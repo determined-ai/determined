@@ -1,4 +1,4 @@
-package agent
+package aproto
 
 import (
 	"syscall"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 // AgentMessage is a union type for all messages sent to agents.
@@ -29,13 +29,13 @@ type MasterSetAgentOptions struct {
 
 // StartContainer notifies the agent to start a container with the provided spec.
 type StartContainer struct {
-	Container container.Container
-	Spec      container.Spec
+	Container cproto.Container
+	Spec      cproto.Spec
 }
 
 // SignalContainer notifies the agent to send the requested signal to the container.
 type SignalContainer struct {
-	ContainerID container.ID
+	ContainerID cproto.ID
 	Signal      syscall.Signal
 }
 

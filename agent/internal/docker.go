@@ -20,15 +20,15 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 type dockerActor struct {
 	*client.Client
 	credentialStores map[string]*credentialStore
-	spec             *container.Spec
+	spec             *cproto.Spec
 }
 
 type (
@@ -37,7 +37,7 @@ type (
 		signal   syscall.Signal
 	}
 	pullImage struct {
-		container.PullSpec
+		cproto.PullSpec
 		Name string
 	}
 	imagePulled      struct{}
@@ -74,7 +74,7 @@ func (d *dockerActor) Receive(ctx *actor.Context) error {
 	case pullImage:
 		go d.pullImage(ctx, msg)
 
-	case container.RunSpec:
+	case cproto.RunSpec:
 		go d.runContainer(ctx, msg)
 
 	case signalContainer:
@@ -165,7 +165,7 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	ctx.Tell(ctx.Sender(), imagePulled{})
 }
 
-func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
+func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	if !d.spec.RunSpec.UseFluentLogging {
 		msg.HostConfig.AutoRemove = false
 	}

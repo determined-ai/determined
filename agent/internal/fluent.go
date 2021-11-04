@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/docker/docker/api/types"

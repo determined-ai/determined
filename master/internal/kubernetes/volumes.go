@@ -10,7 +10,7 @@ import (
 
 	k8sV1 "k8s.io/api/core/v1"
 
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 func configureMountPropagation(b *mount.BindOptions) *k8sV1.MountPropagationMode {
@@ -79,7 +79,7 @@ func configureShmVolume(_ int64) (k8sV1.VolumeMount, k8sV1.Volume) {
 
 func configureAdditionalFilesVolumes(
 	configMapName string,
-	runArchives []container.RunArchive,
+	runArchives []cproto.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
 	initContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)
 	mainContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)

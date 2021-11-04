@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -58,7 +58,7 @@ type TaskSpec struct {
 	WorkDir               string
 	Owner                 *model.User
 	AgentUserGroup        *model.AgentUserGroup
-	ExtraArchives         []container.RunArchive
+	ExtraArchives         []cproto.RunArchive
 	ExtraEnvVars          map[string]string
 	Entrypoint            []string
 	Mounts                []mount.Mount
@@ -92,8 +92,8 @@ func (t *TaskSpec) ResolveWorkDir() {
 }
 
 // Archives returns all the archives.
-func (t *TaskSpec) Archives() []container.RunArchive {
-	res := []container.RunArchive{
+func (t *TaskSpec) Archives() []cproto.RunArchive {
+	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
 		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
@@ -144,7 +144,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 }
 
 // ToDockerSpec converts a task spec to a docker container spec.
-func (t *TaskSpec) ToDockerSpec() container.Spec {
+func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 	var envVars []string
 	for k, v := range t.EnvVars() {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
@@ -177,12 +177,12 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 		})
 	}
 
-	spec := container.Spec{
-		PullSpec: container.PullSpec{
+	spec := cproto.Spec{
+		PullSpec: cproto.PullSpec{
 			Registry:  env.RegistryAuth(),
 			ForcePull: env.ForcePullImage(),
 		},
-		RunSpec: container.RunSpec{
+		RunSpec: cproto.RunSpec{
 			ContainerConfig: docker.Config{
 				User:         getUser(t.AgentUserGroup),
 				ExposedPorts: toPortSet(env.Ports()),
@@ -214,7 +214,7 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 // workDirArchive ensures that the workdir is created and owned by the user.
 func workDirArchive(
 	aug *model.AgentUserGroup, workDir string, createWorkDir bool,
-) container.RunArchive {
+) cproto.RunArchive {
 	a := archive.Archive{
 		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
 		aug.OwnedArchiveItem(infoDir, nil, 0755, tar.TypeDir),
@@ -230,7 +230,7 @@ func workDirArchive(
 // to /run/determined/etc, which will be read by libnss_determined inside the container. If
 // libnss_determined is not present in the container, these files will be simply ignored and some
 // non-root container features will not work properly.
-func injectUserArchive(aug *model.AgentUserGroup, workDir string) container.RunArchive {
+func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArchive {
 	passwdBytes := []byte(
 		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)

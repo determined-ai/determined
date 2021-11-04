@@ -1,4 +1,4 @@
-package agent
+package aproto
 
 import (
 	"fmt"

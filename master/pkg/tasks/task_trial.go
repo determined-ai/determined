@@ -8,7 +8,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -81,7 +81,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		),
 	}
 
-	res.ExtraArchives = []container.RunArchive{
+	res.ExtraArchives = []cproto.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),

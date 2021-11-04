@@ -18,9 +18,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -31,7 +31,7 @@ type (
 		resourcePool     *actor.Ref
 		socket           *actor.Ref
 		slots            *actor.Ref
-		containers       map[container.ID]*actor.Ref
+		containers       map[cproto.ID]*actor.Ref
 		resourcePoolName string
 		label            string
 		// started tracks if we have received the AgentStarted message.
@@ -84,7 +84,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case actor.PreStart:
 		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{resourcePool: a.resourcePool})
-		a.containers = make(map[container.ID]*actor.Ref)
+		a.containers = make(map[cproto.ID]*actor.Ref)
 	case model.AgentSummary:
 		ctx.Respond(a.summarize(ctx))
 	case ws.WebSocketConnected:
@@ -246,9 +246,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			stopped := aproto.ContainerError(
 				aproto.AgentFailed, errors.New("agent closed with allocated containers"))
 			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-				Container: container.Container{
+				Container: cproto.Container{
 					ID:    cid,
-					State: container.Terminated,
+					State: cproto.Terminated,
 				},
 				ContainerStopped: &stopped,
 			})
@@ -309,14 +309,14 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 
 	rsc := sproto.TaskContainerStateChanged{Container: sc.Container}
 	switch sc.Container.State {
-	case container.Running:
+	case cproto.Running:
 		if sc.ContainerStarted.ProxyAddress == "" {
 			sc.ContainerStarted.ProxyAddress = a.address
 		}
 		rsc.ContainerStarted = &sproto.TaskContainerStarted{
 			Addresses: sc.ContainerStarted.Addresses(),
 		}
-	case container.Terminated:
+	case cproto.Terminated:
 		ctx.Log().
 			WithError(sc.ContainerStopped.Failure).
 			Infof("container %s terminated", sc.Container.ID)

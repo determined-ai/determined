@@ -12,7 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 type tick struct{}
@@ -24,7 +24,7 @@ type checkerActor struct {
 }
 
 func newCheckerActor(
-	config container.ChecksConfig,
+	config cproto.ChecksConfig,
 	info types.ContainerJSON,
 ) (*checkerActor, error) {
 	urls := make([]string, 0, len(config.Checks))

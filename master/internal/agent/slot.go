@@ -12,9 +12,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -23,7 +23,7 @@ type slot struct {
 	resourcePool *actor.Ref
 	device       device.Device
 	enabled      slotEnabled
-	container    *container.Container
+	container    *cproto.Container
 }
 
 type slotEnabled struct {
@@ -59,7 +59,7 @@ func (s *slot) Receive(ctx *actor.Context) error {
 	case aproto.ContainerStateChanged:
 		check.Panic(check.Equal(s.container.ID, msg.Container.ID, "Invalid container id sent to slot"))
 		s.container = &msg.Container
-		if msg.Container.State == container.Terminated {
+		if msg.Container.State == cproto.Terminated {
 			s.container = nil
 		}
 	case *proto.GetSlotRequest:
