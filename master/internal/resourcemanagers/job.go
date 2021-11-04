@@ -43,8 +43,8 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 				IsPreemptible: req.Preemptible,
 			}
 			isAdded[*req.JobID] = v1JobInfo
-			jobsAhead++
 			jobActors[*req.JobID] = req.Group
+			jobsAhead++
 		}
 		// Carry over the the highest state.
 		if v1JobInfo.State < req.State {

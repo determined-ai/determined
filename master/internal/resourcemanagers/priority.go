@@ -96,7 +96,6 @@ func (p *priorityScheduler) prioritySchedule(
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
-	// TODO consider agent labels
 	// Since labels are a hard scheduling constraint, process every label independently.
 	for label, agentsWithLabel := range splitAgentsByLabel(agents) {
 		// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority

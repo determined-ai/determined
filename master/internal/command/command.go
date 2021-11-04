@@ -399,7 +399,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		JobId:    c.jobID.String(),
 		EntityId: string(c.taskID),
 		Type:     c.jobType.Proto(),
-		// IsPreemptible:  c.pre // TODO see internal/experiment
+		// IsPreemptible:  // TODO see internal/job/RMJobInfo
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		SubmissionTime: timestamppb.New(c.registeredTime),
 		Username:       c.Base.Owner.Username,

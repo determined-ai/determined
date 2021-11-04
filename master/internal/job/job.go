@@ -75,8 +75,7 @@ type RMJobInfo struct {
 // 	RMInfo RMJobInfo
 // }
 
-type GetJobSummary struct {
-}
+type GetJobSummary struct{}
 
 // Jobs manage jobs.
 type Jobs struct {
@@ -88,18 +87,7 @@ func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Re
 	fmt.Printf("children count %d \n", len(children))
 	// jobs := make([]*jobv1.Job, 0)
 	return ctx.AskAll(msg, children...).GetAll()
-
 	// IMPROVE. look up reflect
-	// for _, val := range ctx.AskAll(msg, children...).GetAll() {
-	// 	rType := reflect.TypeOf(responses).Elem()
-	// 	typed, ok := val.(rType)
-	// 	if !ok {
-	// 		return errors.New("unexpected response type")
-	// 	}
-	// 	if typed != nil {
-	// 		responses = append(responses, typed)
-	// 	}
-
 }
 
 func (j *Jobs) parseV1JobResposnes(responses map[*actor.Ref]actor.Message) ([]*jobv1.Job, error) {
@@ -116,10 +104,6 @@ func (j *Jobs) parseV1JobResposnes(responses map[*actor.Ref]actor.Message) ([]*j
 	return jobs, nil
 }
 
-func (j *Jobs) getV1Jobs(ctx *actor.Context, msg actor.Message) ([]*jobv1.Job, error) {
-	return j.parseV1JobResposnes(j.askJobActors(ctx, msg))
-}
-
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
@@ -127,20 +111,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	case *apiv1.GetJobsRequest:
 		fmt.Printf("GetJobsRequest %v \n", *msg)
 
-		jobs, err := j.getV1Jobs(ctx, msg)
+		jobs, err := j.parseV1JobResposnes(j.askJobActors(ctx, msg))
 		if err != nil {
 			return err
 		}
-		// TODO do pagination here as well?
 		ctx.Respond(jobs)
-
-	// case *apiv1.GetJobQueueStatsRequest:
-	// 	jobs, err := j.getV1Jobs(ctx, msg) // TODO specialize to returning just stats.
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	ctx.Respond(QueueStatsFromJobs(jobs))
-	// TODO sync with RMInfo from RM
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
