@@ -34,10 +34,35 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-// OrderedAllocations sorts by expected allocation order at this point excluding backfills.
-func (p *priorityScheduler) OrderedAllocations(
-	rp *ResourcePool,
-) (reqs []*sproto.AllocateRequest) {
+func (p *priorityScheduler) createJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
+	reqs := make(AllocReqs, 0)
+	// FIXME there is gotta be a friendlier version of this.
+	// can we stick to slices together quickly in Go?
+	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
+		if out == nil {
+			panic("missing output array. (nil pointer)")
+		}
+		priorities := getOrderedPriorities(aMap)
+		for _, priority := range priorities {
+			*out = append(*out, aMap[priority]...)
+		}
+	}
+
+	readFromPrioToTask(scheduled, &reqs)
+	readFromPrioToTask(pending, &reqs)
+	jobQInfo, jobActors := mergeToJobQInfo(reqs)
+	return jobQInfo, jobActors
+}
+
+func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) {
+	// TODO
+	jobQInfo, jobActors := p.createJobQInfo(pending, scheduled)
+	for jobId, jobActor := range jobActors {
+		jobActor.System().Tell(jobActor, jobQInfo[jobId])
+	}
+}
+
+func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	/*
 		compute a single numerical ordering for allocationreuqests that can be modified.
 		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms
@@ -57,29 +82,8 @@ func (p *priorityScheduler) OrderedAllocations(
 		sortTasksByPriorityAndPositionAndTimestamp(
 			rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
 
-	// FIXME there is gotta be a friendlier version of this.
-	// can we stick to slices together quickly in Go?
-	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
-		if out == nil {
-			panic("missing output array. (nil pointer)")
-		}
-		priorities := getOrderedPriorities(aMap)
-		for _, priority := range priorities {
-			*out = append(*out, aMap[priority]...)
-		}
-	}
+	jobQInfo, _ := p.createJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 
-	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
-	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
-	return reqs
-}
-
-func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	reqs := p.OrderedAllocations(rp)
-	jobQInfo, jobActors := mergeToJobQInfo(reqs)
-	for jobId, jobActor := range jobActors {
-		rp.system.Tell(jobActor, jobQInfo[jobId])
-	}
 	return jobQInfo
 }
 
@@ -129,6 +133,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
 		sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, filter)
 
+	p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
