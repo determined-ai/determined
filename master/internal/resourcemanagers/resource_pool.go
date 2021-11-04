@@ -275,7 +275,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case schedulerTick:
 		if rp.reschedule {
-			// QUESTION do we want to do this if there are no agents?
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
@@ -285,6 +284,12 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 			}
 			rp.sendScalingInfo(ctx)
 		}
+		// jobQ := rp.scheduler.JobQInfo(rp) // OPTIMIZE: integrate into Schedule() call
+		// // FIXME why can't we TellAt on Context?
+		// ctx.Self().System().TellAt(job.JobsActorAddr, job.SetJobQ{
+		// 	Identifier: rp.config.PoolName,
+		// 	Queue:      jobQ,
+		// })
 		rp.reschedule = false
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})

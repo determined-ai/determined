@@ -1,4 +1,4 @@
-package job // jobqueue
+package job // jobqueue?
 
 import (
 	"errors"
@@ -58,9 +58,15 @@ type RMJobInfo struct { // rename ?
 
 type GetJobSummary struct{}
 
+// type SetJobQ struct {
+// 	Identifier string
+// 	Queue      map[model.JobID]*RMJobInfo
+// }
+
 // Jobs manage jobs.
 type Jobs struct {
 	RMRef *actor.Ref
+	// Queues map[string]map[model.JobID]*RMJobInfo
 }
 
 func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
@@ -97,6 +103,9 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			return err
 		}
 		ctx.Respond(jobs)
+
+	// case SetJobQ:
+	// 	j.Queues[msg.Identifier] = msg.Queue
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
