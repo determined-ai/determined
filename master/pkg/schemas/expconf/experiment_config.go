@@ -40,6 +40,7 @@ type ExperimentConfigV0 struct {
 	RawResources                *ResourcesConfigV0          `json:"resources"`
 	RawSchedulingUnit           *int                        `json:"scheduling_unit"`
 	RawSearcher                 *SearcherConfigV0           `json:"searcher"`
+	RawLaunch                   *string                     `json:"launch"`
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
 }

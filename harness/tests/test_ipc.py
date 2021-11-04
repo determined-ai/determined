@@ -190,6 +190,7 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
             cross_size=cross_size,
             chief_ip="localhost",
             force_tcp=force_tcp,
+            backend="horovod"
         )
 
     contexts = do_parallel(make_distributed_context)

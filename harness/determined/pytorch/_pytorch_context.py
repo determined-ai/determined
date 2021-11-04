@@ -81,14 +81,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self.experimental = pytorch.PyTorchExperimentalContext(self)
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
-        if self.distributed.backend == "horovod":
-            experiment_config = self.get_experiment_config()
-            optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
-            self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
-            self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
-            self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
-            self.average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
-
+        optimizations_config = self.get_optimizations_config()
+        self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+        self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
+        self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:

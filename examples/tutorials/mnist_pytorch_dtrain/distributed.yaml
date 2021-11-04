@@ -8,8 +8,9 @@ hyperparameters:
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
-resources:
-  slots_per_trial: 8
+debug: true
+launch: python3 -m determined.launch.torch_distributed
+
 searcher:
   name: single
   metric: validation_loss

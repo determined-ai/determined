@@ -1183,6 +1183,13 @@ schemas = {
             ],
             "default": null
         },
+        "launch": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "optimizations": {
             "type": [
                 "object",

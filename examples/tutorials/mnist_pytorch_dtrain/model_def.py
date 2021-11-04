@@ -13,7 +13,7 @@ from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 import torch
 import torchvision
-import os
+
 from torch import nn
 from layers import Flatten
 from torch.distributed.optim import DistributedOptimizer
@@ -56,9 +56,7 @@ class MNistTrial(PyTorchTrial):
         self.loss = torch.nn.NLLLoss()
         optimizer = torch.optim.Adadelta(self.model.parameters(),
                                          lr=self.context.get_hparam("learning_rate"))
-        # distributed_optimizer = DistributedOptimizer(torch.optim.Adagrad(),
-        #                                              params_rref=self.model.parameters(),
-        #                                              lr=self.context.get_hparam("learning_rate"))
+
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
 

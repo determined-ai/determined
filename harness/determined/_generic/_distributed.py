@@ -355,4 +355,5 @@ class DummyDistributed(DistributedContext):
             local_size=1,
             cross_rank=0,
             cross_size=1,
+            backend=None
         )

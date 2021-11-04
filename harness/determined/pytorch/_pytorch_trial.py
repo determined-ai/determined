@@ -527,8 +527,7 @@ class PyTorchTrialController(det.TrialController):
                 metrics_reducers=self._prepare_metrics_reducers(keys=keys),
             )
 
-            if self.distributed_training:
-                num_inputs *= self.context.distributed.get_size()
+            num_inputs *= self.context.distributed.get_size()
 
         else:
             check.true(self._evaluate_full_dataset_defined())
@@ -641,7 +640,7 @@ class PyTorchTrialController(det.TrialController):
         self, metrics: Dict[str, Any], num_batches: int
     ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
         # The chief receives the metric from every other training process.
-        check.true(self.distributed_training)
+        check.true(self.context.distributed.backend is not None)
 
         # all_args is a list of [(metrics, num_batches), ...] for each worker.
         all_args = self.context.distributed._zmq_gather((metrics, num_batches))

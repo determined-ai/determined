@@ -36,7 +36,7 @@ class TFKerasTrialContext(det.TrialContext):
 
         self.dataset_initialized = False
 
-        self.experimental = TFKerasExperimentalContext(env=self.env)
+        self.experimental = TFKerasExperimentalContext(env=self.env, distributed_backend=self.distributed.backend)
 
         # The following three attributes are initialized during the lifetime of a
         # TFKerasTrialContext instance by the user calling compile() and
@@ -58,13 +58,9 @@ class TFKerasTrialContext(det.TrialContext):
         self._fit_max_queue_size = 10
         self._fit_shuffle = True
         self._fit_validation_steps = None
-        if self.distributed.backend == "horovod":
-            experiment_config = self.get_experiment_config()
-            optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
-            self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
-            self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
-            self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
-            self.average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
+        optimizations_config = self.get_optimizations_config()
+        self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+        self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
 
     def configure_fit(
         self,
@@ -412,5 +408,5 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(self, env: det.EnvContext) -> None:
-        super().__init__(env=env)
+    def __init__(self, env: det.EnvContext, distributed_backend: Optional[str]) -> None:
+        super().__init__(env=env, distributed_backend=distributed_backend)

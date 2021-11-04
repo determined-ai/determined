@@ -248,6 +248,14 @@ func (e *ExperimentConfigV0) SetSearcher(val SearcherConfigV0) {
 	e.RawSearcher = &val
 }
 
+func (e ExperimentConfigV0) Launch() *string {
+	return e.RawLaunch
+}
+
+func (e *ExperimentConfigV0) SetLaunch(val *string) {
+	e.RawLaunch = val
+}
+
 func (e ExperimentConfigV0) Security() *SecurityConfigV0 {
 	return e.RawSecurity
 }

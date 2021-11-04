@@ -77,6 +77,12 @@ class TrialContext(metaclass=abc.ABCMeta):
         """
         return self.get_experiment_config().get("data", {})
 
+    def get_optimizations_config(self) -> Dict[str, Any]:
+        """
+        Return the optimizations configuration.
+        """
+        return self.get_experiment_config().get("optimizations", {})
+
     def get_experiment_id(self) -> int:
         """
         Return the experiment ID of the current trial.
