@@ -241,7 +241,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case GetJobQInfo:
-		ctx.Respond(k.getOrderedJobQInfo())
+		ctx.Respond(k.jobQInfo())
 		return actor.ErrUnexpectedMessage(ctx)
 
 	case SetJobOrder:
@@ -278,9 +278,8 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	return nil
 }
 
-// getOrderedJobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
 // CHECK should this be on the resourcepool struct?
-func (k *kubernetesResourceManager) getOrderedJobQInfo() map[model.JobID]*job.RMJobInfo {
+func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
 	jobQinfo, _ := mergeToJobQInfo(reqs)
 	return jobQinfo
