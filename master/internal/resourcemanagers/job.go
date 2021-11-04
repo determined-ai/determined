@@ -194,7 +194,7 @@ func updateJobs(ctx *actor.Context, rp *ResourcePool) {
 			JobsAhead:      int(j.Summary.JobsAhead),
 			RequestedSlots: int(j.RequestedSlots),
 			AllocatedSlots: int(j.AllocatedSlots),
-			// State:          j.Summary.State,
+			State:          sproto.SchedulingStateFromProto(j.Summary.State),
 		})
 	}
 }

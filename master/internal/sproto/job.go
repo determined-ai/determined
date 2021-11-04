@@ -5,7 +5,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// TODO here or in model/job.go
+// TODO here or in resourcemanager/job.go
 
 // SchedulingState denotes the scheduling state of a job and in order of its progression value.
 type SchedulingState uint8
@@ -33,6 +33,25 @@ func (s SchedulingState) Proto() jobv1.State {
 	}
 }
 
+func SchedulingStateFromProto(state jobv1.State) SchedulingState {
+	switch state {
+	case jobv1.State_STATE_QUEUED:
+		return SchedulingStateQueued
+	case jobv1.State_STATE_SCHEDULED_BACKFILLED:
+		return SchedulingStateScheduledBackfilled
+	case jobv1.State_STATE_SCHEDULED:
+		return SchedulingStateScheduled
+	default:
+		panic("unexpected state")
+	}
+}
+
+// ScheduledStates provides a list of ScheduledStates that are considered scheduled.
+var ScheduledStates = map[SchedulingState]bool{
+	SchedulingStateScheduled:           true,
+	SchedulingStateScheduledBackfilled: true,
+}
+
 // JobSummary contains information about a job for external display.
 type JobSummary struct {
 	//Job      model.Job
@@ -42,10 +61,4 @@ type JobSummary struct {
 	State          SchedulingState
 	RequestedSlots int
 	AllocatedSlots int
-}
-
-// ScheduledStates provides a list of ScheduledStates that are considered scheduled.
-var ScheduledStates = map[SchedulingState]bool{
-	SchedulingStateScheduled:           true,
-	SchedulingStateScheduledBackfilled: true,
 }
