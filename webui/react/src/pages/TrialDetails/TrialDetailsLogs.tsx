@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
 import handleError, { ErrorType } from 'ErrorHandler';
-import TrialLogFilters, { Filters } from 'pages/TrialDetails/TrialLogFilters';
+import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
