@@ -4,7 +4,7 @@ import React from 'react';
 
 import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask } from 'types';
-import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/sort';
+import { alphanumericSorter, commandStateSorter, dateTimeStringSorter } from 'utils/sort';
 import { generateCommandTask } from 'utils/task';
 
 import {
@@ -44,7 +44,8 @@ const columns: ColumnType<CommandTask>[] = [
     key: 'startTime',
     render: (_: number, record: CommandTask): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
-    sorter: (a: CommandTask, b: CommandTask): number => stringTimeSorter(a.startTime, b.startTime),
+    sorter: (a: CommandTask, b: CommandTask): number =>
+      dateTimeStringSorter(a.startTime, b.startTime),
     title: 'Start Time',
   },
   {

@@ -18,7 +18,7 @@ import { Log, LogLevel, RecordKey } from 'types';
 import { clone } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { copyToClipboard } from 'utils/dom';
-import { datetimeStringSorter, numericSorter } from 'utils/sort';
+import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
 import css from './LogViewerCore.module.scss';
 
@@ -79,7 +79,7 @@ const logSorter = (key: keyof Log) => (a: Log, b: Log): number => {
   const aValue = a[key];
   const bValue = b[key];
   if (key === 'id') return numericSorter(aValue as number, bValue as number);
-  if (key === 'time') return datetimeStringSorter(aValue as string, bValue as string);
+  if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
   return 0;
 };
 

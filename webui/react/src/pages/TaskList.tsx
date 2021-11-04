@@ -31,7 +31,7 @@ import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
 import {
-  alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
+  alphanumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
 import { filterTasks } from 'utils/task';
 import { commandToTask, commandTypeToLabel, isTaskKillable } from 'utils/types';
@@ -305,7 +305,7 @@ const TaskList: React.FC = () => {
           return relativeTimeRenderer(new Date(record.startTime));
         },
         sorter: (a: CommandTask, b: CommandTask): number => {
-          return stringTimeSorter(a.startTime, b.startTime);
+          return dateTimeStringSorter(a.startTime, b.startTime);
         },
         title: 'Start Time',
       },
