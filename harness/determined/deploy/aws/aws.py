@@ -358,13 +358,13 @@ def deploy_stack(
             prompt_needed = False
             if constants.deployment_types.TYPE_TAG_KEY not in tags:
                 print()
-                print("Previous value of --deployment-type is not known. Versions of Determined as late")
-                print("as 0.17.2 did not annotate deployed clusters, and it was the responsibility of")
-                print("the user to make updates with the same --deployment-type. Note that if you are")
-                print("sure you did not set --deployment-type before, your cluster would have deployed")
-                print("as --deployment-type simple (the default).")
+                print("Previous value of --deployment-type is unknown. Versions of `det` prior to")
+                print("0.17.3 did not annotate deployed clusters, and it was the responsibility of")
+                print("the user to make updates with the same --deployment-type. Note that if you")
+                print("are sure --deployment-type was not set before, your cluster would have")
+                print("deployed as --deployment-type simple (the default).")
                 print()
-                
+
                 prompt_needed = True
             elif tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:
                 print("Value of --deployment-type has changed!")
