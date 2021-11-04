@@ -10,7 +10,22 @@ import (
 const (
 	localhost    = "localhost"
 	ipv4Loopback = "127.0.0.1"
+
+	nonRootbitUserName = "nonroot"
+	nonRootUID         = 65532
+	nonRootGroupName   = "nonroot"
+	nonRootGID         = 65532
+	nonRootHome        = "/home/nonroot/"
 )
+
+// NonRootAgentUserGroup is a non-root agent user group that should exist by default
+// for fluentbit container images that has a writable homedir for on-disk buffers.
+var NonRootAgentUserGroup = model.AgentUserGroup{
+	User:  nonRootbitUserName,
+	UID:   nonRootUID,
+	Group: nonRootGroupName,
+	GID:   nonRootGID,
+}
 
 // ConfigItem describes one line in a Fluent Bit config file.
 type ConfigItem struct {
@@ -134,6 +149,7 @@ func ContainerConfig(
 	filters []ConfigSection,
 	loggingConfig model.LoggingConfig,
 	tlsConfig model.TLSClientConfig,
+	asNonRoot bool,
 ) ([]string, map[string][]byte) {
 	const luaPath = "tonumber.lua"
 	const configPath = "fluent.conf"
@@ -170,13 +186,18 @@ end
 
 	var config strings.Builder
 
+	bufferDir := "/var/log/flb-buffers"
+	if asNonRoot {
+		bufferDir = nonRootHome + "flb-buffers"
+	}
+
 	fmt.Fprintf(&config, `
 [SERVICE]
   # Flush every .05 seconds to reduce latency for users.
   Flush .05
   Parsers_File %s
-  storage.path /var/log/flb-buffers/
-`, parserConfigPath)
+  storage.path %s
+`, parserConfigPath, bufferDir)
 
 	for _, input := range inputs {
 		fmt.Fprintf(&config, `[INPUT]
