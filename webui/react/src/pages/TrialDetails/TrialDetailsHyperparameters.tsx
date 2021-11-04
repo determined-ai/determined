@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { ExperimentBase, TrialDetails } from 'types';
 import { isObject } from 'utils/data';
-import { alphanumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './TrialDetailsHyperparameters.module.scss';
 
@@ -25,7 +25,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
       defaultSortOrder: 'ascend',
       key: 'hyperparameter',
       sorter: (a: HyperParameter, b: HyperParameter) =>
-        alphanumericSorter(a.hyperparameter, b.hyperparameter),
+        alphaNumericSorter(a.hyperparameter, b.hyperparameter),
       title: 'Hyperparameter',
     },
     {

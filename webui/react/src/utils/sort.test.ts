@@ -19,7 +19,7 @@ describe('sort utility', () => {
     });
   };
 
-  describe('alphanumericSorter', () => {
+  describe('alphaNumericSorter', () => {
     const tests = [
       { input: [ 'Jumping', 'elephant' ], output: 1 },
       { input: [ 52, 'elephant' ], output: -1 },
@@ -27,8 +27,8 @@ describe('sort utility', () => {
       { input: [ 52, -12 ], output: 1 },
       { input: [ -12, 52 ], output: -1 },
       { input: [ 'abc', 'abc' ], output: 0 },
-      { input: [ 'ABC', 'abc' ], output: 0 },
-      { input: [ 'abc', 'ABC' ], output: 0 },
+      { input: [ 'ABC', 'abc' ], output: 1 },
+      { input: [ 'abc', 'ABC' ], output: -1 },
       { input: [ -12, -12 ], output: 0 },
       { input: [ 52, 52 ], output: 0 },
       { input: [ 0.123, undefined ], output: -1 },
@@ -46,7 +46,7 @@ describe('sort utility', () => {
       { input: [ null, 'ABC' ], output: 1 },
       { input: [ null, 'abc' ], output: 1 },
     ];
-    runSortTests(tests, sorters.alphanumericSorter);
+    runSortTests(tests, sorters.alphaNumericSorter);
   });
 
   describe('booleanSorter', () => {

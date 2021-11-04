@@ -33,7 +33,7 @@ const commandStateSortValues: Record<CommandState, number> = {
  *    - numbers come before string
  *    - place `null` and `undefined` at the end of numbers and strings
  */
-export const alphanumericSorter = (
+export const alphaNumericSorter = (
   a: NullOrUndefined<string | number>,
   b: NullOrUndefined<string | number>,
 ): number => {
@@ -91,7 +91,7 @@ export const metricNameSorter = (a: MetricName, b: MetricName): number => {
   const isBValidation = b.type === MetricType.Validation;
   if (isAValidation && !isBValidation) return -1;
   if (isBValidation && !isAValidation) return 1;
-  return alphanumericSorter(a.name, b.name);
+  return alphaNumericSorter(a.name, b.name);
 };
 
 /*
@@ -123,7 +123,7 @@ export const primitiveSorter = (
   // Sort by primitive type.
   if (typeof a === 'boolean' && typeof b === 'boolean') return booleanSorter(a, b);
   if (typeof a === 'number' && typeof b === 'number') return numericSorter(a, b);
-  if (typeof a === 'string' && typeof b === 'string') return alphanumericSorter(a, b);
+  if (typeof a === 'string' && typeof b === 'string') return alphaNumericSorter(a, b);
   return 0;
 };
 

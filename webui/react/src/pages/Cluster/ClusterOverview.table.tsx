@@ -1,21 +1,21 @@
 import { ColumnType } from 'antd/es/table';
 
 import { ResourcePool } from 'types';
-import { alphanumericSorter, numericSorter } from 'utils/sort';
+import { alphaNumericSorter, numericSorter } from 'utils/sort';
 import { V1ResourcePoolTypeToLabel } from 'utils/types';
 
 export const columns: ColumnType<ResourcePool>[] = [
   {
     dataIndex: 'name',
     key: 'name',
-    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.name, b.name),
+    sorter: (a: ResourcePool, b: ResourcePool): number => alphaNumericSorter(a.name, b.name),
     title: 'Pool Name',
   },
   {
     dataIndex: 'description',
     key: 'description',
     sorter: (a: ResourcePool, b: ResourcePool): number =>
-      alphanumericSorter(a.description, b.description),
+      alphaNumericSorter(a.description, b.description),
     title: 'Description',
   },
   {
@@ -26,7 +26,7 @@ export const columns: ColumnType<ResourcePool>[] = [
     dataIndex: 'type',
     key: 'type',
     render: (_, record) => V1ResourcePoolTypeToLabel[record.type],
-    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.type, b.type),
+    sorter: (a: ResourcePool, b: ResourcePool): number => alphaNumericSorter(a.type, b.type),
     title: 'Type',
   },
   {
