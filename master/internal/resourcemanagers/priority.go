@@ -77,7 +77,7 @@ func (p *priorityScheduler) OrderedAllocations(
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	reqs := p.OrderedAllocations(rp)
 	isAdded := make(map[model.JobID]*job.RMJobInfo)
-	// v1Jobs := make([]*jobv1.Job, 0)
+	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
 	for _, req := range reqs {
 		curJob := req.Job
@@ -94,6 +94,7 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 			}
 			isAdded[curJob.JobID] = v1JobInfo
 			jobsAhead++
+			jobActors[curJob.JobID] = req.Group
 		}
 		// Carry over the the highest state.
 		if v1JobInfo.State < curJob.State {
@@ -103,6 +104,9 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		if sproto.ScheduledStates[req.Job.State] {
 			v1JobInfo.AllocatedSlots += req.SlotsNeeded
 		}
+	}
+	for jobId, jobActor := range jobActors {
+		rp.system.Tell(jobActor, isAdded[jobId])
 	}
 	return isAdded
 }

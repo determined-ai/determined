@@ -1,8 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -158,15 +156,6 @@ func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *j
 	return nil
 }
 
-// getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
-// CHECK should this be on the resourcepool struct?
-func getV1Jobs( // TODO rename
-	rp *ResourcePool,
-) []*jobv1.Job {
-	allocateRequests := rp.scheduler.OrderedAllocations(rp)
-	return mergeToJobs(allocateRequests, rp.groups, rp.config.Scheduler.GetType())
-}
-
 func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 	if req.Job == nil {
 		return
@@ -179,22 +168,4 @@ func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 	// TODO work on allocate requests
 	jobs := mergeToJobs(reqs, rp.groups, rp.config.Scheduler.GetType())
 	return job.QueueStatsFromJobs(jobs)
-}
-
-// TODO to be implemented inside the scheduler for better perf and control
-// TODO update to avoid goig through proto
-func updateJobs(ctx *actor.Context, rp *ResourcePool) {
-	jobs := getV1Jobs(rp)
-	fmt.Println("updating jobs, got jobs")
-	for _, j := range jobs {
-		addr := job.JobActorAddr(model.JobTypeFromProto(j.Type), j.EntityId)
-		fmt.Printf("updating job %s\n", addr)
-		actorRef := ctx.Self().System().Get(addr)
-		ctx.Tell(actorRef, job.RMJobInfo{
-			JobsAhead:      int(j.Summary.JobsAhead),
-			RequestedSlots: int(j.RequestedSlots),
-			AllocatedSlots: int(j.AllocatedSlots),
-			State:          sproto.SchedulingStateFromProto(j.Summary.State),
-		})
-	}
 }

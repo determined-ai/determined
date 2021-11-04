@@ -278,7 +278,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case schedulerTick:
 		if rp.reschedule {
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
-			updateJobs(ctx, rp) // FIXME this is a hack.
+			rp.scheduler.JobQInfo(rp) // FIXME this is a hack
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}
@@ -354,8 +354,6 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case GetJobOrder:
-		ctx.Respond(getV1Jobs(rp))
 	case SetJobOrder:
 		for it := rp.taskList.iterator(); it.next(); {
 			req := it.value()

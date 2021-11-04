@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -86,7 +85,7 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		// job                   job.Job
-		rmJobInfo job.RMJobInfo
+		rmJobInfo *job.RMJobInfo
 	}
 )
 
@@ -285,7 +284,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(e.toV1Job())
 
-	case job.RMJobInfo:
+	case *job.RMJobInfo:
 		e.rmJobInfo = msg
 
 	// Experiment shutdown logic.
@@ -607,7 +606,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		j.Priority = int32(*priority)
 	}
 
-	job.FillInRmJobInfo(&j, &e.rmJobInfo)
+	job.FillInRmJobInfo(&j, e.rmJobInfo)
 
 	return &j
 }

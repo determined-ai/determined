@@ -156,6 +156,12 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 }
 
 func FillInRmJobInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
+	if job == nil {
+		panic("nil job ptr")
+	}
+	if rmInfo == nil {
+		return
+	}
 	job.RequestedSlots = int32(rmInfo.RequestedSlots)
 	job.AllocatedSlots = int32(rmInfo.AllocatedSlots)
 	if job.Summary == nil {

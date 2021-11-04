@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -85,7 +86,7 @@ type command struct {
 	serviceAddress *string
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
-	rmJobInfo      job.RMJobInfo
+	rmJobInfo      *job.RMJobInfo
 }
 
 // Receive implements the actor.Actor interface.
@@ -173,7 +174,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}, c.db, sproto.GetRM(ctx.Self().System()))
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
-	case job.RMJobInfo:
+	case *job.RMJobInfo:
 		c.rmJobInfo = msg
 
 	case *apiv1.GetJobsRequest:
@@ -414,7 +415,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		j.Priority = int32(*priority)
 	}
 
-	job.FillInRmJobInfo(&j, &c.rmJobInfo)
+	job.FillInRmJobInfo(&j, c.rmJobInfo)
 
 	return &j
 }
