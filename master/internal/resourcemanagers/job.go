@@ -26,9 +26,10 @@ type SetJobOrder struct {
 
 // GetJobOrder requests a list of *jobv1.Job.
 // Expected response: []*jobv1.Job.
+// DEPRECATED
 type GetJobOrder struct{}
 
-// GetJobQInfo is used to get all job information in one go avoid any inconsistencies.
+// GetJobQInfo is used to get all job information in one go to avoid any inconsistencies.
 type GetJobQInfo struct{}
 
 // GetJobQStats requests stats for a queue.
