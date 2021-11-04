@@ -183,11 +183,14 @@ func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 
 // TODO to be implemented inside the scheduler for better perf and control
 // TODO update to avoid goig through proto
-func updateJobs(system *actor.System, rp *ResourcePool) {
+func updateJobs(ctx *actor.Context, rp *ResourcePool) {
 	jobs := getV1Jobs(rp)
 	fmt.Println("updating jobs, got jobs")
 	for _, j := range jobs {
-		system.TellAt(job.JobsActorAddr.Child(j.JobId), job.RMJobInfo{
+		addr := job.JobActorAddr(model.JobTypeFromProto(j.Type), j.EntityId)
+		fmt.Printf("updating job %s\n", addr)
+		actorRef := ctx.Self().System().Get(addr)
+		ctx.Tell(actorRef, job.RMJobInfo{
 			JobsAhead:      int(j.Summary.JobsAhead),
 			RequestedSlots: int(j.RequestedSlots),
 			AllocatedSlots: int(j.AllocatedSlots),

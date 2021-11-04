@@ -48,7 +48,24 @@ func (jt JobType) Proto() jobv1.Type {
 	case JobTypeTensorboard:
 		return jobv1.Type_TYPE_TENSORBOARD
 	default:
-		return jobv1.Type_TYPE_UNSPECIFIED
+		panic("unknown job type")
+	}
+}
+
+func JobTypeFromProto(t jobv1.Type) JobType {
+	switch t {
+	case jobv1.Type_TYPE_EXPERIMENT:
+		return JobTypeExperiment
+	case jobv1.Type_TYPE_COMMAND:
+		return JobTypeCommand
+	case jobv1.Type_TYPE_SHELL:
+		return JobTypeShell
+	case jobv1.Type_TYPE_NOTEBOOK:
+		return JobTypeNotebook
+	case jobv1.Type_TYPE_TENSORBOARD:
+		return JobTypeTensorboard
+	default:
+		panic("unknown job type")
 	}
 }
 

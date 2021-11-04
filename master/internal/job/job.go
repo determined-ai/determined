@@ -6,6 +6,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -31,6 +32,23 @@ func getJobRefs(system *actor.System) []*actor.Ref {
 		jobRefs = append(jobRefs, system.Get(addr).Children()...)
 	}
 	return jobRefs
+}
+
+func JobActorAddr(jobType model.JobType, entityId string) actor.Address {
+	parentAddress := ""
+	switch jobType {
+	case model.JobTypeExperiment:
+		parentAddress = "experiments"
+	case model.JobTypeTensorboard:
+		parentAddress = "tensorboard"
+	case model.JobTypeCommand:
+		parentAddress = "commands"
+	case model.JobTypeNotebook:
+		parentAddress = "notebooks"
+	case model.JobTypeShell:
+		parentAddress = "shells"
+	}
+	return actor.Addr(parentAddress).Child(entityId)
 }
 
 // RMJobInfo packs information available only to the RM that updates frequently.
