@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/provisioner"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -122,7 +122,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 
 	allocations := make([]sproto.Reservation, 0, len(fits))
 	for _, fit := range fits {
-		container := newContainer(req, fit.Agent, fit.Slots)
+		container := newContainer(req, fit.Slots)
 		allocations = append(allocations, &containerReservation{
 			req:       req,
 			agent:     fit.Agent,

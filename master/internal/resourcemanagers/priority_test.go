@@ -621,7 +621,7 @@ func AllocateTasks(
 		fits := findFits(req, agents, BestFit)
 
 		for _, fit := range fits {
-			container := newContainer(req, fit.Agent, fit.Slots)
+			container := newContainer(req, fit.Slots)
 			devices := fit.Agent.allocateFreeDevices(fit.Slots, container.id)
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,

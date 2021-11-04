@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -141,7 +140,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case actor.PostStop:
 
-	case sproto.StartTaskPod:
+	case StartTaskPod:
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
 		}
@@ -158,7 +157,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podPreemption:
 		p.receivePodPreemption(ctx, msg)
 
-	case sproto.KillTaskPod:
+	case KillTaskPod:
 		p.receiveKillPod(ctx, msg)
 
 	case resourceDeletionFailed:
@@ -306,7 +305,7 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 	)
 }
 
-func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) error {
+func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
@@ -380,7 +379,7 @@ func (p *pods) receivePodPreemption(ctx *actor.Context, msg podPreemption) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receiveKillPod(ctx *actor.Context, msg sproto.KillTaskPod) {
+func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {
 	ref, ok := p.containerIDToPodHandler[string(msg.PodID)]
 	if !ok {
 		// For multi-pod tasks, when the chief pod exits, the scheduler

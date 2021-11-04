@@ -240,13 +240,13 @@ func newFakeAgentState(
 			SlotsNeeded: slotsUsed,
 			Preemptible: true,
 		}
-		container := newContainer(req, state, req.SlotsNeeded)
+		container := newContainer(req, req.SlotsNeeded)
 		state.allocateFreeDevices(req.SlotsNeeded, container.id)
 	}
 
 	for i := 0; i < zeroSlotContainers; i++ {
 		req := &sproto.AllocateRequest{}
-		container := newContainer(req, state, req.SlotsNeeded)
+		container := newContainer(req, req.SlotsNeeded)
 		state.allocateFreeDevices(req.SlotsNeeded, container.id)
 	}
 	return state
@@ -367,7 +367,7 @@ func setupSchedulerStates(
 			assert.Assert(t, mockTask.allocatedAgent.slots >= mockTask.slotsNeeded)
 			agentRef := system.Get(actor.Addr(mockTask.allocatedAgent.id))
 			agentState := agents[agentRef]
-			container := newContainer(req, agentState, req.SlotsNeeded)
+			container := newContainer(req, req.SlotsNeeded)
 
 			devices := make([]device.Device, 0)
 			if mockTask.containerStarted {
