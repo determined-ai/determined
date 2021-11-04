@@ -152,21 +152,20 @@ func (a *apiServer) filter(values interface{}, check func(int) bool) {
 	rv.Elem().Set(results)
 }
 
-func (a *apiServer) actorRequest(addr actor.Address, req actor.Message, v interface{}) error {
-	resp := a.m.system.AskAt(addr, req)
-	if err := api.ProcessActorResponseError(&resp); err != nil {
-		return err
-	}
-	reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
-	return nil
-}
-
-// ask asks addr the req and puts the response into what v points at.
+// ask asks at addr the req and puts the response into what v points at. When appropriate,
+// errors are converted appropriate for an API response. Error cases are enumerated below:
+//  * If v points to an unsettable value, a 500 is returned.
+//  * If the actor cannot be found, a 404 is returned.
+//  * If v is settable and the actor didn't respond or responded with nil, a 404 is returned.
+//  * If the actor returned an error and it is a well-known error type, it is coalesced to gRPC.
+//  * If the actor returned plain error, a 500 is returned.
+//  * Finally, if the response's type is OK, it is put into v.
+//  * Else, a 500 is returned.
 func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) error {
 	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
 		return status.Errorf(
 			codes.Internal,
-			`ask to actor %s contains valid but unsettable response holder %T`, addr, v,
+			"ask to actor %s contains valid but unsettable response holder %T", addr, v,
 		)
 	}
 	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
@@ -182,27 +181,17 @@ func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) erro
 			"actor %s did not respond", addr,
 		)
 	case resp.Error() != nil:
-		switch {
-		case errors.Is(resp.Error(), api.ErrInvalid):
-			return status.Errorf(
-				codes.InvalidArgument,
-				resp.Error().Error(),
-			)
-		case errors.Is(resp.Error(), api.ErrNotFound):
-			return status.Errorf(
-				codes.NotFound,
-				resp.Error().Error(),
-			)
-		default:
-			return status.Errorf(
-				codes.Internal,
-				"actor %s returned error: %s", addr, resp.Error(),
-			)
+		if ok, err := api.EchoErrToGRPC(resp.Error()); ok {
+			return err
 		}
+		return api.APIErrToGRPC(resp.Error())
 	default:
 		if expectingResponse {
 			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
-				return unexpectedMessageError(addr, resp)
+				return status.Errorf(
+					codes.Internal,
+					"actor %s returned unexpected message (%T): %v", addr, resp, resp,
+				)
 			}
 			reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
 		}

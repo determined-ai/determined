@@ -423,7 +423,7 @@ func (a *apiServer) ActivateExperiment(
 	}
 
 	addr := experimentsAddr.Child(req.Id)
-	switch err = a.actorRequest(addr, req, &resp); {
+	switch err = a.ask(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
 	case err != nil:
@@ -441,7 +441,7 @@ func (a *apiServer) PauseExperiment(
 	}
 
 	addr := experimentsAddr.Child(req.Id)
-	switch err = a.actorRequest(addr, req, &resp); {
+	switch err = a.ask(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
 	case err != nil:
@@ -459,7 +459,7 @@ func (a *apiServer) CancelExperiment(
 	}
 
 	addr := experimentsAddr.Child(req.Id)
-	err = a.actorRequest(addr, req, &resp)
+	err = a.ask(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.CancelExperimentResponse{}, nil
 	}
@@ -475,7 +475,7 @@ func (a *apiServer) KillExperiment(
 	}
 
 	addr := experimentsAddr.Child(req.Id)
-	err = a.actorRequest(addr, req, &resp)
+	err = a.ask(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.KillExperimentResponse{}, nil
 	}

@@ -66,8 +66,7 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 func (a *apiServer) GetTensorboards(
 	_ context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
-	err = a.actorRequest(tensorboardsAddr, req, &resp)
-	if err != nil {
+	if err = a.ask(tensorboardsAddr, req, &resp); err != nil {
 		return nil, err
 	}
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
@@ -77,19 +76,19 @@ func (a *apiServer) GetTensorboards(
 func (a *apiServer) GetTensorboard(
 	_ context.Context, req *apiv1.GetTensorboardRequest,
 ) (resp *apiv1.GetTensorboardResponse, err error) {
-	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) KillTensorboard(
 	_ context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
-	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) SetTensorboardPriority(
 	_ context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
-	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+	return resp, a.ask(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) LaunchTensorboard(
@@ -117,7 +116,7 @@ func (a *apiServer) LaunchTensorboard(
 		MustZeroSlot: true,
 	})
 	if err != nil {
-		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -290,20 +289,18 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	// Launch a TensorBoard actor.
-	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, *spec)
-	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
-		return nil, errors.Wrapf(err, "cannot find Tensorboard manager actor")
+	var tbID model.TaskID
+	if err = a.ask(tensorboardsAddr, *spec, &tbID); err != nil {
+		return nil, err
 	}
 
-	tensorboardID := tensorboardIDFut.Get().(model.TaskID)
-	tensorboard := a.m.system.AskAt(
-		tensorboardsAddr.Child(tensorboardID), &tensorboardv1.Tensorboard{})
-	if err = api.ProcessActorResponseError(&tensorboard); err != nil {
-		return nil, errors.Wrapf(err, "cannot find created TensorBoard actor")
+	var tb *tensorboardv1.Tensorboard
+	if err = a.ask(tensorboardsAddr.Child(tbID), &tensorboardv1.Tensorboard{}, &tb); err != nil {
+		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
-		Tensorboard: tensorboard.Get().(*tensorboardv1.Tensorboard),
+		Tensorboard: tb,
 		Config:      protoutils.ToStruct(spec.Config),
 	}, err
 }

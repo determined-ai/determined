@@ -16,9 +16,9 @@ func (a *apiServer) GetAgents(
 ) (resp *apiv1.GetAgentsResponse, err error) {
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(sproto.AgentsAddr, req, &resp)
+		err = a.ask(sproto.AgentsAddr, req, &resp)
 	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.PodsAddr, req, &resp)
+		err = a.ask(sproto.PodsAddr, req, &resp)
 	default:
 		err = status.Error(codes.NotFound, "cannot find agents or pods actor")
 	}
@@ -43,42 +43,35 @@ func slotAddr(agentID, slotID string) actor.Address {
 
 func (a *apiServer) GetAgent(
 	_ context.Context, req *apiv1.GetAgentRequest) (resp *apiv1.GetAgentResponse, err error) {
-	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
-	return resp, err
+	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) GetSlots(
 	_ context.Context, req *apiv1.GetSlotsRequest) (resp *apiv1.GetSlotsResponse, err error) {
-	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
-	return resp, err
+	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) GetSlot(
 	_ context.Context, req *apiv1.GetSlotRequest) (resp *apiv1.GetSlotResponse, err error) {
-	err = a.actorRequest(slotAddr(req.AgentId, req.SlotId), req, &resp)
-	return resp, err
+	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 func (a *apiServer) EnableAgent(
 	_ context.Context, req *apiv1.EnableAgentRequest) (resp *apiv1.EnableAgentResponse, err error) {
-	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
-	return resp, err
+	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) DisableAgent(
 	_ context.Context, req *apiv1.DisableAgentRequest) (resp *apiv1.DisableAgentResponse, err error) {
-	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
-	return resp, err
+	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) EnableSlot(
 	_ context.Context, req *apiv1.EnableSlotRequest) (resp *apiv1.EnableSlotResponse, err error) {
-	err = a.actorRequest(slotAddr(req.AgentId, req.SlotId), req, &resp)
-	return resp, err
+	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 func (a *apiServer) DisableSlot(
 	_ context.Context, req *apiv1.DisableSlotRequest) (resp *apiv1.DisableSlotResponse, err error) {
-	err = a.actorRequest(slotAddr(req.AgentId, req.SlotId), req, &resp)
-	return resp, err
+	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
