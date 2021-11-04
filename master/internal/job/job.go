@@ -60,6 +60,10 @@ type RMJobInfo struct {
 	IsPreemptible  bool
 	// should preemptible status come from RM? internal/experiments
 	// order: wherever we save it, job config, rm config,
+	// TODO where is source of truth for weight and priority? should be here with fallback on RM
+	// read from m.config.ResourceConfig or rp
+	// adjusted priorities and weights should be persisted in this actor, probably. and passed down to rp group?
+	// check with RMJobInfo definition
 }
 
 // type Job struct { // probably not needed? can we merged into ENTbCS but could be used to unify the two

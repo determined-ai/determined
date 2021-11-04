@@ -408,6 +408,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		// IsPreemptible:  c.pre // TODO see internal/experiment
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		SubmissionTime: timestamppb.New(c.registeredTime),
+		Username:       c.Base.Owner.Username,
 		Weight:         c.Config.Resources.Weight,
 	}
 

@@ -19,7 +19,7 @@ type (
 		Job          *JobSummary
 		Name         string
 		TaskActor    *actor.Ref
-		Group        *actor.Ref // aka the job actor?
+		Group        *actor.Ref // CHECK aka the job actor
 
 		// Resource configuration.
 		SlotsNeeded         int

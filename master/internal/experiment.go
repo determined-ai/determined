@@ -596,13 +596,11 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		JobId:          e.JobID.String(),
 		EntityId:       fmt.Sprint(e.ID),
 		Type:           jobv1.Type_TYPE_EXPERIMENT,
-		IsPreemptible:  true, // trial allocate requests are set to true. job config => rm/rp config
+		IsPreemptible:  true, // trial allocate requests are set to true. // ref RMJobInfo
 		ResourcePool:   e.Config.RawResources.ResourcePool(),
 		SubmissionTime: timestamppb.New(e.StartTime),
 		Weight:         e.Config.RawResources.Weight(),
-		// TODO where is source of truth for weight and priority? should be here with fallback on RM
-		// read from m.config.ResourceConfig or rp
-		// adjusted priorities and weights should be persisted in this actor, probably. and passed down to rp group?
+		Username:       fmt.Sprintf("%d-userid", e.OwnerID),
 	}
 
 	if priority := e.Config.RawResources.Priority(); priority != nil {
