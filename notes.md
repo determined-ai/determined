@@ -1,4 +1,23 @@
-# tip of master:
+## TODO
+
+- [x] update jobs in each scheduler individually
+- [x] remove Orderedallocation interfaces
+- [ ] probe rp for job list from jobs
+- [ ] pr!
+- [ ] p2: actor alias
+- [x] add from proto translation
+- [x] add name and user information for jobs
+- [x] low cost single job summary lookup
+- [x] scheduling state
+- [ ] group usage?
+
+
+chat:
+- async update pattern of q info
+- multiple queues per scheduler
+
+## actor system
+### tip of master:
 root
   - experiments
     - exp 1 actor (aka a job)
@@ -7,7 +26,7 @@ root
     - cmd1, ..
   - tensorboards, ..
 
-# this pr
+### this pr
 root
   - experiments
     - exp 1 actor (aka a job)
@@ -17,7 +36,7 @@ root
   - jobs: pass messages for jobs directly to children of experiments, command, notebooks eg [exp1, exp2, cmd1]. I considered registering exp1, cmd1 directly as chilldren but not sure if our actor system would like that
     - no official children
 
-# potential future
+### potential future
 root
   - jobs: pass messages for jobs directly to children of experiments, command, notebooks eg [exp1, exp2, cmd1]
     - experiments
@@ -25,3 +44,4 @@ root
       - exp 2 atcor
     - notebooks
       - cmd1, ..
+
