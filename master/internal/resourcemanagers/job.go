@@ -59,12 +59,18 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 
 func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}
-	jobinfo := rp.scheduler.JobQInfo(rp)
-	for _, j := range jobinfo {
-		// if j.IsPreemptible { // TODO
-		// 	stats.PreemptibleCount++
-		// }
-		if j.State == job.SchedulingStateQueued {
+	counted := make(map[model.JobID]bool)
+	for it := rp.taskList.iterator(); it.next(); {
+		req := it.value()
+		if req.JobID == nil || counted[*req.JobID] {
+			continue
+		}
+		counted[*req.JobID] = true
+
+		if req.Preemptible {
+			stats.PreemptibleCount++
+		}
+		if req.State == job.SchedulingStateQueued {
 			stats.QueuedCount++
 		} else {
 			stats.ScheduledCount++
