@@ -55,14 +55,14 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 			isAdded[curJob.JobID].State = curJob.State
 		}
 		v1JobInfo.RequestedSlots += req.SlotsNeeded
-		if sproto.ScheduledStates[req.Job.State] {
+		if job.ScheduledStates[req.Job.State] {
 			v1JobInfo.AllocatedSlots += req.SlotsNeeded
 		}
 	}
 	return isAdded, jobActors
 }
 
-func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
+func setJobState(req *sproto.AllocateRequest, state job.SchedulingState) {
 	if req.Job == nil {
 		return
 	}
@@ -76,7 +76,7 @@ func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 		if j.IsPreemptible {
 			stats.PreemptibleCount++
 		}
-		if j.State == sproto.SchedulingStateQueued {
+		if j.State == job.SchedulingStateQueued {
 			stats.QueuedCount++
 		} else {
 			stats.ScheduledCount++

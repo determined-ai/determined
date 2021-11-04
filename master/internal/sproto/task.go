@@ -17,6 +17,7 @@ type (
 		AllocationID model.AllocationID
 		TaskID       model.TaskID
 		Job          *JobSummary
+		// Job          *job.RMJobInfo
 		// JobID     model.JobID
 		Name      string
 		TaskActor *actor.Ref
