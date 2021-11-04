@@ -12,7 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 

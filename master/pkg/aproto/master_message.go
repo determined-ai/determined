@@ -1,4 +1,4 @@
-package agent
+package aproto
 
 import (
 	"net"
@@ -11,7 +11,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
@@ -46,7 +46,7 @@ type AgentStarted struct {
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.
 type ContainerStateChanged struct {
-	Container container.Container
+	Container cproto.Container
 
 	ContainerStarted *ContainerStarted
 	ContainerStopped *ContainerStopped
@@ -60,17 +60,17 @@ type ContainerStarted struct {
 
 // Addresses calculates the address of containers and hosts based on the container
 // started information.
-func (c ContainerStarted) Addresses() []container.Address {
+func (c ContainerStarted) Addresses() []cproto.Address {
 	proxy := c.ProxyAddress
 	proxyIsIPv4 := net.ParseIP(proxy).To4() != nil
 
 	info := c.ContainerInfo
 
-	var addresses []container.Address
+	var addresses []cproto.Address
 	switch info.HostConfig.NetworkMode {
 	case "host":
 		for port := range info.Config.ExposedPorts {
-			addresses = append(addresses, container.Address{
+			addresses = append(addresses, cproto.Address{
 				ContainerIP:   proxy,
 				ContainerPort: port.Int(),
 				HostIP:        proxy,
@@ -113,7 +113,7 @@ func (c ContainerStarted) Addresses() []container.Address {
 						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
 					}
 
-					addresses = append(addresses, container.Address{
+					addresses = append(addresses, cproto.Address{
 						ContainerIP:   ip,
 						ContainerPort: port.Int(),
 						HostIP:        hostIP,
@@ -140,7 +140,7 @@ func (c ContainerStopped) String() string {
 
 // ContainerLog notifies the master that a new log message is available for the container.
 type ContainerLog struct {
-	Container container.Container
+	Container cproto.Container
 	Timestamp time.Time
 
 	PullMessage *jsonmessage.JSONMessage

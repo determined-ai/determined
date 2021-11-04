@@ -10,8 +10,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -58,7 +58,7 @@ type pod struct {
 	podName          string
 	configMap        *k8sV1.ConfigMap
 	configMapName    string
-	container        container.Container
+	container        cproto.Container
 	ports            []int
 	resourcesDeleted bool
 	testLogStreamer  bool
@@ -76,7 +76,7 @@ type podNodeInfo struct {
 	nodeName  string
 	numSlots  int
 	slotType  device.Type
-	container *container.Container
+	container *cproto.Container
 }
 
 func newPod(
@@ -98,10 +98,10 @@ func newPod(
 	slotResourceRequests PodSlotResourceRequests,
 	scheduler string,
 ) *pod {
-	podContainer := container.Container{
+	podContainer := cproto.Container{
 		Parent: msg.TaskActor.Address(),
-		ID:     container.ID(msg.Spec.ContainerID),
-		State:  container.Assigned,
+		ID:     cproto.ID(msg.Spec.ContainerID),
+		State:  cproto.Assigned,
 	}
 	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
@@ -230,24 +230,24 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	}
 
 	switch containerState {
-	case container.Assigned:
+	case cproto.Assigned:
 		// Don't need to do anything.
 
-	case container.Starting:
+	case cproto.Starting:
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
 		ctx.Log().Infof(
-			"transitioning pod state from %s to %s", p.container.State, container.Pulling)
-		p.container = p.container.Transition(container.Pulling)
+			"transitioning pod state from %s to %s", p.container.State, cproto.Pulling)
+		p.container = p.container.Transition(cproto.Pulling)
 		ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{Container: p.container})
 
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
-		p.container = p.container.Transition(container.Starting)
+		p.container = p.container.Transition(cproto.Starting)
 		ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{Container: p.container})
 
-	case container.Running:
+	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
-		p.container = p.container.Transition(container.Running)
+		p.container = p.container.Transition(cproto.Running)
 
 		// testLogStreamer is a testing flag only set in the pod_tests.
 		// This allows us to bypass the need for a log streamer or REST server.
@@ -261,9 +261,9 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			}
 		}
 
-		addresses := []container.Address{}
+		addresses := []cproto.Address{}
 		for _, port := range p.ports {
-			addresses = append(addresses, container.Address{
+			addresses = append(addresses, cproto.Address{
 				ContainerIP:   p.pod.Status.PodIP,
 				ContainerPort: port,
 				HostIP:        p.pod.Status.PodIP,
@@ -272,7 +272,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		}
 		p.informTaskContainerStarted(ctx, sproto.TaskContainerStarted{Addresses: addresses})
 
-	case container.Terminated:
+	case cproto.Terminated:
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod, p.containerNames)
 		if err != nil {
 			// When a pod is deleted, it is possible that it will exit before the
@@ -288,16 +288,16 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		}
 
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
-		p.container = p.container.Transition(container.Terminated)
+		p.container = p.container.Transition(cproto.Terminated)
 
 		taskContainerStopped := sproto.TaskContainerStopped{}
-		if exitCode == agent.SuccessExitCode {
+		if exitCode == aproto.SuccessExitCode {
 			ctx.Log().Infof("pod exited successfully")
 		} else {
 			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
-			exitCodeConverted := agent.ExitCode(exitCode)
-			taskContainerStopped.ContainerStopped.Failure = &agent.ContainerFailure{
-				FailureType: agent.ContainerFailed,
+			exitCodeConverted := aproto.ExitCode(exitCode)
+			taskContainerStopped.ContainerStopped.Failure = &aproto.ContainerFailure{
+				FailureType: aproto.ContainerFailed,
 				ErrMsg:      exitMessage,
 				ExitCode:    &exitCodeConverted,
 			}
@@ -353,13 +353,13 @@ func (p *pod) receiveGetPodNodeInfo(ctx *actor.Context) {
 func (p *pod) finalizeTaskState(ctx *actor.Context) {
 	// If an error occurred during the lifecycle of the pods, we need to update the scheduler
 	// and the task handler with new state.
-	if p.container.State != container.Terminated {
+	if p.container.State != cproto.Terminated {
 		ctx.Log().Warnf("updating container state after pod actor exited unexpectedly")
-		p.container = p.container.Transition(container.Terminated)
+		p.container = p.container.Transition(cproto.Terminated)
 
 		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
-			ContainerStopped: agent.ContainerError(
-				agent.TaskError, errors.New("agent failed while container was running")),
+			ContainerStopped: aproto.ContainerError(
+				aproto.TaskError, errors.New("agent failed while container was running")),
 		})
 	}
 }
@@ -445,7 +445,7 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	// We only forward messages while pods are starting up.
 	switch p.container.State {
-	case container.Running, container.Terminated:
+	case cproto.Running, cproto.Terminated:
 		return
 	}
 
@@ -460,7 +460,7 @@ func getPodState(
 	ctx *actor.Context,
 	pod *k8sV1.Pod,
 	containerNames map[string]bool,
-) (container.State, error) {
+) (cproto.State, error) {
 	switch pod.Status.Phase {
 	case k8sV1.PodPending:
 		// When pods are deleted, Kubernetes sometimes transitions pod statuses to pending
@@ -469,15 +469,15 @@ func getPodState(
 		// deletion timestamp to see if this is the case.
 		if pod.ObjectMeta.DeletionTimestamp != nil {
 			ctx.Log().Warn("marking pod as terminated due to deletion timestamp")
-			return container.Terminated, nil
+			return cproto.Terminated, nil
 		}
 
 		for _, condition := range pod.Status.Conditions {
 			if condition.Type == k8sV1.PodScheduled && condition.Status == k8sV1.ConditionTrue {
-				return container.Starting, nil
+				return cproto.Starting, nil
 			}
 		}
-		return container.Assigned, nil
+		return cproto.Assigned, nil
 
 	case k8sV1.PodRunning:
 		// Pods are in a running state as long as at least one container has not terminated.
@@ -491,21 +491,21 @@ func getPodState(
 
 		for _, containerStatus := range containerStatuses {
 			if containerStatus.State.Terminated != nil {
-				return container.Terminated, nil
+				return cproto.Terminated, nil
 			}
 		}
 
 		for _, containerStatus := range containerStatuses {
 			// Check that all Determined containers are running.
 			if containerStatus.State.Running == nil {
-				return container.Starting, nil
+				return cproto.Starting, nil
 			}
 		}
 
-		return container.Running, nil
+		return cproto.Running, nil
 
 	case k8sV1.PodFailed, k8sV1.PodSucceeded:
-		return container.Terminated, nil
+		return cproto.Terminated, nil
 
 	default:
 		return "", errors.Errorf(
@@ -524,7 +524,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames map[string]bool) (int,
 			continue
 		}
 		exitCode := initContainerStatus.State.Terminated.ExitCode
-		if exitCode != agent.SuccessExitCode {
+		if exitCode != aproto.SuccessExitCode {
 			errMessage := fmt.Sprintf(
 				"container %s: %s", initContainerStatus.Name,
 				initContainerStatus.State.Terminated.Message,

@@ -1,4 +1,4 @@
-package container
+package cproto
 
 import (
 	"github.com/docker/docker/api/types"

@@ -26,7 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
-	proto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -42,7 +42,7 @@ const (
 type agent struct {
 	Version               string
 	Options               `json:"options"`
-	MasterSetAgentOptions *proto.MasterSetAgentOptions
+	MasterSetAgentOptions *aproto.MasterSetAgentOptions
 	Devices               []device.Device `json:"devices"`
 
 	socket *actor.Ref
@@ -66,7 +66,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 		return a.connect(ctx)
 
-	case proto.AgentMessage:
+	case aproto.AgentMessage:
 		switch {
 		case msg.MasterSetAgentOptions != nil:
 			if a.MasterSetAgentOptions != nil {
@@ -88,15 +88,15 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			panic(fmt.Sprintf("unknown message received: %+v", msg))
 		}
 
-	case proto.ContainerStateChanged:
+	case aproto.ContainerStateChanged:
 		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{ContainerStateChanged: &msg}})
+			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerStateChanged: &msg}})
 		} else {
 			ctx.Log().Warnf("Not sending container state change to the master: %+v", msg)
 		}
-	case proto.ContainerLog:
+	case aproto.ContainerLog:
 		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{ContainerLog: &msg}})
+			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
 		}
 
 	case model.TrialLog:
@@ -230,7 +230,7 @@ func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 			return
 		}
 
-		var msg proto.AgentMessage
+		var msg aproto.AgentMessage
 		if err = json.Unmarshal(body, &msg); err != nil {
 			ctx.Respond(err)
 			return
@@ -332,14 +332,14 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		}
 
 		b, rErr := ioutil.ReadAll(resp.Body)
-		if rErr == nil && strings.Contains(string(b), proto.ErrAgentMustReconnect.Error()) {
-			return proto.ErrAgentMustReconnect
+		if rErr == nil && strings.Contains(string(b), aproto.ErrAgentMustReconnect.Error()) {
+			return aproto.ErrAgentMustReconnect
 		}
 
 		return errors.Wrapf(err, "error dialing master: %s", b)
 	}
 
-	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
+	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, aproto.AgentMessage{}, true))
 	return nil
 }
 
@@ -348,16 +348,16 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 	defer func() {
 		a.reconnecting = false
 	}()
-	for i := 0; i < proto.AgentReconnectAttempts; i++ {
+	for i := 0; i < aproto.AgentReconnectAttempts; i++ {
 		switch err := a.connect(ctx); {
 		case err == nil:
 			return true
-		case errors.Is(err, proto.ErrAgentMustReconnect):
+		case errors.Is(err, aproto.ErrAgentMustReconnect):
 			return false
 		default:
 			ctx.Log().WithError(err).Error("error to reconnecting to master")
 		}
-		time.Sleep(proto.AgentReconnectBackoff)
+		time.Sleep(aproto.AgentReconnectBackoff)
 	}
 	return false
 }
@@ -418,11 +418,13 @@ func (a *agent) setup(ctx *actor.Context) error {
 	}
 	a.cm, _ = ctx.ActorOf("containers", cm)
 
-	ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version: a.Version,
-		Devices: a.Devices,
-		Label:   a.Label,
-	}}})
+	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
+		AgentStarted: &aproto.AgentStarted{
+			Version: a.Version,
+			Devices: a.Devices,
+			Label:   a.Label,
+		},
+	}})
 	return nil
 }
 

@@ -11,8 +11,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -202,7 +202,7 @@ func checkReceiveTermination(
 		t.Errorf("container started message not present")
 	}
 
-	assert.Equal(t, newPod.container.State, container.Terminated)
+	assert.Equal(t, newPod.container.State, cproto.Terminated)
 }
 
 func TestResourceCreationFailed(t *testing.T) {
@@ -373,17 +373,17 @@ func TestReceivePodStatusUpdateAssigned(t *testing.T) {
 
 	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
-	assert.Equal(t, newPod.container.State, container.Assigned)
+	assert.Equal(t, newPod.container.State, cproto.Assigned)
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
-	newPod.container.State = container.Starting
+	newPod.container.State = cproto.Starting
 
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, newPod.container.State, container.Starting)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 }
 
 func TestReceivePodStatusUpdateStarting(t *testing.T) {
@@ -420,12 +420,12 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	time.Sleep(time.Second)
 
 	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, container.Starting)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 	podMap["task"].Purge()
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, newPod.container.State, container.Starting)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 
 	// Pod status Running, but container status Waiting.
 	t.Logf("Testing pod running with waiting status")
@@ -453,7 +453,7 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, container.Starting)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 
 	// Pod status running, but no Container State inside.
 	t.Logf("Testing pod running with no status")
@@ -472,7 +472,7 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 2)
-	assert.Equal(t, newPod.container.State, container.Starting)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 }
 
 func TestMultipleContainersRunning(t *testing.T) {
@@ -483,7 +483,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 	// Testing pod with two containers and one doesn't have running state.
 	t.Logf("Testing two pods and one doesn't have running state")
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
-	newPod.container.State = container.Starting
+	newPod.container.State = cproto.Starting
 	newPod.testLogStreamer = true
 
 	podMap["task"].Purge()
@@ -517,7 +517,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
-	assert.Equal(t, newPod.container.State, container.Starting)
+	assert.Equal(t, newPod.container.State, cproto.Starting)
 
 	// Multiple containers, all in running state, results in a running state.
 	t.Logf("Testing two pods with running states")
@@ -527,7 +527,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
-	newPod.container.State = container.Starting
+	newPod.container.State = cproto.Starting
 	containerStatuses[1] = k8sV1.ContainerStatus{
 		Name:  "test-pod-2",
 		State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
@@ -596,13 +596,13 @@ func TestReceivePodEventUpdate(t *testing.T) {
 
 	// When container is in Running state, pod actor should not forward message.
 	podMap["task"].Purge()
-	newPod.container.State = container.Running
+	newPod.container.State = cproto.Running
 	system.Ask(ref, podEventUpdate{event: &newEvent})
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
 	//When container is in Terminated state, pod actor should not forward message.
-	newPod.container.State = container.Terminated
+	newPod.container.State = cproto.Terminated
 	system.Ask(ref, podEventUpdate{event: &newEvent})
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
@@ -698,11 +698,11 @@ func TestResourceCreationCancelled(t *testing.T) {
 	var correctContainerStarted *sproto.TaskContainerStarted = nil
 	correctFailType := "task failed without an associated exit code"
 	correctErrMsg := "agent failed while container was running"
-	var correctCode *agent.ExitCode = nil
+	var correctCode *aproto.ExitCode = nil
 
 	assert.Equal(t, containerMsg.ContainerStarted, correctContainerStarted)
 	assert.Equal(t, containerMsg.ContainerStopped.Failure.FailureType,
-		agent.FailureType(correctFailType))
+		aproto.FailureType(correctFailType))
 	assert.Equal(t, containerMsg.ContainerStopped.Failure.ErrMsg, correctErrMsg)
 	assert.Equal(t, containerMsg.ContainerStopped.Failure.ExitCode, correctCode)
 }
@@ -733,11 +733,11 @@ func TestResourceDeletionFailed(t *testing.T) {
 	}
 
 	var correctContainerStarted *sproto.TaskContainerStarted = nil
-	var correctCode *agent.ExitCode = nil
+	var correctCode *aproto.ExitCode = nil
 
 	assert.Equal(t, containerMsg.ContainerStarted, correctContainerStarted)
 	assert.Equal(t, containerMsg.ContainerStopped.Failure.FailureType,
-		agent.FailureType("task failed without an associated exit code"))
+		aproto.FailureType("task failed without an associated exit code"))
 	assert.Equal(t, containerMsg.ContainerStopped.Failure.ErrMsg,
 		"agent failed while container was running")
 	assert.Equal(t, containerMsg.ContainerStopped.Failure.ExitCode, correctCode)

@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	proto "github.com/determined-ai/determined/master/pkg/agent"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -31,7 +31,7 @@ const (
 
 type containerManager struct {
 	Options       Options           `json:"-"`
-	MasterInfo    proto.MasterInfo  `json:"-"`
+	MasterInfo    aproto.MasterInfo `json:"-"`
 	GlobalEnvVars []string          `json:"global_env_vars"`
 	Labels        map[string]string `json:"labels"`
 	Devices       []device.Device   `json:"devices"`
@@ -94,10 +94,10 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			dockerMasterLabel:        c.MasterInfo.MasterID,
 		}
 
-	case proto.ContainerLog, proto.ContainerStateChanged, model.TrialLog:
+	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TrialLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
-	case proto.StartContainer:
+	case aproto.StartContainer:
 		msg.Spec = c.overwriteSpec(msg.Container, msg.Spec)
 		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
@@ -108,7 +108,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(ctx.Ask(ref, getContainerSummary{}))
 		}
 
-	case proto.SignalContainer:
+	case aproto.SignalContainer:
 		if ref := ctx.Child(msg.ContainerID); ref != nil {
 			ctx.Tell(ref, msg)
 		} else {

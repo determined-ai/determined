@@ -7,7 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -34,7 +34,7 @@ type (
 		Config         model.CommandConfig    `json:"config"`
 		State          string                 `json:"state"`
 		ServiceAddress *string                `json:"service_address"`
-		Addresses      []container.Address    `json:"addresses"`
+		Addresses      []cproto.Address       `json:"addresses"`
 		ExitStatus     *string                `json:"exit_status"`
 		Misc           map[string]interface{} `json:"misc"`
 		IsReady        bool                   `json:"is_ready"`
@@ -56,7 +56,7 @@ func (c *command) summary(ctx *actor.Context) summary {
 	)
 	state := resp.(task.AllocationState)
 
-	var addresses []container.Address
+	var addresses []cproto.Address
 	for _, cAddrs := range state.Addresses {
 		addresses = append(addresses, cAddrs...)
 		break

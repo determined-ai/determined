@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 // container tracks an actual task container running in the cluster.

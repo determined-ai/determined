@@ -1,4 +1,4 @@
-package container
+package cproto
 
 import (
 	"github.com/determined-ai/determined/master/pkg/actor"

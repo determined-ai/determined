@@ -11,9 +11,9 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 type slots struct {
@@ -78,7 +78,7 @@ func (s *slots) summarize(ctx *actor.Context) model.SlotsSummary {
 	return summary
 }
 
-func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor.Message) {
+func (s *slots) sendToSlots(ctx *actor.Context, c cproto.Container, msg actor.Message) {
 	for _, d := range c.Devices {
 		ctx.Tell(ctx.Child(d.ID), msg)
 	}

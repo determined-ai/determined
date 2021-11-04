@@ -9,7 +9,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -50,7 +50,7 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 
 	res.WorkDir = DefaultWorkDir
 
-	res.ExtraArchives = []container.RunArchive{
+	res.ExtraArchives = []cproto.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0700, tar.TypeDir),

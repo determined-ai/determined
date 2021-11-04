@@ -13,7 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -69,7 +69,7 @@ func (p *podLogStreamer) Receive(ctx *actor.Context) error {
 func (p *podLogStreamer) Write(log []byte) (n int, err error) {
 	p.ctx.Tell(p.podHandler, sproto.ContainerLog{
 		Timestamp: time.Now().UTC(),
-		RunMessage: &agent.RunMessage{
+		RunMessage: &aproto.RunMessage{
 			Value:   string(log),
 			StdType: stdcopy.Stdout,
 		},

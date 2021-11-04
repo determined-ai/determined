@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 )
@@ -35,7 +35,7 @@ func normalizePythonVersion(version string) string {
 	return version
 }
 
-func harnessArchive(harnessPath string, aug *model.AgentUserGroup) container.RunArchive {
+func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArchive {
 	var harnessFiles archive.Archive
 	validWhlNames := fmt.Sprintf("*%s*.whl", normalizePythonVersion(version.Version))
 	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, validWhlNames))
@@ -80,7 +80,7 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) container.Run
 	return wrapArchive(aug.OwnArchive(harnessFiles), "/")
 }
 
-func masterCertArchive(cert *tls.Certificate) container.RunArchive {
+func masterCertArchive(cert *tls.Certificate) cproto.RunArchive {
 	var certBytes []byte
 	if cert != nil {
 		for _, c := range cert.Certificate {
@@ -99,6 +99,6 @@ func masterCertArchive(cert *tls.Certificate) container.RunArchive {
 	return wrapArchive(arch, "/")
 }
 
-func wrapArchive(archive archive.Archive, path string) container.RunArchive {
-	return container.RunArchive{Path: path, Archive: archive}
+func wrapArchive(archive archive.Archive, path string) cproto.RunArchive {
+	return cproto.RunArchive{Path: path, Archive: archive}
 }
