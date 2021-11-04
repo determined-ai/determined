@@ -354,7 +354,8 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	case SetJobOrder:
 		for it := rp.taskList.iterator(); it.next(); {
 			req := it.value()
-			if req.Job.JobID == msg.JobID {
+			// TODO nit: early break instead nesting?
+			if req.JobID != nil && *req.JobID == msg.JobID {
 				group := rp.getOrCreateGroup(ctx, req.Group)
 				if msg.QPosition > 0 {
 					group.qPosition = msg.QPosition

@@ -2,7 +2,6 @@ package resourcemanagers
 
 import (
 	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -33,40 +32,30 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
 	for _, req := range reqs {
-		curJob := req.Job
-		if curJob == nil {
+		if req.JobID == nil {
 			continue
 		}
-		v1JobInfo, exists := isAdded[curJob.JobID]
+		v1JobInfo, exists := isAdded[*req.JobID]
 		if !exists {
 			v1JobInfo = &job.RMJobInfo{
-				JobsAhead:      jobsAhead,
-				State:          req.Job.State,
-				RequestedSlots: req.Job.RequestedSlots,
-				AllocatedSlots: req.Job.AllocatedSlots,
-				IsPreemptible:  req.Preemptible,
+				JobsAhead:     jobsAhead,
+				State:         req.State,
+				IsPreemptible: req.Preemptible,
 			}
-			isAdded[curJob.JobID] = v1JobInfo
+			isAdded[*req.JobID] = v1JobInfo
 			jobsAhead++
-			jobActors[curJob.JobID] = req.Group
+			jobActors[*req.JobID] = req.Group
 		}
 		// Carry over the the highest state.
-		if v1JobInfo.State < curJob.State {
-			isAdded[curJob.JobID].State = curJob.State
+		if v1JobInfo.State < req.State {
+			isAdded[*req.JobID].State = req.State
 		}
 		v1JobInfo.RequestedSlots += req.SlotsNeeded
-		if job.ScheduledStates[req.Job.State] {
+		if job.ScheduledStates[req.State] {
 			v1JobInfo.AllocatedSlots += req.SlotsNeeded
 		}
 	}
 	return isAdded, jobActors
-}
-
-func setJobState(req *sproto.AllocateRequest, state job.SchedulingState) {
-	if req.Job == nil {
-		return
-	}
-	req.Job.State = state
 }
 
 func jobStats(rp *ResourcePool) *jobv1.QueueStats {

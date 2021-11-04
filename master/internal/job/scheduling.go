@@ -3,7 +3,7 @@ package job
 import "github.com/determined-ai/determined/proto/pkg/jobv1"
 
 // SchedulingState denotes the scheduling state of a job and in order of its progression value.
-type SchedulingState uint8
+type SchedulingState uint8 // CHECK perhaps could be defined in resource manager. cyclic import
 
 const (
 	// SchedulingStateQueued denotes a queued job waiting to be scheduled.

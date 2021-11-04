@@ -161,7 +161,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
-					setJobState(allocatedTask, job.SchedulingStateScheduledBackfilled)
+					allocatedTask.State = job.SchedulingStateScheduledBackfilled
 					toAllocate = append(toAllocate, allocatedTask)
 				}
 			}
@@ -297,10 +297,10 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
-			setJobState(req, job.SchedulingStateQueued)
+			req.State = job.SchedulingStateQueued
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
-			setJobState(req, job.SchedulingStateScheduled)
+			req.State = job.SchedulingStateScheduled
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		}
 	}

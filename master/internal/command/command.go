@@ -146,14 +146,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		jobSummary := sproto.JobSummary{
-			JobID: c.jobID,
-		}
-
 		allocation := task.NewAllocation(sproto.AllocateRequest{
 			AllocationID: c.allocationID,
 			TaskID:       c.taskID,
-			Job:          &jobSummary,
+			JobID:        &c.jobID,
 			Name:         c.Config.Description,
 			TaskActor:    ctx.Self(),
 			Group:        ctx.Self(),

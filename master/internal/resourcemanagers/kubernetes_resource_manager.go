@@ -247,7 +247,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case SetJobOrder:
 		for it := k.reqList.iterator(); it.next(); {
 			req := it.value()
-			if req.Job.JobID == msg.JobID {
+			if req.JobID != nil && *req.JobID == msg.JobID {
 				group := k.getOrCreateGroup(ctx, req.Group)
 				if msg.QPosition > 0 {
 					group.qPosition = msg.QPosition
