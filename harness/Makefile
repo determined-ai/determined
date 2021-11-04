@@ -1,5 +1,5 @@
 .PHONY: build
-build:
+build: gen
 	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
 
 .PHONY: publish
@@ -34,7 +34,7 @@ test-tf2:
 	pytest -v --runslow --durations=0 tests/experiment/keras
 
 .PHONY: clean
-clean:
+clean: ungen
 	rm -rf .pytest_cache/
 	rm -rf .mypy_cache/
 	rm -rf *.egg-info/
