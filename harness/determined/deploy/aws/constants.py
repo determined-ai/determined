@@ -6,6 +6,7 @@ class deployment_types:
     FSX = "fsx"
     GOVCLOUD = "govcloud"
     DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC, EFS, FSX, GOVCLOUD]
+    TYPE_TAG_KEY = "deployment-type"
 
 
 class defaults:

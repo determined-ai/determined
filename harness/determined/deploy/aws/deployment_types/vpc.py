@@ -4,6 +4,7 @@ from determined.deploy.aws.deployment_types import base
 
 class VPC(base.DeterminedDeployment):
     template = "vpc.yaml"
+    deployment_type = constants.deployment_types.VPC
 
     template_parameter_keys = [
         constants.cloudformation.ENABLE_CORS,
@@ -32,7 +33,7 @@ class VPC(base.DeterminedDeployment):
         constants.cloudformation.MOUNT_FSX_ID,
     ]
 
-    def deploy(self) -> None:
+    def deploy(self, no_prompt: bool) -> None:
         self.before_deploy_print()
         cfn_parameters = self.consolidate_parameters()
         with open(self.template_path) as f:
@@ -44,13 +45,17 @@ class VPC(base.DeterminedDeployment):
             keypair=self.parameters[constants.cloudformation.KEYPAIR],
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
+            no_prompt=no_prompt,
+            deployment_type=self.deployment_type,
         )
         self.print_results()
 
 
 class FSx(VPC):
     template = "fsx.yaml"
+    deployment_type = constants.deployment_types.FSX
 
 
 class EFS(VPC):
     template = "efs.yaml"
+    deployment_type = constants.deployment_types.EFS
