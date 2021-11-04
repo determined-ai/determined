@@ -30,7 +30,7 @@ Api.V1LoginRequest, Api.V1LoginResponse, LoginResponse
  */
 // Temporarily disabling this until we figure out how we want to secure new login endpoint.
 // export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
-//   const response = await detApi.Auth.determinedLogin({
+//   const response = await detApi.Auth.login({
 //     password: Config.saltAndHashPassword(credentials.password),
 //     username: credentials.username,
 //   } as Api.V1LoginRequest);

@@ -90,7 +90,7 @@ export const commandToEndpoint: Record<CommandType, string> = {
 export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, LoginResponse> = {
   name: 'login',
   postProcess: (resp) => ({ token: resp.token, user: decoder.mapV1User(resp.user) }),
-  request: (params, options) => detApi.Auth.determinedLogin(
+  request: (params, options) => detApi.Auth.login(
     { ...params, isHashed: true, password: saltAndHashPassword(params.password) }
     , options,
   ),
@@ -99,20 +99,20 @@ export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, LoginRespons
 export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
   name: 'logout',
   postProcess: noOp,
-  request: () => detApi.Auth.determinedLogout(),
+  request: () => detApi.Auth.logout(),
 };
 
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.mapV1User(response.user),
   // We make sure to request using the latest API configuraitonp parameters.
-  request: (options) => detApi.Auth.determinedCurrentUser(options),
+  request: (options) => detApi.Auth.currentUser(options),
 };
 
 export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[]> = {
   name: 'getUsers',
   postProcess: (response) => decoder.mapV1UserList(response),
-  request: (options) => detApi.Users.determinedGetUsers(options),
+  request: (options) => detApi.Users.getUsers(options),
 };
 
 /* Info */
@@ -120,13 +120,13 @@ export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
   postProcess: (response) => decoder.mapV1MasterInfo(response),
-  request: () => detApi.Cluster.determinedGetMaster(),
+  request: () => detApi.Cluster.getMaster(),
 };
 
 export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry> = {
   name: 'getTelemetry',
   postProcess: (response) => response,
-  request: () => detApi.Internal.determinedGetTelemetry(),
+  request: () => detApi.Internal.getTelemetry(),
 };
 
 /* Cluster */
@@ -134,7 +134,7 @@ export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telem
 export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
-  request: () => detApi.Cluster.determinedGetAgents(),
+  request: () => detApi.Cluster.getAgents(),
 };
 
 export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]> =
@@ -143,7 +143,7 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: () => detApi.Internal.determinedGetResourcePools(),
+  request: () => detApi.Internal.getResourcePools(),
 };
 
 export const getResourceAllocationAggregated: DetApi<
@@ -155,7 +155,7 @@ export const getResourceAllocationAggregated: DetApi<
   request: (params: GetResourceAllocationAggregatedParams, options) => {
     const dateFormat = (params.period === 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
       ? 'YYYY-MM' : 'YYYY-MM-DD');
-    return detApi.Cluster.determinedResourceAllocationAggregated(
+    return detApi.Cluster.resourceAllocationAggregated(
       params.startDate.format(dateFormat),
       params.endDate.format(dateFormat),
       params.period,
@@ -177,7 +177,7 @@ export const getExperiments: DetApi<
     };
   },
   request: (params: GetExperimentsParams, options) => {
-    return detApi.Experiments.determinedGetExperiments(
+    return detApi.Experiments.getExperiments(
       params.sortBy,
       params.orderBy,
       params.offset,
@@ -200,7 +200,7 @@ GetExperimentParams, Api.V1GetExperimentResponse, ExperimentItem
   postProcess: (response: Api.V1GetExperimentResponse) =>
     decoder.mapV1Experiment(response.experiment),
   request: (params: GetExperimentParams) => {
-    return detApi.Experiments.determinedGetExperiment(params.id);
+    return detApi.Experiments.getExperiment(params.id);
   },
 };
 
@@ -212,7 +212,7 @@ export const createExperiment: DetApi<
     return decoder.mapV1GetExperimentResponse(resp);
   },
   request: (params: CreateExperimentParams, options) => {
-    return detApi.Internal.determinedCreateExperiment(
+    return detApi.Internal.createExperiment(
       {
         config: params.experimentConfig,
         parentId: params.parentId,
@@ -228,7 +228,7 @@ export const archiveExperiment: DetApi<
   name: 'archiveExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedArchiveExperiment(params.experimentId, options);
+    return detApi.Experiments.archiveExperiment(params.experimentId, options);
   },
 };
 
@@ -238,7 +238,7 @@ export const deleteExperiment: DetApi<
   name: 'deleteExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedDeleteExperiment(params.experimentId, options);
+    return detApi.Experiments.deleteExperiment(params.experimentId, options);
   },
 };
 
@@ -248,7 +248,7 @@ export const unarchiveExperiment: DetApi<
   name: 'unarchiveExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedUnarchiveExperiment(params.experimentId, options);
+    return detApi.Experiments.unarchiveExperiment(params.experimentId, options);
   },
 };
 
@@ -258,7 +258,7 @@ export const activateExperiment: DetApi<
   name: 'activateExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedActivateExperiment(params.experimentId, options);
+    return detApi.Experiments.activateExperiment(params.experimentId, options);
   },
 };
 
@@ -266,7 +266,7 @@ export const pauseExperiment: DetApi<ExperimentIdParams, Api.V1PauseExperimentRe
   name: 'pauseExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedPauseExperiment(params.experimentId, options);
+    return detApi.Experiments.pauseExperiment(params.experimentId, options);
   },
 };
 
@@ -274,7 +274,7 @@ export const cancelExperiment: DetApi<ExperimentIdParams, Api.V1CancelExperiment
   name: 'cancelExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedCancelExperiment(params.experimentId, options);
+    return detApi.Experiments.cancelExperiment(params.experimentId, options);
   },
 };
 
@@ -282,7 +282,7 @@ export const killExperiment: DetApi<ExperimentIdParams, Api.V1KillExperimentResp
   name: 'killExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams, options) => {
-    return detApi.Experiments.determinedKillExperiment(params.experimentId, options);
+    return detApi.Experiments.killExperiment(params.experimentId, options);
   },
 };
 
@@ -290,7 +290,7 @@ export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimen
   name: 'patchExperiment',
   postProcess: noOp,
   request: (params: PatchExperimentParams, options) => {
-    return detApi.Experiments.determinedPatchExperiment(
+    return detApi.Experiments.patchExperiment(
       params.experimentId,
       params.body as Api.V1Experiment,
       options,
@@ -303,7 +303,7 @@ export const getExperimentDetails: DetApi<
 > = {
   name: 'getExperimentDetails',
   postProcess: (response) => decoder.mapV1GetExperimentResponse(response),
-  request: (params, options) => detApi.Experiments.determinedGetExperiment(params.id, options),
+  request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
 };
 
 export const getExpValidationHistory: DetApi<
@@ -319,7 +319,7 @@ export const getExpValidationHistory: DetApi<
     }));
   },
   request: (params, options) => {
-    return detApi.Experiments.determinedGetExperimentValidationHistory(params.id, options);
+    return detApi.Experiments.getExperimentValidationHistory(params.id, options);
   },
 };
 
@@ -334,7 +334,7 @@ export const getExpTrials: DetApi<
     };
   },
   request: (params, options) => {
-    return detApi.Experiments.determinedGetExperimentTrials(
+    return detApi.Experiments.getExperimentTrials(
       params.id,
       params.sortBy,
       params.orderBy,
@@ -351,7 +351,7 @@ export const getExperimentLabels: DetApi<
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Experiments.determinedGetExperimentLabels(options),
+  request: (options) => detApi.Experiments.getExperimentLabels(options),
 };
 
 export const getTrialDetails: DetApi<
@@ -362,7 +362,7 @@ export const getTrialDetails: DetApi<
     return decoder
       .decodeTrialResponseToTrialDetails(resp);
   },
-  request: (params: TrialDetailsParams) => detApi.Experiments.determinedGetTrial(params.id),
+  request: (params: TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
 /* Tasks */
@@ -371,7 +371,7 @@ export const getCommands: DetApi<GetCommandsParams, Api.V1GetCommandsResponse, C
   name: 'getCommands',
   postProcess: (response) => (response.commands || [])
     .map(command => decoder.mapV1Command(command)),
-  request: (params: GetCommandsParams) => detApi.Commands.determinedGetCommands(
+  request: (params: GetCommandsParams) => detApi.Commands.getCommands(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -385,7 +385,7 @@ export const getJupyterLabs: DetApi<
   name: 'getJupyterLabs',
   postProcess: (response) => (response.notebooks || [])
     .map(jupyterLab => decoder.mapV1Notebook(jupyterLab)),
-  request: (params: GetJupyterLabsParams) => detApi.Notebooks.determinedGetNotebooks(
+  request: (params: GetJupyterLabsParams) => detApi.Notebooks.getNotebooks(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -397,7 +397,7 @@ export const getShells: DetApi<GetShellsParams, Api.V1GetShellsResponse, Command
   name: 'getShells',
   postProcess: (response) => (response.shells || [])
     .map(shell => decoder.mapV1Shell(shell)),
-  request: (params: GetShellsParams) => detApi.Shells.determinedGetShells(
+  request: (params: GetShellsParams) => detApi.Shells.getShells(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -411,7 +411,7 @@ export const getTensorBoards: DetApi<
   name: 'getTensorBoards',
   postProcess: (response) => (response.tensorboards || [])
     .map(tensorboard => decoder.mapV1TensorBoard(tensorboard)),
-  request: (params: GetTensorBoardsParams) => detApi.TensorBoards.determinedGetTensorboards(
+  request: (params: GetTensorBoardsParams) => detApi.TensorBoards.getTensorboards(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -423,35 +423,35 @@ export const killCommand: DetApi<CommandIdParams, Api.V1KillCommandResponse, voi
   name: 'killCommand',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Commands
-    .determinedKillCommand(params.commandId),
+    .killCommand(params.commandId),
 };
 
 export const killJupyterLab: DetApi<CommandIdParams, Api.V1KillNotebookResponse, void> = {
   name: 'killJupyterLab',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Notebooks
-    .determinedKillNotebook(params.commandId),
+    .killNotebook(params.commandId),
 };
 
 export const killShell: DetApi<CommandIdParams, Api.V1KillShellResponse, void> = {
   name: 'killShell',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Shells
-    .determinedKillShell(params.commandId),
+    .killShell(params.commandId),
 };
 
 export const killTensorBoard: DetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> = {
   name: 'killTensorBoard',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.TensorBoards
-    .determinedKillTensorboard(params.commandId),
+    .killTensorboard(params.commandId),
 };
 
 export const getTemplates: DetApi<GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]> = {
   name: 'getTemplates',
   postProcess: (response) => (response.templates || [])
     .map(template => decoder.mapV1Template(template)),
-  request: (params: GetTemplatesParams) => detApi.Templates.determinedGetTemplates(
+  request: (params: GetTemplatesParams) => detApi.Templates.getTemplates(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -466,7 +466,7 @@ export const launchJupyterLab: DetApi<
   name: 'launchJupyterLab',
   postProcess: (response) => decoder.mapV1Notebook(response.notebook),
   request: (params: LaunchJupyterLabParams) => detApi.Notebooks
-    .determinedLaunchNotebook(params),
+    .launchNotebook(params),
 };
 
 export const previewJupyterLab: DetApi<
@@ -475,7 +475,7 @@ export const previewJupyterLab: DetApi<
   name: 'previewJupyterLab',
   postProcess: (response) => response.config,
   request: (params: LaunchJupyterLabParams) => detApi.Notebooks
-    .determinedLaunchNotebook(params),
+    .launchNotebook(params),
 };
 
 export const launchTensorBoard: DetApi<
@@ -484,7 +484,7 @@ export const launchTensorBoard: DetApi<
   name: 'launchTensorBoard',
   postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
   request: (params: LaunchTensorBoardParams) => detApi.TensorBoards
-    .determinedLaunchTensorboard(params),
+    .launchTensorboard(params),
 };
 
 /* Logs */

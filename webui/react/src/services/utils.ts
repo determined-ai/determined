@@ -125,7 +125,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
   to make a request and handle events one by one.
   Example:
   consumeStream<Api.V1TrialLogsResponse>(
-    Api.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
+    Api.ExperimentsApiFetchParamCreator().trialLogs(1, undefined, undefined, true),
     console.log,
   ).then(() => console.log('finished'));
 */

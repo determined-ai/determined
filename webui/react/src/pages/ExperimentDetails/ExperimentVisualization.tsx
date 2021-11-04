@@ -161,7 +161,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     const validationMetricsMap: Record<string, boolean> = {};
 
     consumeStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.determinedMetricNames(
+      detApi.StreamingInternal.metricNames(
         experiment.id,
         undefined,
         { signal: canceler.signal },
@@ -188,7 +188,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     consumeStream<V1GetHPImportanceResponse>(
-      detApi.StreamingInternal.determinedGetHPImportance(
+      detApi.StreamingInternal.getHPImportance(
         experiment.id,
         undefined,
         { signal: canceler.signal },
@@ -217,7 +217,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     const batchesMap: Record<number, number> = {};
 
     consumeStream<V1MetricBatchesResponse>(
-      detApi.StreamingInternal.determinedMetricBatches(
+      detApi.StreamingInternal.metricBatches(
         experiment.id,
         activeMetric.name,
         metricTypeParam,
