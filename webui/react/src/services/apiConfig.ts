@@ -391,7 +391,7 @@ export const getModels: DetApi<GetModelsParams, Api.V1GetModelsResponse, ModelPa
       pagination: response.pagination,
     };
   },
-  request: (params: GetModelsParams) => detApi.Models.determinedGetModels(
+  request: (params: GetModelsParams) => detApi.Models.getModels(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -409,7 +409,7 @@ export const getModel: DetApi<GetModelParams, Api.V1GetModelResponse, ModelItem 
   postProcess: (response) => {
     return response.model ? decoder.mapV1Model(response.model) : undefined;
   },
-  request: (params: GetModelParams) => detApi.Models.determinedGetModel(
+  request: (params: GetModelParams) => detApi.Models.getModel(
     params.modelId,
   ),
 };
@@ -421,7 +421,7 @@ GetModelDetailsParams, Api.V1GetModelVersionsResponse, ModelVersions | undefined
     return (response.model != null && response.modelVersions != null) ?
       decoder.mapV1ModelDetails(response) : undefined;
   },
-  request: (params: GetModelDetailsParams) => detApi.Models.determinedGetModelVersions(
+  request: (params: GetModelDetailsParams) => detApi.Models.getModelVersions(
     params.modelId,
     params.sortBy,
   ),
@@ -434,7 +434,7 @@ GetModelVersionParams, Api.V1GetModelVersionResponse, ModelVersion | undefined
   postProcess: (response) => {
     return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
   },
-  request: (params: GetModelVersionParams) => detApi.Models.determinedGetModelVersion(
+  request: (params: GetModelVersionParams) => detApi.Models.getModelVersion(
     params.modelId,
     params.versionId,
   ),
@@ -446,7 +446,7 @@ PatchModelParams, Api.V1PatchModelResponse, ModelItem | undefined>
    name: 'patchModel',
    postProcess: (response) => response.model ? decoder.mapV1Model(response.model) : undefined,
    request: (params: PatchModelParams) =>
-     detApi.Models.determinedPatchModel(
+     detApi.Models.patchModel(
        params.modelId,
        { model: params.body },
      ),
@@ -459,7 +459,7 @@ PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefin
    postProcess: (response) => response.modelVersion ?
      decoder.mapV1ModelVersion(response.modelVersion) : undefined,
    request: (params: PatchModelVersionParams) =>
-     detApi.Models.determinedPatchModelVersion(
+     detApi.Models.patchModelVersion(
        params.modelId,
        params.versionId,
        { modelVersion: params.body },
@@ -469,7 +469,7 @@ PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefin
 export const archiveModel: DetApi<ArchiveModelParams, Api.V1ArchiveModelResponse, void> = {
   name: 'archiveModel',
   postProcess: noOp,
-  request: (params: GetModelParams) => detApi.Models.determinedArchiveModel(
+  request: (params: GetModelParams) => detApi.Models.archiveModel(
     params.modelId,
   ),
 };
@@ -477,7 +477,7 @@ export const archiveModel: DetApi<ArchiveModelParams, Api.V1ArchiveModelResponse
 export const unarchiveModel: DetApi<ArchiveModelParams, Api.V1UnarchiveModelResponse, void> = {
   name: 'unarchiveModel',
   postProcess: noOp,
-  request: (params: GetModelParams) => detApi.Models.determinedUnarchiveModel(
+  request: (params: GetModelParams) => detApi.Models.unarchiveModel(
     params.modelId,
   ),
 };
@@ -485,7 +485,7 @@ export const unarchiveModel: DetApi<ArchiveModelParams, Api.V1UnarchiveModelResp
 export const deleteModel: DetApi<DeleteModelParams, Api.V1DeleteModelResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,
-  request: (params: GetModelParams) => detApi.Models.determinedDeleteModel(
+  request: (params: GetModelParams) => detApi.Models.deleteModel(
     params.modelId,
   ),
 };
@@ -495,7 +495,7 @@ DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 > = {
   name: 'deleteModelVersion',
   postProcess: noOp,
-  request: (params: GetModelVersionParams) => detApi.Models.determinedDeleteModelVersion(
+  request: (params: GetModelVersionParams) => detApi.Models.deleteModelVersion(
     params.modelId,
     params.versionId,
   ),
@@ -506,7 +506,7 @@ export const getModelLabels: DetApi<
 > = {
   name: 'getModelLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Models.determinedGetModelLabels(options),
+  request: (options) => detApi.Models.getModelLabels(options),
 };
 
 /* Tasks */
