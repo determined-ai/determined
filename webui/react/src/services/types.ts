@@ -1,6 +1,5 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
-import { string } from 'fp-ts';
 
 import { CommandType, DetailedUser, RawJson } from 'types';
 
