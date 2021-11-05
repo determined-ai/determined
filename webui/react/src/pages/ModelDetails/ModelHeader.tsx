@@ -92,10 +92,10 @@ const ModelHeader: React.FC<Props> = (
       </div>
       <div className={css.headerContent}>
         <div className={css.mainRow}>
-          <div>
-            <img />
-            <h1>{model.name}</h1>
-          </div>
+          <Space style={{ marginBlock: 'var(--theme-sizes-layout-large)' }}>
+            <Icon name="model" size="large" />
+            <h1 style={{ margin: 0 }}>{model.name}</h1>
+          </Space>
           <Space size="small">
             <Dropdown overlay={(
               <Menu>
