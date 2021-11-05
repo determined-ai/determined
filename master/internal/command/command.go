@@ -42,6 +42,7 @@ func createGenericCommandActor(
 	db *db.PgDB,
 	taskID model.TaskID,
 	taskType model.TaskType,
+	jobID model.JobID,
 	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
 ) error {
@@ -56,6 +57,7 @@ func createGenericCommandActor(
 		taskType:       taskType,
 		jobType:        jobType,
 		serviceAddress: &serviceAddress,
+		jobID:          jobID,
 	}
 
 	// cmd.isPreemptible = internal.ReadPreemptionStatus() // need to move Config to its own package
