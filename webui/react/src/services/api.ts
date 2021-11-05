@@ -159,19 +159,19 @@ export const patchModelVersion = generateDetApi<
 >(Config.patchModelVersion);
 
 export const archiveModel = generateDetApi<
-  GetModelParams, Api.V1ArchiveModelResponse, void
+  ArchiveModelParams, Api.V1ArchiveModelResponse, void
 >(Config.archiveModel);
 
 export const unarchiveModel = generateDetApi<
-  GetModelParams, Api.V1UnarchiveModelResponse, void
+  ArchiveModelParams, Api.V1UnarchiveModelResponse, void
 >(Config.unarchiveModel);
 
 export const deleteModel = generateDetApi<
-  GetModelParams, Api.V1DeleteModelResponse, void
+  DeleteModelParams, Api.V1DeleteModelResponse, void
 >(Config.deleteModel);
 
 export const deleteModelVersion = generateDetApi<
-  GetModelVersionParams, Api.V1DeleteModelVersionResponse, void
+  DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 >(Config.deleteModelVersion);
 
 export const getModelLabels = generateDetApi<

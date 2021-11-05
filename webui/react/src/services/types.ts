@@ -121,6 +121,10 @@ export interface GetModelParams {
   modelId: number;
 }
 
+export type ArchiveModelParams = GetModelParams;
+
+export type DeleteModelParams = GetModelParams;
+
 export interface GetModelDetailsParams extends PaginationParams {
   modelId: number;
   sortBy: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
@@ -130,6 +134,8 @@ export interface GetModelVersionParams {
   modelId: number;
   versionId: number;
 }
+
+export type DeleteModelVersionParams = GetModelVersionParams;
 
 export interface PatchModelParams {
   body: {

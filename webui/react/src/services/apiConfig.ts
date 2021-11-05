@@ -466,7 +466,7 @@ PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefin
      ),
  };
 
-export const archiveModel: DetApi<GetModelParams, Api.V1ArchiveModelResponse, void> = {
+export const archiveModel: DetApi<ArchiveModelParams, Api.V1ArchiveModelResponse, void> = {
   name: 'archiveModel',
   postProcess: noOp,
   request: (params: GetModelParams) => detApi.Models.determinedArchiveModel(
@@ -474,7 +474,7 @@ export const archiveModel: DetApi<GetModelParams, Api.V1ArchiveModelResponse, vo
   ),
 };
 
-export const unarchiveModel: DetApi<GetModelParams, Api.V1UnarchiveModelResponse, void> = {
+export const unarchiveModel: DetApi<ArchiveModelParams, Api.V1UnarchiveModelResponse, void> = {
   name: 'unarchiveModel',
   postProcess: noOp,
   request: (params: GetModelParams) => detApi.Models.determinedUnarchiveModel(
@@ -482,7 +482,7 @@ export const unarchiveModel: DetApi<GetModelParams, Api.V1UnarchiveModelResponse
   ),
 };
 
-export const deleteModel: DetApi<GetModelParams, Api.V1DeleteModelResponse, void> = {
+export const deleteModel: DetApi<DeleteModelParams, Api.V1DeleteModelResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,
   request: (params: GetModelParams) => detApi.Models.determinedDeleteModel(
@@ -491,7 +491,7 @@ export const deleteModel: DetApi<GetModelParams, Api.V1DeleteModelResponse, void
 };
 
 export const deleteModelVersion: DetApi<
-GetModelVersionParams, Api.V1DeleteModelVersionResponse, void
+DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 > = {
   name: 'deleteModelVersion',
   postProcess: noOp,
