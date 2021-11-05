@@ -24,11 +24,10 @@ import css from './LogViewerCore.module.scss';
 
 interface Props {
   decoder: (data: unknown) => Log,
-  filters?: React.ReactNode;
   onDownload?: () => void;
   onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
-  title: string;
+  title?: React.ReactNode;
 }
 
 interface ViewerLog extends Log {
@@ -52,7 +51,7 @@ export enum FetchType {
   Stream = 'Stream',
 }
 
-const PAGE_LIMIT = 50;
+const PAGE_LIMIT = 100;
 const PADDING = 8;
 const THROTTLE_TIME = 50;
 
@@ -396,10 +395,6 @@ const LogViewerCore: React.FC<Props> = ({
     return (): void => target?.removeEventListener('copy', handleCopy);
   }, []);
 
-  const logViewerTitle = (
-    <div className={css.title}>{props.title}</div>
-  );
-
   const logViewerOptions = (
     <div className={css.options}>
       <Space>
@@ -446,10 +441,9 @@ const LogViewerCore: React.FC<Props> = ({
       bodyNoPadding
       bodyScroll
       divider
-      filters={props.filters}
       maxHeight
       options={logViewerOptions}
-      title={logViewerTitle}>
+      title={props.title}>
       <div className={css.base} ref={baseRef}>
         <div className={css.container} ref={containerRef}>
           <VariableSizeList

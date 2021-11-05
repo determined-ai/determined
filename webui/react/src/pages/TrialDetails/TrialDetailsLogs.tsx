@@ -124,17 +124,22 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     return () => canceler.abort();
   }, [ trial.id ]);
 
+  const trialLogFilters = (
+    <div className={css.filters}>
+      <TrialLogFilters
+        options={filterOptions}
+        values={filterValues}
+        onChange={handleFilterChange}
+      />
+    </div>
+  );
+
   return (
     <div className={css.base}>
       <LogViewerCore
         decoder={jsonToTrialLog}
-        filters={<TrialLogFilters
-          options={filterOptions}
-          values={filterValues}
-          onChange={handleFilterChange}
-        />}
         sortKey="time"
-        title={`Trial ${trial.id} Logs`}
+        title={trialLogFilters}
         onDownload={handleDownloadLogs}
         onFetch={handleFetch}
       />

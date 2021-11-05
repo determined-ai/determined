@@ -1,4 +1,4 @@
-import { Button, Select } from 'antd';
+import { Button, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
@@ -51,37 +51,45 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, options, values }: Props) 
     });
   }, [ onChange, values ]);
 
-  const handleClear = useCallback(() => onChange?.({}), [ onChange ]);
+  const handleReset = useCallback(() => onChange?.({}), [ onChange ]);
 
   return (
     <>
-      <MultiSelect
-        label="Agents"
-        value={values.agentIds}
-        onChange={handleChange('agentIds', String)}>
-        {(selectOptions?.agentIds || []).map(id => <Option key={id} value={id}>{id}</Option>)}
-      </MultiSelect>
-      <MultiSelect
-        label="Containers"
-        value={values.containerIds}
-        onChange={handleChange('containerIds', String)}>
-        {(selectOptions?.containerIds || []).map(id => <Option key={id} value={id}>{id}</Option>)}
-      </MultiSelect>
-      <MultiSelect
-        label="Ranks"
-        value={values.rankIds}
-        onChange={handleChange('rankIds', Number)}>
-        {(selectOptions?.rankIds || []).map(id => <Option key={id} value={id}>{id}</Option>)}
-      </MultiSelect>
-      <MultiSelect
-        label="Level"
-        value={values.levels}
-        onChange={handleChange('levels', String)}>
-        {selectOptions?.levels.map((level) => (
-          <Option key={level.value} value={level.value}>{level.label}</Option>
-        ))}
-      </MultiSelect>
-      <Button onClick={handleClear}>Clear</Button>
+      <Space>
+        {selectOptions?.agentIds?.length !== 0 && (
+          <MultiSelect
+            itemName="Agent"
+            value={values.agentIds}
+            onChange={handleChange('agentIds', String)}>
+            {selectOptions?.agentIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
+          </MultiSelect>
+        )}
+        {selectOptions?.containerIds?.length !== 0 && (
+          <MultiSelect
+            itemName="Container"
+            value={values.containerIds}
+            onChange={handleChange('containerIds', String)}>
+            {selectOptions?.containerIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
+          </MultiSelect>
+        )}
+        {selectOptions?.rankIds?.length !== 0 && (
+          <MultiSelect
+            itemName="Rank"
+            value={values.rankIds}
+            onChange={handleChange('rankIds', Number)}>
+            {selectOptions?.rankIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
+          </MultiSelect>
+        )}
+        <MultiSelect
+          itemName="Level"
+          value={values.levels}
+          onChange={handleChange('levels', String)}>
+          {selectOptions?.levels.map((level) => (
+            <Option key={level.value} value={level.value}>{level.label}</Option>
+          ))}
+        </MultiSelect>
+        <Button onClick={handleReset}>Reset</Button>
+      </Space>
     </>
   );
 };
