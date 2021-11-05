@@ -92,7 +92,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       options.timestampAfter = new Date().toISOString();
     }
 
-    return detApi.StreamingExperiments.determinedTrialLogs(
+    return detApi.StreamingExperiments.trialLogs(
       trial.id,
       options.limit,
       options.follow,
@@ -113,7 +113,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     const canceler = new AbortController();
 
     consumeStream(
-      detApi.StreamingExperiments.determinedTrialLogsFields(
+      detApi.StreamingExperiments.trialLogsFields(
         trial.id,
         true,
         { signal: canceler.signal },

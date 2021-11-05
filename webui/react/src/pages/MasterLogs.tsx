@@ -23,7 +23,7 @@ const MasterLogs: React.FC = () => {
       options.limit = 0;
     }
 
-    return detApi.StreamingCluster.determinedMasterLogs(
+    return detApi.StreamingCluster.masterLogs(
       options.offset,
       options.limit,
       options.follow,
