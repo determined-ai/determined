@@ -64,6 +64,7 @@ const NavigationTabbar: React.FC = () => {
         <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
         <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
+        <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
