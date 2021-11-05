@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 import determined as det
 from determined import horovod, profiler, workload
@@ -49,18 +49,21 @@ class TrialController(metaclass=abc.ABCMeta):
             )
             logging.getLogger().setLevel(log_level)
 
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> Any:
+    def pre_execute_hook(
+        cls: Type["TrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+    ) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)
         or intializing user code (in the Trial API case).
         """
         pass
 
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
     def from_trial(
+        cls: Type["TrialController"],
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
@@ -79,12 +82,12 @@ class TrialController(metaclass=abc.ABCMeta):
         """
         pass
 
-    @staticmethod
-    def supports_mixed_precision() -> bool:
+    @classmethod
+    def supports_mixed_precision(cls: Type["TrialController"]) -> bool:
         return False
 
-    @staticmethod
-    def supports_averaging_training_metrics() -> bool:
+    @classmethod
+    def supports_averaging_training_metrics(cls: Type["TrialController"]) -> bool:
         return False
 
     def initialize_wrapper(self) -> None:

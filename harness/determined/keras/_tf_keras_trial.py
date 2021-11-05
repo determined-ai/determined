@@ -5,7 +5,7 @@ import pickle
 import random
 import sys
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Type, cast
 
 import h5py
 import numpy as np
@@ -156,12 +156,14 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 
 class TFKerasTrialController(det.TrialController):
-    @staticmethod
-    def supports_averaging_training_metrics() -> bool:
+    @classmethod
+    def supports_averaging_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
         return True
 
-    @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    @classmethod
+    def pre_execute_hook(
+        cls: Type["TFKerasTrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+    ) -> None:
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
@@ -170,23 +172,24 @@ class TFKerasTrialController(det.TrialController):
         # Start with a clean graph.
         tf.compat.v1.reset_default_graph()
 
-        TFKerasTrialController._set_random_seeds(env.trial_seed)
+        cls._set_random_seeds(env.trial_seed)
 
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
             session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            TFKerasTrialController._configure_session(env, hvd_config, session_config)
+            cls._configure_session(env, hvd_config, session_config)
 
-    @staticmethod
-    def _set_random_seeds(seed: int) -> None:
+    @classmethod
+    def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes. When using horovod, each worker will
         # start at a unique offset in the dataset, ensuring it's processing a unique training batch.
         random.seed(seed)
         np.random.seed(seed)
         tf.compat.v1.set_random_seed(seed)
 
-    @staticmethod
+    @classmethod
     def _configure_session(
+        cls: Type["TFKerasTrialController"],
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
         session_config: tf.compat.v1.ConfigProto,
@@ -216,8 +219,9 @@ class TFKerasTrialController(det.TrialController):
 
             return None
 
-    @staticmethod
+    @classmethod
     def compile_model(
+        cls: Type["TFKerasTrialController"],
         context: keras.TFKerasTrialContext,
         compile_args: inspect.BoundArguments,
         env: det.EnvContext,
@@ -249,8 +253,9 @@ class TFKerasTrialController(det.TrialController):
         else:
             context.model.compile(*compile_args.args, **compile_args.kwargs)
 
-    @staticmethod
+    @classmethod
     def from_trial(
+        cls: Type["TFKerasTrialController"],
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
@@ -265,7 +270,7 @@ class TFKerasTrialController(det.TrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
-        session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
+        session = cls._configure_session(env, hvd_config, trial.session_config())
 
         training_data = keras._adapt_data_from_data_loader(
             input_data=trial.build_training_data_loader(),
@@ -283,13 +288,13 @@ class TFKerasTrialController(det.TrialController):
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
 
-        TFKerasTrialController.compile_model(
+        cls.compile_model(
             context=context, compile_args=compile_args, env=env, hvd_config=hvd_config
         )
 
         tf_keras_callbacks = trial.keras_callbacks()
 
-        return TFKerasTrialController(
+        return cls(
             context.model,
             session,
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
