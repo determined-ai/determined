@@ -802,7 +802,6 @@ func (m *Master) Run(ctx context.Context) error {
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
-	trialsGroup.POST("/:trial_id/kill", api.Route(m.postTrialKill))
 
 	checkpointsGroup := m.echo.Group("/checkpoints", authFuncs...)
 	checkpointsGroup.GET("", api.Route(m.getCheckpoints))

@@ -98,7 +98,7 @@ def download(args: Namespace) -> None:
 
 @authentication.required
 def kill_trial(args: Namespace) -> None:
-    api.post(args.master, "trials/{}/kill".format(args.trial_id))
+    api.post(args.master, "/api/v1/trials/{}/kill".format(args.trial_id))
     print("Killed trial {}".format(args.trial_id))
 
 
