@@ -230,6 +230,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillNotebookRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
+		c.clearJobInfo()
 	case *apiv1.SetNotebookPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
@@ -246,6 +247,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillCommandRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
+		c.clearJobInfo()
+
 	case *apiv1.SetCommandPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
@@ -262,6 +265,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillShellRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
+		c.clearJobInfo()
+
 	case *apiv1.SetShellPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
@@ -278,6 +283,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTensorboardRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
+		c.clearJobInfo()
+
 	case *apiv1.SetTensorboardPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
@@ -427,4 +434,9 @@ func (c *command) toV1Job() *jobv1.Job {
 	job.UpdateJobQInfo(&j, c.rmJobInfo)
 
 	return &j
+}
+
+// clearJobInfo clears the job info from the command.
+func (c *command) clearJobInfo() {
+	c.rmJobInfo = nil
 }

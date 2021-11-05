@@ -84,9 +84,8 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
-		// job                   job.Job
-		rmJobInfo     *job.RMJobInfo
-		isPreemptible bool
+		rmJobInfo             *job.RMJobInfo
+		isPreemptible         bool
 	}
 )
 
@@ -372,6 +371,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
+		e.clearJobInfo()
 
 	case *apiv1.CancelExperimentRequest:
 		switch {
@@ -386,6 +386,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.CancelExperimentResponse{})
 			}
 		}
+		e.clearJobInfo()
 
 	case *apiv1.KillExperimentRequest:
 		switch {
@@ -400,6 +401,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
+		e.clearJobInfo()
 
 	default:
 		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
@@ -620,4 +622,9 @@ func (e *experiment) toV1Job() *jobv1.Job {
 	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	return &j
+}
+
+// clearJobInfo clears the job info from the experiment.
+func (e *experiment) clearJobInfo() {
+	e.rmJobInfo = nil
 }

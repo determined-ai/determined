@@ -87,15 +87,17 @@ func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Re
 	// IMPROVE. look up reflect
 }
 
-func (j *Jobs) parseV1JobResposnes(responses map[*actor.Ref]actor.Message) ([]*jobv1.Job, error) {
-	jobs := make([]*jobv1.Job, 0)
+func (j *Jobs) parseV1JobResposnes(
+	responses map[*actor.Ref]actor.Message,
+) (map[model.JobID]*jobv1.Job, error) {
+	jobs := make(map[model.JobID]*jobv1.Job)
 	for _, val := range responses {
 		typed, ok := val.(*jobv1.Job)
 		if !ok {
 			return nil, errors.New("unexpected response type")
 		}
 		if typed != nil {
-			jobs = append(jobs, typed)
+			jobs[model.JobID(typed.JobId)] = typed
 		}
 	}
 	return jobs, nil
@@ -111,15 +113,17 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return err
 		}
-		// ask for a consistent snapshot of the job queue
+		// ask for a consistent snapshot of the job queue from the RM
+		jobsInRM := make([]*jobv1.Job, 0)
 		jobQ := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: msg.ResourcePool}).Get().(AQueue)
-		for _, j := range jobs {
-			rmInfo, ok := jobQ[model.JobID(j.JobId)]
+		for jID, jRMInfo := range jobQ {
+			v1Job, ok := jobs[jID]
 			if ok {
-				UpdateJobQInfo(j, rmInfo)
+				UpdateJobQInfo(v1Job, jRMInfo)
+				jobsInRM = append(jobsInRM, v1Job)
 			}
 		}
-		ctx.Respond(jobs)
+		ctx.Respond(jobsInRM)
 
 	// case SetJobQ:
 	// 	j.Queues[msg.Identifier] = msg.Queue
@@ -135,9 +139,14 @@ func UpdateJobQInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
 	if job == nil {
 		panic("nil job ptr")
 	}
+
 	if rmInfo == nil {
+		job.Summary = nil
+		job.RequestedSlots = 0
+		job.AllocatedSlots = 0
 		return
 	}
+
 	job.RequestedSlots = int32(rmInfo.RequestedSlots)
 	job.AllocatedSlots = int32(rmInfo.AllocatedSlots)
 	if job.Summary == nil {

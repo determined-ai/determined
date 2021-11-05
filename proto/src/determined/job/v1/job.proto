@@ -51,7 +51,6 @@ message Job {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [
-        "summary",
         "type",
         "submission_time",
         "username",
