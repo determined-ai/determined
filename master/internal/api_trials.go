@@ -812,13 +812,6 @@ func (a *apiServer) checkTrialExists(id int) error {
 	}
 }
 
-func unexpectedMessageError(addr actor.Address, resp interface{}) error {
-	return status.Errorf(
-		codes.Internal,
-		"actor %s returned unexpected message (%T): %v", addr, resp, resp,
-	)
-}
-
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and
 // optionally, additionally, waits some buffer duration to give trials a bit to finish sending
 // stuff after termination.

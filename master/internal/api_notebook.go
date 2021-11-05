@@ -47,8 +47,7 @@ var notebooksAddr = actor.Addr("notebooks")
 func (a *apiServer) GetNotebooks(
 	_ context.Context, req *apiv1.GetNotebooksRequest,
 ) (resp *apiv1.GetNotebooksResponse, err error) {
-	err = a.actorRequest(notebooksAddr, req, &resp)
-	if err != nil {
+	if err = a.ask(notebooksAddr, req, &resp); err != nil {
 		return nil, err
 	}
 	a.sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
@@ -57,23 +56,23 @@ func (a *apiServer) GetNotebooks(
 
 func (a *apiServer) GetNotebook(
 	_ context.Context, req *apiv1.GetNotebookRequest) (resp *apiv1.GetNotebookResponse, err error) {
-	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) IdleNotebook(
 	_ context.Context, req *apiv1.IdleNotebookRequest) (resp *apiv1.IdleNotebookResponse, err error) {
-	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
 	_ context.Context, req *apiv1.KillNotebookRequest) (resp *apiv1.KillNotebookResponse, err error) {
-	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) SetNotebookPriority(
 	_ context.Context, req *apiv1.SetNotebookPriorityRequest,
 ) (resp *apiv1.SetNotebookPriorityResponse, err error) {
-	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) NotebookLogs(
@@ -124,7 +123,7 @@ func (a *apiServer) LaunchNotebook(
 		Files:        req.Files,
 	})
 	if err != nil {
-		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -191,19 +190,18 @@ func (a *apiServer) LaunchNotebook(
 	}
 
 	// Launch a Notebook actor.
-	notebookIDFut := a.m.system.AskAt(notebooksAddr, *spec)
-	if err = api.ProcessActorResponseError(&notebookIDFut); err != nil {
+	var notebookID model.TaskID
+	if err = a.ask(notebooksAddr, *spec, &notebookID); err != nil {
 		return nil, err
 	}
 
-	notebookID := notebookIDFut.Get().(model.TaskID)
-	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
-	if err = api.ProcessActorResponseError(&notebook); err != nil {
+	var notebook *notebookv1.Notebook
+	if err = a.ask(notebooksAddr.Child(notebookID), &notebookv1.Notebook{}, &notebook); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchNotebookResponse{
-		Notebook: notebook.Get().(*notebookv1.Notebook),
+		Notebook: notebook,
 		Config:   protoutils.ToStruct(spec.Config),
 	}, nil
 }

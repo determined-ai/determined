@@ -39,8 +39,7 @@ var shellsAddr = actor.Addr("shells")
 func (a *apiServer) GetShells(
 	_ context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
-	err = a.actorRequest(shellsAddr, req, &resp)
-	if err != nil {
+	if err = a.ask(shellsAddr, req, &resp); err != nil {
 		return nil, err
 	}
 	a.sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
@@ -49,18 +48,18 @@ func (a *apiServer) GetShells(
 
 func (a *apiServer) GetShell(
 	_ context.Context, req *apiv1.GetShellRequest) (resp *apiv1.GetShellResponse, err error) {
-	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
+	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 func (a *apiServer) KillShell(
 	_ context.Context, req *apiv1.KillShellRequest) (resp *apiv1.KillShellResponse, err error) {
-	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
+	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 func (a *apiServer) SetShellPriority(
 	_ context.Context, req *apiv1.SetShellPriorityRequest,
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
-	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
+	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 var shellReadinessPattern = regexp.MustCompile("Server listening on")
@@ -74,7 +73,7 @@ func (a *apiServer) LaunchShell(
 		Files:        req.Files,
 	})
 	if err != nil {
-		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
+		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
 	// Postprocess the spec.
@@ -138,19 +137,18 @@ func (a *apiServer) LaunchShell(
 	spec.LogReadinessCheck = shellReadinessPattern
 
 	// Launch a Shell actor.
-	shellIDFut := a.m.system.AskAt(shellsAddr, *spec)
-	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
+	var shellID model.TaskID
+	if err := a.ask(shellsAddr, *spec, &shellID); err != nil {
 		return nil, err
 	}
 
-	shellID := shellIDFut.Get().(model.TaskID)
-	shell := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
-	if err = api.ProcessActorResponseError(&shell); err != nil {
+	var shell *shellv1.Shell
+	if err := a.ask(shellsAddr.Child(shellID), &shellv1.Shell{}, &shell); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell:  shell.Get().(*shellv1.Shell),
+		Shell:  shell,
 		Config: protoutils.ToStruct(spec.Config),
 	}, nil
 }
