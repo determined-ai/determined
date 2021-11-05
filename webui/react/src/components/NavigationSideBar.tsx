@@ -42,7 +42,6 @@ const settingsConfig: SettingsConfig = {
 
 const menuConfig = {
   bottom: [
-    { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
     { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
     {
       external: true,
@@ -57,6 +56,7 @@ const menuConfig = {
     { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
     { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
     { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+    { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
   ],
 };
 
