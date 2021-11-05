@@ -59,10 +59,10 @@ class Training:
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
-            "metrics": det.util.clearinf(metrics),
+            "metrics": metrics,
         }
         if batch_metrics is not None:
-            body["batch_metrics"] = det.util.clearinf(batch_metrics)
+            body["batch_metrics"] = batch_metrics
         logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
@@ -119,7 +119,7 @@ class Training:
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
-            "metrics": det.util.clearinf(reportable_metrics),
+            "metrics": reportable_metrics,
         }
         logger.info(f"report_validation_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(

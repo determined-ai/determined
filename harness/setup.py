@@ -32,7 +32,6 @@ setup(
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
-        "simplejson",
         "azure-storage-blob",
         "termcolor>=1.1.0",
         "boto3",

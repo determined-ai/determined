@@ -1,4 +1,5 @@
 import collections
+import json
 import math
 import random
 import sys
@@ -7,7 +8,6 @@ import uuid
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
-import simplejson
 from termcolor import colored
 
 from determined.common import api, constants, context, yaml
@@ -92,7 +92,7 @@ def trial_logs(
         if reverse:
             line_iter = reversed(list(line_iter))
         for line in line_iter:
-            yield simplejson.loads(line)["result"]
+            yield json.loads(line)["result"]
 
 
 def print_trial_logs(master_url: str, trial_id: int, **kwargs: Any) -> None:

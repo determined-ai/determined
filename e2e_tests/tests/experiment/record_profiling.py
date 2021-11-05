@@ -1,8 +1,7 @@
+import json
 from statistics import mean
 from typing import Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
-
-import simplejson
 
 from determined.common import api
 from determined.profiler import SysMetricName
@@ -77,7 +76,7 @@ def get_profiling_metrics(trial_id: int, metric_type: str) -> List[float]:
         return [
             batch
             for batches in [
-                simplejson.loads(line)["result"]["batch"]["values"] for line in r.iter_lines()
+                json.loads(line)["result"]["batch"]["values"] for line in r.iter_lines()
             ]
             for batch in batches
         ]

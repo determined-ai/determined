@@ -94,6 +94,7 @@ def test_nan_metrics() -> None:
     training_structure = config["hyperparameters"]["training_structure"]["val"]
     training_structure["inf"] = "Infinity"
     training_structure["nan"] = "NaN"
+    training_structure["nanarray"] = ["NaN", "NaN"]
     validation_structure = config["hyperparameters"]["validation_structure"]["val"]
     validation_structure["neg_inf"] = "-Infinity"
 
