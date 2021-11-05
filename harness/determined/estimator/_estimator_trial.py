@@ -8,7 +8,7 @@ import random
 import shutil
 import tempfile
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Type, cast
 
 import numpy as np
 import tensorflow as tf
@@ -400,8 +400,12 @@ class EstimatorTrialController(det.TrialController):
 
         self._init_model()
 
-    @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    @classmethod
+    def pre_execute_hook(
+        cls: Type["EstimatorTrialController"],
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+    ) -> None:
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
@@ -411,7 +415,7 @@ class EstimatorTrialController(det.TrialController):
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will receive a unique
         # shard of the dataset.
-        EstimatorTrialController.set_random_seed(env.trial_seed)
+        cls.set_random_seed(env.trial_seed)
 
         if version.parse(tf.__version__) >= version.parse("2.0.0"):
             tf.compat.v1.disable_v2_behavior()
@@ -420,9 +424,7 @@ class EstimatorTrialController(det.TrialController):
         # set and users call TF code that detects GPUs, it would map the processes to all of
         # the GPUs. We set the default session before importing any user code to prevent this
         # this problem. This default session does not have any effect within the Estimator itself.
-        EstimatorTrialController._set_default_tensorflow_session(
-            env=env, hvd_config=hvd_config, session_config=None
-        )
+        cls._set_default_tensorflow_session(env=env, hvd_config=hvd_config, session_config=None)
 
         logging.debug("Applying tf.estimator patches.")
 
@@ -435,29 +437,31 @@ class EstimatorTrialController(det.TrialController):
             # ultimately runs the evaluation.
             logging.info("Skipping %s(*%s, **%s)", original.__name__, args, kwargs)
 
-    @staticmethod
-    def set_random_seed(seed: int) -> None:
+    @classmethod
+    def set_random_seed(cls: Type["EstimatorTrialController"], seed: int) -> None:
         random.seed(seed)
         np.random.seed(seed)
         # This seed value will be overwritten by
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
 
-    @staticmethod
+    @classmethod
     def _set_default_tensorflow_session(
+        cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
         session_config: Optional[tf.compat.v1.ConfigProto],
     ) -> None:
-        session_config = EstimatorTrialController._init_session_config(
+        session_config = cls._init_session_config(
             session_config=session_config,
             env=env,
             hvd_config=hvd_config,
         )
         tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=session_config))
 
-    @staticmethod
+    @classmethod
     def from_trial(
+        cls: Type["EstimatorTrialController"],
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
@@ -476,7 +480,7 @@ class EstimatorTrialController(det.TrialController):
         )
         trial_inst = cast(EstimatorTrial, trial_inst)
 
-        return EstimatorTrialController(
+        return cls(
             trial_inst.build_estimator(),
             trial_inst.build_train_spec(),
             trial_inst.build_validation_spec(),
@@ -623,8 +627,9 @@ class EstimatorTrialController(det.TrialController):
     def _init_val_hooks(self) -> List[tf.estimator.SessionRunHook]:
         return [*self.val_spec.hooks, DeterminedEarlyStoppingHook(self.context)]
 
-    @staticmethod
+    @classmethod
     def _init_session_config(
+        cls: Type["EstimatorTrialController"],
         session_config: tf.compat.v1.ConfigProto,
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,

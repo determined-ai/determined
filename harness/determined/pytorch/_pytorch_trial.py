@@ -4,7 +4,7 @@ import pickle
 import random
 import time
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 import torch
@@ -63,17 +63,19 @@ class PyTorchTrialController(det.TrialController):
 
         self.latest_batch = self.env.latest_batch
 
-    @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    @classmethod
+    def pre_execute_hook(
+        cls: Type["PyTorchTrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+    ) -> None:
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
 
-        PyTorchTrialController._set_random_seeds(env.trial_seed)
+        cls._set_random_seeds(env.trial_seed)
 
-    @staticmethod
-    def _set_random_seeds(seed: int) -> None:
+    @classmethod
+    def _set_random_seeds(cls: Type["PyTorchTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will start at a unique
         # offset in the dataset, ensuring it's processing a unique
@@ -85,16 +87,18 @@ class PyTorchTrialController(det.TrialController):
         # torch.backends.cudnn.deterministic = True
         # torch.backends.cudnn.benchmark = False
 
-    @staticmethod
-    def from_trial(*args: Any, **kwargs: Any) -> det.TrialController:
-        return PyTorchTrialController(*args, **kwargs)
+    @classmethod
+    def from_trial(
+        cls: Type["PyTorchTrialController"], *args: Any, **kwargs: Any
+    ) -> det.TrialController:
+        return cls(*args, **kwargs)
 
-    @staticmethod
-    def supports_mixed_precision() -> bool:
+    @classmethod
+    def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
-    @staticmethod
-    def supports_averaging_training_metrics() -> bool:
+    @classmethod
+    def supports_averaging_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
     def _check_evaluate_implementation(self) -> None:
@@ -451,8 +455,10 @@ class PyTorchTrialController(det.TrialController):
 
         return metrics
 
-    @staticmethod
-    def _convert_metrics_to_numpy(metrics: Dict[str, Any]) -> Dict[str, Any]:
+    @classmethod
+    def _convert_metrics_to_numpy(
+        cls: Type["PyTorchTrialController"], metrics: Dict[str, Any]
+    ) -> Dict[str, Any]:
         for metric_name, metric_val in metrics.items():
             if isinstance(metric_val, torch.Tensor):
                 metrics[metric_name] = metric_val.cpu().numpy()
