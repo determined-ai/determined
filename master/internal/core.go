@@ -24,6 +24,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
@@ -713,7 +714,7 @@ func (m *Master) Run(ctx context.Context) error {
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 	m.system.ActorOf(job.JobsActorAddr, &job.Jobs{
-		// RMRef: sproto.GetCurrentRM(m.system),
+		RMRef: sproto.GetCurrentRM(m.system),
 	})
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {

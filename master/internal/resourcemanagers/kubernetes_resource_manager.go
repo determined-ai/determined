@@ -108,8 +108,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(getTaskHandler(k.reqList, msg.ID))
 
 	case
-		GetJobQInfo,
-		SetJobOrder:
+		job.GetJobQ,
+		job.SetJobOrder:
 		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskSummary:
@@ -240,11 +240,11 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case GetJobQInfo:
+	case job.GetJobQ:
 		ctx.Respond(k.jobQInfo())
 		return actor.ErrUnexpectedMessage(ctx)
 
-	case SetJobOrder:
+	case job.SetJobOrder:
 		for it := k.reqList.iterator(); it.next(); {
 			req := it.value()
 			if req.JobID != nil && *req.JobID == msg.JobID {

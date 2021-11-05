@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -249,9 +250,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return rp.receiveRequestMsg(ctx)
 
 	case
-		GetJobQInfo,
-		SetJobOrder,
-		GetJobQStats:
+		job.GetJobQ,
+		job.SetJobOrder,
+		job.GetJobQStats:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -357,7 +358,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case SetJobOrder:
+	case job.SetJobOrder:
 		for it := rp.taskList.iterator(); it.next(); {
 			req := it.value()
 			// TODO nit: early break instead nesting?
@@ -387,9 +388,9 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 			}
 		}
 		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
-	case GetJobQStats:
+	case job.GetJobQStats:
 		ctx.Respond(*jobStats(rp))
-	case GetJobQInfo:
+	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

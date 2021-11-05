@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -78,7 +77,7 @@ func (a *apiServer) GetJobQueueStats(
 		stats := jobv1.QueueStats{}
 		qStats := apiv1.RPQueueStat{ResourcePool: rpAddr.Local()}
 		err = a.actorRequest(
-			rpAddr, resourcemanagers.GetJobQStats{}, &stats,
+			rpAddr, job.GetJobQStats{}, &stats,
 		)
 		if err != nil {
 			return nil, err
@@ -99,7 +98,7 @@ func (a *apiServer) UpdateJobQueue(
 		qPosition := float64(update.GetQueuePosition())
 		priority := int(update.GetPriority())
 		weight := float64(update.GetWeight())
-		msg := resourcemanagers.SetJobOrder{
+		msg := job.SetJobOrder{
 			QPosition: qPosition,
 			Priority:  &priority,
 			Weight:    weight,

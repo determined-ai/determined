@@ -616,7 +616,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		j.Priority = int32(*priority)
 	}
 
-	job.FillInRmJobInfo(&j, e.rmJobInfo)
+	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	return &j
 }

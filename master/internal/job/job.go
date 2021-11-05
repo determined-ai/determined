@@ -58,6 +58,26 @@ type RMJobInfo struct { // rename ?
 
 type GetJobSummary struct{}
 
+// GetJobQInfo is used to get all job information in one go to avoid any inconsistencies.
+type GetJobQ struct {
+	ResourcePool string
+}
+
+// GetJobQStats requests stats for a queue.
+// Expected response: jobv1.QueueStats.
+type GetJobQStats struct {
+	ResourcePool string
+}
+
+// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
+type SetJobOrder struct {
+	ResourcePool string
+	QPosition    float64
+	Weight       float64
+	Priority     *int
+	JobID        model.JobID
+}
+
 // type SetJobQ struct {
 // 	Identifier string
 // 	Queue      map[model.JobID]*RMJobInfo
@@ -68,6 +88,8 @@ type Jobs struct {
 	RMRef *actor.Ref
 	// Queues map[string]map[model.JobID]*RMJobInfo
 }
+
+type AQueue = map[model.JobID]*RMJobInfo
 
 func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
 	children := getJobRefs(ctx.Self().System())
@@ -102,6 +124,14 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return err
 		}
+		// ask for a consistent snapshot of the job queue
+		jobQ := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: msg.ResourcePool}).Get().(AQueue)
+		for _, j := range jobs {
+			rmInfo, ok := jobQ[model.JobID(j.JobId)]
+			if ok {
+				UpdateJobQInfo(j, rmInfo)
+			}
+		}
 		ctx.Respond(jobs)
 
 	// case SetJobQ:
@@ -113,7 +143,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func FillInRmJobInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
+func UpdateJobQInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
 	if job == nil {
 		panic("nil job ptr")
 	}

@@ -12,21 +12,6 @@ import (
 // CHECK do we define the following messages in sproto package?
 // QUESTION should we use proto defined messages more often internally or keep them at api level
 
-// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
-type SetJobOrder struct {
-	QPosition float64
-	Weight    float64
-	Priority  *int
-	JobID     model.JobID
-}
-
-// GetJobQInfo is used to get all job information in one go to avoid any inconsistencies.
-type GetJobQInfo struct{}
-
-// GetJobQStats requests stats for a queue.
-// Expected response: jobv1.QueueStats.
-type GetJobQStats struct{}
-
 func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
 	isAdded := make(map[model.JobID]*job.RMJobInfo)
 	jobActors := make(map[model.JobID]*actor.Ref)

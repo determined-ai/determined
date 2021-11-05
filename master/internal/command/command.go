@@ -423,7 +423,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		j.Priority = int32(*priority)
 	}
 
-	job.FillInRmJobInfo(&j, c.rmJobInfo)
+	job.UpdateJobQInfo(&j, c.rmJobInfo)
 
 	return &j
 }
