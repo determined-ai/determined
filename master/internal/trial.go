@@ -217,7 +217,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			SingleAgent: false,
 		},
 
-		Preemptible:  true, // TODO should this read from expconfig schema directly?
+		Preemptible:  true, // TODO should this read from config files?
 		DoRendezvous: true,
 	}, t.db, t.rm))
 	return nil

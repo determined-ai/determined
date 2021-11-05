@@ -41,8 +41,6 @@ type ResourcePool struct {
 	// Track notifyOnStop for testing purposes.
 	saveNotifications bool
 	notifications     []<-chan struct{}
-
-	system *actor.System
 }
 
 // GetResourceSummary is a message to request a summary of the resources used by the
@@ -55,7 +53,6 @@ func NewResourcePool(
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
-	system *actor.System,
 ) *ResourcePool {
 	d := &ResourcePool{
 		config: config,
@@ -70,7 +67,6 @@ func NewResourcePool(
 		scalingInfo: &sproto.ScalingInfo{},
 
 		reschedule: false,
-		system:     system,
 	}
 	return d
 }

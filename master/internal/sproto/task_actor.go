@@ -64,7 +64,7 @@ type (
 		Handler      *actor.Ref
 	}
 	// SetGroupOrder sets the order of the group in the priority scheduler.
-	SetGroupOrder struct { // TODO set on job instead it'd then trickle down to tasks for a job
+	SetGroupOrder struct {
 		QPosition    float64
 		ResourcePool string
 		Handler      *actor.Ref

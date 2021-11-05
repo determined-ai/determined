@@ -283,6 +283,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if !e.isRP(msg.Handler) {
 			ctx.Tell(e.rm, msg)
 		}
+		// TODO persist in memory as well (on new and on restore)
 
 	case *apiv1.GetJobsRequest:
 		fmt.Printf("GetJobsReques eid %v t\n", e.ID)

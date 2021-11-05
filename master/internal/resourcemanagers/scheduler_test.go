@@ -174,7 +174,7 @@ func setupResourcePool(
 
 	rp := NewResourcePool(
 		config, nil, MakeScheduler(config.Scheduler),
-		MakeFitFunction(config.Scheduler.FittingPolicy), system)
+		MakeFitFunction(config.Scheduler.FittingPolicy))
 	rp.taskList, rp.groups, rp.agents = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)

@@ -286,8 +286,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case sproto.SetGroupOrder:
-		// c.Config.Resources.
-		// TODO
+		// TODO persist in the job actor if we want to report it
 
 	case sproto.SetGroupWeight:
 		c.Config.Resources.Weight = msg.Weight
