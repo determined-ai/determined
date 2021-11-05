@@ -326,7 +326,7 @@ const LogViewerCore: React.FC<Props> = ({
     };
   }, [ addLogs, decoder, isNewestFirst, onFetch, processLogs ]);
 
-  // Re
+  // Re-fetch logs when fetch callback changes.
   useEffect(() => {
     local.current = clone(defaultLocal);
 
@@ -345,8 +345,8 @@ const LogViewerCore: React.FC<Props> = ({
     if (containerSize.width === 0 || containerSize.height === 0) return;
 
     const sizeChanged = (
-      containerSize.height === local.current.previousHeight &&
-      containerSize.width === local.current.previousWidth
+      containerSize.height !== local.current.previousHeight ||
+      containerSize.width !== local.current.previousWidth
     );
     if (sizeChanged) resizeLogs();
 
