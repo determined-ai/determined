@@ -86,6 +86,7 @@ type (
 		restored              bool
 		rmJobInfo             *job.RMJobInfo
 		isPreemptible         bool
+		mConfig               *Config
 	}
 )
 
@@ -158,6 +159,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
 		isPreemptible: isPreemptible,
+		mConfig:       master.config,
 	}, nil
 }
 
@@ -615,10 +617,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Name:           e.Config.Name().String(),
 	}
 
-	if priority := e.Config.Resources().Priority(); priority != nil {
-		j.Priority = int32(*priority)
-	}
-
+	j.Priority = int32(ReadPriority(e.mConfig, j.ResourcePool, e))
 	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	return &j

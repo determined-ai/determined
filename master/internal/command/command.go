@@ -429,7 +429,12 @@ func (c *command) toV1Job() *jobv1.Job {
 
 	if priority := c.Config.Resources.Priority; priority != nil {
 		j.Priority = int32(*priority)
+	} else {
+		j.Priority = 42
 	}
+
+	// TODO make config its own package so we can bring in the config
+	// to resolve preemption, priority, and weight?
 
 	job.UpdateJobQInfo(&j, c.rmJobInfo)
 
