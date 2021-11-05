@@ -95,7 +95,11 @@ func (a *apiServer) GetExperiment(
 		return &resp, nil
 	}
 
-	a.actorRequest(actor.Addr("experiments").Child(exp.Id), job.GetJobSummary{}, &resp.JobSummary)
+	err = a.actorRequest(actor.Addr("experiments").Child(exp.Id),
+		job.GetJobSummary{}, &resp.JobSummary)
+	if err != nil {
+		return nil, err
+	}
 
 	return &resp, nil
 }

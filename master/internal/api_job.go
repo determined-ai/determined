@@ -20,7 +20,6 @@ import (
 func (a *apiServer) GetJobs(
 	_ context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-
 	if req.ResourcePool == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing resource_pool parameter")
 	}

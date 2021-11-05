@@ -1,8 +1,9 @@
 package job // jobqueue?
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -10,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+// JobsActorAddr is the address of the jobs actor.
 var JobsActorAddr = actor.Addr("jobs")
 
 // TODO these could be set up as jobs children.
@@ -21,31 +23,15 @@ var jobManagers = [...]actor.Address{
 	actor.Addr("notebooks"),
 }
 
-// TODO attach jobs to jobs actor for direct access via id? would need alias address support form the actor system
-// helper to get all the childrens of job managers addresse into a list
+// TODO attach jobs to jobs actor for direct access via id?
+// would need alias address support form the actor system
+// helper to get all the childrens of job managers addresse into a list.
 func getJobRefs(system *actor.System) []*actor.Ref {
 	jobRefs := make([]*actor.Ref, 0)
 	for _, addr := range jobManagers {
 		jobRefs = append(jobRefs, system.Get(addr).Children()...)
 	}
 	return jobRefs
-}
-
-func JobActorAddr(jobType model.JobType, entityId string) actor.Address {
-	parentAddress := ""
-	switch jobType {
-	case model.JobTypeExperiment:
-		parentAddress = "experiments"
-	case model.JobTypeTensorboard:
-		parentAddress = "tensorboard"
-	case model.JobTypeCommand:
-		parentAddress = "commands"
-	case model.JobTypeNotebook:
-		parentAddress = "notebooks"
-	case model.JobTypeShell:
-		parentAddress = "shells"
-	}
-	return actor.Addr(parentAddress).Child(entityId)
 }
 
 // RMJobInfo packs information available only to the RM that updates frequently.
@@ -56,9 +42,10 @@ type RMJobInfo struct { // rename ?
 	AllocatedSlots int
 }
 
+// GetJobSummary requests a summary of the job.
 type GetJobSummary struct{}
 
-// GetJobQInfo is used to get all job information in one go to avoid any inconsistencies.
+// GetJobQ is used to get all job information in one go to avoid any inconsistencies.
 type GetJobQ struct {
 	ResourcePool string
 }
@@ -89,6 +76,7 @@ type Jobs struct {
 	// Queues map[string]map[model.JobID]*RMJobInfo
 }
 
+// AQueue is a map of jobID to RMJobInfo.
 type AQueue = map[model.JobID]*RMJobInfo
 
 func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
@@ -113,13 +101,12 @@ func (j *Jobs) parseV1JobResposnes(responses map[*actor.Ref]actor.Message) ([]*j
 	return jobs, nil
 }
 
+// Receive implements the actor.Actor interface.
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetJobsRequest:
-		fmt.Printf("GetJobsRequest %v \n", *msg)
-
 		jobs, err := j.parseV1JobResposnes(j.askJobActors(ctx, msg))
 		if err != nil {
 			return err
@@ -143,6 +130,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+// UpdateJobQInfo updates the job with the RMJobInfo.
 func UpdateJobQInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
 	if job == nil {
 		panic("nil job ptr")

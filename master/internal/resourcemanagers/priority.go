@@ -34,7 +34,10 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-func (p *priorityScheduler) createJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
+func (p *priorityScheduler) createJobQInfo(
+	pending map[int]AllocReqs,
+	scheduled map[int]AllocReqs,
+) (job.AQueue, map[model.JobID]*actor.Ref) {
 	reqs := make(AllocReqs, 0)
 	// FIXME there is gotta be a friendlier version of this.
 	// can we stick to slices together quickly in Go?
@@ -55,10 +58,9 @@ func (p *priorityScheduler) createJobQInfo(pending map[int]AllocReqs, scheduled 
 }
 
 func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) {
-	// TODO
 	jobQInfo, jobActors := p.createJobQInfo(pending, scheduled)
-	for jobId, jobActor := range jobActors {
-		jobActor.System().Tell(jobActor, jobQInfo[jobId])
+	for jobID, jobActor := range jobActors {
+		jobActor.System().Tell(jobActor, jobQInfo[jobID])
 	}
 }
 

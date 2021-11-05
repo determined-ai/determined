@@ -870,6 +870,7 @@ func (m *Master) Run(ctx context.Context) error {
 	return m.startServers(ctx, cert)
 }
 
+// ReadPreemptionStatus resolves the preemption status for a task type.
 func ReadPreemptionStatus(config *Config, rpName string, taskType model.TaskType) bool {
 	return true
 	// TODO
@@ -880,6 +881,6 @@ func ReadPreemptionStatus(config *Config, rpName string, taskType model.TaskType
 			can the selected scheduler preempt? is it set to?
 		if agent:
 			can the default scheduler preempt? is it set to?
-			can thsi tasks rp preempt? is it set to?
+			can this task's rp preempt? is it set to?
 	*/
 }

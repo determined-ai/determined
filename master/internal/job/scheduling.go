@@ -28,6 +28,7 @@ func (s SchedulingState) Proto() jobv1.State {
 	}
 }
 
+// SchedulingStateFromProto returns SchedulingState from proto representation.
 func SchedulingStateFromProto(state jobv1.State) SchedulingState {
 	switch state {
 	case jobv1.State_STATE_QUEUED:
