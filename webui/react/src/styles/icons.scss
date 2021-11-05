@@ -4,8 +4,8 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('fonts/determined-ai.woff2?2sciyp') format('woff2'),
-    url('fonts/determined-ai.woff?2sciyp') format('woff');
+    url('fonts/determined-ai.woff2?1v4ahh') format('woff2'),
+    url('fonts/determined-ai.woff?1v4ahh') format('woff');
 }
 
 [class^='icon-'],
@@ -66,6 +66,7 @@
 .icon-parcoords::before { content: '\e92f'; }
 .icon-pencil::before { content: '\e930'; }
 .icon-popout::before { content: '\e910'; }
+.icon-queue::before { content: '\e938'; }
 .icon-reset::before { content: '\e932'; }
 .icon-scatter-plot::before { content: '\e92e'; }
 .icon-search::before { content: '\ea01'; }
