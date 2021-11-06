@@ -14,4 +14,7 @@
     & > * { margin-bottom: var(--theme-sizes-layout-enormous); }
     & > *:last-child { margin-bottom: 0; }
   }
+  .ssoButton {
+    width: 100%;
+  }
 }
