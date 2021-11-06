@@ -33,7 +33,8 @@ const SignIn: React.FC = () => {
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
   const ssoQueryString = queryString.stringify(ssoQueries);
-  const samlSso = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
+  const samlGoogle = info.ssoProviders?.find(ssoProvider => /^google$/i.test(ssoProvider.name));
+  const samlOkta = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
 
   const externalAuthError = useMemo(() => {
     return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
@@ -114,10 +115,18 @@ const SignIn: React.FC = () => {
         <div className={css.content}>
           <Logo branding={info.branding} type={LogoType.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
-          {samlSso && (
+          {samlGoogle && (
             <Button
               className={css.ssoButton}
-              href={samlUrl(samlSso.ssoUrl, ssoQueryString)}
+              href={samlUrl(samlGoogle.ssoUrl, ssoQueryString)}
+              type="primary">
+              Sign in with Google
+            </Button>
+          )}
+          {samlOkta && (
+            <Button
+              className={css.ssoButton}
+              href={samlUrl(samlOkta.ssoUrl, ssoQueryString)}
               type="primary">
               Sign in with Okta
             </Button>
