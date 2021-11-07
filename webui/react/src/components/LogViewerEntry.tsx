@@ -40,7 +40,7 @@ const LogViewerEntry: React.FC<Prop> = ({
 }) => {
   const classes = [ css.base ];
   const logLevel = level ? level : LogLevel.Info;
-  const levelClasses = [ css.level, logLevel ];
+  const levelClasses = [ css.level, css[logLevel] ];
   const messageClasses = [ css.message ];
 
   if (noWrap) classes.push(css.noWrap);
