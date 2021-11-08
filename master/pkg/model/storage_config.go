@@ -142,6 +142,7 @@ type S3Config struct {
 	AccessKey   *string `json:"access_key,omitempty"`
 	SecretKey   *string `json:"secret_key,omitempty"`
 	EndpointURL *string `json:"endpoint_url,omitempty"`
+	Prefix      *string `json:"prefix,omitempty"`
 }
 
 // Validate implements the check.Validatable interface.

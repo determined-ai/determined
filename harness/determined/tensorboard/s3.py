@@ -1,7 +1,9 @@
 import logging
+import os
 from typing import Any, Optional
 
 from determined.common import util
+from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
 
@@ -16,6 +18,7 @@ class S3TensorboardManager(base.TensorboardManager):
         access_key: Optional[str],
         secret_key: Optional[str],
         endpoint_url: Optional[str],
+        prefix: Optional[str],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -36,10 +39,13 @@ class S3TensorboardManager(base.TensorboardManager):
             aws_secret_access_key=secret_key,
         )
 
+        self.prefix = normalize_prefix(prefix)
+
     @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
-            key_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
+            tbd_filename = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
+            key_name = os.path.join(self.prefix, tbd_filename)
 
             url = f"s3://{self.bucket}/{key_name}"
             logging.debug(f"Uploading {path} to {url}")
@@ -47,4 +53,5 @@ class S3TensorboardManager(base.TensorboardManager):
             self.client.upload_file(str(path), self.bucket, key_name)
 
     def delete(self) -> None:
-        self.resource.Bucket(self.bucket).objects.filter(Prefix=str(self.sync_path)).delete()
+        prefix_path = os.path.join(self.prefix, self.sync_path)
+        self.resource.Bucket(self.bucket).objects.filter(Prefix=prefix_path).delete()

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -202,7 +203,12 @@ func (a *apiServer) LaunchTensorboard(
 
 			uniqEnvVars["AWS_BUCKET"] = c.Bucket()
 
-			logBasePath = "s3://" + c.Bucket()
+			prefix := c.Prefix()
+			if prefix != nil {
+				logBasePath = fmt.Sprintf("s3://%s", filepath.Join(c.Bucket(), *prefix))
+			} else {
+				logBasePath = fmt.Sprintf("s3://%s", c.Bucket())
+			}
 
 		case expconf.AzureConfig:
 			logBasePath = "azure://" + c.Container()

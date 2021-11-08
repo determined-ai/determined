@@ -47,7 +47,7 @@ def test_imports() -> None:
             bad = []
             for f in found:
                 m = importlib.import_module(f)
-                if hasattr(m, "__file__"):
+                if hasattr(m, "__file__") and m.__file__ is not None:
                     bad.append(f)
             assert not bad, bad
     """
