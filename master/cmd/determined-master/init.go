@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -74,7 +74,7 @@ func registerConfig() {
 	v = viper.NewWithOptions(viper.KeyDelimiter(viperKeyDelimiter))
 	v.SetTypeByDefaultValue(true)
 
-	defaults := internal.DefaultConfig()
+	defaults := config.DefaultConfig()
 
 	// Register flags and environment variables, and set default values for the flags.
 	flags := rootCmd.PersistentFlags()

@@ -9,6 +9,7 @@ import (
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
@@ -43,7 +44,7 @@ resource_pools:
     task_container_defaults:
       dtrain_network_interface: if0
 `
-	expected := Config{
+	expected := config.Config{
 		Log: logger.Config{
 			Level: "info",
 			Color: false,

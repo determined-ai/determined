@@ -22,6 +22,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
@@ -67,7 +68,7 @@ type Master struct {
 	MasterID  string
 	Version   string
 
-	config   *Config
+	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
 	logs            *logger.LogBuffer
@@ -83,7 +84,7 @@ type Master struct {
 }
 
 // New creates an instance of the Determined master.
-func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
+func New(version string, logStore *logger.LogBuffer, config *config.Config) *Master {
 	logger.SetLogrus(config.Log)
 	return &Master{
 		MasterID: uuid.New().String(),
