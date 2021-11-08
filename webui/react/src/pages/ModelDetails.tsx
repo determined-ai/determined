@@ -70,6 +70,8 @@ const ModelDetails: React.FC = () => {
 
   const downloadVersion = useCallback((version: ModelVersion) => {
     //open download popover
+    //eslint-disable-next-line
+    console.log(version)
   }, []);
 
   const setModelVersionTags = useCallback((modelId, versionId, tags) => {
