@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -11,7 +12,8 @@ import (
 )
 
 type notebookManager struct {
-	db *db.PgDB
+	db      *db.PgDB
+	mConfig *config.Config
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -35,7 +37,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		return createGenericCommandActor(
-			ctx, n.db, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg,
+			ctx, n.db, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg, n.mConfig,
 		)
 
 	default:
