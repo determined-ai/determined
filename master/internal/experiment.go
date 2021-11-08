@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -82,6 +83,7 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
+		mConfig               *config.Config
 	}
 )
 
@@ -147,6 +149,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
+		mConfig: master.config,
 	}, nil
 }
 
@@ -162,7 +165,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		})
 		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources().Weight(), Handler: ctx.Self()})
 		ctx.Tell(e.rm, sproto.SetGroupPriority{
-			Priority: e.Config.Resources().Priority(),
+			Priority: config.ReadPriority(e.mConfig, e.Config.Resources().ResourcePool(), e.Config),
 			Handler:  ctx.Self(),
 		})
 

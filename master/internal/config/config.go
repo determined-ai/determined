@@ -228,7 +228,7 @@ func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bo
 }
 
 // ReadPriority resolves the priority value for a job.
-func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
+func ReadPriority(config *Config, rpName string, jobConf interface{}) *int {
 	var prio *int
 	switch conf := jobConf.(type) {
 	case *expconf.ExperimentConfig:
@@ -239,9 +239,10 @@ func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
 		// TODO find the RM config or RP config and lookup the priorities in order
 	}
 	if prio == nil { // until this is implemented
-		return 42
+		prio = new(int)
+		*prio = 42
 	}
-	return *prio
+	return prio
 }
 
 // func ReadWeight(config *Config, rpName string, jobConf interface{}) int {

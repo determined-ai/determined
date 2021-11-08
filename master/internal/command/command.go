@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -40,6 +41,7 @@ func createGenericCommandActor(
 	taskType model.TaskType,
 	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
+	mConfig *config.Config,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
@@ -81,6 +83,7 @@ type command struct {
 	serviceAddress *string
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
+	mConfig        *config.Config
 }
 
 // Receive implements the actor.Actor interface.
@@ -100,8 +103,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
 
 		ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
-			Priority: c.Config.Resources.Priority,
-			Handler:  ctx.Self(),
+			Priority: config.ReadPriority(
+				c.mConfig, c.Config.Resources.ResourcePool, c.Config,
+			),
+			Handler: ctx.Self(),
 		})
 
 		var portProxyConf *sproto.PortProxyConfig
