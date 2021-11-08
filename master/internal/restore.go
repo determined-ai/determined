@@ -171,7 +171,7 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
 	default:
 		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
-			return nil, errors.Wrap(err, "failed to shim trial snapshot")
+			return nil, errors.Wrap(err, "failed to shim experiment snapshot")
 		}
 		return snapshot, nil
 	}
@@ -208,13 +208,13 @@ func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
 
 func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
 	if version > experimentSnapshotVersion {
-		return nil, fmt.Errorf("cannot shim from %d to %d", experimentSnapshotVersion, version)
+		return nil, fmt.Errorf("cannot shim from %d to %d", version, experimentSnapshotVersion)
 	}
 	var err error
 	for version < experimentSnapshotVersion {
 		shim, ok := shims[version]
 		if !ok {
-			return nil, fmt.Errorf("missing shim from %d to %d", experimentSnapshotVersion, version)
+			return nil, fmt.Errorf("missing shim from %d to %d", version, experimentSnapshotVersion)
 		}
 		if snapshot, err = shim(snapshot); err != nil {
 			return nil, errors.Wrapf(err, "failed to shim snapshot")
