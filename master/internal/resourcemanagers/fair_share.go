@@ -54,6 +54,8 @@ func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*ac
 }
 
 func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	// TODO report job states.
+	// compute a list of jobs.
 	return make(map[model.JobID]*job.RMJobInfo)
 }
 
@@ -155,6 +157,31 @@ func calculateGroupStates(
 				state.slotDemand = min(state.slotDemand, *state.maxSlots)
 			}
 		}
+	}
+	for g, gState := range groupMapping {
+		jobQ := make(map[model.JobID]*job.RMJobInfo) // track the job actor
+
+		allocatedSlots := 0
+		pendingSlots := 0
+		var jobActor *actor.Ref
+		for _, req := range gState.allocatedReqs {
+			if req.JobID == nil {
+				continue
+			}
+			// TODO create and track jobs.
+			jobActor = req.Group
+			allocatedSlots += req.SlotsNeeded
+		}
+		for _, req := range gState.pendingReqs {
+			jobActor = req.Group
+			pendingSlots += req.SlotsNeeded
+		}
+		jobInfo := job.RMJobInfo{
+			RequestedSlots: pendingSlots, // gState.slotDemand,
+			AllocatedSlots: allocatedSlots,
+		}
+		// g.handler
+
 	}
 
 	return states
