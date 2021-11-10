@@ -351,6 +351,8 @@ def test_login_as_non_active_user(clean_auth: None) -> None:
 
     with logged_in_user(ADMIN_CREDENTIALS):
         child = det_spawn(["user", "deactivate", creds.username])
+        child.wait()
+        assert child.exitstatus == 0
 
     child = det_spawn(["user", "login", creds.username])
     child.setecho(True)
