@@ -3,6 +3,8 @@ import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import LogoGoogle from 'assets/logo-sso-google-white.svg';
+import LogoOkta from 'assets/logo-sso-okta-white.svg';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoType } from 'components/Logo';
@@ -14,7 +16,9 @@ import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
 import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
+import { RecordKey } from 'types';
 import { getPath } from 'utils/data';
+import { capitalize } from 'utils/string';
 
 import css from './SignIn.module.scss';
 
@@ -23,6 +27,11 @@ interface Queries {
   jwt?: string;
   redirect?: string;
 }
+
+const logoConfig: Record<RecordKey, string> = {
+  google: LogoGoogle,
+  okta: LogoOkta,
+};
 
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
@@ -33,7 +42,6 @@ const SignIn: React.FC = () => {
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
   const ssoQueryString = queryString.stringify(ssoQueries);
-  const samlSso = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
 
   const externalAuthError = useMemo(() => {
     return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
@@ -114,14 +122,20 @@ const SignIn: React.FC = () => {
         <div className={css.content}>
           <Logo branding={info.branding} type={LogoType.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
-          {samlSso && (
-            <Button
-              className={css.ssoButton}
-              href={samlUrl(samlSso.ssoUrl, ssoQueryString)}
-              type="primary">
-              Sign in with Okta
-            </Button>
-          )}
+          {info.ssoProviders?.map(ssoProvider => {
+            const key = ssoProvider.name;
+            const logo = logoConfig[key] ? <img alt={key} src={logoConfig[key]} /> : '';
+            return (
+              <Button
+                className={css.ssoButton}
+                href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}
+                key={key}
+                size="large"
+                type="primary">
+                Sign in with {logo} {capitalize(key)}
+              </Button>
+            );
+          })}
         </div>
       </div>
     </Page>
