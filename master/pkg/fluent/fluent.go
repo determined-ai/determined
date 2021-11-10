@@ -11,7 +11,7 @@ const (
 	localhost    = "localhost"
 	ipv4Loopback = "127.0.0.1"
 
-	nonRootbitUserName = "nonroot"
+	nonRootUserName = "nonroot"
 	nonRootUID         = 65532
 	nonRootGroupName   = "nonroot"
 	nonRootGID         = 65532
@@ -19,7 +19,7 @@ const (
 )
 
 // NonRootAgentUserGroup is a non-root agent user group that should exist by default
-// for fluentbit container images that has a writable homedir for on-disk buffers.
+// for Fluent Bit container images that has a writable homedir for on-disk buffers.
 var NonRootAgentUserGroup = model.AgentUserGroup{
 	User:  nonRootbitUserName,
 	UID:   nonRootUID,
@@ -188,7 +188,7 @@ end
 
 	bufferDir := "/var/log/flb-buffers"
 	if asNonRoot {
-		bufferDir = nonRootHome + "flb-buffers"
+		bufferDir = filepath.Join(nonRootHome, "flb-buffers")
 	}
 
 	fmt.Fprintf(&config, `

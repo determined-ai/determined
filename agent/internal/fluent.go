@@ -160,7 +160,7 @@ func startLoggingContainer(
 		},
 		masterSetOpts.LoggingOptions,
 		tlsConfig,
-		// TODO(DET-6188): Run fluentbit as non-root on Determined agents.
+		// TODO(DET-6188): Run Fluent Bit as non-root on Determined agents.
 		false,
 	)
 

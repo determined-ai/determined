@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  Security and Logging: if a non-root user is used to run jobs on Kubernetes, the Fluentbit sidecar
+-  Security and Logging: if a non-root user is used to run jobs on Kubernetes, the Fluent Bit sidecar
    will also run as non-root.
