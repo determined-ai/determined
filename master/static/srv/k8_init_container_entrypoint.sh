@@ -13,5 +13,6 @@ do
     SRC=$2/$IDX.tar.gz
     DST=$3/$IDX
     mkdir $DST
+    # TODO(Brad): init container runs as root to use --same-owner, could be a problem.
     tar --same-owner -xvf $SRC -C $DST
 done

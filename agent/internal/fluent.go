@@ -160,6 +160,8 @@ func startLoggingContainer(
 		},
 		masterSetOpts.LoggingOptions,
 		tlsConfig,
+		// TODO(DET-6188): Run Fluent Bit as non-root on Determined agents.
+		false,
 	)
 
 	createResponse, err := docker.ContainerCreate(
