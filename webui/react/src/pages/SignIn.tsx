@@ -120,8 +120,7 @@ const SignIn: React.FC = () => {
               href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}
               key={ssoProvider.name}
               type="primary">
-              Sign in with&nbsp;
-              {ssoProvider.name.split(/\s+/i).map(partial => capitalize(partial)).join(' ')}
+              Sign in with {capitalize(ssoProvider.name)}
             </Button>
           ))}
         </div>
