@@ -297,15 +297,16 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) KillTrial(
 	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
-	ok, err := a.m.db.CheckTrialExists(int(req.Id))
+	t, err := a.m.db.TrialByID(int(req.Id))
 	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
-	case !ok:
+	case errors.Cause(err) == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found", req.Id)
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to get trial: %s", err)
 	}
 
-	if err = a.ask(actor.Addr("trials", req.Id), model.StoppingKilledState, nil); err != nil {
+	tr := actor.Addr("experiments", t.ExperimentID, t.RequestID)
+	if err = a.ask(tr, model.StoppingKilledState, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.KillTrialResponse{}, nil
