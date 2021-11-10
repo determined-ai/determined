@@ -34,6 +34,8 @@ const (
 	preemptionScheduler = "preemption"
 	gcTask              = "gc"
 	cmdTask             = "cmd"
+
+	rootUserName = "root"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -380,6 +382,8 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	if spec.UseFluentLogging {
 		p.containerNames[model.DeterminedK8FluentContainerName] = true
 		envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
+		asNonRoot := p.taskSpec.AgentUserGroup != nil &&
+			p.taskSpec.AgentUserGroup.User != rootUserName
 
 		loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
 
@@ -437,13 +441,20 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 			},
 			p.loggingConfig,
 			p.loggingTLSConfig,
+			asNonRoot,
 		)
+
+		var fluentSecCtx *k8sV1.SecurityContext
+		if asNonRoot {
+			fluentSecCtx = configureSecurityContext(&fluent.NonRootAgentUserGroup)
+		}
 
 		sidecars = append(sidecars, k8sV1.Container{
 			Name:            model.DeterminedK8FluentContainerName,
 			Command:         fluentArgs,
 			Image:           "fluent/fluent-bit:1.6",
 			ImagePullPolicy: configureImagePullPolicy(spec.Environment),
+			SecurityContext: fluentSecCtx,
 			VolumeMounts:    loggingMounts,
 			WorkingDir:      fluentBaseDir,
 		})
