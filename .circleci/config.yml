@@ -35,7 +35,7 @@ release-and-rc-filters: &release-and-rc-filters
   tags:
     only:
       - /(\d)+(\.(\d)+)+/
-      - /((\d)+(\.(\d)+)+)(rc)(\d)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
 rc-filters: &rc-filters
   branches:
