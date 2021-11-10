@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -34,7 +34,7 @@ func (f ExperimentModelOptionFunc) apply(experiment *model.Experiment) {
 // ExperimentModel returns a new experiment with the specified options.
 func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 	maxLength := expconf.NewLengthInBatches(100)
-	config := expconf.ExperimentConfig{
+	eConf := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
 			RawMetric: ptrs.StringPtr("loss"),
 			RawSingleConfig: &expconf.SingleConfig{
@@ -53,13 +53,13 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 			},
 		},
 	}
-	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
-	internal.DefaultConfig().TaskContainerDefaults.MergeIntoExpConfig(&config)
+	eConf = schemas.WithDefaults(eConf).(expconf.ExperimentConfig)
+	config.DefaultConfig().TaskContainerDefaults.MergeIntoExpConfig(&eConf)
 
 	e := &model.Experiment{
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
-		Config:               config,
+		Config:               eConf,
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
 		ModelDefinitionBytes: []byte{},

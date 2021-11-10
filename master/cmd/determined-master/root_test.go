@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -43,7 +43,7 @@ task_container_defaults:
       containers:
         - name: determined-container
 `
-	expected := internal.DefaultConfig()
+	expected := config.DefaultConfig()
 	providerConf := provisioner.DefaultConfig()
 	providerConf.GCP = provisioner.DefaultGCPClusterConfig()
 	providerConf.GCP.BaseConfig = &compute.Instance{

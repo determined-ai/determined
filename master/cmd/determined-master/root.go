@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/version"
@@ -61,7 +62,7 @@ func runRoot() error {
 // initializeConfig returns the validated configuration populated from config
 // file, environment variables, and command line flags) and also initializes
 // global logging state based on those options.
-func initializeConfig() (*internal.Config, error) {
+func initializeConfig() (*config.Config, error) {
 	// Fetch an initial config to get the config file path and read its settings into Viper.
 	initialConfig, err := getConfig(v.AllSettings())
 	if err != nil {
@@ -122,13 +123,13 @@ func mergeConfigBytesIntoViper(bs []byte) error {
 	return nil
 }
 
-func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
+func getConfig(configMap map[string]interface{}) (*config.Config, error) {
 	configMap, err := applyBackwardsCompatibility(configMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
 	}
 
-	config := internal.DefaultConfig()
+	config := config.DefaultConfig()
 	bs, err := json.Marshal(configMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal configuration map into json bytes")

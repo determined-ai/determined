@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -74,7 +75,7 @@ func ResolveElastic() (*elastic.Elastic, error) {
 // RunMaster runs a master in a goroutine and returns a reference to the master,
 // along with all the external context required to interact with the master, and
 // a function to close it.
-func RunMaster(ctx context.Context, c *internal.Config) (
+func RunMaster(ctx context.Context, c *config.Config) (
 	*internal.Master, *logger.LogBuffer, apiv1.DeterminedClient,
 	context.Context, error,
 ) {
@@ -114,7 +115,7 @@ func RunMaster(ctx context.Context, c *internal.Config) (
 // ConnectMaster blocks until a connection can be made to this master, assumed to be running
 // on localhost on the port indicated by the configuration. Returns an error if unable to connect
 // after 5 tries with 100ms delay between each.
-func ConnectMaster(c *internal.Config) (apiv1.DeterminedClient, error) {
+func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 	var cl apiv1.DeterminedClient
 	var clConn *grpc.ClientConn
 	var err error
@@ -136,8 +137,8 @@ func ConnectMaster(c *internal.Config) (apiv1.DeterminedClient, error) {
 }
 
 // DefaultMasterConfig returns the default master configuration.
-func DefaultMasterConfig() (*internal.Config, error) {
-	c := internal.DefaultConfig()
+func DefaultMasterConfig() (*config.Config, error) {
+	c := config.DefaultConfig()
 	if err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields); err != nil {
 		return nil, err
 	}
