@@ -2566,7 +2566,7 @@ export interface V1Job {
      * @type {V1JobSummary}
      * @memberof V1Job
      */
-    summary: V1JobSummary;
+    summary?: V1JobSummary;
     /**
      * Job type.
      * @type {Determinedjobv1Type}
