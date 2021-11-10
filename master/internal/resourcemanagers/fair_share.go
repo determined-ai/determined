@@ -50,10 +50,13 @@ func (g groupState) String() string {
 }
 
 func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	defer f.updateJobs(rp) // CHECK does this work how I think it does?
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+func (f *fairShare) createJobQInfo(
+	rp *ResourcePool,
+) (job.AQueue, map[model.JobID]*actor.Ref) {
 	for _, resAllocated := range rp.taskList.allocations {
 		req := rp.taskList.taskByID[resAllocated.ID]
 		if req.JobID == nil {
@@ -66,11 +69,22 @@ func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 		reqs = append(reqs, req)
 	}
 	jobQ, jobActors := mergeToJobQInfo(reqs)
+	for _, j := range jobQ {
+		j.JobsAhead = -1 // we don't support job order for fairshare scheduler.
+	}
+	return jobQ, jobActors
+}
+
+func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	jobQ, _ := f.createJobQInfo(rp)
+	return jobQ
+}
+
+func (f *fairShare) updateJobs(rp *ResourcePool) {
+	jobQ, jobActors := f.createJobQInfo(rp)
 	for jobID, jobActor := range jobActors {
-		jobQ[jobID].JobsAhead = -1 // we don't support job order for fairshare scheduler.
 		jobActor.System().Tell(jobActor, jobQ[jobID])
 	}
-	return jobQ
 }
 
 func fairshareSchedule(
