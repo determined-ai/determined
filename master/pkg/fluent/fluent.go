@@ -2,6 +2,7 @@ package fluent
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -11,17 +12,17 @@ const (
 	localhost    = "localhost"
 	ipv4Loopback = "127.0.0.1"
 
-	nonRootUserName = "nonroot"
-	nonRootUID         = 65532
-	nonRootGroupName   = "nonroot"
-	nonRootGID         = 65532
-	nonRootHome        = "/home/nonroot/"
+	nonRootUserName  = "nonroot"
+	nonRootUID       = 65532
+	nonRootGroupName = "nonroot"
+	nonRootGID       = 65532
+	nonRootHome      = "/home/nonroot/"
 )
 
 // NonRootAgentUserGroup is a non-root agent user group that should exist by default
 // for Fluent Bit container images that has a writable homedir for on-disk buffers.
 var NonRootAgentUserGroup = model.AgentUserGroup{
-	User:  nonRootbitUserName,
+	User:  nonRootUserName,
 	UID:   nonRootUID,
 	Group: nonRootGroupName,
 	GID:   nonRootGID,
