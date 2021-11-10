@@ -15,6 +15,7 @@ import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
 import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
 import { getPath } from 'utils/data';
+import { capitalize } from 'utils/string';
 
 import css from './SignIn.module.scss';
 
@@ -33,8 +34,6 @@ const SignIn: React.FC = () => {
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
   const ssoQueryString = queryString.stringify(ssoQueries);
-  const samlGoogle = info.ssoProviders?.find(ssoProvider => /^google$/i.test(ssoProvider.name));
-  const samlOkta = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
 
   const externalAuthError = useMemo(() => {
     return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
@@ -115,22 +114,16 @@ const SignIn: React.FC = () => {
         <div className={css.content}>
           <Logo branding={info.branding} type={LogoType.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
-          {samlGoogle && (
+          {info.ssoProviders?.map(ssoProvider => (
             <Button
               className={css.ssoButton}
-              href={samlUrl(samlGoogle.ssoUrl, ssoQueryString)}
+              href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}
+              key={ssoProvider.name}
               type="primary">
-              Sign in with Google
+              Sign in with&nbsp;
+              {ssoProvider.name.split(/\s+/i).map(partial => capitalize(partial)).join(' ')}
             </Button>
-          )}
-          {samlOkta && (
-            <Button
-              className={css.ssoButton}
-              href={samlUrl(samlOkta.ssoUrl, ssoQueryString)}
-              type="primary">
-              Sign in with Okta
-            </Button>
-          )}
+          ))}
         </div>
       </div>
     </Page>
