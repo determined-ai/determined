@@ -123,7 +123,7 @@ const SignIn: React.FC = () => {
           <Logo branding={info.branding} type={LogoType.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
           {info.ssoProviders?.map(ssoProvider => {
-            const key = ssoProvider.name;
+            const key = ssoProvider.name.toLowerCase();
             const logo = logoConfig[key] ? <img alt={key} src={logoConfig[key]} /> : '';
             return (
               <Button
