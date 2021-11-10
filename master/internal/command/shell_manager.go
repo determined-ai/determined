@@ -3,7 +3,6 @@ package command
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -12,8 +11,7 @@ import (
 )
 
 type shellManager struct {
-	db      *db.PgDB
-	mConfig *config.Config
+	db *db.PgDB
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -35,9 +33,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
-		return createGenericCommandActor(
-			ctx, s.db, taskID, model.TaskTypeShell, model.JobTypeShell, msg, s.mConfig,
-		)
+		return createGenericCommandActor(ctx, s.db, taskID, model.TaskTypeShell, model.JobTypeShell, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

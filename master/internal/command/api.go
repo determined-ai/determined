@@ -3,7 +3,6 @@ package command
 import (
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -14,7 +13,6 @@ func RegisterAPIHandler(
 	system *actor.System,
 	echo *echo.Echo,
 	db *db.PgDB,
-	mConfig *config.Config,
 	middleware ...echo.MiddlewareFunc,
 ) {
 	system.ActorOf(actor.Addr("commands"), &commandManager{db: db})

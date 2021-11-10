@@ -1,7 +1,6 @@
 package command
 
 import (
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -11,8 +10,7 @@ import (
 )
 
 type commandManager struct {
-	db      *db.PgDB
-	mConfig *config.Config
+	db *db.PgDB
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -35,7 +33,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		return createGenericCommandActor(
-			ctx, c.db, taskID, model.TaskTypeCommand, model.JobTypeCommand, msg, c.mConfig,
+			ctx, c.db, taskID, model.TaskTypeCommand, model.JobTypeCommand, msg,
 		)
 
 	default:
