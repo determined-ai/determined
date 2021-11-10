@@ -138,7 +138,7 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 
 // DefaultMasterConfig returns the default master configuration.
 func DefaultMasterConfig() (*config.Config, error) {
-	c := internal.DefaultConfig()
+	c := config.DefaultConfig()
 	if err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields); err != nil {
 		return nil, err
 	}
