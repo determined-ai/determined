@@ -2,8 +2,12 @@ import prettyBytes from 'pretty-bytes';
 
 import { MetricName, MetricType } from 'types';
 
-export const capitalize = (str: string): string => {
+export const capitalizeWord = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+export const capitalize = (str: string): string => {
+  return str.split(/\s+/).map(part => capitalizeWord(part)).join(' ');
 };
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
