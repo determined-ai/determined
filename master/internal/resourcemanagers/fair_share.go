@@ -67,6 +67,7 @@ func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	}
 	jobQ, jobActors := mergeToJobQInfo(reqs)
 	for jobID, jobActor := range jobActors {
+		jobQ[jobID].JobsAhead = -1 // we don't support job order for fairshare scheduler.
 		jobActor.System().Tell(jobActor, jobQ[jobID])
 	}
 	return jobQ

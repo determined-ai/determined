@@ -33,15 +33,20 @@ func (a *apiServer) GetJobs(
 		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 
-	// a.sort(jobs, req.OrderBy, KEY
 	sort.SliceStable(jobs, func(i, j int) bool {
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
 			i, j = j, i
 		}
 		if jobs[i].Summary == nil || jobs[j].Summary == nil {
-			return false // CHECK
+			return false
 		}
-		return jobs[i].Summary.JobsAhead < jobs[j].Summary.JobsAhead
+		if jobs[i].Summary.JobsAhead < jobs[j].Summary.JobsAhead {
+			return true
+		}
+		if jobs[i].Summary.JobsAhead > jobs[j].Summary.JobsAhead {
+			return false
+		}
+		return jobs[i].JobId < jobs[j].JobId
 	})
 
 	if req.Pagination == nil {
