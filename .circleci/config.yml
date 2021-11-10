@@ -43,7 +43,7 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
-      - /((\d)+(\.(\d)+)+)(rc)(\d)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
 release-filters: &release-filters
   branches:
