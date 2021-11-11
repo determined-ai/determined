@@ -283,6 +283,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return err
 		}
 		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
 			ctx.Tell(e.rm, msg)
 		}
 		// TODO persist in memory as well (on new and on restore)

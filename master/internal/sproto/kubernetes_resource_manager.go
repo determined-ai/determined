@@ -20,6 +20,21 @@ type (
 		PodID cproto.ID
 	}
 
+	// PreemptTaskPod notifies the pods actor to preempt a pod.
+	PreemptTaskPod struct {
+		PodName string
+	}
+
+	// ChangePriority notifies the pods actor to preempt a pod
+	ChangePriority struct {
+		PodID container.ID
+	}
+
+	SetPodOrder struct {
+		QPosition float64
+		PodID     container.ID
+	}
+
 	// GetTaskInfo notifies the pods actor to query for pod statuses
 	GetTaskInfo struct {
 		PodID cproto.ID

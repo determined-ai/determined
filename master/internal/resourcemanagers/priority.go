@@ -31,6 +31,7 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	setPositions(rp)
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
@@ -79,14 +80,74 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		Once jobs carry a queue position attribute with them it'll be what
 		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
-	// WARN scheduled here means that resources are allocated.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
-		sortTasksByPriorityAndPositionAndTimestamp(
-			rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
-
-	jobQInfo, _ := p.createJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
-
+	reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups)
+	jobQInfo, _ := mergeToJobQInfo(reqs)
 	return jobQInfo
+}
+
+func setPositions(rp *ResourcePool) error {
+	reqs, positionSet := sortTasksWithPosition(rp.taskList, rp.groups)
+	// if there has been no position set, we artificially generate positions
+	// if there has been a position set, we quickly calculate and assign positions
+	if positionSet {
+		err := adjustPriorities(rp.groups, reqs)
+		if err != nil {
+			return err
+		}
+	} else {
+		for i, req := range reqs {
+			group, ok := rp.groups[req.Group]
+			if !ok {
+				return fmt.Errorf("scheduler expects all tasks to belong to a group. "+
+					"group not found for task %s in resource pool %s", req.Name, req.ResourcePool)
+			}
+			group.qPosition = float64(i)
+		}
+	}
+	return nil
+}
+
+func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateRequest) error {
+	prev := float64(0)
+	i := 0
+
+	for i < len(reqs) {
+		if groups[reqs[i].Group].qPosition == -1 {
+			if i == len(reqs)-1 {
+				groups[reqs[i].Group].qPosition = prev + 1
+			} else {
+				// seek the next populated value
+				seeker := i + 1
+				for loc := i + 1; loc < len(reqs); loc++ {
+					seeker = loc
+					if groups[reqs[loc].Group].qPosition != -1 {
+						break
+					} else if loc == len(reqs) {
+						break
+					}
+				}
+
+				if seeker == len(reqs) {
+					for setter := i; setter < len(reqs); setter++ {
+						groups[reqs[setter].Group].qPosition = prev + 1
+						prev += 1
+					}
+				} else {
+					maxValue := groups[reqs[seeker].Group].qPosition
+					diff := float64(seeker - i)
+					increment := (maxValue - prev) / diff
+
+					for setter := i; setter < seeker; setter++ {
+						groups[reqs[setter].Group].qPosition = prev + increment
+						prev += increment
+					}
+				} // find the value of the non negative position and add increments
+			}
+		}
+		prev = groups[reqs[i].Group].qPosition
+		i += 1
+	}
+	return nil
 }
 
 func (p *priorityScheduler) prioritySchedule(
@@ -366,7 +427,7 @@ func sortTasksWithPosition(
 	isPositionSet := false
 
 	for it := taskList.iterator(); it.next(); {
-		if groups[it.value().Group].qPosition != -1 {
+		if groups[it.value().Group].qPosition > 0 {
 			isPositionSet = true
 		}
 		reqs = append(reqs, it.value())

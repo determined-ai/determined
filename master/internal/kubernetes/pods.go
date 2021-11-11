@@ -3,9 +3,12 @@
 package kubernetes
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -31,6 +34,12 @@ import (
 type podMetadata struct {
 	podName     string
 	containerID string
+}
+
+type patchStringValue struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
 }
 
 // High lever overview of the actors within the kubernetes package:
@@ -146,6 +155,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 
+	case sproto.SetPodOrder:
+		p.receiveJobQueueMsg(ctx)
+
 	case sproto.GetTaskInfo:
 		// TODO query the kubernetes API for additional information
 
@@ -158,8 +170,11 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
-	case podPreemption:
+	case sproto.PreemptTaskPod:
 		p.receivePodPreemption(ctx, msg)
+
+	case sproto.ChangePriority:
+		p.receivePriorityChange(ctx, msg)
 
 	case sproto.KillTaskPod:
 		p.receiveKillPod(ctx, msg)
@@ -339,6 +354,45 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) 
 	return nil
 }
 
+//func (p *pods) handleReorderRequest(ctx *actor.Context, msg sproto.ReorderRequest) {
+//	// assume there is some new order or a new priority
+//	// if the pod has already been allocated resources and the priority gets increased, do nothing
+//	// if the pod is already running and the priority gets decreased, release the resources and reset the priority class
+//	// if the pod is not yet running and the priority gets increased or decreased, quickly release and reset the priority class
+//	// let the preemption logic handle
+//	// for every change in priority, recalculate the queue position
+//}
+
+func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
+	switch msg := ctx.Message().(type) {
+	case sproto.SetPodOrder:
+		// TODO: This works in the CLI, but not in golang
+		if msg.QPosition > 0 {
+			podName, ok := p.containerIDToPodName[msg.PodID.String()]
+			if !ok {
+				ctx.Log().WithField("pod-id", msg.PodID).Debug(
+					"received change position command for unregistered container id")
+				return
+			}
+			p.clientSet.CoreV1().Pods("default").Get(podName, metaV1.GetOptions{})
+
+			payload := []patchStringValue{{
+				Op:    "replace",
+				Path:  "/metadata/labels/determined-queue-position",
+				Value: fmt.Sprintf("%f", msg.QPosition),
+			}}
+
+			payloadBytes, _ := json.Marshal(payload)
+
+			_, err := p.clientSet.CoreV1().Pods("default").Patch(podName, types.JSONPatchType, payloadBytes)
+			if err != nil {
+				ctx.Log().Infof("Failed to set the order of pod %s: ", podName)
+			}
+		}
+	}
+	return
+}
+
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	ref, ok := p.podNameToPodHandler[msg.updatedPod.Name]
 	if !ok {
@@ -373,13 +427,30 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receivePodPreemption(ctx *actor.Context, msg podPreemption) {
-	ref, ok := p.podNameToPodHandler[msg.podName]
+func (p *pods) receivePodPreemption(ctx *actor.Context, msg sproto.PreemptTaskPod) {
+	ref, ok := p.podNameToPodHandler[msg.PodName]
 	if !ok {
-		ctx.Log().WithField("pod-name", msg.podName).Debug(
-			"received preemption command for unregistered container id")
+		ctx.Log().WithField("pod-name", msg.PodName).Debug(
+			"received preemption command for unregistered pod")
 		return
 	}
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receivePriorityChange(ctx *actor.Context, msg sproto.ChangePriority) {
+	podName, ok := p.containerIDToPodName[msg.PodID.String()]
+	if !ok {
+		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+			"received change priority command for unregistered container id")
+		return
+	}
+	ref, ok := p.podNameToPodHandler[podName]
+	if !ok {
+		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+			"received change priority command for unregistered container id")
+		return
+	}
+
 	ctx.Tell(ref, msg)
 }
 

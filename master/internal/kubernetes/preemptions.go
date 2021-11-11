@@ -5,6 +5,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
@@ -15,11 +17,6 @@ import (
 
 // Messages that are sent to the preemption listener.
 type startPreemptionListener struct{}
-
-// Messages that are sent by the preemption listener.
-type podPreemption struct {
-	podName string
-}
 
 type preemptionListener struct {
 	clientSet   *k8sClient.Clientset
@@ -70,7 +67,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	}
 
 	for _, pod := range pods.Items {
-		ctx.Tell(p.podsHandler, podPreemption{podName: pod.Name})
+		ctx.Tell(p.podsHandler, sproto.PreemptTaskPod{PodName: pod.Name})
 	}
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
@@ -97,7 +94,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
 			continue
 		}
-		ctx.Tell(p.podsHandler, podPreemption{podName: pod.Name})
+		ctx.Tell(p.podsHandler, sproto.PreemptTaskPod{PodName: pod.Name})
 	}
 
 	ctx.Log().Warn("preemption listener stopped unexpectedly")
