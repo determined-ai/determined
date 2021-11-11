@@ -91,6 +91,8 @@ message Job {
   int32 allocated_slots = 12;
   // Job name.
   string name = 13;
+  // Job's progress from 0 to 1.
+  float progress = 14;
 }
 
 // Describes a message to control jobs in a queue.
