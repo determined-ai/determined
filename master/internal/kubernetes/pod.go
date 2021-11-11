@@ -155,7 +155,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
-	case sproto.PreemptTaskPod::
+	case sproto.PreemptTaskPod:
 		ctx.Log().Info("received preemption command")
 		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
 

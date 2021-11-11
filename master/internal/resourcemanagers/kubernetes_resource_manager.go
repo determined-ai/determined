@@ -1,9 +1,10 @@
 package resourcemanagers
 
 import (
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/kubernetes"
@@ -96,21 +97,21 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 	case
-			groupActorStopped,
-			sproto.SetGroupMaxSlots,
-			sproto.SetGroupWeight,
-			sproto.SetGroupPriority,
-			sproto.SetGroupOrder,
-			sproto.SetTaskName,
-			sproto.AllocateRequest,
-			sproto.ResourcesReleased:
+		groupActorStopped,
+		sproto.SetGroupMaxSlots,
+		sproto.SetGroupWeight,
+		sproto.SetGroupPriority,
+		sproto.SetGroupOrder,
+		sproto.SetTaskName,
+		sproto.AllocateRequest,
+		sproto.ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
 
 	case
-			job.GetJobQ,
-			job.GetJobSummary,
-			job.GetJobQStats,
-			job.SetJobOrder:
+		job.GetJobQ,
+		job.GetJobSummary,
+		job.GetJobQStats,
+		job.SetJobOrder:
 		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -397,7 +398,7 @@ func (k *kubernetesResourceManager) assignResources(
 			req:       req,
 			agent:     k.agent,
 			container: container,
-			group: 	   k.groups[req.Group],
+			group:     k.groups[req.Group],
 		})
 
 		//if _, ok := k.addrToContainerID[req.TaskActor]; !ok {
@@ -472,7 +473,7 @@ type k8sPodReservation struct {
 	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
-	group 	  *group
+	group     *group
 }
 
 // Summary summarizes a container allocation.
