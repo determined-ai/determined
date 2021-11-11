@@ -614,8 +614,9 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		ResourcePool:   e.Config.Resources().ResourcePool(),
 		SubmissionTime: timestamppb.New(e.StartTime),
 		Weight:         e.Config.Resources().Weight(),
-		Username:       fmt.Sprintf("%d-userid", e.OwnerID),
-		Name:           e.Config.Name().String(),
+		Username:       fmt.Sprintf("%d-userid", e.OwnerID), // FIXME
+		// Progress:       e.searcher.Progress(),
+		Name: e.Config.Name().String(),
 	}
 
 	j.Priority = int32(ReadPriority(e.mConfig, j.ResourcePool, e))

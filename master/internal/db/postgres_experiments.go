@@ -1226,6 +1226,7 @@ FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
+	// TODO get user's username + whereever else owner_id is pulled
 	rows, err := db.sql.Queryx(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
