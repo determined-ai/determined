@@ -85,29 +85,23 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 	return jobQInfo
 }
 
-func setPositions(rp *ResourcePool) error {
+func setPositions(rp *ResourcePool) {
 	reqs, positionSet := sortTasksWithPosition(rp.taskList, rp.groups)
 	// if there has been no position set, we artificially generate positions
 	// if there has been a position set, we quickly calculate and assign positions
 	if positionSet {
-		err := adjustPriorities(rp.groups, reqs)
-		if err != nil {
-			return err
-		}
+		adjustPriorities(rp.groups, reqs)
 	} else {
 		for i, req := range reqs {
 			group, ok := rp.groups[req.Group]
-			if !ok {
-				return fmt.Errorf("scheduler expects all tasks to belong to a group. "+
-					"group not found for task %s in resource pool %s", req.Name, req.ResourcePool)
+			if ok {
+				group.qPosition = float64(i)
 			}
-			group.qPosition = float64(i)
 		}
 	}
-	return nil
 }
 
-func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateRequest) error {
+func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateRequest) {
 	prev := float64(0)
 	i := 0
 
@@ -117,7 +111,7 @@ func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateReque
 				groups[reqs[i].Group].qPosition = prev + 1
 			} else {
 				// seek the next populated value
-				seeker := i + 1
+				var seeker int
 				for loc := i + 1; loc < len(reqs); loc++ {
 					seeker = loc
 					if groups[reqs[loc].Group].qPosition != -1 {
@@ -127,10 +121,11 @@ func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateReque
 					}
 				}
 
-				if seeker == len(reqs) {
+				// set queue positions
+				if seeker >= len(reqs) - 1 {
 					for setter := i; setter < len(reqs); setter++ {
 						groups[reqs[setter].Group].qPosition = prev + 1
-						prev += 1
+						prev++
 					}
 				} else {
 					maxValue := groups[reqs[seeker].Group].qPosition
@@ -145,9 +140,8 @@ func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateReque
 			}
 		}
 		prev = groups[reqs[i].Group].qPosition
-		i += 1
+		i++
 	}
-	return nil
 }
 
 func (p *priorityScheduler) prioritySchedule(
