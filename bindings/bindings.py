@@ -254,10 +254,10 @@ class Enum(TypeDef):
         self.members = members
 
     def load(self, val: Code) -> Code:
-        return f"{val}.value"
+        return f"{val}"
 
     def dump(self, val: Code) -> Code:
-        return f"{self.name}({val})"
+        return f"{val}"
 
     def gen_def(self) -> Code:
         out = [f"class {self.name}(enum.Enum):"]
@@ -528,9 +528,9 @@ def pybindings(swagger: dict) -> str:
     out += ["def dump_float(val):"]
     out += ["    if math.isnan(val):"]
     out += ['        return "Nan"']
-    out += ["    if math.isinfinite(val):"]
+    out += ["    if math.isinf(val):"]
     out += ['        return "Infinity" if val > 0 else "-Infinity"']
-    out += ["    return float"]
+    out += ["    return val"]
     out += [""]
 
     defs = process_definitions(swagger["definitions"])
