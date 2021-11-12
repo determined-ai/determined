@@ -1,5 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Deploy: Will now confirm potentially destructive updates on AWS unless --no-prompt is specified.

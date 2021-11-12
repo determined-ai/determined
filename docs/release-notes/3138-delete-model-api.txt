@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvement**
-
--  Adds DELETE endpoints for a model and a model_version.
--  Models can only deleted by the user who created them.
