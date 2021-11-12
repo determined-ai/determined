@@ -266,8 +266,10 @@ class Enum(TypeDef):
 
 
 class Parameter:
-    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str) -> None:
+    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str,
+                 serialized_name: str = None) -> None:
         self.name = name
+        self.serialized_name = serialized_name
         self.type = typ
         self.required = required
         self.where = where
@@ -366,7 +368,7 @@ class Function:
         if query_params:
             out += ["    _params = {"]
             for p in query_params:
-                out += [f'        "{self.params[p].name}": {self.params[p].name},']
+                out += [f'        "{self.params[p].serialized_name}": {self.params[p].name},']
             out += ["    }"]
         else:
             out += ["    _params = None"]
@@ -492,6 +494,10 @@ def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Funct
             # Figure out parameters.
             params = {}
             for pspec in spec.get("parameters", []):
+                where = pspec["in"]
+                serialized_name = None
+                if where == "query": # preserve query parameter names
+                    serialized_name = pname = pspec["name"]
                 pname = pspec["name"].replace(".", "_")
                 required = pspec.get("required", False)
                 if "schema" in pspec:
@@ -501,8 +507,7 @@ def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Funct
                     inlined = ("type", "format", "items", "properties", "enum")
                     pschema = {k: pspec[k] for k in inlined if k in pspec}
                 ptype = classify_type(f"{name}.{pname}", pschema)
-                where = pspec["in"]
-                params[pname] = Parameter(pname, ptype, required, where)
+                params[pname] = Parameter(pname, ptype, required, where, serialized_name)
 
             # TODO: Validate before altering the whole path.
             path = path.replace(".", "_")
