@@ -6,12 +6,13 @@ import yaml
 
 from determined.common.api.b import get_Determined_GetJobs
 from determined.cli.session import setup_session
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
+@authentication.required
 def list(args: Namespace) -> None:
-    response = get_Determined_GetJobs(setup_session(args), resourcePool=args.resource_pool)
-    if response.jobs is None:  # TODO remove once proto annotations are inplace.
-        return
+    response = get_Determined_GetJobs(setup_session(args), resourcePool=args.resource_pool,
+        pagination_limit=args.limit, pagination_offset=args.offset, orderBy=args.order_by)
     if args.output == "yaml":
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
     elif args.output == "json":
@@ -21,6 +22,25 @@ def list(args: Namespace) -> None:
     else:
         raise ValueError(f"Bad output format: {args.output}")
 
+pagination_args = [
+                    Arg(
+                        "--offset",
+                        type=int,
+                        default=0,
+                        help="Offset the returned set.",
+                    ),
+                    Arg(
+                        "--limit",
+                        type=int,
+                        default=50,
+                        help="Limit the returned set.",
+                    ),
+                    Arg(
+                        "--order-by",
+                        type=str,
+                        help="Whether to sort the results in descending or ascending order",
+                    ),
+]
 
 args_description = [
     Cmd(
@@ -41,6 +61,7 @@ args_description = [
                         help="Output format, one of json|yaml",
                     ),
                     Arg("-rp", "--resource-pool", type=str, default="default", help=""),
+                    *pagination_args
                 ],
             ),
         ],
