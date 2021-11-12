@@ -8,6 +8,25 @@
  Version 0.17
 **************
 
+Version 0.17.3
+==============
+
+**Release Date:** November 12, 2021
+
+**Improvements**
+
+-  Model Registry APIs: Add PATCH and DELETE endpoints to update the attributes of models and model
+   versions.
+-  Model Registry: Allow models to be deleted only by the user who created them.
+-  Security and Logging: When a job is run on Kubernetes as a non-root user, the corresponding
+   Fluent Bit sidecar will also run as a non-root user.
+-  Deploy: ``det deploy`` will now confirm potentially destructive updates on AWS unless
+   ``--no-prompt`` is specified.
+
+**Bug Fixes**
+
+-  Model Registry APIs: Change the ``/models/{}/versions/{}`` to accept model ID as an int.
+
 Version 0.17.2
 ==============
 
