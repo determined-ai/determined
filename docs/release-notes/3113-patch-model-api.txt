@@ -1,9 +1,0 @@
-:orphan:
-
-**Improvement**
-
--  PATCH endpoints to update attributes of a model and a model_version
-
-**Bug Fixes**
-
--  Accept GET /models/{}/versions/{} with model_id as an int type
