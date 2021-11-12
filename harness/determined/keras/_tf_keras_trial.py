@@ -957,11 +957,11 @@ class TFKerasTrial(det.Trial):
     :meth:`build_training_data_loader`, and :meth:`build_validation_data_loader`).
     In most cases you should provide a custom :meth:`__init__` method as well.
 
-    By default, experiments use TensorFlow 1.x. To configure your trial to use
-    TensorFlow 2.x, specify a TensorFlow 2.x image in the
+    By default, experiments use TensorFlow 2.x. To configure your trial to use
+    legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate
