@@ -81,3 +81,6 @@ gobin
 
 # Hydra output
 model_hub/examples/mmdetection/hydra/outputs
+
+# generated bindings
+harness/determined/common/api/b.py

@@ -13,14 +13,17 @@ deps/$(CODEGEN_BIN):
 	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
-build/typescript-fetch: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
-	mkdir -p build/typescript-fetch
+build/python: $(SWAGGER_SPEC)
+	python bindings.py > ../harness/determined/common/api/b.py
+
+build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
+	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l typescript-fetch -o build/typescript-fetch
 	touch build/typescript-fetch
 
 .PHONY: build
-build: build/typescript-fetch
+build: build/typescript-fetch build/python
 
 .PHONY: clean-deps
 clean-deps:
