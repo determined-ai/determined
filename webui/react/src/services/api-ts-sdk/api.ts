@@ -2669,6 +2669,12 @@ export interface V1Job {
      * @memberof V1Job
      */
     name: string;
+    /**
+     * Job's progress from 0 to 1.
+     * @type {number}
+     * @memberof V1Job
+     */
+    progress?: number;
 }
 
 /**
