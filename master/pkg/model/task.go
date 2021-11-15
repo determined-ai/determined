@@ -212,6 +212,26 @@ func TaskLogLevelFromProto(l logv1.LogLevel) string {
 	}
 }
 
+// TaskLogLevelToProto returns a protobuf task log level from its string repr.
+func TaskLogLevelToProto(l string) logv1.LogLevel {
+	switch l {
+	case LogLevelTrace:
+		return logv1.LogLevel_LOG_LEVEL_TRACE
+	case LogLevelDebug:
+		return logv1.LogLevel_LOG_LEVEL_DEBUG
+	case LogLevelInfo:
+		return logv1.LogLevel_LOG_LEVEL_INFO
+	case LogLevelWarn:
+		return logv1.LogLevel_LOG_LEVEL_WARNING
+	case LogLevelError:
+		return logv1.LogLevel_LOG_LEVEL_ERROR
+	case LogLevelCritical:
+		return logv1.LogLevel_LOG_LEVEL_CRITICAL
+	default:
+		return logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+	}
+}
+
 // TaskLog represents a structured log emitted by an allocation.
 type TaskLog struct {
 	// A task log should have one of these IDs after being persisted. All should be unique.
@@ -235,10 +255,14 @@ type TaskLog struct {
 	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
 }
 
-// Resolve resolves the flat version of the log that UIs have shown historically.
+// Message resolves the flat version of the log that UIs have shown historically.
 // TODO(task-unif): Should we just.. stop doing this? And send the log as is and let the
 // UIs handle display (yes, IMO).
-func (t *TaskLog) Resolve() {
+func (t *TaskLog) Message() string {
+	if t.FlatLog != "" {
+		return t.FlatLog
+	}
+
 	var timestamp string
 	if t.Timestamp != nil {
 		timestamp = t.Timestamp.Format(time.RFC3339Nano)
@@ -249,12 +273,12 @@ func (t *TaskLog) Resolve() {
 	// This is just to match postgres.
 	const containerIDMaxLength = 8
 	var containerID string
-	if t.ContainerID != nil {
+	if t.ContainerID != nil && *t.ContainerID != "" {
 		containerID = *t.ContainerID
 		if len(containerID) > containerIDMaxLength {
 			containerID = containerID[:containerIDMaxLength]
 		}
-		containerID = fmt.Sprintf("[%s] ", containerID)
+		containerID = fmt.Sprintf("%s ", containerID)
 	}
 
 	var rankID string
@@ -267,54 +291,39 @@ func (t *TaskLog) Resolve() {
 		level = fmt.Sprintf("%s: ", *t.Level)
 	}
 
-	t.FlatLog = fmt.Sprintf("[%s] %s%s|| %s %s",
-		timestamp, containerID, rankID, level, t.Log)
+	return fmt.Sprintf("[%s] %s%s|| %s %s", timestamp, containerID, rankID, level, t.Log)
 }
 
 // Proto converts a task log to its protobuf representation.
 func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
-	resp := &apiv1.TaskLogsResponse{}
-
+	var id string
 	switch {
 	case t.ID != nil:
-		resp.Id = strconv.Itoa(*t.ID)
+		id = strconv.Itoa(*t.ID)
 	case t.StringID != nil:
-		resp.Id = *t.StringID
+		id = *t.StringID
 	default:
 		panic("log had no valid ID")
 	}
 
+	var ts *timestamppb.Timestamp
 	if t.Timestamp != nil {
-		resp.Timestamp = timestamppb.New(*t.Timestamp)
+		ts = timestamppb.New(*t.Timestamp)
 	}
 
+	var level logv1.LogLevel
 	if t.Level == nil {
-		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+		level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 	} else {
-		switch *t.Level {
-		case LogLevelTrace:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_TRACE
-		case LogLevelDebug:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_DEBUG
-		case LogLevelInfo:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
-		case LogLevelWarn:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_WARNING
-		case LogLevelError:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_ERROR
-		case LogLevelCritical:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_CRITICAL
-		default:
-			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
-		}
+		level = TaskLogLevelToProto(*t.Level)
 	}
 
-	if resp.Message == "" {
-		t.Resolve()
-	}
-	resp.Message = t.FlatLog
-
-	return resp, nil
+	return &apiv1.TaskLogsResponse{
+		Id:        id,
+		Timestamp: ts,
+		Level:     level,
+		Message:   t.FlatLog,
+	}, nil
 }
 
 // TaskLogBatch represents a batch of model.TaskLog.

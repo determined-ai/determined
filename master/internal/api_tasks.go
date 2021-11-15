@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,11 +22,10 @@ const (
 )
 
 var (
-	taskLogsBatchWaitTime     = 100 * time.Millisecond
-	taskLogsBatchMissWaitTime = time.Second
-	// For Elasticsearch, this _must_ be greater than internal/elastic.elasticTimeWindowDelay
-	// or else following terminates before all logs are delivered.
-	taskLogsTerminationDelay    = elastic.ElasticTimeWindowDelay + time.Second
+	taskReadyCheckLogs = "/run/determined/check_ready_logs.py"
+
+	taskLogsBatchWaitTime       = 100 * time.Millisecond
+	taskLogsBatchMissWaitTime   = time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 
 	// Common errors
@@ -124,7 +122,7 @@ func (a *apiServer) taskLogs(
 	api.NewBatchStreamProcessor(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
-		a.isTaskTerminalFunc(taskID, taskLogsTerminationDelay),
+		a.isTaskTerminalFunc(taskID, a.m.taskLogBackend.MaxTerminationDelay()),
 		false,
 		taskLogsBatchWaitTime,
 		taskLogsBatchMissWaitTime,
@@ -198,7 +196,7 @@ func (a *apiServer) TaskLogsFields(
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		a.isTaskTerminalFunc(taskID, taskLogsTerminationDelay),
+		a.isTaskTerminalFunc(taskID, a.m.taskLogBackend.MaxTerminationDelay()),
 		true,
 		taskLogsFieldsBatchWaitTime,
 		taskLogsFieldsBatchWaitTime,
@@ -233,7 +231,7 @@ func processBatches(res chan api.BatchResult, h func(api.Batch) error) error {
 	var err *multierror.Error
 	for r := range res {
 		if r.Err() != nil {
-			// Failing but not returning here will cause us to wait for the downstream
+			// Noting the failure but not exiting here will cause us to wait for the downstream
 			// processor to fail from its error or continue.
 			err = multierror.Append(err, r.Err())
 			continue

@@ -389,10 +389,10 @@ func (a *Allocation) TaskContainerStateChanged(
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
 		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
-		ctx.Tell(ctx.Self(), sproto.ContainerLog{
-			AuxMessage: ptrs.StringPtr(msg.ContainerStopped.String()),
-			Container:  msg.Container,
-		})
+		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			ContainerID: &msg.Container.Proto().Id,
+			Log:         msg.ContainerStopped.String(),
+		}))
 		switch {
 		case msg.ContainerStopped.Failure != nil:
 			a.Error(ctx, *msg.ContainerStopped.Failure)

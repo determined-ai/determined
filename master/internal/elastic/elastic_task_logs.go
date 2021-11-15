@@ -160,8 +160,8 @@ func (e *Elastic) TaskLogs(
 		// The short form `for _, h := range resp.Hits.Hits` will result in &h.ID being
 		// the same address and all logs having identical IDs.
 		h := resp.Hits.Hits[i]
-		h.Source.Resolve()
 		h.Source.StringID = &h.ID
+		h.Source.FlatLog = h.Source.Message()
 		logs = append(logs, h.Source)
 	}
 
@@ -291,6 +291,13 @@ func (e *Elastic) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResp
 		Stdtypes:      resp.Aggregations.StdTypes.toKeys(),
 		Sources:       resp.Aggregations.Sources.toKeys(),
 	}, nil
+}
+
+// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been recevied.
+// For Elasticsearch, this _must_ be greater than internal/elastic.elasticTimeWindowDelay or else
+// following terminates before all logs are delivered.
+func (e *Elastic) MaxTerminationDelay() time.Duration {
+	return ElasticTimeWindowDelay + time.Second
 }
 
 // search runs the search request with query as its body and populates the result into resp.

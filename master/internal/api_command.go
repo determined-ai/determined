@@ -33,7 +33,6 @@ import (
 )
 
 const (
-	commandDir        = "/run/determined/"
 	commandEntrypoint = "/run/determined/command-entrypoint.sh"
 )
 
@@ -205,7 +204,6 @@ func (a *apiServer) LaunchCommand(
 
 	spec.Config.Entrypoint = append([]string{commandEntrypoint}, spec.Config.Entrypoint...)
 	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(commandDir, nil, 0700, tar.TypeDir),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			commandEntrypoint,
 			etc.MustStaticFile(etc.CommandEntrypointResource),

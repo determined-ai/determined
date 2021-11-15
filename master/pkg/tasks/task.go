@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -95,6 +96,7 @@ func (t *TaskSpec) ResolveWorkDir() {
 func (t *TaskSpec) Archives() []cproto.RunArchive {
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
+		runDirHelpersArchive(t.AgentUserGroup),
 		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
@@ -224,6 +226,18 @@ func workDirArchive(
 		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0700, tar.TypeDir))
 	}
 	return wrapArchive(a, rootDir)
+}
+
+// runDirHelpersArchive ensures helper scripts exist in the run dir.
+func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
+	return wrapArchive(archive.Archive{
+		aug.OwnedArchiveItem(
+			taskLoggingSetupScript,
+			etc.MustStaticFile(etc.TaskLoggingSetupScriptResource),
+			taskLoggingSetupMode,
+			tar.TypeReg,
+		),
+	}, runDir)
 }
 
 // injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files

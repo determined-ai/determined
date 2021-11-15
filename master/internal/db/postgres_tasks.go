@@ -203,7 +203,7 @@ ORDER BY timestamp %s OFFSET $2 LIMIT $3
 	}
 
 	for _, l := range b {
-		l.Resolve()
+		l.FlatLog = l.Message()
 	}
 
 	return b, offset + len(b), nil
@@ -276,4 +276,11 @@ func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsRespon
 	var fields apiv1.TaskLogsFieldsResponse
 	err := db.QueryProto("get_task_logs_fields", &fields, taskID)
 	return &fields, err
+}
+
+// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been recevied.
+// For Postgres, we don't need to wait very log at all; this is just a hypothetical cap on fluent
+// to DB latency.
+func (db *PgDB) MaxTerminationDelay() time.Duration {
+	return 2 * time.Second
 }

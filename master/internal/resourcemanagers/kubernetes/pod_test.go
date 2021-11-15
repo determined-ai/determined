@@ -164,7 +164,14 @@ func setupEntrypoint(t *testing.T) {
 	if err != nil {
 		t.Logf("Failed to set root directory")
 	}
+
 	f, _ := os.OpenFile("k8_init_container_entrypoint.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	err = f.Close()
+	if err != nil {
+		t.Logf("Failed to close entrypoint")
+	}
+
+	f, _ = os.OpenFile("task-logging-setup.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	err = f.Close()
 	if err != nil {
 		t.Logf("Failed to close entrypoint")
@@ -173,6 +180,11 @@ func setupEntrypoint(t *testing.T) {
 
 func cleanup(t *testing.T) {
 	err := os.Remove("k8_init_container_entrypoint.sh")
+	if err != nil {
+		t.Logf("Failed to remove entrypoint")
+	}
+
+	err = os.Remove("task-logging-setup.sh")
 	if err != nil {
 		t.Logf("Failed to remove entrypoint")
 	}

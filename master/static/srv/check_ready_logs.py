@@ -1,5 +1,5 @@
 """
-check_ready.py accepts a task's logs as STDIN, runs a regex to determine readiness
+check_ready_logs.py accepts a task's logs as STDIN, runs a regex to determine readiness
 and reemits the logs to STDOUT
 """
 import argparse

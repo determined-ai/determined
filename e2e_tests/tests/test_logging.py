@@ -90,7 +90,6 @@ def check_logs(
     # This is also testing that follow terminates. If we timeout here, that's it.
     for log in log_fn(master_url, entity_id, follow=True):
         if log_regex.match(log["message"]):
-            match = True
             break
     else:
         pytest.fail("ran out of logs without a match")

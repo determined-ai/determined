@@ -39,6 +39,10 @@ type LogBackend interface {
 	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
 	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
 	DeleteTaskLogs(taskIDs []model.TaskID) error
+	// MaxTerminationDelay is the max delay before a consumer can be sure all logs have been
+	// recevied. A better interface may be an interface for streaming, rather than helper
+	// interfaces to aid streaming, but it's not bad enough to motivate changing it.
+	MaxTerminationDelay() time.Duration
 }
 
 type (
@@ -74,7 +78,7 @@ func NewCustomLogger(logger *actor.Ref) *Logger {
 	}
 }
 
-// Insert always asynchronously inserts a task log. Though, this means we do not have
+// Insert always asynchronously inserts a task log. As a consequence, this means it does not have
 // any mechanism for backpressure, so use with caution (a few, important logs should go here).
 func (l *Logger) Insert(ctx *actor.Context, tl model.TaskLog) {
 	ctx.Tell(l.inner, tl)
