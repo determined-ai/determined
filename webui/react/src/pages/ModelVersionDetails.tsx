@@ -265,10 +265,10 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         <TabPane key="checkpoint-details" tab="Checkpoint Details">
           <div className={css.base}>
             <Card title="Source">
-              <InfoBox rows={checkpointInfo} seperator />
+              <InfoBox rows={checkpointInfo} separator />
             </Card>
             <Card title="Validation Metrics">
-              <InfoBox rows={validationMetrics} seperator />
+              <InfoBox rows={validationMetrics} separator />
             </Card>
           </div>
         </TabPane>

@@ -8,20 +8,20 @@ export interface InfoRow {
 }
 
 interface InfoRowProps extends InfoRow {
-  seperator: boolean;
+  separator: boolean;
 }
 
 interface Props {
   header?: React.ReactNode;
   rows: InfoRow[];
-  seperator?: boolean;
+  separator?: boolean;
 }
 
-export const renderRow = ({ label, content, seperator }: InfoRowProps): React.ReactNode => {
+export const renderRow = ({ label, content, separator }: InfoRowProps): React.ReactNode => {
   if (content == null) return null;
   return (
     <div
-      className={[ css.info, seperator ? css.seperator : null ].join(' ')}
+      className={[ css.info, separator ? css.separator : null ].join(' ')}
       key={label?.toString()}>
       <dt className={css.label}>{label}</dt>
       {Array.isArray(content) ?
@@ -35,11 +35,11 @@ export const renderRow = ({ label, content, seperator }: InfoRowProps): React.Re
   );
 };
 
-const InfoBox: React.FC<Props> = ({ header, rows, seperator = true }: Props) => {
+const InfoBox: React.FC<Props> = ({ header, rows, separator = true }: Props) => {
   return (
     <dl className={css.base}>
       {header != null ? <div className={css.header}>{header}</div>: null}
-      {rows.map((row) => renderRow({ ...row, seperator }))}
+      {rows.map((row) => renderRow({ ...row, separator }))}
     </dl>
   );
 };

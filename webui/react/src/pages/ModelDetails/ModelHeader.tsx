@@ -117,7 +117,7 @@ const ModelHeader: React.FC<Props> = (
             </Dropdown>
           </Space>
         </div>
-        <InfoBox rows={infoRows} seperator={false} />
+        <InfoBox rows={infoRows} separator={false} />
       </div>
     </header>
   );

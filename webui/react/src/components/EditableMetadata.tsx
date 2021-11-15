@@ -7,7 +7,7 @@ import Icon from './Icon';
 import InfoBox, { InfoRow } from './InfoBox';
 
 interface Props {
-  editing: boolean;
+  editing?: boolean;
   metadata: Record<string, string>;
   updateMetadata?: (obj: Record<string, string>) => void;
 }
@@ -87,7 +87,7 @@ const EditableRow: React.FC<EditableRowProps> = (
         <Input placeholder="Enter metadata label" />
       </Form.Item>
       <Form.Item name={[ name, 'value' ]} noStyle>
-        <Input placeholder="Enter metadata" />
+        <Input placeholder="Enter metadata value" />
       </Form.Item>
       {onDelete && <Dropdown
         className={css.overflow}

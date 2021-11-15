@@ -132,7 +132,7 @@ const ModelVersionHeader: React.FC<Props> = (
             </Dropdown>
           </div>
         </div>
-        <InfoBox rows={infoRows} seperator={false} />
+        <InfoBox rows={infoRows} separator={false} />
       </div>
     </header>
   );
