@@ -69,12 +69,6 @@ const ModelDetails: React.FC = () => {
     setIsLoading(true);
   }, [ fetchModel ]);
 
-  const downloadVersion = useCallback((version: ModelVersion) => {
-    //open download popover
-    //eslint-disable-next-line
-    console.log(version)
-  }, []);
-
   const setModelVersionTags = useCallback((modelId, versionId, tags) => {
     patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
     fetchModel();
