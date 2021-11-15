@@ -1161,7 +1161,7 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 		 job_id, u.username as username
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
-WHERE id = $1`, &experiment, id); err != nil {
+WHERE e.id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
 
@@ -1199,7 +1199,7 @@ SELECT e.id, state, model_definition, start_time, end_time, archived,
 			 job_id, u.username as username
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
-WHERE id = $1`, &experiment, id); err != nil {
+WHERE e.id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
 
