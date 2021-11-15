@@ -31,7 +31,7 @@ type (
 		// System dependencies.
 		db     db.DB
 		rm     *actor.Ref
-		logger *actor.Ref
+		logger *Logger
 
 		// The request to create the allocation, essentially our configuration.
 		req sproto.AllocateRequest
@@ -120,7 +120,9 @@ const (
 )
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
-func NewAllocation(req sproto.AllocateRequest, db db.DB, rm, logger *actor.Ref) actor.Actor {
+func NewAllocation(
+	req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
+) actor.Actor {
 	return &Allocation{
 		db:     db,
 		rm:     rm,
@@ -640,7 +642,7 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 
 func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
 	ev = a.enrichEvent(ctx, ev)
-	ctx.Tell(a.logger, a.enrichLog(ev.ToTaskLog()))
+	a.logger.Insert(ctx, a.enrichLog(ev.ToTaskLog()))
 	if a.req.StreamEvents != nil {
 		ctx.Tell(a.req.StreamEvents.To, ev)
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
 const (
@@ -49,18 +48,6 @@ func (a *apiServer) AllocationReady(
 	return &apiv1.AllocationReadyResponse{}, nil
 }
 
-// TaskLogBackend is an interface task log backends, such as elastic or postgres,
-// must support to provide the features surfaced in our API.
-type TaskLogBackend interface {
-	TaskLogs(
-		taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
-	) ([]*model.TaskLog, interface{}, error)
-	AddTaskLogs([]*model.TaskLog) error
-	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
-	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
-	DeleteTaskLogs(taskIDs []model.TaskID) error
-}
-
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {
@@ -82,7 +69,7 @@ func (a *apiServer) TaskLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{})
+	res := make(chan api.BatchResult)
 	go a.taskLogs(ctx, req, res)
 
 	return processBatches(res, func(b api.Batch) error {
@@ -97,12 +84,14 @@ func (a *apiServer) TaskLogs(
 }
 
 func (a *apiServer) taskLogs(
-	ctx context.Context, req *apiv1.TaskLogsRequest, res chan interface{},
+	ctx context.Context, req *apiv1.TaskLogsRequest, res chan api.BatchResult,
 ) {
 	taskID := model.TaskID(req.TaskId)
 	filters, err := constructTaskLogsFilters(req)
 	if err != nil {
-		res <- status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		res <- api.ErrBatchResult(
+			status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err)),
+		)
 		return
 	}
 
@@ -127,7 +116,7 @@ func (a *apiServer) taskLogs(
 
 	total, err := a.m.taskLogBackend.TaskLogsCount(taskID, filters)
 	if err != nil {
-		res <- fmt.Errorf("getting log count from backend: %w", err)
+		res <- api.ErrBatchResult(fmt.Errorf("getting log count from backend: %w", err))
 		return
 	}
 	effectiveLimit := api.EffectiveLimit(int(req.Limit), 0, total)
@@ -164,22 +153,7 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 	addInFilter("level", func() interface{} {
 		var levels []string
 		for _, l := range req.Levels {
-			switch l {
-			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
-				levels = append(levels, model.LogLevelUnspecified)
-			case logv1.LogLevel_LOG_LEVEL_TRACE:
-				levels = append(levels, model.LogLevelTrace)
-			case logv1.LogLevel_LOG_LEVEL_DEBUG:
-				levels = append(levels, model.LogLevelDebug)
-			case logv1.LogLevel_LOG_LEVEL_INFO:
-				levels = append(levels, model.LogLevelInfo)
-			case logv1.LogLevel_LOG_LEVEL_WARNING:
-				levels = append(levels, model.LogLevelWarn)
-			case logv1.LogLevel_LOG_LEVEL_ERROR:
-				levels = append(levels, model.LogLevelError)
-			case logv1.LogLevel_LOG_LEVEL_CRITICAL:
-				levels = append(levels, model.LogLevelCritical)
-			}
+			levels = append(levels, model.TaskLogLevelFromProto(l))
 		}
 		return levels
 	}(), len(req.Levels))
@@ -220,7 +194,7 @@ func (a *apiServer) TaskLogsFields(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{})
+	res := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
@@ -255,22 +229,21 @@ func (a *apiServer) isTaskTerminalFunc(
 	}
 }
 
-func processBatches(res chan interface{}, h func(api.Batch) error) error {
+func processBatches(res chan api.BatchResult, h func(api.Batch) error) error {
 	var err *multierror.Error
 	for r := range res {
-		switch r := r.(type) {
-		case error:
+		if r.Err() != nil {
 			// Failing but not returning here will cause us to wait for the downstream
 			// processor to fail from its error or continue.
-			err = multierror.Append(err, r)
-		case api.Batch:
-			if hErr := h(r); hErr != nil {
-				// Since this is our failure, we fail and return. This should cause upstream
-				// processses and cause downstream senders to cancel.
-				return hErr
-			}
-		default:
-			panic(fmt.Sprintf("unexpected result %T", r))
+			err = multierror.Append(err, r.Err())
+			continue
+		}
+
+		hErr := h(r.Batch())
+		if hErr != nil {
+			// Since this is our failure, we fail and return. This should cause upstream
+			// processses and cause downstream senders to cancel.
+			return hErr
 		}
 	}
 	return err.ErrorOrNil()

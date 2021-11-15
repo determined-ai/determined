@@ -40,9 +40,9 @@ type trial struct {
 	experimentID int
 
 	// System dependencies.
-	rm     *actor.Ref
-	logger *actor.Ref
-	db     db.DB
+	rm         *actor.Ref
+	taskLogger *task.Logger
+	db         db.DB
 
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
@@ -72,7 +72,7 @@ func newTrial(
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
-	rm, logger *actor.Ref,
+	rm *actor.Ref, taskLogger *task.Logger,
 	db db.DB,
 	config expconf.ExperimentConfig,
 	warmStartCheckpoint *model.Checkpoint,
@@ -85,9 +85,9 @@ func newTrial(
 		state:        initialState,
 		searcher:     searcher,
 
-		rm:     rm,
-		logger: logger,
-		db:     db,
+		rm:         rm,
+		taskLogger: taskLogger,
+		db:         db,
 
 		config:              config,
 		taskSpec:            taskSpec,
@@ -156,13 +156,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}); err != nil {
 			ctx.Log().WithError(err).Warn("dropping container log")
 		} else {
-			ctx.Tell(t.logger, log)
+			t.taskLogger.Insert(ctx, log)
 		}
 	case model.TaskLog:
 		if log, err := t.enrichTaskLog(msg); err != nil {
 			ctx.Log().WithError(err).Warn("dropping trial log")
 		} else {
-			ctx.Tell(t.logger, log)
+			t.taskLogger.Insert(ctx, log)
 		}
 
 	default:
@@ -218,7 +218,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 		Preemptible:  true,
 		DoRendezvous: true,
-	}, t.db, t.rm, t.logger))
+	}, t.db, t.rm, t.taskLogger))
 	return nil
 }
 

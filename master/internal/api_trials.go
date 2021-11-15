@@ -29,7 +29,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -77,7 +76,7 @@ func (a *apiServer) TrialLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{}, 1)
+	res := make(chan api.BatchResult, 1)
 	switch t, err := a.m.db.TaskByID(taskID); {
 	case errors.Is(err, sql.ErrNoRows), t.LogVersion == 0:
 		go a.legacyTrialLogs(ctx, req, res)
@@ -124,19 +123,22 @@ func (a *apiServer) TrialLogs(
 }
 
 func (a *apiServer) legacyTrialLogs(
-	ctx context.Context, req *apiv1.TrialLogsRequest, res chan interface{},
+	ctx context.Context, req *apiv1.TrialLogsRequest, res chan api.BatchResult,
 ) {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
-		res <- err
+		res <- api.ErrBatchResult(err)
 		return
 	}
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
-		res <- status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		// TODO(Brad): is this 400 propogated?
+		res <- api.ErrBatchResult(
+			status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err)),
+		)
 		return
 	}
 
@@ -161,7 +163,7 @@ func (a *apiServer) legacyTrialLogs(
 
 	total, err := a.m.trialLogBackend.TrialLogsCount(int(req.TrialId), filters)
 	if err != nil {
-		res <- fmt.Errorf("failed to get trial count from backend: %w", err)
+		res <- api.ErrBatchResult(fmt.Errorf("failed to get trial count from backend: %w", err))
 		return
 	}
 	effectiveLimit := api.EffectiveLimit(int(req.Limit), 0, total)
@@ -197,22 +199,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 	addInFilter("level", func() interface{} {
 		var levels []string
 		for _, l := range req.Levels {
-			switch l {
-			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
-				levels = append(levels, model.LogLevelDebug)
-			case logv1.LogLevel_LOG_LEVEL_TRACE:
-				levels = append(levels, model.LogLevelTrace)
-			case logv1.LogLevel_LOG_LEVEL_DEBUG:
-				levels = append(levels, model.LogLevelDebug)
-			case logv1.LogLevel_LOG_LEVEL_INFO:
-				levels = append(levels, model.LogLevelInfo)
-			case logv1.LogLevel_LOG_LEVEL_WARNING:
-				levels = append(levels, model.LogLevelWarn)
-			case logv1.LogLevel_LOG_LEVEL_ERROR:
-				levels = append(levels, model.LogLevelError)
-			case logv1.LogLevel_LOG_LEVEL_CRITICAL:
-				levels = append(levels, model.LogLevelCritical)
-			}
+			levels = append(levels, model.TaskLogLevelFromProto(l))
 		}
 		return levels
 	}(), len(req.Levels))
@@ -251,7 +238,7 @@ func (a *apiServer) TrialLogsFields(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{})
+	res := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
@@ -486,7 +473,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{})
+	res := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Limit: math.MaxInt32, Follow: req.Follow},
 		fetch,
@@ -527,7 +514,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{})
+	res := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,

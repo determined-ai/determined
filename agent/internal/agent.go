@@ -449,7 +449,7 @@ func (a *agent) postTaskLog(log model.TaskLog) error {
 	}
 
 	resp, err := a.masterClient.Post(
-		fmt.Sprintf("%s://%s:%d/task_logs", a.masterProto, a.MasterHost, a.MasterPort),
+		fmt.Sprintf("%s://%s:%d/task-logs", a.masterProto, a.MasterHost, a.MasterPort),
 		"application/json",
 		bytes.NewReader(j),
 	)

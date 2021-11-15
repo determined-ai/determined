@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO(brad); BEGIN: Pull into task-logging-setup.sh
 STDOUT_FILE=/run/determined/train/logs/stdout.log
 STDERR_FILE=/run/determined/train/logs/stderr.log
 
@@ -28,6 +29,7 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
     mkdir -p -m 755 $STDERR_ROTATE_DIR
     exec > >(multilog n2 "$STDOUT_ROTATE_DIR")  2> >(multilog n2 "$STDERR_ROTATE_DIR")
 fi
+# TODO(brad); END: Pull into task-logging-setup.sh
 
 set -e
 set -x

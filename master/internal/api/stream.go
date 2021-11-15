@@ -14,6 +14,32 @@ type BatchRequest struct {
 	Follow bool
 }
 
+// BatchResult contains either a batch or an error.
+type BatchResult struct {
+	batch Batch
+	err   error
+}
+
+// Batch returns the inner batch or nil.
+func (r *BatchResult) Batch() Batch {
+	return r.batch
+}
+
+// Err returns the inner error or nil.
+func (r *BatchResult) Err() error {
+	return r.err
+}
+
+// OkBatchResult returns a BatchResult with a valid batch and nil error.
+func OkBatchResult(b Batch) BatchResult {
+	return BatchResult{batch: b}
+}
+
+// ErrBatchResult returns a BatchResult with an error and no batch.
+func ErrBatchResult(err error) BatchResult {
+	return BatchResult{err: err}
+}
+
 // Batch represents a batch of logs.
 type Batch interface {
 	ForEach(func(interface{}) error) error
@@ -85,7 +111,7 @@ func NewBatchStreamProcessor(
 // Run runs the batch stream processor. There is an implicit assumption upstream that errors
 // won't be sent forever, so after encountering an error in Run, we should log and continue
 // or send and return.
-func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
+func (p *BatchStreamProcessor) Run(ctx context.Context, res chan BatchResult) {
 	t := time.NewTicker(p.batchWaitTime)
 	defer t.Stop()
 	defer close(res)
@@ -93,7 +119,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
 		var miss bool
 		switch batch, err := p.fetcher(p.req); {
 		case err != nil:
-			res <- errors.Wrapf(err, "failed to fetch batch")
+			res <- ErrBatchResult(errors.Wrapf(err, "failed to fetch batch"))
 			return
 		case batch == nil, batch.Size() == 0:
 			if !p.req.Follow {
@@ -109,7 +135,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
 			}
 			p.req.Limit -= batch.Size()
 			p.req.Offset += batch.Size()
-			res <- batch
+			res <- OkBatchResult(batch)
 			if !p.req.Follow && p.req.Limit <= 0 {
 				return
 			}
@@ -118,7 +144,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
 		if (miss || p.alwaysCheckTermination) && p.terminateCheck != nil {
 			switch terminate, err := p.terminateCheck(); {
 			case err != nil:
-				res <- errors.Wrap(err, "failed to check the termination status")
+				res <- ErrBatchResult(errors.Wrap(err, "failed to check the termination status"))
 				return
 			case terminate:
 				return

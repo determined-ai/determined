@@ -177,14 +177,15 @@ func setup(t *testing.T) (
 	rm := system.MustActorOf(actor.Addr("rm"), &rmImpl)
 
 	// mock trial
+	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	loggerAddr := "logger"
+	loggerActor := system.MustActorOf(actor.Addr(loggerAddr), &loggerImpl)
+	logger := NewCustomLogger(loggerActor)
+
+	// mock trial
 	trialImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	trialAddr := "trial"
 	trial := system.MustActorOf(actor.Addr(trialAddr), &trialImpl)
-
-	// mock trial
-	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	loggerAddr := "logger"
-	logger := system.MustActorOf(actor.Addr(loggerAddr), &loggerImpl)
 
 	// mock db.
 	db := &mocks.DB{}

@@ -86,7 +86,7 @@ func (a *apiServer) NotebookLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{}, 1)
+	res := make(chan api.BatchResult, 1)
 	go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
 		TaskId: req.NotebookId,
 		Limit:  req.Limit,

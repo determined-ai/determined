@@ -36,7 +36,7 @@ type terminateForGC struct{}
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
-	logger *actor.Ref,
+	taskLogger *task.Logger,
 	taskID model.TaskID,
 	taskType model.TaskType,
 	jobType model.JobType,
@@ -45,8 +45,8 @@ func createGenericCommandActor(
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	cmd := &command{
-		db:     db,
-		logger: logger,
+		db:         db,
+		taskLogger: taskLogger,
 
 		GenericCommandSpec: spec,
 
@@ -71,7 +71,7 @@ func createGenericCommandActor(
 type command struct {
 	db          *db.PgDB
 	eventStream *actor.Ref
-	logger      *actor.Ref
+	taskLogger  *task.Logger
 
 	tasks.GenericCommandSpec
 
@@ -159,7 +159,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			StreamEvents: eventStreamConfig,
 			ProxyPort:    portProxyConf,
 			IdleTimeout:  idleWatcherConfig,
-		}, c.db, sproto.GetRM(ctx.Self().System()), c.logger)
+		}, c.db, sproto.GetRM(ctx.Self().System()), c.taskLogger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 	case actor.PostStop:

@@ -82,7 +82,7 @@ func (a *apiServer) MasterLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan interface{}, 1)
+	res := make(chan api.BatchResult, 1)
 	go api.NewBatchStreamProcessor(
 		lReq,
 		fetch,

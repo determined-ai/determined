@@ -190,6 +190,28 @@ const (
 	LogLevelUnspecified = "UNSPECIFIED"
 )
 
+// TaskLogLevelFromProto returns a task log level from its protobuf repr.
+func TaskLogLevelFromProto(l logv1.LogLevel) string {
+	switch l {
+	case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
+		return LogLevelUnspecified
+	case logv1.LogLevel_LOG_LEVEL_TRACE:
+		return LogLevelTrace
+	case logv1.LogLevel_LOG_LEVEL_DEBUG:
+		return LogLevelDebug
+	case logv1.LogLevel_LOG_LEVEL_INFO:
+		return LogLevelInfo
+	case logv1.LogLevel_LOG_LEVEL_WARNING:
+		return LogLevelWarn
+	case logv1.LogLevel_LOG_LEVEL_ERROR:
+		return LogLevelError
+	case logv1.LogLevel_LOG_LEVEL_CRITICAL:
+		return LogLevelCritical
+	default:
+		return LogLevelUnspecified
+	}
+}
+
 // TaskLog represents a structured log emitted by an allocation.
 type TaskLog struct {
 	// A task log should have one of these IDs after being persisted. All should be unique.

@@ -9,7 +9,11 @@ mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
 ln -sf /proc/$$/fd/1 "$STDOUT_FILE"
 ln -sf /proc/$$/fd/2 "$STDERR_FILE"
 if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
-    exec > >(multilog n2 "$STDOUT_FILE-rotate")  2> >(multilog n2 "$STDERR_FILE-rotate")
+    STDOUT_ROTATE_DIR="$STDOUT_FILE-rotate"
+    STDERR_ROTATE_DIR="$STDERR_FILE-rotate"
+    mkdir -p -m 755 $STDOUT_ROTATE_DIR
+    mkdir -p -m 755 $STDERR_ROTATE_DIR
+    exec > >(multilog n2 "$STDOUT_ROTATE_DIR")  2> >(multilog n2 "$STDERR_ROTATE_DIR")
 fi
 
 set -e

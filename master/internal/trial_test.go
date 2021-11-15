@@ -138,15 +138,18 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	rmImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	rm := system.MustActorOf(actor.Addr("rm"), &rmImpl)
 
-	// mock allocation
-	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	taskAllocator = func(req sproto.AllocateRequest, db db.DB, rm, l *actor.Ref) actor.Actor {
-		return &allocImpl
-	}
-
 	// mock logger.
 	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	logger := system.MustActorOf(actor.Addr("logger"), &loggerImpl)
+	loggerActor := system.MustActorOf(actor.Addr("logger"), &loggerImpl)
+	logger := task.NewCustomLogger(loggerActor)
+
+	// mock allocation
+	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	taskAllocator = func(
+		req sproto.AllocateRequest, db db.DB, rm *actor.Ref, l *task.Logger,
+	) actor.Actor {
+		return &allocImpl
+	}
 
 	// mock db.
 	db := &mocks.DB{}

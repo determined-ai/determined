@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -72,7 +73,7 @@ type (
 
 		*model.Experiment
 		rm                  *actor.Ref
-		taskLogger          *actor.Ref
+		taskLogger          *task.Logger
 		hpImportance        *actor.Ref
 		db                  *db.PgDB
 		searcher            *searcher.Searcher

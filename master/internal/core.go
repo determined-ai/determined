@@ -23,6 +23,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
@@ -77,11 +78,11 @@ type Master struct {
 	rwCoordinator *actor.Ref
 	db            *db.PgDB
 	proxy         *actor.Ref
-	taskLogger    *actor.Ref
+	taskLogger    *task.Logger
 	hpImportance  *actor.Ref
 
 	trialLogBackend TrialLogBackend
-	taskLogBackend  TaskLogBackend
+	taskLogBackend  task.LogBackend
 }
 
 // New creates an instance of the Determined master.
@@ -612,7 +613,7 @@ func (m *Master) Run(ctx context.Context) error {
 	default:
 		panic("unsupported logging backend")
 	}
-	m.taskLogger, _ = m.system.ActorOf(actor.Addr("taskLogger"), newTaskLogger(m.taskLogBackend))
+	m.taskLogger = task.NewLogger(m.system, m.taskLogBackend)
 
 	userService, err := user.New(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	if err != nil {
@@ -808,7 +809,7 @@ func (m *Master) Run(ctx context.Context) error {
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
-	m.echo.POST("/task_logs", api.Route(m.postTaskLogs))
+	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
 
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
