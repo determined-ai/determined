@@ -4,6 +4,7 @@ from typing import Any, List
 
 import yaml
 
+from determined.cli import render
 from determined.cli.session import setup_session
 from determined.common.api import authentication
 from determined.common.api.b import get_GetJobs
@@ -24,7 +25,36 @@ def ls(args: Namespace) -> None:
     elif args.output == "json":
         print(json.dumps(response.to_json(), indent=4, default=str))
     elif ["csv", "table"].count(args.output) > 0:
-        raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
+        headers = [
+            "Jobs Ahead",
+            "ID",
+            "Entity ID",
+            "Status",
+            "Type",
+            "Slots Acquired",
+            "Slots Requested",
+            "Name",
+            "User",
+            "Submission Time",
+        ]
+        values = [
+            [
+                j.summary.jobsAhead
+                if j.summary is not None and j.summary.jobsAhead > -1
+                else "N/A",
+                j.jobId,
+                j.entityId,
+                j.summary.state if j.summary is not None else "N/A",
+                j.type,
+                j.allocatedSlots,
+                j.requestedSlots,
+                j.name,
+                j.username,
+                j.submissionTime,
+            ]
+            for j in response.jobs
+        ]
+        render.tabulate_or_csv(headers, values, as_csv=args.output == "csv")
     else:
         raise ValueError(f"Bad output format: {args.output}")
 
