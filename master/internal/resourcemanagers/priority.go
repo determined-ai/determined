@@ -122,7 +122,7 @@ func adjustPriorities(groups map[*actor.Ref]*group, reqs []*sproto.AllocateReque
 				}
 
 				// set queue positions
-				if seeker >= len(reqs) - 1 {
+				if seeker >= len(reqs)-1 {
 					for setter := i; setter < len(reqs); setter++ {
 						groups[reqs[setter].Group].qPosition = prev + 1
 						prev++
@@ -432,9 +432,9 @@ func sortTasksWithPosition(
 		p2 := *groups[reqs[j].Group].priority
 		switch {
 		case p1 > p2:
-			return true
-		case p2 > p1:
 			return false
+		case p2 > p1:
+			return true
 		}
 
 		if isPositionSet {

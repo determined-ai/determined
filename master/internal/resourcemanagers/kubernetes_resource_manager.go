@@ -205,9 +205,6 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight:
-		// SetGroupWeight is not supported by the Kubernetes RP.
-
 	case sproto.SetGroupPriority:
 		group := k.getOrCreateGroup(ctx, msg.Handler)
 		if msg.Priority != nil {
@@ -305,7 +302,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	//	resp := k.getJobSummary(msg.JobID)
 	//	ctx.Respond(resp)
 	case job.GetJobQStats:
-		ctx.Respond(*k.getJobQStats())
+		ctx.Respond(k.getJobQStats())
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -326,6 +323,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 //	return nil
 //}
 
+// TODO: consolidate these jq functions into the job queue
 func (k *kubernetesResourceManager) getJobQStats() *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
