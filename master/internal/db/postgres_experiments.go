@@ -1157,9 +1157,11 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
-FROM experiments
+SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+		 job_id, u.username as username
+FROM experiments e
+JOIN users u ON (e.owner_id = u.id)
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
@@ -1193,9 +1195,11 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
-FROM experiments
+SELECT e.id, state, model_definition, start_time, end_time, archived,
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+			 job_id, u.username as username
+FROM experiments e
+JOIN users u ON e.owner_id = u.id
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
@@ -1228,9 +1232,11 @@ FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
-SELECT id, state, config, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
-FROM experiments
+SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
+			 u.username as username
+FROM experiments e
+JOIN users u ON e.owner_id = u.id
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
 	if err == sql.ErrNoRows {
 		return nil, errors.WithStack(ErrNotFound)
