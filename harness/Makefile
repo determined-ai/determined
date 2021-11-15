@@ -1,7 +1,5 @@
-API_BINDINGS=determined/common/api/b.py
-
 .PHONY: build
-build: gen $(API_BINDINGS)
+build: gen
 	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
 
 .PHONY: publish
@@ -19,9 +17,6 @@ check: check-gen
 	black . --check
 	flake8
 	mypy .
-
-$(API_BINDINGS):
-	$(MAKE) -C ../bindings build/python
 
 .PHONY: test
 test: gen
@@ -46,7 +41,6 @@ clean: ungen
 	rm -rf pip-wheel-metadata/
 	rm -rf dist/
 	rm -rf build/
-	rm $(API_BINDINGS)
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
 AWS_TEMPLATES_PATH := determined/deploy/aws/templates
@@ -66,7 +60,7 @@ ungen:
 	git checkout -- $(GENERATED_COMMITTED)
 
 .PHONY: gen
-gen: $(GENERATED_COMMITTED) determined/common/api/b.py
+gen: $(GENERATED_COMMITTED)
 
 .PHONY: force-gen
 force-gen:
