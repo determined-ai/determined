@@ -1,0 +1,1 @@
+- joda az generation cli a proje ro anjam bede
