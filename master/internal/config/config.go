@@ -264,7 +264,12 @@ func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bo
 		}
 	}
 
-	// TODO k8 RM?
+	if config.ResourceManager.KubernetesRM != nil {
+		if config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption" {
+			RMPremption = true
+		}
+	}
+
 	return jobPreemptible && RMPremption
 }
 
@@ -306,7 +311,10 @@ func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
 		return *prio
 	}
 
-	// TODO k8 RM?
+	if config.ResourceManager.KubernetesRM != nil {
+		return resourcemanagers.KubernetesDefaultPriority
+	}
+
 	return resourcemanagers.DefaultSchedulingPriority
 }
 
