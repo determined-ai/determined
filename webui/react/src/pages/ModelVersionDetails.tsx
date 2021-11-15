@@ -1,5 +1,5 @@
 import { CopyOutlined, EditOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Card, Space, Tabs, Tooltip } from 'antd';
+import { Breadcrumb, Button, Card, notification, Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
@@ -92,6 +92,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(referenceText);
+    notification.open({ message: 'Copied to clipboard' });
   }, [ referenceText ]);
 
   const metadata = Object.entries(modelVersion?.metadata ?? {}).map((pair) => {

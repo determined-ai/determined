@@ -1,5 +1,5 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Input, Popover, Tooltip } from 'antd';
+import { Input, notification, Popover, Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import { ModelVersion } from 'types';
@@ -19,6 +19,7 @@ const DownloadModelPopover: React.FC<Props> = (
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(downloadCommand);
+    notification.open({ message: 'Copied to clipboard' });
     setVisible(false);
   }, [ downloadCommand ]);
 
