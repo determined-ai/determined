@@ -33,6 +33,7 @@ func (a *apiServer) GetJobs(
 		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 
+	// order by jobsAhead first and JobId second.
 	sort.SliceStable(jobs, func(i, j int) bool {
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
 			i, j = j, i

@@ -50,7 +50,7 @@ func (g groupState) String() string {
 }
 
 func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	defer f.updateJobs(rp) // CHECK does this work how I think it does?
+	defer f.updateJobs(rp)
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
