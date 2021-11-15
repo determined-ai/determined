@@ -5,8 +5,11 @@ import typing
 if typing.TYPE_CHECKING:
     from determined.experimental import client
 
+# flake8: noqa
+Json = typing.Any
 
-def dump_float(val):
+
+def dump_float(val: typing.Any) -> typing.Any:
     if math.isnan(val):
         return "Nan"
     if math.isinf(val):
@@ -40,13 +43,13 @@ class v1GetJobsResponse:
         self.jobs = jobs
 
     @classmethod
-    def from_json(cls, obj):
+    def from_json(cls, obj: Json) -> "v1GetJobsResponse":
         return cls(
             pagination=v1Pagination.from_json(obj["pagination"]),
             jobs=[v1Job.from_json(x) for x in obj["jobs"]],
         )
 
-    def to_json(self):
+    def to_json(self) -> typing.Any:
         return {
             "pagination": self.pagination.to_json(),
             "jobs": [x.to_json() for x in self.jobs],
@@ -85,7 +88,7 @@ class v1Job:
         self.name = name
 
     @classmethod
-    def from_json(cls, obj):
+    def from_json(cls, obj: Json) -> "v1Job":
         return cls(
             summary=v1JobSummary.from_json(obj["summary"])
             if obj.get("summary", None) is not None
@@ -104,7 +107,7 @@ class v1Job:
             name=obj["name"],
         )
 
-    def to_json(self):
+    def to_json(self) -> typing.Any:
         return {
             "summary": self.summary.to_json() if self.summary is not None else None,
             "type": self.type,
@@ -132,13 +135,13 @@ class v1JobSummary:
         self.jobsAhead = jobsAhead
 
     @classmethod
-    def from_json(cls, obj):
+    def from_json(cls, obj: Json) -> "v1JobSummary":
         return cls(
             state=obj["state"],
             jobsAhead=obj["jobsAhead"],
         )
 
-    def to_json(self):
+    def to_json(self) -> typing.Any:
         return {
             "state": self.state,
             "jobsAhead": self.jobsAhead,
@@ -161,7 +164,7 @@ class v1Pagination:
         self.total = total
 
     @classmethod
-    def from_json(cls, obj):
+    def from_json(cls, obj: Json) -> "v1Pagination":
         return cls(
             offset=obj["offset"] if obj.get("offset", None) is not None else None,
             limit=obj["limit"] if obj.get("limit", None) is not None else None,
@@ -170,7 +173,7 @@ class v1Pagination:
             total=obj["total"] if obj.get("total", None) is not None else None,
         )
 
-    def to_json(self):
+    def to_json(self) -> typing.Any:
         return {
             "offset": self.offset if self.offset is not None else None,
             "limit": self.limit if self.limit is not None else None,
