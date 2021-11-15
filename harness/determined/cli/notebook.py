@@ -9,6 +9,8 @@ from determined.common import api
 from determined.common.api import authentication
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.api.b import post_LaunchNotebook, v1LaunchNotebookRequest
+from determined.cli.session import setup_session
 
 from .command import (
     CONFIG_DESC,
@@ -24,14 +26,9 @@ from .command import (
 def start_notebook(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)
 
-    resp = launch_command(
-        args.master,
-        "api/v1/notebooks",
-        config,
-        args.template,
-        context_path=args.context,
-        preview=args.preview,
-    )
+
+    body = v1LaunchNotebookRequest(config, preview=True)
+    post_LaunchNotebook(setup_session(args), body=body)
 
     if args.preview:
         print(render.format_object_as_yaml(resp["config"]))
