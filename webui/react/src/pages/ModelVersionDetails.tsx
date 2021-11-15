@@ -43,6 +43,7 @@ const ModelVersionDetails: React.FC = () => {
   const { modelId, versionId, tab } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
+  const [ isNotesLoading, setIsNotesLoading ] = useState(true);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
   const history = useHistory();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
@@ -55,6 +56,7 @@ const ModelVersionDetails: React.FC = () => {
         { modelId: parseInt(modelId), versionId: parseInt(versionId) },
       );
       if (!isEqual(versionData, modelVersion)) setModelVersion(versionData);
+      setIsNotesLoading(false);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
@@ -117,12 +119,15 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     setIsEditingMetadata(false);
   }, []);
 
-  const saveNotes = useCallback((editedNotes: string) => {
-    patchModelVersion({
+  const saveNotes = useCallback(async (editedNotes: string) => {
+    setIsNotesLoading(true);
+    const versionResponse = await patchModelVersion({
       body: { id: parseInt(modelId), notes: editedNotes },
       modelId: parseInt(modelId),
       versionId: parseInt(versionId),
     });
+    setModelVersion(versionResponse);
+    setIsNotesLoading(false);
   }, [ modelId, versionId ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
@@ -246,17 +251,21 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                 <EditOutlined onClick={editMetadata} />
               </Tooltip>
             )}
-            title={'Metadata'}>
+            title="Metadata">
             <EditableMetadata
               editing={isEditingMetadata}
               metadata={modelVersion.metadata ?? {}}
               updateMetadata={setEditedMetadata} />
           </Card>
             }
-            <NotesCard
-              notes={modelVersion.notes ?? ''}
-              style={{ height: 350 }}
-              onSave={saveNotes} />
+            {isNotesLoading ?
+              <Card title="Notes">
+                <Spinner />
+              </Card> :
+              <NotesCard
+                notes={modelVersion.notes ?? ''}
+                style={{ height: 350 }}
+                onSave={saveNotes} />}
             <Card
               extra={(
                 <Tooltip title="Copy to Clipboard">
