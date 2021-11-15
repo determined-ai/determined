@@ -490,6 +490,10 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 
 // Resolve resolves the legacy Message field from the others provided.
 func (t *TrialLog) Resolve() {
+	if t.Message != "" {
+		return
+	}
+
 	var timestamp string
 	if t.Timestamp != nil {
 		timestamp = t.Timestamp.Format(time.RFC3339Nano)

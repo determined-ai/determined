@@ -139,10 +139,7 @@ func (a *apiServer) legacyTrialLogs(
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
-		// TODO(Brad): is this 400 propogated?
-		res <- api.ErrBatchResult(
-			status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err)),
-		)
+		res <- api.ErrBatchResult(errors.Wrap(err, "unsupported filter"))
 		return
 	}
 
@@ -175,7 +172,7 @@ func (a *apiServer) legacyTrialLogs(
 	api.NewBatchStreamProcessor(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
-		a.isTrialTerminalFunc(int(req.TrialId), taskLogsTerminationDelay),
+		a.isTrialTerminalFunc(int(req.TrialId), a.m.taskLogBackend.MaxTerminationDelay()),
 		false,
 		nil,
 		&trialLogsBatchMissWaitTime,
@@ -246,7 +243,7 @@ func (a *apiServer) TrialLogsFields(
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		a.isTrialTerminalFunc(int(req.TrialId), taskLogsTerminationDelay),
+		a.isTrialTerminalFunc(int(req.TrialId), a.m.taskLogBackend.MaxTerminationDelay()),
 		true,
 		&distinctFieldBatchWaitTime,
 		&distinctFieldBatchWaitTime,
@@ -254,8 +251,7 @@ func (a *apiServer) TrialLogsFields(
 
 	return processBatches(res, func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
-			return resp.Send(
-				r.(*apiv1.TrialLogsFieldsResponse))
+			return resp.Send(r.(*apiv1.TrialLogsFieldsResponse))
 		})
 	})
 }

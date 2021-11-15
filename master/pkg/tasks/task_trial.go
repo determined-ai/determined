@@ -72,7 +72,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			sshdConfigMode,
 			tar.TypeReg,
 		),
-
 		archive.RootItem(
 			trialSSHConfigFile,
 			etc.MustStaticFile(etc.SSHConfigResource),

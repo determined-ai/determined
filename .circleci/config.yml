@@ -1937,6 +1937,7 @@ workflows:
           name: test-e2e-cpu-elastic
           requires:
             - build-go
+          parallelism: 1
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
