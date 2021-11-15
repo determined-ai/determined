@@ -3,7 +3,7 @@ import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
-import { alphanumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 import { toHtmlId, truncate } from 'utils/string';
 
 import css from './TagList.module.scss';
@@ -109,7 +109,7 @@ const EditableTagList: React.FC<Props> = (
   return (
     <div aria-label={ARIA_LABEL_CONTAINER} className={classes.join(' ')} onClick={stopPropagation}>
       {tags
-        .sort((a, b) => alphanumericSorter(a, b))
+        .sort((a, b) => alphaNumericSorter(a, b))
         .map((tag, index) => {
           if (compact && !showMore && index >= COMPACT_MAX_THRESHOLD) {
             if (index > COMPACT_MAX_THRESHOLD) return null;

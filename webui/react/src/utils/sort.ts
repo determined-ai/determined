@@ -1,8 +1,6 @@
 import {
-  CommandState, HpImportance, MetricName, MetricType, Primitive, RunState, State,
+  CommandState, HpImportance, MetricName, MetricType, NullOrUndefined, Primitive, RunState, State,
 } from 'types';
-
-import { isNumber } from './data';
 
 const runStateSortValues: Record<RunState, number> = {
   [RunState.Active]: 0,
@@ -29,23 +27,50 @@ const commandStateSortValues: Record<CommandState, number> = {
   [CommandState.Terminated]: 6,
 };
 
-export const alphanumericSorter = (a?: string | number, b?: string | number): number => {
-  if (a != null && b!= null) {
-    const options = { numeric: isNumber(a), sensitivity: 'base' };
-    return a.toString().localeCompare(b.toString(), 'en', options);
-  }
-  if (a != null && b == null) return 1;
-  if (a == null && b != null) return -1;
-  return 0;
+/*
+ * Sort numbers and strings with the following properties.
+ *    - case insensitive
+ *    - numbers come before string
+ *    - place `null` and `undefined` at the end of numbers and strings
+ */
+export const alphaNumericSorter = (
+  a: NullOrUndefined<string | number>,
+  b: NullOrUndefined<string | number>,
+): number => {
+  // Handle undefined and null cases.
+  if (a == null || b == null) return nullSorter(a, b);
+
+  // Sort with English locale.
+  return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
 };
 
-export const booleanSorter = (a: boolean, b: boolean): number => {
+export const booleanSorter = (a: NullOrUndefined<boolean>, b: NullOrUndefined<boolean>): number => {
+  // Handle undefined and null cases.
+  if (a == null || b == null) return nullSorter(a, b);
+
   // True values first.
   return (a === b) ? 0 : (a ? -1 : 1);
 };
 
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
+/*
+ * Sorts ISO 8601 datetime strings.
+ * https://tc39.es/ecma262/#sec-date-time-string-format
+ */
+export const dateTimeStringSorter = (
+  a: NullOrUndefined<string>,
+  b: NullOrUndefined<string>,
+): number => {
+  // Handle undefined and null cases.
+  if (a == null || b == null) return nullSorter(a, b);
+
+  // Compare as date objects.
+  const [ aTime, bTime ] = [ new Date(a).getTime(), new Date(b).getTime() ];
+  if (aTime === bTime) return 0;
+  return aTime < bTime ? -1 : 1;
 };
 
 export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
@@ -66,40 +91,44 @@ export const metricNameSorter = (a: MetricName, b: MetricName): number => {
   const isBValidation = b.type === MetricType.Validation;
   if (isAValidation && !isBValidation) return -1;
   if (isBValidation && !isAValidation) return 1;
-  return alphanumericSorter(a.name, b.name);
+  return alphaNumericSorter(a.name, b.name);
 };
 
-export const numericSorter = (a?: number, b?: number, reverseOrder = false): number => {
-  if (a != null && b != null) {
-    const diff = reverseOrder ? b - a : a - b;
-    if (diff < 0) return -1;
-    if (diff > 0) return 1;
-    return 0;
-  }
-  if (a != null && b == null) return reverseOrder ? -1 : 1;
-  if (a == null && b != null) return reverseOrder ? 1 : -1;
+/*
+ * This also handles `undefined` and treats it equally as `null`.
+ * NOTE: `undefined == null` is true (double equal sign not triple)
+ */
+export const nullSorter = (a: unknown, b: unknown): number => {
+  if (a != null && b == null) return -1;
+  if (a == null && b != null) return 1;
   return 0;
 };
 
-export const primitiveSorter = (a: Primitive, b: Primitive): number => {
-  if (typeof a === 'boolean' && typeof b === 'boolean') {
-    return booleanSorter(a, b);
-  } else if (typeof a === 'number' && typeof b === 'number') {
-    return numericSorter(a, b);
-  } else if (typeof a === 'string' && typeof b === 'string') {
-    return alphanumericSorter(a, b);
-  }
+export const numericSorter = (a: NullOrUndefined<number>, b: NullOrUndefined<number>): number => {
+  // Handle undefined and null cases.
+  if (a == null || b == null) return nullSorter(a, b);
+
+  // Sort by numeric type.
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+};
+
+export const primitiveSorter = (
+  a: NullOrUndefined<Primitive>,
+  b: NullOrUndefined<Primitive>,
+): number => {
+  // Handle undefined and null cases.
+  if (a == null || b == null) return nullSorter(a, b);
+
+  // Sort by primitive type.
+  if (typeof a === 'boolean' && typeof b === 'boolean') return booleanSorter(a, b);
+  if (typeof a === 'number' && typeof b === 'number') return numericSorter(a, b);
+  if (typeof a === 'string' && typeof b === 'string') return alphaNumericSorter(a, b);
   return 0;
 };
 
 export const runStateSorter = (a: RunState, b: RunState): number => {
   return runStateSortValues[a] - runStateSortValues[b];
-};
-
-export const stringTimeSorter = (a: string, b: string): number => {
-  const aTime = new Date(a).getTime();
-  const bTime = new Date(b).getTime();
-  return aTime - bTime;
 };
 
 export const taskStateSorter = (a: State, b: State): number => {

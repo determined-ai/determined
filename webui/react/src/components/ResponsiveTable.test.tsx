@@ -6,7 +6,7 @@ import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { Pagination, RecordKey, UnknownRecord } from 'types';
-import { alphanumericSorter, numericSorter } from 'utils/sort';
+import { alphaNumericSorter, numericSorter } from 'utils/sort';
 import { generateAlphaNumeric } from 'utils/string';
 
 import ResponsiveTable from './ResponsiveTable';
@@ -43,13 +43,13 @@ const columns: ColumnType<TableItem>[] = [
   {
     dataIndex: 'id',
     key: 'id',
-    sorter: (a: TableItem, b: TableItem) => alphanumericSorter(a.id, b.id),
+    sorter: (a: TableItem, b: TableItem) => alphaNumericSorter(a.id, b.id),
     title: 'ID',
   },
   {
     dataIndex: 'name',
     key: 'name',
-    sorter: (a: TableItem, b: TableItem) => alphanumericSorter(a.name, b.name),
+    sorter: (a: TableItem, b: TableItem) => alphaNumericSorter(a.name, b.name),
     title: 'Name',
   },
   {

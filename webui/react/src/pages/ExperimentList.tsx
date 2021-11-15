@@ -36,7 +36,7 @@ import {
   ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentItem, RecordKey, RunState,
 } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
-import { alphanumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import {
   cancellableRunStates, deletableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
@@ -153,7 +153,7 @@ const ExperimentList: React.FC = () => {
   const fetchLabels = useCallback(async () => {
     try {
       const labels = await getExperimentLabels({ signal: canceler.signal });
-      labels.sort((a, b) => alphanumericSorter(a, b));
+      labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) {}
   }, [ canceler.signal ]);

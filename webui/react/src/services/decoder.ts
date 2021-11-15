@@ -420,15 +420,14 @@ export const decodeTrialResponseToTrialDetails = (
   };
 };
 
-export const jsonToLogs = (data: unknown): types.Log[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeLogs>(ioTypes.ioLogs, data);
-  return io.map(log => ({
-    id: log.id,
-    level: log.level ?
-      types.LogLevel[capitalize(log.level) as keyof typeof types.LogLevel] : undefined,
-    message: log.message,
-    time: log.time || undefined,
-  }));
+export const jsonToMasterLog = (data: unknown): types.Log => {
+  const logData = data as Sdk.V1MasterLogsResponse;
+  return ({
+    id: logData.logEntry?.id ?? 0,
+    level: decodeV1LogLevelToLogLevel(logData.logEntry?.level ?? Sdk.V1LogLevel.UNSPECIFIED),
+    message: logData.logEntry?.message ?? '',
+    time: logData.logEntry?.timestamp as unknown as string,
+  });
 };
 
 const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | undefined => {
@@ -450,7 +449,7 @@ const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(
 export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   const logData = data as Sdk.V1TrialLogsResponse;
   const log = {
-    id: logData.id,
+    id: parseInt(logData.id),
     level: decodeV1LogLevelToLogLevel(logData.level),
     message: logData.message,
     time: logData.timestamp as unknown as string,

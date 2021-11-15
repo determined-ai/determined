@@ -9,6 +9,7 @@ interface WithPagination {
 export type RecordKey = string | number | symbol;
 export type UnknownRecord = Record<RecordKey, unknown>;
 export type Primitive = boolean | number | string;
+export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [ T, T ];
 
@@ -563,11 +564,11 @@ export interface Log {
   level?: LogLevel;
   message: string;
   meta?: string;
-  time?: string;
+  time: string;
 }
 
 export interface TrialLog {
-  id: string;
+  id: number;
   level?: LogLevel;
   message: string;
   time: string;

@@ -18,7 +18,7 @@ import {
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
 } from 'types';
 import { hasObjectKeys } from 'utils/data';
-import { alphanumericSorter, hpImportanceSorter } from 'utils/sort';
+import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
 import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
@@ -175,8 +175,8 @@ const ExperimentVisualization: React.FC<Props> = ({
          */
         (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
         (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
-        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphanumericSorter);
-        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphanumericSorter);
+        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
+        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
           ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
           ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
@@ -227,7 +227,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       event => {
         if (!event) return;
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
-        const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
+        const newBatches = Object.values(batchesMap).sort(alphaNumericSorter);
         setBatches(newBatches);
       },
     ).catch(() => {

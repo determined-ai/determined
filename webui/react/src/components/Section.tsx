@@ -27,6 +27,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
   const id = props.id || defaultId;
   const classes = [ css.base ];
+  const titleClasses = [ css.title ];
 
   if (props.bodyBorder) classes.push(css.bodyBorder);
   if (props.bodyDynamic) classes.push(css.bodyDynamic);
@@ -35,12 +36,13 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   if (props.divider) classes.push(css.divider);
   if (props.filters) classes.push(css.filters);
   if (props.maxHeight) classes.push(css.maxHeight);
+  if (typeof props.title === 'string') titleClasses.push(css.string);
 
   return (
     <section className={classes.join(' ')} id={id}>
       {(props.title || props.options) && (
         <div className={css.header}>
-          {props.title && <h5 className={css.title}>{props.title}</h5>}
+          {props.title && <div className={titleClasses.join(' ')}>{props.title}</div>}
           {props.options && <div className={css.options}>{props.options}</div>}
         </div>
       )}

@@ -1,79 +1,45 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback } from 'react';
 
-import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
-import { getMasterLogs } from 'services/api';
-import { LogsParams } from 'services/types';
-import { Log } from 'types';
+import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import Page from 'components/Page';
+import { detApi } from 'services/apiConfig';
+import { jsonToMasterLog } from 'services/decoder';
+
+import css from './MasterLogs.module.scss';
 
 const MasterLogs: React.FC = () => {
-  const logsRef = useRef<LogViewerHandles>(null);
-  const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
-  const [ logIdRange, setLogIdRange ] =
-    useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
-  const [ logsResponse, triggerOldLogsRequest ] =
-    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
-  const [ pollingLogsResponse, triggerNewLogsRequest ] =
-    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
+  const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
+    const options = { follow: false, limit: config.limit, offset: 0 };
 
-  const fetchOlderLogs = useCallback((oldestLogId: number) => {
-    const startLogId = Math.max(0, oldestLogId - TAIL_SIZE);
-    if (startLogId >= oldestFetchedId) return;
-    setOldestFetchedId(startLogId);
-    triggerOldLogsRequest({ greaterThanId: startLogId, tail: TAIL_SIZE });
-  }, [ oldestFetchedId, triggerOldLogsRequest ]);
+    if (type === FetchType.Initial) {
+      if (config.isNewestFirst) options.offset = -config.limit;
+    } else if (type === FetchType.Newer) {
+      options.offset = config.offsetLog?.id ?? 0;
+    } else if (type === FetchType.Older) {
+      options.offset = Math.max(0, (config.offsetLog?.id ?? 0) - config.limit);
+    } else if (type === FetchType.Stream) {
+      options.offset = -1;
+      options.follow = true;
+      options.limit = 0;
+    }
 
-  const fetchNewerLogs = useCallback(() => {
-    if (logIdRange.max < 0) return;
-    triggerNewLogsRequest({ greaterThanId: logIdRange.max, tail: TAIL_SIZE });
-  }, [ logIdRange.max, triggerNewLogsRequest ]);
-
-  const handleScrollToTop = useCallback((oldestLogId: number) => {
-    fetchOlderLogs(oldestLogId);
-  }, [ fetchOlderLogs ]);
-
-  usePolling(fetchNewerLogs);
-
-  useEffect(() => {
-    if (!logsResponse.data || logsResponse.data.length === 0) return;
-
-    const minLogId = logsResponse.data.first().id;
-    const maxLogId = logsResponse.data.last().id;
-    if (minLogId >= logIdRange.min) return;
-
-    setLogIdRange({
-      max: Math.max(logIdRange.max, maxLogId),
-      min: Math.min(logIdRange.min, minLogId),
-    });
-
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(logsResponse.data, true);
-  }, [ logIdRange, logsResponse ]);
-
-  useEffect(() => {
-    if (!pollingLogsResponse.data || pollingLogsResponse.data.length === 0) return;
-
-    const minLogId: number = pollingLogsResponse.data[0].id;
-    const maxLogId: number = pollingLogsResponse.data.last().id;
-    if (maxLogId <= logIdRange.max) return;
-
-    setLogIdRange({
-      max: Math.max(logIdRange.max, maxLogId),
-      min: Math.min(logIdRange.min, minLogId),
-    });
-
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(pollingLogsResponse.data);
-  }, [ logIdRange, pollingLogsResponse.data ]);
+    return detApi.StreamingCluster.masterLogs(
+      options.offset,
+      options.limit,
+      options.follow,
+      { signal: config.canceler.signal },
+    );
+  }, []);
 
   return (
-    <LogViewer
-      noWrap
-      pageProps={{ title: 'Master Logs' }}
-      ref={logsRef}
-      onScrollToTop={handleScrollToTop}
-    />
+    <Page bodyNoPadding id="master-logs">
+      <LogViewerCore
+        decoder={jsonToMasterLog}
+        sortKey="id"
+        title={<div className={css.title}>Master Logs</div>}
+        onFetch={handleFetch}
+      />
+    </Page>
   );
 };
 

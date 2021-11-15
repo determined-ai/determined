@@ -463,7 +463,7 @@ export default class StepImplementation {
   @Step('Should have some log entries')
   public async checkSomeLogLines() {
     await t.waitFor(async () => {
-      const logs = await getElements('[class*=LogViewer_line]');
+      const logs = await getElements('[class*=LogViewerEntry_base]');
       return logs.length > 0;
     });
   }

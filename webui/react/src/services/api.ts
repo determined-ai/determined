@@ -4,7 +4,7 @@ import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
   GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
   GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorBoardsParams,
-  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse, LogsParams,
+  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse,
   PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
@@ -211,7 +211,5 @@ export const killTask = async (task: CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
-
-export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 
 export const getTaskLogs = generateApi<TaskLogsParams, Log[]>(Config.getTaskLogs);

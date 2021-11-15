@@ -4,7 +4,7 @@ import React from 'react';
 
 import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask } from 'types';
-import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/sort';
+import { alphaNumericSorter, commandStateSorter, dateTimeStringSorter } from 'utils/sort';
 import { generateCommandTask } from 'utils/task';
 
 import {
@@ -25,26 +25,27 @@ const columns: ColumnType<CommandTask>[] = [
     dataIndex: 'id',
     key: 'id',
     render: taskIdRenderer,
-    sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.id, b.id),
+    sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
     title: 'Short ID',
   },
   {
     key: 'type',
     render: taskTypeRenderer,
-    sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.type, b.type),
+    sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.type, b.type),
     title: 'Type',
   },
   {
     key: 'name',
     // render: added in TaskList.tsx
-    sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
+    sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.name, b.name),
     title: 'Name',
   },
   {
     key: 'startTime',
     render: (_: number, record: CommandTask): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
-    sorter: (a: CommandTask, b: CommandTask): number => stringTimeSorter(a.startTime, b.startTime),
+    sorter: (a: CommandTask, b: CommandTask): number =>
+      dateTimeStringSorter(a.startTime, b.startTime),
     title: 'Start Time',
   },
   {
@@ -62,7 +63,7 @@ const columns: ColumnType<CommandTask>[] = [
   {
     key: 'user',
     render: userRenderer,
-    sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.username, b.username),
+    sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.username, b.username),
     title: 'User',
   },
   {

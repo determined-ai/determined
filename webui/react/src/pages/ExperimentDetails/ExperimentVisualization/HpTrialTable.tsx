@@ -11,7 +11,7 @@ import {
 } from 'types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { isNumber } from 'utils/data';
-import { alphanumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
+import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
 import css from './HpTrialTable.module.scss';
 
@@ -79,7 +79,7 @@ const HpTrialTable: React.FC<Props> = ({
         </div>
       );
     };
-    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
+    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphaNumericSorter(a.id, b.id);
     const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
     const metricRenderer = (_: string, record: TrialHParams) => {

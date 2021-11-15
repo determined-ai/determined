@@ -9,7 +9,11 @@ import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
 
 const { Option } = Select;
 
-const MultiSelect: React.FC<SelectFilterProps> = ({ onChange, value, ...props }) => {
+const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, ...props }) => {
+  const allLabel = useMemo(() => {
+    return itemName ? `All ${itemName}s` : 'All';
+  }, [ itemName ]);
+
   const values = useMemo(() => {
     if (!value) return [];
     return Array.isArray(value) ? value : [ value ];
@@ -43,16 +47,17 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ onChange, value, ...props })
   return (
     <SelectFilter
       disableTags
-      dropdownMatchSelectWidth={200}
+      dropdownMatchSelectWidth={true}
+      itemName={itemName}
       mode="multiple"
-      placeholder="All"
+      placeholder={allLabel}
       showArrow
-      style={{ width: 130 }}
+      style={{ width: 140 }}
       value={value}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option value={ALL_VALUE}>All</Option>
+      <Option value={ALL_VALUE}>{allLabel}</Option>
       {props.children}
     </SelectFilter>
   );

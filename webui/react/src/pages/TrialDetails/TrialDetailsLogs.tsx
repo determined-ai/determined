@@ -1,14 +1,15 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import LogViewerTimestamp, { TAIL_SIZE } from 'components/LogViewerTimestamp';
+import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
 import handleError, { ErrorType } from 'ErrorHandler';
-import TrialLogFilters, { TrialLogFiltersInterface } from 'pages/TrialDetails/Logs/TrialLogFilters';
+import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
-import { ExperimentBase, RunState, TrialDetails } from 'types';
+import { consumeStream } from 'services/utils';
+import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
 import css from './TrialDetailsLogs.module.scss';
@@ -18,82 +19,14 @@ export interface Props {
   trial: TrialDetails;
 }
 
+type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
+
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
+  const [ filterOptions, setFilterOptions ] = useState<Filters>({});
+  const [ filterValues, setFilterValues ] = useState<Filters>({});
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
 
-  const fetchLogTail = useMemo(() => {
-    if (trial.state === RunState.Completed) return undefined;
-    return (
-      filters: TrialLogFiltersInterface,
-      canceler: AbortController,
-    ) => {
-      return detApi.StreamingExperiments.trialLogs(
-        trial.id,
-        0,
-        true,
-        filters.agentIds,
-        filters.containerIds,
-        filters.rankIds,
-        filters.levels,
-        filters.stdtypes,
-        filters.sources,
-        undefined,
-        new Date(),
-        'ORDER_BY_ASC',
-        { signal: canceler.signal },
-      );
-    };
-  }, [ trial.id, trial.state ]);
-
-  const fetchLogAfter = useCallback((
-    filters: TrialLogFiltersInterface,
-    canceler: AbortController,
-  ) => {
-    return detApi.StreamingExperiments.trialLogs(
-      trial.id,
-      TAIL_SIZE,
-      false,
-      filters.agentIds,
-      filters.containerIds,
-      filters.rankIds,
-      filters.levels,
-      filters.stdtypes,
-      filters.sources,
-      filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
-      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-      'ORDER_BY_ASC',
-      { signal: canceler.signal },
-    );
-  }, [ trial.id ]);
-
-  const fetchLogBefore = useCallback((
-    filters: TrialLogFiltersInterface,
-    canceler: AbortController,
-  ) => {
-    return detApi.StreamingExperiments.trialLogs(
-      trial.id,
-      TAIL_SIZE,
-      false,
-      filters.agentIds,
-      filters.containerIds,
-      filters.rankIds,
-      filters.levels,
-      filters.stdtypes,
-      filters.sources,
-      filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
-      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-      'ORDER_BY_DESC',
-      { signal: canceler.signal },
-    );
-  }, [ trial.id ]);
-
-  const fetchLogFilter = useCallback((canceler: AbortController) => {
-    return detApi.StreamingExperiments.trialLogsFields(
-      trial.id,
-      true,
-      { signal: canceler.signal },
-    );
-  }, [ trial.id ]);
+  const handleFilterChange = useCallback((filters: Filters) => setFilterValues(filters), []);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -135,16 +68,80 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     setDownloadModal(modal);
   }, [ experiment.id, handleDownloadConfirm, trial.id ]);
 
+  const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
+    const options = {
+      follow: false,
+      limit: config.limit,
+      orderBy: 'ORDER_BY_UNSPECIFIED',
+      timestampAfter: '',
+      timestampBefore: '',
+    };
+
+    if (type === FetchType.Initial) {
+      options.orderBy = config.isNewestFirst ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+    } else if (type === FetchType.Newer) {
+      options.orderBy = 'ORDER_BY_ASC';
+      if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
+    } else if (type === FetchType.Older) {
+      options.orderBy = 'ORDER_BY_DESC';
+      if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
+    } else if (type === FetchType.Stream) {
+      options.follow = true;
+      options.limit = 0;
+      options.orderBy = 'ORDER_BY_ASC';
+      options.timestampAfter = new Date().toISOString();
+    }
+
+    return detApi.StreamingExperiments.trialLogs(
+      trial.id,
+      options.limit,
+      options.follow,
+      filterValues.agentIds,
+      filterValues.containerIds,
+      filterValues.rankIds,
+      filterValues.levels,
+      filterValues.stdtypes,
+      filterValues.sources,
+      options.timestampBefore ? new Date(options.timestampBefore) : undefined,
+      options.timestampAfter ? new Date(options.timestampAfter) : undefined,
+      options.orderBy as OrderBy,
+      { signal: config.canceler.signal },
+    );
+  }, [ filterValues, trial.id ]);
+
+  useEffect(() => {
+    const canceler = new AbortController();
+
+    consumeStream(
+      detApi.StreamingExperiments.trialLogsFields(
+        trial.id,
+        true,
+        { signal: canceler.signal },
+      ),
+      event => setFilterOptions(event as Filters),
+    );
+
+    return () => canceler.abort();
+  }, [ trial.id ]);
+
+  const trialLogFilters = (
+    <div className={css.filters}>
+      <TrialLogFilters
+        options={filterOptions}
+        values={filterValues}
+        onChange={handleFilterChange}
+      />
+    </div>
+  );
+
   return (
     <div className={css.base}>
-      <LogViewerTimestamp
-        fetchToLogConverter={jsonToTrialLog}
-        FilterComponent={TrialLogFilters}
-        onDownloadClick={handleDownloadLogs}
-        onFetchLogAfter={fetchLogAfter}
-        onFetchLogBefore={fetchLogBefore}
-        onFetchLogFilter={fetchLogFilter}
-        onFetchLogTail={fetchLogTail}
+      <LogViewerCore
+        decoder={jsonToTrialLog}
+        sortKey="time"
+        title={trialLogFilters}
+        onDownload={handleDownloadLogs}
+        onFetch={handleFetch}
       />
     </div>
   );
