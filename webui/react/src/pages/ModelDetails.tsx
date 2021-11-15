@@ -4,6 +4,7 @@ import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
+import DownloadModelPopover from 'components/DownloadModelPopover';
 import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
 import IconButton from 'components/IconButton';
@@ -128,12 +129,13 @@ const ModelDetails: React.FC = () => {
 
     const actionRenderer = (_:string, record: ModelVersion) => {
       return <div className={css.center}>
-        <IconButton
-          icon="download"
-          iconSize="large"
-          label="Download Model"
-          type="text"
-          onClick={() => downloadVersion(record)} />
+        <DownloadModelPopover modelVersion={record}>
+          <IconButton
+            icon="download"
+            iconSize="large"
+            label="Download Model"
+            type="text" />
+        </DownloadModelPopover>
       </div>;
     };
 
@@ -179,7 +181,7 @@ const ModelDetails: React.FC = () => {
     ];
 
     return tableColumns;
-  }, [ showConfirmDelete, downloadVersion, model?.model.username, setModelVersionTags, user ]);
+  }, [ showConfirmDelete, model?.model.username, setModelVersionTags, user ]);
 
   const metadata = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {

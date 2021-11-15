@@ -2,6 +2,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import DownloadModelPopover from 'components/DownloadModelPopover';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -19,12 +20,11 @@ interface Props {
   modelVersion: ModelVersion;
   onAddMetadata: () => void;
   onDeregisterVersion: () => void;
-  onDownload: () => void;
   onSaveDescription: (editedNotes: string) => Promise<void>;
 }
 
 const ModelVersionHeader: React.FC<Props> = (
-  { modelVersion, onAddMetadata, onDeregisterVersion, onDownload, onSaveDescription }: Props,
+  { modelVersion, onAddMetadata, onDeregisterVersion, onSaveDescription }: Props,
 ) => {
   const { auth: { user } } = useStore();
 
@@ -113,7 +113,9 @@ const ModelVersionHeader: React.FC<Props> = (
             <h1 className={css.versionName}>Version {modelVersion.version}</h1>
           </div>
           <div className={css.buttons}>
-            <Button onClick={onDownload}>Download Model</Button>
+            <DownloadModelPopover modelVersion={modelVersion}>
+              <Button>Download Model</Button>
+            </DownloadModelPopover>
             <Dropdown overlay={(
               <Menu>
                 <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>

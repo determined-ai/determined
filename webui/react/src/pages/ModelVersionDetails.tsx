@@ -137,10 +137,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     history.push(`/det/models/${modelVersion?.model.id}`);
   }, [ history, modelVersion?.id, modelVersion?.model.id ]);
 
-  const downloadVersion = useCallback(() => {
-    //open download popover
-  }, []);
-
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
       <div className={css.resource} key={resource}>
@@ -219,7 +215,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         modelVersion={modelVersion}
         onAddMetadata={editMetadata}
         onDeregisterVersion={deleteVersion}
-        onDownload={downloadVersion}
         onSaveDescription={saveDescription} />}
       id="modelDetails">
       <Tabs
