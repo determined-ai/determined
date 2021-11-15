@@ -58,9 +58,9 @@ func (p *priorityScheduler) createJobQInfo(
 }
 
 func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) {
-	jobQInfo, jobActors := p.createJobQInfo(pending, scheduled)
+	jobQ, jobActors := p.createJobQInfo(pending, scheduled)
 	for jobID, jobActor := range jobActors {
-		jobActor.System().Tell(jobActor, jobQInfo[jobID])
+		jobActor.System().Tell(jobActor, jobQ[jobID])
 	}
 }
 
