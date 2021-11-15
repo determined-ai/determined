@@ -16,7 +16,6 @@ import { formatDatetime } from 'utils/date';
 import css from './ModelHeader.module.scss';
 
 interface Props {
-  archived: boolean;
   model: ModelItem;
   onAddMetadata: () => void;
   onDelete: () => void;
@@ -25,7 +24,7 @@ interface Props {
 }
 
 const ModelHeader: React.FC<Props> = (
-  { model, archived, onAddMetadata, onDelete, onSwitchArchive, onSaveDescription }: Props,
+  { model, onAddMetadata, onDelete, onSwitchArchive, onSaveDescription }: Props,
 ) => {
   const { auth: { user } } = useStore();
 
@@ -101,7 +100,7 @@ const ModelHeader: React.FC<Props> = (
               <Menu>
                 <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
                 <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
-                  {archived ? 'Unarchive' : 'Archive'}
+                  {model.archived ? 'Unarchive' : 'Archive'}
                 </Menu.Item>
                 <Menu.Item
                   danger

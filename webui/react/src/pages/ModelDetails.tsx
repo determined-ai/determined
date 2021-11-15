@@ -239,7 +239,6 @@ const ModelDetails: React.FC = () => {
     <Page
       docTitle="Model Details"
       headerComponent={<ModelHeader
-        archived={false}
         model={model.model}
         onAddMetadata={editMetadata}
         onDelete={deleteCurrentModel}
