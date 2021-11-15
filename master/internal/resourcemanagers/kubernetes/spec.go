@@ -396,8 +396,6 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 			{"Match", "*"},
 			{"Add", "agent_id k8agent"},
 			{"Add", "container_id " + string(p.container.ID)},
-			{"Add", "allocation_id " + p.taskSpec.AllocationID},
-			{"Add", "task_id" + p.taskSpec.TaskID},
 		}
 		for k, v := range spec.LoggingFields {
 			modifyConfig = append(modifyConfig, fluent.ConfigItem{Name: "Add", Value: k + " " + v})

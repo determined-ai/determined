@@ -28,13 +28,12 @@ import (
 )
 
 const (
-	jupyterDir         = "/run/determined/jupyter/"
-	jupyterConfigDir   = "/run/determined/jupyter/config"
-	jupyterDataDir     = "/run/determined/jupyter/data"
-	jupyterRuntimeDir  = "/run/determined/jupyter/runtime"
-	jupyterEntrypoint  = "/run/determined/jupyter/notebook-entrypoint.sh"
-	jupyterIdleCheck   = "/run/determined/jupyter/check_idle.py"
-	taskReadyCheckLogs = "/run/determined/check_ready_logs.py"
+	jupyterDir        = "/run/determined/jupyter/"
+	jupyterConfigDir  = "/run/determined/jupyter/config"
+	jupyterDataDir    = "/run/determined/jupyter/data"
+	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
+	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
