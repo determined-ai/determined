@@ -207,6 +207,14 @@ const ModelDetails: React.FC = () => {
     });
   }, [ modelId ]);
 
+  const setModelTags = useCallback(async (tags) => {
+    await patchModel({
+      body: { id: parseInt(modelId), labels: tags },
+      modelId: parseInt(modelId),
+    });
+    fetchModel();
+  }, [ fetchModel, modelId ]);
+
   const switchArchive = useCallback(() => {
     if (model?.model.archived) {
       unarchiveModel({ modelId: parseInt(modelId) });
@@ -239,7 +247,8 @@ const ModelDetails: React.FC = () => {
         onAddMetadata={editMetadata}
         onDelete={deleteCurrentModel}
         onSaveDescription={saveDescription}
-        onSwitchArchive={switchArchive} />}
+        onSwitchArchive={switchArchive}
+        onUpdateTags={setModelTags} />}
       id="modelDetails">
       <div className={css.base}>{
         model.modelVersions.length === 0 ?

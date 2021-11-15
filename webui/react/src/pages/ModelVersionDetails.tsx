@@ -133,6 +133,15 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     });
   }, [ modelId, versionId ]);
 
+  const setVersionTags = useCallback(async (tags) => {
+    await patchModelVersion({
+      body: { id: parseInt(modelId), labels: tags },
+      modelId: parseInt(modelId),
+      versionId: parseInt(versionId),
+    });
+    fetchModelVersion();
+  }, [ fetchModelVersion, modelId, versionId ]);
+
   const deleteVersion = useCallback(() => {
     deleteModelVersion({ modelId: modelVersion?.model.id ?? 0, versionId: modelVersion?.id ?? 0 });
     history.push(`/det/models/${modelVersion?.model.id}`);
@@ -216,7 +225,8 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         modelVersion={modelVersion}
         onAddMetadata={editMetadata}
         onDeregisterVersion={deleteVersion}
-        onSaveDescription={saveDescription} />}
+        onSaveDescription={saveDescription}
+        onUpdateTags={setVersionTags} />}
       id="modelDetails">
       <Tabs
         defaultActiveKey="overview"

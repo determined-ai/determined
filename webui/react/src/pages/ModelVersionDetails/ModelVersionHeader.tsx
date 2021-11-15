@@ -21,10 +21,11 @@ interface Props {
   onAddMetadata: () => void;
   onDeregisterVersion: () => void;
   onSaveDescription: (editedNotes: string) => Promise<void>;
+  onUpdateTags: (newTags: string[]) => Promise<void>;
 }
 
 const ModelVersionHeader: React.FC<Props> = (
-  { modelVersion, onAddMetadata, onDeregisterVersion, onSaveDescription }: Props,
+  { modelVersion, onAddMetadata, onDeregisterVersion, onSaveDescription, onUpdateTags }: Props,
 ) => {
   const { auth: { user } } = useStore();
 
@@ -57,10 +58,11 @@ const ModelVersionHeader: React.FC<Props> = (
       content: <TagList
         ghost={false}
         tags={modelVersion.labels ?? []}
+        onChange={onUpdateTags}
       />,
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ modelVersion, onSaveDescription ]);
+  }, [ modelVersion, onSaveDescription, onUpdateTags ]);
 
   const isDeletable = user?.isAdmin
         || user?.username === modelVersion.model.username
