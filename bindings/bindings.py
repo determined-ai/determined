@@ -204,11 +204,44 @@ class Sequence(TypeAnno):
             return val
         return f"[{self.items.dump('x')} for x in {val}]"
 
+class Parameter:
+    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str,
+                 serialized_name: str = None) -> None:
+        self.name = name
+        self.serialized_name = serialized_name
+        self.type = typ
+        self.required = required
+        self.where = where
+        # validations
+        assert where in ("query", "body", "path", "definitions"), (name, where)
+        assert where != "path" or required, name
+        if where == "path":
+            if not isinstance(typ, (String, Int, Bool)):
+                raise AssertionError(f"bad type in path parameter {name}: {typ}")
+        if where == "query":
+            if not isinstance(typ, (String, Int, Bool)):
+                if not isinstance(typ, Sequence) or not isinstance(typ.items, (String, Int, Bool)):
+                    raise AssertionError(f"bad type in query parameter {name}: {typ}")
+
+    def gen_function_param(self) -> Code:
+        if self.required:
+            typestr = self.type.annotation()
+            default = ""
+        else:
+            typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
+            default = " = None"
+        default = "" if self.required else " = None"
+        return f"    {self.name}: {typestr}{default},"
+
+    def dump(self) -> Code:
+        return self.type.dump(self.name)
+
 
 class Class(TypeDef):
-    def __init__(self, name: str, members: typing.Dict[str, TypeAnno]):
+    def __init__(self, name: str, params: typing.Dict[str, Parameter]):
         self.name = name
-        self.members = members
+        # self.members = members
+        self.params = params
 
     def load(self, val: Code) -> Code:
         return f"{self.name}.from_json({val})"
@@ -220,28 +253,36 @@ class Class(TypeDef):
         out = [f"class {self.name}:"]
         out += ["    def __init__("]
         out += ["        self,"]
-        out += [f"        {k}: {v.annotation()}," for k, v in self.members.items()]
+        required = sorted(p for p in self.params if self.params[p].required)
+        optional = sorted(p for p in self.params if not self.params[p].required)
+        for name in required + optional:
+            out += ["        " + self.params[name].gen_function_param()]
+        # out += [f"        {k}: {v.annotation()}," for k, v in self.members.items()]
         out += ["    ):"]
-        out += [f"        self.{k} = {k}" for k in self.members]
+        out += [f"        self.{k} = {k}" for k in self.params]
         out += [""]
         out += ["    @classmethod"]
         out += ["    def from_json(cls, obj):"]
         out += ["        return cls("]
-        for k, v in self.members.items():
-            if v.need_parse():
-                parsed = v.load(f'obj["{k}"]')
+        for k, v in self.params.items():
+            if v.type.need_parse():
+                parsed = v.type.load(f'obj["{k}"]')
             else:
                 parsed = f'obj["{k}"]'
+            if not v.required:
+                parsed = parsed + f' if obj.get("{k}", None) is not None else None'
             out.append(f"""             {k}={parsed},""")
         out += ["        )"]
         out += [""]
         out += ["    def to_json(self):"]
         out += ["        return {"]
-        for k, v in self.members.items():
-            if v.need_parse():
-                parsed = v.dump(f"self.{k}")
+        for k, v in self.params.items():
+            if v.type.need_parse():
+                parsed = v.type.dump(f"self.{k}")
             else:
                 parsed = f"self.{k}"
+            if not v.required:
+                parsed = parsed + f" if self.{k} is not None else None"
             out.append(f'             "{k}": {parsed},')
         out += ["        }"]
 
@@ -264,38 +305,6 @@ class Enum(TypeDef):
         out += [f'    {v} = "{v}"' for v in self.members]
         return "\n".join(out)
 
-
-class Parameter:
-    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str,
-                 serialized_name: str = None) -> None:
-        self.name = name
-        self.serialized_name = serialized_name
-        self.type = typ
-        self.required = required
-        self.where = where
-        # validations
-        assert where in ("query", "body", "path"), (name, where)
-        assert where != "path" or required, name
-        if where == "path":
-            if not isinstance(typ, (String, Int, Bool)):
-                raise AssertionError(f"bad type in path parameter {name}: {typ}")
-        if where == "query":
-            if not isinstance(typ, (String, Int, Bool)):
-                if not isinstance(typ, Sequence) or not isinstance(typ.items, (String, Int, Bool)):
-                    raise AssertionError(f"bad type in query parameter {name}: {typ}")
-
-    def gen_function_param(self) -> Code:
-        if self.required:
-            typestr = self.type.annotation()
-            default = ""
-        else:
-            typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
-            default = " = None"
-        default = "" if self.required else " = None"
-        return f"    {self.name}: {typestr}{default},"
-
-    def dump(self) -> Code:
-        return self.type.dump(self.name)
 
 
 class Function:
@@ -457,9 +466,11 @@ def process_definitions(swagger_definitions: dict) -> TypeDefs:
             # top-level named objects should be classes, not typed dictionaries:
             assert "additionalProperties" not in schema, (name, schema)
             if "properties" in schema:
+                required = set(schema.get("required", []))
                 members = {
-                    k: classify_type(path, v) for k, v in schema["properties"].items()
+                    k: Parameter(k, classify_type(path, v), (k in required), "definitions") for k, v in schema["properties"].items()
                 }
+                # TODO create parameters
                 defs[name] = Class(name, members)
                 continue
             else:
