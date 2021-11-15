@@ -124,11 +124,11 @@ common_log_options = [
     ),
     Arg(
         "--timestamp-before",
-        help="show logs only from before (RFC 3339 format)",
+        help="show logs only from before (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
     Arg(
         "--timestamp-after",
-        help="show logs only from after (RFC 3339 format)",
+        help="show logs only from after (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
     Arg(
         "--level",

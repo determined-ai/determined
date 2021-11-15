@@ -73,7 +73,7 @@ func makeOutputConfig(
   Match *
   Host %s
   Port %d
-  URI /task_logs
+  URI /task-logs
   Header_tag X-Fluent-Tag
   Format json
   Json_date_key timestamp

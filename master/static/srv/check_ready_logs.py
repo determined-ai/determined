@@ -10,7 +10,7 @@ import os
 from time import sleep
 from determined.common import api
 from determined.common.api import certs
-from typing import Any
+from typing import Any, Pattern
 import backoff
 from requests.exceptions import RequestException
 
@@ -34,7 +34,7 @@ def post_ready(master_url: str, cert: certs.Cert, allocation_id: str):
     )
 
 
-def main(ready: Any) -> int:
+def main(ready: Pattern) -> int:
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
