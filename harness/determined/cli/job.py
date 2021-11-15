@@ -4,14 +4,14 @@ from typing import Any, List
 
 import yaml
 
-from determined.common.api.b import get_Determined_GetJobs
+from determined.common.api.b import get_GetJobs
 from determined.cli.session import setup_session
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
 @authentication.required
 def list(args: Namespace) -> None:
-    response = get_Determined_GetJobs(setup_session(args), resourcePool=args.resource_pool,
+    response = get_GetJobs(setup_session(args), resourcePool=args.resource_pool,
         pagination_limit=args.limit, pagination_offset=args.offset, orderBy=args.order_by)
     if args.output == "yaml":
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))

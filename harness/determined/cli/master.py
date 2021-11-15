@@ -10,7 +10,7 @@ from determined.common import api, yaml
 from determined.common.api import authentication
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.api.b import get_Determined_GetMaster
+from determined.common.api.b import get_GetMaster
 
 
 @authentication.required
@@ -26,7 +26,7 @@ def config(args: Namespace) -> None:
 
 def get_master(args: Namespace) -> None:
     session = setup_session(args)
-    resp = get_Determined_GetMaster(session)
+    resp = get_GetMaster(session)
     if args.output == "json":
         print(json.dumps(resp.to_json(), indent=4))
     elif args.output == "yaml":
