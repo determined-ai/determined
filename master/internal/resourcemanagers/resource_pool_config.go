@@ -3,7 +3,7 @@ package resourcemanagers
 import (
 	"encoding/json"
 
-	"github.com/determined-ai/determined/master/internal/provisioner"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 )

@@ -80,7 +80,7 @@ type podNodeInfo struct {
 }
 
 func newPod(
-	msg sproto.StartTaskPod,
+	msg StartTaskPod,
 	cluster *actor.Ref,
 	clusterID string,
 	clientSet *k8sClient.Clientset,
@@ -162,7 +162,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		p.receiveContainerLog(ctx, msg)
 
-	case sproto.KillTaskPod:
+	case KillTaskPod:
 		ctx.Log().Info("received request to stop pod")
 		p.deleteKubernetesResources(ctx)
 

@@ -1,4 +1,4 @@
-package sproto
+package kubernetes
 
 import (
 	"github.com/determined-ai/determined/master/pkg/actor"

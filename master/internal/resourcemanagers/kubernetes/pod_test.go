@@ -60,7 +60,7 @@ func createPod(
 	resourceHandler *actor.Ref,
 	task tasks.TaskSpec,
 ) *pod {
-	msg := sproto.StartTaskPod{
+	msg := StartTaskPod{
 		TaskActor: taskHandler,
 		Spec:      task,
 		Slots:     1,
@@ -651,7 +651,7 @@ func TestKillTaskPod(t *testing.T) {
 	podMap["resource"].Purge()
 	assert.Equal(t, podMap["resource"].GetLength(), 0)
 
-	system.Ask(ref, sproto.KillTaskPod{})
+	system.Ask(ref, KillTaskPod{})
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["resource"].GetLength(), 1)
 
@@ -666,7 +666,7 @@ func TestKillTaskPod(t *testing.T) {
 	},
 	)
 
-	system.Ask(ref, sproto.KillTaskPod{})
+	system.Ask(ref, KillTaskPod{})
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["resource"].GetLength(), 0)
 }

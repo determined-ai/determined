@@ -12,15 +12,13 @@ type container struct {
 	req   *sproto.AllocateRequest
 	id    cproto.ID
 	slots int
-	agent *agentState
 }
 
 // newContainer returns a new container state assigned to the specified agent.
-func newContainer(req *sproto.AllocateRequest, agent *agentState, slots int) *container {
+func newContainer(req *sproto.AllocateRequest, slots int) *container {
 	return &container{
 		req:   req,
 		id:    cproto.ID(uuid.New().String()),
 		slots: slots,
-		agent: agent,
 	}
 }
