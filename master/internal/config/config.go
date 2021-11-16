@@ -251,6 +251,10 @@ func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bo
 			RMPremption = *preemption
 			return jobPreemptible && RMPremption
 		}
+		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
+			RMPremption = rpConfig.Provider.GCP.InstanceType.Preemptible
+			return jobPreemptible && RMPremption
+		}
 		break
 	}
 
