@@ -167,7 +167,7 @@ const ModelDetails: React.FC = () => {
         width: 250,
       },
       {
-        dataIndex: 'description',
+        dataIndex: 'comment',
         title: 'Description',
       },
       {
