@@ -5,15 +5,17 @@ import { Prompt, useLocation } from 'react-router-dom';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
+import Spinner from './Spinner';
 
 interface Props {
   notes: string;
-  onSave: (editedNotes: string) => void;
+  onSave?: (editedNotes: string) => Promise<void>;
   style?: React.CSSProperties;
 }
 
 const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
   const [ isEditing, setIsEditing ] = useState(false);
+  const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
   const location = useLocation();
 
@@ -26,9 +28,11 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
     setEditedNotes(notes);
   }, [ notes ]);
 
-  const saveNotes = useCallback(() => {
+  const saveNotes = useCallback(async () => {
     setIsEditing(false);
-    onSave(editedNotes);
+    setIsLoading(true);
+    await onSave?.(editedNotes);
+    setIsLoading(false);
   }, [ editedNotes, onSave ]);
 
   return (
@@ -58,12 +62,14 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
       }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
       title="Notes">
-      <Markdown
-        editing={isEditing}
-        markdown={isEditing ? editedNotes : notes}
-        onChange={setEditedNotes}
-        onClick={() => { if (notes === '') editNotes(); }}
-      />
+      <Spinner spinning={isLoading}>
+        <Markdown
+          editing={isEditing}
+          markdown={isEditing ? editedNotes : notes}
+          onChange={setEditedNotes}
+          onClick={() => { if (notes === '') editNotes(); }}
+        />
+      </Spinner>
       <Prompt
         message={(newLocation) => {
           return (

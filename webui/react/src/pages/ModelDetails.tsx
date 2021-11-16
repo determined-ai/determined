@@ -1,14 +1,13 @@
-import { EditOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Menu, Modal, Space, Tooltip } from 'antd';
+import { Button, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import DownloadModelPopover from 'components/DownloadModelPopover';
-import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
 import IconButton from 'components/IconButton';
 import Message, { MessageType } from 'components/Message';
+import MetadataCard from 'components/MetadataCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
@@ -38,8 +37,7 @@ const ModelDetails: React.FC = () => {
   const { modelId } = useParams<Params>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
-  const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
-  const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
+  const [ forceEditMetadata, setForceEditMetadata ] = useState(false);
   const history = useHistory();
 
   const id = parseInt(modelId);
@@ -78,7 +76,7 @@ const ModelDetails: React.FC = () => {
     }
   }, [ fetchModel ]);
 
-  const setModelVersionTags = useCallback(async (modelId, versionId, tags) => {
+  const saveModelVersionTags = useCallback(async (modelId, versionId, tags) => {
     try {
       setIsLoading(true);
       await patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
@@ -112,7 +110,7 @@ const ModelDetails: React.FC = () => {
       <TagList
         compact
         tags={record.labels ?? []}
-        onChange={(tags) => setModelVersionTags(record.model.id, record.id, tags)}
+        onChange={(tags) => saveModelVersionTags(record.model.id, record.id, tags)}
       />
     );
 
@@ -195,44 +193,60 @@ const ModelDetails: React.FC = () => {
     ];
 
     return tableColumns;
-  }, [ showConfirmDelete, model?.model.username, setModelVersionTags, user ]);
-
-  const metadata = useMemo(() => {
-    return Object.entries(model?.model.metadata || {}).map((pair) => {
-      return ({ content: pair[1], label: pair[0] });
-    });
-  }, [ model?.model.metadata ]);
+  }, [ showConfirmDelete, model?.model.username, saveModelVersionTags, user ]);
 
   const editMetadata = useCallback(() => {
-    setIsEditingMetadata(true);
+    setForceEditMetadata(true);
   }, []);
 
-  const saveMetadata = useCallback(() => {
-    setIsEditingMetadata(false);
-    patchModel({
-      body: { id: parseInt(modelId), metadata: editedMetadata },
-      modelId: parseInt(modelId),
-    });
-    fetchModel();
-  }, [ editedMetadata, fetchModel, modelId ]);
+  const saveMetadata = useCallback(async (editedMetadata) => {
+    try {
+      await patchModel({
+        body: { id: parseInt(modelId), metadata: editedMetadata },
+        modelId: parseInt(modelId),
+      });
+      await fetchModel();
+    } catch (e) {
+      handleError({
+        message: 'Unable to save metadata.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
 
-  const cancelEditMetadata = useCallback(() => {
-    setIsEditingMetadata(false);
-  }, []);
+  }, [ fetchModel, modelId ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
-    await patchModel({
-      body: { description: editedDescription, id: parseInt(modelId) },
-      modelId: parseInt(modelId),
-    });
+    try {
+      await patchModel({
+        body: { description: editedDescription, id: parseInt(modelId) },
+        modelId: parseInt(modelId),
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to save description.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
   }, [ modelId ]);
 
-  const setModelTags = useCallback(async (tags) => {
-    await patchModel({
-      body: { id: parseInt(modelId), labels: tags },
-      modelId: parseInt(modelId),
-    });
-    fetchModel();
+  const saveModelTags = useCallback(async (editedTags) => {
+    try {
+      await patchModel({
+        body: { id: parseInt(modelId), labels: editedTags },
+        modelId: parseInt(modelId),
+      });
+      fetchModel();
+    } catch (e) {
+      handleError({
+        message: 'Unable to update model tags.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
   }, [ fetchModel, modelId ]);
 
   const switchArchive = useCallback(() => {
@@ -268,10 +282,10 @@ const ModelDetails: React.FC = () => {
         onDelete={deleteCurrentModel}
         onSaveDescription={saveDescription}
         onSwitchArchive={switchArchive}
-        onUpdateTags={setModelTags} />}
+        onUpdateTags={saveModelTags} />}
       id="modelDetails">
-      <div className={css.base}>{
-        model.modelVersions.length === 0 ?
+      <div className={css.base}>
+        {model.modelVersions.length === 0 ?
           <div className={css.noVersions}>
             <p>No Model Versions</p>
             <p className={css.subtext}>
@@ -286,26 +300,11 @@ const ModelDetails: React.FC = () => {
             showSorterTooltip={false}
             size="small"
           />
-      }
-      {(metadata.length > 0 || isEditingMetadata) &&
-          <Card
-            extra={isEditingMetadata ? (
-              <Space size="small">
-                <Button size="small" onClick={cancelEditMetadata}>Cancel</Button>
-                <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
-              </Space>
-            ) : (
-              <Tooltip title="Edit">
-                <EditOutlined onClick={editMetadata} />
-              </Tooltip>
-            )}
-            title={'Metadata'}>
-            <EditableMetadata
-              editing={isEditingMetadata}
-              metadata={model?.model.metadata}
-              updateMetadata={setEditedMetadata} />
-          </Card>
-      }
+        }
+        <MetadataCard
+          forceEdit={forceEditMetadata}
+          metadata={model.model.metadata}
+          onSave={saveMetadata} />
       </div>
     </Page>
   );

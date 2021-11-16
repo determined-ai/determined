@@ -1,15 +1,16 @@
-import { CopyOutlined, EditOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Card, notification, Space, Tabs, Tooltip } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
+import { Breadcrumb, Card, notification, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
-import InfoBox, { InfoRow } from 'components/InfoBox';
+import InfoBox from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
+import MetadataCard from 'components/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
+import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services/api';
@@ -42,9 +43,7 @@ const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
   const { modelId, versionId, tab } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
-  const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
-  const [ isNotesLoading, setIsNotesLoading ] = useState(true);
-  const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
+  const [ forceEditMetadata, setForceEditMetadata ] = useState(false);
   const history = useHistory();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
@@ -59,7 +58,6 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-    setIsNotesLoading(false);
   }, [ modelId, modelVersion, pageError, versionId ]);
 
   usePolling(fetchModelVersion);
@@ -97,37 +95,42 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     notification.open({ message: 'Copied to clipboard' });
   }, [ referenceText ]);
 
-  const metadata = Object.entries(modelVersion?.metadata ?? {}).map((pair) => {
-    return ({ content: pair[1], label: pair[0] } as InfoRow);
-  });
-
   const editMetadata = useCallback(() => {
-    setIsEditingMetadata(true);
+    setForceEditMetadata(true);
   }, []);
 
-  const saveMetadata = useCallback(() => {
-    setIsEditingMetadata(false);
-    patchModelVersion({
-      body: { id: parseInt(modelId), metadata: editedMetadata },
-      modelId: parseInt(modelId),
-      versionId: parseInt(versionId),
-    });
-    fetchModelVersion();
-  }, [ editedMetadata, fetchModelVersion, modelId, versionId ]);
-
-  const cancelEditMetadata = useCallback(() => {
-    setIsEditingMetadata(false);
-  }, []);
+  const saveMetadata = useCallback(async (editedMetadata) => {
+    try {
+      await patchModelVersion({
+        body: { id: parseInt(modelId), metadata: editedMetadata },
+        modelId: parseInt(modelId),
+        versionId: parseInt(versionId),
+      });
+      await fetchModelVersion();
+    } catch (e) {
+      handleError({
+        message: 'Unable to save metadata.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ fetchModelVersion, modelId, versionId ]);
 
   const saveNotes = useCallback(async (editedNotes: string) => {
-    setIsNotesLoading(true);
-    const versionResponse = await patchModelVersion({
-      body: { id: parseInt(modelId), notes: editedNotes },
-      modelId: parseInt(modelId),
-      versionId: parseInt(versionId),
-    });
-    setModelVersion(versionResponse);
-    setIsNotesLoading(false);
+    try {
+      const versionResponse = await patchModelVersion({
+        body: { id: parseInt(modelId), notes: editedNotes },
+        modelId: parseInt(modelId),
+        versionId: parseInt(versionId),
+      });
+      setModelVersion(versionResponse);
+    } catch (e) {
+      handleError({
+        message: 'Unable to update notes.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
   }, [ modelId, versionId ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
@@ -240,32 +243,13 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <div className={css.base}>
-            {(metadata.length > 0 || isEditingMetadata) &&
-          <Card
-            extra={isEditingMetadata ? (
-              <Space size="small">
-                <Button size="small" onClick={cancelEditMetadata}>Cancel</Button>
-                <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
-              </Space>
-            ) : (
-              <Tooltip title="Edit">
-                <EditOutlined onClick={editMetadata} />
-              </Tooltip>
-            )}
-            title="Metadata">
-            <EditableMetadata
-              editing={isEditingMetadata}
-              metadata={modelVersion.metadata ?? {}}
-              updateMetadata={setEditedMetadata} />
-          </Card>
-            }
-            {isNotesLoading ?
-              <Card title="Notes">
-                <Spinner />
-              </Card> :
-              <NotesCard
-                notes={modelVersion.notes ?? ''}
-                onSave={saveNotes} />}
+            <MetadataCard
+              forceEdit={forceEditMetadata}
+              metadata={modelVersion.metadata}
+              onSave={saveMetadata} />
+            <NotesCard
+              notes={modelVersion.notes ?? ''}
+              onSave={saveNotes} />
             <Card
               extra={(
                 <Tooltip title="Copy to Clipboard">

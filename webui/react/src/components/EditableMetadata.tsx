@@ -8,10 +8,10 @@ import css from './EditableMetadata.module.scss';
 import Icon from './Icon';
 import InfoBox, { InfoRow } from './InfoBox';
 
-type Metadata = Record<RecordKey, string>;
+export type Metadata = Record<RecordKey, string>;
 interface Props {
   editing?: boolean;
-  metadata?: Record<string, string>;
+  metadata?: Metadata;
   updateMetadata?: (obj: Metadata) => void;
 }
 
