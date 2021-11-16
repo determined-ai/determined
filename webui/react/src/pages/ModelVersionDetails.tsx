@@ -5,6 +5,7 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import Icon from 'components/Icon';
 import InfoBox from 'components/InfoBox';
+import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/MetadataCard';
 import NotesCard from 'components/NotesCard';
@@ -175,20 +176,20 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     return [
       {
         content: <Breadcrumb className={css.link}>
-          <Breadcrumb.Item
-            className={css.link}
-            href={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
-            Experiment {modelVersion.checkpoint.experimentId}
+          <Breadcrumb.Item>
+            <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
+              Experiment {modelVersion.checkpoint.experimentId}
+            </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item
-            className={css.link}
-            href={paths.trialDetails(
+          <Breadcrumb.Item>
+            <Link path={paths.trialDetails(
               modelVersion.checkpoint.trialId,
               modelVersion.checkpoint.experimentId,
             )}>
-          Trial {modelVersion.checkpoint.trialId}
+              Trial {modelVersion.checkpoint.trialId}
+            </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item className={css.link}>Batch {totalBatchesProcessed}</Breadcrumb.Item>
+          <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
         </Breadcrumb>,
         label: 'Checkpoint',
       },
