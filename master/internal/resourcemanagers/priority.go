@@ -80,13 +80,13 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		Once jobs carry a queue position attribute with them it'll be what
 		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
-	reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups)
+	reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups, false)
 	jobQInfo, _ := mergeToJobQInfo(reqs)
 	return jobQInfo
 }
 
 func setPositions(rp *ResourcePool) {
-	reqs, positionSet := sortTasksWithPosition(rp.taskList, rp.groups)
+	reqs, positionSet := sortTasksWithPosition(rp.taskList, rp.groups, false)
 	// if there has been no position set, we artificially generate positions
 	// if there has been a position set, we quickly calculate and assign positions
 	if positionSet {
@@ -416,6 +416,7 @@ func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group
 func sortTasksWithPosition(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
+	k8s bool,
 ) ([]*sproto.AllocateRequest, bool) {
 	var reqs []*sproto.AllocateRequest
 	isPositionSet := false
@@ -430,11 +431,20 @@ func sortTasksWithPosition(
 	sort.Slice(reqs, func(i, j int) bool {
 		p1 := *groups[reqs[i].Group].priority
 		p2 := *groups[reqs[j].Group].priority
-		switch {
-		case p1 > p2:
-			return false
-		case p2 > p1:
-			return true
+		if k8s { // in k8s, higher priority == more prioritized
+			switch {
+			case p1 > p2:
+				return true
+			case p2 > p1:
+				return false
+			}
+		} else {
+			switch {
+			case p1 > p2:
+				return false
+			case p2 > p1:
+				return true
+			}
 		}
 
 		if isPositionSet {
