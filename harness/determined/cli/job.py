@@ -8,7 +8,7 @@ from determined.cli import render
 from determined.cli.session import setup_session
 from determined.common.api import authentication
 from determined.common.api.b import get_GetJobs
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 @authentication.required
@@ -20,11 +20,11 @@ def ls(args: Namespace) -> None:
         pagination_offset=args.offset,
         orderBy=args.order_by,
     )
-    if args.output == "yaml":
+    if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
-    elif args.output == "json":
+    elif args.json:
         print(json.dumps(response.to_json(), indent=4, default=str))
-    elif ["csv", "table"].count(args.output) > 0:
+    elif args.table or args.csv:
         headers = [
             "Jobs Ahead",
             "ID",
@@ -54,7 +54,7 @@ def ls(args: Namespace) -> None:
             ]
             for j in response.jobs
         ]
-        render.tabulate_or_csv(headers, values, as_csv=args.output == "csv")
+        render.tabulate_or_csv(headers, values, as_csv=args.csv)
     else:
         raise ValueError(f"Bad output format: {args.output}")
 
@@ -75,9 +75,18 @@ pagination_args = [
     Arg(
         "--order-by",
         type=str,
+        default="ORDER_BY_DESC",
         help="Whether to sort the results in descending or ascending order",
     ),
 ]
+
+
+output_format = Group(
+    Arg("--csv", action="store_true", help="print as CSV"),
+    Arg("--json", action="store_true", help="print as JSON"),
+    Arg("--yaml", action="store_true", help="print as JSON"),
+    Arg("--table", action="store_true", default=True, help="print as JSON"),
+)
 
 args_description = [
     Cmd(
@@ -86,18 +95,12 @@ args_description = [
         "manage job",
         [
             Cmd(
-                "list",
+                "list ls",
                 ls,
                 "list jobs",
                 [
-                    Arg(
-                        "-o",
-                        "--output",
-                        type=str,
-                        default="yaml",
-                        help="Output format, one of json|yaml",
-                    ),
                     Arg("-rp", "--resource-pool", type=str, default="default", help=""),
+                    output_format,
                     *pagination_args,
                 ],
             ),
