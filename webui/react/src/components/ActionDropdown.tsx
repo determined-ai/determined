@@ -32,11 +32,11 @@ const ActionDropdown = <T extends string>(
     params.domEvent.stopPropagation();
     try {
       const action = params.key as T;
-      const fn = onTrigger[action];
-      if (!fn) throw new Error(`No triggers for action ${action}`);
+      const handleTrigger = onTrigger[action];
+      if (!handleTrigger) throw new Error(`No triggers for action ${action}`);
       const onOk = async () => {
-        await fn();
-        if (onComplete) onComplete(action);
+        await handleTrigger();
+        onComplete?.(action);
       };
 
       if (confirmations?.[action]) {

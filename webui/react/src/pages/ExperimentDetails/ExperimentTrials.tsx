@@ -41,7 +41,10 @@ interface Props {
   experiment: ExperimentBase;
 }
 
-export type TrialAction = 'Open Tensorboard' | 'View Logs';
+enum TrialAction {
+  OpenTensorBoard = 'Open Tensorboard',
+  ViewLogs = 'View Logs',
+}
 
 const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ total, setTotal ] = useState(0);
@@ -79,10 +82,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
 
   const dropDownOnTrigger = useCallback((trial: TrialItem) => {
     return {
-      'Open Tensorboard': async () => {
+      [TrialAction.OpenTensorBoard]: async () => {
         openCommand(await openOrCreateTensorBoard({ trialIds: [ trial.id ] }));
       },
-      'View Logs': () => {
+      [TrialAction.ViewLogs]: () => {
         routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
       },
     };
@@ -125,8 +128,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     const actionRenderer = (_: string, record: TrialItem): React.ReactNode => {
       return <ActionDropdown<TrialAction>
         actionOrder={[
-          'Open Tensorboard',
-          'View Logs',
+          TrialAction.OpenTensorBoard,
+          TrialAction.ViewLogs,
         ]}
         thing={{ id: experiment.id + '', kind: 'experiment' }}
         onTrigger={dropDownOnTrigger(record)} />;
