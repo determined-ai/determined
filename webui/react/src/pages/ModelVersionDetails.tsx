@@ -265,7 +265,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
               </Card> :
               <NotesCard
                 notes={modelVersion.notes ?? ''}
-                style={{ height: 350 }}
                 onSave={saveNotes} />}
             <Card
               extra={(

@@ -56,7 +56,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
         paddingLeft: 'var(--theme-sizes-layout-big)',
         paddingRight: 'var(--theme-sizes-layout-big)',
       }}
-      style={style}
+      style={{ height: isEditing ? '500px' : '100%', ...style }}
       title="Notes">
       <Markdown
         editing={isEditing}
