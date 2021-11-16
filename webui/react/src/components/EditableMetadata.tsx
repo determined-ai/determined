@@ -2,42 +2,49 @@ import { Button, Dropdown, Form, Input, Menu } from 'antd';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import React, { useCallback, useMemo } from 'react';
 
+import { RecordKey } from 'types';
+
 import css from './EditableMetadata.module.scss';
 import Icon from './Icon';
 import InfoBox, { InfoRow } from './InfoBox';
 
+type Metadata = Record<RecordKey, string>;
 interface Props {
   editing?: boolean;
-  metadata: Record<string, string>;
-  updateMetadata?: (obj: Record<string, string>) => void;
+  metadata?: Record<string, string>;
+  updateMetadata?: (obj: Metadata) => void;
 }
 
-const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }: Props) => {
+const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetadata }: Props) => {
   const staticMetadata: InfoRow[] = useMemo(() => {
-    return Object.entries(metadata || {}).map((pair) => {
-      return ({ content: pair[1], label: pair[0] });
+    return Object.entries(metadata).map(([ key, value ]) => {
+      return ({ content: value, label: key });
     });
   }, [ metadata ]);
 
   const metadataArray = useMemo(() => {
-    return [ ...Object.entries(metadata || { }).map(entry => {
-      return { key: entry[0], value: entry[1] };
-    }), { key: '', value: '' } ];
+    const array = Object.entries(metadata).map(([ key, value ]) => {
+      return { key, value };
+    });
+    if (array.length === 0) {
+      array.push({ key: '', value: '' });
+    }
+    return array;
   }, [ metadata ]);
 
   const onValuesChange = useCallback((
     _changedValues,
-    values: {metadata: Record<string, string>[]},
+    values: {metadata: Metadata[]},
   ) => {
-    const md = (Object.fromEntries(Object.values(values.metadata).map(pair => {
+    const newMetadata = (Object.fromEntries(Object.values(values.metadata).map(pair => {
       if (pair == null) return [ '', '' ];
       if (pair.key == null) pair.key = '';
       if (pair.value == null) pair.value = '';
       return [ pair.key, pair.value ];
     })));
-    delete md[''];
+    delete newMetadata[''];
 
-    updateMetadata?.(md);
+    updateMetadata?.(newMetadata);
   }, [ updateMetadata ]);
 
   return (
