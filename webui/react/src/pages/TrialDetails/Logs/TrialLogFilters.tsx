@@ -8,11 +8,12 @@ const { Option } = Select;
 
 interface Props {
   onChange?: (filters: Filters) => void;
+  onReset?: () => void;
   options: Filters;
   values: Filters;
 }
 
-enum LogLevelFromApi {
+export enum LogLevelFromApi {
   Unspecified = 'LOG_LEVEL_UNSPECIFIED',
   Trace = 'LOG_LEVEL_TRACE',
   Debug = 'LOG_LEVEL_DEBUG',
@@ -23,15 +24,15 @@ enum LogLevelFromApi {
 }
 
 export interface Filters {
-  agentIds?: Array<string>,
-  containerIds?: Array<string>,
-  levels?: Array<LogLevelFromApi>,
-  rankIds?: Array<number>,
-  sources?: Array<string>,
-  stdtypes?: Array<string>,
+  agentIds?: string[],
+  containerIds?: string[],
+  levels?: LogLevelFromApi[],
+  rankIds?: number[],
+  sources?: string[],
+  stdtypes?: string[],
 }
 
-const TrialLogFilters: React.FC<Props> = ({ onChange, options, values }: Props) => {
+const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
   const selectOptions = useMemo(() => {
     return {
       ...options,
@@ -51,7 +52,7 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, options, values }: Props) 
     });
   }, [ onChange, values ]);
 
-  const handleReset = useCallback(() => onChange?.({}), [ onChange ]);
+  const handleReset = useCallback(() => onReset?.(), [ onReset ]);
 
   return (
     <>
@@ -67,6 +68,7 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, options, values }: Props) 
         {selectOptions?.containerIds?.length !== 0 && (
           <MultiSelect
             itemName="Container"
+            style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map(id => <Option key={id} value={id}>{id}</Option>)}

@@ -1,9 +1,10 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
@@ -13,6 +14,7 @@ import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
 import css from './TrialDetailsLogs.module.scss';
+import settingsConfig, { Settings } from './TrialDetailsLogs.settings';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -23,10 +25,31 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [ filterOptions, setFilterOptions ] = useState<Filters>({});
-  const [ filterValues, setFilterValues ] = useState<Filters>({});
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
 
-  const handleFilterChange = useCallback((filters: Filters) => setFilterValues(filters), []);
+  const {
+    resetSettings,
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
+
+  const filterValues: Filters = useMemo(() => ({
+    agentIds: settings.agentId,
+    containerIds: settings.containerId,
+    levels: settings.level,
+    rankIds: settings.rankId,
+  }), [ settings ]);
+
+  const handleFilterChange = useCallback((filters: Filters) => {
+    updateSettings({
+      agentId: filters.agentIds,
+      containerId: filters.containerIds,
+      level: filters.levels,
+      rankId: filters.rankIds,
+    });
+  }, [ updateSettings ]);
+
+  const handleFilterReset = useCallback(() => resetSettings(), [ resetSettings ]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -96,18 +119,18 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       trial.id,
       options.limit,
       options.follow,
-      filterValues.agentIds,
-      filterValues.containerIds,
-      filterValues.rankIds,
-      filterValues.levels,
-      filterValues.stdtypes,
-      filterValues.sources,
+      settings.agentId,
+      settings.containerId,
+      settings.rankId,
+      settings.level,
+      undefined,
+      undefined,
       options.timestampBefore ? new Date(options.timestampBefore) : undefined,
       options.timestampAfter ? new Date(options.timestampAfter) : undefined,
       options.orderBy as OrderBy,
       { signal: config.canceler.signal },
     );
-  }, [ filterValues, trial.id ]);
+  }, [ settings, trial.id ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -130,6 +153,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options={filterOptions}
         values={filterValues}
         onChange={handleFilterChange}
+        onReset={handleFilterReset}
       />
     </div>
   );
