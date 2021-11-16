@@ -49,7 +49,15 @@ def test_model_registry() -> None:
     assert db_model.labels == ["hello", "world"]
 
     # confirm patch does not overwrite other fields
+    mnist.set_description("abcde")
+    db_model = d.get_model(mnist.model_id)
     assert db_model.metadata == {"testing": "override"}
+    assert db_model.labels == ["hello", "world"]
+
+    # overwrite labels to empty list
+    mnist.set_labels([])
+    db_model = d.get_model(mnist.model_id)
+    assert db_model.labels == []
 
     # archive and unarchive
     assert mnist.archived is False

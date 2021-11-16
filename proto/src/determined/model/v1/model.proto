@@ -61,7 +61,7 @@ message PatchModel {
   // An updated metadata object for the model.
   google.protobuf.Struct metadata = 4;
   // An updated label list for the model.
-  repeated google.protobuf.StringValue labels = 5;
+  google.protobuf.ListValue labels = 5;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
@@ -117,7 +117,7 @@ message PatchModelVersion {
   // An updated comment for the model version.
   google.protobuf.StringValue comment = 5;
   // An updated label list for the model version.
-  repeated google.protobuf.StringValue labels = 6;
+  google.protobuf.ListValue labels = 6;
   // Updated text notes for the model version.
   google.protobuf.StringValue notes = 7;
 }

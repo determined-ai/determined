@@ -295,6 +295,13 @@ class Model:
             json={"model": {"labels": self.labels}},
         )
 
+    def set_description(self, description: str) -> None:
+        self.description = description
+        self._session.patch(
+            "/api/v1/models/{}".format(self.model_id),
+            json={"model": {"description": description}},
+        )
+
     def archive(self) -> None:
         """
         Sets the model's state to archived
