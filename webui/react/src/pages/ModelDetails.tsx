@@ -16,6 +16,7 @@ import { modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
+import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
   patchModelVersion, unarchiveModel } from 'services/api';
@@ -62,16 +63,34 @@ const ModelDetails: React.FC = () => {
     fetchModel();
   }, [ fetchModel ]);
 
-  const deleteVersion = useCallback((version: ModelVersion) => {
-    setIsLoading(true);
-    deleteModelVersion({ modelId: version.model.id, versionId: version.id });
-    fetchModel();
+  const deleteVersion = useCallback(async (version: ModelVersion) => {
+    try {
+      setIsLoading(true);
+      await deleteModelVersion({ modelId: version.model.id, versionId: version.id });
+      await fetchModel();
+    } catch (e) {
+      handleError({
+        message: `Unable to delete model version ${version.id}.`,
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
   }, [ fetchModel ]);
 
-  const setModelVersionTags = useCallback((modelId, versionId, tags) => {
-    setIsLoading(true);
-    patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
-    fetchModel();
+  const setModelVersionTags = useCallback(async (modelId, versionId, tags) => {
+    try {
+      setIsLoading(true);
+      await patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
+      await fetchModel();
+    } catch (e) {
+      handleError({
+        message: `Unable to update model version ${versionId} tags.`,
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
   }, [ fetchModel ]);
 
   const showConfirmDelete = useCallback((version: ModelVersion) => {

@@ -91,8 +91,8 @@ const ModelRegistry: React.FC = () => {
    * pagination and sorter.
    */
   useEffect(() => {
-    fetchModels();
     setIsLoading(true);
+    fetchModels();
   }, [
     fetchModels,
     settings,
@@ -102,20 +102,38 @@ const ModelRegistry: React.FC = () => {
     deleteModel({ modelId: model.id });
   }, []);
 
-  const switchArchived = useCallback((model: ModelItem) => {
-    if (model.archived) {
-      unarchiveModel({ modelId: model.id });
-    } else {
-      archiveModel({ modelId: model.id });
+  const switchArchived = useCallback(async (model: ModelItem) => {
+    try {
+      setIsLoading(true);
+      if (model.archived) {
+        await unarchiveModel({ modelId: model.id });
+      } else {
+        await archiveModel({ modelId: model.id });
+      }
+      await fetchModels();
+    } catch (e) {
+      handleError({
+        message: `Unable to switch model ${model.id} archive status.`,
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
     }
-    fetchModels();
-    setIsLoading(true);
   }, [ fetchModels ]);
 
-  const setModelTags = useCallback((modelId, tags) => {
-    patchModel({ body: { id: modelId, labels: tags }, modelId });
-    fetchModels();
-    setIsLoading(true);
+  const setModelTags = useCallback(async (modelId, tags) => {
+    try {
+      setIsLoading(true);
+      await patchModel({ body: { id: modelId, labels: tags }, modelId });
+      await fetchModels();
+    } catch (e) {
+      handleError({
+        message: `Unable to update model ${modelId} tags.`,
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
   }, [ fetchModels ]);
 
   const handleArchiveFilterApply = useCallback((archived: string[]) => {
@@ -288,7 +306,7 @@ const ModelRegistry: React.FC = () => {
         filterDropdown: descriptionFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetModelsRequestSortBy.DESCRIPTION,
-        onHeaderCell: () => settings.name ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => settings.description ? { className: tableCss.headerFilterOn } : {},
         sorter: true,
         title: 'Description',
       },
