@@ -254,7 +254,8 @@ const ModelRegistry: React.FC = () => {
                   Delete Model
               </Menu.Item>
             </Menu>
-          )}>
+          )}
+          trigger={[ 'click' ]}>
           <Button className={css.overflow} type="text">
             <Icon name="overflow-vertical" size="tiny" />
           </Button>

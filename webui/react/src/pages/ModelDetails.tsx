@@ -48,31 +48,30 @@ const ModelDetails: React.FC = () => {
       const modelData = await getModelDetails(
         { modelId: id, sortBy: 'SORT_BY_VERSION' },
       );
-      if (!isEqual(modelData, model)) setModel(modelData);
-      setIsLoading(false);
+      setModel(prev => !isEqual(modelData, prev) ? modelData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
-      setIsLoading(false);
     }
-  }, [ id, model, pageError ]);
+    setIsLoading(false);
+  }, [ id, pageError ]);
 
   usePolling(fetchModel);
 
   useEffect(() => {
-    fetchModel();
     setIsLoading(true);
+    fetchModel();
   }, [ fetchModel ]);
 
   const deleteVersion = useCallback((version: ModelVersion) => {
+    setIsLoading(true);
     deleteModelVersion({ modelId: version.model.id, versionId: version.id });
     fetchModel();
-    setIsLoading(true);
   }, [ fetchModel ]);
 
   const setModelVersionTags = useCallback((modelId, versionId, tags) => {
+    setIsLoading(true);
     patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
     fetchModel();
-    setIsLoading(true);
   }, [ fetchModel ]);
 
   const showConfirmDelete = useCallback((version: ModelVersion) => {
@@ -109,11 +108,13 @@ const ModelDetails: React.FC = () => {
               <Menu.Item
                 danger
                 disabled={!isDeletable}
+                key="delete-version"
                 onClick={() => showConfirmDelete(record)}>
                   Delete Version
               </Menu.Item>
             </Menu>
-          )}>
+          )}
+          trigger={[ 'click' ]}>
           <Button className={css.overflow} type="text">
             <Icon name="overflow-vertical" size="tiny" />
           </Button>

@@ -77,6 +77,7 @@ export interface Theme {
       small: string;
       medium: string;
       large: string;
+      big: string;
     };
     /* eslint-enable @typescript-eslint/member-ordering */
     layout: {[size in ShirtSize]: string};
@@ -191,6 +192,7 @@ const lightDeterminedTheme: Theme = {
       small: '16px',
       medium: '20px',
       large: '24px',
+      big: '28px',
     },
     layout: {
       micro: '2px',

@@ -94,25 +94,28 @@ const ModelHeader: React.FC<Props> = (
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space style={{ marginBlock: 'var(--theme-sizes-layout-large)' }}>
-            <Icon name="model" size="large" />
+            <Icon name="model" size="big" />
             <h1 style={{ margin: 0 }}>{model.name}</h1>
           </Space>
           <Space size="small">
-            <Dropdown overlay={(
-              <Menu>
-                <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
-                  {model.archived ? 'Unarchive' : 'Archive'}
-                </Menu.Item>
-                <Menu.Item
-                  danger
-                  disabled={!isDeletable}
-                  key="delete-model"
-                  onClick={() => showConfirmDelete(model)}>
+            <Dropdown
+              overlay={(
+                <Menu>
+                  {Object.keys(model.metadata ?? {}).length === 0 &&
+                    <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>}
+                  <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
+                    {model.archived ? 'Unarchive' : 'Archive'}
+                  </Menu.Item>
+                  <Menu.Item
+                    danger
+                    disabled={!isDeletable}
+                    key="delete-model"
+                    onClick={() => showConfirmDelete(model)}>
                   Delete
-                </Menu.Item>
-              </Menu>
-            )}>
+                  </Menu.Item>
+                </Menu>
+              )}
+              trigger={[ 'click' ]}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>

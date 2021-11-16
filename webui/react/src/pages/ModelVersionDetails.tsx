@@ -55,11 +55,11 @@ const ModelVersionDetails: React.FC = () => {
       const versionData = await getModelVersion(
         { modelId: parseInt(modelId), versionId: parseInt(versionId) },
       );
-      if (!isEqual(versionData, modelVersion)) setModelVersion(versionData);
-      setIsNotesLoading(false);
+      setModelVersion(prev => !isEqual(versionData, modelVersion) ? versionData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
+    setIsNotesLoading(false);
   }, [ modelId, modelVersion, pageError, versionId ]);
 
   usePolling(fetchModelVersion);
@@ -138,9 +138,9 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     });
   }, [ modelId, versionId ]);
 
-  const setVersionTags = useCallback(async (tags) => {
+  const saveVersionTags = useCallback(async (newTags) => {
     await patchModelVersion({
-      body: { id: parseInt(modelId), labels: tags },
+      body: { id: parseInt(modelId), labels: newTags },
       modelId: parseInt(modelId),
       versionId: parseInt(versionId),
     });
@@ -231,10 +231,11 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         onAddMetadata={editMetadata}
         onDeregisterVersion={deleteVersion}
         onSaveDescription={saveDescription}
-        onUpdateTags={setVersionTags} />}
+        onUpdateTags={saveVersionTags} />}
       id="modelDetails">
       <Tabs
         defaultActiveKey="overview"
+        style={{ height: 'auto' }}
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}
         onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">

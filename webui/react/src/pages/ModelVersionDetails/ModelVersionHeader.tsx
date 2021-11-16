@@ -118,18 +118,21 @@ const ModelVersionHeader: React.FC<Props> = (
             <DownloadModelPopover modelVersion={modelVersion}>
               <Button>Download Model</Button>
             </DownloadModelPopover>
-            <Dropdown overlay={(
-              <Menu>
-                <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item
-                  danger
-                  disabled={!isDeletable}
-                  key="deregister-version"
-                  onClick={() => showConfirmDelete(modelVersion)}>
+            <Dropdown
+              overlay={(
+                <Menu>
+                  {Object.keys(modelVersion.metadata ?? {}).length === 0 &&
+                    <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>}
+                  <Menu.Item
+                    danger
+                    disabled={!isDeletable}
+                    key="deregister-version"
+                    onClick={() => showConfirmDelete(modelVersion)}>
                   Deregister Version
-                </Menu.Item>
-              </Menu>
-            )}>
+                  </Menu.Item>
+                </Menu>
+              )}
+              trigger={[ 'click' ]}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>
