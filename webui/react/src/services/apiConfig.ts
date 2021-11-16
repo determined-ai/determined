@@ -5,7 +5,7 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
-import * as ServiceType from 'services/types';
+import * as Service from 'services/types';
 import * as Type from 'types';
 
 import { noOp } from './utils';
@@ -77,8 +77,8 @@ export const commandToEndpoint: Record<Type.CommandType, string> = {
 
 /* Authentication */
 
-export const login: ServiceType.DetApi<
-  Api.V1LoginRequest, Api.V1LoginResponse, ServiceType.LoginResponse
+export const login: Service.DetApi<
+  Api.V1LoginRequest, Api.V1LoginResponse, Service.LoginResponse
 > = {
   name: 'login',
   postProcess: (resp) => ({ token: resp.token, user: decoder.mapV1User(resp.user) }),
@@ -88,16 +88,16 @@ export const login: ServiceType.DetApi<
   ),
 };
 
-export const logout: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1LogoutResponse, void
+export const logout: Service.DetApi<
+  Service.EmptyParams, Api.V1LogoutResponse, void
 > = {
   name: 'logout',
   postProcess: noOp,
   request: () => detApi.Auth.logout(),
 };
 
-export const getCurrentUser: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
+export const getCurrentUser: Service.DetApi<
+  Service.EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 > = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.mapV1User(response.user),
@@ -105,8 +105,8 @@ export const getCurrentUser: ServiceType.DetApi<
   request: (options) => detApi.Auth.currentUser(options),
 };
 
-export const getUsers: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+export const getUsers: Service.DetApi<
+  Service.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
 > = {
   name: 'getUsers',
   postProcess: (response) => decoder.mapV1UserList(response),
@@ -115,16 +115,16 @@ export const getUsers: ServiceType.DetApi<
 
 /* Info */
 
-export const getInfo: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
+export const getInfo: Service.DetApi<
+  Service.EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
 > = {
   name: 'getInfo',
   postProcess: (response) => decoder.mapV1MasterInfo(response),
   request: () => detApi.Cluster.getMaster(),
 };
 
-export const getTelemetry: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
+export const getTelemetry: Service.DetApi<
+  Service.EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
 > = {
   name: 'getTelemetry',
   postProcess: (response) => response,
@@ -133,16 +133,16 @@ export const getTelemetry: ServiceType.DetApi<
 
 /* Cluster */
 
-export const getAgents: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
+export const getAgents: Service.DetApi<
+  Service.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
 > = {
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
   request: () => detApi.Cluster.getAgents(),
 };
 
-export const getResourcePools: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
+export const getResourcePools: Service.DetApi<
+  Service.EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
 > = {
   name: 'getResourcePools',
   postProcess: (response) => {
@@ -151,14 +151,14 @@ export const getResourcePools: ServiceType.DetApi<
   request: () => detApi.Internal.getResourcePools(),
 };
 
-export const getResourceAllocationAggregated: ServiceType.DetApi<
-  ServiceType.GetResourceAllocationAggregatedParams,
+export const getResourceAllocationAggregated: Service.DetApi<
+  Service.GetResourceAllocationAggregatedParams,
   Api.V1ResourceAllocationAggregatedResponse,
   Api.V1ResourceAllocationAggregatedResponse
 > = {
   name: 'getResourceAllocationAggregated',
   postProcess: (response) => response,
-  request: (params: ServiceType.GetResourceAllocationAggregatedParams, options) => {
+  request: (params: Service.GetResourceAllocationAggregatedParams, options) => {
     const dateFormat = (params.period === 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
       ? 'YYYY-MM' : 'YYYY-MM-DD');
     return detApi.Cluster.resourceAllocationAggregated(
@@ -172,8 +172,8 @@ export const getResourceAllocationAggregated: ServiceType.DetApi<
 
 /* Experiment */
 
-export const getExperiments: ServiceType.DetApi<
-  ServiceType.GetExperimentsParams, Api.V1GetExperimentsResponse, Type.ExperimentPagination
+export const getExperiments: Service.DetApi<
+  Service.GetExperimentsParams, Api.V1GetExperimentsResponse, Type.ExperimentPagination
 > = {
   name: 'getExperiments',
   postProcess: (response: Api.V1GetExperimentsResponse) => {
@@ -182,7 +182,7 @@ export const getExperiments: ServiceType.DetApi<
       pagination: response.pagination,
     };
   },
-  request: (params: ServiceType.GetExperimentsParams, options) => {
+  request: (params: Service.GetExperimentsParams, options) => {
     return detApi.Experiments.getExperiments(
       params.sortBy,
       params.orderBy,
@@ -199,25 +199,25 @@ export const getExperiments: ServiceType.DetApi<
   },
 };
 
-export const getExperiment: ServiceType.DetApi<
-  ServiceType.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
+export const getExperiment: Service.DetApi<
+  Service.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
 > = {
   name: 'getExperiment',
   postProcess: (response: Api.V1GetExperimentResponse) =>
     decoder.mapV1Experiment(response.experiment),
-  request: (params: ServiceType.GetExperimentParams) => {
+  request: (params: Service.GetExperimentParams) => {
     return detApi.Experiments.getExperiment(params.id);
   },
 };
 
-export const createExperiment: ServiceType.DetApi<
-  ServiceType.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
+export const createExperiment: Service.DetApi<
+  Service.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
 > = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
     return decoder.mapV1GetExperimentResponse(resp);
   },
-  request: (params: ServiceType.CreateExperimentParams, options) => {
+  request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
       {
         config: params.experimentConfig,
@@ -228,82 +228,82 @@ export const createExperiment: ServiceType.DetApi<
   },
 };
 
-export const archiveExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
+export const archiveExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
 > = {
   name: 'archiveExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.archiveExperiment(params.experimentId, options);
   },
 };
 
-export const deleteExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1DeleteExperimentResponse, void
+export const deleteExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1DeleteExperimentResponse, void
 > = {
   name: 'deleteExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.deleteExperiment(params.experimentId, options);
   },
 };
 
-export const unarchiveExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
+export const unarchiveExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
 > = {
   name: 'unarchiveExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.unarchiveExperiment(params.experimentId, options);
   },
 };
 
-export const activateExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1ActivateExperimentResponse, void
+export const activateExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1ActivateExperimentResponse, void
 > = {
   name: 'activateExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.activateExperiment(params.experimentId, options);
   },
 };
 
-export const pauseExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1PauseExperimentResponse, void
+export const pauseExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1PauseExperimentResponse, void
 > = {
   name: 'pauseExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.pauseExperiment(params.experimentId, options);
   },
 };
 
-export const cancelExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1CancelExperimentResponse, void
+export const cancelExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1CancelExperimentResponse, void
 > = {
   name: 'cancelExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.cancelExperiment(params.experimentId, options);
   },
 };
 
-export const killExperiment: ServiceType.DetApi<
-  ServiceType.ExperimentIdParams, Api.V1KillExperimentResponse, void
+export const killExperiment: Service.DetApi<
+  Service.ExperimentIdParams, Api.V1KillExperimentResponse, void
 > = {
   name: 'killExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.ExperimentIdParams, options) => {
+  request: (params: Service.ExperimentIdParams, options) => {
     return detApi.Experiments.killExperiment(params.experimentId, options);
   },
 };
 
-export const patchExperiment: ServiceType.DetApi<
-  ServiceType.PatchExperimentParams, Api.V1PatchExperimentResponse, void
+export const patchExperiment: Service.DetApi<
+  Service.PatchExperimentParams, Api.V1PatchExperimentResponse, void
 > = {
   name: 'patchExperiment',
   postProcess: noOp,
-  request: (params: ServiceType.PatchExperimentParams, options) => {
+  request: (params: Service.PatchExperimentParams, options) => {
     return detApi.Experiments.patchExperiment(
       params.experimentId,
       params.body as Api.V1Experiment,
@@ -312,16 +312,16 @@ export const patchExperiment: ServiceType.DetApi<
   },
 };
 
-export const getExperimentDetails: ServiceType.DetApi<
-  ServiceType.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
+export const getExperimentDetails: Service.DetApi<
+  Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 > = {
   name: 'getExperimentDetails',
   postProcess: (response) => decoder.mapV1GetExperimentResponse(response),
   request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
 };
 
-export const getExpValidationHistory: ServiceType.DetApi<
-  ServiceType.SingleEntityParams,
+export const getExpValidationHistory: Service.DetApi<
+  Service.SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,
   Type.ValidationHistory[]
 > = {
@@ -339,8 +339,8 @@ export const getExpValidationHistory: ServiceType.DetApi<
   },
 };
 
-export const getExpTrials: ServiceType.DetApi<
-  ServiceType.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
+export const getExpTrials: Service.DetApi<
+  Service.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
 > = {
   name: 'getExperimentTrials',
   postProcess: (response) => {
@@ -362,33 +362,33 @@ export const getExpTrials: ServiceType.DetApi<
   },
 };
 
-export const getExperimentLabels: ServiceType.DetApi<
-  ServiceType.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+export const getExperimentLabels: Service.DetApi<
+  Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
   request: (options) => detApi.Experiments.getExperimentLabels(options),
 };
 
-export const getTrialDetails: ServiceType.DetApi<
-  ServiceType.TrialDetailsParams, Api.V1GetTrialResponse, Type.TrialDetails
+export const getTrialDetails: Service.DetApi<
+  Service.TrialDetailsParams, Api.V1GetTrialResponse, Type.TrialDetails
 > = {
   name: 'getTrialDetails',
   postProcess: (response: Api.V1GetTrialResponse) => {
     return decoder.decodeTrialResponseToTrialDetails(response);
   },
-  request: (params: ServiceType.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
+  request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
 /* Tasks */
 
-export const getCommands: ServiceType.DetApi<
-  ServiceType.GetCommandsParams, Api.V1GetCommandsResponse, Type.CommandTask[]
+export const getCommands: Service.DetApi<
+  Service.GetCommandsParams, Api.V1GetCommandsResponse, Type.CommandTask[]
 > = {
   name: 'getCommands',
   postProcess: (response) => (response.commands || [])
     .map(command => decoder.mapV1Command(command)),
-  request: (params: ServiceType.GetCommandsParams) => detApi.Commands.getCommands(
+  request: (params: Service.GetCommandsParams) => detApi.Commands.getCommands(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -396,13 +396,13 @@ export const getCommands: ServiceType.DetApi<
   ),
 };
 
-export const getJupyterLabs: ServiceType.DetApi<
-  ServiceType.GetJupyterLabsParams, Api.V1GetNotebooksResponse, Type.CommandTask[]
+export const getJupyterLabs: Service.DetApi<
+  Service.GetJupyterLabsParams, Api.V1GetNotebooksResponse, Type.CommandTask[]
 > = {
   name: 'getJupyterLabs',
   postProcess: (response) => (response.notebooks || [])
     .map(jupyterLab => decoder.mapV1Notebook(jupyterLab)),
-  request: (params: ServiceType.GetJupyterLabsParams) => detApi.Notebooks.getNotebooks(
+  request: (params: Service.GetJupyterLabsParams) => detApi.Notebooks.getNotebooks(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -410,13 +410,13 @@ export const getJupyterLabs: ServiceType.DetApi<
   ),
 };
 
-export const getShells: ServiceType.DetApi<
-  ServiceType.GetShellsParams, Api.V1GetShellsResponse, Type.CommandTask[]
+export const getShells: Service.DetApi<
+  Service.GetShellsParams, Api.V1GetShellsResponse, Type.CommandTask[]
 > = {
   name: 'getShells',
   postProcess: (response) => (response.shells || [])
     .map(shell => decoder.mapV1Shell(shell)),
-  request: (params: ServiceType.GetShellsParams) => detApi.Shells.getShells(
+  request: (params: Service.GetShellsParams) => detApi.Shells.getShells(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -424,13 +424,13 @@ export const getShells: ServiceType.DetApi<
   ),
 };
 
-export const getTensorBoards: ServiceType.DetApi<
-  ServiceType.GetTensorBoardsParams, Api.V1GetTensorboardsResponse, Type.CommandTask[]
+export const getTensorBoards: Service.DetApi<
+  Service.GetTensorBoardsParams, Api.V1GetTensorboardsResponse, Type.CommandTask[]
 > = {
   name: 'getTensorBoards',
   postProcess: (response) => (response.tensorboards || [])
     .map(tensorboard => decoder.mapV1TensorBoard(tensorboard)),
-  request: (params: ServiceType.GetTensorBoardsParams) => detApi.TensorBoards.getTensorboards(
+  request: (params: Service.GetTensorBoardsParams) => detApi.TensorBoards.getTensorboards(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -438,49 +438,49 @@ export const getTensorBoards: ServiceType.DetApi<
   ),
 };
 
-export const killCommand: ServiceType.DetApi<
-  ServiceType.CommandIdParams, Api.V1KillCommandResponse, void
+export const killCommand: Service.DetApi<
+  Service.CommandIdParams, Api.V1KillCommandResponse, void
 > = {
   name: 'killCommand',
   postProcess: noOp,
-  request: (params: ServiceType.CommandIdParams) => detApi.Commands
+  request: (params: Service.CommandIdParams) => detApi.Commands
     .killCommand(params.commandId),
 };
 
-export const killJupyterLab: ServiceType.DetApi<
-  ServiceType.CommandIdParams, Api.V1KillNotebookResponse, void
+export const killJupyterLab: Service.DetApi<
+  Service.CommandIdParams, Api.V1KillNotebookResponse, void
 > = {
   name: 'killJupyterLab',
   postProcess: noOp,
-  request: (params: ServiceType.CommandIdParams) => detApi.Notebooks
+  request: (params: Service.CommandIdParams) => detApi.Notebooks
     .killNotebook(params.commandId),
 };
 
-export const killShell: ServiceType.DetApi<
-  ServiceType.CommandIdParams, Api.V1KillShellResponse, void
+export const killShell: Service.DetApi<
+  Service.CommandIdParams, Api.V1KillShellResponse, void
 > = {
   name: 'killShell',
   postProcess: noOp,
-  request: (params: ServiceType.CommandIdParams) => detApi.Shells
+  request: (params: Service.CommandIdParams) => detApi.Shells
     .killShell(params.commandId),
 };
 
-export const killTensorBoard: ServiceType.DetApi<
-  ServiceType.CommandIdParams, Api.V1KillTensorboardResponse, void
+export const killTensorBoard: Service.DetApi<
+  Service.CommandIdParams, Api.V1KillTensorboardResponse, void
 > = {
   name: 'killTensorBoard',
   postProcess: noOp,
-  request: (params: ServiceType.CommandIdParams) => detApi.TensorBoards
+  request: (params: Service.CommandIdParams) => detApi.TensorBoards
     .killTensorboard(params.commandId),
 };
 
-export const getTemplates: ServiceType.DetApi<
-  ServiceType.GetTemplatesParams, Api.V1GetTemplatesResponse, Type.Template[]
+export const getTemplates: Service.DetApi<
+  Service.GetTemplatesParams, Api.V1GetTemplatesResponse, Type.Template[]
 > = {
   name: 'getTemplates',
   postProcess: (response) => (response.templates || [])
     .map(template => decoder.mapV1Template(template)),
-  request: (params: ServiceType.GetTemplatesParams) => detApi.Templates.getTemplates(
+  request: (params: Service.GetTemplatesParams) => detApi.Templates.getTemplates(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -489,44 +489,44 @@ export const getTemplates: ServiceType.DetApi<
   ),
 };
 
-export const launchJupyterLab: ServiceType.DetApi<
-  ServiceType.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.CommandTask
+export const launchJupyterLab: Service.DetApi<
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.CommandTask
 > = {
   name: 'launchJupyterLab',
   postProcess: (response) => decoder.mapV1Notebook(response.notebook),
-  request: (params: ServiceType.LaunchJupyterLabParams) => detApi.Notebooks
+  request: (params: Service.LaunchJupyterLabParams) => detApi.Notebooks
     .launchNotebook(params),
 };
 
-export const previewJupyterLab: ServiceType.DetApi<
-  ServiceType.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
+export const previewJupyterLab: Service.DetApi<
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
 > = {
   name: 'previewJupyterLab',
   postProcess: (response) => response.config,
-  request: (params: ServiceType.LaunchJupyterLabParams) => detApi.Notebooks
+  request: (params: Service.LaunchJupyterLabParams) => detApi.Notebooks
     .launchNotebook(params),
 };
 
-export const launchTensorBoard: ServiceType.DetApi<
-  ServiceType.LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, Type.CommandTask
+export const launchTensorBoard: Service.DetApi<
+  Service.LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, Type.CommandTask
 > = {
   name: 'launchTensorBoard',
   postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
-  request: (params: ServiceType.LaunchTensorBoardParams) => detApi.TensorBoards
+  request: (params: Service.LaunchTensorBoardParams) => detApi.TensorBoards
     .launchTensorboard(params),
 };
 
 /* Logs */
 
-const buildQuery = (params: ServiceType.LogsParams): string => {
+const buildQuery = (params: Service.LogsParams): string => {
   const queryParams: Record<string, number> = {};
   if (params.tail) queryParams['tail'] = params.tail;
   if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
   return queryString.stringify(queryParams);
 };
 
-export const getTaskLogs: ServiceType.HttpApi<ServiceType.TaskLogsParams, Type.Log[]> = {
-  httpOptions: (params: ServiceType.TaskLogsParams) => ({
+export const getTaskLogs: Service.HttpApi<Service.TaskLogsParams, Type.Log[]> = {
+  httpOptions: (params: Service.TaskLogsParams) => ({
     url: [
       `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
       buildQuery(params),

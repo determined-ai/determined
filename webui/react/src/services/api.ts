@@ -1,6 +1,6 @@
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
-import * as ServiceType from 'services/types';
+import * as Service from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import * as Type from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
@@ -10,7 +10,7 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 /* Authentication */
 
 export const login = generateDetApi<
-  Api.V1LoginRequest, Api.V1LoginResponse, ServiceType.LoginResponse
+  Api.V1LoginRequest, Api.V1LoginResponse, Service.LoginResponse
 >(Config.login);
 
 /*
@@ -27,39 +27,39 @@ export const login = generateDetApi<
 // };
 
 export const logout = generateDetApi<
-  ServiceType.EmptyParams, Api.V1LogoutResponse, void
+  Service.EmptyParams, Api.V1LogoutResponse, void
 >(Config.logout);
 
 export const getCurrentUser = generateDetApi<
-  ServiceType.EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
+  Service.EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 >(Config.getCurrentUser);
 
 export const getUsers = generateDetApi<
-  ServiceType.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
 >(Config.getUsers);
 
 /* Info */
 
 export const getInfo = generateDetApi<
-  ServiceType.EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
+  Service.EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
 >(Config.getInfo);
 
 export const getTelemetry = generateDetApi<
-  ServiceType.EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
+  Service.EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
 >(Config.getTelemetry);
 
 /* Cluster */
 
 export const getAgents = generateDetApi<
-  ServiceType.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
+  Service.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
 >(Config.getAgents);
 
 export const getResourcePools = generateDetApi<
-  ServiceType.EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
+  Service.EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
 >(Config.getResourcePools);
 
 export const getResourceAllocationAggregated = generateDetApi<
-  ServiceType.GetResourceAllocationAggregatedParams,
+  Service.GetResourceAllocationAggregatedParams,
   Api.V1ResourceAllocationAggregatedResponse,
   Api.V1ResourceAllocationAggregatedResponse
 >(Config.getResourceAllocationAggregated);
@@ -67,123 +67,123 @@ export const getResourceAllocationAggregated = generateDetApi<
 /* Experiments */
 
 export const getExperiments = generateDetApi<
-  ServiceType.GetExperimentsParams, Api.V1GetExperimentsResponse, Type.ExperimentPagination
+  Service.GetExperimentsParams, Api.V1GetExperimentsResponse, Type.ExperimentPagination
 >(Config.getExperiments);
 
 export const getExperiment = generateDetApi<
-  ServiceType.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
+  Service.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
 >(Config.getExperiment);
 
 export const getExperimentDetails = generateDetApi<
-  ServiceType.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
+  Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 >(Config.getExperimentDetails);
 
 export const getExpTrials = generateDetApi<
-  ServiceType.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
+  Service.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
 >(Config.getExpTrials);
 
 export const getExpValidationHistory = generateDetApi<
-  ServiceType.SingleEntityParams,
+  Service.SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,
   Type.ValidationHistory[]
 >(Config.getExpValidationHistory);
 
 export const getTrialDetails = generateDetApi<
-  ServiceType.TrialDetailsParams, Api.V1GetTrialResponse, Type.TrialDetails
+  Service.TrialDetailsParams, Api.V1GetTrialResponse, Type.TrialDetails
 >(Config.getTrialDetails);
 
 export const createExperiment = generateDetApi<
-  ServiceType.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
+  Service.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
 >(Config.createExperiment);
 
 export const archiveExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
 >(Config.archiveExperiment);
 
 export const unarchiveExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
 >(Config.unarchiveExperiment);
 
 export const deleteExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1DeleteExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1DeleteExperimentResponse, void
 >(Config.deleteExperiment);
 
 export const activateExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1ActivateExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1ActivateExperimentResponse, void
 >(Config.activateExperiment);
 
 export const pauseExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1PauseExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1PauseExperimentResponse, void
 >(Config.pauseExperiment);
 
 export const cancelExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1CancelExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1CancelExperimentResponse, void
 >(Config.cancelExperiment);
 
 export const killExperiment = generateDetApi<
-  ServiceType.ExperimentIdParams, Api.V1KillExperimentResponse, void
+  Service.ExperimentIdParams, Api.V1KillExperimentResponse, void
 >(Config.killExperiment);
 
 export const patchExperiment = generateDetApi<
-  ServiceType.PatchExperimentParams, Api.V1KillExperimentResponse, void
+  Service.PatchExperimentParams, Api.V1KillExperimentResponse, void
 >(Config.patchExperiment);
 
 export const getExperimentLabels = generateDetApi<
-  ServiceType.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+  Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
 /* Tasks */
 
 export const getCommands = generateDetApi<
-  ServiceType.GetCommandsParams, Api.V1GetCommandsResponse, Type.CommandTask[]
+  Service.GetCommandsParams, Api.V1GetCommandsResponse, Type.CommandTask[]
 >(Config.getCommands);
 
 export const getJupyterLabs = generateDetApi<
-  ServiceType.GetJupyterLabsParams, Api.V1GetNotebooksResponse, Type.CommandTask[]
+  Service.GetJupyterLabsParams, Api.V1GetNotebooksResponse, Type.CommandTask[]
 >(Config.getJupyterLabs);
 
 export const getShells = generateDetApi<
-  ServiceType.GetShellsParams, Api.V1GetShellsResponse, Type.CommandTask[]
+  Service.GetShellsParams, Api.V1GetShellsResponse, Type.CommandTask[]
 >(Config.getShells);
 
 export const getTensorBoards = generateDetApi<
-  ServiceType.GetTensorBoardsParams, Api.V1GetTensorboardsResponse, Type.CommandTask[]
+  Service.GetTensorBoardsParams, Api.V1GetTensorboardsResponse, Type.CommandTask[]
 >(Config.getTensorBoards);
 
 export const killCommand = generateDetApi<
-  ServiceType.CommandIdParams, Api.V1KillCommandResponse, void
+  Service.CommandIdParams, Api.V1KillCommandResponse, void
 >(Config.killCommand);
 
 export const killJupyterLab = generateDetApi<
-  ServiceType.CommandIdParams, Api.V1KillNotebookResponse, void
+  Service.CommandIdParams, Api.V1KillNotebookResponse, void
 >(Config.killJupyterLab);
 
 export const killShell = generateDetApi<
-  ServiceType.CommandIdParams, Api.V1KillShellResponse, void
+  Service.CommandIdParams, Api.V1KillShellResponse, void
 >(Config.killShell);
 
 export const killTensorBoard = generateDetApi<
-  ServiceType.CommandIdParams, Api.V1KillTensorboardResponse, void
+  Service.CommandIdParams, Api.V1KillTensorboardResponse, void
 >(Config.killTensorBoard);
 
 export const getTaskTemplates = generateDetApi<
-  ServiceType.GetTemplatesParams, Api.V1GetTemplatesResponse, Type.Template[]
+  Service.GetTemplatesParams, Api.V1GetTemplatesResponse, Type.Template[]
 >(Config.getTemplates);
 
 export const launchJupyterLab = generateDetApi<
-  ServiceType.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.CommandTask
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.CommandTask
 >(Config.launchJupyterLab);
 
 export const previewJupyterLab = generateDetApi<
-  ServiceType.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
 >(Config.previewJupyterLab);
 
 export const launchTensorBoard = generateDetApi<
-  ServiceType.LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, Type.CommandTask
+  Service.LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, Type.CommandTask
 >(Config.launchTensorBoard);
 
 export const openOrCreateTensorBoard = async (
-  params: ServiceType.LaunchTensorBoardParams,
+  params: Service.LaunchTensorBoardParams,
 ): Promise<Type.CommandTask> => {
   const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(tensorboard =>
@@ -206,4 +206,4 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
   }
 };
 
-export const getTaskLogs = generateApi<ServiceType.TaskLogsParams, Type.Log[]>(Config.getTaskLogs);
+export const getTaskLogs = generateApi<Service.TaskLogsParams, Type.Log[]>(Config.getTaskLogs);
