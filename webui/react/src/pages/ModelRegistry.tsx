@@ -24,7 +24,7 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ArchiveFilter, ModelItem } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
-import { alphanumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
 import css from './ModelRegistry.module.scss';
@@ -73,7 +73,7 @@ const ModelRegistry: React.FC = () => {
   const fetchTags = useCallback(async () => {
     try {
       const tags = await getModelLabels({ signal: canceler.signal });
-      tags.sort((a, b) => alphanumericSorter(a, b));
+      tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
     } catch (e) {}
   }, [ canceler.signal ]);
