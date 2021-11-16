@@ -79,7 +79,7 @@ const ModelHeader: React.FC<Props> = (
         <Breadcrumb separator="">
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>
-              <LeftOutlined style={{ marginRight: 10 }} />
+              <LeftOutlined className={css.leftIcon} />
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
@@ -93,9 +93,9 @@ const ModelHeader: React.FC<Props> = (
       </div>
       <div className={css.headerContent}>
         <div className={css.mainRow}>
-          <Space style={{ marginBlock: 'var(--theme-sizes-layout-large)' }}>
+          <Space className={css.nameAndIcon}>
             <Icon name="model" size="big" />
-            <h1 style={{ margin: 0 }}>{model.name}</h1>
+            <h1 className={css.name}>{model.name}</h1>
           </Space>
           <Space size="small">
             <Dropdown
