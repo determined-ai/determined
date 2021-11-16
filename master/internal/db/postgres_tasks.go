@@ -33,8 +33,8 @@ func (db *PgDB) AddTask(t *model.Task) error {
 
 func addTask(q queryHandler, t *model.Task) error {
 	if _, err := q.NamedExec(`
-INSERT INTO tasks (task_id, task_type, start_time)
-VALUES (:task_id, :task_type, :start_time)
+INSERT INTO tasks (task_id, task_type, start_time, job_id)
+VALUES (:task_id, :task_type, :start_time, :job_id)
 `, t); err != nil {
 		return errors.Wrap(err, "adding task")
 	}

@@ -1125,6 +1125,7 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 		job := model.Job{
 			JobID:   experiment.JobID,
 			JobType: model.JobTypeExperiment,
+			OwnerID: experiment.OwnerID,
 		}
 		if err := addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)

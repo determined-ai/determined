@@ -234,6 +234,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 
 	if !t.idSet {
 		modelTrial := model.NewTrial(
+			t.jobID,
 			t.taskID,
 			t.searcher.Create.RequestID,
 			t.experimentID,
