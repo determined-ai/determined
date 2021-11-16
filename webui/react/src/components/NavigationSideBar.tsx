@@ -92,8 +92,8 @@ const NavigationSideBar: React.FC = () => {
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
-  const shortVersion = version.split('.').slice(0, 3).join('.');
-  const isVersionLong = (version.match(/\./g) || []).length > 2;
+  const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
+  const isVersionLong = version !== shortVersion;
   const username = auth.user?.username || 'Anonymous';
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;
