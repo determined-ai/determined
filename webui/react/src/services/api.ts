@@ -135,47 +135,47 @@ export const getExperimentLabels = generateDetApi<
 /* Models */
 
 export const getModels = generateDetApi<
-  GetModelsParams, Api.V1GetModelsResponse, ModelPagination
+  Service.GetModelsParams, Api.V1GetModelsResponse, Type.ModelPagination
 >(Config.getModels);
 
 export const getModel = generateDetApi<
-  GetModelParams, Api.V1GetModelResponse, ModelItem | undefined
+  Service.GetModelParams, Api.V1GetModelResponse, Type.ModelItem | undefined
 >(Config.getModel);
 
 export const patchModel = generateDetApi<
-  PatchModelParams, Api.V1PatchModelResponse, ModelItem | undefined
+  Service.PatchModelParams, Api.V1PatchModelResponse, Type.ModelItem | undefined
 >(Config.patchModel);
 
 export const getModelDetails = generateDetApi<
-  GetModelDetailsParams, Api.V1GetModelVersionsResponse, ModelVersions | undefined
+  Service.GetModelDetailsParams, Api.V1GetModelVersionsResponse, Type.ModelVersions | undefined
 >(Config.getModelDetails);
 
 export const getModelVersion = generateDetApi<
-  GetModelVersionParams, Api.V1GetModelVersionResponse, ModelVersion | undefined
+  Service.GetModelVersionParams, Api.V1GetModelVersionResponse, Type.ModelVersion | undefined
 >(Config.getModelVersion);
 
 export const patchModelVersion = generateDetApi<
-  PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefined
+  Service.PatchModelVersionParams, Api.V1PatchModelVersionResponse, Type.ModelVersion | undefined
 >(Config.patchModelVersion);
 
 export const archiveModel = generateDetApi<
-  ArchiveModelParams, Api.V1ArchiveModelResponse, void
+  Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void
 >(Config.archiveModel);
 
 export const unarchiveModel = generateDetApi<
-  ArchiveModelParams, Api.V1UnarchiveModelResponse, void
+  Service.ArchiveModelParams, Api.V1UnarchiveModelResponse, void
 >(Config.unarchiveModel);
 
 export const deleteModel = generateDetApi<
-  DeleteModelParams, Api.V1DeleteModelResponse, void
+  Service.DeleteModelParams, Api.V1DeleteModelResponse, void
 >(Config.deleteModel);
 
 export const deleteModelVersion = generateDetApi<
-  DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
+  Service.DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 >(Config.deleteModelVersion);
 
 export const getModelLabels = generateDetApi<
-  EmptyParams, Api.V1GetModelLabelsResponse, string[]
+  Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
 
 /* Tasks */
