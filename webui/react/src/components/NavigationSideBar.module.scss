@@ -1,7 +1,9 @@
 /* stylelint-disable no-descending-specificity */
 
 .base {
-  background-color: var(--theme-colors-base-2);
+  background-color: var(--theme-colors-monochrome-15);
+  border-right: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+  box-sizing: border-box;
   display: flex;
   flex-basis: var(--theme-sizes-navigation-maxWidth);
   flex-direction: column;
@@ -32,8 +34,8 @@
     position: relative;
   }
   .version {
-    background-color: var(--theme-colors-base-1);
-    color: var(--theme-colors-base-12);
+    background-color: var(--theme-colors-monochrome-13);
+    color: var(--theme-colors-monochrome-8);
     font-size: var(--theme-sizes-font-tiny);
     font-style: italic;
     height: 32px;
@@ -58,7 +60,7 @@
       border-radius: var(--theme-sizes-border-radius);
       border-style: solid;
       border-width: var(--theme-sizes-border-width);
-      color: var(--theme-colors-monochrome-17);
+      color: var(--theme-colors-monochrome-3);
       flex-grow: 1;
       flex-shrink: 1;
       overflow: hidden;
@@ -70,7 +72,7 @@
       border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
       border-style: solid;
       border-width: var(--theme-sizes-border-width);
-      color: var(--theme-colors-monochrome-17);
+      color: var(--theme-colors-monochrome-0);
       display: flex;
       flex-shrink: 0;
       justify-content: center;
@@ -79,10 +81,10 @@
   }
   .launchBlock:hover {
     .launchButton,
-    .launchIcon { border-color: var(--theme-colors-monochrome-17); }
+    .launchIcon { border-color: var(--theme-colors-monochrome-6); }
   }
   .navItem {
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-colors-monochrome-3);
     cursor: pointer;
     display: block;
     height: 48px;
@@ -118,34 +120,36 @@
       white-space: nowrap;
     }
   }
-  .navItem.active {
-    background-color: var(--theme-colors-base-0);
+  .navItem.active,
+  .navItem.active:hover {
+    background-color: var(--theme-colors-monochrome-17);
+    color: var(--theme-colors-monochrome-0);
     cursor: default;
   }
   .navItem:hover {
-    background-color: var(--theme-colors-base-3);
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-colors-action-normal);
   }
   .user {
     align-items: center;
-    background-color: var(--theme-colors-base-4);
+    background-color: var(--theme-colors-monochrome-13);
     cursor: pointer;
     display: flex;
     padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
     position: relative;
     width: var(--theme-sizes-navigation-maxWidth);
+
+    & > span {
+      color: var(--theme-colors-monochrome-3);
+      font-size: var(--theme-sizes-font-small);
+      margin-left: var(--theme-sizes-layout-big);
+      pointer-events: none;
+    }
   }
-  .user:hover {
-    background-color: var(--theme-colors-base-3);
+  .user:hover > span {
+    color: var(--theme-colors-monochrome-0);
   }
   .user > [class*=Avatar_base_] {
     flex-shrink: 0;
-  }
-  .user > span {
-    color: var(--theme-colors-monochrome-17);
-    font-size: var(--theme-sizes-font-small);
-    margin-left: var(--theme-sizes-layout-big);
-    pointer-events: none;
   }
 }
 .collapsedAppear {
