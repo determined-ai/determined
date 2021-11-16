@@ -158,8 +158,7 @@ func (a *apiServer) PatchModel(
 	if req.Model.Labels != nil {
 		var reqLabelList []string
 		for _, el := range req.Model.Labels.Values {
-			sval := el.String()
-			reqLabelList = append(reqLabelList, sval[14:len(sval)-1])
+			reqLabelList = append(reqLabelList, el.GetStringValue())
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
@@ -372,8 +371,7 @@ func (a *apiServer) PatchModelVersion(
 	if req.ModelVersion.Labels != nil {
 		var reqLabelList []string
 		for _, el := range req.ModelVersion.Labels.Values {
-			sval := el.String()
-			reqLabelList = append(reqLabelList, sval[14:len(sval)-1])
+			reqLabelList = append(reqLabelList, el.GetStringValue())
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {

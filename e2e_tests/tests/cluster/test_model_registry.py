@@ -113,12 +113,13 @@ def test_model_registry() -> None:
 
     # Create some more models and validate listing models.
     tform = d.create_model("transformer", "all you need is attention")
-    d.create_model("object-detection", "a bounding box model")
+    objectdetect = d.create_model("object-detection", "a bounding box model")
 
     models = d.get_models(sort_by=ModelSortBy.NAME)
     assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]
 
     # Test model labels combined
+    mnist.set_labels(["hello", "world"])
     tform.set_labels(["world", "test", "zebra"])
     labels = d.get_model_labels()
     assert labels == ["world", "hello", "test", "zebra"]
@@ -127,3 +128,7 @@ def test_model_registry() -> None:
     tform.delete()
     models = d.get_models(sort_by=ModelSortBy.NAME)
     assert [m.name for m in models] == ["mnist", "object-detection"]
+
+    # Continue cleaning model registry of test data
+    mnist.delete()
+    objectdetect.delete()
