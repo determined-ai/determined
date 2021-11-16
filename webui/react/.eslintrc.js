@@ -92,6 +92,7 @@ module.exports = {
     'object-property-newline': [ 'error', { allowAllPropertiesOnSameLine: true } ],
     'quote-props': [ 'error', 'consistent-as-needed' ],
     'quotes': [ 'error', 'single', { avoidEscape: true } ],
+    'react/display-name': 'off',
     'react/jsx-first-prop-new-line': [ 'error', 'multiline-multiprop' ],
     'react/jsx-max-props-per-line': [ 'error', { when: 'multiline' } ],
     'react/jsx-sort-props': [ 'error', {
