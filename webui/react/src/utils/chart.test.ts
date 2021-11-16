@@ -51,7 +51,7 @@ describe('normalizeRange', () => {
     expect(normalizeRange([], [ 1, 5 ])).toStrictEqual([]);
   });
   it('Values and range', () => {
-    expect(normalizeRange([ 1, 2, 5 ], [ 1, 5 ])).toStrictEqual([ 0, 1/4, 1 ]);
+    expect(normalizeRange([ 1, 2, 5 ], [ 1, 5 ])).toStrictEqual([ 0, 1 / 4, 1 ]);
   });
 });
 
@@ -60,6 +60,6 @@ describe('distance', () => {
     expect(distance(0, 0, 0, 0)).toStrictEqual(0);
   });
   it('Distance', () => {
-    expect(distance(0, 0, 1, 1)**2).toBeCloseTo(2);
+    expect(distance(0, 0, 1, 1) ** 2).toBeCloseTo(2);
   });
 });

@@ -50,10 +50,10 @@ const TrialsComparisonModal: React.FC<ModalProps> =
     <Modal
       centered
       footer={null}
-      style={{ height: resize.height*.9 }}
+      style={{ height: resize.height * .9 }}
       title={`Experiment ${experiment.id} Trial Comparison`}
       visible={visible}
-      width={resize.width*.9}
+      width={resize.width * .9}
       onCancel={onCancel}>
       <TrialsComparisonTable experiment={experiment} trials={trials} onUnselect={onUnselect} />
     </Modal>

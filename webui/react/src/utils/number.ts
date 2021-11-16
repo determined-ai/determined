@@ -11,8 +11,8 @@ export const findFactorOfNumber = (n: number): number[] => {
     if (abs % i !== 0) continue;
     factorsAsc.push(i);
 
-    if (abs/i === i) continue;
-    factorsDesc.push(abs/i);
+    if (abs / i === i) continue;
+    factorsDesc.push(abs / i);
   }
 
   return factorsAsc.concat(factorsDesc.reverse());

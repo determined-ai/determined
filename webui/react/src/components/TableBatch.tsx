@@ -32,7 +32,7 @@ const TableBatch: React.FC<Props> = ({
   const classes = [ css.base ];
   const selectCount = selectedRowCount || 0;
 
-  const message = `Apply batch operations to ${selectCount}`+
+  const message = `Apply batch operations to ${selectCount}` +
     ` item${selectCount === 1 ? '' : 's'}`;
 
   if (selectCount > 0) classes.push(css.show);

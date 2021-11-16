@@ -29,7 +29,8 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
       return {
         name: name,
         range: value.type === HyperparameterType.Log ?
-          [ (value.base || 10)**(value.minval || -5), (value.base || 10)**(value.maxval || 1) ] :
+          [ (value.base || 10) ** (value.minval || -5),
+            (value.base || 10) ** (value.maxval || 1) ] :
           [ value.minval || 0, value.maxval || 1 ],
         type: value.type,
         val: String(trial.hyperparameters[name] || 0),
@@ -64,13 +65,13 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
       case HyperparameterType.Categorical:
       {
         const idx = hp.vals.indexOf(hp.val);
-        return ((idx === -1 ? 0 : idx)/(hp.vals.length-1));
+        return ((idx === -1 ? 0 : idx) / (hp.vals.length - 1));
       }
       case HyperparameterType.Log:
-        return clamp(1-Math.log(parseFloat(hp.val)/hp.range[0])/
-            (Math.log(hp.range[1]/hp.range[0])), 0, 1);
+        return clamp(1 - Math.log(parseFloat(hp.val) / hp.range[0]) /
+            (Math.log(hp.range[1] / hp.range[0])), 0, 1);
       default:
-        return clamp(1-(parseFloat(hp.val)-hp.range[0])/
+        return clamp(1 - (parseFloat(hp.val) - hp.range[0]) /
             (hp.range[1] - hp.range[0]), 0, 1);
     }
   }, [ hp ]);
@@ -83,7 +84,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
         <MainTrack hp={hp} />
         <div className={css.pointerTrack}>
           <Pointer
-            containerStyle={{ transform: `translateY(${270*pointerPosition}px)` }}
+            containerStyle={{ transform: `translateY(${270 * pointerPosition}px)` }}
             content={<ParsedHumanReadableValue hp={hp} />} />
         </div>
       </div>
@@ -106,12 +107,12 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
       </div>;
     case HyperparameterType.Log:
       return <div className={css.valuesTrack}>
-        {(new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1))).fill(null)
+        {(new Array(Math.floor(Math.log10((hp.range[1]) / (hp.range[0])) + 1))).fill(null)
           .map((_, idx) =>
             <p className={css.text} key={idx}>
-              {String((hp.range[1])/(10**idx)).length > 4 ?
-                ((hp.range[1])/(10**idx)).toExponential() :
-                (hp.range[1])/(10**idx)}
+              {String((hp.range[1]) / (10 ** idx)).length > 4 ?
+                ((hp.range[1]) / (10 ** idx)).toExponential() :
+                (hp.range[1]) / (10 ** idx)}
             </p>)}
       </div>;
     default:
@@ -142,7 +143,7 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
       break;
     case HyperparameterType.Log:
       trackType = css.blueTrack;
-      content = (new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1)))
+      content = (new Array(Math.floor(Math.log10((hp.range[1]) / (hp.range[0])) + 1)))
         .fill(null)
         .map((_, idx) =>
           <div className={css.tick} key={idx} />);

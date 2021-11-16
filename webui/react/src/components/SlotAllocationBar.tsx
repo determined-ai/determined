@@ -38,7 +38,7 @@ const Legend: React.FC<LegendProps> = ({
   let label = `0 (${floatToPercent(0, 0)})`;
   if (totalSlots !== 0) {
     label = count.toString();
-    if (showPercentage) label += ` (${floatToPercent(count/totalSlots, 0)})`;
+    if (showPercentage) label += ` (${floatToPercent(count / totalSlots, 0)})`;
   }
   return (
     <li className={css.legend}>
@@ -131,7 +131,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           {totalSlots === 0 ? <span>0/0</span> :
             <span>
               {resourceStates.length}/{totalSlots}
-              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length/totalSlots, 0)})` : ''}
+              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length / totalSlots, 0)})` : ''}
             </span>
           }
         </div>
