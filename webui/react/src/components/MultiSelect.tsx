@@ -52,7 +52,7 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, .
       mode="multiple"
       placeholder={allLabel}
       showArrow
-      style={{ width: 140 }}
+      style={{ width: props.style?.width ?? 140 }}
       value={value}
       onDeselect={handleDeselect}
       onSelect={handleSelect}

@@ -68,6 +68,7 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }
         {selectOptions?.containerIds?.length !== 0 && (
           <MultiSelect
             itemName="Container"
+            style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
             {selectOptions?.containerIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
