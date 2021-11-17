@@ -1122,7 +1122,8 @@ jobs:
           extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 
-      - run: make -C master get-deps
+      # job should depend on build-go
+      # - run: make -C master get-deps
       - install-devcluster
       - start-devcluster
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
