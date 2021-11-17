@@ -126,7 +126,7 @@ func detectMigInstances(visibleGPUs string) ([]device.Device, error) {
 			deviceIndex++
 		}
 	}
-	return devices, err
+	return devices, nil
 }
 
 // detectGPUs returns the list of available Nvidia GPUs.
