@@ -69,6 +69,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
+  const { theme } = useTheme();
+
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
       acc[key] = experiment.hyperparameters[key];
