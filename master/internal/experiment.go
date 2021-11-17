@@ -290,7 +290,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetJobsRequest:
 		fmt.Printf("GetJobsReques eid %v t\n", e.ID)
-		if msg.ResourcePool != e.Config.Resources().ResourcePool() {
+		if msg.ResourcePool != e.Config.Resources().ResourcePool() && sproto.UseAgentRM(e.rm.System()){
 			ctx.Respond(nil)
 			return nil
 		}

@@ -442,7 +442,9 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 		return g
 	}
 
-	g := &group{handler: handler, weight: 1, qPosition: -1}
+	// TODO: remove magic number
+	newPriority := 50
+	g := &group{handler: handler, weight: 1, priority: &newPriority, qPosition: -1}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 
