@@ -17,6 +17,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
+
+	structpb "github.com/golang/protobuf/ptypes/struct"
 )
 
 func (a *apiServer) GetModel(
@@ -157,8 +159,10 @@ func (a *apiServer) PatchModel(
 	currLabels := strings.Join(currModel.Labels, ",")
 	if req.Model.Labels != nil {
 		var reqLabelList []string
-		for i := 0; i < len(req.Model.Labels); i++ {
-			reqLabelList = append(reqLabelList, req.Model.Labels[i].Value)
+		for _, el := range req.Model.Labels.Values {
+			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
+				reqLabelList = append(reqLabelList, el.GetStringValue())
+			}
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
@@ -370,8 +374,10 @@ func (a *apiServer) PatchModelVersion(
 	currLabels := strings.Join(currModelVersion.Labels, ",")
 	if req.ModelVersion.Labels != nil {
 		var reqLabelList []string
-		for i := 0; i < len(req.ModelVersion.Labels); i++ {
-			reqLabelList = append(reqLabelList, req.ModelVersion.Labels[i].Value)
+		for _, el := range req.ModelVersion.Labels.Values {
+			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
+				reqLabelList = append(reqLabelList, el.GetStringValue())
+			}
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {

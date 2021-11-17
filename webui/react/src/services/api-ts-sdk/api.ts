@@ -3376,10 +3376,10 @@ export interface V1PatchModel {
     metadata?: any;
     /**
      * An updated label list for the model.
-     * @type {Array<string>}
+     * @type {Array<any>}
      * @memberof V1PatchModel
      */
-    labels?: Array<string>;
+    labels?: Array<any>;
 }
 
 /**
@@ -3448,10 +3448,10 @@ export interface V1PatchModelVersion {
     comment?: string;
     /**
      * An updated label list for the model version.
-     * @type {Array<string>}
+     * @type {Array<any>}
      * @memberof V1PatchModelVersion
      */
-    labels?: Array<string>;
+    labels?: Array<any>;
     /**
      * Updated text notes for the model version.
      * @type {string}
