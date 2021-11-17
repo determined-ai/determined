@@ -135,20 +135,52 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   }, [ modelId, versionId ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
-    await patchModelVersion({
-      body: { comment: editedDescription, id: parseInt(modelId) },
-      modelId: parseInt(modelId),
-      versionId: parseInt(versionId),
-    });
+    try {
+      await patchModelVersion({
+        body: { comment: editedDescription, id: parseInt(modelId) },
+        modelId: parseInt(modelId),
+        versionId: parseInt(versionId),
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to save description.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ modelId, versionId ]);
+
+  const saveName = useCallback(async (editedName: string) => {
+    try {
+      await patchModelVersion({
+        body: { id: parseInt(modelId), name: editedName },
+        modelId: parseInt(modelId),
+        versionId: parseInt(versionId),
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to save name.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
   }, [ modelId, versionId ]);
 
   const saveVersionTags = useCallback(async (newTags) => {
-    await patchModelVersion({
-      body: { id: parseInt(modelId), labels: newTags },
-      modelId: parseInt(modelId),
-      versionId: parseInt(versionId),
-    });
-    fetchModelVersion();
+    try {
+      await patchModelVersion({
+        body: { id: parseInt(modelId), labels: newTags },
+        modelId: parseInt(modelId),
+        versionId: parseInt(versionId),
+      });
+      fetchModelVersion();
+    } catch (e) {
+      handleError({
+        message: 'Unable to save tags.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
   }, [ fetchModelVersion, modelId, versionId ]);
 
   const deleteVersion = useCallback(() => {
@@ -235,6 +267,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         onAddMetadata={editMetadata}
         onDeregisterVersion={deleteVersion}
         onSaveDescription={saveDescription}
+        onSaveName={saveName}
         onUpdateTags={saveVersionTags} />}
       id="modelDetails">
       <Tabs

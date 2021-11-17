@@ -20,12 +20,16 @@ interface Props {
   onAddMetadata: () => void;
   onDelete: () => void;
   onSaveDescription: (editedDescription: string) => Promise<void>
+  onSaveName: (editedName: string) => Promise<void>;
   onSwitchArchive: () => void;
-  onUpdateTags: (newTags: string[]) => void;
+  onUpdateTags: (newTags: string[]) => Promise<void>;
 }
 
 const ModelHeader: React.FC<Props> = (
-  { model, onAddMetadata, onDelete, onSwitchArchive, onSaveDescription, onUpdateTags }: Props,
+  {
+    model, onAddMetadata, onDelete, onSwitchArchive,
+    onSaveDescription, onUpdateTags, onSaveName,
+  }: Props,
 ) => {
   const { auth: { user } } = useStore();
 
@@ -95,7 +99,12 @@ const ModelHeader: React.FC<Props> = (
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
             <Icon name="model" size="big" />
-            <h1 className={css.name}>{model.name}</h1>
+            <h1 className={css.name}>
+              <InlineEditor
+                placeholder="Add name..."
+                value={model.name}
+                onSave={onSaveName} />
+            </h1>
           </Space>
           <Space size="small">
             <Dropdown

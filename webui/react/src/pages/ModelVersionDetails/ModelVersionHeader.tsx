@@ -21,11 +21,15 @@ interface Props {
   onAddMetadata: () => void;
   onDeregisterVersion: () => void;
   onSaveDescription: (editedNotes: string) => Promise<void>;
+  onSaveName: (editedName: string) => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
 }
 
 const ModelVersionHeader: React.FC<Props> = (
-  { modelVersion, onAddMetadata, onDeregisterVersion, onSaveDescription, onUpdateTags }: Props,
+  {
+    modelVersion, onAddMetadata, onDeregisterVersion,
+    onSaveDescription, onUpdateTags, onSaveName,
+  }: Props,
 ) => {
   const { auth: { user } } = useStore();
 
@@ -112,7 +116,13 @@ const ModelVersionHeader: React.FC<Props> = (
             <div className={css.versionBox}>
               V{modelVersion.version}
             </div>
-            <h1 className={css.versionName}>Version {modelVersion.version}</h1>
+            <h1 className={css.versionName}>
+              <InlineEditor
+                placeholder="Add name..."
+                value = {modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
+                onSave={onSaveName}
+              />
+            </h1>
           </div>
           <div className={css.buttons}>
             <DownloadModelPopover modelVersion={modelVersion}>

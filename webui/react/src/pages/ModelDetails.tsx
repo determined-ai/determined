@@ -232,6 +232,21 @@ const ModelDetails: React.FC = () => {
     }
   }, [ modelId ]);
 
+  const saveName = useCallback(async (editedName: string) => {
+    try {
+      await patchModel({
+        body: { id: parseInt(modelId), name: editedName },
+        modelId: parseInt(modelId),
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to save name.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ modelId ]);
+
   const saveModelTags = useCallback(async (editedTags) => {
     try {
       await patchModel({
@@ -281,6 +296,7 @@ const ModelDetails: React.FC = () => {
         onAddMetadata={editMetadata}
         onDelete={deleteCurrentModel}
         onSaveDescription={saveDescription}
+        onSaveName={saveName}
         onSwitchArchive={switchArchive}
         onUpdateTags={saveModelTags} />}
       id="modelDetails">
