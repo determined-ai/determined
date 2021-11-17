@@ -17,15 +17,16 @@ export type Confirmations<T extends string> =
 interface Props<T extends string> {
   actionOrder: T[];
   confirmations?: Confirmations<T>
+  id: string;
+  kind: string;
   onComplete?: (action?: T) => void;
   onTrigger: Triggers<T>;
-  thing: { id: string, kind: string };
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ActionDropdown = <T extends string>(
-  { thing: { id, kind }, onComplete, onTrigger, confirmations, actionOrder }: Props<T>,
+  { id, kind, onComplete, onTrigger, confirmations, actionOrder }: Props<T>,
 ): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {

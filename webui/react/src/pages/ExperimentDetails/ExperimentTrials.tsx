@@ -131,7 +131,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           TrialAction.OpenTensorBoard,
           TrialAction.ViewLogs,
         ]}
-        thing={{ id: experiment.id + '', kind: 'experiment' }}
+        id={experiment.id + ''}
+        kind="experiment"
         onTrigger={dropDownOnTrigger(record)} />;
     };
 
