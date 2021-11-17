@@ -1,1 +1,1 @@
-ALTER TABLE public.models DROP CONSTRAINT uni_name;
+ALTER TABLE public.models DROP CONSTRAINT models_name_unique;

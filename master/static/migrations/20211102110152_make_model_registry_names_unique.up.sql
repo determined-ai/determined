@@ -7,4 +7,4 @@ names AS (
 UPDATE models SET name = CONCAT(name, id::text)
 WHERE name IN (SELECT name FROM names);
 
-ALTER TABLE public.models ADD CONSTRAINT uni_name UNIQUE (name);
+ALTER TABLE public.models ADD CONSTRAINT models_name_unique UNIQUE (name);
