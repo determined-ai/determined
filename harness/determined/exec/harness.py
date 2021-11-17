@@ -75,9 +75,10 @@ def main(chief_ip: Optional[str]) -> int:
     )
 
     multi_machine_trial = len(info.container_addrs) > 1
-    hvd_config = horovod.HorovodContext.from_configs(
-        env.experiment_config, env.hparams, multi_machine_trial
-    )
+    multi_slot_trial = (env.experiment_config.slots_per_trial() > 1
+                        and not env.experiment_config.native_parallel_enabled())
+
+    distributed_backend = "horovod" if multi_machine_trial or multi_slot_trial else None
 
     config_logging(env.debug)
 
@@ -89,12 +90,12 @@ def main(chief_ip: Optional[str]) -> int:
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
-        controller_class.pre_execute_hook(env, hvd_config)
+        controller_class.pre_execute_hook(env, distributed_backend)
 
         # Step 3: Now that horovod is initialized, we can build a RankInfo object.
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
-        if hvd_config.use:
+        if distributed_backend == "horovod":
             distributed = _generic.DistributedContext(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),
@@ -110,7 +111,7 @@ def main(chief_ip: Optional[str]) -> int:
 
         # Step 4: Let generic.init() create the generic.Context.
         with _generic.init(distributed=distributed) as generic_context:
-            trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+            trial_context = trial_class.trial_context_class(generic_context, env, distributed_backend)
 
             # Step 5: Instantiate the user's Trial.
             trial_inst = trial_class(trial_context)
@@ -121,7 +122,7 @@ def main(chief_ip: Optional[str]) -> int:
                 trial_inst=trial_inst,
                 context=trial_context,
                 env=env,
-                hvd_config=hvd_config,
+                distributed_backend=distributed_backend,
             )
 
             controller.run()

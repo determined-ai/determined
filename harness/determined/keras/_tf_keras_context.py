@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 
 import tensorflow as tf
 
@@ -36,7 +36,7 @@ class TFKerasTrialContext(det.TrialContext):
 
         self.dataset_initialized = False
 
-        self.experimental = TFKerasExperimentalContext(env=self.env, hvd_config=self.hvd_config)
+        self.experimental = TFKerasExperimentalContext(env=self.env, distributed_backend=self.distributed_backend)
 
         # The following three attributes are initialized during the lifetime of a
         # TFKerasTrialContext instance by the user calling compile() and
@@ -44,6 +44,10 @@ class TFKerasTrialContext(det.TrialContext):
         self.model = None  # type: Optional[tf.keras.Model]
         self.compile_args = None  # type: Optional[inspect.BoundArguments]
         self.train_config = None  # type: Optional[TFKerasTrainConfig]
+
+        optimizations_config = self.get_optimizations_config()
+        self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+        self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
 
         self._optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._wrapped_optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
@@ -259,9 +263,9 @@ class TFKerasTrialContext(det.TrialContext):
             return dataset
 
         self.dataset_initialized = True
-        if not self.hvd_config.use or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:
+        if not self.distributed_backend == "horovod" or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:
 
-            if self.hvd_config and not shard_dataset:
+            if self.distributed_backend == "horovod" and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset
 
@@ -273,7 +277,7 @@ class TFKerasTrialContext(det.TrialContext):
     def _get_horovod_optimizer_if_using_horovod(
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
-        if not self.hvd_config.use:
+        if not self.distributed_backend == "horovod":
             return optimizer
 
         # Horovod doesn't know how to handle string-based optimizers.
@@ -283,12 +287,12 @@ class TFKerasTrialContext(det.TrialContext):
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
         hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
-            "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
+            "average_aggregated_gradients": self.average_aggregated_gradients,
         }  # type: Dict[str, Any]
         if "aggregation_frequency" in hvd_sig.parameters:
-            horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
+            horovod_kwargs["aggregation_frequency"] = self.aggregation_frequency
         else:
-            horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency
+            horovod_kwargs["backward_passes_per_step"] = self.aggregation_frequency
 
         return hvd.DistributedOptimizer(optimizer, **horovod_kwargs)
 
@@ -308,7 +312,7 @@ class TFKerasTrialContext(det.TrialContext):
             return optimizer
 
         logging.debug(f"Processing wrapped optimizer {optimizer}.")
-        if not self.hvd_config.use:
+        if not self.distributed_backend == "horovod":
             self._wrapped_optimizers.append(optimizer)
             return optimizer
 
@@ -332,7 +336,7 @@ class TFKerasTrialContext(det.TrialContext):
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
         logging.debug(f"Processing compiled optimizer {optimizer}.")
-        if not self.hvd_config.use:
+        if not self.distributed_backend == "horovod":
             self._compiled_optimizer = optimizer
             return optimizer
 
@@ -405,5 +409,5 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        super().__init__(env=env, hvd_config=hvd_config)
+    def __init__(self, env: det.EnvContext, distributed_backend: Optional[str]) -> None:
+        super().__init__(env=env, distributed_backend=distributed_backend)

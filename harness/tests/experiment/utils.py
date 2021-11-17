@@ -157,17 +157,6 @@ def make_default_env_context(
     )
 
 
-def make_default_hvd_config() -> horovod.HorovodContext:
-    return horovod.HorovodContext(
-        use=False,
-        aggregation_frequency=1,
-        fp16_compression=False,
-        grad_updates_size_file="",
-        average_aggregated_gradients=True,
-        average_training_metrics=False,
-    )
-
-
 def fixtures_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "fixtures", path)
 
@@ -253,23 +242,20 @@ def make_trial_controller_from_trial_implementation(
         expose_gpus=expose_gpus,
     )
 
-    hvd_config = make_default_hvd_config()
-
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
     generic_context = _generic._dummy_init(storage_manager=storage_manager)
 
     controller_class = trial_class.trial_controller_class
     assert controller_class is not None
-    controller_class.pre_execute_hook(env, hvd_config)
+    controller_class.pre_execute_hook(env, None)
 
-    trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+    trial_context = trial_class.trial_context_class(generic_context, env)
     trial_inst = trial_class(trial_context)
 
     return controller_class.from_trial(
         trial_inst=trial_inst,
         context=trial_context,
         env=env,
-        hvd_config=hvd_config,
         workloads=workloads,
     )
 

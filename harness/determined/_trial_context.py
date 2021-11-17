@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import determined as det
 from determined import _generic, horovod
@@ -15,11 +15,11 @@ class TrialContext(metaclass=abc.ABCMeta):
         self,
         generic_context: _generic.Context,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
+        distributed_backend: Optional[str] = None,
     ) -> None:
         self._generic = generic_context
         self.env = env
-        self.hvd_config = hvd_config
+        self.distributed_backend = distributed_backend
 
         self.distributed = self._generic.distributed
         self._stop_requested = False
@@ -58,14 +58,14 @@ class TrialContext(metaclass=abc.ABCMeta):
         Arguments:
             config: An experiment config file, in dictionary form.
         """
-        generic_context, env, hvd_config = det._make_local_execution_env(
+        generic_context, env = det._make_local_execution_env(
             managed_training=False,
             test_mode=False,
             config=config,
             checkpoint_dir="/tmp",
             limit_gpus=1,
         )
-        return cls(generic_context, env, hvd_config)
+        return cls(generic_context, env)
 
     def get_experiment_config(self) -> Dict[str, Any]:
         """
@@ -154,3 +154,13 @@ class TrialContext(metaclass=abc.ABCMeta):
 
     def get_initial_batch(self) -> int:
         return self.env.latest_batch
+
+    def get_distributed_backend(self) -> Optional[str]:
+        return self.distributed_backend
+
+    def get_optimizations_config(self) -> Dict[str, Any]:
+        """
+        Return the optimizations configuration.
+        """
+        return self.get_experiment_config().get("optimizations", {})
+
