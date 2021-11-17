@@ -2,6 +2,7 @@ import { Button, Tooltip } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -14,11 +15,10 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
-import TrialActionDropdown from 'components/TrialActionDropdown';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { paths } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
@@ -39,6 +39,11 @@ import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
+}
+
+enum TrialAction {
+  OpenTensorBoard = 'Open Tensorboard',
+  ViewLogs = 'View Logs',
 }
 
 const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
@@ -75,6 +80,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       onReset={handleStateFilterReset} />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
+  const dropDownOnTrigger = useCallback((trial: TrialItem) => {
+    return {
+      [TrialAction.OpenTensorBoard]: async () => {
+        openCommand(await openOrCreateTensorBoard({ trialIds: [ trial.id ] }));
+      },
+      [TrialAction.ViewLogs]: () => {
+        routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
+      },
+    };
+  }, [ experiment.id ]);
+
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
 
@@ -110,7 +126,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     };
 
     const actionRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      return <TrialActionDropdown experimentId={experiment.id} trial={record} />;
+      return <ActionDropdown<TrialAction>
+        actionOrder={[
+          TrialAction.OpenTensorBoard,
+          TrialAction.ViewLogs,
+        ]}
+        id={experiment.id + ''}
+        kind="experiment"
+        onTrigger={dropDownOnTrigger(record)} />;
     };
 
     const newColumns = [ ...defaultColumns ].map(column => {
@@ -141,7 +164,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     });
 
     return newColumns;
-  }, [ experiment.config, experiment.id, settings, stateFilterDropdown ]);
+  }, [ experiment.config, experiment.id, settings, stateFilterDropdown, dropDownOnTrigger ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;

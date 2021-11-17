@@ -22,8 +22,8 @@ import {
 } from 'utils/types';
 import { openCommand } from 'wait';
 
+import css from './ActionDropdown.module.scss';
 import Link from './Link';
-import css from './TaskActionDropdown.module.scss';
 
 interface Props {
   curUser?: DetailedUser;
