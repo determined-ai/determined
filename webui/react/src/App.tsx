@@ -17,8 +17,6 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
-import { ThemeId } from 'themes';
-import { BrandingType } from 'types';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -29,7 +27,7 @@ const AppView: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const { info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
-  const { setThemeId } = useTheme();
+  const { setBranding } = useTheme();
 
   const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
@@ -70,12 +68,15 @@ const AppView: React.FC = () => {
 
   // Detect branding changes and update theme accordingly.
   useEffect(() => {
-    if (info.checked) {
-      setThemeId(info.branding === BrandingType.HPE ? ThemeId.LightHPE : ThemeId.LightDetermined);
-    }
-  }, [ info.checked, info.branding, setThemeId ]);
+    if (info.checked) setBranding(info.branding);
+  }, [ info.checked, info.branding, setBranding ]);
 
   useEffect(() => {
+    // window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    //   const newColorScheme = e.matches ? 'dark' : 'light';
+    //   console.log('scheme', newColorScheme);
+    // });
+
     return () => canceler.abort();
   }, [ canceler ]);
 

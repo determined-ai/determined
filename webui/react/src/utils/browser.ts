@@ -1,3 +1,5 @@
+import { boolean } from 'fp-ts';
+
 import { parseUrl, routeToExternalUrl } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
@@ -22,6 +24,10 @@ export const getCookie = (name: string): string | null => {
   const regex = new RegExp(`(?:(?:^|.*;\\s*)${name}\\s*\\=\\s*([^;]*).*$)|^.*$`);
   const value = document.cookie.replace(regex, '$1');
   return value ? value : null;
+};
+
+export const getIsDarkMode = (): boolean => {
+  return matchMedia?.('(prefers-color-scheme: dark)').matches;
 };
 
 const downloadBlob = (filename: string, data: Blob): void => {

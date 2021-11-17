@@ -10,6 +10,7 @@ import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
+import useTheme from 'hooks/useTheme';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -75,6 +76,8 @@ const HpHeatMaps: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
 
+  const { theme } = useTheme();
+
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
         selectedMetric.name === experiment.config.searcher.metric) {
@@ -84,8 +87,8 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [ experiment.config.searcher, selectedMetric ]);
 
   const colorScale = useMemo(() => {
-    return getColorScale(chartData?.metricRange, smallerIsBetter);
-  }, [ chartData, smallerIsBetter ]);
+    return getColorScale(theme, chartData?.metricRange, smallerIsBetter);
+  }, [ chartData, smallerIsBetter, theme ]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam([ hParam1, hParam2 ]);

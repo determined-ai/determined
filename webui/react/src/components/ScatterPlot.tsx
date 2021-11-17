@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
+import useTheme from 'hooks/useTheme';
 import Plotly, { Layout, PlotData, PlotMarker } from 'Plotly';
-import themes, { defaultThemeId } from 'themes';
 import { getNumericRange } from 'utils/chart';
 import { ColorScale, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { clone, isString } from 'utils/data';
@@ -34,8 +34,7 @@ const plotlyLayout: Partial<Layout> = {
   hovermode: 'closest',
   margin: { b: 32, l: 32, r: 32, t: 48 },
   paper_bgcolor: 'transparent',
-  plot_bgcolor: themes[defaultThemeId].colors.monochrome[17],
-  title: { font: { family: themes[defaultThemeId].font.family, size: 13 } },
+  title: { font: { size: 13 } },
   xaxis: { automargin: true },
   yaxis: { automargin: true },
 };
@@ -64,6 +63,8 @@ const ScatterPlot: React.FC<Props> = ({
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
 
+  const { theme } = useTheme();
+
   const valueRange = useMemo(() => getNumericRange(values || [], false), [ values ]);
 
   const { xIsString, yIsString } = useMemo(() => {
@@ -83,7 +84,7 @@ const ScatterPlot: React.FC<Props> = ({
 
     const trace: Partial<PlotData> = {
       hovertemplate: `${hovertemplate.join('<br>')}<extra></extra>`,
-      marker: { color: themes[defaultThemeId].colors.action.normal },
+      marker: { color: theme.colors.action.normal },
       mode: 'markers',
       x,
       y,
@@ -108,10 +109,14 @@ const ScatterPlot: React.FC<Props> = ({
       trace.text = values.map(value => roundToPrecision(value).toString());
     }
     return trace;
-  }, [ colorScale, valueLabel, values, valueRange, x, xLabel, y, yLabel ]);
+  }, [ colorScale, theme, valueLabel, values, valueRange, x, xLabel, y, yLabel ]);
 
   const chartLayout: Partial<Layout> = useMemo(() => {
     const layout = clone(plotlyLayout);
+
+    layout.plot_bgcolor = theme.colors.monochrome[17];
+    layout.title.font.family = theme.font.family;
+
     if (disableZoom) {
       layout.xaxis.fixedrange = true;
       layout.yaxis.fixedrange = true;
@@ -127,8 +132,9 @@ const ScatterPlot: React.FC<Props> = ({
     if (yLogScale) layout.yaxis.type = 'log';
     if (height) layout.height = height;
     if (width) layout.width = width;
+
     return layout;
-  }, [ disableZoom, height, title, width, xLabel, xLogScale, yLabel, yLogScale ]);
+  }, [ disableZoom, height, theme, title, width, xLabel, xLogScale, yLabel, yLogScale ]);
 
   useEffect(() => {
     const ref = chartRef.current;

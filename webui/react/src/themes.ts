@@ -1,4 +1,4 @@
-import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
+import { BrandingType, CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -216,10 +216,145 @@ const lightDeterminedTheme: Theme = {
   },
 };
 
+const darkDeterminedTheme: Theme = {
+  animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
+  colors: {
+    action: {
+      dark: '#0088cc',
+      light: '#00b2ff',
+      normal: '#009bde',
+    },
+    base: [
+      '#0d1e2b',  // 0 - A
+      '#132231',  // 1 - B
+      '#1f2d3c',  // 2 - C
+      '#273847',  // 3 - D
+      '#334251',  // 4 - E
+      '#3d4c5a',  // 5 - F
+      '#4A5764',  // 6 - G
+      '#55626e',  // 7 - H
+      '#616c78',  // 8 - I
+      '#6B7681',  // 9 - J
+      '#77818b',  // 10 - K
+      '#828c95',  // 11 - L
+      '#8d959e',  // 12 - M
+    ],
+    brand: {
+      dark: '#ee6600',
+      light: '#ff9933',
+      normal: '#f77b21',
+    },
+    core: {
+      background: '#f7f7f7',
+      secondary: '#234B65',
+    },
+    danger: {
+      dark: '#aa0000',
+      light: '#ee0000',
+      normal: '#cc0000',
+    },
+    monochrome: [
+      '#ffffff',  // 17 - White
+      '#fafafa',  // 16 - Fog
+      '#f7f7f7',  // 15 - Dusty
+      '#f2f2f2',  // 14 - Platinum
+      '#ececec',  // 13 - Silver
+      '#dddddd',  // 12 - Ash
+      '#cccccc',  // 11 - Stainless Steel
+      '#bbbbbb',  // 10 - Rhino
+      '#aaaaaa',  // 9 - Grey
+      '#888888',  // 8 - Anchor
+      '#666666',  // 7 - Lead
+      '#444444',  // 6 - Charcoal
+      '#333333',  // 5 - Onyx
+      '#2b2b2b',  // 4 - Midnight
+      '#1d1d1d',  // 3 - Vanta
+      '#141414',  // 2 - Jet
+      '#080808',  // 1 - Space
+      '#000000',  // 0 - Black
+    ],
+    overlay: 'rgba(255, 255, 255, 0.75)',
+    states: {
+      active: '#009bde',
+      failed: '#cc0000',
+      free: '#eee',
+      inactive: '#666666',
+      pending: '#6666cc',
+      success: '#009900',
+      suspended: '#cc9900',
+    },
+    underlay: 'rgba(0, 0, 0, 0.65)',
+  },
+  focus: { shadow: '0 0 0 2px rgba(0, 155, 222, 0.25)' },
+  font: { family: 'Objektiv Mk3' },
+  outline: '0 0 4px 0 #009bde',
+  shadow: '2px 2px 4px 0 rgba(0, 0, 0, 0.25)',
+  sizes: {
+    border: {
+      radius: '4px',
+      width: '1px',
+    },
+    /* eslint-disable sort-keys-fix/sort-keys-fix */
+    font: {
+      micro: '10px',
+      tiny: '11px',
+      small: '12px',
+      medium: '14px',
+      large: '16px',
+      big: '18px',
+      great: '20px',
+      huge: '22px',
+      enormous: '24px',
+      giant: '28px',
+      jumbo: '36px',
+      mega: '40px',
+    },
+    icon: {
+      tiny: '12px',
+      small: '16px',
+      medium: '20px',
+      large: '24px',
+    },
+    layout: {
+      micro: '2px',
+      tiny: '4px',
+      small: '6px',
+      medium: '8px',
+      large: '12px',
+      big: '16px',
+      great: '18px',
+      huge: '20px',
+      enormous: '24px',
+      giant: '32px',
+      jumbo: '36px',
+      mega: '40px',
+    },
+    /* eslint-enable sort-keys-fix/sort-keys-fix */
+    navigation: {
+      maxWidth: '240px',
+      minWidth: '56px',
+      toolbarHeight: '56px',
+      topbarHeight: '56px',
+    },
+  },
+};
+
 const lightHpeTheme: Theme = {
   ...lightDeterminedTheme,
   colors: {
     ...lightDeterminedTheme.colors,
+    brand: {
+      dark: '#009069',
+      light: '#1bc39c',
+      normal: '#01a982',
+    },
+  },
+};
+
+const darkHpeTheme: Theme = {
+  ...darkDeterminedTheme,
+  colors: {
+    ...darkDeterminedTheme.colors,
     brand: {
       dark: '#009069',
       light: '#1bc39c',
@@ -266,18 +401,18 @@ export const getStateColor = (state: States | undefined): string => {
   return window.getComputedStyle(document.body).getPropertyValue(cssVar);
 };
 
-export enum ThemeId {
-  DarkDetermined = 'dark-determined',
-  DarkHPE = 'dark-hpe',
-  LightDetermined = 'light-determined',
-  LightHPE = 'light-hpe',
+export enum DarkLight {
+  Dark = 'dark',
+  Light = 'light',
 }
 
-export const defaultThemeId: ThemeId = ThemeId.LightDetermined;
-
 export default {
-  [ThemeId.DarkDetermined]: lightDeterminedTheme,
-  [ThemeId.LightDetermined]: lightDeterminedTheme,
-  [ThemeId.DarkHPE]: lightHpeTheme,
-  [ThemeId.LightHPE]: lightHpeTheme,
+  [BrandingType.Determined]: {
+    [DarkLight.Dark]: darkDeterminedTheme,
+    [DarkLight.Light]: lightDeterminedTheme,
+  },
+  [BrandingType.HPE]: {
+    [DarkLight.Dark]: darkHpeTheme,
+    [DarkLight.Light]: lightHpeTheme,
+  },
 };

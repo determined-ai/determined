@@ -9,6 +9,7 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import useTheme from 'hooks/useTheme';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -66,6 +67,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
+  const { theme } = useTheme();
+
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
       acc[key] = experiment.hyperparameters[key];
@@ -84,8 +87,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [ experiment.config.searcher, selectedMetric ]);
 
   const colorScale = useMemo(() => {
-    return getColorScale(chartData?.metricRange, smallerIsBetter);
-  }, [ chartData?.metricRange, smallerIsBetter ]);
+    return getColorScale(theme, chartData?.metricRange, smallerIsBetter);
+  }, [ chartData?.metricRange, smallerIsBetter, theme ]);
 
   const dimensions = useMemo(() => {
     const newDimensions = selectedHParams.map(key => {
