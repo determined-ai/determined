@@ -80,6 +80,7 @@ func (a *apiServer) GetModels(
 		labelFilterExpr,
 		nameFilterExpr,
 		descFilterExpr,
+		"%",
 	)
 	if err != nil {
 		return nil, err
