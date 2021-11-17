@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvement**
+
+-  Revert changes to Model Registry CLI format so models can be referred to by a unique name, and
+   not only ID
