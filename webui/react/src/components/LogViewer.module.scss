@@ -53,7 +53,7 @@
   .line > .trace { color: var(--theme-colors-states-active); }
   .line > .warning { color: var(--theme-colors-states-suspended); }
   .line > .time {
-    color: var(--theme-colors-base-0);
+    color: var(--theme-colors-monochrome-3);
     flex-shrink: 0;
   }
   .line > .time::after { content: '\00a0'; }
