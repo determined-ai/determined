@@ -1,5 +1,3 @@
-import { boolean } from 'fp-ts';
-
 import { parseUrl, routeToExternalUrl } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';

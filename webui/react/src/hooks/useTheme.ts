@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import themes, { DarkLight, Theme } from 'themes';
 import { BrandingType } from 'types';
@@ -7,6 +7,14 @@ import { isObject } from 'utils/data';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type SubTheme = Record<string, any>;
+
+type ThemeHook = {
+  setBranding: Dispatch<SetStateAction<BrandingType>>,
+  setMode: Dispatch<SetStateAction<DarkLight>>,
+  theme: Theme,
+};
+
+export const MATCH_MEDIA_SCHEME = '(prefers-color-scheme: dark)';
 
 const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
   if (isObject(theme)) {
@@ -19,12 +27,6 @@ const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
       .reduce((acc, sub) => ({ ...acc, ...sub }), {});
   }
   return { [basePath]: theme };
-};
-
-type ThemeHook = {
-  setBranding: Dispatch<SetStateAction<BrandingType>>,
-  setMode: Dispatch<SetStateAction<DarkLight>>,
-  theme: Theme,
 };
 
 /*
@@ -40,6 +42,10 @@ export const useTheme = (): ThemeHook => {
 
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
 
+  const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
+    setMode(event.matches ? DarkLight.Dark : DarkLight.Light);
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
     const cssVars = flattenTheme(theme);
@@ -47,6 +53,15 @@ export const useTheme = (): ThemeHook => {
     // Set each theme property as top level CSS variable
     Object.keys(cssVars).forEach(key => root.style.setProperty(`--${key}`, cssVars[key]));
   }, [ theme ]);
+
+  // Detect browser/OS level dark/light mode changes.
+  useEffect(() => {
+    matchMedia?.(MATCH_MEDIA_SCHEME).addEventListener('change', handleSchemeChange);
+
+    return () => {
+      matchMedia?.(MATCH_MEDIA_SCHEME).removeEventListener('change', handleSchemeChange);
+    };
+  }, [ handleSchemeChange ]);
 
   return { setBranding, setMode, theme };
 };
