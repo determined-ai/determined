@@ -259,7 +259,7 @@ const darkDeterminedTheme: Theme = {
       normal: '#f77b21',
     },
     core: {
-      background: '#f7f7f7',
+      background: '#141414',
       secondary: '#234B65',
     },
     danger: {
