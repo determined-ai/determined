@@ -174,7 +174,7 @@ const ClusterOverview: React.FC = () => {
           {overview.GPU.total ?
             <OverviewStats title="GPU Slots Allocated">
               {overview.GPU.total - overview.GPU.available} <small>/ {overview.GPU.total}</small>
-            </OverviewStats>: null
+            </OverviewStats> : null
           }
           {overview.CPU.total ?
             <OverviewStats title="CPU Slots Allocated">
@@ -184,7 +184,7 @@ const ClusterOverview: React.FC = () => {
           {auxContainers.total ?
             <OverviewStats title="Aux Containers Running">
               {auxContainers.running} <small>/ {auxContainers.total}</small>
-            </OverviewStats>: null
+            </OverviewStats> : null
           }
         </Grid>
       </Section>

@@ -67,7 +67,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
 const generateLogStringBuffer = (count: number, avgLength: number): string => {
   const msg = new Array(avgLength).fill('a').join('') + '\n';
   let stringBuffer = '';
-  for (let i=0; i<count; i++) {
+  for (let i = 0; i < count; i++) {
     stringBuffer += (i + msg);
   }
   return stringBuffer;

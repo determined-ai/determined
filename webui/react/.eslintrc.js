@@ -122,6 +122,7 @@ module.exports = {
       natural: true,
     } ],
     'space-in-parens': [ 'error', 'never' ],
+    'space-infix-ops': [ 'error', { int32Hint: true } ],
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint
