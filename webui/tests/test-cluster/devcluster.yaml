@@ -10,8 +10,6 @@ stages:
 
   - master:
       pre:
-        - sh: make -C proto build
-        - sh: make -C master build
         - sh: make -C tools prep-root
       config_file:
         port: 8081
@@ -30,8 +28,6 @@ stages:
         root: tools/build
 
   - agent:
-      pre:
-        - sh: make -C agent build
       config_file:
         master_host: 127.0.0.1
         master_port: 8081
