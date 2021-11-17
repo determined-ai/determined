@@ -68,13 +68,24 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	return ops, nil
 }
 
-func (s *randomSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
+func (s *randomSearch) progress(
+	trialProgress map[model.RequestID]model.PartialUnits,
+	trialsClosed map[model.RequestID]bool) float64 {
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
-	unitsCompleted := sumTrialLengths(trialProgress)
+	unitsCompleted := 0.
+	for k, v := range trialProgress {
+		if closed, ok := trialsClosed[k]; ok {
+			if closed {
+				unitsCompleted += float64(s.MaxLength().Units)
+			}
+		} else {
+			unitsCompleted += float64(v)
+		}
+	}
 	unitsExpected := s.MaxLength().Units * s.MaxTrials()
-	return float64(unitsCompleted) / float64(unitsExpected)
+	return unitsCompleted / float64(unitsExpected)
 }
 
 // trialExitedEarly creates a new trial upon receiving an InvalidHP workload.
