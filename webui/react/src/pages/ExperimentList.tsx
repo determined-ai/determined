@@ -339,7 +339,13 @@ const ExperimentList: React.FC = () => {
       {
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
-          .filter(value => value !== RunState.Unspecified)
+          .filter(value => [
+            RunState.Active,
+            RunState.Paused,
+            RunState.Canceled,
+            RunState.Completed,
+            RunState.Errored,
+          ].includes(value))
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
