@@ -5,6 +5,8 @@ import { readStream } from 'services/utils';
 import { parseUrl, routeToExternalUrl } from 'shared/utils/routes';
 import { BrandingType } from 'types';
 
+export const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+
 /*
  * In mobile view the definition of viewport height varies between
  * whether it should include the chrome's vertical space or not.
@@ -18,7 +20,7 @@ export const correctViewportHeight = (): void => {
 };
 
 export const getIsDarkMode = (): boolean => {
-  return matchMedia?.('(prefers-color-scheme: dark)').matches;
+  return matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
 };
 
 const downloadBlob = (filename: string, data: Blob): void => {
