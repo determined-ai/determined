@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } f
 
 import themes, { DarkLight, Theme } from 'themes';
 import { BrandingType } from 'types';
-import { getIsDarkMode } from 'utils/browser';
+import { getIsDarkMode, MATCH_MEDIA_SCHEME_DARK } from 'utils/browser';
 import { isObject } from 'utils/data';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -14,7 +14,9 @@ type ThemeHook = {
   theme: Theme,
 };
 
-export const MATCH_MEDIA_SCHEME = '(prefers-color-scheme: dark)';
+/* eslint-disable @typescript-eslint/no-var-requires */
+// const antdLightTheme = require('antd/dist/antd.compact.min.css');
+// const antdDarkTheme = require('antd/dist/antd.dark.min.css');
 
 const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
   if (isObject(theme)) {
@@ -43,7 +45,9 @@ export const useTheme = (): ThemeHook => {
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    setMode(event.matches ? DarkLight.Dark : DarkLight.Light);
+    const isDarkMode = event.matches;
+    // const newTheme = isDarkMode ? antdDarkTheme : antdLightTheme; // TODO: apply theme
+    setMode(isDarkMode ? DarkLight.Dark : DarkLight.Light);
   }, []);
 
   useEffect(() => {
@@ -56,10 +60,10 @@ export const useTheme = (): ThemeHook => {
 
   // Detect browser/OS level dark/light mode changes.
   useEffect(() => {
-    matchMedia?.(MATCH_MEDIA_SCHEME).addEventListener('change', handleSchemeChange);
+    matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
 
     return () => {
-      matchMedia?.(MATCH_MEDIA_SCHEME).removeEventListener('change', handleSchemeChange);
+      matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
     };
   }, [ handleSchemeChange ]);
 
