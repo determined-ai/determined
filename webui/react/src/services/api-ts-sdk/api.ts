@@ -2640,7 +2640,7 @@ export interface V1LaunchCommandResponse {
      * @type {V1Command}
      * @memberof V1LaunchCommandResponse
      */
-    command?: V1Command;
+    command: V1Command;
     /**
      * 
      * @type {any}
@@ -2744,7 +2744,7 @@ export interface V1LaunchShellResponse {
      * @type {V1Shell}
      * @memberof V1LaunchShellResponse
      */
-    shell?: V1Shell;
+    shell: V1Shell;
     /**
      * 
      * @type {any}
