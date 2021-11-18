@@ -74,8 +74,8 @@ pagination_args = [
     ),
     Arg(
         "--reverse",
-        type=bool,
         default=False,
+        action="store_true",
         help="Reverse the requested order of results.",
     ),
 ]
