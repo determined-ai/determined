@@ -7,6 +7,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import DownloadModelPopover from 'components/DownloadModelPopover';
 import Icon from 'components/Icon';
 import IconButton from 'components/IconButton';
+import InlineEditor from 'components/InlineEditor';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/MetadataCard';
 import Page from 'components/Page';
@@ -121,6 +122,23 @@ const ModelDetails: React.FC = () => {
     });
   }, [ deleteVersion ]);
 
+  const saveVersionDescription =
+    useCallback(async (editedDescription: string, versionId: number) => {
+      try {
+        await patchModelVersion({
+          body: { comment: editedDescription, id },
+          modelId: id,
+          versionId: versionId,
+        });
+      } catch (e) {
+        handleError({
+          message: 'Unable to save version description.',
+          silent: true,
+          type: ErrorType.Api,
+        });
+      }
+    }, [ id ]);
+
   const columns = useMemo(() => {
     const labelsRenderer = (value: string, record: ModelVersion) => (
       <TagList
@@ -167,6 +185,13 @@ const ModelDetails: React.FC = () => {
       </div>;
     };
 
+    const descriptionRenderer = (value:string, record: ModelVersion) => {
+      return <InlineEditor
+        placeholder="Add description..."
+        value={value}
+        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)} />;
+    };
+
     const tableColumns: ColumnsType<ModelVersion> = [
       {
         dataIndex: 'version',
@@ -184,6 +209,7 @@ const ModelDetails: React.FC = () => {
       },
       {
         dataIndex: 'comment',
+        render: descriptionRenderer,
         title: 'Description',
       },
       {
@@ -219,7 +245,8 @@ const ModelDetails: React.FC = () => {
     saveModelVersionTags,
     user,
     settings.sortKey,
-    settings.sortDesc ]);
+    settings.sortDesc,
+    saveVersionDescription ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;

@@ -4,6 +4,7 @@ import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
+import InlineEditor from 'components/InlineEditor';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -244,6 +245,22 @@ const ModelRegistry: React.FC = () => {
     });
   }, [ deleteCurrentModel ]);
 
+  const saveModelDescription = useCallback(async (editedDescription: string, id: number) => {
+    try {
+      await patchModel({
+        body: { description: editedDescription, id },
+        modelId: id,
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to save model description.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
+  }, [ ]);
+
   const columns = useMemo(() => {
     const labelsRenderer = (value: string, record: ModelItem) => (
       <TagList
@@ -281,6 +298,13 @@ const ModelRegistry: React.FC = () => {
       );
     };
 
+    const descriptionRenderer = (value:string, record: ModelItem) => {
+      return <InlineEditor
+        placeholder="Add description..."
+        value={value}
+        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)} />;
+    };
+
     const tableColumns: ColumnsType<ModelItem> = [
       {
         dataIndex: 'id',
@@ -307,6 +331,7 @@ const ModelRegistry: React.FC = () => {
         filterIcon: tableSearchIcon,
         key: V1GetModelsRequestSortBy.DESCRIPTION,
         onHeaderCell: () => settings.description ? { className: tableCss.headerFilterOn } : {},
+        render: descriptionRenderer,
         sorter: true,
         title: 'Description',
       },
