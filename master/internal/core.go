@@ -844,6 +844,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.echo,
 		m.db,
+		m.config,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
@@ -868,38 +869,4 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	return m.startServers(ctx, cert)
-}
-
-// TODO these would go in a config package
-
-// ReadPreemptionStatus resolves the preemption status for a task type.
-func ReadPreemptionStatus(config *config.Config, rpName string, taskType model.TaskType) bool {
-	return true
-	// TODO
-	/*
-		does this task allow preemption?
-		k8 or agent
-		if k8:
-			can the selected scheduler preempt? is it set to?
-		if agent:
-			can the default scheduler preempt? is it set to?
-			can this task's rp preempt? is it set to?
-	*/
-}
-
-// ReadPriority resolves the priority value for a job.
-func ReadPriority(config *config.Config, rpName string, jobI interface{}) int {
-	var prio *int
-	switch job := jobI.(type) {
-	case *experiment:
-		prio = job.Config.Resources().Priority()
-	case *tasks.GenericCommandSpec:
-		prio = job.Config.Resources.Priority
-	default:
-		// TODO find the RM config or RP config and lookup the priorities in order
-	}
-	if prio == nil { // until this is implemented
-		return 42
-	}
-	return *prio
 }

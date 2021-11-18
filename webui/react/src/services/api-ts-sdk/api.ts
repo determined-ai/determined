@@ -12178,7 +12178,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {string} [resourcePool] The target resource-pool.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12297,7 +12297,7 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {string} [resourcePool] The target resource-pool.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12357,7 +12357,7 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {string} [resourcePool] The target resource-pool.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12402,7 +12402,7 @@ export class JobsApi extends BaseAPI {
      * @param {number} [paginationOffset] The number of records to skip before returning results.
      * @param {number} [paginationLimit] The amount of records limited in the results.
      * @param {string} [resourcePool] The target resource-pool.
-     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
