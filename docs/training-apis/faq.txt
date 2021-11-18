@@ -23,17 +23,17 @@ particular experiment is controlled by the container image that has been configu
 experiment. Determined provides prebuilt Docker images that include TensorFlow 2.4, 1.15, 2.5, and
 2.6, respectively:
 
--  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2`` (default)
--  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2``
--  ``determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2``
--  ``determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2``
+-  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` (default)
+-  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.4``
+-  ``determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4``
+-  ``determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4``
 
 We also provide lightweight CPU-only counterparts:
 
--  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2``
--  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.2``
--  ``determinedai/environments:py-3.8-tf-2.5-cpu-0.17.2``
--  ``determinedai/environments:py-3.8-tf-2.6-cpu-0.17.2``
+-  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4``
+-  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.4``
+-  ``determinedai/environments:py-3.8-tf-2.5-cpu-0.17.4``
+-  ``determinedai/environments:py-3.8-tf-2.6-cpu-0.17.4``
 
 To change the container image used for an experiment, specify :ref:`environment.image
 <exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
