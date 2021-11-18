@@ -300,9 +300,6 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 				// do nothing if message is setting the weight
 			}
 		}
-	//case job.GetJobSummary:
-	//	resp := k.getJobSummary(msg.JobID)
-	//	ctx.Respond(resp)
 	case job.GetJobQStats:
 		ctx.Respond(k.getJobQStats())
 	default:
@@ -310,20 +307,6 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	}
 	return nil
 }
-
-//func (k *kubernetesResourceManager) getJobSummary(jobID model.JobID) *jobv1.JobSummary {
-//	var requests []*sproto.AllocateRequest
-//	for it := k.reqList.iterator(); it.next(); {
-//		requests = append(requests, it.value())
-//	}
-//	jobs := mergeToJobs(requests, k.groups, kubernetesScheduler)
-//	for _, job := range jobs {
-//		if job.JobId == jobID.String() {
-//			return job.Summary
-//		}
-//	}
-//	return nil
-//}
 
 // TODO: consolidate these jq functions into the job queue.
 func (k *kubernetesResourceManager) getJobQStats() *jobv1.QueueStats {
