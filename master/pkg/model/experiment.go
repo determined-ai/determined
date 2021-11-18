@@ -53,7 +53,7 @@ const (
 	// DeletingState constant.
 	DeletingState State = "DELETING"
 	// DeleteFailedState constant.
-	DeleteFailedState State = "DELETE_ERROR"
+	DeleteFailedState State = "DELETE_FAILED"
 	// DeletedState constant.
 	DeletedState State = "DELETED"
 
