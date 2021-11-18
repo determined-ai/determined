@@ -1381,14 +1381,25 @@ WHERE id = :id`
 // DeleteExperiment deletes an existing experiment.
 func (db *PgDB) DeleteExperiment(id int) error {
 	return db.withTransaction("delete experiment", func(tx *sqlx.Tx) error {
-		// This delete cascades to checkpoints and validations.
-		// TODO(DET-5210): If/When validations and checkpoints are no longer linked
-		// to steps, this delete will not work properly.
 		if _, err := tx.Exec(`
-DELETE FROM steps
+DELETE FROM raw_steps
 WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 `, id); err != nil {
 			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+		}
+
+		if _, err := tx.Exec(`
+DELETE FROM raw_validations
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
+`, id); err != nil {
+			return errors.Wrapf(err, "error deleting validations for experiment %v", id)
+		}
+
+		if _, err := tx.Exec(`
+DELETE FROM raw_checkpoints
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
+`, id); err != nil {
+			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
 		}
 
 		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
