@@ -403,7 +403,8 @@ const ModelRegistry: React.FC = () => {
     switchArchived,
     showConfirmDelete,
     settings,
-    tags ]);
+    tags,
+    saveModelDescription ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
