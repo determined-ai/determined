@@ -78,10 +78,9 @@ const ModelVersionDetails: React.FC = () => {
   const referenceText = useMemo(() => {
     return (
       `from determined.experimental import Determined
-model = Determined.getModel("${modelVersion?.model?.name}")
-ckpt = model.get_version("${modelVersion?.version}")
+model = Determined().get_model(${modelVersion?.model?.id})
+ckpt = model.get_version(${modelVersion?.id}).checkpoint
 ckpt_path = ckpt.download()
-ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
 
 # WARNING: From here on out, this might not be possible to automate. Requires research.
 from model import build_model
