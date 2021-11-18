@@ -8,6 +8,7 @@ from determined.common.declarative_argparse import Arg, Cmd, add_args
 
 from .aws.cli import args_description as aws_args_description
 from .gcp.cli import args_description as gcp_args_description
+from .gke.cli import args_description as gke_args_description
 from .local.cli import args_description as local_args_description
 
 args_subs: List[Union[Arg, Cmd]] = [
@@ -28,6 +29,7 @@ args_subs: List[Union[Arg, Cmd]] = [
     local_args_description,
     aws_args_description,
     gcp_args_description,
+    gke_args_description,
 ]
 
 deploy_cmd.subs = args_subs
