@@ -213,7 +213,7 @@ args_description = [
                     Arg(
                         "--version",
                         type=int,
-                        default=0,
+                        default=-1,
                         help="model version information to include in output",
                     ),
                 ],
