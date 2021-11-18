@@ -100,9 +100,10 @@ const EditableRow: React.FC<EditableRowProps> = (
         className={css.overflow}
         overlay={(
           <Menu>
-            <Menu.Item danger onClick={onDelete}>Delete Row</Menu.Item>
+            <Menu.Item danger key="delete-metadata-row" onClick={onDelete}>Delete Row</Menu.Item>
           </Menu>
-        )}>
+        )}
+        trigger={[ 'click' ]}>
         <Button type="text">
           <Icon name="overflow-vertical" size="tiny" />
         </Button>
