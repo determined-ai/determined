@@ -7,6 +7,7 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
+    "setup": "node scripts/setup.js",
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "craco start",
     "build": "craco build",
