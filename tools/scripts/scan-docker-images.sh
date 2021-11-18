@@ -34,7 +34,7 @@ if [ ${#} -lt 1 ]; then
   print_usage_and_exit_with_error "${#} arguments received, expected 1 or more"
 fi
 
-while [[ $# -gt 0 ]]; do
+while [[ ${#} -gt 0 ]]; do
   key=${1}
 
   case $key in
