@@ -19,6 +19,11 @@ masterPort: 8080
 # load-balancer.
 useNodePortForMaster: false
 
+# Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
+# route:
+  # enabled: 
+  # termination: 
+
 # tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
 # termination is performed in the Determined master). This includes communication between the
 # Determined master and the task containers it launches, but does not include communication between
