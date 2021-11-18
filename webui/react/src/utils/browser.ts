@@ -5,8 +5,6 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { BrandingType } from 'types';
 
-export const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
-
 const updateFavicon = (iconPath: string): void => {
   const linkEl: HTMLLinkElement | null = document.querySelector("link[rel*='shortcut icon']");
   if (!linkEl) return;
@@ -24,10 +22,6 @@ export const getCookie = (name: string): string | null => {
   const regex = new RegExp(`(?:(?:^|.*;\\s*)${name}\\s*\\=\\s*([^;]*).*$)|^.*$`);
   const value = document.cookie.replace(regex, '$1');
   return value ? value : null;
-};
-
-export const getIsDarkMode = (): boolean => {
-  return matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
 };
 
 const downloadBlob = (filename: string, data: Blob): void => {
