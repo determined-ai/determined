@@ -82,10 +82,10 @@ pagination_args = [
 
 
 output_format = Group(
-    Arg("--csv", action="store_true", help="print as CSV"),
-    Arg("--json", action="store_true", help="print as JSON"),
-    Arg("--yaml", action="store_true", help="print as JSON"),
-    Arg("--table", action="store_true", default=True, help="print as JSON"),
+    Arg("--csv", action="store_true", help="Print as CSV format."),
+    Arg("--json", action="store_true", help="Print as JSON format."),
+    Arg("--yaml", action="store_true", help="Print in YAML fromat."),
+    Arg("--table", action="store_true", default=True, help="Print in a tabular format."),
 )
 
 args_description = [
@@ -99,9 +99,11 @@ args_description = [
                 ls,
                 "list jobs",
                 [
-                    Arg("-rp", "--resource-pool", type=str, default="default", help=""),
-                    output_format,
+                    Arg(
+                        "-rp", "--resource-pool", type=str, help="The target resource pool, if any."
+                    ),
                     *pagination_args,
+                    output_format,
                 ],
             ),
         ],
