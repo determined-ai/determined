@@ -21,31 +21,53 @@ VULNERABILITIES_FOUND=3
 
 function print_usage_and_exit_with_error() {
   echo ${MAJOR_SEPARATOR}
-  echo Error: ${1}
+  echo "Error: ${1}"
   echo
   echo Usage:
-  echo 
-  echo "    ${0} path/to/bumpenvs.yaml"
+  echo
+  echo "    ${0} {path/to/bumpenvs.yaml | --images [image_name ...]}"
   echo ${MAJOR_SEPARATOR}
   exit ${INVALID_ARGS}
 }
 
-if [ ${#} -ne 1 ]; then
-  print_usage_and_exit_with_error "${#} arguments received, expected 1"
+if [ ${#} -lt 1 ]; then
+  print_usage_and_exit_with_error "${#} arguments received, expected 1 or more"
 fi
 
-if [ ! -f ${1} ]; then
-  print_usage_and_exit_with_error "File ${1} does not exist"
-fi
+while [[ ${#} -gt 0 ]]; do
+  key=${1}
 
-BUMPENVS=${1}
+  case $key in
+    --images)
+      shift
+      IMAGES=$*
+      break
+      ;;
+    *)
+      if [ ${#} -ne 1 ]; then
+        print_usage_and_exit_with_error "${#} arguments received, expected 1"
+      fi
+
+      BUMPENVS=${1}
+      break
+    ;;
+  esac
+done
 
 for command in anchore-cli awk curl docker-compose grep jq yq; do
   if ! which ${command} > /dev/null; then
-    echo ${0} requires ${command}
+    echo "${0} requires ${command}"
     exit ${MISSING_DEPENDENCIES}
   fi
 done
+
+if [ -n "$BUMPENVS" ]; then
+  if [ ! -f "$BUMPENVS" ]; then
+    print_usage_and_exit_with_error "File ${1} does not exist"
+  fi
+
+  IMAGES=$(yq eval -o=p "${BUMPENVS}" | grep '_hashed.new = ' | awk '{ print $3 }')
+fi
 
 # Set up Anchore Engine
 COMPOSE_FILE=/tmp/determined-anchore-engine.yaml
@@ -59,16 +81,13 @@ export ANCHORE_CLI_PASS=foobar
 timeout 30 bash -c "while ! anchore-cli image list; do sleep 1; done"
 
 # Start download and scanning
-IMAGES=$(yq eval -o=p ${BUMPENVS} | grep '_hashed.new = ' | awk '{ print $3 }')
 for image in ${IMAGES}; do
-  anchore-cli image add ${image}
+  anchore-cli image add "${image}"
 done
 
 # Wait on results
-IMAGES=$(yq eval -o=p ${BUMPENVS} | grep '_hashed.new = ' | awk '{ print $3 }')
-
 for image in ${IMAGES}; do
-  anchore-cli image wait ${image}
+  anchore-cli image wait "${image}"
 done
 
 # Check results
@@ -78,7 +97,7 @@ for image in ${IMAGES}; do
   echo "${image}"
   echo "${MINOR_SEPARATOR}"
   # Run the following for a full report: anchore-cli image vuln ${image} all
-  output=$(anchore-cli --json image vuln ${image} all | jq -r '.vulnerabilities[] | select(.severity == "High" or .severity == "Critical") | .vuln')
+  output=$(anchore-cli --json image vuln "${image}" all | jq -r '.vulnerabilities[] | select(.severity == "High" or .severity == "Critical") | .vuln')
   file_failures=0
   while IFS= read -r vulnerability; do
     if [[ ${IGNORED_VULNERABILITIES} == *"${vulnerability}"* ]]; then
