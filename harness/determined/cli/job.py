@@ -18,7 +18,7 @@ def ls(args: Namespace) -> None:
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy=args.order_by,
+        orderBy="ORDER_BY_DESC" if not args.reverse else "ORDER_BY_ASC",
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
@@ -73,10 +73,10 @@ pagination_args = [
         help="Limit the returned set.",
     ),
     Arg(
-        "--order-by",
-        type=str,
-        default="ORDER_BY_DESC",
-        help="Whether to sort the results in descending or ascending order",
+        "--reverse",
+        type=bool,
+        default=False,
+        help="Reverse the requested order of results.",
     ),
 ]
 
