@@ -164,7 +164,7 @@ func (rp *ResourcePool) getOrCreateGroup(
 	if g, ok := rp.groups[handler]; ok {
 		return g
 	}
-	g := &group{handler: handler, weight: 1}
+	g := &group{handler: handler, weight: 1, qPosition: -1}
 
 	if rp.config.Scheduler.Priority != nil {
 		if rp.config.Scheduler.Priority.DefaultPriority == nil {
