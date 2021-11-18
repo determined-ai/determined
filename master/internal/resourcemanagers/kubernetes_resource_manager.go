@@ -22,6 +22,9 @@ import (
 const kubernetesScheduler = "kubernetes"
 const kubernetesDummyResourcePool = "kubernetes"
 
+// KubernetesDefaultPriority is the default K8 resource manager priority.
+const KubernetesDefaultPriority = 50
+
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config *KubernetesResourceManagerConfig
@@ -426,7 +429,7 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	}
 
 	// TODO: remove magic number
-	newPriority := 50
+	newPriority := KubernetesDefaultPriority
 	g := &group{handler: handler, weight: 1, priority: &newPriority, qPosition: -1}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0

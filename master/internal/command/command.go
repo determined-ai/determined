@@ -13,6 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -45,6 +46,7 @@ func createGenericCommandActor(
 	jobID model.JobID,
 	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
+	mConfig *config.Config,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
@@ -58,9 +60,8 @@ func createGenericCommandActor(
 		jobType:        jobType,
 		serviceAddress: &serviceAddress,
 		jobID:          jobID,
+		mConfig:        mConfig,
 	}
-
-	// cmd.isPreemptible = internal.ReadPreemptionStatus() // need to move Config to its own package
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
@@ -91,7 +92,7 @@ type command struct {
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	rmJobInfo      *job.RMJobInfo
-	isPreemptible  bool
+	mConfig        *config.Config
 }
 
 // Receive implements the actor.Actor interface.
@@ -427,7 +428,6 @@ func (c *command) toV1Job() *jobv1.Job {
 		JobId:          c.jobID.String(),
 		EntityId:       string(c.taskID),
 		Type:           c.jobType.Proto(),
-		IsPreemptible:  c.isPreemptible,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		SubmissionTime: timestamppb.New(c.registeredTime),
 		Username:       c.Base.Owner.Username,
@@ -435,14 +435,9 @@ func (c *command) toV1Job() *jobv1.Job {
 		Name:           c.Config.Description,
 	}
 
-	if priority := c.Config.Resources.Priority; priority != nil {
-		j.Priority = int32(*priority)
-	} else {
-		j.Priority = 42
-	}
-
-	// TODO make config its own package so we can bring in the config
-	// to resolve preemption, priority, and weight?
+	j.IsPreemptible = config.ReadPreemptionStatus(c.mConfig, j.ResourcePool, &c.Config)
+	j.Priority = int32(config.ReadPriority(c.mConfig, j.ResourcePool, &c.Config))
+	j.Weight = config.ReadWeight(c.mConfig, j.ResourcePool, &c.Config)
 
 	job.UpdateJobQInfo(&j, c.rmJobInfo)
 

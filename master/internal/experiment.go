@@ -86,7 +86,6 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		rmJobInfo             *job.RMJobInfo
-		isPreemptible         bool
 		mConfig               *config.Config
 	}
 )
@@ -137,12 +136,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	}
 	taskSpec.AgentUserGroup = agentUserGroup
 
-	isPreemptible := ReadPreemptionStatus(
-		master.config,
-		expModel.Config.Resources().ResourcePool(),
-		model.TaskTypeTrial,
-	)
-
 	return &experiment{
 		Experiment:          expModel,
 		rm:                  master.rm,
@@ -159,8 +152,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
-		isPreemptible: isPreemptible,
-		mConfig:       master.config,
+		mConfig: master.config,
 	}, nil
 }
 
@@ -611,16 +603,16 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		JobId:          e.JobID.String(),
 		EntityId:       fmt.Sprint(e.ID),
 		Type:           jobv1.Type_TYPE_EXPERIMENT,
-		IsPreemptible:  e.isPreemptible,
 		ResourcePool:   e.Config.Resources().ResourcePool(),
 		SubmissionTime: timestamppb.New(e.StartTime),
-		Weight:         e.Config.Resources().Weight(),
 		Username:       e.Username,
 		Progress:       float32(e.searcher.Progress()),
 		Name:           e.Config.Name().String(),
 	}
 
-	j.Priority = int32(ReadPriority(e.mConfig, j.ResourcePool, e))
+	j.IsPreemptible = config.ReadPreemptionStatus(e.mConfig, j.ResourcePool, &e.Config)
+	j.Priority = int32(config.ReadPriority(e.mConfig, j.ResourcePool, &e.Config))
+	j.Weight = config.ReadWeight(e.mConfig, j.ResourcePool, &e.Config)
 	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	return &j
