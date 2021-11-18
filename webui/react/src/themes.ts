@@ -1,4 +1,6 @@
-import { BrandingType, CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
+import {
+  BrandingType, CheckpointState, CommandState, ResourceState, RunState, SlotState,
+} from 'types';
 
 /*
  * Where did we get our sizes from?
