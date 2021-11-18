@@ -3,7 +3,6 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } f
 import { isObject } from 'shared/utils/data';
 import themes, { DarkLight, Theme } from 'themes';
 import { BrandingType } from 'types';
-import { getIsDarkMode, MATCH_MEDIA_SCHEME_DARK } from 'utils/browser';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type SubTheme = Record<string, any>;
@@ -14,9 +13,36 @@ type ThemeHook = {
   theme: Theme,
 };
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-// const antdLightTheme = require('antd/dist/antd.compact.min.css');
-// const antdDarkTheme = require('antd/dist/antd.dark.min.css');
+const STYLESHEET_ID = 'antd-stylesheet';
+const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+
+const themePaths = {
+  [DarkLight.Dark]: 'antd.dark.min.css',
+  [DarkLight.Light]: 'antd.min.css',
+};
+
+const createStylesheetLink = () => {
+  const link = document.createElement('link');
+  link.id = STYLESHEET_ID;
+  link.rel = 'stylesheet';
+
+  document.head.appendChild(link);
+
+  return link;
+};
+
+const getStylesheetLink = () => {
+  return document.getElementById(STYLESHEET_ID) as HTMLLinkElement || createStylesheetLink();
+};
+
+const getIsDarkMode = (): boolean => {
+  return matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
+};
+
+const updateTheme = (path: string) => {
+  const link = getStylesheetLink();
+  link.href = `${process.env.PUBLIC_URL}/themes/${path}`;
+};
 
 const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
   if (isObject(theme)) {
@@ -45,9 +71,7 @@ export const useTheme = (): ThemeHook => {
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    const isDarkMode = event.matches;
-    // const newTheme = isDarkMode ? antdDarkTheme : antdLightTheme; // TODO: apply theme
-    setMode(isDarkMode ? DarkLight.Dark : DarkLight.Light);
+    setMode(event.matches ? DarkLight.Dark : DarkLight.Light);
   }, []);
 
   useEffect(() => {
@@ -66,6 +90,11 @@ export const useTheme = (): ThemeHook => {
       matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
     };
   }, [ handleSchemeChange ]);
+
+  // When mode changes update theme.
+  useEffect(() => {
+    updateTheme(themePaths[mode]);
+  }, [ mode ]);
 
   return { setBranding, setMode, theme };
 };
