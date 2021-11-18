@@ -873,8 +873,8 @@ class TFKerasTrialController(det.TrialController):
 
         if self.train_response_func is None:
             raise AssertionError(
-                "Callback should avoid calling model.predict(), "
-                "as this will affect Determined training behavior",
+                "train_response_func is not set.  This should not be possible; please file an "
+                "issue at github.com/determined-ai/determined so we can fix this bug."
             )
 
         if self.hvd_config.use:
@@ -1085,9 +1085,6 @@ class TFKerasTrial(det.Trial):
         """
         Specifies a list of :class:`determined.keras.callbacks.Callback` objects to be used during
         training.
-
-        Callbacks should avoid calling ``model.predict()``, as this will affect Determined training
-        behavior.
 
         .. note:
            Note that :class:`determined.keras.callbacks.Callback` is a subclass of
