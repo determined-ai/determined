@@ -94,7 +94,7 @@ message LaunchCommandRequest {
 // Response to LaunchCommandRequest.
 message LaunchCommandResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "notebook", "config" ] }
+    json_schema: { required: [ "command", "config" ] }
   };
   // The requested command.
   determined.command.v1.Command command = 1;
