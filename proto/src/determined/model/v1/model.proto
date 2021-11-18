@@ -47,6 +47,8 @@ message Model {
   string username = 10;
   // Whether this model is archived or not.
   bool archived = 11;
+  // Notes associated with this model.
+  string notes = 12;
 }
 
 // PatchModel is a partial update to a model with only id required
@@ -62,6 +64,8 @@ message PatchModel {
   google.protobuf.Struct metadata = 4;
   // An updated label list for the model.
   google.protobuf.ListValue labels = 5;
+  // Updated notes associated with this model.
+  google.protobuf.StringValue notes = 6;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
