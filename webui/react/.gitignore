@@ -4,6 +4,9 @@
 /.pnp
 .pnp.js
 
+# antd themes
+public/themes
+
 # testing
 /coverage
 
