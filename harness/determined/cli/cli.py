@@ -18,6 +18,7 @@ from determined.cli import render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.checkpoint import args_description as checkpoint_args_description
 from determined.cli.experiment import args_description as experiment_args_description
+from determined.cli.job import args_description as job_args_description
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
@@ -131,6 +132,7 @@ all_args_description = (
     + model_args_description
     + agent_args_description
     + notebook_args_description
+    + job_args_description
     + resources_args_description
     + shell_args_description
     + task_args_description
