@@ -126,7 +126,7 @@ export type DeleteModelParams = GetModelParams;
 
 export interface GetModelDetailsParams extends PaginationParams {
   modelId: number;
-  sortBy: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
 }
 
 export interface GetModelVersionParams {

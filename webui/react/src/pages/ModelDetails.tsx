@@ -1,5 +1,6 @@
 import { Button, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
@@ -11,20 +12,22 @@ import MetadataCard from 'components/MetadataCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
-import { modelVersionNameRenderer, modelVersionNumberRenderer,
+import { getFullPaginationConfig, modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
+import useSettings from 'hooks/useSettings';
 import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
   patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import { isAborted, isNotFound } from 'services/utils';
+import { isAborted, isNotFound, validateDetApiEnum } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
 
 import css from './ModelDetails.module.scss';
+import settingsConfig, { Settings } from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
 
 interface Params {
@@ -38,21 +41,34 @@ const ModelDetails: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ forceEditMetadata, setForceEditMetadata ] = useState(false);
+  const [ total, setTotal ] = useState(0);
   const history = useHistory();
+
+  const {
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const id = parseInt(modelId);
 
   const fetchModel = useCallback(async () => {
     try {
       const modelData = await getModelDetails(
-        { modelId: id, sortBy: 'SORT_BY_VERSION' },
+        {
+          limit: settings.tableLimit,
+          modelId: id,
+          offset: settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetModelVersionsRequestSortBy, settings.sortKey),
+        },
       );
+      setTotal(modelData?.pagination.total || 0);
       setModel(prev => !isEqual(modelData, prev) ? modelData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
     setIsLoading(false);
-  }, [ id, pageError ]);
+  }, [ id, pageError, settings ]);
 
   usePolling(fetchModel);
 
@@ -174,7 +190,6 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'lastUpdatedTime',
         render: (date: Date, record: ModelVersion) =>
           relativeTimeRenderer(date ?? record.creationTime),
-        sorter: true,
         title: 'Last updated',
         width: 140,
       },
@@ -192,8 +207,36 @@ const ModelDetails: React.FC = () => {
       { render: overflowRenderer, title: '', width: 1 },
     ];
 
-    return tableColumns;
-  }, [ showConfirmDelete, model?.model.username, saveModelVersionTags, user ]);
+    return tableColumns.map(column => {
+      column.sortOrder = null;
+      if (column.key === settings.sortKey) {
+        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
+      }
+      return column;
+    });
+  }, [ showConfirmDelete,
+    model?.model.username,
+    saveModelVersionTags,
+    user,
+    settings.sortKey,
+    settings.sortDesc ]);
+
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    if (Array.isArray(tableSorter)) return;
+
+    const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    const newSettings = {
+      sortDesc: order === 'descend',
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      sortKey: columnKey as any,
+      tableLimit: tablePagination.pageSize,
+      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+    };
+    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+    updateSettings(newSettings, shouldPush);
+  }, [ columns, settings.tableOffset, updateSettings ]);
 
   const editMetadata = useCallback(() => {
     setForceEditMetadata(true);
@@ -312,9 +355,13 @@ const ModelDetails: React.FC = () => {
             columns={columns}
             dataSource={model.modelVersions}
             loading={isLoading}
-            pagination={{ hideOnSinglePage: true }}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
             showSorterTooltip={false}
             size="small"
+            onChange={handleTableChange}
           />
         }
         <MetadataCard

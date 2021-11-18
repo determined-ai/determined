@@ -430,6 +430,9 @@ export const getModelDetails: Service.DetApi<
   request: (params: Service.GetModelDetailsParams) => detApi.Models.getModelVersions(
     params.modelId,
     params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
   ),
 };
 
