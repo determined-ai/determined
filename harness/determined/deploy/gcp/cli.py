@@ -155,7 +155,7 @@ def handle_dump_master_config_template(args: argparse.Namespace) -> None:
 args_description = Cmd(
     "gcp",
     None,
-    "gcp_help",
+    "GCP help",
     [
         Cmd(
             "down",
