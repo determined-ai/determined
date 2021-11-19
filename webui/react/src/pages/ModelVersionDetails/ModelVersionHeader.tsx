@@ -1,7 +1,8 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
+import CopyButton from 'components/CopyButton';
 import DownloadModelPopover from 'components/DownloadModelPopover';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -13,6 +14,7 @@ import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/date';
+import { copyToClipboard } from 'utils/dom';
 
 import css from './ModelVersionHeader.module.scss';
 
@@ -31,6 +33,7 @@ const ModelVersionHeader: React.FC<Props> = (
   }: Props,
 ) => {
   const { auth: { user } } = useStore();
+  const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -66,6 +69,25 @@ const ModelVersionHeader: React.FC<Props> = (
       label: 'Tags',
     } ] as InfoRow[];
   }, [ modelVersion, onSaveDescription, onUpdateTags ]);
+
+  const referenceText = useMemo(() => {
+    return (
+      `from determined.experimental import Determined
+model = Determined().get_model(${modelVersion?.model?.id})
+ckpt = model.get_version(${modelVersion?.id}).checkpoint
+ckpt_path = ckpt.download()
+
+# WARNING: From here on out, this might not be possible to automate. Requires research.
+from model import build_model
+model = build_model()
+model.load_state_dict(ckpt['models_state_dict'][0])
+
+# If you get this far, you should be able to run \`model.eval()\``);
+  }, [ modelVersion ]);
+
+  const handleCopy = useCallback(async () => {
+    await copyToClipboard(referenceText);
+  }, [ referenceText ]);
 
   const isDeletable = user?.isAdmin
         || user?.username === modelVersion.model.username
@@ -127,6 +149,20 @@ const ModelVersionHeader: React.FC<Props> = (
             <DownloadModelPopover modelVersion={modelVersion}>
               <Button>Download Model</Button>
             </DownloadModelPopover>
+            <Button onClick={() => setShowUseInNotebook(true)}>Use in Notebook</Button>
+            <Modal
+              className={css.useNotebookModal}
+              footer={null}
+              title="Use in Notebook"
+              visible={showUseInNotebook}
+              onCancel={() => setShowUseInNotebook(false)}>
+              <div className={css.topLine}>
+                <p>Reference this model in a notebook</p>
+                <CopyButton handleCopy={handleCopy} />
+              </div>
+              <pre className={css.codeSample}><code>{referenceText}</code></pre>
+              <p>Copy/paste code into a notebook cell</p>
+            </Modal>
             <Dropdown
               overlay={(
                 <Menu>

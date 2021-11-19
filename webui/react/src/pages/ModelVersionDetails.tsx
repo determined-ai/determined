@@ -1,9 +1,7 @@
-import { CopyOutlined } from '@ant-design/icons';
-import { Breadcrumb, Card, notification, Tabs, Tooltip } from 'antd';
+import { Breadcrumb, Card, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import Icon from 'components/Icon';
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
@@ -18,7 +16,6 @@ import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
-import { copyToClipboard } from 'utils/dom';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/types';
 
@@ -74,26 +71,6 @@ const ModelVersionDetails: React.FC = () => {
       history.replace(`${basePath}/${tabKey}`);
     }
   }, [ basePath, history, tab, tabKey ]);
-
-  const referenceText = useMemo(() => {
-    return (
-      `from determined.experimental import Determined
-model = Determined().get_model(${modelVersion?.model?.id})
-ckpt = model.get_version(${modelVersion?.id}).checkpoint
-ckpt_path = ckpt.download()
-
-# WARNING: From here on out, this might not be possible to automate. Requires research.
-from model import build_model
-model = build_model()
-model.load_state_dict(ckpt['models_state_dict'][0])
-
-# If you get this far, you should be able to run \`model.eval()\``);
-  }, [ modelVersion ]);
-
-  const handleCopy = useCallback(async () => {
-    await copyToClipboard(referenceText);
-    notification.open({ message: 'Copied to clipboard' });
-  }, [ referenceText ]);
 
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
@@ -287,15 +264,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             <NotesCard
               notes={modelVersion.notes ?? ''}
               onSave={saveNotes} />
-            <Card
-              extra={(
-                <Tooltip title="Copy to Clipboard">
-                  <CopyOutlined onClick={handleCopy} />
-                </Tooltip>
-              )}
-              title={<>How to reference this model <Icon name="info" /></>}>
-              <pre>{referenceText}</pre>
-            </Card>
           </div>
         </TabPane>
       </Tabs>

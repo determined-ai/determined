@@ -327,7 +327,7 @@ const ModelDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelId ]);
+  }, [ modelId, fetchModel ]);
 
   const saveModelTags = useCallback(async (editedTags) => {
     try {
