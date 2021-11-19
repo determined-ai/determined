@@ -18,7 +18,6 @@ import css from './ModelVersionHeader.module.scss';
 
 interface Props {
   modelVersion: ModelVersion;
-  onAddMetadata: () => void;
   onDeregisterVersion: () => void;
   onSaveDescription: (editedNotes: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<void>;
@@ -27,7 +26,7 @@ interface Props {
 
 const ModelVersionHeader: React.FC<Props> = (
   {
-    modelVersion, onAddMetadata, onDeregisterVersion,
+    modelVersion, onDeregisterVersion,
     onSaveDescription, onUpdateTags, onSaveName,
   }: Props,
 ) => {
@@ -131,8 +130,6 @@ const ModelVersionHeader: React.FC<Props> = (
             <Dropdown
               overlay={(
                 <Menu>
-                  {Object.keys(modelVersion.metadata ?? {}).length === 0 &&
-                    <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>}
                   <Menu.Item
                     danger
                     disabled={!isDeletable}

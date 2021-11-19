@@ -45,7 +45,6 @@ const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
   const { modelId, versionId, tab } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
-  const [ forceEditMetadata, setForceEditMetadata ] = useState(false);
   const history = useHistory();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
@@ -95,10 +94,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     await copyToClipboard(referenceText);
     notification.open({ message: 'Copied to clipboard' });
   }, [ referenceText ]);
-
-  const editMetadata = useCallback(() => {
-    setForceEditMetadata(true);
-  }, []);
 
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
@@ -264,7 +259,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
       docTitle="Model Version Details"
       headerComponent={<ModelVersionHeader
         modelVersion={modelVersion}
-        onAddMetadata={editMetadata}
         onDeregisterVersion={deleteVersion}
         onSaveDescription={saveDescription}
         onSaveName={saveName}
@@ -278,7 +272,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         <TabPane key="overview" tab="Overview">
           <div className={css.base}>
             <MetadataCard
-              forceEdit={forceEditMetadata}
               metadata={modelVersion.metadata}
               onSave={saveMetadata} />
             <NotesCard

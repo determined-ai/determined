@@ -41,7 +41,6 @@ const ModelDetails: React.FC = () => {
   const { modelId } = useParams<Params>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
-  const [ forceEditMetadata, setForceEditMetadata ] = useState(false);
   const [ total, setTotal ] = useState(0);
   const history = useHistory();
 
@@ -265,10 +264,6 @@ const ModelDetails: React.FC = () => {
     updateSettings(newSettings, shouldPush);
   }, [ columns, settings.tableOffset, updateSettings ]);
 
-  const editMetadata = useCallback(() => {
-    setForceEditMetadata(true);
-  }, []);
-
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
       await patchModel({
@@ -363,7 +358,6 @@ const ModelDetails: React.FC = () => {
       docTitle="Model Details"
       headerComponent={<ModelHeader
         model={model.model}
-        onAddMetadata={editMetadata}
         onDelete={deleteCurrentModel}
         onSaveDescription={saveDescription}
         onSaveName={saveName}
@@ -392,7 +386,6 @@ const ModelDetails: React.FC = () => {
           />
         }
         <MetadataCard
-          forceEdit={forceEditMetadata}
           metadata={model.model.metadata}
           onSave={saveMetadata} />
       </div>

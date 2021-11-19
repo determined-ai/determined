@@ -17,7 +17,6 @@ import css from './ModelHeader.module.scss';
 
 interface Props {
   model: ModelItem;
-  onAddMetadata: () => void;
   onDelete: () => void;
   onSaveDescription: (editedDescription: string) => Promise<void>
   onSaveName: (editedName: string) => Promise<void>;
@@ -27,7 +26,7 @@ interface Props {
 
 const ModelHeader: React.FC<Props> = (
   {
-    model, onAddMetadata, onDelete, onSwitchArchive,
+    model, onDelete, onSwitchArchive,
     onSaveDescription, onUpdateTags, onSaveName,
   }: Props,
 ) => {
@@ -110,8 +109,6 @@ const ModelHeader: React.FC<Props> = (
             <Dropdown
               overlay={(
                 <Menu>
-                  {Object.keys(model.metadata ?? {}).length === 0 &&
-                    <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>}
                   <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
                     {model.archived ? 'Unarchive' : 'Archive'}
                   </Menu.Item>

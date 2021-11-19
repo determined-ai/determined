@@ -1,23 +1,22 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import EditableMetadata, { Metadata } from './EditableMetadata';
 import Spinner from './Spinner';
 
 interface Props {
-  forceEdit: boolean;
   metadata?: Metadata;
   onSave?: (newMetadata: Metadata) => Promise<void>;
 }
 
-const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave, forceEdit }: Props) => {
+const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave }: Props) => {
   const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
-  const [ editedMetadata, setEditedMetadata ] = useState<Metadata>(metadata);
+  const [ editedMetadata, setEditedMetadata ] = useState<Metadata>(metadata ?? {});
 
   const metadataArray = useMemo(() => {
-    return Object.entries(metadata).map(([ key, value ]) => {
+    return Object.entries(metadata ?? {}).map(([ key, value ]) => {
       return ({ content: value, label: key });
     });
   }, [ metadata ]);
@@ -37,15 +36,9 @@ const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave, forceEdit }: Pro
     setIsEditing(false);
   }, []);
 
-  useEffect(() => {
-    if (forceEdit) {
-      setIsEditing(true);
-    }
-  }, [ forceEdit ]);
-
-  if (!(metadataArray.length > 0 || isEditing || isLoading)) {
-    return (<div />);
-  }
+  const showPlaceholder = useMemo(() => {
+    return metadataArray.length === 0 && !isEditing;
+  }, [ isEditing, metadataArray.length ]);
 
   return (
     <Card
@@ -60,12 +53,18 @@ const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave, forceEdit }: Pro
         </Tooltip>
       )}
       title={'Metadata'}>
-      <Spinner spinning={isLoading}>
-        <EditableMetadata
-          editing={isEditing}
-          metadata={editedMetadata}
-          updateMetadata={setEditedMetadata} />
-      </Spinner>
+      {showPlaceholder ?
+        <p
+          style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
+          onClick={editMetadata}>
+          Add metadata
+        </p> :
+        <Spinner spinning={isLoading}>
+          <EditableMetadata
+            editing={isEditing}
+            metadata={editedMetadata}
+            updateMetadata={setEditedMetadata} />
+        </Spinner>}
     </Card>);
 };
 

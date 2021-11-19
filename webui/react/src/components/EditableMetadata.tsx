@@ -109,7 +109,6 @@ const EditableRow: React.FC<EditableRowProps> = (
         </Button>
       </Dropdown>}
     </Input.Group>
-
   </Form.Item>;
 };
 
