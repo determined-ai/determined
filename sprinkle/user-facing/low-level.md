@@ -1,12 +1,14 @@
-# Generic API (the "low-level" API)
+# Core API
+
+*Formerly proposed as Generic API.*
 
 ## Features
 
-The Generic API lets you train arbitrary models in Determined, but in a way
-that you can integrate seamlessly with the entire Determined platform.
-Technically, no interaction with the Generic API is required to run arbitrary
-models on Determined, in which case you will still already have access to the
-following platform features:
+The Core API lets you train arbitrary models in Determined, but in a way that
+you can integrate seamlessly with the entire Determined platform.  Technically,
+no interaction with the Core API is required to run arbitrary models on
+Determined, in which case you will still already have access to the following
+platform features:
 
 * scheduling single-gpu jobs on a Determined cluster (on-premise or on-cloud)
 * tracking/viewing logs from training jobs in the webui or cli
@@ -25,17 +27,17 @@ following features of the Determined platform:
 * performant spot-instance support
 * running on one gpu, or across many gpus
 
-The Generic API is used behind-the-scenes to implement each of the higher-level
+The Core API is used behind-the-scenes to implement each of the higher-level
 APIs Determined offers (PyTorchTrial, Keras, Estimator, Lightning, etc), so
-with the Generic API, you really have the full capabilities of the Determined
+with the Core API, you really have the full capabilities of the Determined
 platform at your fingertips!
 
 ## Starting Point
 
-Let's pretend you have a very simple training script built around PyTorch.
-In real life, you should use our PyTorchTrial, Determined's high-level API for
-integrating with PyTorch, but this author is most familiar with PyTorch, so
-that's what the Generic API tutorial is in right now).
+Let's pretend you have a very simple training script built around PyTorch.  In
+real life, you should use our PyTorchTrial, Determined's high-level API for
+integrating with PyTorch (but this author is most familiar with PyTorch, so
+that's what the Core API tutorial is in right now).
 
 We'll split our training into a few different files:
 * model.py: defines the model and how to train/evaluate it
@@ -50,7 +52,7 @@ We'll split our training into a few different files:
 import torch
 
 def build_model(learning_rate):
-    # the model is silly, the real focus is on the Generic API
+    # the model is silly, the real focus is on the Core API
     model = nn.Linear(1, 1, False)
 
     loss_fn = torch.nn.MSELoss()
@@ -207,7 +209,7 @@ Let's look at how to get the following API features:
 
 All you have to do is:
 
-* [x] Initialize a Generic API context: `with det.generic.init() as context:`
+* [x] Initialize a Core API context: `with det.core.init() as context:`
 * [x] Report training metrics: `context.training.report_training_metrics()`
 * [x] Report validation metrics: `context.training.report_validation_metrics()`
 * [x] Report checkpoints to the Checkpoint API: `with
@@ -268,15 +270,15 @@ this demo.
 
     if __name__ == "__main__":
 -       main()
-+       # initialize a context object for accessing the Generic API
++       # initialize a context object for accessing the Core API
 +       import determined as det
-+       with det.generic.init() as context:
++       with det.core.init() as context:
 +           main(context)
 ```
 
 ### Updates to `my_config.yaml`
 
-Notice that the `context.checkpoint.save_path()` from the Generic API was easy
+Notice that the `context.checkpoint.save_path()` from the Core API was easy
 to use, and now we can rely on the cluster's checkpoint configuration, rather
 than hacking something together with bindmounts:
 
@@ -371,9 +373,9 @@ for model definitions, including:
             torch.save(model.state_dict(), f"{path]/my_checkpoint")
 
     if __name__ == "__main__":
-        # initialize a context object for accessing the Generic API
+        # initialize a context object for accessing the Core API
         import determined as det
-        with det.generic.init() as context:
+        with det.core.init() as context:
             main(context)
 ```
 
@@ -419,7 +421,7 @@ Do you have training that take hours, days, or even weeks to complete?
 Don't let power outages, network outages, or even slow memory leaks cause you
 to have to restart.
 
-When you use the Generic API, can checkpoint your progress as often as you like.
+When you use the Core API, can checkpoint your progress as often as you like.
 Determined will restart your job with the last checkpoint you reported, and
 all you have to do for fault tolerance is load that checkpoint and go!
 

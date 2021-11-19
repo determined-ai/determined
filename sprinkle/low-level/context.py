@@ -29,10 +29,10 @@ Goals for context objects in the Sprinkle API:
    those TrialContext classes should remain unchanged.
 """
 
-# GENERIC CONTEXT
+# CORE CONTEXT
 # Useful for custom workloads and is the basis for the framework contexts.
 
-with det.generic.init(
+with det.core.init(
     rank_info=...,  # provide info from a custom dtrain backend.
     session=...,  # provide a session() if you are running off-cluster (future enhancement)
 ) as context:  # use a contextmanager so we can start/stop off-thread resources (e.g. profiler)
