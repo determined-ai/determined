@@ -3,7 +3,7 @@ import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CopyButton from 'components/CopyButton';
-import DownloadModelPopover from 'components/DownloadModelPopover';
+import DownloadModelModal from 'components/DownloadModelModal';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -34,6 +34,7 @@ const ModelVersionHeader: React.FC<Props> = (
 ) => {
   const { auth: { user } } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
+  const [ showDownloadModel, setShowDownloadModel ] = useState(false);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -146,9 +147,11 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             </h1>
           </div>
           <div className={css.buttons}>
-            <DownloadModelPopover modelVersion={modelVersion}>
-              <Button>Download Model</Button>
-            </DownloadModelPopover>
+            <Button onClick={() => setShowDownloadModel(true)}>Download Model</Button>
+            <DownloadModelModal
+              modelVersion={modelVersion}
+              visible={showDownloadModel}
+              onClose={() => setShowDownloadModel(false)} />
             <Button onClick={() => setShowUseInNotebook(true)}>Use in Notebook</Button>
             <Modal
               className={css.useNotebookModal}

@@ -4,7 +4,7 @@ import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import DownloadModelPopover from 'components/DownloadModelPopover';
+import DownloadModelModal from 'components/DownloadModelModal';
 import Icon from 'components/Icon';
 import IconButton from 'components/IconButton';
 import InlineEditor from 'components/InlineEditor';
@@ -173,18 +173,6 @@ const ModelDetails: React.FC = () => {
       );
     };
 
-    const actionRenderer = (_:string, record: ModelVersion) => {
-      return <div className={css.center}>
-        <DownloadModelPopover modelVersion={record}>
-          <IconButton
-            icon="download"
-            iconSize="large"
-            label="Download Model"
-            type="text" />
-        </DownloadModelPopover>
-      </div>;
-    };
-
     const descriptionRenderer = (value:string, record: ModelVersion) => {
       return <InlineEditor
         placeholder="Add description..."
@@ -229,7 +217,7 @@ const ModelDetails: React.FC = () => {
         width: 1,
       },
       { dataIndex: 'labels', render: labelsRenderer, title: 'Tags', width: 120 },
-      { render: actionRenderer, title: 'Actions', width: 1 },
+      { render: useActionRenderer, title: 'Actions', width: 1 },
       { render: overflowRenderer, title: '', width: 1 },
     ];
 
@@ -409,6 +397,23 @@ const ModelDetails: React.FC = () => {
       </div>
     </Page>
   );
+};
+
+const useActionRenderer = (_:string, record: ModelVersion) => {
+  const [ showModal, setShowModal ] = useState(false);
+
+  return <div className={css.center}>
+    <IconButton
+      icon="download"
+      iconSize="large"
+      label="Download Model"
+      type="text"
+      onClick={() => setShowModal(true)} />
+    <DownloadModelModal
+      modelVersion={record}
+      visible={showModal}
+      onClose={() => setShowModal(false)} />
+  </div>;
 };
 
 export default ModelDetails;
