@@ -37,8 +37,8 @@ func (a *apiServer) GetModel(
 func (a *apiServer) GetModels(
 	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
-	nameFilterExpr := strings.ToLower(req.Name)
-	descFilterExpr := strings.ToLower(req.Description)
+	nameFilterExpr := req.Name
+	descFilterExpr := req.Description
 	archFilterExpr := ""
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
@@ -114,7 +114,7 @@ func (a *apiServer) PostModel(
 	reqLabels := strings.Join(req.Labels, ",")
 	err = a.m.db.QueryProto(
 		"insert_model", m, req.Name, req.Description, b,
-		reqLabels, user.User.Id,
+		reqLabels, req.Notes, user.User.Id,
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
@@ -131,11 +131,25 @@ func (a *apiServer) PatchModel(
 	currModel := getResp.Model
 	madeChanges := false
 
+	if req.Model.Name != nil && req.Model.Name.Value != currModel.Name {
+		log.Infof("model (%d) name changing from \"%s\" to \"%s\"",
+			req.ModelId, currModel.Name, req.Model.Name.Value)
+		madeChanges = true
+		currModel.Name = req.Model.Name.Value
+	}
+
 	if req.Model.Description != nil && req.Model.Description.Value != currModel.Description {
 		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
 			req.ModelId, currModel.Description, req.Model.Description.Value)
 		madeChanges = true
 		currModel.Description = req.Model.Description.Value
+	}
+
+	if req.Model.Notes != nil && req.Model.Notes.Value != currModel.Notes {
+		log.Infof("model (%d) notes changing from \"%s\" to \"%s\"",
+			req.ModelId, currModel.Notes, req.Model.Notes.Value)
+		madeChanges = true
+		currModel.Notes = req.Model.Notes.Value
 	}
 
 	currMeta, err := protojson.Marshal(currModel.Metadata)
@@ -179,7 +193,8 @@ func (a *apiServer) PatchModel(
 
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"update_model", finalModel, req.ModelId, currModel.Description, currMeta, currLabels)
+		"update_model", finalModel, req.ModelId, currModel.Name, currModel.Description,
+		currModel.Notes, currMeta, currLabels)
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %d in database", req.ModelId)

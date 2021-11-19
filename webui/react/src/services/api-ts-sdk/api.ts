@@ -3123,6 +3123,12 @@ export interface V1Model {
      * @memberof V1Model
      */
     archived?: boolean;
+    /**
+     * Notes associated with this model.
+     * @type {string}
+     * @memberof V1Model
+     */
+    notes?: string;
 }
 
 /**
@@ -3380,6 +3386,12 @@ export interface V1PatchModel {
      * @memberof V1PatchModel
      */
     labels?: Array<any>;
+    /**
+     * Updated notes associated with this model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    notes?: string;
 }
 
 /**
@@ -3572,6 +3584,12 @@ export interface V1PostModelRequest {
      * @memberof V1PostModelRequest
      */
     username?: string;
+    /**
+     * Notes associated with this model.
+     * @type {string}
+     * @memberof V1PostModelRequest
+     */
+    notes?: string;
 }
 
 /**
