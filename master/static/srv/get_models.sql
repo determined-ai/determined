@@ -4,7 +4,7 @@ LEFT JOIN users as u ON u.id = m.user_id
 WHERE ($1 = '' OR m.archived = $1::BOOL)
 AND ($2 = '' OR (u.username IN (SELECT unnest(string_to_array($2, ',')))))
 AND ($3 = '' OR (m.labels <@ string_to_array($3, ',')))
-AND ($4 = '' OR LOWER(m.name) = $4)
-AND ($5 = '' OR (LOWER(m.description) LIKE CONCAT($6::text, $5, $6::text)))
+AND ($4 = '' OR m.name ILIKE $4)
+AND ($5 = '' OR m.description ILIKE $5)
 GROUP BY m.id, u.id
 ORDER BY %s;

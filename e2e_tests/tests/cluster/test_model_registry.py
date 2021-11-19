@@ -116,16 +116,11 @@ def test_model_registry() -> None:
         assert len(all_versions) == 1
 
         # Create some more models and validate listing models.
-        tform = d.create_model("transformer", "all you need is attention __test__")
+        tform = d.create_model("transformer", "all you need is attention")
         objectdetect = d.create_model("object-detection", "a bounding box model")
 
         models = d.get_models(sort_by=ModelSortBy.NAME)
         assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]
-
-        # Search model descriptions
-        results = d.get_models(description="__test__")
-        assert len(results) == 1
-        assert results[0].name == "transformer"
 
         # Test model labels combined
         mnist.set_labels(["hello", "world"])
