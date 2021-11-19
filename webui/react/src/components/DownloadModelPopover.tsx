@@ -3,6 +3,7 @@ import { Input, notification, Popover, Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import { ModelVersion } from 'types';
+import { copyToClipboard } from 'utils/dom';
 
 interface Props {
   modelVersion: ModelVersion;
@@ -18,7 +19,7 @@ const DownloadModelPopover: React.FC<Props> = (
   }, [ modelVersion.checkpoint.uuid ]);
 
   const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(downloadCommand);
+    await copyToClipboard(downloadCommand);
     notification.open({ message: 'Copied to clipboard' });
     setVisible(false);
   }, [ downloadCommand ]);

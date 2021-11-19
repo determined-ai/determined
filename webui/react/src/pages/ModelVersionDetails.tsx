@@ -18,6 +18,7 @@ import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
+import { copyToClipboard } from 'utils/dom';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/types';
 
@@ -91,7 +92,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   }, [ modelVersion ]);
 
   const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(referenceText);
+    await copyToClipboard(referenceText);
     notification.open({ message: 'Copied to clipboard' });
   }, [ referenceText ]);
 
