@@ -58,7 +58,7 @@ class PyTorchTrialController(det.TrialController):
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._generic, self.env
+                self.context._core, self.env
             )
 
         self.latest_batch = self.env.latest_batch
@@ -197,7 +197,7 @@ class PyTorchTrialController(det.TrialController):
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
                 logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-                with self.context._generic.checkpointing.restore_path(
+                with self.context._core.checkpointing.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
@@ -250,7 +250,7 @@ class PyTorchTrialController(det.TrialController):
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",
                         }
-                        with self.context._generic.checkpointing.store_path(metadata) as (
+                        with self.context._core.checkpointing.store_path(metadata) as (
                             storage_id,
                             path,
                         ):

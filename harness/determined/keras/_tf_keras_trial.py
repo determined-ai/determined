@@ -357,7 +357,7 @@ class TFKerasTrialController(det.TrialController):
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._generic,
+                self.context._core,
                 self.env,
             )
 
@@ -365,7 +365,7 @@ class TFKerasTrialController(det.TrialController):
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
             logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-            with self.context._generic.checkpointing.restore_path(
+            with self.context._core.checkpointing.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self._load(pathlib.Path(load_path))
@@ -806,7 +806,7 @@ class TFKerasTrialController(det.TrialController):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_weights",
                         }
-                        with self.context._generic.checkpointing.store_path(metadata) as (
+                        with self.context._core.checkpointing.store_path(metadata) as (
                             storage_id,
                             path,
                         ):

@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict
 
 import determined as det
-from determined import _generic
+from determined import _core
 
 
 class TrialContext(metaclass=abc.ABCMeta):
@@ -13,13 +13,13 @@ class TrialContext(metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        generic_context: _generic.Context,
+        core_context: _core.Context,
         env: det.EnvContext,
     ) -> None:
-        self._generic = generic_context
+        self._core = core_context
         self.env = env
 
-        self.distributed = self._generic.distributed
+        self.distributed = self._core.distributed
         self._stop_requested = False
 
     @classmethod
@@ -56,14 +56,14 @@ class TrialContext(metaclass=abc.ABCMeta):
         Arguments:
             config: An experiment config file, in dictionary form.
         """
-        generic_context, env = det._make_local_execution_env(
+        core_context, env = det._make_local_execution_env(
             managed_training=False,
             test_mode=False,
             config=config,
             checkpoint_dir="/tmp",
             limit_gpus=1,
         )
-        return cls(generic_context, env)
+        return cls(core_context, env)
 
     def get_experiment_config(self) -> Dict[str, Any]:
         """

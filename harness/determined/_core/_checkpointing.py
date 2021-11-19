@@ -3,11 +3,11 @@ import logging
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 import determined as det
-from determined import _generic, tensorboard
+from determined import _core, tensorboard
 from determined.common import storage
 from determined.common.experimental.session import Session
 
-logger = logging.getLogger("determined.generic")
+logger = logging.getLogger("determined.core")
 
 
 class Checkpointing:
@@ -17,7 +17,7 @@ class Checkpointing:
 
     def __init__(
         self,
-        dist: _generic.DistributedContext,
+        dist: _core.DistributedContext,
         storage_manager: storage.StorageManager,
         session: Session,
         api_path: str,
@@ -134,7 +134,7 @@ class Checkpointing:
 class DummyCheckpointing(Checkpointing):
     def __init__(
         self,
-        dist: _generic.DistributedContext,
+        dist: _core.DistributedContext,
         storage_manager: storage.StorageManager,
     ) -> None:
         self._dist = dist

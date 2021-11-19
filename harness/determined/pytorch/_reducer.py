@@ -252,7 +252,7 @@ class _PyTorchReducerContext:
     _PyTorchReducerContext is a component of the PyTorchTrialContext which does not interact with
     the rest of the PyTorchTrialContext.  It has been separated into its own object to keep the
     size of PyTorchTrialContext down, and because there may be a future where we can create a
-    _PyTorchReducerContext as a standalone feature for users of the generic API... though in that
+    _PyTorchReducerContext as a standalone feature for users of the Core API... though in that
     case we would rename it with a public name first.
     """
 

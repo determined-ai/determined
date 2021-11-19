@@ -4,34 +4,34 @@ from typing import Any, Optional
 import appdirs
 
 import determined as det
-from determined import _generic, tensorboard
+from determined import _core, tensorboard
 from determined.common import constants, storage
 from determined.common.api import certs
 from determined.common.experimental.session import Session
 
-logger = logging.getLogger("determined.generic")
+logger = logging.getLogger("determined.core")
 
 
 class Context:
     """
-    generic.Context will someday evolve into a core part of the Generic API.
+    core.Context is a simple composition of several other APIs.
     """
 
     def __init__(
         self,
-        checkpointing: _generic.Checkpointing,
-        distributed: Optional[_generic.DistributedContext] = None,
-        preemption: Optional[_generic.Preemption] = None,
-        training: Optional[_generic.Training] = None,
-        searcher: Optional[_generic.AdvancedSearcher] = None,
+        checkpointing: _core.Checkpointing,
+        distributed: Optional[_core.DistributedContext] = None,
+        preemption: Optional[_core.Preemption] = None,
+        training: Optional[_core.Training] = None,
+        searcher: Optional[_core.AdvancedSearcher] = None,
     ) -> None:
         self.checkpointing = checkpointing
-        self.distributed = distributed or _generic.DummyDistributed()
-        self.preemption = preemption or _generic.DummyPreemption()
-        self.training = training or _generic.DummyTraining()
+        self.distributed = distributed or _core.DummyDistributed()
+        self.preemption = preemption or _core.DummyPreemption()
+        self.training = training or _core.DummyTraining()
         # TODO(DET-6083): Finalize BasicSearcher.  Figure out if calling this .searcher is going to
         # create a name conflict between AdvancedSearcher and BasicSearcher
-        self.searcher = searcher or _generic.DummyAdvancedSearcher()
+        self.searcher = searcher or _core.DummyAdvancedSearcher()
 
     def __enter__(self) -> "Context":
         self.preemption.start()
@@ -42,33 +42,33 @@ class Context:
         self.distributed.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
-            self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
+            self.training.report_early_exit(_core.EarlyExitReason.INVALID_HP)
             logger.info("InvalidHP detected during Trial init, converting InvalidHP to exit(0)")
             exit(0)
 
 
 def _dummy_init(
     *,
-    distributed: Optional[_generic.DistributedContext] = None,
+    distributed: Optional[_core.DistributedContext] = None,
     # TODO(DET-6153): allow a Union[StorageManager, str] here.
     storage_manager: Optional[storage.StorageManager] = None,
 ) -> Context:
     """
-    Build a generic.Context suitable for running off-cluster.  This is normally called by init()
+    Build a core.Context suitable for running off-cluster.  This is normally called by init()
     when it is detected that there is no ClusterInfo available, but can be invoked directly for
     e.g. local test mode.
     """
-    distributed = distributed or _generic.DummyDistributed()
-    preemption = _generic.DummyPreemption()
+    distributed = distributed or _core.DummyDistributed()
+    preemption = _core.DummyPreemption()
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
         logger.info("no storage_manager provided; storing checkpoints in {base_path}")
         storage_manager = storage.SharedFSStorageManager(base_path)
-    checkpointing = _generic.DummyCheckpointing(distributed, storage_manager)
+    checkpointing = _core.DummyCheckpointing(distributed, storage_manager)
 
-    training = _generic.DummyTraining()
-    searcher = _generic.DummyAdvancedSearcher()
+    training = _core.DummyTraining()
+    searcher = _core.DummyAdvancedSearcher()
 
     return Context(
         distributed=distributed,
@@ -85,7 +85,7 @@ def _dummy_init(
 # yet, so the '*' lets us delay that decision until we are ready.
 def init(
     *,
-    distributed: Optional[_generic.DistributedContext] = None,
+    distributed: Optional[_core.DistributedContext] = None,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
 ) -> Context:
@@ -97,13 +97,13 @@ def init(
     cert = certs.default_load(info.master_url)
     session = Session(info.master_url, None, None, cert)
 
-    distributed = distributed or _generic.DummyDistributed()
+    distributed = distributed or _core.DummyDistributed()
 
     naddrs = len(info.container_addrs)
-    if naddrs > 1 and isinstance(distributed, _generic.DummyDistributed):
+    if naddrs > 1 and isinstance(distributed, _core.DummyDistributed):
         raise ValueError("you must provide a valid DistributedContext for a multi-container task")
 
-    preemption = _generic.Preemption(session, info.allocation_id, distributed)
+    preemption = _core.Preemption(session, info.allocation_id, distributed)
 
     # At present, we only support tensorboards in Trial tasks.
     tbd_mgr = None
@@ -123,7 +123,7 @@ def init(
         )
         tbd_writer = tensorboard.get_metric_writer()
 
-        training = _generic.Training(
+        training = _core.Training(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,
@@ -131,7 +131,7 @@ def init(
             tbd_mgr,
             tbd_writer,
         )
-        searcher = _generic.AdvancedSearcher(
+        searcher = _core.AdvancedSearcher(
             session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id
         )
 
@@ -147,7 +147,7 @@ def init(
             "trial_run_id": info.trial._trial_run_id,
         }
 
-        checkpointing = _generic.Checkpointing(
+        checkpointing = _core.Checkpointing(
             distributed, storage_manager, session, api_path, static_metadata, tbd_mgr
         )
 
@@ -157,7 +157,7 @@ def init(
             base_path = appdirs.user_data_dir("determined")
             logger.info("no storage_manager provided; storing checkpoints in {base_path}")
             storage_manager = storage.SharedFSStorageManager(base_path)
-        checkpointing = _generic.DummyCheckpointing(distributed, storage_manager)
+        checkpointing = _core.DummyCheckpointing(distributed, storage_manager)
 
     return Context(
         distributed=distributed,

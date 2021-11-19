@@ -274,7 +274,7 @@ class DeterminedControlHook(estimator.RunHook):
         return self.estimator_trial_controller.compute_validation_metrics()
 
     def control_loop(self) -> None:
-        _generic = self.estimator_trial_controller.context._generic
+        _core = self.estimator_trial_controller.context._core
 
         assert self.estimator_trial_controller.workloads is not None
         for wkld, response_func in self.estimator_trial_controller.workloads:
@@ -307,7 +307,7 @@ class DeterminedControlHook(estimator.RunHook):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
                         }
-                        with _generic.checkpointing.store_path(metadata) as (storage_id, path):
+                        with _core.checkpointing.store_path(metadata) as (storage_id, path):
                             self._checkpoint_model(pathlib.Path(path))
                         response = {"uuid": storage_id}
                     else:
@@ -400,7 +400,7 @@ class EstimatorTrialController(det.TrialController):
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._generic, self.env
+                self.context._core, self.env
             )
 
         self._init_model()
@@ -724,9 +724,7 @@ class EstimatorTrialController(det.TrialController):
             return
 
         logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-        with self.context._generic.checkpointing.restore_path(
-            self.env.latest_checkpoint
-        ) as load_path:
+        with self.context._core.checkpointing.restore_path(self.env.latest_checkpoint) as load_path:
             for callback in self.train_hooks:
                 if isinstance(callback, estimator.RunHook):
                     callback.on_checkpoint_load(str(load_path))

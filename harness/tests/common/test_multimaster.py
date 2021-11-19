@@ -51,7 +51,7 @@ def run_api_server(
             assert self.headers["Authorization"] == f"Bearer {token}"
             return {"models": []}
 
-        def do_generic(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
+        def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
                 self.send_error(404, f"path not handled: {self.path}")
                 return None
@@ -65,13 +65,13 @@ def run_api_server(
                 "/users/me": self._users_me,
                 "/api/v1/models/": self._api_v1_models,
             }.get(self.path.split("?")[0])
-            self.do_generic(fn)
+            self.do_core(fn)
 
         def do_POST(self) -> None:
             fn = {
                 "/login": self._login,
             }.get(self.path)
-            self.do_generic(fn)
+            self.do_core(fn)
 
         def _send_result(self, result: Dict[str, Any]) -> None:
             response = json.dumps(result).encode("utf8")
