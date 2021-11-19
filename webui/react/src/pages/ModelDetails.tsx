@@ -10,6 +10,7 @@ import IconButton from 'components/IconButton';
 import InlineEditor from 'components/InlineEditor';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/MetadataCard';
+import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
@@ -312,6 +313,22 @@ const ModelDetails: React.FC = () => {
     }
   }, [ modelId ]);
 
+  const saveNotes = useCallback(async (editedNotes: string) => {
+    try {
+      await patchModel({
+        body: { id: parseInt(modelId), notes: editedNotes },
+        modelId: parseInt(modelId),
+      });
+      await fetchModel();
+    } catch (e) {
+      handleError({
+        message: 'Unable to update notes.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ modelId ]);
+
   const saveModelTags = useCallback(async (editedTags) => {
     try {
       await patchModel({
@@ -385,6 +402,7 @@ const ModelDetails: React.FC = () => {
             onChange={handleTableChange}
           />
         }
+        <NotesCard notes={model.model.notes ?? ''} onSave={saveNotes} />
         <MetadataCard
           metadata={model.model.metadata}
           onSave={saveMetadata} />

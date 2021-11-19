@@ -143,6 +143,7 @@ export interface PatchModelParams {
     labels?: string[];
     metadata?: RawJson;
     name?: string;
+    notes?: string;
   }
   modelId: number;
 }

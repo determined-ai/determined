@@ -490,6 +490,7 @@ export interface ModelItem {
   lastUpdatedTime: string;
   metadata: RawJson;
   name: string;
+  notes?: string;
   numVersions: number;
   username: string;
 }

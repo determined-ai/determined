@@ -38,7 +38,7 @@ export const renderRow = ({ label, content, separator }: InfoRowProps): React.Re
 const InfoBox: React.FC<Props> = ({ header, rows, separator = true }: Props) => {
   return (
     <dl className={css.base}>
-      {header != null ? <div className={css.header}>{header}</div>: null}
+      {header != null ? <div className={css.header}>{header}</div> : null}
       {rows.map((row) => renderRow({ ...row, separator }))}
     </dl>
   );

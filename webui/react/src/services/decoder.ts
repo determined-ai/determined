@@ -169,6 +169,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     lastUpdatedTime: model.lastUpdatedTime as unknown as string,
     metadata: model.metadata,
     name: model.name,
+    notes: model.notes,
     numVersions: model.numVersions,
     username: model.username,
   };
