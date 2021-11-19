@@ -133,7 +133,8 @@ func trialDetailAPITests(
 			err := db.AddExperiment(experiment)
 			assert.NilError(t, err, "failed to insert experiment")
 
-			trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+			trial := testutils.TrialModel(
+				experiment.ID, experiment.JobID, testutils.WithTrialState(model.ActiveState))
 			err = db.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
@@ -176,7 +177,8 @@ func trialProfilerMetricsTests(
 	assert.NilError(t, err, "failed to insert experiment")
 
 	// With a trial.
-	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	trial := testutils.TrialModel(
+		experiment.ID, experiment.JobID, testutils.WithTrialState(model.ActiveState))
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
@@ -249,7 +251,8 @@ func trialProfilerMetricsAvailableSeriesTests(
 	err := db.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
-	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	trial := testutils.TrialModel(
+		experiment.ID, experiment.JobID, testutils.WithTrialState(model.ActiveState))
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
@@ -486,7 +489,8 @@ func trialLogAPITests(
 			err := pgDB.AddExperiment(experiment)
 			assert.NilError(t, err, "failed to insert experiment")
 
-			trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+			trial := testutils.TrialModel(
+				experiment.ID, experiment.JobID, testutils.WithTrialState(model.ActiveState))
 			err = pgDB.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
@@ -557,7 +561,8 @@ func trialLogFollowingTests(
 	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
-	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	trial := testutils.TrialModel(
+		experiment.ID, experiment.JobID, testutils.WithTrialState(model.ActiveState))
 	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
