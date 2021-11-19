@@ -309,10 +309,12 @@ func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
 	}
 
 	// if not found, fall back to resource manager config
-	schedulerConf = config.ResourceManager.AgentRM.Scheduler
-	prio = readPriorityFromScheduler(schedulerConf)
-	if prio != nil {
-		return *prio
+	if config.ResourceManager.AgentRM != nil {
+		schedulerConf = config.ResourceManager.AgentRM.Scheduler
+		prio = readPriorityFromScheduler(schedulerConf)
+		if prio != nil {
+			return *prio
+		}
 	}
 
 	if config.ResourceManager.KubernetesRM != nil {
