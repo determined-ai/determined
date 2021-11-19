@@ -307,14 +307,6 @@ const ModelRegistry: React.FC = () => {
 
     const tableColumns: ColumnsType<ModelItem> = [
       {
-        dataIndex: 'id',
-        key: V1GetModelsRequestSortBy.CREATIONTIME,
-        render: modelNameRenderer,
-        sorter: true,
-        title: 'ID',
-        width: 60,
-      },
-      {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
@@ -322,7 +314,7 @@ const ModelRegistry: React.FC = () => {
         onHeaderCell: () => settings.name ? { className: tableCss.headerFilterOn } : {},
         render: modelNameRenderer,
         sorter: true,
-        title: 'Model name',
+        title: 'Name',
         width: 250,
       },
       {

@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Space, Tooltip } from 'antd';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
@@ -158,7 +158,11 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
-  return <Link path={paths.modelDetails(record.id)}>{value}</Link>;
+  return (
+    <Space><Icon name="model" size="medium" />
+      <Link path={paths.modelDetails(record.id)}>{value}</Link>
+    </Space>
+  );
 };
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => {
