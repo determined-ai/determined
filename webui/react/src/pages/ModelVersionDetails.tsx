@@ -218,7 +218,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
           </Breadcrumb.Item>
           <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
         </Breadcrumb>,
-        label: 'Checkpoint',
+        label: 'Source',
       },
       { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
       {
@@ -269,11 +269,21 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         style={{ height: 'auto' }}
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}
         onChange={handleTabChange}>
-        <TabPane key="overview" tab="Overview">
+        <TabPane key="model" tab="Model">
           <div className={css.base}>
+            <Card title="Model Checkpoint">
+              <InfoBox rows={checkpointInfo} separator />
+            </Card>
+            <Card title="Validation Metrics">
+              <InfoBox rows={validationMetrics} separator />
+            </Card>
             <MetadataCard
               metadata={modelVersion.metadata}
               onSave={saveMetadata} />
+          </div>
+        </TabPane>
+        <TabPane key="notes" tab="Notes">
+          <div className={css.base}>
             <NotesCard
               notes={modelVersion.notes ?? ''}
               onSave={saveNotes} />
@@ -285,16 +295,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
               )}
               title={<>How to reference this model <Icon name="info" /></>}>
               <pre>{referenceText}</pre>
-            </Card>
-          </div>
-        </TabPane>
-        <TabPane key="checkpoint-details" tab="Checkpoint Details">
-          <div className={css.base}>
-            <Card title="Source">
-              <InfoBox rows={checkpointInfo} separator />
-            </Card>
-            <Card title="Validation Metrics">
-              <InfoBox rows={validationMetrics} separator />
             </Card>
           </div>
         </TabPane>
