@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('path');
 
+const { when } = require('@craco/craco');
 const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin');
 const AntDesignThemePlugin = require('antd-theme-webpack-plugin');
 const CracoLessPlugin = require('craco-less');
@@ -34,6 +35,29 @@ module.exports = {
     },
   ],
   webpack: {
+    // Skip webpack v4 optimizations when development environment to lower build time.
+    ...when(
+      IS_DEV,
+      () => ({
+        configure: {
+          optimization: {
+            concatenateModules: false,
+            flagIncludedChunks: false,
+            mergeDuplicateChunks: false,
+            minimize: false,
+            namedChunks: false,
+            namedModules: false,
+            occurrenceOrder: false,
+            providedExports: false,
+            removeAvailableModules: false,
+            removeEmptyChunks: false,
+            sideEffects: false,
+            usedExports: false,
+          },
+        },
+      }),
+      {},
+    ),
     plugins: [
       new DefinePlugin({
         'process.env.IS_DEV': JSON.stringify(IS_DEV),
