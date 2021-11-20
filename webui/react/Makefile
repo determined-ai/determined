@@ -42,7 +42,7 @@ build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json config-o
 
 .PHONY: build-storybook
 build-storybook:
-	npm run build-storybook
+	npm run storybook:build
 
 .PHONY: clean
 clean:

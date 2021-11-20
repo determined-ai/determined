@@ -17,7 +17,7 @@
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "storybook": "NODE_PATH=src start-storybook -p 9009 -s public",
-    "build-storybook": "NODE_PATH=src build-storybook -s public -o build-storybook"
+    "storybook:build": "NODE_PATH=src build-storybook -s public -o build-storybook"
   },
   "dependencies": {
     "ansi-to-html": "^0.7.1",
@@ -71,6 +71,7 @@
     "@storybook/addon-docs": "^6.3.12",
     "@storybook/addon-knobs": "^6.3.1",
     "@storybook/addon-links": "^6.3.12",
+    "@storybook/addon-postcss": "^2.0.0",
     "@storybook/addon-viewport": "^6.3.12",
     "@storybook/addons": "^6.3.12",
     "@storybook/preset-create-react-app": "^3.2.0",
@@ -131,6 +132,7 @@
     "sass-loader": "^10.1.1",
     "sinon": "^10.0.0",
     "source-map-explorer": "^2.5.0",
+    "storybook-preset-craco": "0.0.6",
     "stylelint": "^13.13.1",
     "stylelint-config-standard": "^22.0.0",
     "stylelint-order": "^4.1.0",
