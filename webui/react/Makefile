@@ -36,7 +36,7 @@ get-deps: node_modules/done.stamp
 .PHONY: build
 build: build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json config-overrides.js
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js
 	npm run build
 	touch $@
 
