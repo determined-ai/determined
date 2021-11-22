@@ -9,7 +9,7 @@ import Icon from 'components/Icon';
 import IconButton from 'components/IconButton';
 import InlineEditor from 'components/InlineEditor';
 import Message, { MessageType } from 'components/Message';
-import MetadataCard from 'components/MetadataCard';
+import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';

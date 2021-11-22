@@ -1,12 +1,11 @@
-import { Button, Dropdown, Form, Input, Menu } from 'antd';
-import { FormListFieldData } from 'antd/lib/form/FormList';
+import { Button, Form } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import InfoBox, { InfoRow } from 'components/InfoBox';
 import { RecordKey } from 'types';
 
 import css from './EditableMetadata.module.scss';
-import Icon from './Icon';
-import InfoBox, { InfoRow } from './InfoBox';
+import EditableRow from './EditableRow';
 
 export type Metadata = Record<RecordKey, string>;
 interface Props {
@@ -72,44 +71,6 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
         </>) : <InfoBox rows={staticMetadata} />}
     </Form>
   );
-};
-
-interface EditableRowProps {
-  field?: FormListFieldData;
-  initialKey?: string;
-  initialValue?: string;
-  name: string | number;
-  onDelete?: () => void;
-}
-
-const EditableRow: React.FC<EditableRowProps> = (
-  { name, onDelete, field }: EditableRowProps,
-) => {
-  return <Form.Item
-    {...field}
-    name={name}
-    noStyle>
-    <Input.Group className={css.row} compact>
-      <Form.Item name={[ name, 'key' ]} noStyle>
-        <Input placeholder="Enter metadata label" />
-      </Form.Item>
-      <Form.Item name={[ name, 'value' ]} noStyle>
-        <Input placeholder="Enter metadata value" />
-      </Form.Item>
-      {onDelete && <Dropdown
-        className={css.overflow}
-        overlay={(
-          <Menu>
-            <Menu.Item danger key="delete-metadata-row" onClick={onDelete}>Delete Row</Menu.Item>
-          </Menu>
-        )}
-        trigger={[ 'click' ]}>
-        <Button type="text">
-          <Icon name="overflow-vertical" size="tiny" />
-        </Button>
-      </Dropdown>}
-    </Input.Group>
-  </Form.Item>;
 };
 
 export default EditableMetadata;

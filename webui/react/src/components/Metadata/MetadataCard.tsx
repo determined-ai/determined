@@ -3,7 +3,7 @@ import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import EditableMetadata, { Metadata } from './EditableMetadata';
-import Spinner from './Spinner';
+import Spinner from '../Spinner';
 
 interface Props {
   metadata?: Metadata;

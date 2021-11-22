@@ -5,7 +5,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
-import MetadataCard from 'components/MetadataCard';
+import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
