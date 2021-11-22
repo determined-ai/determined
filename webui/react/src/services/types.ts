@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, RawJson } from 'types';
+import { CommandType, DetailedUser, RecordKey } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -141,7 +141,7 @@ export interface PatchModelParams {
     description?: string;
     id: number;
     labels?: string[];
-    metadata?: RawJson;
+    metadata?: Record<RecordKey, string>;
     name?: string;
     notes?: string;
   }
@@ -153,7 +153,7 @@ export interface PatchModelVersionParams {
     comment?: string;
     id: number;
     labels?: string[];
-    metadata?: RawJson;
+    metadata?: Record<RecordKey, string>;
     name?: string;
     notes?: string;
   }

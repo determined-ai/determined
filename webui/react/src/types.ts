@@ -408,7 +408,7 @@ export interface Metrics {
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
-  metadata?: RawJson;
+  metadata?: Record<RecordKey, string>;
   metrics?: Metrics;
 }
 
@@ -488,7 +488,7 @@ export interface ModelItem {
   id: number;
   labels?: string[];
   lastUpdatedTime: string;
-  metadata: RawJson;
+  metadata: Record<RecordKey, string>;
   name: string;
   notes?: string;
   numVersions: number;
@@ -502,7 +502,7 @@ export interface ModelVersion {
   id: number;
   labels?: string[];
   lastUpdatedTime?: string;
-  metadata?: RawJson;
+  metadata?: Record<RecordKey, string>;
   model: ModelItem;
   name?: string;
   notes?: string;
