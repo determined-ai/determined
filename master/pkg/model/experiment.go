@@ -353,11 +353,14 @@ type Trial struct {
 	HParams               JSONObj    `db:"hparams"`
 	WarmStartCheckpointID *int       `db:"warm_start_checkpoint_id"`
 	Seed                  int64      `db:"seed"`
+
+	JobID JobID
 }
 
 // NewTrial creates a new trial in the active state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	jobID JobID,
 	taskID TaskID,
 	requestID RequestID,
 	experimentID int,
@@ -378,6 +381,8 @@ func NewTrial(
 		HParams:               hparams,
 		WarmStartCheckpointID: warmStartCheckpointID,
 		Seed:                  trialSeed,
+
+		JobID: jobID,
 	}
 }
 

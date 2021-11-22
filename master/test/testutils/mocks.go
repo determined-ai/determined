@@ -91,9 +91,10 @@ func WithTrialState(state model.State) TrialModelOption {
 }
 
 // TrialModel returns a new trial with the specified options.
-func TrialModel(eID int, opts ...TrialModelOption) *model.Trial {
+func TrialModel(eID int, jobID model.JobID, opts ...TrialModelOption) *model.Trial {
 	t := &model.Trial{
 		TaskID:       model.TaskID(uuid.New().String()),
+		JobID:        jobID,
 		ExperimentID: eID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),

@@ -89,10 +89,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
+		if err := c.db.AddJob(&model.Job{
+			JobID:   c.jobID(),
+			JobType: c.jobType,
+			OwnerID: &c.Base.Owner.ID,
+		}); err != nil {
+			return errors.Wrapf(err, "persisting job %v", c.taskID)
+		}
 		if err := c.db.AddTask(&model.Task{
 			TaskID:    c.taskID,
 			TaskType:  c.taskType,
 			StartTime: c.registeredTime,
+			JobID:     c.jobID(),
 		}); err != nil {
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}

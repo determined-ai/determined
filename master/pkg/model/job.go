@@ -36,4 +36,5 @@ const (
 type Job struct {
 	JobID   JobID   `db:"job_id"`
 	JobType JobType `db:"job_type"`
+	OwnerID *UserID `db:"owner_id"`
 }
