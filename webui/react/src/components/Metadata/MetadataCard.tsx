@@ -2,6 +2,7 @@ import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import handleError, { ErrorType } from 'ErrorHandler';
 import { Metadata } from 'types';
 
 import Spinner from '../Spinner';
@@ -29,9 +30,17 @@ const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave }: Props) => {
   }, []);
 
   const saveMetadata = useCallback(async () => {
-    setIsEditing(false);
-    setIsLoading(true);
-    await onSave?.(editedMetadata);
+    try {
+      setIsLoading(true);
+      await onSave?.(editedMetadata);
+      setIsEditing(false);
+    } catch (e) {
+      handleError({
+        message: 'Unable to update metadata.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
     setIsLoading(false);
   }, [ editedMetadata, onSave ]);
 

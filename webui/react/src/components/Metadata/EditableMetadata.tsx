@@ -27,13 +27,10 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
     _changedValues,
     values: {metadata: Metadata[]},
   ) => {
-    const newMetadata = (Object.fromEntries(Object.values(values.metadata).map(pair => {
-      if (pair == null) return [ '', '' ];
-      if (pair.key == null) pair.key = '';
-      if (pair.value == null) pair.value = '';
-      return [ pair.key, pair.value ];
-    })));
-    delete newMetadata[''];
+    const newMetadata = values.metadata.reduce((acc, row) => {
+      if (row?.key) acc[row.key] = row.value;
+      return acc;
+    }, {} as Metadata);
 
     updateMetadata?.(newMetadata);
   }, [ updateMetadata ]);
