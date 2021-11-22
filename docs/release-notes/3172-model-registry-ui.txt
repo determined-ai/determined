@@ -2,5 +2,5 @@
 
 **New Features**
 
-- WebUI: Add the Model Registry as a new top-level navigation option, allowing for viewing, editing, 
-  and deleting existing models created using the CLI.
+- WebUI: Add the Model Registry as a new top-level navigation option, allowing 
+  for viewing, editing, and deleting existing models created using the CLI.
