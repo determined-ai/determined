@@ -12195,8 +12195,8 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @summary Get a list of jobs in queue.
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
-         * @param {string} [resourcePool] The target resource-pool.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12314,8 +12314,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @summary Get a list of jobs in queue.
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
-         * @param {string} [resourcePool] The target resource-pool.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12374,8 +12374,8 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @summary Get a list of jobs in queue.
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
-         * @param {string} [resourcePool] The target resource-pool.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12419,8 +12419,8 @@ export class JobsApi extends BaseAPI {
      * @summary Get a list of jobs in queue.
      * @param {number} [paginationOffset] The number of records to skip before returning results.
      * @param {number} [paginationLimit] The amount of records limited in the results.
-     * @param {string} [resourcePool] The target resource-pool.
-     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi

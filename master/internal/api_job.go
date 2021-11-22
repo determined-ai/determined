@@ -35,7 +35,7 @@ func (a *apiServer) GetJobs(
 
 	// order by jobsAhead first and JobId second.
 	sort.SliceStable(jobs, func(i, j int) bool {
-		if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
+		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 			i, j = j, i
 		}
 		if jobs[i].Summary == nil || jobs[j].Summary == nil {

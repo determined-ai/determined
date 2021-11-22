@@ -10,14 +10,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Get a list of jobs sorted by number of jobs ahead & job ID.
 message GetJobsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "resource_pool" ] }
+    json_schema: { required: [] }
   };
   // Request to paginate the resposne.
   PaginationRequest pagination = 1;
-  // The target resource-pool.
+  // The target resource-pool for agent resource manager.
   string resource_pool = 2;
-  // Order results in either ascending or descending order.
-  OrderBy order_by = 4;
+  // Order results in either ascending or descending order by the number of
+  // jobs ahead.
+  OrderBy order_by = 3;
 }
 
 // Response to GetJobsRequest.
