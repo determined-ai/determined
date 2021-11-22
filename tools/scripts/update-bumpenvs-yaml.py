@@ -38,10 +38,12 @@ JOB_SUFFIXES = [
     "tf2-cpu",
     "tf25-cpu",
     "tf26-cpu",
+    "tf27-cpu",
     "tf1-gpu",
     "tf2-gpu",
     "tf25-gpu",
     "tf26-gpu",
+    "tf27-gpu",
 ]
 
 EXPECT_JOBS = {
