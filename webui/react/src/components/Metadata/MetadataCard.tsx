@@ -2,9 +2,11 @@ import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { Metadata } from 'types';
+
 import Spinner from '../Spinner';
 
-import EditableMetadata, { Metadata } from './EditableMetadata';
+import EditableMetadata from './EditableMetadata';
 
 interface Props {
   metadata?: Metadata;

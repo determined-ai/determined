@@ -405,10 +405,12 @@ export interface Metrics {
   validationMetrics?: Record<string, number>;
 }
 
+export type Metadata = Record<RecordKey, string>;
+
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
-  metadata?: Record<RecordKey, string>;
+  metadata?: Metadata;
   metrics?: Metrics;
 }
 
@@ -488,7 +490,7 @@ export interface ModelItem {
   id: number;
   labels?: string[];
   lastUpdatedTime: string;
-  metadata: Record<RecordKey, string>;
+  metadata: Metadata;
   name: string;
   notes?: string;
   numVersions: number;
@@ -502,7 +504,7 @@ export interface ModelVersion {
   id: number;
   labels?: string[];
   lastUpdatedTime?: string;
-  metadata?: Record<RecordKey, string>;
+  metadata?: Metadata;
   model: ModelItem;
   name?: string;
   notes?: string;

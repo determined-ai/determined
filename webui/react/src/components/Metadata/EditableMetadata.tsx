@@ -2,12 +2,10 @@ import { Button, Form } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import { RecordKey } from 'types';
+import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
 import EditableRow from './EditableRow';
-
-export type Metadata = Record<RecordKey, string>;
 interface Props {
   editing?: boolean;
   metadata?: Metadata;
