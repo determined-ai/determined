@@ -6,6 +6,10 @@
     border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
     padding: var(--theme-sizes-layout-small) 0;
   }
+  .search :global(.ant-input-affix-wrapper) {
+    border-width: 0;
+    box-shadow: none;
+  }
   .search :global(.ant-input-prefix) {
     color: var(--theme-colors-monochrome-8);
   }
@@ -19,7 +23,7 @@
     background-color: var(--theme-colors-monochrome-15);
   }
   .option > * {
-    padding: 0 var(--theme-sizes-layout-medium);
+    margin: 0 var(--theme-sizes-layout-medium);
     pointer-events: none;
   }
   .option > span {
