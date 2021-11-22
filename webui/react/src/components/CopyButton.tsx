@@ -4,24 +4,26 @@ import React, { useCallback, useState } from 'react';
 
 type TextOptions = 'Copy to Clipboard' | 'Copied!'
 
+const DEFAULT_TOOLTIP_TEXT: TextOptions = 'Copy to Clipboard';
+
 interface Props {
-  handleCopy: () => Promise<void>;
+  onCopy: () => Promise<void>;
 }
 
-const CopyButton: React.FC<Props> = ({ handleCopy }: Props) => {
-  const [ text, setText ] = useState<TextOptions>('Copy to Clipboard');
+const CopyButton: React.FC<Props> = ({ onCopy }: Props) => {
+  const [ text, setText ] = useState<TextOptions>(DEFAULT_TOOLTIP_TEXT);
 
-  const handleClick = useCallback(async () => {
-    await handleCopy();
+  const handleCopy = useCallback(async () => {
+    await onCopy();
     setText('Copied!');
     setTimeout(() => {
-      setText('Copy to Clipboard');
+      setText(DEFAULT_TOOLTIP_TEXT);
     }, 2000);
-  }, [ handleCopy ]);
+  }, [ onCopy ]);
 
   return (
     <Tooltip title={text}>
-      <CopyOutlined onClick={handleClick} />
+      <CopyOutlined onClick={handleCopy} />
     </Tooltip>
   );
 };

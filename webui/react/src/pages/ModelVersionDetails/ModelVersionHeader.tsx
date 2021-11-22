@@ -161,7 +161,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
               onCancel={() => setShowUseInNotebook(false)}>
               <div className={css.topLine}>
                 <p>Reference this model in a notebook</p>
-                <CopyButton handleCopy={handleCopy} />
+                <CopyButton onCopy={handleCopy} />
               </div>
               <pre className={css.codeSample}><code>{referenceText}</code></pre>
               <p>Copy/paste code into a notebook cell</p>

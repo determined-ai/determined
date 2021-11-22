@@ -34,7 +34,7 @@ const DownloadModelPopover: React.FC<Props> = (
       <div className={css.base}>
         <div className={css.topLine}>
           <p>Download model using the Determined CLI</p>
-          <CopyButton handleCopy={handleCopy} />
+          <CopyButton onCopy={handleCopy} />
         </div>
         <Input
           className={css.codeSample}
