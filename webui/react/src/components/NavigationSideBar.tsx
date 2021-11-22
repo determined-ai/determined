@@ -55,6 +55,7 @@ const menuConfig = {
     { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
     { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
     { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
+    { icon: 'model', label: 'Model Registry', path: paths.modelList() },
     { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
     { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
   ],

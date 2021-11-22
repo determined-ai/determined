@@ -53,6 +53,25 @@ const routes: RouteConfig[] = [
     title: 'Experiments',
   },
   {
+    id: 'modelVersionDetails',
+    needAuth: true,
+    path: '/models/:modelId/versions/:versionId',
+    title: 'Version Details',
+  },
+  {
+    id: 'modelDetails',
+    needAuth: true,
+    path: '/models/:modelId',
+    title: 'Model Details',
+  },
+  {
+    icon: 'model',
+    id: 'models',
+    needAuth: true,
+    path: '/models',
+    title: 'Model Registry',
+  },
+  {
     icon: 'cluster',
     id: 'cluster',
     needAuth: true,

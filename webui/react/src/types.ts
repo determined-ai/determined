@@ -400,9 +400,18 @@ export interface Step extends WorkloadWrapper, StartEndTimes {
   training: MetricsWorkload;
 }
 
+export interface Metrics {
+  numInputs?: number;
+  validationMetrics?: Record<string, number>;
+}
+
+export type Metadata = Record<RecordKey, string>;
+
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
+  metadata?: Metadata;
+  metrics?: Metrics;
 }
 
 export interface TrialPagination extends WithPagination {
@@ -472,6 +481,44 @@ export enum ExperimentVisualizationType {
   HpHeatMap = 'hp-heat-map',
   HpScatterPlots = 'hp-scatter-plots',
   LearningCurve = 'learning-curve',
+}
+
+export interface ModelItem {
+  archived?: boolean;
+  creationTime: string;
+  description?: string;
+  id: number;
+  labels?: string[];
+  lastUpdatedTime: string;
+  metadata: Metadata;
+  name: string;
+  notes?: string;
+  numVersions: number;
+  username: string;
+}
+
+export interface ModelVersion {
+  checkpoint: CheckpointDetail;
+  comment?: string;
+  creationTime: string;
+  id: number;
+  labels?: string[];
+  lastUpdatedTime?: string;
+  metadata?: Metadata;
+  model: ModelItem;
+  name?: string;
+  notes?: string;
+  username: string;
+  version: number;
+}
+
+export interface ModelPagination extends WithPagination {
+  models: ModelItem[];
+}
+
+export interface ModelVersions extends WithPagination {
+  model: ModelItem;
+  modelVersions: ModelVersion[]
 }
 
 export interface Task {

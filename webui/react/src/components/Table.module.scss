@@ -2,3 +2,11 @@
   align-items: center;
   display: flex;
 }
+.versionBox {
+  background-color: var(--theme-colors-monochrome-14);
+  border-radius: 15%;
+  color: var(--theme-colors-monochrome-0);
+  height: min-content;
+  padding: var(--theme-sizes-layout-small);
+  width: min-content
+}

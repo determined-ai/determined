@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Space, Tooltip } from 'antd';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
@@ -11,7 +11,8 @@ import { paths } from 'routes/utils';
 import {
   CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
-  Pagination, RunState, StartEndTimes, TrialItem,
+  ModelItem,
+  ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { ConditionalWrapper } from 'utils/react';
 import { canBeOpened } from 'utils/task';
@@ -72,7 +73,7 @@ export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => {
   return (
-    <Tooltip title={date.toLocaleString()}>
+    <Tooltip title={date?.toLocaleString()}>
       <TimeAgo datetime={date} />
     </Tooltip>
   );
@@ -152,6 +153,33 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   return record.progress ? <ProgressBar
     percent={record.progress * 100}
     state={record.state} /> : null;
+};
+
+/* Model Table Column Renderers */
+
+export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
+  return (
+    <Space><Icon name="model" size="medium" />
+      <Link path={paths.modelDetails(record.id)}>{value}</Link>
+    </Space>
+  );
+};
+
+export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => {
+  return <Link path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
+    {value ? value : 'Version ' + record.version}
+  </Link>;
+};
+
+export const modelVersionNumberRenderer =
+(value: string, record: ModelVersion): React.ReactNode => {
+  return (
+    <Link
+      className={css.versionBox}
+      path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
+    V{record.version}
+    </Link>
+  );
 };
 
 /* Table Helper Functions */

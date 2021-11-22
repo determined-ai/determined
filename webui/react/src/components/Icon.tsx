@@ -4,7 +4,7 @@ import { CommonProps } from 'types';
 
 import css from './Icon.module.scss';
 
-export type IconSize = 'tiny' | 'small' | 'medium' | 'large';
+export type IconSize = 'tiny' | 'small' | 'medium' | 'large' | 'big';
 
 interface Props extends CommonProps {
   name?: string;

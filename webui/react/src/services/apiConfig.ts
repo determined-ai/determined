@@ -21,6 +21,7 @@ export const detApi = {
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
+  Models: new Api.ModelsApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
@@ -49,6 +50,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.Internal = new Api.InternalApi(config);
+  detApi.Models = new Api.ModelsApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingCluster = Api.ClusterApiFetchParamCreator(config);
@@ -378,6 +380,148 @@ export const getTrialDetails: Service.DetApi<
     return decoder.decodeTrialResponseToTrialDetails(response);
   },
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
+};
+
+/* Models */
+
+export const getModels: Service.DetApi<
+  Service.GetModelsParams, Api.V1GetModelsResponse, Type.ModelPagination
+> = {
+  name: 'getModels',
+  postProcess: (response) => {
+    return {
+      models: (response.models).map(model => decoder.mapV1Model(model)),
+      pagination: response.pagination,
+    };
+  },
+  request: (params: Service.GetModelsParams) => detApi.Models.getModels(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.name,
+    params.description,
+    params.labels,
+    params.archived,
+    params.users,
+  ),
+};
+
+export const getModel: Service.DetApi<
+  Service.GetModelParams, Api.V1GetModelResponse, Type.ModelItem | undefined
+> = {
+  name: 'getModel',
+  postProcess: (response) => {
+    return response.model ? decoder.mapV1Model(response.model) : undefined;
+  },
+  request: (params: Service.GetModelParams) => detApi.Models.getModel(
+    params.modelId,
+  ),
+};
+
+export const getModelDetails: Service.DetApi<
+  Service.GetModelDetailsParams, Api.V1GetModelVersionsResponse, Type.ModelVersions | undefined
+> = {
+  name: 'getModelDetails',
+  postProcess: (response) => {
+    return (response.model != null && response.modelVersions != null) ?
+      decoder.mapV1ModelDetails(response) : undefined;
+  },
+  request: (params: Service.GetModelDetailsParams) => detApi.Models.getModelVersions(
+    params.modelId,
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
+};
+
+export const getModelVersion: Service.DetApi<
+  Service.GetModelVersionParams, Api.V1GetModelVersionResponse, Type.ModelVersion | undefined
+> = {
+  name: 'getModelVersion',
+  postProcess: (response) => {
+    return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
+  },
+  request: (params: Service.GetModelVersionParams) => detApi.Models.getModelVersion(
+    params.modelId,
+    params.versionId,
+  ),
+};
+
+export const patchModel: Service.DetApi<
+  Service.PatchModelParams, Api.V1PatchModelResponse, Type.ModelItem | undefined>
+ = {
+   name: 'patchModel',
+   postProcess: (response) => response.model ? decoder.mapV1Model(response.model) : undefined,
+   request: (params: Service.PatchModelParams) =>
+     detApi.Models.patchModel(
+       params.modelId,
+       { model: params.body },
+     ),
+ };
+
+export const patchModelVersion: Service.DetApi<
+  Service.PatchModelVersionParams, Api.V1PatchModelVersionResponse, Type.ModelVersion | undefined>
+ = {
+   name: 'patchModel',
+   postProcess: (response) => response.modelVersion ?
+     decoder.mapV1ModelVersion(response.modelVersion) : undefined,
+   request: (params: Service.PatchModelVersionParams) =>
+     detApi.Models.patchModelVersion(
+       params.modelId,
+       params.versionId,
+       { modelVersion: params.body },
+     ),
+ };
+
+export const archiveModel: Service.DetApi<
+  Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void
+> = {
+  name: 'archiveModel',
+  postProcess: noOp,
+  request: (params: Service.GetModelParams) => detApi.Models.archiveModel(
+    params.modelId,
+  ),
+};
+
+export const unarchiveModel: Service.DetApi<
+  Service.ArchiveModelParams, Api.V1UnarchiveModelResponse, void
+> = {
+  name: 'unarchiveModel',
+  postProcess: noOp,
+  request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(
+    params.modelId,
+  ),
+};
+
+export const deleteModel: Service.DetApi<
+  Service.DeleteModelParams, Api.V1DeleteModelResponse, void
+> = {
+  name: 'deleteModel',
+  postProcess: noOp,
+  request: (params: Service.GetModelParams) => detApi.Models.deleteModel(
+    params.modelId,
+  ),
+};
+
+export const deleteModelVersion: Service.DetApi<
+  Service.DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
+> = {
+  name: 'deleteModelVersion',
+  postProcess: noOp,
+  request: (params: Service.GetModelVersionParams) => detApi.Models.deleteModelVersion(
+    params.modelId,
+    params.versionId,
+  ),
+};
+
+export const getModelLabels: Service.DetApi<
+  Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
+> = {
+  name: 'getModelLabels',
+  postProcess: (response) => response.labels || [],
+  request: (options) => detApi.Models.getModelLabels(options),
 };
 
 /* Tasks */

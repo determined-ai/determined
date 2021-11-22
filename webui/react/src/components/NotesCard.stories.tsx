@@ -136,6 +136,6 @@ Duplicated footnote reference[^second].
 
 export const Default = (): React.ReactNode => (
   <div style={{ height: '80vh', width: '600px' }}>
-    <NotesCard notes={markdown} onSave={() => null} />
+    <NotesCard notes={markdown} />
   </div>
 );

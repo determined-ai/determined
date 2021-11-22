@@ -159,6 +159,55 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
   return { config: template.config, name: template.name };
 };
 
+export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
+  return {
+    archived: model.archived,
+    creationTime: model.creationTime as unknown as string,
+    description: model.description,
+    id: model.id,
+    labels: model.labels,
+    lastUpdatedTime: model.lastUpdatedTime as unknown as string,
+    metadata: model.metadata,
+    name: model.name,
+    notes: model.notes,
+    numVersions: model.numVersions,
+    username: model.username,
+  };
+};
+
+export const mapV1ModelVersion = (
+  modelVersion: Sdk.V1ModelVersion,
+): types.ModelVersion => {
+  return {
+    checkpoint: decodeCheckpoint(modelVersion.checkpoint),
+    comment: modelVersion.comment,
+    creationTime: modelVersion.creationTime as unknown as string,
+    id: modelVersion.id,
+    labels: modelVersion.labels,
+    lastUpdatedTime: modelVersion.lastUpdatedTime as unknown as string,
+    metadata: modelVersion.metadata,
+    model: mapV1Model(modelVersion.model),
+    name: modelVersion.name,
+    notes: modelVersion.notes,
+    username: modelVersion.username,
+    version: modelVersion.version,
+  };
+};
+
+export const mapV1ModelDetails = (
+  modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
+): types.ModelVersions | undefined => {
+  if (!modelDetailsResponse.model ||
+    !modelDetailsResponse.modelVersions ||
+    !modelDetailsResponse.pagination) return;
+  return {
+    model: mapV1Model(modelDetailsResponse.model),
+    modelVersions: modelDetailsResponse.modelVersions.map(version =>
+      mapV1ModelVersion(version) as types.ModelVersion),
+    pagination: modelDetailsResponse.pagination,
+  };
+};
+
 const ioToHyperparametereter = (
   io: ioTypes.ioTypeHyperparameter,
 ): types.Hyperparameter => {
@@ -374,6 +423,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
     batch: data.batchNumber,
     endTime: data.endTime && data.endTime as unknown as string,
     experimentId: data.experimentId,
+    metrics: data.metrics,
     resources,
     state: decodeCheckpointState(data.state),
     trialId: data.trialId,
