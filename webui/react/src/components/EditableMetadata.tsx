@@ -61,7 +61,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                   <EditableRow
                     key={field.key}
                     name={field.name}
-                    onDelete={() => remove(field.name)} />
+                    onDelete={fields.length > 1 ? () => remove(field.name) : undefined} />
                 ))}
                 <Button
                   className={css.addRow}

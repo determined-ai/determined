@@ -54,12 +54,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
           <EditOutlined onClick={editNotes} />
         </Tooltip>
       )}
-      headStyle={{
-        flexGrow: 0,
-        flexShrink: 0,
-        paddingLeft: 'var(--theme-sizes-layout-big)',
-        paddingRight: 'var(--theme-sizes-layout-big)',
-      }}
+      headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
       title="Notes">
       <Spinner spinning={isLoading}>
