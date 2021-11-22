@@ -15,20 +15,14 @@ interface Props {
 }
 
 const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetadata }: Props) => {
-  const staticMetadata: InfoRow[] = useMemo(() => {
-    return Object.entries(metadata).map(([ key, value ]) => {
-      return ({ content: value, label: key });
-    });
-  }, [ metadata ]);
-
-  const metadataArray = useMemo(() => {
-    const array = Object.entries(metadata).map(([ key, value ]) => {
-      return { key, value };
-    });
-    if (array.length === 0) {
-      array.push({ key: '', value: '' });
-    }
-    return array;
+  const [ metadataRows, metadataList ] = useMemo(() => {
+    const { rows, list } = Object.entries(metadata).reduce((acc, [ key, value ]) => {
+      acc.rows.push({ content: value, label: key });
+      acc.list.push({ key, value });
+      return acc;
+    }, { list: [] as {key: string, value: string}[], rows: [] as InfoRow[] });
+    if (list.length === 0) list.push({ key: '', value: '' });
+    return [ rows, list ];
   }, [ metadata ]);
 
   const onValuesChange = useCallback((
@@ -47,7 +41,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   }, [ updateMetadata ]);
 
   return (
-    <Form initialValues={{ metadata: metadataArray }} onValuesChange={onValuesChange}>
+    <Form initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
       {editing ? (
         <>
           <div className={css.titleRow}>
@@ -68,7 +62,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                   onClick={add}>+ Add Row</Button>
               </>)}
           </Form.List>
-        </>) : <InfoBox rows={staticMetadata} />}
+        </>) : <InfoBox rows={metadataRows} />}
     </Form>
   );
 };
