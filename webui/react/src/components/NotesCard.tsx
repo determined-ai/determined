@@ -3,6 +3,8 @@ import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { Prompt, useLocation } from 'react-router-dom';
 
+import handleError, { ErrorType } from 'ErrorHandler';
+
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
 import Spinner from './Spinner';
@@ -29,9 +31,17 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
   }, [ notes ]);
 
   const saveNotes = useCallback(async () => {
-    setIsEditing(false);
-    setIsLoading(true);
-    await onSave?.(editedNotes);
+    try {
+      setIsLoading(true);
+      await onSave?.(editedNotes);
+      setIsEditing(false);
+    } catch (e) {
+      handleError({
+        message: 'Unable to update notes.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
     setIsLoading(false);
   }, [ editedNotes, onSave ]);
 
