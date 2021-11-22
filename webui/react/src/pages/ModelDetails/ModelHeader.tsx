@@ -2,6 +2,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -36,7 +37,7 @@ const ModelHeader: React.FC<Props> = (
     return [ {
       content:
       (<Space>
-        {userRenderer(model.username, model, 0)}
+        <Avatar name={model.username} />
         {model.username + ' on ' +
       formatDatetime(model.creationTime, 'MMM D, YYYY', false)}
       </Space>),

@@ -2,6 +2,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Avatar from 'components/Avatar';
 import CopyButton from 'components/CopyButton';
 import DownloadModelModal from 'components/DownloadModelModal';
 import Icon from 'components/Icon';
@@ -41,10 +42,10 @@ const ModelVersionHeader: React.FC<Props> = (
       content:
       (<Space>
         {modelVersion.username ?
-          userRenderer(modelVersion.username, modelVersion, 0) :
-          userRenderer(modelVersion.model.username, modelVersion.model, 0)}
-        {modelVersion.username ? modelVersion.username : modelVersion.model.username + ' on ' +
-      formatDatetime(modelVersion.creationTime, 'MMM D, YYYY', false)}
+          <Avatar name={modelVersion.username} /> :
+          <Avatar name={modelVersion.model.username} />}
+        {modelVersion.username ? modelVersion.username : modelVersion.model.username}
+        on {formatDatetime(modelVersion.creationTime, 'MMM D, YYYY', false)}
       </Space>),
       label: 'Created by',
     },
