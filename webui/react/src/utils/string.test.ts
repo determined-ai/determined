@@ -151,3 +151,23 @@ describe('String Utilities', () => {
     });
   });
 });
+
+describe('truncate', () => {
+  const testStr = 'adoptacat';
+  it('should avoid changing short strings', () => {
+    const s = 'abc';
+    expect(string.truncate(s, s.length + 1)).toBe(s);
+  });
+
+  it('should add a suffix when truncating', () => {
+    const suffix = '...';
+    const size = 4;
+    expect(string.truncate(testStr, size, suffix))
+      .toBe(testStr.substring(0, size - suffix.length) + suffix);
+  });
+
+  it('should support skipping the suffix', () => {
+    const size = 4;
+    expect(string.truncate(testStr, size, '')).toBe(testStr.substring(0, size));
+  });
+});

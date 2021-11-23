@@ -236,6 +236,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {durationInEnglish(getDuration(experiment))}
               </div>
             )}
+            {experiment.jobSummary && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Job Info:</span>
+                <span>{experiment.jobSummary?.jobsAhead || 'No'} jobs ahead of this one.</span>
+              </div>
+            )}
             <TagList
               ghost={true}
               tags={experiment.config.labels || []}
