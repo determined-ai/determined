@@ -15,7 +15,7 @@ const { Option } = Select;
 
 interface Props {
   job: Job;
-  onFinish: () => void;
+  onFinish?: () => void;
   schedulerType: V1SchedulerType;
   selectedRPStats: RPStats;
 }
@@ -50,7 +50,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
           type: ErrorType.Api,
         });
       }
-      onFinish();
+      onFinish?.();
     },
     [ formRef, onFinish, job.jobId, job.resourcePool ],
   );
