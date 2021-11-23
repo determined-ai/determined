@@ -425,20 +425,12 @@ const ModelRegistry: React.FC = () => {
     <Page docTitle="Model Registry" id="models">
       <Section title="Model Registry">
         {models.length === 0 && !isLoading ?
-          <div style={{
-            marginInline: 'auto',
-            marginTop: 150,
-            maxWidth: 350,
-            textAlign: 'center',
-          }}>
-            <div style={{ padding: 16 }}>
+          <div className={css.emptyBase}>
+            <div className={css.icon}>
               <Icon name="model" size="mega" />
             </div>
-            <h4 style={{ marginBottom: 8 }}>No Models Registered</h4>
-            <p style={{
-              color: 'var(--theme-colors-monochrome-9)',
-              fontSize: 'var(--theme-sizes-font-medium)',
-            }}>
+            <h4>No Models Registered</h4>
+            <p className={css.description}>
               Track important checkpoints and versions from your experiments.{' '}
               <Link external path={paths.docs('/post-training/model-registry.html')}>
                 Learn more
