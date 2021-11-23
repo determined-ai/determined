@@ -4,6 +4,7 @@ import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
@@ -14,7 +15,6 @@ import {
   ModelItem,
   ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
-import { ConditionalWrapper } from 'utils/react';
 import { canBeOpened } from 'utils/task';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel } from 'utils/types';
