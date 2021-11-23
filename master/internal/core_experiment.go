@@ -493,6 +493,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	dbExp.OwnerID = &user.ID
+	dbExp.Username = user.Username
 	e, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")

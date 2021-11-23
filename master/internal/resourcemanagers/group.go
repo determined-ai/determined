@@ -1,6 +1,8 @@
 package resourcemanagers
 
-import "github.com/determined-ai/determined/master/pkg/actor"
+import (
+	"github.com/determined-ai/determined/master/pkg/actor"
+)
 
 // groupActorStopped notifies that the group actor is stopped.
 type groupActorStopped struct {
