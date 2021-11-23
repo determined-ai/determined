@@ -1,11 +1,16 @@
 import abc
 import logging
+import os
 from typing import Any, Optional, Type
-
+from distutils.util import strtobool
+from enum import Enum
 import determined as det
 from determined import horovod, profiler, workload
 from determined.common import check
 from determined.horovod import hvd
+
+class DistributedBackend(Enum):
+    HOROVOD = bool(strtobool(os.environ.get("USE_HOROVOD", "False")))
 
 
 class TrialController(metaclass=abc.ABCMeta):
@@ -31,6 +36,7 @@ class TrialController(metaclass=abc.ABCMeta):
             context.distributed.rank,
         )
 
+        self.use_horovod = DistributedBackend.HOROVOD.value
         self._check_if_trial_supports_configurations(env)
 
         self.batch_size = self.context.get_per_slot_batch_size()
@@ -38,7 +44,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
         self.is_chief = context.distributed.rank == 0
 
-        if self.context.distributed_backend and not self.is_chief:
+        if context.distributed.size > 1 and not self.is_chief:
             log_level = (
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )

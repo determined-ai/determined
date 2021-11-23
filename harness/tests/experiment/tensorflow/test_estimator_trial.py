@@ -345,3 +345,4 @@ class TestLinearTrial:
 
 def test_create_trial_instance() -> None:
     utils.create_trial_instance(estimator_xor_model.XORTrial)
+

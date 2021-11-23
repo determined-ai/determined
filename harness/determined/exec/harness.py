@@ -2,6 +2,7 @@ import argparse
 import contextlib
 import faulthandler
 import logging
+
 import sys
 from typing import Iterator, Optional
 
@@ -111,7 +112,7 @@ def main(chief_ip: Optional[str]) -> int:
 
         # Step 4: Let generic.init() create the generic.Context.
         with _generic.init(distributed=distributed) as generic_context:
-            trial_context = trial_class.trial_context_class(generic_context, env, distributed_backend)
+            trial_context = trial_class.trial_context_class(generic_context, env)
 
             # Step 5: Instantiate the user's Trial.
             trial_inst = trial_class(trial_context)
@@ -122,7 +123,6 @@ def main(chief_ip: Optional[str]) -> int:
                 trial_inst=trial_inst,
                 context=trial_context,
                 env=env,
-                distributed_backend=distributed_backend,
             )
 
             controller.run()

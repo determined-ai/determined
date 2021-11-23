@@ -196,7 +196,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
 
-            if self.context.distributed_backend == "horovod":
+            if self.context.distributed.size > 1 and self.use_horovod:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
@@ -268,7 +268,7 @@ class PyTorchTrialController(det.TrialController):
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Average training metrics across GPUs"""
-        check.true(self.context.distributed_backend == "horovod", "Can only average training metrics in multi-GPU training.")
+        check.true(self.context.distributed.size > 1, "Can only average training metrics in multi-GPU training.")
         metrics_timeseries = util._list_to_dict(per_batch_metrics)
 
         # combined_timeseries is: dict[metric_name] -> 2d-array.
@@ -340,7 +340,7 @@ class PyTorchTrialController(det.TrialController):
     def _should_update_scaler(self) -> bool:
         if not self.context._scaler or not self.context.experimental._auto_amp:
             return False
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1:
             return self.context._should_communicate_and_update()  # type: ignore
         return True
 
@@ -431,7 +431,7 @@ class PyTorchTrialController(det.TrialController):
             per_batch_metrics.append(tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
-        if self.context.distributed_backend == "horovod" and self.context.average_training_metrics:
+        if self.context.distributed.size > 1 and self.use_horovod and self.context.average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
                 per_batch_metrics = self._average_training_metrics(per_batch_metrics)
         num_inputs *= self.context.distributed.get_size()
@@ -550,7 +550,7 @@ class PyTorchTrialController(det.TrialController):
             self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
-        if self.context.distributed_backend == "horovod" and any(
+        if self.context.distributed.size > 1 and self.use_horovod and any(
             map(
                 lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
                 or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
@@ -614,7 +614,7 @@ class PyTorchTrialController(det.TrialController):
             for name in keys or []
         }
 
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1 and self.use_horovod:
             # If using horovod combine metrics across all processes.
             # Only the chief process will receive all the metrics.
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
@@ -644,7 +644,7 @@ class PyTorchTrialController(det.TrialController):
         self, metrics: Dict[str, Any], num_batches: int
     ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
         # The chief receives the metric from every other training process.
-        check.true(self.context.distributed_backend == "horovod")
+        check.true(self.context.distributed.size > 1)
 
         # all_args is a list of [(metrics, num_batches), ...] for each worker.
         all_args = self.context.distributed._zmq_gather((metrics, num_batches))

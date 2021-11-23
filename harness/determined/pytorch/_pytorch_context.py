@@ -145,7 +145,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             check.false(self._use_apex, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
-            if not self.distributed_backend == "horovod" and self.n_gpus > 1:
+            if not self.distributed.size > 1 and self.n_gpus > 1:
                 check.eq(
                     self.aggregation_frequency,
                     1,
@@ -203,7 +203,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "backward_passes_per_step for local gradient aggregation must be >= 1",
             )
 
-            if self.distributed_backend == "horovod":
+            if self.distributed.size > 1:
                 use_compression = self.fp16_compression
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
@@ -297,7 +297,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
-        if self.distributed_backend == "horovod":
+        if self.distributed.size > 1:
             if self.n_gpus > 0:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
@@ -432,7 +432,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         check.is_none(self._scaler, "Do not mix APEX with PyTorch AMP")
 
         check.false(self._use_apex, "Please only call configure_apex_amp once.")
-        if self.distributed_backend == "horovod":
+        if self.distributed.size > 1:
             check.eq(
                 num_losses,
                 1,
@@ -442,7 +442,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         self._use_apex = True
 
-        if self.distributed_backend == "horovod":
+        if self.distributed.size > 1:
             check.eq(
                 self.aggregation_frequency,
                 1,
@@ -548,7 +548,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
 
-                if self.distributed_backend == "horovod" and self._should_communicate_and_update():
+                if self.distributed.size > 1 and self._should_communicate_and_update():
                     # When we exit out of this context manager, we need to finish
                     # communicating gradient updates before they are unscaled.
                     #
@@ -635,7 +635,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # before we apply gradient clipping and `step()`. In the case of APEX
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
-        if self.distributed_backend == "horovod" and not self._use_apex:
+        if self.distributed.size > 1 and not self._use_apex:
             with self._record_timing("train_batch.sync_optimizers", accumulate=True):
                 optimizer.synchronize()  # type: ignore
 
@@ -667,7 +667,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         else:
             step_fn = optimizer.step  # type: ignore
 
-        if self.distributed_backend == "horovod":
+        if self.distributed.size > 1:
             with optimizer.skip_synchronize():  # type: ignore
                 step_fn()
         else:

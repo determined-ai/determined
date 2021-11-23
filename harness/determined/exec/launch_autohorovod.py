@@ -7,6 +7,7 @@ subprocess otherwise.
 
 import copy
 import json
+import os
 import logging
 import socket
 import subprocess
@@ -208,6 +209,8 @@ def main() -> int:
     ]
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
+
+    os.environ["USE_HOROVOD"] = "True"
 
     return subprocess.Popen(
         pid_server_cmd + hvd_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd

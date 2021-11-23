@@ -9,10 +9,11 @@ from determined import horovod, util
 
 def _check_if_aggregation_frequency_will_work(
     model: tf.keras.Model,
-    distributed_backend: Optional[str],
-    aggregation_frequency: Optional[int]
+    aggregation_frequency: Optional[int],
+    use_horovod: bool = False,
+
 ) -> None:
-    if not distributed_backend == "horovod" or aggregation_frequency == 1:
+    if not use_horovod or aggregation_frequency == 1:
         return
 
     if model._is_graph_network or isinstance(model, sequential.Sequential):

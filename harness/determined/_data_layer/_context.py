@@ -1,3 +1,4 @@
+from determined._generic import DistributedContext
 from typing import Callable, Optional
 
 import determined as det
@@ -5,18 +6,18 @@ from determined import _data_layer, horovod
 
 
 class DataLayerContext:
-    def __init__(self, env: det.EnvContext, distributed_backend: Optional[str]) -> None:
+    def __init__(self, env: det.EnvContext, distributed_context: DistributedContext) -> None:
         self._training_cacheable = _data_layer._CacheableDecorator(
             env=env,
             training=True,
             per_slot_batch_size=env.per_slot_batch_size,
-            distributed_backend=distributed_backend,
+            distributed_context=distributed_context,
         )
         self._validation_cacheable = _data_layer._CacheableDecorator(
             env=env,
             training=False,
             per_slot_batch_size=env.per_slot_batch_size,
-            distributed_backend=distributed_backend
+            distributed_context=distributed_context
         )
 
     def cache_train_dataset(

@@ -2,6 +2,8 @@ import enum
 import functools
 import logging
 import pathlib
+
+from determined._generic import DistributedContext
 from typing import Any, Callable, Optional, cast
 from urllib import parse
 
@@ -37,10 +39,10 @@ class _CacheableDecorator:
         env: det.EnvContext,
         training: bool,
         per_slot_batch_size: int,
-        distributed_backend: Optional[str]
+        distributed_context: DistributedContext
     ) -> None:
         self._env = env
-        self._distributed_backend = distributed_backend
+        self._distributed_context = distributed_context
         self._training = training
         self._per_slot_batch_size = per_slot_batch_size
 
@@ -63,20 +65,20 @@ class _CacheableDecorator:
         self._offset = self._env.latest_batch * batch_size
 
     def _init_shard(self) -> None:
-        if not self._distributed_backend == "horovod":
+        if not self._distributed_context.size > 1:
             return
 
-        self._shard_rank = hvd.rank()
-        self._num_shards = hvd.size()
+        self._shard_rank = self._distributed_context.rank
+        self._num_shards = self._distributed_context.size
 
     def _configure_storage(self) -> None:
         session_config = None  # type: Optional[tf.compat.v1.ConfigProto]
-        if self._distributed_backend == "horovod":
+        if self._distributed_context.size > 1:
             # For multi-GPU training, we map processes to individual GPUs. TF requires
             # that for each instantiation of `tf.Session`, the process is mapped
             # to the same GPU.
             session_config = tf.compat.v1.ConfigProto()
-            session_config.gpu_options.visible_device_list = str(hvd.local_rank())
+            session_config.gpu_options.visible_device_list = str(self._distributed_context.local_rank)
 
         parsed = parse.urlparse(self._env.master_url)
         scheme = "wss" if parsed.scheme == "https" else "ws"

@@ -1,5 +1,7 @@
 import inspect
 import logging
+
+from determined._generic import DistributedContext
 from typing import Any, Callable, List, Tuple, Union, Optional
 
 import tensorflow as tf
@@ -41,10 +43,10 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         self.experimental = EstimatorExperimentalContext(
             env=self.env,
             parent=self,
-            distributed_backend=self.distributed_backend
+            distributed_context=self.distributed
         )
 
-        if self.distributed_backend == "horovod":
+        if self.distributed.size > 1:
             experiment_config = self.get_experiment_config()
             optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
             self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
@@ -68,7 +70,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             return optimizer
 
         self.optimizer_initialized = True
-        if not self.distributed_backend == "horovod":
+        if not self.distributed.size > 1:
             return optimizer
 
         check.check_false(
@@ -121,8 +123,8 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.distributed_backend == "horovod" or not shard_dataset:
-            if self.distributed_backend == "horovod" and not shard_dataset:
+        if not self.distributed.size > 1 or not shard_dataset:
+            if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset
 
@@ -142,9 +144,9 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
 
     def __init__(
         self, env: det.EnvContext, parent: EstimatorTrialContext,
-            distributed_backend: Optional[str]
+            distributed_context: DistributedContext
     ) -> None:
-        super().__init__(env=env, distributed_backend=distributed_backend)
+        super().__init__(env=env, distributed_context=distributed_context)
         self._parent = parent
 
     @util.deprecated(

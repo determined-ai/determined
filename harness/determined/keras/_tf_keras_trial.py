@@ -177,7 +177,7 @@ class TFKerasTrialController(det.TrialController):
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
             session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            cls._configure_session(env, session_config, distributed_backend)
+            cls._configure_session(env, session_config, distributed_backend == "horovod")
 
     @classmethod
     def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:
@@ -192,11 +192,11 @@ class TFKerasTrialController(det.TrialController):
         cls: Type["TFKerasTrialController"],
         env: det.EnvContext,
         session_config: tf.compat.v1.ConfigProto,
-        distributed_backend: Optional[str],
+        use_horovod: bool = False,
     ) -> Optional[tf.compat.v1.Session]:
         if not tf.executing_eagerly():
             session_config.gpu_options.allow_growth = True
-            if distributed_backend == "horovod":
+            if use_horovod:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
                 session_config.gpu_options.visible_device_list = str(hvd.local_rank())
@@ -212,7 +212,7 @@ class TFKerasTrialController(det.TrialController):
             gpus = tf.config.experimental.list_physical_devices("GPU")
 
             if len(gpus) > 0:
-                local_rank = hvd.local_rank() if distributed_backend == "horovod" else 0
+                local_rank = hvd.local_rank() if use_horovod else 0
                 gpu = gpus[local_rank]
                 tf.config.experimental.set_visible_devices(gpu, "GPU")
                 tf.config.experimental.set_memory_growth(gpu, True)
@@ -238,7 +238,7 @@ class TFKerasTrialController(det.TrialController):
         # be none because we check that in `from_trial`.
         assert context.model is not None
 
-        if context.distributed_backend == "horovod" and version.parse("2.0.0") <= version.parse(
+        if context.distributed.size > 1 and version.parse("2.0.0") <= version.parse(
             tf.__version__
         ) < version.parse("2.2.0"):
             logging.info(
@@ -268,7 +268,7 @@ class TFKerasTrialController(det.TrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
-        session = cls._configure_session(env, trial.session_config(), distributed_backend=context.distributed_backend)
+        session = cls._configure_session(env, trial.session_config(), use_horovod=context.distributed.size > 1)
 
         training_data = keras._adapt_data_from_data_loader(
             input_data=trial.build_training_data_loader(),
@@ -319,7 +319,7 @@ class TFKerasTrialController(det.TrialController):
         self.context._select_optimizers()
 
         keras._check_if_aggregation_frequency_will_work(
-            model=self.model, distributed_backend=self.context.distributed_backend,
+            model=self.model, use_horovod=self.use_horovod,
             aggregation_frequency=self.context.aggregation_frequency
         )
 
@@ -505,7 +505,7 @@ class TFKerasTrialController(det.TrialController):
         )
         callbacks = [self.multiplexer]
 
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1 and self.use_horovod:
             # Horovod synchronization of initial variables should happen even before we enter our
             # control loop, in case we have an initial validation requested.
             callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)] + callbacks
@@ -818,7 +818,7 @@ class TFKerasTrialController(det.TrialController):
         raise det.errors.WorkerFinishedGracefully()
 
     def _allreduce_logs(self, logs: Dict) -> Dict:
-        if not self.context.distributed_backend == "horovod":
+        if not (self.context.distributed.size > 1 and self.use_horovod):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
@@ -875,7 +875,7 @@ class TFKerasTrialController(det.TrialController):
                 "as this will affect Determined training behavior",
             )
 
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1 and self.use_horovod:
             num_inputs = self._hvd_allreduce(num_inputs, average=False, name="train_num_inputs")
             num_inputs = self._convert_possible_tensor(num_inputs)
 
@@ -912,7 +912,7 @@ class TFKerasTrialController(det.TrialController):
         metrics = self._launch_evaluate()
         num_inputs = self.multiplexer.get_test_inputs()
 
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1 and self.use_horovod:
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.

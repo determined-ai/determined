@@ -15,11 +15,9 @@ class TrialContext(metaclass=abc.ABCMeta):
         self,
         generic_context: _generic.Context,
         env: det.EnvContext,
-        distributed_backend: Optional[str] = None,
     ) -> None:
         self._generic = generic_context
         self.env = env
-        self.distributed_backend = distributed_backend
 
         self.distributed = self._generic.distributed
         self._stop_requested = False
@@ -154,9 +152,6 @@ class TrialContext(metaclass=abc.ABCMeta):
 
     def get_initial_batch(self) -> int:
         return self.env.latest_batch
-
-    def get_distributed_backend(self) -> Optional[str]:
-        return self.distributed_backend
 
     def get_optimizations_config(self) -> Dict[str, Any]:
         """

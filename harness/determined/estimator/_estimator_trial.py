@@ -8,6 +8,8 @@ import random
 import shutil
 import tempfile
 from abc import abstractmethod
+
+from determined._generic import DistributedContext
 from typing import Any, Callable, Dict, List, Optional, Type, cast
 
 import numpy as np
@@ -407,6 +409,7 @@ class EstimatorTrialController(det.TrialController):
         distributed_backend: Optional[str] = None,
     ) -> None:
         # Initialize the correct horovod.
+        print(f"pre execute {distributed_backend}")
         if distributed_backend == "horovod":
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
             hvd.init()
@@ -425,7 +428,7 @@ class EstimatorTrialController(det.TrialController):
         # the GPUs. We set the default session before importing any user code to prevent this
         # this problem. This default session does not have any effect within the Estimator itself.
         cls._set_default_tensorflow_session(env=env,
-                                            session_config=None, distributed_backend=distributed_backend)
+                                            session_config=None, use_horovod=distributed_backend == "horovod")
 
         logging.debug("Applying tf.estimator patches.")
 
@@ -451,12 +454,12 @@ class EstimatorTrialController(det.TrialController):
         cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
         session_config: Optional[tf.compat.v1.ConfigProto],
-        distributed_backend: Optional[str] = None,
+        use_horovod: bool = False,
     ) -> None:
         session_config = cls._init_session_config(
             session_config=session_config,
             env=env,
-            distributed_backend=distributed_backend,
+            use_horovod=use_horovod,
         )
         tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=session_config))
 
@@ -551,7 +554,7 @@ class EstimatorTrialController(det.TrialController):
             self._set_default_tensorflow_session(
                 env=self.env,
                 session_config=config.session_config,
-                distributed_backend=self.context.distributed_backend,
+                use_horovod=self.use_horovod,
             )
 
             return f(features, **kwargs)
@@ -617,7 +620,7 @@ class EstimatorTrialController(det.TrialController):
 
         self.train_hooks.append(DeterminedEarlyStoppingHook(self.context))
 
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1 and self.use_horovod:
             self.train_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
 
         # It is important that this hook is the final in the list so that if
@@ -633,13 +636,13 @@ class EstimatorTrialController(det.TrialController):
         cls: Type["EstimatorTrialController"],
         session_config: tf.compat.v1.ConfigProto,
         env: det.EnvContext,
-        distributed_backend: Optional[str] = None,
+        use_horovod: bool = False,
     ) -> tf.compat.v1.ConfigProto:
         if session_config is None:
             session_config = tf.compat.v1.ConfigProto()
         session_config.gpu_options.allow_growth = True
 
-        if not distributed_backend == "horovod":
+        if not use_horovod:
             return session_config
 
         if version.parse(tf.__version__) >= version.parse("2.5.0"):
@@ -664,7 +667,8 @@ class EstimatorTrialController(det.TrialController):
 
         # The default session should already be defined, here we also set the session
         # for the estimator itself.
-        self._init_session_config(session_config, self.env, distributed_backend=self.context.distributed_backend)
+        logging.info(f"Session config {self.use_horovod}")
+        self._init_session_config(session_config, self.env, self.use_horovod)
 
         config = config.replace(
             model_dir=str(self.estimator_dir),
@@ -710,7 +714,7 @@ class EstimatorTrialController(det.TrialController):
         """
 
         # Add suffix so that horovod processes don't overwrite each other.
-        suffix = str(0) if not self.context.distributed_backend == "horovod" else str(hvd.local_rank())
+        suffix = str(0) if not self.context.distributed.size > 1 else str(self.context.distributed.rank)
 
         if self.env.latest_checkpoint is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
@@ -747,7 +751,7 @@ class EstimatorTrialController(det.TrialController):
             input_fn=self.eval_spec.input_fn, steps=steps, hooks=self.eval_spec.hooks
         )
 
-        if self.context.distributed_backend == "horovod":
+        if self.context.distributed.size > 1:
             metrics = self.average_metrics(metrics)
             if self.is_chief:
                 logging.debug(f"Averaged validation metrics: {metrics}.")
@@ -765,7 +769,7 @@ class EstimatorTrialController(det.TrialController):
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        check.true(self.context.distributed_backend == "horovod")
+        check.true(self.context.distributed.size > 1)
         all_metrics = self.context.distributed._zmq_gather(metrics)
         if not self.is_chief:
             return None
