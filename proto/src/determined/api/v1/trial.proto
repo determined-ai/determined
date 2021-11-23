@@ -4,7 +4,6 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
 
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
