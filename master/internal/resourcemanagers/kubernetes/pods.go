@@ -63,7 +63,7 @@ type pods struct {
 	preemptionListener           *actor.Ref
 	resourceRequestQueue         *actor.Ref
 	podNameToPodHandler          map[string]*actor.Ref
-	containerIDToPodHandler      map[string]*actor.Ref
+	containerIDToPodName         map[string]string
 	podHandlerToMetadata         map[*actor.Ref]podMetadata
 	nodeToSystemResourceRequests map[string]int64
 
@@ -101,7 +101,7 @@ func Initialize(
 		loggingTLSConfig:             loggingTLSConfig,
 		loggingConfig:                loggingConfig,
 		podNameToPodHandler:          make(map[string]*actor.Ref),
-		containerIDToPodHandler:      make(map[string]*actor.Ref),
+		containerIDToPodName:         make(map[string]string),
 		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
@@ -154,7 +154,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
-	case podPreemption:
+	case PreemptTaskPod:
 		p.receivePodPreemption(ctx, msg)
 
 	case KillTaskPod:
@@ -326,7 +326,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	}
 
 	p.podNameToPodHandler[newPodHandler.podName] = ref
-	p.containerIDToPodHandler[msg.Spec.ContainerID] = ref
+	p.containerIDToPodName[msg.Spec.ContainerID] = newPodHandler.podName
 	p.podHandlerToMetadata[ref] = podMetadata{
 		podName:     newPodHandler.podName,
 		containerID: msg.Spec.ContainerID,
@@ -369,22 +369,29 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receivePodPreemption(ctx *actor.Context, msg podPreemption) {
-	ref, ok := p.podNameToPodHandler[msg.podName]
+func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {
+	ref, ok := p.podNameToPodHandler[msg.PodName]
 	if !ok {
-		ctx.Log().WithField("pod-name", msg.podName).Debug(
-			"received preemption command for unregistered container id")
+		ctx.Log().WithField("pod-name", msg.PodName).Debug(
+			"received preemption command for unregistered pod")
 		return
 	}
 	ctx.Tell(ref, msg)
 }
 
 func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {
-	ref, ok := p.containerIDToPodHandler[string(msg.PodID)]
+	name, ok := p.containerIDToPodName[string(msg.PodID)]
 	if !ok {
 		// For multi-pod tasks, when the chief pod exits, the scheduler
 		// will request to terminate pods all other pods that have
 		// notified the scheduler that they have exited.
+		ctx.Log().WithField("pod-id", msg.PodID).Info(
+			"received stop pod command for unregistered container id")
+		return
+	}
+
+	ref, ok := p.podNameToPodHandler[name]
+	if !ok {
 		ctx.Log().WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return
@@ -411,7 +418,7 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	ctx.Log().WithField("pod", podInfo.podName).WithField(
 		"handler", podHandler.Address()).Infof("de-registering pod handler")
 	delete(p.podNameToPodHandler, podInfo.podName)
-	delete(p.containerIDToPodHandler, podInfo.containerID)
+	delete(p.containerIDToPodName, podInfo.containerID)
 	delete(p.podHandlerToMetadata, podHandler)
 
 	return nil
