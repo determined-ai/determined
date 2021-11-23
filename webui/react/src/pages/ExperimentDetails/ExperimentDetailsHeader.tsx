@@ -208,9 +208,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     showForkModal,
   ]);
 
-  const resolvedState = experiment.state === RunState.Active && experiment.jobSummary ?
-    experiment.jobSummary.state : experiment.state;
-
   return (
     <>
       <PageHeaderFoldable
@@ -274,7 +271,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           </div>
         }
         options={headerOptions}
-        style={{ backgroundColor: getStateColorCssVar(resolvedState) }}
+        style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
       />
       <ExperimentHeaderProgress experiment={experiment} />
     </>

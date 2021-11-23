@@ -3,7 +3,7 @@ import { Dayjs } from 'dayjs';
 
 import { CommandType, DetailedUser, Job, RecordKey } from 'types';
 
-import { V1GetJobsResponse } from './api-ts-sdk/api';
+import * as Api from './api-ts-sdk/api';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -234,7 +234,6 @@ export interface GetJobQParams extends PaginationParams, FetchOptions {
   resourcePool: string;
 }
 
-export interface GetJobsResponse extends V1GetJobsResponse {
+export interface GetJobsResponse extends Api.V1GetJobsResponse {
   jobs: Job[];
 }
-// export interface GetJobsResposne { jobs, pagination: decoder.mapV1Pagination(pagination) }

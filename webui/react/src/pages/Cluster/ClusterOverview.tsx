@@ -44,7 +44,6 @@ const ClusterOverview: React.FC = () => {
     if (initView && Object.values(GridListView).includes(initView as GridListView)) return initView;
     return GridListView.Grid;
   });
-  // const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);

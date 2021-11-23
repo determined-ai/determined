@@ -181,13 +181,10 @@ export const linkPath = (aPath: string, external = false): string => {
   return path;
 };
 
-const routeById = (id: string): RouteConfig => {
-  // OPTIMIZE: We might want to change the route data structrue, or precompute
-  // to speed up this process.
-  const route = routes.find(route => route.id === 'jobs');
-  if (!route) throw new Error(`unknown route id ${id}`);
-  return route;
-};
+const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
+  acc[cur.id] = cur;
+  return acc;
+}, {} as Record<string, RouteConfig>);
 
 export const paths = {
   cluster: (): string => {
@@ -209,7 +206,7 @@ export const paths = {
     return `/experiments/${experimentId}/model_def`;
   },
   jobs: (): string => {
-    return routeById('jobs').path;
+    return routeById.jobs.path;
 
   },
   login: (): string => {

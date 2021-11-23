@@ -1,4 +1,4 @@
-import { AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, Job, JobType,
+import { AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, Job, JobState, JobType,
   RunState } from 'types';
 
 import { capitalize } from './string';
@@ -44,4 +44,10 @@ export const taskFromJob = (job: Job): AnyTask => {
     } as CommandTask;
   }
   return rv;
+};
+
+export const jobStateToLabel: {[key in JobState]: string} = {
+  [JobState.SCHEDULED]: 'Scheduled',
+  [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
+  [JobState.QUEUED]: 'Queued',
 };

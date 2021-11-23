@@ -203,7 +203,7 @@ const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = '')
 
 const matchesState = <T extends AnyTask | ExperimentItem>(task: T, states: string[]): boolean => {
   if (!Array.isArray(states) || states.length === 0 || states[0] === ALL_VALUE) return true;
-  return states.includes(task.state as string); // FIXME
+  return states.includes(task.state as string);
 };
 
 const matchesUser = <T extends AnyTask | ExperimentItem>(

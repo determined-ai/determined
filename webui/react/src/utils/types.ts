@@ -11,6 +11,7 @@ import {
 import { LaunchTensorBoardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
+import { jobStateToLabel } from './job';
 import { isMetricsWorkload } from './workload';
 
 /* Conversions to Tasks */
@@ -154,12 +155,6 @@ export const resourceStateToLabel: {[key in ResourceState]: string} = {
   [ResourceState.Pulling]: 'Pulling',
   [ResourceState.Starting]: 'Starting',
   [ResourceState.Unspecified]: 'Unspecified',
-};
-
-export const jobStateToLabel: {[key in JobState]: string} = {
-  [JobState.SCHEDULED]: 'Scheduled',
-  [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
-  [JobState.QUEUED]: 'Queued',
 };
 
 export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
