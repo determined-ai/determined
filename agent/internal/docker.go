@@ -95,21 +95,12 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 
 	_, _, err = d.ImageInspectWithRaw(context.Background(), ref.String())
 	switch {
-	case err == nil && msg.ForcePull:
-		d.sendAuxLog(ctx, fmt.Sprintf("attempting to remove cached image: %s", ref.String()))
-		opts := types.ImageRemoveOptions{Force: true, PruneChildren: false}
-		removed, rerr := d.ImageRemove(context.Background(), ref.String(), opts)
-		if rerr != nil {
-			sendErr(ctx, errors.Wrapf(rerr, "error removing image: %s", ref.String()))
-			return
-		}
-		for _, r := range removed {
-			switch {
-			case r.Untagged != "":
-				d.sendAuxLog(ctx, fmt.Sprintf("untagged image: %s", r.Untagged))
-			case r.Deleted != "":
-				d.sendAuxLog(ctx, fmt.Sprintf("deleted image: %s", r.Deleted))
-			}
+	case msg.ForcePull:
+		if err == nil {
+			d.sendAuxLog(ctx, fmt.Sprintf(
+				"image present, but force_pull_image is set; checking for updates: %s",
+				ref.String(),
+			))
 		}
 	case err == nil:
 		d.sendAuxLog(ctx, fmt.Sprintf("image already found, skipping pull phase: %s", ref.String()))
