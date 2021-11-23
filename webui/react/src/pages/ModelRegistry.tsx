@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -19,6 +20,7 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -420,19 +422,32 @@ const ModelRegistry: React.FC = () => {
   }, [ canceler ]);
 
   return (
-    <Page docTitle="Model Registry" id="models">
+    <Page docTitle="Model Registry" id="models" loading={isLoading}>
       <Section title="Model Registry">
-        <ResponsiveTable
-          columns={columns}
-          dataSource={models}
-          loading={isLoading}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, total)}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange} />
+        {models.length === 0 ?
+          <div className={css.emptyBase}>
+            <div className={css.icon}>
+              <Icon name="model" size="mega" />
+            </div>
+            <h4>No Models Registered</h4>
+            <p className={css.description}>
+              Track important checkpoints and versions from your experiments.&nbsp;
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </p>
+          </div> :
+          <ResponsiveTable
+            columns={columns}
+            dataSource={models}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            showSorterTooltip={false}
+            size="small"
+            onChange={handleTableChange} />}
       </Section>
     </Page>
   );

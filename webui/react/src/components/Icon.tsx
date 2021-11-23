@@ -1,10 +1,11 @@
 import React from 'react';
 
+import { Theme } from 'themes';
 import { CommonProps } from 'types';
 
 import css from './Icon.module.scss';
 
-export type IconSize = 'tiny' | 'small' | 'medium' | 'large' | 'big';
+export type IconSize = keyof Theme['sizes']['icon'];
 
 interface Props extends CommonProps {
   name?: string;
