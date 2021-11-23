@@ -422,16 +422,16 @@ const ModelRegistry: React.FC = () => {
   }, [ canceler ]);
 
   return (
-    <Page docTitle="Model Registry" id="models">
+    <Page docTitle="Model Registry" id="models" loading={isLoading}>
       <Section title="Model Registry">
-        {models.length === 0 && !isLoading ?
+        {models.length === 0 ?
           <div className={css.emptyBase}>
             <div className={css.icon}>
               <Icon name="model" size="mega" />
             </div>
             <h4>No Models Registered</h4>
             <p className={css.description}>
-              Track important checkpoints and versions from your experiments.{' '}
+              Track important checkpoints and versions from your experiments.&nbsp;
               <Link external path={paths.docs('/post-training/model-registry.html')}>
                 Learn more
               </Link>
