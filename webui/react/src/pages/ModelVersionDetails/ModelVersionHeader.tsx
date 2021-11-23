@@ -37,6 +37,24 @@ const ModelVersionHeader: React.FC<Props> = (
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
   const [ showDownloadModel, setShowDownloadModel ] = useState(false);
 
+  const isDeletable = user?.isAdmin
+        || user?.username === modelVersion.model.username
+        || user?.username === modelVersion.username;
+
+  const showConfirmDelete = useCallback(() => {
+    Modal.confirm({
+      closable: true,
+      content: `Are you sure you want to delete this version "Version ${modelVersion.version}" 
+            from this model?`,
+      icon: null,
+      maskClosable: true,
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: onDeregisterVersion,
+      title: 'Confirm Delete',
+    });
+  }, [ onDeregisterVersion, modelVersion.version ]);
+
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content:
@@ -72,6 +90,32 @@ const ModelVersionHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ modelVersion, onSaveDescription, onUpdateTags ]);
 
+  const actions = useMemo(() => {
+    return [
+      {
+        danger: false,
+        disabled: false,
+        key: 'download-model',
+        onClick: () => setShowDownloadModel(true),
+        text: 'Download Model',
+      },
+      {
+        danger: false,
+        disabled: false,
+        key: 'use-in-notebook',
+        onClick: () => setShowUseInNotebook(true),
+        text: 'Use in Notebook',
+      },
+      {
+        danger: true,
+        disabled: !isDeletable,
+        key: 'deregister-version',
+        onClick: showConfirmDelete,
+        text: 'Deregister Version',
+      },
+    ];
+  }, [ isDeletable, showConfirmDelete ]);
+
   const referenceText = useMemo(() => {
     return (
       `from determined.experimental import Determined
@@ -90,24 +134,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   const handleCopy = useCallback(async () => {
     await copyToClipboard(referenceText);
   }, [ referenceText ]);
-
-  const isDeletable = user?.isAdmin
-        || user?.username === modelVersion.model.username
-        || user?.username === modelVersion.username;
-
-  const showConfirmDelete = useCallback((version: ModelVersion) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this version "Version ${version.version}" 
-      from this model?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Version',
-      okType: 'danger',
-      onOk: () => onDeregisterVersion(),
-      title: 'Confirm Delete',
-    });
-  }, [ onDeregisterVersion ]);
 
   return (
     <header className={css.base}>
@@ -148,35 +174,27 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             </h1>
           </div>
           <div className={css.buttons}>
-            <Button onClick={() => setShowDownloadModel(true)}>Download Model</Button>
-            <DownloadModelModal
-              modelVersion={modelVersion}
-              visible={showDownloadModel}
-              onClose={() => setShowDownloadModel(false)} />
-            <Button onClick={() => setShowUseInNotebook(true)}>Use in Notebook</Button>
-            <Modal
-              className={css.useNotebookModal}
-              footer={null}
-              title="Use in Notebook"
-              visible={showUseInNotebook}
-              onCancel={() => setShowUseInNotebook(false)}>
-              <div className={css.topLine}>
-                <p>Reference this model in a notebook</p>
-                <CopyButton onCopy={handleCopy} />
-              </div>
-              <pre className={css.codeSample}><code>{referenceText}</code></pre>
-              <p>Copy/paste code into a notebook cell</p>
-            </Modal>
+            {actions.slice(0, 2).map(action =>
+              <Button
+                className={css.buttonAction}
+                danger={action.danger}
+                disabled={action.disabled}
+                key={action.key}
+                onClick={action.onClick}>
+                {action.text}
+              </Button>)}
             <Dropdown
               overlay={(
-                <Menu>
-                  <Menu.Item
-                    danger
-                    disabled={!isDeletable}
-                    key="deregister-version"
-                    onClick={() => showConfirmDelete(modelVersion)}>
-                  Deregister Version
-                  </Menu.Item>
+                <Menu className={css.overflow}>
+                  {actions.map(action =>
+                    <Menu.Item
+                      className={css.overflowAction}
+                      danger={action.danger}
+                      disabled={action.disabled}
+                      key={action.key}
+                      onClick={action.onClick}>
+                      {action.text}
+                    </Menu.Item>)}
                 </Menu>
               )}
               trigger={[ 'click' ]}>
@@ -188,6 +206,23 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
+      <DownloadModelModal
+        modelVersion={modelVersion}
+        visible={showDownloadModel}
+        onClose={() => setShowDownloadModel(false)} />
+      <Modal
+        className={css.useNotebookModal}
+        footer={null}
+        title="Use in Notebook"
+        visible={showUseInNotebook}
+        onCancel={() => setShowUseInNotebook(false)}>
+        <div className={css.topLine}>
+          <p>Reference this model in a notebook</p>
+          <CopyButton onCopy={handleCopy} />
+        </div>
+        <pre className={css.codeSample}><code>{referenceText}</code></pre>
+        <p>Copy/paste code into a notebook cell</p>
+      </Modal>
     </header>
   );
 };
