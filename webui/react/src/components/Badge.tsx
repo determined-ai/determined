@@ -1,8 +1,8 @@
 import { Tooltip } from 'antd';
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
-import { getStateColorCssVar } from 'themes';
-import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
+import { getStateColorCssVar, StateOfUnion } from 'themes';
+import { RunState, SlotState } from 'types';
 import { stateToLabel } from 'utils/types';
 
 import css from './Badge.module.scss';
@@ -15,7 +15,7 @@ export enum BadgeType {
 }
 
 export interface BadgeProps {
-  state?: RunState | CommandState | CheckpointState | ResourceState | SlotState;
+  state?: StateOfUnion;
   tooltip?: string;
   type?: BadgeType;
 }

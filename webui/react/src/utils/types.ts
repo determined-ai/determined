@@ -1,14 +1,17 @@
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { StateOfUnion } from 'themes';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask, RecentExperimentTask,
-  RecentTask, RecordKey, ResourceState, RunState, SlotState, Workload,
+  CommandType, CompoundRunState, ExperimentItem, JobState, MetricsWorkload, RawJson,
+  RecentCommandTask, RecentExperimentTask, RecentTask, RecordKey,
+  ResourceState, RunState, SlotState, Workload,
 } from 'types';
 
 import { LaunchTensorBoardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
+import { jobStateToLabel } from './job';
 import { isMetricsWorkload } from './workload';
 
 /* Conversions to Tasks */
@@ -60,8 +63,9 @@ export const activeRunStates: Array<
   'STATE_STOPPING_ERROR',
 ];
 
-export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
-export const cancellableRunStates = [ RunState.Active, RunState.Paused ];
+export const killableRunStates: CompoundRunState[] =
+  [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
+export const cancellableRunStates: CompoundRunState[] = [ RunState.Active, RunState.Paused ];
 export const killableCmdStates = [
   CommandState.Assigned,
   CommandState.Pending,
@@ -75,14 +79,14 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-export const terminalRunStates: Set<RunState> = new Set([
+export const terminalRunStates: Set<CompoundRunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
   RunState.Deleted,
 ]);
 
-export const deletableRunStates: Set<RunState> = new Set([
+export const deletableRunStates: Set<CompoundRunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
@@ -159,12 +163,13 @@ export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
 };
 
 export function stateToLabel(
-  state: RunState | CommandState | CheckpointState | ResourceState | SlotState,
+  state: StateOfUnion,
 ): string {
   return runStateToLabel[state as RunState]
   || commandStateToLabel[state as CommandState]
   || resourceStateToLabel[state as ResourceState]
   || checkpointStateToLabel[state as CheckpointState]
+  || jobStateToLabel[state as JobState]
   || slotStateToLabel[state as SlotState];
 }
 

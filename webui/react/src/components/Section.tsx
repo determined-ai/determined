@@ -42,7 +42,8 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
     <section className={classes.join(' ')} id={id}>
       {(props.title || props.options) && (
         <div className={css.header}>
-          {props.title && <div className={titleClasses.join(' ')}>{props.title}</div>}
+          {props.title && !props.hideTitle &&
+            <h5 className={titleClasses.join(' ')}>{props.title}</h5>}
           {props.options && <div className={css.options}>{props.options}</div>}
         </div>
       )}

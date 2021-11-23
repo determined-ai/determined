@@ -123,7 +123,9 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
     resources: {},
     searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
   };
+  const exp = generateExperiments(1)[0];
   return {
+    ...exp,
     ...experimentTask,
     config: {
       checkpointPolicy: 'best',
@@ -163,6 +165,7 @@ export const generateExperiments = (count = 30): ExperimentItem[] => {
       return {
         ...experimentTask,
         id: idx,
+        jobId: idx.toString(),
         labels: [],
         name: experimentTask.name,
         numTrials: Math.round(Math.random() * 60000),
@@ -200,7 +203,7 @@ const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = '')
 
 const matchesState = <T extends AnyTask | ExperimentItem>(task: T, states: string[]): boolean => {
   if (!Array.isArray(states) || states.length === 0 || states[0] === ALL_VALUE) return true;
-  return states.includes(task.state);
+  return states.includes(task.state as string);
 };
 
 const matchesUser = <T extends AnyTask | ExperimentItem>(
