@@ -76,7 +76,7 @@ export const columns: ColumnType<Job>[] = [
   {
     dataIndex: 'priority',
     key: SCHEDULING_VAL_KEY,
-    title: 'Priority', // TODO or weight? in fairshare
+    title: 'Priority',
   },
   {
     dataIndex: 'submissionTime',
