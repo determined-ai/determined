@@ -1,9 +1,7 @@
-import {
-  V1FittingPolicy, V1Pagination, V1ResourcePoolType, V1SchedulerType,
-} from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk';
 
 interface WithPagination {
-  pagination: V1Pagination;
+  pagination: Api.V1Pagination; // probably should use this or Pagination
 }
 
 export type RecordKey = string | number | symbol;
@@ -366,8 +364,8 @@ export interface Checkpoint extends EndTimes {
   resources?: Record<string, number>;
   state: CheckpointState;
   trialId: number;
-  uuid? : string;
-  validationMetric? : number;
+  uuid?: string;
+  validationMetric?: number;
 }
 
 export interface BaseWorkload extends EndTimes {
@@ -377,7 +375,7 @@ export interface BaseWorkload extends EndTimes {
 export interface CheckpointWorkload extends BaseWorkload {
   resources?: Record<string, number>;
   state: CheckpointState;
-  uuid? : string;
+  uuid?: string;
 }
 
 export interface CheckpointWorkloadExtended extends CheckpointWorkload {
@@ -443,6 +441,8 @@ export interface ExperimentItem {
   description?: string;
   endTime?: string;
   id: number;
+  jobId: string;
+  jobSummary?: JobSummary;
   labels: string[];
   name: string;
   notes?: string;
@@ -450,31 +450,18 @@ export interface ExperimentItem {
   progress?: number;
   resourcePool: string
   startTime: string;
-  state: RunState;
+  state: CompoundRunState;
   username: string;
 }
 
-export interface ExperimentBase {
-  archived: boolean;
+export interface ExperimentBase extends ExperimentItem {
   config: ExperimentConfig;
-  configRaw: RawJson;                                 // Readonly unparsed config object.
-  description?: string;
-  endTime?: string;
-  hyperparameters: HyperparametersFlattened;    // nested hp keys are flattened, eg) foo.bar
-  id: number;
-  name: string;
-  notes?: string;
-  progress?: number;
-  resourcePool: string;
-  startTime: string;
-  state: RunState;
-  username: string;
+  configRaw: RawJson; // Readonly unparsed config object.
+  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
 }
-
+// TODO we should be able to remove ExperimentOld but leaving this off.
 export interface ExperimentOld extends ExperimentBase {
-  name: string;
   url: string;
-  username: string;
 }
 
 export enum ExperimentVisualizationType {
@@ -531,11 +518,14 @@ export interface Task {
   url?: string;
 }
 
+// CompoundRunState adds more information about a job's state to RunState.
+export type CompoundRunState = RunState | JobState
+
 export interface ExperimentTask extends Task {
   archived: boolean;
   progress?: number;
   resourcePool: string;
-  state: RunState;
+  state: CompoundRunState;
   username: string;
 }
 
@@ -643,13 +633,13 @@ export interface ResourcePool {
   name: string;
   numAgents: number;
   preemptible: boolean;
-  schedulerFittingPolicy: V1FittingPolicy;
-  schedulerType: V1SchedulerType;
+  schedulerFittingPolicy: Api.V1FittingPolicy;
+  schedulerType: Api.V1SchedulerType;
   slotType: ResourceType;
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;
-  type: V1ResourcePoolType;
+  type: Api.V1ResourcePoolType;
 }
 
 export interface RPDetails {
@@ -708,3 +698,24 @@ export interface PriorityScheduler {
   defaultPriority: number;
   preemption: boolean;
 }
+
+/* Jobs */
+
+export interface Job extends Api.V1Job {
+  summary: Api.V1JobSummary;
+}
+export const JobType = Api.Determinedjobv1Type;
+export type JobType = Api.Determinedjobv1Type;
+export const JobState = Api.Determinedjobv1State;
+export type JobState = Api.Determinedjobv1State;
+export type JobSummary = Api.V1JobSummary;
+export type RPStats = Api.V1RPQueueStat;
+
+export enum JobAction {
+  Cancel = 'Cancel',
+  Kill = 'Kill',
+  ManageJob = 'Manage Job',
+  MoveToTop = 'Move To Top',
+}
+
+/* End of Jobs */

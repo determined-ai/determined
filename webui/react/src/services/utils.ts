@@ -211,3 +211,4 @@ export const validateDetApiEnumList = (enumObject: unknown, values?: unknown[]):
 
 /* eslint-disable-next-line */
 export const noOp = (): void => {}
+export const identity = <T>(a: T): T => a;

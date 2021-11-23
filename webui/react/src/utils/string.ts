@@ -48,15 +48,19 @@ export const listToStr = (list: (string | undefined)[], glue = ' '): string => {
   return list.filter(item => !!item).join(glue);
 };
 
+export const truncate = (str: string, maxLen = 20, suffix = '...'): string => {
+  if (maxLen < suffix.length + 1) {
+    str.slice(0, maxLen);
+  }
+  if (str.length <= maxLen) {
+    return str;
+  }
+  return str.slice(0, maxLen - suffix.length) + suffix;
+};
+
 export const toHtmlId = (str: string): string => {
   return str
     .replace(/[\s_]/gi, '-')
     .replace(/[^a-z0-9-]/gi, '')
     .toLowerCase();
-};
-
-export const truncate = (str: string, maxLength = 20): string => {
-  if (maxLength < 4) maxLength = 4;
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + '...';
 };

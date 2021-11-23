@@ -21,6 +21,7 @@ export const detApi = {
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
+  Jobs: new Api.JobsApi(ApiConfig),
   Models: new Api.ModelsApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
@@ -50,6 +51,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.Internal = new Api.InternalApi(config);
+  detApi.Jobs = new Api.JobsApi(config);
   detApi.Models = new Api.ModelsApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
@@ -205,8 +207,11 @@ export const getExperiment: Service.DetApi<
   Service.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
 > = {
   name: 'getExperiment',
-  postProcess: (response: Api.V1GetExperimentResponse) =>
-    decoder.mapV1Experiment(response.experiment),
+  postProcess: (response: Api.V1GetExperimentResponse) => {
+    const exp = decoder.mapV1Experiment(response.experiment);
+    exp.jobSummary = response.jobSummary;
+    return exp;
+  },
   request: (params: Service.GetExperimentParams) => {
     return detApi.Experiments.getExperiment(params.id);
   },
@@ -687,6 +692,25 @@ export const launchTensorBoard: Service.DetApi<
   postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
   request: (params: Service.LaunchTensorBoardParams) => detApi.TensorBoards
     .launchTensorboard(params),
+};
+
+/* Jobs */
+
+export const getJobQueue: Service.DetApi<
+  Service.GetJobQParams, Api.V1GetJobsResponse, Service.GetJobsResponse
+> = {
+  name: 'getJobQ',
+  postProcess: (response) => {
+    response.jobs = response.jobs.filter(job => !!job.summary);
+    // we don't work with jobs without a summary in the ui yet
+    return response as Service.GetJobsResponse;
+  },
+  request: (params: Service.GetJobQParams) => detApi.Jobs.getJobs(
+    params.offset,
+    params.limit,
+    params.resourcePool,
+    params.orderBy,
+  ),
 };
 
 /* Logs */
