@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	defaultSchedulingPriority = 42
+	// DefaultSchedulingPriority is the default resource manager priority.
+	DefaultSchedulingPriority = 42
 
 	fairShareScheduling  = "fair_share"
 	priorityScheduling   = "priority"
@@ -57,7 +58,7 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 		s.FairShare = &FairShareSchedulerConfig{}
 	}
 	if s.Priority != nil && s.Priority.DefaultPriority == nil {
-		defaultPriority := defaultSchedulingPriority
+		defaultPriority := DefaultSchedulingPriority
 		s.Priority.DefaultPriority = &defaultPriority
 	}
 	if s.FittingPolicy == "" {

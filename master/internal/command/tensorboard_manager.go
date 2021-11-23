@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -11,7 +12,8 @@ import (
 )
 
 type tensorboardManager struct {
-	db *db.PgDB
+	db      *db.PgDB
+	mConfig *config.Config
 }
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
@@ -33,8 +35,9 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
+		jobID := model.NewJobID()
 		return createGenericCommandActor(
-			ctx, t.db, taskID, model.TaskTypeTensorboard, model.JobTypeTensorboard, msg,
+			ctx, t.db, taskID, model.TaskTypeTensorboard, jobID, model.JobTypeTensorboard, msg, t.mConfig,
 		)
 
 	default:
