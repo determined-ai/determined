@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -19,6 +20,7 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -422,17 +424,38 @@ const ModelRegistry: React.FC = () => {
   return (
     <Page docTitle="Model Registry" id="models">
       <Section title="Model Registry">
-        <ResponsiveTable
-          columns={columns}
-          dataSource={models}
-          loading={isLoading}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, total)}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange} />
+        {models.length === 0 && !isLoading ?
+          <div style={{
+            marginInline: 'auto',
+            marginTop: 150,
+            maxWidth: 350,
+            textAlign: 'center',
+          }}>
+            <div style={{ padding: 16 }}>
+              <Icon name="model" size="mega" />
+            </div>
+            <h4 style={{ marginBottom: 8 }}>No Models Registered</h4>
+            <p style={{
+              color: 'var(--theme-colors-monochrome-9)',
+              fontSize: 'var(--theme-sizes-font-medium)',
+            }}>
+              Track important checkpoints and versions from your experiments.{' '}
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </p>
+          </div> :
+          <ResponsiveTable
+            columns={columns}
+            dataSource={models}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            showSorterTooltip={false}
+            size="small"
+            onChange={handleTableChange} />}
       </Section>
     </Page>
   );
