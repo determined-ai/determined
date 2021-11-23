@@ -12,7 +12,7 @@ import usePrevious from 'hooks/usePrevious';
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { ansiToHtml, copyToClipboard } from 'utils/dom';
 import { capitalize } from 'utils/string';
 

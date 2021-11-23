@@ -7,7 +7,7 @@ import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 
 import LogViewerEntry, { DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 import css from './TrialLogPreview.module.scss';

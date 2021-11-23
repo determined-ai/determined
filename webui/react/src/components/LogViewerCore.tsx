@@ -16,7 +16,7 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { Log, LogLevel, RecordKey } from 'types';
 import { clone } from 'utils/data';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { copyToClipboard } from 'utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
