@@ -4,6 +4,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/job"
 	"net/http"
 	"strconv"
 
@@ -64,6 +65,8 @@ type pods struct {
 	resourceRequestQueue         *actor.Ref
 	podNameToPodHandler          map[string]*actor.Ref
 	containerIDToPodName         map[string]string
+	containerIDToSchedulingState map[string]job.SchedulingState
+	podNameToContainerID         map[string]string
 	podHandlerToMetadata         map[*actor.Ref]podMetadata
 	nodeToSystemResourceRequests map[string]int64
 
@@ -102,6 +105,8 @@ func Initialize(
 		loggingConfig:                loggingConfig,
 		podNameToPodHandler:          make(map[string]*actor.Ref),
 		containerIDToPodName:         make(map[string]string),
+		containerIDToSchedulingState: make(map[string]job.SchedulingState),
+		podNameToContainerID:         make(map[string]string),
 		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
@@ -327,6 +332,8 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 
 	p.podNameToPodHandler[newPodHandler.podName] = ref
 	p.containerIDToPodName[msg.Spec.ContainerID] = newPodHandler.podName
+	p.podNameToContainerID[newPodHandler.podName] = msg.Spec.ContainerID
+	p.containerIDToSchedulingState[msg.Spec.ContainerID] = job.SchedulingStateQueued
 	p.podHandlerToMetadata[ref] = podMetadata{
 		podName:     newPodHandler.podName,
 		containerID: msg.Spec.ContainerID,
@@ -344,6 +351,23 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	}
 
 	ctx.Tell(ref, msg)
+
+	// TODO: here
+
+	if containerID, ok := p.podNameToContainerID[msg.updatedPod.Name]; ok {
+		if state, ok := p.containerIDToSchedulingState[containerID]; ok {
+			currState := job.SchedulingStateQueued
+			if msg.updatedPod.Status.String() == "Running" {
+				currState = job.SchedulingStateScheduled
+			}
+			if currState != state {
+				ctx.Tell(p.cluster, UpdatePodStatus{
+					ContainerID: containerID,
+					State:       state,
+				})
+			}
+		}
+	}
 }
 
 func (p *pods) receiveNodeStatusUpdate(ctx *actor.Context, msg nodeStatusUpdate) {
@@ -418,7 +442,9 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	ctx.Log().WithField("pod", podInfo.podName).WithField(
 		"handler", podHandler.Address()).Infof("de-registering pod handler")
 	delete(p.podNameToPodHandler, podInfo.podName)
+	delete(p.podNameToContainerID, podInfo.podName)
 	delete(p.containerIDToPodName, podInfo.containerID)
+	delete(p.containerIDToSchedulingState, podInfo.containerID)
 	delete(p.podHandlerToMetadata, podHandler)
 
 	return nil

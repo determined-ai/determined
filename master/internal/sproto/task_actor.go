@@ -3,6 +3,7 @@ package sproto
 import (
 	"bytes"
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/job"
 	"strings"
 	"time"
 
@@ -43,6 +44,12 @@ type (
 		Container        cproto.Container
 		ContainerStarted *TaskContainerStarted
 		ContainerStopped *TaskContainerStopped
+	}
+
+	// UpdatePodStatus notifies the resource manager of experiment state change.
+	UpdatePodStatus struct {
+		ContainerID string
+		State       job.SchedulingState
 	}
 
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.

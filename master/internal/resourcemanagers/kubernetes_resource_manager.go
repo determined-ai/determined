@@ -102,7 +102,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
-		sproto.ResourcesReleased:
+		sproto.ResourcesReleased,
+		sproto.UpdatePodStatus:
 		return k.receiveRequestMsg(ctx)
 
 	case
@@ -213,6 +214,21 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case sproto.ResourcesReleased:
 		k.resourcesReleased(ctx, msg.TaskActor)
+
+	case sproto.UpdatePodStatus:
+		var ref *actor.Ref
+		for addr, id := range k.addrToContainerID {
+			if id.String() == msg.ContainerID {
+				ref = addr
+			}
+		}
+
+		for it := k.reqList.iterator(); it.next(); {
+			req := it.value()
+			if req.TaskActor == ref {
+				req.State = msg.State
+			}
+		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
