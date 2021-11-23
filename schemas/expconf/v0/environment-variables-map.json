@@ -24,6 +24,16 @@
             "items": {
                 "type": "string"
             }
+        },
+        "rocm": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }

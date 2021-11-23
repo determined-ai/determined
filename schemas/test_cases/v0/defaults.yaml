@@ -39,10 +39,13 @@
         - ASDF=asdf
       gpu:
         - ASDF=asdf
+      rocm:
+        - ASDF=asdf
     force_pull_image: false
     image:
       cpu: '*'
       gpu: '*'
+      rocm: '*'
     # go will generate some non-empty struct here, but python will not
     pod_spec: '*'
     ports:

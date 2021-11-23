@@ -183,7 +183,7 @@ class Case:
         # support the partial checkpoint storage configs.  It probably will never support the
         # partial checkpoint storage (only the master needs it, and hopefully only for the V0
         # schema).
-        pytest.skip("python expconf support merge tests yet")
+        pytest.skip("python expconf doesn't support merge tests yet")
 
         cls = class_from_url(self.merge_as)
 

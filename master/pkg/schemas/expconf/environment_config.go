@@ -58,21 +58,26 @@ type EnvironmentConfigV0 struct {
 //go:generate ../gen.sh
 // EnvironmentImageMapV0 configures the runtime image.
 type EnvironmentImageMapV0 struct {
-	RawCPU *string `json:"cpu"`
-	RawGPU *string `json:"gpu"`
+	RawCPU  *string `json:"cpu"`
+	RawGPU  *string `json:"gpu"`
+	RawROCM *string `json:"rocm"`
 }
 
 // WithDefaults implements the Defaultable interface.
 func (e EnvironmentImageMapV0) WithDefaults() interface{} {
 	cpu := CPUImage
 	gpu := GPUImage
+	rocm := ROCMImage
 	if e.RawCPU != nil {
 		cpu = *e.RawCPU
 	}
 	if e.RawGPU != nil {
 		gpu = *e.RawGPU
 	}
-	return EnvironmentImageMapV0{RawCPU: &cpu, RawGPU: &gpu}
+	if e.RawROCM != nil {
+		gpu = *e.RawROCM
+	}
+	return EnvironmentImageMapV0{RawCPU: &cpu, RawGPU: &gpu, RawROCM: &rocm}
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -81,6 +86,7 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &plain); err == nil {
 		e.RawCPU = &plain
 		e.RawGPU = &plain
+		e.RawROCM = &plain
 		return nil
 	}
 	type DefaultParser EnvironmentImageMapV0
@@ -90,6 +96,7 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 	}
 	e.RawCPU = jsonItem.RawCPU
 	e.RawGPU = jsonItem.RawGPU
+	e.RawROCM = jsonItem.RawROCM
 	return nil
 }
 
@@ -100,6 +107,8 @@ func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 		return *e.RawCPU
 	case device.GPU:
 		return *e.RawGPU
+	case device.ROCM:
+		return *e.RawROCM
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
@@ -108,8 +117,9 @@ func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 //go:generate ../gen.sh
 // EnvironmentVariablesMapV0 configures the runtime environment variables.
 type EnvironmentVariablesMapV0 struct {
-	RawCPU []string `json:"cpu"`
-	RawGPU []string `json:"gpu"`
+	RawCPU  []string `json:"cpu"`
+	RawGPU  []string `json:"gpu"`
+	RawROCM []string `json:"rocm"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -118,8 +128,10 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &plain); err == nil {
 		e.RawCPU = []string{}
 		e.RawGPU = []string{}
+		e.RawROCM = []string{}
 		e.RawCPU = append(e.RawCPU, plain...)
 		e.RawGPU = append(e.RawGPU, plain...)
+		e.RawROCM = append(e.RawROCM, plain...)
 		return nil
 	}
 	type DefaultParser EnvironmentVariablesMapV0
@@ -129,11 +141,15 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	}
 	e.RawCPU = []string{}
 	e.RawGPU = []string{}
+	e.RawROCM = []string{}
 	if jsonItems.RawCPU != nil {
 		e.RawCPU = append(e.RawCPU, jsonItems.RawCPU...)
 	}
 	if jsonItems.RawGPU != nil {
 		e.RawGPU = append(e.RawGPU, jsonItems.RawGPU...)
+	}
+	if jsonItems.RawROCM != nil {
+		e.RawROCM = append(e.RawROCM, jsonItems.RawROCM...)
 	}
 	return nil
 }
@@ -145,6 +161,8 @@ func (e EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
 		return e.RawCPU
 	case device.GPU:
 		return e.RawGPU
+	case device.ROCM:
+		return e.RawROCM
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}

@@ -214,7 +214,8 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	}
 	env := []string{fmt.Sprintf("DET_TRIAL_ID=%d", trialID)}
 	cont := cproto.Container{ID: "goodcontainer"}
-	spec = overwriteSpec(cont, spec, env, nil, fluentPort)
+	spec, err = overwriteSpec(cont, spec, env, nil, fluentPort)
+	assert.NilError(t, err, "failed to overwrite spec")
 
 	// AND create a container with this env
 	cc, err := docker.ContainerCreate(

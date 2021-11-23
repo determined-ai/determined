@@ -24,6 +24,14 @@ func (e *EnvironmentVariablesMapV0) SetGPU(val []string) {
 	e.RawGPU = val
 }
 
+func (e EnvironmentVariablesMapV0) ROCM() []string {
+	return e.RawROCM
+}
+
+func (e *EnvironmentVariablesMapV0) SetROCM(val []string) {
+	e.RawROCM = val
+}
+
 func (e EnvironmentVariablesMapV0) ParsedSchema() interface{} {
 	return schemas.ParsedEnvironmentVariablesMapV0()
 }

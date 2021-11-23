@@ -436,8 +436,6 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 			switch p.slotType {
 			case device.CPU:
 				resourceName = "CPU slots"
-			case device.GPU:
-				fallthrough
 			default:
 				resourceName = "GPUs"
 			}

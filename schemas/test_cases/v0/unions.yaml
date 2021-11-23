@@ -123,6 +123,7 @@
   case:
     cpu: "alpine"
     gpu: "alpine"
+    rocm: "alpine"
 
 - name: environment variables list of strings (valid)
   sane_as:
@@ -137,6 +138,8 @@
     cpu:
       - "ABCD=1234"
     gpu:
+      - "ABCD=1234"
+    rocm:
       - "ABCD=1234"
 
 - name: whole environment with no objects
@@ -154,8 +157,11 @@
     image:
       cpu: "alpine"
       gpu: "alpine"
+      rocm: "alpine"
     environment_variables:
       cpu:
         - "ABCD=1234"
       gpu:
+        - "ABCD=1234"
+      rocm:
         - "ABCD=1234"

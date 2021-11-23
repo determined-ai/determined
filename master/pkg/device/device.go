@@ -12,8 +12,10 @@ type Type string
 const (
 	// CPU represents a CPU device.
 	CPU Type = "cpu"
-	// GPU represents a GPU device.
+	// GPU represents a CUDA device.
 	GPU Type = "gpu"
+	// ROCM represents an AMD GPU device.
+	ROCM Type = "rocm"
 	// ZeroSlot represents cpu devices on agents where only GPUs are modeled.
 	ZeroSlot Type = ""
 )
@@ -25,6 +27,8 @@ func (t Type) Proto() devicev1.Type {
 		return devicev1.Type_TYPE_CPU
 	case GPU:
 		return devicev1.Type_TYPE_GPU
+	case ROCM:
+		return devicev1.Type_TYPE_ROCM
 	case ZeroSlot:
 		return devicev1.Type_TYPE_UNSPECIFIED
 	default:

@@ -7,7 +7,8 @@
     "required": [],
     "eventuallyRequired": [
         "cpu",
-        "gpu"
+        "gpu",
+        "rocm"
     ],
     "properties": {
         "cpu": {
@@ -18,6 +19,13 @@
             "default": null
         },
         "gpu": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "rocm": {
             "type": [
                 "string",
                 "null"

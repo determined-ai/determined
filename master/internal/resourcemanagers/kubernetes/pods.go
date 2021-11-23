@@ -501,6 +501,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 			milliCPUs := resources.MilliValue() - p.nodeToSystemResourceRequests[node.Name]
 			numSlots = int64(float32(milliCPUs) / (1000. * p.slotResourceRequests.CPU))
 			deviceType = device.CPU
+		case device.ROCM:
+			panic("ROCm is not supported on k8s yet")
 		case device.GPU:
 			fallthrough
 		default:

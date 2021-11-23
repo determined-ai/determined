@@ -126,6 +126,8 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	switch k.SlotType {
 	case device.CPU, device.GPU:
 		break
+	case device.ROCM:
+		checkSlotType = errors.Errorf("rocm slot_type is not supported yet on k8s")
 	default:
 		checkSlotType = errors.Errorf("slot_type must be either gpu or cpu")
 	}

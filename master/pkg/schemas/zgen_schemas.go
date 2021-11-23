@@ -739,7 +739,8 @@ var (
     "required": [],
     "eventuallyRequired": [
         "cpu",
-        "gpu"
+        "gpu",
+        "rocm"
     ],
     "properties": {
         "cpu": {
@@ -750,6 +751,13 @@ var (
             "default": null
         },
         "gpu": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "rocm": {
             "type": [
                 "string",
                 "null"
@@ -796,6 +804,16 @@ var (
             }
         },
         "gpu": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "rocm": {
             "type": [
                 "array",
                 "null"

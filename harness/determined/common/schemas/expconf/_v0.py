@@ -225,12 +225,14 @@ class EnvironmentImageV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment-image.json"
     cpu: Optional[str] = None
     gpu: Optional[str] = None
+    rocm: Optional[str] = None
 
     @schemas.auto_init
     def __init__(
         self,
         cpu: Optional[str] = None,
         gpu: Optional[str] = None,
+        rocm: Optional[str] = None,
     ) -> None:
         pass
 
@@ -238,7 +240,7 @@ class EnvironmentImageV0(schemas.SchemaBase):
     def from_dict(cls, d: Union[dict, str], prevalidated: bool = False) -> "EnvironmentImageV0":
         # Accept either a string or a map of strings to strings.
         if isinstance(d, str):
-            d = {"cpu": d, "gpu": d}
+            d = {"cpu": d, "gpu": d, "rocm": d}
         return super().from_dict(d, prevalidated)
 
     def runtime_defaults(self) -> None:
@@ -250,18 +252,22 @@ class EnvironmentImageV0(schemas.SchemaBase):
             self.gpu = (
                 "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
             )
+        if self.rocm is None:
+            self.rocm = "determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment-variables.json"
     cpu: Optional[List[str]] = None
     gpu: Optional[List[str]] = None
+    rocm: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
         self,
         cpu: Optional[List[str]] = None,
         gpu: Optional[List[str]] = None,
+        rocm: Optional[List[str]] = None,
     ) -> None:
         pass
 
@@ -271,7 +277,7 @@ class EnvironmentVariablesV0(schemas.SchemaBase):
     ) -> "EnvironmentVariablesV0":
         # Accept either a list of strings or a map of strings to lists of strings.
         if isinstance(d, (list, tuple)):
-            d = {"cpu": d, "gpu": d}
+            d = {"cpu": d, "gpu": d, "rocm": d}
         return super().from_dict(d, prevalidated)
 
 

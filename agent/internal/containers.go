@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -121,7 +122,17 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:
-		msg.Spec = c.overwriteSpec(msg.Container, msg.Spec)
+		enrichedSpec, err := c.overwriteSpec(msg.Container, msg.Spec)
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("failed to overwrite spec")
+			if ctx.ExpectingResponse() {
+				ctx.Respond(errors.Wrap(err, "failed to overwrite spec"))
+			}
+			return nil
+		}
+		// actually overwrite the spec.
+		msg.Spec = enrichedSpec
+
 		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
 			if ctx.ExpectingResponse() {
@@ -161,7 +172,8 @@ func (c *containerManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Cont
 	}
 }
 
-func (c *containerManager) overwriteSpec(cont cproto.Container, spec cproto.Spec) cproto.Spec {
+func (c *containerManager) overwriteSpec(cont cproto.Container, spec cproto.Spec) (
+	cproto.Spec, error) {
 	return overwriteSpec(cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort)
 }
 
@@ -171,7 +183,7 @@ func overwriteSpec(
 	globalEnvVars []string,
 	labels map[string]string,
 	fluentPort int,
-) cproto.Spec {
+) (cproto.Spec, error) {
 	spec.RunSpec.HostConfig.AutoRemove = true
 	spec.RunSpec.ContainerConfig.Env = append(
 		spec.RunSpec.ContainerConfig.Env, globalEnvVars...)
@@ -188,8 +200,16 @@ func overwriteSpec(
 		spec.RunSpec.ContainerConfig.Labels[k] = v
 	}
 
-	spec.RunSpec.HostConfig.DeviceRequests = append(
-		spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
+	if len(cont.DeviceUUIDsByType(device.GPU)) > 0 {
+		spec.RunSpec.HostConfig.DeviceRequests = append(
+			spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
+	}
+
+	if len(cont.DeviceUUIDsByType(device.ROCM)) > 0 {
+		if err := injectRocmDeviceRequests(cont, &spec.RunSpec.HostConfig); err != nil {
+			return cproto.Spec{}, err
+		}
+	}
 
 	if spec.RunSpec.UseFluentLogging {
 		spec.RunSpec.HostConfig.LogConfig = dcontainer.LogConfig{
@@ -205,7 +225,7 @@ func overwriteSpec(
 		}
 	}
 
-	return spec
+	return spec, nil
 }
 
 func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
@@ -220,6 +240,45 @@ func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 			DeviceIDs:    gpuUUIDs,
 		},
 	}
+}
+
+func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
+	uuids := cont.DeviceUUIDsByType(device.ROCM)
+
+	if len(uuids) == 0 {
+		return errors.New("no rocm device uuids")
+	}
+
+	hostConfig.SecurityOpt = append(
+		hostConfig.SecurityOpt, "seccomp=unconfined")
+	hostConfig.GroupAdd = append(hostConfig.GroupAdd, "video")
+	mappedDevices := []string{"/dev/kfd"}
+
+	for _, uuid := range uuids {
+		rocmDevice := getRocmDeviceByUUID(uuid)
+		devPaths := []string{
+			fmt.Sprintf("/dev/dri/by-path/pci-%s-card", strings.ToLower(rocmDevice.PCIBus)),
+			fmt.Sprintf("/dev/dri/by-path/pci-%s-render", strings.ToLower(rocmDevice.PCIBus)),
+		}
+		for _, symlink := range devPaths {
+			resolved, err := filepath.EvalSymlinks(symlink)
+			if err != nil {
+				return err
+			}
+			mappedDevices = append(mappedDevices, resolved)
+		}
+	}
+
+	for _, mappedDevice := range mappedDevices {
+		hostConfig.Devices = append(
+			hostConfig.Devices, dcontainer.DeviceMapping{
+				PathOnHost:        mappedDevice,
+				PathInContainer:   mappedDevice,
+				CgroupPermissions: "rwm",
+			})
+	}
+
+	return nil
 }
 
 func containerEnvVars(cont cproto.Container) []string {

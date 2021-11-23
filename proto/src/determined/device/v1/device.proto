@@ -9,8 +9,10 @@ enum Type {
   TYPE_UNSPECIFIED = 0;
   // A CPU device.
   TYPE_CPU = 1;
-  // A GPU device.
+  // CUDA device.
   TYPE_GPU = 2;
+  // ROCM.
+  TYPE_ROCM = 3;
 }
 
 // Device represents a single computational device on an agent.

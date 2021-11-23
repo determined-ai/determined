@@ -33,6 +33,7 @@
       image:
         cpu: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-825e8ee
         gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee
+        rocm: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da
       pod_spec: null
       ports:
         qwer: 1234
@@ -159,10 +160,12 @@
       environment_variables:
         cpu: []
         gpu: []
+        rocm: []
       force_pull_image: false
       image:
         cpu: '*'
         gpu: '*'
+        rocm: '*'
       pod_spec:
       ports: {}
       registry_auth: null

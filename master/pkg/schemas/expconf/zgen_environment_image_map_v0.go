@@ -30,6 +30,17 @@ func (e *EnvironmentImageMapV0) SetGPU(val string) {
 	e.RawGPU = &val
 }
 
+func (e EnvironmentImageMapV0) ROCM() string {
+	if e.RawROCM == nil {
+		panic("You must call WithDefaults on EnvironmentImageMapV0 before .ROCM")
+	}
+	return *e.RawROCM
+}
+
+func (e *EnvironmentImageMapV0) SetROCM(val string) {
+	e.RawROCM = &val
+}
+
 func (e EnvironmentImageMapV0) ParsedSchema() interface{} {
 	return schemas.ParsedEnvironmentImageMapV0()
 }

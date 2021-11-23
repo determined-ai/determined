@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	unknownNvidiaVersion = "Unknown"
+	unknownGPUDriverVersion = "Unknown"
 )
 
 func getNvidiaVersion() (string, error) {
@@ -30,7 +30,7 @@ func getNvidiaVersion() (string, error) {
 	record, err := r.Read()
 	switch {
 	case err == io.EOF:
-		return unknownNvidiaVersion, nil
+		return unknownGPUDriverVersion, nil
 	case err != nil:
 		return "", errors.Wrap(err, "error parsing output of nvidia-smi as csv")
 	case len(record) != 1:

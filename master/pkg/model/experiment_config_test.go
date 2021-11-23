@@ -388,8 +388,9 @@ func TestExperiment(t *testing.T) {
 		},
 		Environment: Environment{
 			Image: RuntimeItem{
-				CPU: "my_image",
-				GPU: "my_image",
+				CPU:  "my_image",
+				GPU:  "my_image",
+				ROCM: "my_image",
 			},
 		},
 		Reproducibility: ReproducibilityConfig{
@@ -453,8 +454,7 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 	myTestImage := "my-test-image"
 	expected.Environment.Image.CPU = myTestImage
 	expected.Environment.Image.GPU = myTestImage
-	expected.Environment.Image.GPU = myTestImage
-	expected.Environment.Image.GPU = myTestImage
+	expected.Environment.Image.ROCM = myTestImage
 	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)

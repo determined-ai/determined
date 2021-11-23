@@ -796,7 +796,8 @@ schemas = {
     "required": [],
     "eventuallyRequired": [
         "cpu",
-        "gpu"
+        "gpu",
+        "rocm"
     ],
     "properties": {
         "cpu": {
@@ -807,6 +808,13 @@ schemas = {
             "default": null
         },
         "gpu": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "rocm": {
             "type": [
                 "string",
                 "null"
@@ -861,6 +869,16 @@ schemas = {
             }
         },
         "gpu": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "rocm": {
             "type": [
                 "array",
                 "null"

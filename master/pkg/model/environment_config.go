@@ -38,8 +38,9 @@ type Environment struct {
 
 // RuntimeItem configures the runtime image.
 type RuntimeItem struct {
-	CPU string `json:"cpu,omitempty"`
-	GPU string `json:"gpu,omitempty"`
+	CPU  string `json:"cpu,omitempty"`
+	GPU  string `json:"gpu,omitempty"`
+	ROCM string `json:"rocm,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -48,6 +49,7 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &plain); err == nil {
 		r.CPU = plain
 		r.GPU = plain
+		r.ROCM = plain
 		return nil
 	}
 	type DefaultParser RuntimeItem
@@ -57,6 +59,7 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 	}
 	r.CPU = jsonItem.CPU
 	r.GPU = jsonItem.GPU
+	r.ROCM = jsonItem.ROCM
 	return nil
 }
 
@@ -67,6 +70,8 @@ func (r RuntimeItem) For(deviceType device.Type) string {
 		return r.CPU
 	case device.GPU:
 		return r.GPU
+	case device.ROCM:
+		return r.ROCM
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
@@ -74,8 +79,9 @@ func (r RuntimeItem) For(deviceType device.Type) string {
 
 // RuntimeItems configures the runtime environment variables.
 type RuntimeItems struct {
-	CPU []string `json:"cpu,omitempty"`
-	GPU []string `json:"gpu,omitempty"`
+	CPU  []string `json:"cpu,omitempty"`
+	GPU  []string `json:"gpu,omitempty"`
+	ROCM []string `json:"rocm,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -84,6 +90,7 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &plain); err == nil {
 		r.CPU = append(r.CPU, plain...)
 		r.GPU = append(r.GPU, plain...)
+		r.ROCM = append(r.ROCM, plain...)
 		return nil
 	}
 	type DefaultParser RuntimeItems
@@ -93,6 +100,7 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 	}
 	r.CPU = append(r.CPU, jsonItems.CPU...)
 	r.GPU = append(r.GPU, jsonItems.GPU...)
+	r.ROCM = append(r.ROCM, jsonItems.ROCM...)
 	return nil
 }
 
@@ -103,6 +111,8 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 		return r.CPU
 	case device.GPU:
 		return r.GPU
+	case device.ROCM:
+		return r.ROCM
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
