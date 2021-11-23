@@ -41,6 +41,20 @@ const ModelVersionHeader: React.FC<Props> = (
         || user?.username === modelVersion.model.username
         || user?.username === modelVersion.username;
 
+  const showConfirmDelete = useCallback(() => {
+    Modal.confirm({
+      closable: true,
+      content: `Are you sure you want to delete this version "Version ${modelVersion.version}" 
+            from this model?`,
+      icon: null,
+      maskClosable: true,
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: onDeregisterVersion,
+      title: 'Confirm Delete',
+    });
+  }, [ onDeregisterVersion, modelVersion.version ]);
+
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content:
@@ -96,11 +110,11 @@ const ModelVersionHeader: React.FC<Props> = (
         danger: true,
         disabled: !isDeletable,
         key: 'deregister-version',
-        onClick: () => setShowDownloadModel(true),
+        onClick: showConfirmDelete,
         text: 'Deregister Version',
       },
     ];
-  }, [ isDeletable ]);
+  }, [ isDeletable, showConfirmDelete ]);
 
   const referenceText = useMemo(() => {
     return (
@@ -120,20 +134,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   const handleCopy = useCallback(async () => {
     await copyToClipboard(referenceText);
   }, [ referenceText ]);
-
-  const showConfirmDelete = useCallback((version: ModelVersion) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this version "Version ${version.version}" 
-      from this model?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Version',
-      okType: 'danger',
-      onOk: () => onDeregisterVersion(),
-      title: 'Confirm Delete',
-    });
-  }, [ onDeregisterVersion ]);
 
   return (
     <header className={css.base}>
