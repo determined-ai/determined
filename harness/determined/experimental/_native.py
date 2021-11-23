@@ -152,7 +152,7 @@ def test_one_batch(
 
         controller_class = trial_class.trial_controller_class
         assert controller_class is not None
-        controller_class.pre_execute_hook(env, None)
+        controller_class.pre_execute_hook(env, False)
 
         trial_context = trial_class.trial_context_class(generic_context, env)
         logging.info(f"Creating {trial_class.__name__}.")

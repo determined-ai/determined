@@ -8,6 +8,7 @@ from typing import Iterator, Optional
 
 import determined as det
 from determined import _generic, horovod, load
+from determined._trial_controller import DistributedBackend
 from determined.common.api import certs
 
 
@@ -75,12 +76,6 @@ def main(chief_ip: Optional[str]) -> int:
         on_cluster=True,
     )
 
-    multi_machine_trial = len(info.container_addrs) > 1
-    multi_slot_trial = (env.experiment_config.slots_per_trial() > 1
-                        and not env.experiment_config.native_parallel_enabled())
-
-    distributed_backend = "horovod" if multi_machine_trial or multi_slot_trial else None
-
     config_logging(env.debug)
 
     with maybe_periodic_stacktraces(env.debug):
@@ -90,13 +85,16 @@ def main(chief_ip: Optional[str]) -> int:
         # user implemented.
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
+        use_horovod = DistributedBackend.HOROVOD.value
+
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
-        controller_class.pre_execute_hook(env, distributed_backend)
+        controller_class.pre_execute_hook(env, use_horovod)
 
         # Step 3: Now that horovod is initialized, we can build a RankInfo object.
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
-        if distributed_backend == "horovod":
+
+        if use_horovod:
             distributed = _generic.DistributedContext(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),

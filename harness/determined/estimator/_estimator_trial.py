@@ -406,11 +406,10 @@ class EstimatorTrialController(det.TrialController):
     def pre_execute_hook(
         cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
-        distributed_backend: Optional[str] = None,
+        use_horovod: bool,
     ) -> None:
         # Initialize the correct horovod.
-        print(f"pre execute {distributed_backend}")
-        if distributed_backend == "horovod":
+        if use_horovod:
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
             hvd.init()
 
@@ -428,7 +427,7 @@ class EstimatorTrialController(det.TrialController):
         # the GPUs. We set the default session before importing any user code to prevent this
         # this problem. This default session does not have any effect within the Estimator itself.
         cls._set_default_tensorflow_session(env=env,
-                                            session_config=None, use_horovod=distributed_backend == "horovod")
+                                            session_config=None, use_horovod=use_horovod)
 
         logging.debug("Applying tf.estimator patches.")
 

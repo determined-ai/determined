@@ -247,7 +247,7 @@ def make_trial_controller_from_trial_implementation(
 
     controller_class = trial_class.trial_controller_class
     assert controller_class is not None
-    controller_class.pre_execute_hook(env, None)
+    controller_class.pre_execute_hook(env, False)
 
     trial_context = trial_class.trial_context_class(generic_context, env)
     trial_inst = trial_class(trial_context)

@@ -53,7 +53,7 @@ class TrialController(metaclass=abc.ABCMeta):
     @classmethod
     @abc.abstractmethod
     def pre_execute_hook(
-        cls: Type["TrialController"], env: det.EnvContext, distributed_backend: Optional[str]
+        cls: Type["TrialController"], env: det.EnvContext, use_horovod: bool
     ) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)
