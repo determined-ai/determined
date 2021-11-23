@@ -24,6 +24,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
@@ -712,6 +714,9 @@ func (m *Master) Run(ctx context.Context) error {
 	// good still to avoid overwhelming us on restart after a crash.
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
+	m.system.ActorOf(job.JobsActorAddr, &job.Jobs{
+		RMRef: sproto.GetCurrentRM(m.system),
+	})
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
@@ -839,6 +844,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.echo,
 		m.db,
+		m.config,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)

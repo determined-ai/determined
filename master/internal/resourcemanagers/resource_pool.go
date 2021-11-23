@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -243,6 +244,11 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
 
+	case
+		job.GetJobQ,
+		job.GetJobQStats:
+		return rp.receiveJobQueueMsg(ctx)
+
 	case sproto.GetTaskHandler:
 		reschedule = false
 		ctx.Respond(getTaskHandler(rp.taskList, msg.ID))
@@ -332,6 +338,18 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		state.draining = drain
 		state.enabled = false
 
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case job.GetJobQStats:
+		ctx.Respond(*jobStats(rp))
+	case job.GetJobQ:
+		ctx.Respond(rp.scheduler.JobQInfo(rp))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

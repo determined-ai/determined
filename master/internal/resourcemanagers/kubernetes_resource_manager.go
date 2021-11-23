@@ -4,6 +4,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
+
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -18,6 +21,9 @@ import (
 
 const kubernetesScheduler = "kubernetes"
 const kubernetesDummyResourcePool = "kubernetes"
+
+// KubernetesDefaultPriority is the default K8 resource manager priority.
+const KubernetesDefaultPriority = 50
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -100,6 +106,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
+
+	case
+		job.GetJobQ,
+		job.GetJobSummary,
+		job.GetJobQStats:
+		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
 		reschedule = false
@@ -229,6 +241,48 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
 	k.reqList.AddTask(&msg)
+}
+
+func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch ctx.Message().(type) {
+	case job.GetJobQ:
+		ctx.Respond(k.jobQInfo())
+
+	case job.GetJobQStats:
+		ctx.Respond(k.getJobQStats())
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+// TODO: consolidate these jq functions into the job queue.
+func (k *kubernetesResourceManager) getJobQStats() *jobv1.QueueStats {
+	stats := &jobv1.QueueStats{}
+	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
+	counted := make(map[model.JobID]bool)
+	for _, req := range reqs {
+		if req.JobID == nil || counted[*req.JobID] {
+			continue
+		}
+		counted[*req.JobID] = true
+
+		if req.Preemptible {
+			stats.PreemptibleCount++
+		}
+		if req.State == job.SchedulingStateQueued {
+			stats.QueuedCount++
+		} else {
+			stats.ScheduledCount++
+		}
+	}
+	return stats
+}
+
+func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
+	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
+	jobQinfo, _ := mergeToJobQInfo(reqs)
+	return jobQinfo
 }
 
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {

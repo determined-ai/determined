@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/determined-ai/determined/master/pkg/cproto"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -11,7 +13,9 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -20,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
@@ -38,8 +43,10 @@ func createGenericCommandActor(
 	db *db.PgDB,
 	taskID model.TaskID,
 	taskType model.TaskType,
+	jobID model.JobID,
 	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
+	mConfig *config.Config,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
@@ -52,6 +59,8 @@ func createGenericCommandActor(
 		taskType:       taskType,
 		jobType:        jobType,
 		serviceAddress: &serviceAddress,
+		jobID:          jobID,
+		mConfig:        mConfig,
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -76,11 +85,14 @@ type command struct {
 	taskID         model.TaskID
 	taskType       model.TaskType
 	jobType        model.JobType
+	jobID          model.JobID
 	allocationID   model.AllocationID
 	allocation     *actor.Ref
 	serviceAddress *string
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
+	rmJobInfo      *job.RMJobInfo
+	mConfig        *config.Config
 }
 
 // Receive implements the actor.Actor interface.
@@ -90,18 +102,21 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddJob(&model.Job{
-			JobID:   c.jobID(),
+			JobID:   c.jobID,
 			JobType: c.jobType,
 			OwnerID: &c.Base.Owner.ID,
 		}); err != nil {
 			return errors.Wrapf(err, "persisting job %v", c.taskID)
 		}
+
 		if err := c.db.AddTask(&model.Task{
 			TaskID:    c.taskID,
 			TaskType:  c.taskType,
 			StartTime: c.registeredTime,
-			JobID:     c.jobID(),
+			JobID:     c.jobID,
 		}); err != nil {
+			// TODO why do we persist the task when the underlying command isn't persisted?
+			// or is it now persisted?
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 
@@ -148,6 +163,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		allocation := task.NewAllocation(sproto.AllocateRequest{
 			AllocationID: c.allocationID,
 			TaskID:       c.taskID,
+			JobID:        &c.jobID,
 			Name:         c.Config.Description,
 			TaskActor:    ctx.Self(),
 			Group:        ctx.Self(),
@@ -165,6 +181,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 			LogBasedReady: logBasedReadinessConfig,
 		}, c.db, sproto.GetRM(ctx.Self().System()))
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
+
+	case *job.RMJobInfo:
+		c.rmJobInfo = msg
+
+	case *apiv1.GetJobsRequest:
+		if msg.ResourcePool != c.Config.Resources.ResourcePool {
+			ctx.Respond(nil)
+			return nil
+		}
+		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:
 		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
@@ -213,6 +239,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillNotebookRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
+		c.clearJobInfo()
 	case *apiv1.SetNotebookPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
@@ -229,6 +256,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillCommandRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
+		c.clearJobInfo()
+
 	case *apiv1.SetCommandPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
@@ -245,6 +274,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillShellRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
+		c.clearJobInfo()
+
 	case *apiv1.SetShellPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
@@ -261,6 +292,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTensorboardRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
+		c.clearJobInfo()
+
 	case *apiv1.SetTensorboardPriorityRequest:
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
@@ -295,7 +328,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
-		JobId:          c.jobID().String(),
+		JobId:          c.jobID.String(),
 	}
 }
 
@@ -310,7 +343,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Username:     c.Base.Owner.Username,
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
-		JobId:        c.jobID().String(),
+		JobId:        c.jobID.String(),
 	}
 }
 
@@ -329,7 +362,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		ExitStatus:     c.exitStatus.String(),
 		Addresses:      toProto(state.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
-		JobId:          c.jobID().String(),
+		JobId:          c.jobID.String(),
 	}
 }
 
@@ -347,7 +380,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
-		JobId:          c.jobID().String(),
+		JobId:          c.jobID.String(),
 	}
 }
 
@@ -371,14 +404,36 @@ func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationStat
 	return c.lastState
 }
 
-func (c *command) jobID() model.JobID {
-	return model.JobID(c.taskID)
-}
-
 func toProto(as []cproto.Address) []*structpb.Struct {
 	res := make([]*structpb.Struct, 0)
 	for _, a := range as {
 		res = append(res, protoutils.ToStruct(a))
 	}
 	return res
+}
+
+func (c *command) toV1Job() *jobv1.Job {
+	j := jobv1.Job{
+		JobId:          c.jobID.String(),
+		EntityId:       string(c.taskID),
+		Type:           c.jobType.Proto(),
+		ResourcePool:   c.Config.Resources.ResourcePool,
+		SubmissionTime: timestamppb.New(c.registeredTime),
+		Username:       c.Base.Owner.Username,
+		Weight:         c.Config.Resources.Weight,
+		Name:           c.Config.Description,
+	}
+
+	j.IsPreemptible = config.ReadPreemptionStatus(c.mConfig, j.ResourcePool, &c.Config)
+	j.Priority = int32(config.ReadPriority(c.mConfig, j.ResourcePool, &c.Config))
+	j.Weight = config.ReadWeight(c.mConfig, j.ResourcePool, &c.Config)
+
+	job.UpdateJobQInfo(&j, c.rmJobInfo)
+
+	return &j
+}
+
+// clearJobInfo clears the job info from the command.
+func (c *command) clearJobInfo() {
+	c.rmJobInfo = nil
 }
