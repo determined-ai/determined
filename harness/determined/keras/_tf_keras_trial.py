@@ -320,7 +320,7 @@ class TFKerasTrialController(det.TrialController):
 
         keras._check_if_aggregation_frequency_will_work(
             model=self.model, use_horovod=self.use_horovod,
-            aggregation_frequency=self.context.aggregation_frequency
+            aggregation_frequency=self.context._aggregation_frequency
         )
 
         self.training_data = train_config.training_data

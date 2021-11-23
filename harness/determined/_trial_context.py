@@ -153,9 +153,4 @@ class TrialContext(metaclass=abc.ABCMeta):
     def get_initial_batch(self) -> int:
         return self.env.latest_batch
 
-    def get_optimizations_config(self) -> Dict[str, Any]:
-        """
-        Return the optimizations configuration.
-        """
-        return self.get_experiment_config().get("optimizations", {})
 

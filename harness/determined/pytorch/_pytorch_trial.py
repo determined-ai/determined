@@ -321,7 +321,7 @@ class PyTorchTrialController(det.TrialController):
             return
 
         if lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH:
-            start_idx = batch_idx - self.context.aggregation_frequency + 1
+            start_idx = batch_idx - self.context._aggregation_frequency + 1
             for i in range(start_idx, batch_idx + 1):
                 if (i + 1) % lr_scheduler._frequency == 0:
                     lr_scheduler.step()
@@ -331,7 +331,7 @@ class PyTorchTrialController(det.TrialController):
         elif lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_EPOCH:
             # We will step if the next optimizer step will land in the next epoch.
             epoch_idx = self.get_epoch_idx(batch_idx)
-            next_steppable_batch = batch_idx + self.context.aggregation_frequency
+            next_steppable_batch = batch_idx + self.context._aggregation_frequency
             next_batch_epoch_idx = self.get_epoch_idx(next_steppable_batch)
             for e in range(epoch_idx, next_batch_epoch_idx):
                 if (e + 1) % lr_scheduler._frequency == 0:
@@ -431,7 +431,7 @@ class PyTorchTrialController(det.TrialController):
             per_batch_metrics.append(tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
-        if self.context.distributed.size > 1 and self.use_horovod and self.context.average_training_metrics:
+        if self.context.distributed.size > 1 and self.use_horovod and self.context._average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
                 per_batch_metrics = self._average_training_metrics(per_batch_metrics)
         num_inputs *= self.context.distributed.get_size()

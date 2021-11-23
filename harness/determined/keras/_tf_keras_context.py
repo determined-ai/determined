@@ -47,9 +47,9 @@ class TFKerasTrialContext(det.TrialContext):
         self.compile_args = None  # type: Optional[inspect.BoundArguments]
         self.train_config = None  # type: Optional[TFKerasTrainConfig]
 
-        optimizations_config = self.get_optimizations_config()
-        self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
-        self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
+        optimizations_config = self.env.experiment_config.get_optimizations_config()
+        self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+        self._average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
 
         self._optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._wrapped_optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
@@ -289,12 +289,12 @@ class TFKerasTrialContext(det.TrialContext):
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
         hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
-            "average_aggregated_gradients": self.average_aggregated_gradients,
+            "average_aggregated_gradients": self._average_aggregated_gradients,
         }  # type: Dict[str, Any]
         if "aggregation_frequency" in hvd_sig.parameters:
-            horovod_kwargs["aggregation_frequency"] = self.aggregation_frequency
+            horovod_kwargs["aggregation_frequency"] = self._aggregation_frequency
         else:
-            horovod_kwargs["backward_passes_per_step"] = self.aggregation_frequency
+            horovod_kwargs["backward_passes_per_step"] = self._aggregation_frequency
 
         return hvd.DistributedOptimizer(optimizer, **horovod_kwargs)
 

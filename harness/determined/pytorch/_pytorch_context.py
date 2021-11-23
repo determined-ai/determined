@@ -82,11 +82,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
-        optimizations_config = self.get_optimizations_config()
-        self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
-        self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
-        self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
-        self.average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
+        optimizations_config = self.env.experiment_config.get_optimizations_config()
+        self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+        self._fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
+        self._average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
+        self._average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
@@ -147,7 +147,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             model = model.to(self.device)
             if not self.distributed.size > 1 and self.n_gpus > 1:
                 check.eq(
-                    self.aggregation_frequency,
+                    self._aggregation_frequency,
                     1,
                     "Please enable `optimized_parallel` to use aggregation "
                     "frequency greater than 1 for single machine multi-GPU "
@@ -204,12 +204,12 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             )
 
             if self.distributed.size > 1:
-                use_compression = self.fp16_compression
+                use_compression = self._fp16_compression
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
                     backward_passes_per_step=backward_passes_per_step
-                    * self.aggregation_frequency,
+                    * self._aggregation_frequency,
                     compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
                 )
                 logging.debug(
@@ -444,7 +444,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if self.distributed.size > 1:
             check.eq(
-                self.aggregation_frequency,
+                self._aggregation_frequency,
                 1,
                 "Mixed precision training (AMP) is not supported with "
                 "aggregation frequency > 1.",
@@ -485,7 +485,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             return True
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
-        return (self._current_batch_idx + 1) % self.aggregation_frequency == 0
+        return (self._current_batch_idx + 1) % self._aggregation_frequency == 0
 
     def backward(
         self,
@@ -623,7 +623,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         """
 
         check.true(
-            auto_zero_grads or self.aggregation_frequency == 1,
+            auto_zero_grads or self._aggregation_frequency == 1,
             "if optimizations.aggregation_frequency is larger than 1, "
             "you can only set auto_zero_grads to be true. ",
         )
@@ -645,9 +645,9 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             else apex.amp.master_params(optimizer)
         )
 
-        if self.average_aggregated_gradients:
+        if self._average_aggregated_gradients:
             self._average_gradients(
-                parameters=parameters, divisor=self.aggregation_frequency
+                parameters=parameters, divisor=self._aggregation_frequency
             )
 
         if clip_grads is not None:
