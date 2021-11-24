@@ -42,6 +42,7 @@ type ExperimentConfigV0 struct {
 	RawSearcher                 *SearcherConfigV0           `json:"searcher"`
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
+	RawLaunch                   []string                    `json:"launch"`
 }
 
 // Unit implements the model.InUnits interface.

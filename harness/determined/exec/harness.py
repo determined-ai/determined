@@ -2,6 +2,7 @@ import argparse
 import contextlib
 import faulthandler
 import logging
+import os
 import sys
 from typing import Iterator, Optional
 
@@ -85,6 +86,7 @@ def main(chief_ip: Optional[str]) -> int:
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
         use_horovod = DistributedBackend.HOROVOD.value
+        use_torch_distributed = DistributedBackend.TORCH.value
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
         controller_class.pre_execute_hook(env, use_horovod)
@@ -101,6 +103,17 @@ def main(chief_ip: Optional[str]) -> int:
                 local_size=horovod.hvd.local_size(),
                 cross_rank=horovod.hvd.cross_rank(),
                 cross_size=horovod.hvd.cross_size(),
+                chief_ip=chief_ip,
+                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
+            )
+        elif use_torch_distributed:
+            distributed = _generic.DistributedContext(
+                rank=int(os.environ["RANK"]),
+                size=int(os.environ["WORLD_SIZE"]),
+                local_rank=int(os.environ["LOCAL_RANK"]),
+                local_size=int(os.environ["LOCAL_WORLD_SIZE"]),
+                cross_rank=int(os.environ["GROUP_RANK"]),
+                cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )

@@ -12,6 +12,7 @@ from determined.common import check
 
 class DistributedBackend(Enum):
     HOROVOD = bool(strtobool(os.environ.get("USE_HOROVOD", "False")))
+    TORCH = bool(strtobool(os.environ.get("USE_TORCH_DISTRIBUTED", "False")))
 
 
 class TrialController(metaclass=abc.ABCMeta):

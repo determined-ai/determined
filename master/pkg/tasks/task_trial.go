@@ -98,7 +98,9 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		s.TrialID,
 	)
 
-	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
+	trialEntrypoint := []string{"/run/determined/train/entrypoint.sh"}
+
+	res.Entrypoint = append(trialEntrypoint, s.ExperimentConfig.RawLaunch...)
 
 	envVars := map[string]string{
 		"DET_EXPERIMENT_ID":      strconv.Itoa(s.ExperimentID),
