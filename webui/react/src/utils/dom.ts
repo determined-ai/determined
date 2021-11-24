@@ -16,9 +16,8 @@ export const copyToClipboard = async (content: string): Promise<void> => {
   try {
     // This method is only available on https and localhost
     await navigator.clipboard.writeText(content);
-    return;
   } catch (e) {
-    return Promise.reject(new Error('Unable to write to clipboard.'));
+    throw new Error('Unable to write to clipboard.');
   }
 };
 
@@ -28,6 +27,6 @@ export const readFromClipboard = async (): Promise<string> => {
     const content = await navigator.clipboard.readText();
     return content;
   } catch (e) {
-    return Promise.reject(new Error('Unable to read from clipboard.'));
+    throw new Error('Unable to read from clipboard.');
   }
 };
