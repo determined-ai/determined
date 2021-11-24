@@ -37,10 +37,10 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 	return isAdded, jobActors
 }
 
-func jobStats(rp *ResourcePool) *jobv1.QueueStats {
+func jobStats(taskList *taskList) *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}
 	counted := make(map[model.JobID]bool)
-	for it := rp.taskList.iterator(); it.next(); {
+	for it := taskList.iterator(); it.next(); {
 		req := it.value()
 		if req.JobID == nil || counted[*req.JobID] {
 			continue
