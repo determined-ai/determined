@@ -5,6 +5,7 @@ package kubernetes
 import (
 	"fmt"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"net/http"
 	"strconv"
 
@@ -361,7 +362,7 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 				currState = job.SchedulingStateScheduled
 			}
 			if currState != state {
-				ctx.Tell(p.cluster, UpdatePodStatus{
+				ctx.Tell(p.cluster, sproto.UpdatePodStatus{
 					ContainerID: containerID,
 					State:       state,
 				})
