@@ -4,10 +4,11 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"net/http"
 	"strconv"
+
+	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"

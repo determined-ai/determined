@@ -3,9 +3,10 @@ package sproto
 import (
 	"bytes"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/job"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/job"
 
 	"github.com/docker/docker/pkg/jsonmessage"
 
