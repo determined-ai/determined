@@ -4,8 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
-
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -249,35 +247,11 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		ctx.Respond(k.jobQInfo())
 
 	case job.GetJobQStats:
-		ctx.Respond(k.getJobQStats())
+		ctx.Respond(jobStats(k.reqList))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
-}
-
-// TODO: consolidate these jq functions into the job queue.
-func (k *kubernetesResourceManager) getJobQStats() *jobv1.QueueStats {
-	stats := &jobv1.QueueStats{}
-	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(k.reqList, k.groups, trueFilter)
-	reqs := orderTaskMaps(pendingMap, scheduledMap)
-	counted := make(map[model.JobID]bool)
-	for _, req := range reqs {
-		if req.JobID == nil || counted[*req.JobID] {
-			continue
-		}
-		counted[*req.JobID] = true
-
-		if req.Preemptible {
-			stats.PreemptibleCount++
-		}
-		if req.State == job.SchedulingStateQueued {
-			stats.QueuedCount++
-		} else {
-			stats.ScheduledCount++
-		}
-	}
-	return stats
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
