@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import horovod, layers, workload
+from determined import layers, workload
 from determined.common import check
 
 
