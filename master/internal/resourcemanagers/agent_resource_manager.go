@@ -63,7 +63,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
+	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority, sproto.SetGroupOrder:
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetTaskHandler:
@@ -110,10 +110,15 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
 		ctx.Respond(resp)
 
+	// case sproto.GetJobQInfo, sproto.GetJobQStats, sproto.SetJobOrder:
+	// could I look at ResourcePool here?
 	case job.GetJobQ:
 		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
 		ctx.Respond(resp)
 	case job.GetJobQStats:
+		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
+		ctx.Respond(resp)
+	case job.SetJobOrder:
 		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
 		ctx.Respond(resp)
 

@@ -253,14 +253,32 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources := e.Config.Resources()
 		resources.SetWeight(msg.Weight)
 		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
 	case sproto.SetGroupPriority:
 		resources := e.Config.Resources()
 		resources.SetPriority(msg.Priority)
 		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
+	case sproto.SetGroupOrder:
+		job := model.Job{
+			JobID: e.JobID,
+			QPos:  msg.QPosition,
+		}
+		err := e.db.UpdateJob(&job)
+		if err != nil {
+			return err
+		}
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
+		// TODO persist in memory as well (on new and on restore)
 
 	case *apiv1.GetJobsRequest:
 		fmt.Printf("GetJobsReques eid %v t\n", e.ID)
@@ -533,6 +551,20 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 		return errors.Wrap(err, "failed to restore searcher snapshot")
 	}
 	return nil
+}
+
+// isRP determines whether or not the message originated from an RP; if so we will NOT forward the
+// message to a resource manager.
+func (e *experiment) isRP(handler *actor.Ref) bool {
+	if handler == nil {
+		return false
+	}
+	for _, child := range e.rm.Children() {
+		if child.Address() == handler.Address() {
+			return true
+		}
+	}
+	return false
 }
 
 func checkpointFromTrialIDOrUUID(

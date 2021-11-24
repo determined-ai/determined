@@ -25,4 +25,14 @@ type (
 		PodName string
 	}
 
+	// ChangePriority notifies the pods actor of a priority change and to preempt the specified pod
+	ChangePriority struct {
+		PodID cproto.ID
+	}
+
+	// SetPodOrder notifies the pods actor to set the queue position of a pod
+	SetPodOrder struct {
+		QPosition float64
+		PodID     cproto.ID
+	}
 )

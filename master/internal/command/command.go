@@ -303,6 +303,17 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
+	case sproto.SetGroupOrder:
+		// TODO persist in the job actor if we want to report it
+
+	case sproto.SetGroupWeight:
+		c.Config.Resources.Weight = msg.Weight
+
+	case sproto.SetGroupPriority:
+		c.Config.Resources.Priority = msg.Priority
+		// QUESTION: where do these get persisted?
+		// these operations do not require special handling by commands
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

@@ -56,6 +56,15 @@ type GetJobQStats struct {
 	ResourcePool string
 }
 
+// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
+type SetJobOrder struct {
+	ResourcePool string
+	QPosition    float64
+	Weight       float64
+	Priority     *int
+	JobID        model.JobID
+}
+
 // type SetJobQ struct {
 // 	Identifier string
 // 	Queue      map[model.JobID]*RMJobInfo
