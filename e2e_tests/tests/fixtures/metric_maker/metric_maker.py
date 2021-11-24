@@ -1,12 +1,12 @@
 import math
 import pathlib
 import pickle
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import numpy as np
 
 import determined as det
-from determined import horovod, layers, workload
+from determined import layers, workload
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:

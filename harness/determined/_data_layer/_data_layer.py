@@ -2,8 +2,6 @@ import enum
 import functools
 import logging
 import pathlib
-
-from determined._generic import DistributedContext
 from typing import Any, Callable, Optional, cast
 from urllib import parse
 
@@ -12,9 +10,8 @@ import yogadl
 from yogadl import storage, tensorflow
 
 import determined as det
-from determined import horovod
+from determined._generic import DistributedContext
 from determined.common import check
-from determined.horovod import hvd
 
 
 def init_container_storage_path(configured_storage_path: Optional[str]) -> pathlib.Path:
@@ -39,7 +36,7 @@ class _CacheableDecorator:
         env: det.EnvContext,
         training: bool,
         per_slot_batch_size: int,
-        distributed_context: DistributedContext
+        distributed_context: DistributedContext,
     ) -> None:
         self._env = env
         self._distributed_context = distributed_context
@@ -78,7 +75,9 @@ class _CacheableDecorator:
             # that for each instantiation of `tf.Session`, the process is mapped
             # to the same GPU.
             session_config = tf.compat.v1.ConfigProto()
-            session_config.gpu_options.visible_device_list = str(self._distributed_context.local_rank)
+            session_config.gpu_options.visible_device_list = str(
+                self._distributed_context.local_rank
+            )
 
         parsed = parse.urlparse(self._env.master_url)
         scheme = "wss" if parsed.scheme == "https" else "ws"

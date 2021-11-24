@@ -7,8 +7,8 @@ subprocess otherwise.
 
 import copy
 import json
-import os
 import logging
+import os
 import socket
 import subprocess
 import sys

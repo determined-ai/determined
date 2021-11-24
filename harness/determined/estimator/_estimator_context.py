@@ -1,16 +1,15 @@
 import inspect
 import logging
-
-from determined._generic import DistributedContext
-from typing import Any, Callable, List, Tuple, Union, Optional
+from typing import Any, Callable, Dict, List, Tuple, Union, cast
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, estimator, horovod, util
+from determined import _data_layer, estimator, util
+from determined._generic import DistributedContext
 from determined.common import check
 from determined.horovod import hvd
-from typing import cast, Dict
+
 """
 The normal path to create a model usually needs the use of tensorflow pre-made optimizer and
 dataset objects. However, the path to create a model for Horovod is different. Some Horovod
@@ -41,22 +40,25 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         estimator._EstimatorReducerContext.__init__(self, self.distributed._zmq_allgather)
 
         self.experimental = EstimatorExperimentalContext(
-            env=self.env,
-            parent=self,
-            distributed_context=self.distributed
+            env=self.env, parent=self, distributed_context=self.distributed
         )
 
         if self.distributed.size > 1:
             experiment_config = self.get_experiment_config()
             optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
-            self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+            self.aggregation_frequency = cast(
+                int, optimizations_config.get("aggregation_frequency")
+            )
             self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
-            self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
-            self.average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
+            self.average_aggregated_gradients = cast(
+                bool, optimizations_config.get("average_aggregated_gradients")
+            )
+            self.average_training_metrics = cast(
+                bool, optimizations_config.get("average_training_metrics")
+            )
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
-
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
@@ -143,8 +145,10 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
 
     def __init__(
-        self, env: det.EnvContext, parent: EstimatorTrialContext,
-            distributed_context: DistributedContext
+        self,
+        env: det.EnvContext,
+        parent: EstimatorTrialContext,
+        distributed_context: DistributedContext,
     ) -> None:
         super().__init__(env=env, distributed_context=distributed_context)
         self._parent = parent

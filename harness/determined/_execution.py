@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import _generic, constants, gpu, horovod
+from determined import _generic, constants, gpu
 from determined.common import api
 
 

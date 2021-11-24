@@ -1,9 +1,9 @@
 import abc
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import determined as det
-from determined import _generic, horovod
+from determined import _generic
 
 
 class TrialContext(metaclass=abc.ABCMeta):
@@ -152,5 +152,3 @@ class TrialContext(metaclass=abc.ABCMeta):
 
     def get_initial_batch(self) -> int:
         return self.env.latest_batch
-
-

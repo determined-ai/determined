@@ -85,8 +85,12 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         optimizations_config = self.env.experiment_config.get_optimizations_config()
         self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
         self._fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
-        self._average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
-        self._average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
+        self._average_aggregated_gradients = cast(
+            bool, optimizations_config.get("average_aggregated_gradients")
+        )
+        self._average_training_metrics = cast(
+            bool, optimizations_config.get("average_training_metrics")
+        )
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
@@ -208,8 +212,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
-                    backward_passes_per_step=backward_passes_per_step
-                    * self._aggregation_frequency,
+                    backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
                     compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
                 )
                 logging.debug(
@@ -646,9 +649,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         )
 
         if self._average_aggregated_gradients:
-            self._average_gradients(
-                parameters=parameters, divisor=self._aggregation_frequency
-            )
+            self._average_gradients(parameters=parameters, divisor=self._aggregation_frequency)
 
         if clip_grads is not None:
             if self._scaler and self.experimental._auto_amp:

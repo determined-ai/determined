@@ -3,7 +3,6 @@ import pickle
 from typing import cast
 
 import determined as det
-from determined import horovod
 from determined.common import check
 
 

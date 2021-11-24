@@ -1,13 +1,12 @@
 import inspect
 import logging
-
-from determined._generic import DistributedContext
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, errors, horovod, keras
+from determined import _data_layer, errors, keras
+from determined._generic import DistributedContext
 from determined.common import check
 from determined.horovod import hvd
 
@@ -38,7 +37,9 @@ class TFKerasTrialContext(det.TrialContext):
 
         self.dataset_initialized = False
 
-        self.experimental = TFKerasExperimentalContext(env=self.env, distributed_context=self.distributed)
+        self.experimental = TFKerasExperimentalContext(
+            env=self.env, distributed_context=self.distributed
+        )
 
         # The following three attributes are initialized during the lifetime of a
         # TFKerasTrialContext instance by the user calling compile() and
@@ -49,7 +50,9 @@ class TFKerasTrialContext(det.TrialContext):
 
         optimizations_config = self.env.experiment_config.get_optimizations_config()
         self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
-        self._average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
+        self._average_aggregated_gradients = cast(
+            bool, optimizations_config.get("average_aggregated_gradients")
+        )
 
         self._optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._wrapped_optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
@@ -265,7 +268,11 @@ class TFKerasTrialContext(det.TrialContext):
             return dataset
 
         self.dataset_initialized = True
-        if not self.distributed.size > 1 or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:
+        if (
+            not self.distributed.size > 1
+            or not isinstance(dataset, tf.data.Dataset)
+            or not shard_dataset
+        ):
 
             if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")

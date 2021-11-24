@@ -8,8 +8,6 @@ import random
 import shutil
 import tempfile
 from abc import abstractmethod
-
-from determined._generic import DistributedContext
 from typing import Any, Callable, Dict, List, Optional, Type, cast
 
 import numpy as np
@@ -426,8 +424,7 @@ class EstimatorTrialController(det.TrialController):
         # set and users call TF code that detects GPUs, it would map the processes to all of
         # the GPUs. We set the default session before importing any user code to prevent this
         # this problem. This default session does not have any effect within the Estimator itself.
-        cls._set_default_tensorflow_session(env=env,
-                                            session_config=None, use_horovod=use_horovod)
+        cls._set_default_tensorflow_session(env=env, session_config=None, use_horovod=use_horovod)
 
         logging.debug("Applying tf.estimator patches.")
 
@@ -713,7 +710,9 @@ class EstimatorTrialController(det.TrialController):
         """
 
         # Add suffix so that horovod processes don't overwrite each other.
-        suffix = str(0) if not self.context.distributed.size > 1 else str(self.context.distributed.rank)
+        suffix = (
+            str(0) if not self.context.distributed.size > 1 else str(self.context.distributed.rank)
+        )
 
         if self.env.latest_checkpoint is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))

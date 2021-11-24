@@ -1,17 +1,17 @@
 import logging
+from typing import Optional
 
 import tensorflow as tf
 from packaging import version
 from tensorflow.python.keras.engine import sequential
-from typing import Optional
-from determined import horovod, util
+
+from determined import util
 
 
 def _check_if_aggregation_frequency_will_work(
     model: tf.keras.Model,
     aggregation_frequency: Optional[int],
     use_horovod: bool = False,
-
 ) -> None:
     if not use_horovod or aggregation_frequency == 1:
         return

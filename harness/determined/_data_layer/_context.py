@@ -1,8 +1,8 @@
-from determined._generic import DistributedContext
-from typing import Callable, Optional
+from typing import Callable
 
 import determined as det
-from determined import _data_layer, horovod
+from determined import _data_layer
+from determined._generic import DistributedContext
 
 
 class DataLayerContext:
@@ -17,7 +17,7 @@ class DataLayerContext:
             env=env,
             training=False,
             per_slot_batch_size=env.per_slot_batch_size,
-            distributed_context=distributed_context
+            distributed_context=distributed_context,
         )
 
     def cache_train_dataset(

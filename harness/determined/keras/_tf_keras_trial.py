@@ -15,7 +15,7 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 
 import determined as det
-from determined import horovod, keras, layers, util, workload
+from determined import keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.common.api.analytics import send_analytics
@@ -268,7 +268,9 @@ class TFKerasTrialController(det.TrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
-        session = cls._configure_session(env, trial.session_config(), use_horovod=context.distributed.size > 1)
+        session = cls._configure_session(
+            env, trial.session_config(), use_horovod=context.distributed.size > 1
+        )
 
         training_data = keras._adapt_data_from_data_loader(
             input_data=trial.build_training_data_loader(),
@@ -286,9 +288,7 @@ class TFKerasTrialController(det.TrialController):
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
 
-        cls.compile_model(
-            context=context, compile_args=compile_args, env=env
-        )
+        cls.compile_model(context=context, compile_args=compile_args, env=env)
 
         tf_keras_callbacks = trial.keras_callbacks()
 
@@ -319,8 +319,9 @@ class TFKerasTrialController(det.TrialController):
         self.context._select_optimizers()
 
         keras._check_if_aggregation_frequency_will_work(
-            model=self.model, use_horovod=self.use_horovod,
-            aggregation_frequency=self.context._aggregation_frequency
+            model=self.model,
+            use_horovod=self.use_horovod,
+            aggregation_frequency=self.context._aggregation_frequency,
         )
 
         self.training_data = train_config.training_data

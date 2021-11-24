@@ -2,7 +2,6 @@ import argparse
 import contextlib
 import faulthandler
 import logging
-
 import sys
 from typing import Iterator, Optional
 

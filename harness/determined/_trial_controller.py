@@ -1,13 +1,14 @@
 import abc
 import logging
 import os
-from typing import Any, Optional, Type
 from distutils.util import strtobool
 from enum import Enum
+from typing import Any, Optional, Type
+
 import determined as det
-from determined import horovod, profiler, workload
+from determined import profiler, workload
 from determined.common import check
-from determined.horovod import hvd
+
 
 class DistributedBackend(Enum):
     HOROVOD = bool(strtobool(os.environ.get("USE_HOROVOD", "False")))

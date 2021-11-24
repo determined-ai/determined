@@ -9,7 +9,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import _generic, experimental, gpu, horovod, keras, workload
+from determined import _generic, experimental, gpu, keras, workload
 from determined.common import check
 
 
