@@ -352,7 +352,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
+	switch ctx.Message().(type) {
 	case job.GetJobQStats:
 		ctx.Respond(*jobStats(rp))
 	case job.GetJobQ:
