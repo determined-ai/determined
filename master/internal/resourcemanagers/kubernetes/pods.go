@@ -353,18 +353,16 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 
 	ctx.Tell(ref, msg)
 
-	// TODO: here
-
 	if containerID, ok := p.podNameToContainerID[msg.updatedPod.Name]; ok {
 		if state, ok := p.containerIDToSchedulingState[containerID]; ok {
 			currState := job.SchedulingStateQueued
-			if msg.updatedPod.Status.String() == "Running" {
+			if msg.updatedPod.Status.Phase == "Running" {
 				currState = job.SchedulingStateScheduled
 			}
 			if currState != state {
 				ctx.Tell(p.cluster, sproto.UpdatePodStatus{
 					ContainerID: containerID,
-					State:       state,
+					State:       currState,
 				})
 			}
 		}
