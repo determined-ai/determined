@@ -259,7 +259,8 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 // TODO: consolidate these jq functions into the job queue.
 func (k *kubernetesResourceManager) getJobQStats() *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}
-	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
+	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(k.reqList, k.groups, trueFilter)
+	reqs := orderTaskMaps(pendingMap, scheduledMap)
 	counted := make(map[model.JobID]bool)
 	for _, req := range reqs {
 		if req.JobID == nil || counted[*req.JobID] {
@@ -280,7 +281,8 @@ func (k *kubernetesResourceManager) getJobQStats() *jobv1.QueueStats {
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
-	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
+	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(k.reqList, k.groups, trueFilter)
+	reqs := orderTaskMaps(pendingMap, scheduledMap)
 	jobQinfo, _ := mergeToJobQInfo(reqs)
 	return jobQinfo
 }
