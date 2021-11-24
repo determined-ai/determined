@@ -21,8 +21,8 @@ useNodePortForMaster: false
 
 # Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
 # openshiftRoute:
-  # enabled: 
-  # termination: 
+  # enabled:
+  # termination:
 
 # tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
 # termination is performed in the Determined master). This includes communication between the
