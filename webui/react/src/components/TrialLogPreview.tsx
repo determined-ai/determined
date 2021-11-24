@@ -54,7 +54,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
       event => {
         const entry = jsonToTrialLog(event);
         setLogEntry({
-          formattedTime: formatDatetime(entry.time, DATETIME_FORMAT),
+          formattedTime: formatDatetime(entry.time, { format: DATETIME_FORMAT }),
           level: entry.level || LogLevel.Info,
           message: entry.message,
         });

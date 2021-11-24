@@ -18,7 +18,7 @@ import {
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
+import { durationInEnglish, getDuration } from 'utils/datetime';
 import { deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -232,7 +232,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {experiment.endTime != null && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Duration:</span>
-                {shortEnglishHumannizer(getDuration(experiment))}
+                {durationInEnglish(getDuration(experiment))}
               </div>
             )}
             <TagList
