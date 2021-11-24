@@ -264,6 +264,14 @@ func (e *ExperimentConfigV0) SetTensorboardStorage(val *TensorboardStorageConfig
 	e.RawTensorboardStorage = val
 }
 
+func (e ExperimentConfigV0) Launch() []string {
+	return e.RawLaunch
+}
+
+func (e *ExperimentConfigV0) SetLaunch(val []string) {
+	e.RawLaunch = val
+}
+
 func (e ExperimentConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedExperimentConfigV0()
 }
