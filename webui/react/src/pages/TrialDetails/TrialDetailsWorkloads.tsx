@@ -67,7 +67,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
             <Button
               aria-label="View Checkpoint"
               icon={<Icon name="checkpoint" />}
-              onClick={e => handleCheckpointShow(e, checkpoint)} />
+              onClick={e => handleCheckpointShow(e, checkpoint)}
+            />
           </Tooltip>
         );
       }
