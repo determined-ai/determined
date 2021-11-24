@@ -19,8 +19,8 @@ import {
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
+import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
-import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 

@@ -1,9 +1,9 @@
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
-  AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask, RecentExperimentTask,
-  RecentTask, RecordKey, ResourceState, RunState, SlotState, Workload,
+  AnyTask, BaseWorkload, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState,
+  CommandTask, CommandType, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
+  RecentExperimentTask, RecentTask, RecordKey, ResourceState, RunState, SlotState,
 } from 'types';
 
 import { LaunchTensorBoardParams } from '../services/types';
@@ -267,7 +267,10 @@ export const tsbMatchesSource =
     return false;
   };
 
-export const getMetricValue = (workload?: Workload, metricName?: string): number | undefined => {
+export const getMetricValue = (
+  workload?: BaseWorkload,
+  metricName?: string,
+): number | undefined => {
   const metricsWl = workload as MetricsWorkload;
   if (!workload || !isMetricsWorkload(metricsWl) || !metricsWl.metrics) return undefined;
 

@@ -19,7 +19,7 @@ import {
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { flattenObject, isBoolean, isObject } from 'utils/data';
-import { metricNameToStr } from 'utils/string';
+import { metricNameToStr } from 'utils/metric';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpHeatMaps.module.scss';

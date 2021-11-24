@@ -15,7 +15,7 @@ import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Primitive,
 } from 'types';
 import { flattenObject, isBoolean } from 'utils/data';
-import { metricNameToStr } from 'utils/string';
+import { metricNameToStr } from 'utils/metric';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';

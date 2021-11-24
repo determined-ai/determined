@@ -3,8 +3,8 @@ import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
+import { metricNameToValue, valueToMetricName } from 'utils/metric';
 import { metricNameSorter } from 'utils/sort';
-import { metricNameFromValue, metricNameToValue, valueToMetricName } from 'utils/trial';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';
@@ -110,24 +110,12 @@ const MetricSelectFilter: React.FC<Props> = ({
   }, [ multiple, onChange, value ]);
 
   const handleFiltering = useCallback((search: string, option) => {
-    if (option.key === allOptionId || option.key === resetOptionId) {
-      return true;
-    }
-    if (!option.value) {
-      /*
-       * Handle optionGroups that don't have a value to make TS happy. They aren't
-       * impacted by filtering anyway
-       */
-      return false;
-    }
-    const metricName = metricNameFromValue(option.value);
-    if (metricName === undefined) {
-      /*
-       * Handle metric values that don't start with 'training|' or 'validation|'. This
-       * shouldn't ever happen and metricNameFromValue logs an error if it does.
-       */
-      return false;
-    }
+    if (option.key === allOptionId || option.key === resetOptionId) return true;
+    if (!option.value) return false;
+
+    const metricName = valueToMetricName(option.value);
+    if (metricName === undefined) return false;
+
     return filterFn(search, metricName.name);
   }, []);
 

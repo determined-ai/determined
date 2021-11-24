@@ -1,16 +1,17 @@
-import { CheckpointState, CheckpointWorkload, MetricsWorkload, Step,
-  WorkloadWrapper } from '../types';
+import {
+  CheckpointState, CheckpointWorkload, MetricsWorkload, Step, WorkloadGroup,
+} from '../types';
 
 export const hasCheckpointStep = (step: Step): boolean => {
   return !!step.checkpoint && step.checkpoint.state !== CheckpointState.Deleted;
 };
 
-export const hasCheckpoint = (workload: WorkloadWrapper): boolean => {
+export const hasCheckpoint = (workload: WorkloadGroup): boolean => {
   return !!workload.checkpoint && workload.checkpoint.state !== CheckpointState.Deleted;
 };
 
-export const getWorkload = (wrapper: WorkloadWrapper): MetricsWorkload | CheckpointWorkload => {
-  return Object.values(wrapper).find(val => !!val);
+export const getWorkload = (workload: WorkloadGroup): MetricsWorkload | CheckpointWorkload => {
+  return Object.values(workload).find(val => !!val);
 };
 
 export const isMetricsWorkload = (workload: MetricsWorkload | CheckpointWorkload)
@@ -21,20 +22,20 @@ export const isMetricsWorkload = (workload: MetricsWorkload | CheckpointWorkload
   return false;
 };
 
-export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step[] => {
+export const workloadsToSteps = (workloads: WorkloadGroup[]): Step[] => {
   const stepsDict: Record<number, Partial<Step>> = {};
-  workloads.forEach(wlWrapper => {
-    const wl = getWorkload(wlWrapper);
+  workloads.forEach(workload => {
+    const wl = getWorkload(workload);
     const batchNum = wl.totalBatches;
     if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};
     stepsDict[batchNum].batchNum = batchNum;
 
-    if (wlWrapper.checkpoint) {
-      stepsDict[batchNum].checkpoint = wlWrapper.checkpoint;
-    } else if (wlWrapper.validation) {
-      stepsDict[batchNum].validation = wlWrapper.validation;
-    } else if (wlWrapper.training) {
-      stepsDict[batchNum].training = wlWrapper.training;
+    if (workload.checkpoint) {
+      stepsDict[batchNum].checkpoint = workload.checkpoint;
+    } else if (workload.validation) {
+      stepsDict[batchNum].validation = workload.validation;
+    } else if (workload.training) {
+      stepsDict[batchNum].training = workload.training;
     }
   });
   return Object.values(stepsDict) as Step[];

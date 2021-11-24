@@ -17,8 +17,8 @@ import {
   Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
+import { extractMetricValue } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
-import { extractMetricValue } from 'utils/trial';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings, TrialWorkloadFilter } from './TrialDetailsOverview.settings';
