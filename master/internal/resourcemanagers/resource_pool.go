@@ -379,7 +379,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		}
 		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
 	case job.GetJobQStats:
-		ctx.Respond(*jobStats(rp))
+		ctx.Respond(*jobStats(rp.taskList))
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 	default:
