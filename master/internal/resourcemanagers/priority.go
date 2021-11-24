@@ -75,9 +75,11 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any,
 		maphallocationrequests to their jobid, per job id only keep the first occurrence
 		3. convert the resulting ordered list of jobids into a Job type for job apis
+
+		Once jobs carry a queue position attribute with them it'll be what
+		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
-	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(rp.taskList, rp.groups, trueFilter)
-	reqs := orderTaskMaps(pendingMap, scheduledMap)
+	reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups, false)
 	jobQInfo, _ := mergeToJobQInfo(reqs)
 	return jobQInfo
 }
@@ -107,7 +109,7 @@ func (p *priorityScheduler) prioritySchedule(
 	if len(agents) == 0 { // report queue state if no agents are available
 		for _, zeroSlots := range []bool{false, true} {
 			priorityToPendingTasksMap, priorityToScheduledTaskMap :=
-				sortTasksByPriorityAndTimestamp(taskList, groups, taskFilter("", zeroSlots))
+				sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, taskFilter("", zeroSlots))
 			p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 		}
 	}
@@ -132,7 +134,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
 	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
-		sortTasksByPriorityAndTimestamp(taskList, groups, filter)
+		sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, filter)
 
 	p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 	localAgentsState := deepCopyAgents(agents)

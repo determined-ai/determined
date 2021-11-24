@@ -60,20 +60,3 @@ func GetResourceManagerType(rmConfig *ResourceManagerConfig) string {
 		panic("no expected resource manager config is defined")
 	}
 }
-
-type orderedTaskMap = map[int][]*sproto.AllocateRequest
-
-func orderTaskMaps(pendingMap orderedTaskMap, scheduledMap orderedTaskMap) AllocReqs {
-	out := make(AllocReqs, 0, len(scheduledMap)+len(pendingMap))
-	for _, reqs := range scheduledMap {
-		out = append(out, reqs...)
-	}
-	for _, reqs := range pendingMap {
-		out = append(out, reqs...)
-	}
-	return out
-}
-
-func trueFilter(req *sproto.AllocateRequest) bool {
-	return true
-}
