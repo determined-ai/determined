@@ -53,7 +53,6 @@ type GetJobQ struct {
 // GetJobQStats requests stats for a queue.
 // Expected response: jobv1.QueueStats.
 type GetJobQStats struct {
-	ResourcePool string
 }
 
 // type SetJobQ struct {
