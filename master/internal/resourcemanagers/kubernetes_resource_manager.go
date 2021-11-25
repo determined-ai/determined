@@ -108,7 +108,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case
 		job.GetJobQ,
 		job.GetJobSummary,
-		job.GetJobQStats:
+		apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -246,8 +246,13 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case job.GetJobQ:
 		ctx.Respond(k.jobQInfo())
 
-	case job.GetJobQStats:
-		ctx.Respond(jobStats(k.reqList))
+	case apiv1.GetJobQueueStatsRequest:
+		resp := &apiv1.GetJobQueueStatsResponse{
+			Results: make([]*apiv1.RPQueueStat, 0),
+		}
+		resp.Results = append(resp.Results, &apiv1.RPQueueStat{Stats: jobStats(k.reqList)})
+		ctx.Respond(resp)
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
