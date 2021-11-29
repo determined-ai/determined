@@ -1,7 +1,12 @@
 import { Input, Modal, Select } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Metadata } from 'types';
+import handleError, { ErrorType } from 'ErrorHandler';
+import { getModels } from 'services/api';
+import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import { validateDetApiEnum } from 'services/utils';
+import { Metadata, ModelItem } from 'types';
+import { isEqual } from 'utils/data';
 
 import EditableMetadata from './Metadata/EditableMetadata';
 import css from './RegisterModelVersionModal.module.scss';
@@ -15,15 +20,35 @@ interface Props {
 }
 
 const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }) => {
-  const [ model, setModel ] = useState<string>();
+  const [ selectedModel, setSelectedModel ] = useState<string>();
+  const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ versionName, setVersionName ] = useState('');
   const [ modelDescription, setModelDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
   const [ metadata, setMetadata ] = useState<Metadata>({});
   const [ expandDetails, setExpandDetails ] = useState(false);
+  const [ canceler ] = useState(new AbortController());
+
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await getModels({
+        orderBy: 'ORDER_BY_DESC',
+        sortBy: validateDetApiEnum(
+          V1GetModelsRequestSortBy,
+          V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+        ),
+      }, { signal: canceler.signal });
+      setModels(prev => {
+        if (isEqual(prev, response.models)) return prev;
+        return response.models;
+      });
+    } catch(e) {
+      handleError({ message: 'Unable to fetch models.', silent: true, type: ErrorType.Api });
+    }
+  }, [ canceler.signal ]);
 
   const updateModel = useCallback((value) => {
-    setModel(value);
+    setSelectedModel(value);
   }, []);
 
   const updateVersionName = useCallback((value) => {
@@ -35,11 +60,19 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
   }, []);
 
   const modelOptions = useMemo(() => {
-    return [ '' ];
-  }, []);
+    return models.map(model => model.name);
+  }, [ models ]);
 
   const openDetails = useCallback(() => {
     setExpandDetails(true);
+  }, []);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
+
+  useEffect(() => {
+    fetchModels();
   }, []);
 
   return (
@@ -53,7 +86,10 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
         <p className={css.directions}>Save this checkpoint to the Model Registry</p>
         <div>
           <h2>Select Model</h2>
-          <Select placeholder="Select a model..." onChange={updateModel}>
+          <Select
+            dropdownMatchSelectWidth={250}
+            placeholder="Select a model..."
+            onChange={updateModel}>
             {modelOptions.map(option => (
               <Option key={option} value={option}>
                 {option === '' ?
