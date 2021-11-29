@@ -2,7 +2,7 @@ import { Input, Modal, Select } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import handleError, { ErrorType } from 'ErrorHandler';
-import { getModels } from 'services/api';
+import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { Metadata, ModelItem } from 'types';
@@ -20,10 +20,10 @@ interface Props {
 }
 
 const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }) => {
-  const [ selectedModel, setSelectedModel ] = useState<string>();
+  const [ selectedModelId, setSelectedModelId ] = useState<number>();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ versionName, setVersionName ] = useState('');
-  const [ modelDescription, setModelDescription ] = useState('');
+  const [ versionDescription, setVersionDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
   const [ metadata, setMetadata ] = useState<Metadata>({});
   const [ expandDetails, setExpandDetails ] = useState(false);
@@ -47,20 +47,40 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
     }
   }, [ canceler.signal ]);
 
+  const registerModelVersion = useCallback(async () => {
+    if (!selectedModelId) return;
+    try {
+      await postModelVersion({
+        body: {
+          checkpointUuid: '',
+          comment: versionDescription,
+          labels: tags,
+          metadata: metadata,
+          modelId: selectedModelId,
+          name: versionName,
+        },
+        modelId: selectedModelId,
+      });
+      onClose?.();
+    } catch {
+      handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
+    }
+  }, [ metadata, tags, versionDescription, versionName, onClose, selectedModelId ]);
+
   const updateModel = useCallback((value) => {
-    setSelectedModel(value);
+    setSelectedModelId(value);
   }, []);
 
   const updateVersionName = useCallback((value) => {
     setVersionName(value);
   }, []);
 
-  const updateModelDescription = useCallback((value) => {
-    setModelDescription(value);
+  const updateVersionDescription = useCallback((value) => {
+    setVersionDescription(value);
   }, []);
 
   const modelOptions = useMemo(() => {
-    return models.map(model => model.name);
+    return models.map(model => ({ id: model.id, name: model.name }));
   }, [ models ]);
 
   const openDetails = useCallback(() => {
@@ -81,7 +101,8 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
       okText="Add Model Version"
       title="Register Model"
       visible={visible}
-      onCancel={onClose}>
+      onCancel={onClose}
+      onOk={registerModelVersion}>
       <div className={css.base}>
         <p className={css.directions}>Save this checkpoint to the Model Registry</p>
         <div>
@@ -92,10 +113,8 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
             showSearch
             onChange={updateModel}>
             {modelOptions.map(option => (
-              <Option key={option} value={option}>
-                {option === '' ?
-                  'New Model' :
-                  option}
+              <Option key={option.id} value={option.id}>
+                {option.name}
               </Option>))}
           </Select>
         </div>
@@ -105,7 +124,7 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
         </div>
         <div>
           <h2>Description <span>(optional)</span></h2>
-          <Input.TextArea value={modelDescription} onChange={updateModelDescription} />
+          <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
         </div>
         {expandDetails ?
           <>

@@ -169,6 +169,19 @@ export interface PostModelParams {
   username?: string;
 }
 
+export interface PostModelVersionParams {
+  body: {
+    checkpointUuid: string;
+    comment?: string;
+    labels?: string[];
+    metadata?: Metadata;
+    modelId: number;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+}
+
 export interface CreateExperimentParams {
   activate?: boolean;
   experimentConfig: string;

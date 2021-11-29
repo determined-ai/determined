@@ -540,6 +540,19 @@ export const postModel: Service.DetApi<
   }),
 };
 
+export const postModelVersion: Service.DetApi<
+  Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
+> = {
+  name: 'postModelVersion',
+  postProcess: (response) => {
+    return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
+  },
+  request: (params: Service.PostModelVersionParams) => detApi.Models.postModelVersion(
+    params.modelId,
+    params.body,
+  ),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<
