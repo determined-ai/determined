@@ -183,6 +183,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		e.processOperations(ctx, ops, nil)
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
+
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
+			JobID:    e.JobID,
+			JobActor: ctx.Self(),
+		})
+
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.requestID)
 		e.processOperations(ctx, ops, err)
@@ -329,6 +335,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Errorf(
 				"failure to delete snapshots for experiment: %d", e.Experiment.ID)
 		}
+
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
+			JobID: e.JobID,
+		})
 
 		ctx.Log().Info("experiment shut down successfully")
 
