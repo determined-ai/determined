@@ -23,6 +23,7 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
   const [ modelDescription, setModelDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
   const [ metadata, setMetadata ] = useState<Metadata>({});
+  const [ expandDetails, setExpandDetails ] = useState(false);
 
   const createModel = useCallback(async () => {
     try {
@@ -53,6 +54,10 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
     setModelDescription(e.target.value);
   }, []);
 
+  const openDetails = useCallback(() => {
+    setExpandDetails(true);
+  }, []);
+
   return (
     <Modal
       okButtonProps={{ disabled: modelName === '' || !isNameUnique }}
@@ -75,14 +80,18 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
           <h2>Description <span>(optional)</span></h2>
           <Input.TextArea value={modelDescription} onChange={updateModelDescription} />
         </div>
-        <div>
-          <h2>Metadata <span>(optional)</span></h2>
-          <EditableMetadata editing={true} metadata={metadata} updateMetadata={setMetadata} />
-        </div>
-        <div>
-          <h2>Tags <span>(optional)</span></h2>
-          <EditableTagList tags={tags} onChange={setTags} />
-        </div>
+        {expandDetails ?
+          <>
+            <div>
+              <h2>Metadata <span>(optional)</span></h2>
+              <EditableMetadata editing={true} metadata={metadata} updateMetadata={setMetadata} />
+            </div>
+            <div>
+              <h2>Tags <span>(optional)</span></h2>
+              <EditableTagList tags={tags} onChange={setTags} />
+            </div>
+          </> :
+          <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
       </div>
     </Modal>
   );
