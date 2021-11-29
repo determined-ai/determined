@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
 import { paths, routeToReactUrl } from 'routes/utils';
-import { createExperiment } from 'services/api';
+import { activateExperiment, createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone } from 'utils/data';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
@@ -143,6 +143,10 @@ const useCreateExperimentModal = (): ModalHooks => {
         experimentConfig: newConfig,
         parentId: modalState.experiment.id,
       });
+
+      if (isFork) {
+        await activateExperiment({ experimentId: newExperimentId });
+      }
 
       closeModal();
 
