@@ -1792,7 +1792,7 @@ jobs:
       - slack/status:
           fail_only: True
           only_for_branches: master
-          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
           channel: "devops-ag"
 
 workflows:
