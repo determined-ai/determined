@@ -1,15 +1,11 @@
 import { paths } from 'routes/utils';
 import { LaunchTensorBoardParams } from 'services/types';
-import {
-  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
-  ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
-  RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
-} from 'types';
-import { terminalCommandStates } from 'utils/types';
+import * as Type from 'types';
+import { killableCmdStates, killableRunStates, terminalCommandStates } from 'utils/types';
 
 import { isEqual } from './data';
 
-export const canBeOpened = (task: AnyTask): boolean => {
+export const canBeOpened = (task: Type.AnyTask): boolean => {
   if (isExperimentTask(task)) return true;
   if (terminalCommandStates.has(task.state)) return false;
   return !!task.serviceAddress;
@@ -27,7 +23,7 @@ export const sampleUsers = [
   { id: 2, username: 'hamid' },
 ];
 
-function generateTask(idx: number): Task & RecentEvent {
+function generateTask(idx: number): Type.Task & Type.RecentEvent {
   const now = Date.now();
   const range = Math.random() * 2 * 356 * 24 * 60 * 60 * 1000;
   const startTime = new Date(now - range).toString();
@@ -44,8 +40,8 @@ function generateTask(idx: number): Task & RecentEvent {
   };
 }
 
-export function generateExperimentTask(idx: number): RecentExperimentTask {
-  const state = getRandomElementOfEnum(RunState);
+export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
+  const state = getRandomElementOfEnum(Type.RunState);
   const task = generateTask(idx);
   const progress = Math.random();
   const user = sampleUsers.random();
@@ -53,25 +49,25 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
     ...task,
     archived: false,
     progress,
-    state: state as RunState,
+    state: state as Type.RunState,
     url: '#',
     username: user.username,
   };
 }
 
-export function generateCommandTask(idx: number): RecentCommandTask {
-  const state = getRandomElementOfEnum(CommandState);
+export function generateCommandTask(idx: number): Type.RecentCommandTask {
+  const state = getRandomElementOfEnum(Type.CommandState);
   const task = generateTask(idx);
   const user = sampleUsers.random();
   return {
     ...task,
-    state: state as CommandState,
-    type: getRandomElementOfEnum(CommandType),
+    state: state as Type.CommandState,
+    type: getRandomElementOfEnum(Type.CommandType),
     username: user.username,
   };
 }
 
-export const generateOldExperiment = (id = 1): ExperimentOld => {
+export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   const config = {
@@ -102,16 +98,16 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
     id: id,
     name: experimentTask.name,
     username: user.username,
-  } as ExperimentOld;
+  } as Type.ExperimentOld;
 };
 
-export const generateOldExperiments = (count = 10): ExperimentOld[] => {
+export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
   return new Array(Math.floor(count))
     .fill(null)
     .map((_, idx) => generateOldExperiment(idx));
 };
 
-export const generateExperiments = (count = 30): ExperimentItem[] => {
+export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
   return new Array(Math.floor(count))
     .fill(null)
     .map((_, idx) => {
@@ -125,11 +121,11 @@ export const generateExperiments = (count = 30): ExperimentItem[] => {
         numTrials: Math.round(Math.random() * 60000),
         resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
         username: user.username,
-      } as ExperimentItem;
+      } as Type.ExperimentItem;
     });
 };
 
-export const generateTasks = (count = 10): RecentTask[] => {
+export const generateTasks = (count = 10): Type.RecentTask[] => {
   return new Array(Math.floor(count)).fill(0)
     .map((_, idx) => {
       if (Math.random() > 0.5) {
@@ -140,49 +136,65 @@ export const generateTasks = (count = 10): RecentTask[] => {
     });
 };
 
-export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
+// Differentiate Task from Experiment.
+export const isCommandTask = (obj: Type.Command | Type.CommandTask): obj is Type.CommandTask => {
+  return 'type' in obj;
+};
+
+export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTask => {
   return ('archived' in task) && !('type' in task);
 };
 
-const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = ''): boolean => {
+export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
+  return killableRunStates.includes(task.state as Type.RunState)
+    || killableCmdStates.includes(task.state as Type.CommandState);
+};
+
+const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
+  task: T,
+  search = '',
+): boolean => {
   if (!search) return true;
   return task.id.toString().indexOf(search) !== -1 || task.name.indexOf(search) !== -1;
 };
 
-const matchesState = <T extends AnyTask | ExperimentItem>(task: T, states: string[]): boolean => {
-  if (!Array.isArray(states) || states.length === 0 || states[0] === ALL_VALUE) return true;
+const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
+  task: T,
+  states: string[],
+): boolean => {
+  if (!Array.isArray(states) || states.length === 0 || states[0] === Type.ALL_VALUE) return true;
   return states.includes(task.state);
 };
 
-const matchesUser = <T extends AnyTask | ExperimentItem>(
+const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T, users?: string[],
 ): boolean => {
-  if (!Array.isArray(users) || users.length === 0 || users[0] === ALL_VALUE) return true;
+  if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
   return users.findIndex(user => task.username === user) !== -1;
 };
 
 export const filterTasks = <
-  T extends CommandType | TaskType = TaskType,
-  A extends CommandTask | AnyTask = AnyTask
+  T extends Type.CommandType | Type.TaskType = Type.TaskType,
+  A extends Type.CommandTask | Type.AnyTask = Type.AnyTask
 >(
-  tasks: A[], filters: TaskFilters<T>, users: User[], search = '',
+  tasks: A[], filters: Type.TaskFilters<T>, users: Type.User[], search = '',
 ): A[] => {
   return tasks
     .filter(task => {
       const isExperiment = isExperimentTask(task);
-      const type = isExperiment ? TaskType.Experiment : (task as CommandTask).type;
+      const type = isExperiment ? Type.TaskType.Experiment : (task as Type.CommandTask).type;
       return (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
         matchesState<A>(task, filters.states || []) &&
         matchesSearch<A>(task, search) &&
-        (!isExperiment || !(task as ExperimentTask).archived);
+        (!isExperiment || !(task as Type.ExperimentTask).archived);
     })
     .filter(task => matchesSearch<A>(task, search));
 };
 
 /* Conversions to Tasks */
 
-export const taskFromCommandTask = (command: CommandTask): RecentCommandTask => {
+export const taskFromCommandTask = (command: Type.CommandTask): Type.RecentCommandTask => {
   return {
     ...command,
     lastEvent: {
@@ -192,11 +204,11 @@ export const taskFromCommandTask = (command: CommandTask): RecentCommandTask => 
   };
 };
 
-export const taskFromExperiment = (experiment: ExperimentItem): RecentExperimentTask => {
+export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.RecentExperimentTask => {
   const lastEvent = experiment.endTime ?
     { date: experiment.endTime, name: 'finished' } :
     { date: experiment.startTime, name: 'requested' };
-  const task: RecentTask = {
+  const task: Type.RecentTask = {
     archived: experiment.archived,
     id: `${experiment.id}`,
     lastEvent,
@@ -213,7 +225,7 @@ export const taskFromExperiment = (experiment: ExperimentItem): RecentExperiment
 
 // Checks whether tensorboard source matches a given source list.
 export const tensorBoardMatchesSource = (
-  tensorBoard: CommandTask,
+  tensorBoard: Type.CommandTask,
   source: LaunchTensorBoardParams,
 ): boolean => {
   if (source.experimentIds) {

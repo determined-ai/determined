@@ -18,7 +18,7 @@ import {
 import { isNumber } from 'utils/data';
 import { extractMetricNames } from 'utils/metric';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize } from 'utils/workload';
 
 import css from './TrialsComparisonModal.module.scss';
 

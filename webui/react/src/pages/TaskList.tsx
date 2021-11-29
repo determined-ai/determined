@@ -33,8 +33,8 @@ import { isEqual } from 'utils/data';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
-import { filterTasks, taskFromCommandTask } from 'utils/task';
-import { commandTypeToLabel, isTaskKillable } from 'utils/types';
+import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
+import { commandTypeToLabel } from 'utils/types';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';

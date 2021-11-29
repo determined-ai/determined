@@ -8,7 +8,7 @@ import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, Checkpoint
   ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/workload';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';

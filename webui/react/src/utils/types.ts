@@ -1,7 +1,7 @@
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
-  AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState,
-  CommandTask, CommandType, ExperimentItem, RecordKey, ResourceState, RunState, SlotState,
+  Checkpoint, CheckpointState, CheckpointWorkload, CommandState,
+  CommandType, RecordKey, ResourceState, RunState, SlotState,
 } from 'types';
 
 export const activeCommandStates = [
@@ -115,11 +115,6 @@ export const resourceStateToLabel: {[key in ResourceState]: string} = {
   [ResourceState.Unspecified]: 'Unspecified',
 };
 
-export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
-  return killableRunStates.includes(task.state as RunState)
-    || killableCmdStates.includes(task.state as CommandState);
-};
-
 export function stateToLabel(
   state: RunState | CommandState | CheckpointState | ResourceState | SlotState,
 ): string {
@@ -141,16 +136,6 @@ export function hasKey<O>(obj: O, key: RecordKey): key is keyof O {
   return key in obj;
 }
 
-// differentiate Experiment from Task
-export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
-  return 'config' in obj && 'archived' in obj;
-};
-
-// differentiate Task from Experiment
-export const isCommandTask = (obj: Command | CommandTask): obj is CommandTask => {
-  return 'type' in obj;
-};
-
 // used when properties are named differently between objects.
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const oneOfProperties = <T>(obj: any, props: string[]): T => {
@@ -158,23 +143,6 @@ export const oneOfProperties = <T>(obj: any, props: string[]): T => {
     if (prop in obj) return obj[prop] as T;
   }
   throw new Error('no matching property');
-};
-
-// size in bytes
-export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): number => {
-  if (!checkpoint.resources) return 0;
-  const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
-  return total;
-};
-
-export const getBatchNumber = (
-  data: { batch: number } | { totalBatches: number },
-): number => {
-  if ('batch' in data) {
-    return data.batch;
-  } else {
-    return data.totalBatches;
-  }
 };
 
 export type Eventually<T> = T | Promise<T>;

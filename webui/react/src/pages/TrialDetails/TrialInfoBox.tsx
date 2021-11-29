@@ -10,7 +10,7 @@ import {
 } from 'types';
 import { durationInEnglish, getDuration } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;

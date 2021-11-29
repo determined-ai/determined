@@ -38,10 +38,8 @@ import {
 import { isBoolean, isEqual } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
-import { taskFromExperiment } from 'utils/task';
-import {
-  cancellableRunStates, deletableRunStates, isTaskKillable, terminalRunStates,
-} from 'utils/types';
+import { isTaskKillable, taskFromExperiment } from 'utils/task';
+import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import settingsConfig, { Settings } from './ExperimentList.settings';

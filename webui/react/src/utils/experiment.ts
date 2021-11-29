@@ -2,6 +2,13 @@ import * as Type from 'types';
 
 import { deletePathList, getPathList, isNumber, setPathList, unflattenObject } from './data';
 
+// Differentiate Experiment from Task.
+export const isExperiment = (
+  obj: Type.AnyTask | Type.ExperimentItem,
+): obj is Type.ExperimentItem => {
+  return 'config' in obj && 'archived' in obj;
+};
+
 export const isSingleTrialExperiment = (experiment: Type.ExperimentBase): boolean => {
   return experiment?.config.searcher.name === Type.ExperimentSearcherName.Single
       || experiment?.config.searcher.max_trials === 1;

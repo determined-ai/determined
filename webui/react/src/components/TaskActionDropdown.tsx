@@ -16,10 +16,8 @@ import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
 import { capitalize } from 'utils/string';
-import { isExperimentTask } from 'utils/task';
-import {
-  cancellableRunStates, deletableRunStates, isTaskKillable, terminalRunStates,
-} from 'utils/types';
+import { isExperimentTask, isTaskKillable } from 'utils/task';
+import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ActionDropdown.module.scss';
