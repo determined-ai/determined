@@ -68,7 +68,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             return optimizer
 
         self.optimizer_initialized = True
-        if not self.distributed.size > 1:
+        if self.distributed.size == 0:
             return optimizer
 
         check.check_false(
@@ -120,7 +120,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.distributed.size > 1 or not shard_dataset:
+        if self.distributed.size == 0 or not shard_dataset:
             if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset

@@ -62,7 +62,7 @@ class _CacheableDecorator:
         self._offset = self._env.latest_batch * batch_size
 
     def _init_shard(self) -> None:
-        if not self._distributed_context.size > 1:
+        if self._distributed_context.size == 0:
             return
 
         self._shard_rank = self._distributed_context.rank
