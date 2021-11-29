@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import NewModelButton from 'components/NewModelButton';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';

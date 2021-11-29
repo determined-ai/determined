@@ -3,7 +3,12 @@ import React, { useCallback, useState } from 'react';
 
 import EditableTagList from './TagList';
 
-const NewModelModal: React.FC = () => {
+interface Props {
+  onClose?: () => void;
+  visible?: boolean;
+}
+
+const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => {
   const [ modelName, setModelName ] = useState('');
   const [ modelDescription, setModelDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
@@ -17,7 +22,12 @@ const NewModelModal: React.FC = () => {
   }, []);
 
   return (
-    <Modal okButtonProps={{ disabled: modelName === '' }} okText="Create Model" title="New Model">
+    <Modal
+      okButtonProps={{ disabled: modelName === '' }}
+      okText="Create Model"
+      title="New Model"
+      visible={visible}
+      onCancel={onClose}>
       <p>Create a registered model to organize important checkpoints.</p>
       <h2>Model name</h2>
       <Input value={modelName} onChange={updateModelName} />
