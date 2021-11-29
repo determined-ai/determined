@@ -692,7 +692,9 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Jobs"
+      // TODO(hamidzr) update me once the write side of job queue is released.
+      // Here to enable dev webui code that depends on it.
+      tags: "Internal"
     };
   }
 
