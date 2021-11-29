@@ -74,6 +74,26 @@ describe('Metric Utilities', () => {
     });
   });
 
+  describe('getMetricValue', () => {
+    const workload = { metrics: { abc: 123 } };
+
+    it('should return metric value when available', () => {
+      expect(utils.getMetricValue(workload, 'abc')).toBe(123);
+    });
+
+    it('should return metric value when not available', () => {
+      expect(utils.getMetricValue(workload, 'def')).toBeUndefined();
+    });
+
+    it('should return `undefined` if input is not a valid workload', () => {
+      expect(utils.getMetricValue({})).toBeUndefined();
+    });
+
+    it('should return `undefined` if input metric name is invalid', () => {
+      expect(utils.getMetricValue(workload)).toBeUndefined();
+    });
+  });
+
   describe('metricNameToStr', () => {
     it('should convert metric to string', () => {
       metricNames.forEach(metricName => {
