@@ -7,27 +7,51 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
-import { paths } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
+import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
+import { waitPageUrl } from 'wait';
 
 type Renderer<T> = (_: unknown, record: T) => ReactNode;
 export type JobTypeRenderer = Renderer<Job>;
 
 export const SCHEDULING_VAL_KEY = 'schedulingVal';
 
-// translate job type to paths from routes utils
-const jobTypeToPath = (type: JobType, id: string): string => {
-  switch (type) {
+const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
+  let cmds = [];
+  switch (jobType) {
+    case JobType.TENSORBOARD:
+      cmds = await getTensorBoards({});
+      break;
+    case JobType.NOTEBOOK:
+      cmds = await getJupyterLabs({});
+      break;
+    default:
+      throw new Error(`Unsupported job type: ${jobType}`);
+  }
+
+  const task = cmds.find(t => t.id === taskId);
+  if (task) {
+    const url = waitPageUrl(task);
+    routeToReactUrl(url);
+  } else {
+    throw new Error(`${jobType} ${taskId} not found`);
+  }
+};
+
+const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
+  switch (job.type) {
     case JobType.EXPERIMENT:
-      return paths.experimentDetails(id);
+      return <Link path={paths.experimentDetails(job.entityId)}>{label}</Link>;
     case JobType.NOTEBOOK:
     case JobType.TENSORBOARD:
-      // FIXME we need the command's service address
-      return paths.taskList();
+      return <Link onClick={() => {
+        routeToTask(job.entityId, job.type);
+      }}>{label}</Link>;
     default:
-      return '';
+      return label;
   }
 };
 
@@ -37,12 +61,8 @@ export const columns: ColumnType<Job>[] = [
     dataIndex: 'jobId',
     key: 'jobId',
     render: (_: unknown, record: Job): ReactNode => {
-      const pagePath = jobTypeToPath(record.type, record.entityId);
       const label = truncate(record.jobId, 6, '');
-      if (pagePath) {
-        return <Link path={pagePath}>{label}</Link>;
-      }
-      return label;
+      return linkToEntityPage(record, label);
     },
     title: 'ID',
   },
@@ -63,13 +83,9 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
-      const pagePath = jobTypeToPath(record.type, record.entityId);
       const label = record.name ?
         record.name : <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
-      if (pagePath) {
-        return <Link path={pagePath}>{label}</Link>;
-      }
-      return label;
+      return linkToEntityPage(record, label);
     },
     title: 'Job Name',
   },
