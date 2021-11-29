@@ -1,9 +1,10 @@
 import { Input, Modal } from 'antd';
 import React, { useCallback, useState } from 'react';
+import { debounce } from 'throttle-debounce';
 
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { postModel } from 'services/api';
+import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
 
 import EditableMetadata from './Metadata/EditableMetadata';
@@ -18,6 +19,7 @@ interface Props {
 const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => {
   const { auth: { user } } = useStore();
   const [ modelName, setModelName ] = useState('');
+  const [ isNameUnique, setIsNameUnique ] = useState(true);
   const [ modelDescription, setModelDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
   const [ metadata, setMetadata ] = useState<Metadata>({});
@@ -37,17 +39,23 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
     }
   }, [ metadata, tags, modelDescription, modelName, onClose, user?.username ]);
 
-  const updateModelName = useCallback((value) => {
-    setModelName(value);
+  const findIsNameUnique = useCallback(async (name) => {
+    const modelsList = await getModels({ name: name });
+    setIsNameUnique(modelsList.pagination.total === 0 || name === '');
   }, []);
 
-  const updateModelDescription = useCallback((value) => {
-    setModelDescription(value);
+  const updateModelName = useCallback((e) => {
+    setModelName(e.target.value);
+    debounce(250, () => findIsNameUnique(e.target.value))();
+  }, [ findIsNameUnique ]);
+
+  const updateModelDescription = useCallback((e) => {
+    setModelDescription(e.target.value);
   }, []);
 
   return (
     <Modal
-      okButtonProps={{ disabled: modelName === '' }}
+      okButtonProps={{ disabled: modelName === '' || !isNameUnique }}
       okText="Create Model"
       title="New Model"
       visible={visible}
@@ -60,6 +68,8 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
         <div>
           <h2>Model name</h2>
           <Input value={modelName} onChange={updateModelName} />
+          {!isNameUnique &&
+          <p className={css.uniqueWarning}>A model with this name already exists</p>}
         </div>
         <div>
           <h2>Description <span>(optional)</span></h2>

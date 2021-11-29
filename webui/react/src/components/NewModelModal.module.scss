@@ -6,6 +6,10 @@
   .directions {
     margin: 0;
   }
+  .uniqueWarning {
+    color: var(--theme-colors-danger-normal);
+    margin: 0;
+  }
   h2 {
     color: var(--theme-colors-monochrome-5);
     font-size: var(--theme-sizes-font-medium);
