@@ -171,7 +171,7 @@ const JobQueue: React.FC = () => {
         case 'jobsAhead':
           col.render = (_: unknown, record) => {
             return <div className={css.centerVertically}>
-              {record.summary.jobsAhead}
+              {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
               {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
             </div>;
           };
