@@ -12,6 +12,7 @@ import { checkpointSize, getBatchNumber } from 'utils/workload';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';
+import RegisterModelVersionButton from './RegisterModelVersionButton';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
@@ -135,6 +136,7 @@ const CheckpointModal: React.FC<Props> = (
             </div>
           ),
         )}
+        <RegisterModelVersionButton />
       </div>
     </Modal>
   );

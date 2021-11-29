@@ -5,7 +5,12 @@ import EditableTagList from './TagList';
 
 const { Option } = Select;
 
-const RegisterModelVersionModal: React.FC = () => {
+interface Props {
+  onClose?: () => void;
+  visible?: boolean;
+}
+
+const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }) => {
   const [ model, setModel ] = useState<string>();
   const [ versionName, setVersionName ] = useState('');
   const [ modelDescription, setModelDescription ] = useState('');
@@ -31,13 +36,15 @@ const RegisterModelVersionModal: React.FC = () => {
     <Modal
       okButtonProps={{ disabled: versionName === '' }}
       okText="Add Model Version"
-      title="Register Model">
+      title="Register Model"
+      visible={visible}
+      onCancel={onClose}>
       <p>Save this checkpoint to the Model Registry</p>
       <h2>Select Model</h2>
       <Select placeholder="Select a model..." onChange={updateModel}>
         {modelOptions.map(option => (
           <Option key={option} value={option}>
-            {option === ''?
+            {option === '' ?
               'New Model' :
               option}
           </Option>))}
