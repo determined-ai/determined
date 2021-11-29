@@ -1,6 +1,11 @@
 import { Input, Modal } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import { useStore } from 'contexts/Store';
+import handleError, { ErrorType } from 'ErrorHandler';
+import { postModel } from 'services/api';
+import { Metadata } from 'types';
+
 import EditableMetadata from './Metadata/EditableMetadata';
 import css from './NewModelModal.module.scss';
 import EditableTagList from './TagList';
@@ -11,9 +16,26 @@ interface Props {
 }
 
 const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => {
+  const { auth: { user } } = useStore();
   const [ modelName, setModelName ] = useState('');
   const [ modelDescription, setModelDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
+  const [ metadata, setMetadata ] = useState<Metadata>({});
+
+  const createModel = useCallback(async () => {
+    try {
+      await postModel({
+        description: modelDescription,
+        labels: tags,
+        metadata: metadata,
+        name: modelName,
+        username: user?.username,
+      });
+      onClose?.();
+    } catch {
+      handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
+    }
+  }, [ metadata, tags, modelDescription, modelName, onClose, user?.username ]);
 
   const updateModelName = useCallback((value) => {
     setModelName(value);
@@ -29,7 +51,8 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
       okText="Create Model"
       title="New Model"
       visible={visible}
-      onCancel={onClose}>
+      onCancel={onClose}
+      onOk={createModel}>
       <div className={css.base}>
         <p className={css.directions}>
           Create a registered model to organize important checkpoints.
@@ -44,7 +67,7 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
         </div>
         <div>
           <h2>Metadata <span>(optional)</span></h2>
-          <EditableMetadata editing={true} />
+          <EditableMetadata editing={true} metadata={metadata} updateMetadata={setMetadata} />
         </div>
         <div>
           <h2>Tags <span>(optional)</span></h2>

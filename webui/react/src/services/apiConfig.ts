@@ -524,6 +524,22 @@ export const getModelLabels: Service.DetApi<
   request: (options) => detApi.Models.getModelLabels(options),
 };
 
+export const postModel: Service.DetApi<
+  Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
+> = {
+  name: 'postModel',
+  postProcess: (response) => {
+    return response.model ? decoder.mapV1Model(response.model) : undefined;
+  },
+  request: (params: Service.PostModelParams) => detApi.Models.postModel({
+    description: params.description,
+    labels: params.labels,
+    metadata: params.metadata,
+    name: params.name,
+    username: params.username,
+  }),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<
