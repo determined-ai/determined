@@ -29,6 +29,7 @@ type kubernetesResourceManager struct {
 
 	reqList           *taskList
 	groups            map[*actor.Ref]*group
+	addrToContainerID map[*actor.Ref]cproto.ID
 	slotsUsedPerGroup map[*group]int
 
 	// Represent all pods as a single agent.
@@ -52,6 +53,7 @@ func newKubernetesResourceManager(
 
 		reqList:           newTaskList(),
 		groups:            make(map[*actor.Ref]*group),
+		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		slotsUsedPerGroup: make(map[*group]int),
 
 		echoRef:         echoRef,
@@ -321,6 +323,7 @@ func (k *kubernetesResourceManager) assignResources(
 			agent:     k.agent,
 			container: container,
 		})
+		k.addrToContainerID[req.TaskActor] = container.id
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Reservations: allocations}
@@ -336,6 +339,7 @@ func (k *kubernetesResourceManager) assignResources(
 func (k *kubernetesResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	k.reqList.RemoveTaskByHandler(handler)
+	delete(k.addrToContainerID, handler)
 
 	if req, ok := k.reqList.GetTaskByHandler(handler); ok {
 		group := k.groups[handler]
