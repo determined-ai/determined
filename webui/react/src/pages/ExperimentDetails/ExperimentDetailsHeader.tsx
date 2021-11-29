@@ -7,6 +7,7 @@ import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
+import { deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
@@ -19,7 +20,6 @@ import {
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { durationInEnglish, getDuration } from 'utils/datetime';
-import { deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';

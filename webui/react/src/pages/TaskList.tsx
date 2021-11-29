@@ -20,6 +20,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -34,7 +35,6 @@ import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
-import { commandTypeToLabel } from 'utils/types';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';

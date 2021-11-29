@@ -5,13 +5,13 @@ import { useHistory, useParams } from 'react-router';
 import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, TrialDetails } from 'types';
-import { terminalRunStates } from 'utils/types';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';

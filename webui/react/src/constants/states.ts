@@ -1,7 +1,6 @@
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
-  Checkpoint, CheckpointState, CheckpointWorkload, CommandState,
-  CommandType, RecordKey, ResourceState, RunState, SlotState,
+  CheckpointState, CommandState, CommandType, ResourceState, RunState, SlotState,
 } from 'types';
 
 export const activeCommandStates = [
@@ -51,7 +50,7 @@ export const deletableRunStates: Set<RunState> = new Set([
   RunState.DeleteFailed,
 ]);
 
-export const runStateToLabel: {[key in RunState]: string} = {
+export const runStateToLabel: { [key in RunState]: string } = {
   [RunState.Active]: 'Active',
   [RunState.Canceled]: 'Canceled',
   [RunState.Completed]: 'Completed',
@@ -66,7 +65,7 @@ export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.Unspecified]: 'Unspecified',
 };
 
-export const V1ResourcePoolTypeToLabel: {[key in V1ResourcePoolType]: string} = {
+export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } = {
   [V1ResourcePoolType.UNSPECIFIED]: 'Unspecified',
   [V1ResourcePoolType.AWS]: 'AWS',
   [V1ResourcePoolType.GCP]: 'GCP',
@@ -74,7 +73,7 @@ export const V1ResourcePoolTypeToLabel: {[key in V1ResourcePoolType]: string} = 
   [V1ResourcePoolType.K8S]: 'Kubernetes',
 };
 
-export const V1SchedulerTypeToLabel : {[key in V1SchedulerType]: string} = {
+export const V1SchedulerTypeToLabel : { [key in V1SchedulerType]: string } = {
   [V1SchedulerType.FAIRSHARE]: 'Fairshare',
   [V1SchedulerType.KUBERNETES]: 'Kubernetes',
   [V1SchedulerType.PRIORITY]: 'Priority',
@@ -82,7 +81,7 @@ export const V1SchedulerTypeToLabel : {[key in V1SchedulerType]: string} = {
   [V1SchedulerType.UNSPECIFIED]: 'Unspecified',
 };
 
-export const commandStateToLabel: {[key in CommandState]: string} = {
+export const commandStateToLabel: { [key in CommandState]: string } = {
   [CommandState.Pending]: 'Pending',
   [CommandState.Assigned]: 'Assigned',
   [CommandState.Pulling]: 'Pulling',
@@ -92,13 +91,13 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const slotStateToLabel: {[key in SlotState]: string} = {
+export const slotStateToLabel: { [key in SlotState]: string } = {
   [SlotState.Pending]: 'Pending',
   [SlotState.Running]: 'Running',
   [SlotState.Free]: 'Free',
 };
 
-export const checkpointStateToLabel: {[key in CheckpointState]: string} = {
+export const checkpointStateToLabel: { [key in CheckpointState]: string } = {
   [CheckpointState.Active]: 'Active',
   [CheckpointState.Completed]: 'Completed',
   [CheckpointState.Error]: 'Error',
@@ -106,7 +105,7 @@ export const checkpointStateToLabel: {[key in CheckpointState]: string} = {
   [CheckpointState.Unspecified]: 'Unspecified',
 };
 
-export const resourceStateToLabel: {[key in ResourceState]: string} = {
+export const resourceStateToLabel: { [key in ResourceState]: string } = {
   [ResourceState.Running]: 'Running',
   [ResourceState.Assigned]: 'Assigned',
   [ResourceState.Terminated]: 'Terminated',
@@ -115,32 +114,9 @@ export const resourceStateToLabel: {[key in ResourceState]: string} = {
   [ResourceState.Unspecified]: 'Unspecified',
 };
 
-export function stateToLabel(
-  state: RunState | CommandState | CheckpointState | ResourceState | SlotState,
-): string {
-  return runStateToLabel[state as RunState]
-  || commandStateToLabel[state as CommandState]
-  || resourceStateToLabel[state as ResourceState]
-  || checkpointStateToLabel[state as CheckpointState]
-  || slotStateToLabel[state as SlotState];
-}
-
-export const commandTypeToLabel: {[key in CommandType]: string} = {
+export const commandTypeToLabel: { [key in CommandType]: string } = {
   [CommandType.Command]: 'Command',
   [CommandType.JupyterLab]: 'JupyterLab',
   [CommandType.Shell]: 'Shell',
   [CommandType.TensorBoard]: 'TensorBoard',
-};
-
-export function hasKey<O>(obj: O, key: RecordKey): key is keyof O {
-  return key in obj;
-}
-
-// used when properties are named differently between objects.
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const oneOfProperties = <T>(obj: any, props: string[]): T => {
-  for (const prop of props) {
-    if (prop in obj) return obj[prop] as T;
-  }
-  throw new Error('no matching property');
 };

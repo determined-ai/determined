@@ -1,7 +1,7 @@
+import { killableCmdStates, killableRunStates, terminalCommandStates } from 'constants/states';
 import { paths } from 'routes/utils';
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
-import { killableCmdStates, killableRunStates, terminalCommandStates } from 'utils/types';
 
 import { isEqual } from './data';
 

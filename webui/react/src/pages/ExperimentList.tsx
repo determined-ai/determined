@@ -19,6 +19,7 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -39,7 +40,6 @@ import { isBoolean, isEqual } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
-import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import settingsConfig, { Settings } from './ExperimentList.settings';

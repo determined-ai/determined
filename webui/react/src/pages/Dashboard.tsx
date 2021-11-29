@@ -7,6 +7,7 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
+import { activeCommandStates, activeRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
@@ -26,7 +27,6 @@ import {
 } from 'types';
 import { isEqual, validateEnumList } from 'utils/data';
 import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
-import { activeCommandStates, activeRunStates } from 'utils/types';
 
 const defaultFilters: TaskFilters = {
   limit: 25,

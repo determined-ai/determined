@@ -6,6 +6,7 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Icon from 'components/Icon';
+import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
@@ -17,7 +18,6 @@ import {
 } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask, isTaskKillable } from 'utils/task';
-import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ActionDropdown.module.scss';

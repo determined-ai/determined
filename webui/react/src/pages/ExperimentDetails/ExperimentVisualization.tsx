@@ -5,6 +5,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner';
+import { terminalRunStates } from 'constants/states';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import {
@@ -19,7 +20,6 @@ import {
 } from 'types';
 import { hasObjectKeys } from 'utils/data';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
-import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {

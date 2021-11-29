@@ -8,6 +8,7 @@ import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
+import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import {
   CheckpointState,
@@ -17,7 +18,6 @@ import {
 } from 'types';
 import { durationInEnglish, getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
-import { commandTypeToLabel } from 'utils/types';
 import { waitPageUrl } from 'wait';
 
 import Link from './Link';

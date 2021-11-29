@@ -6,9 +6,9 @@ import k8sLogo from 'assets/k8s-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
+import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
-import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'utils/types';
 
 import Json from './Json';
 import Link from './Link';

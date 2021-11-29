@@ -8,6 +8,7 @@ import ParallelCoordinates, {
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
@@ -21,7 +22,6 @@ import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from
 import { clone, flattenObject } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
-import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
