@@ -268,6 +268,7 @@ class TFKerasTrialController(det.TrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
+        # Keras only supports horovod backend for distributed training
         session = cls._configure_session(
             env, trial.session_config(), use_horovod=context.distributed.size > 1
         )
@@ -339,6 +340,10 @@ class TFKerasTrialController(det.TrialController):
         if isinstance(self.validation_data, keras.SequenceAdapter):
             # Ignore these settings and use the same settings as for the fit call.
             self.validation_data = self.validation_data.sequence
+
+        if self.context.distributed.size > 1:
+            assert self.use_horovod, "TF Keras trial must be launched with a horovod backend if " \
+                                     "doing distributed training"
 
         self._check_training_data()
         self._check_validation_data()
@@ -506,7 +511,7 @@ class TFKerasTrialController(det.TrialController):
         )
         callbacks = [self.multiplexer]
 
-        if self.context.distributed.size > 1 and self.use_horovod:
+        if self.context.distributed.size > 1:
             # Horovod synchronization of initial variables should happen even before we enter our
             # control loop, in case we have an initial validation requested.
             callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)] + callbacks
@@ -657,8 +662,8 @@ class TFKerasTrialController(det.TrialController):
                 workers=self.context._fit_workers,
                 use_multiprocessing=self.context._fit_use_multiprocessing,
                 max_queue_size=self.context._fit_max_queue_size,
-                shard_rank=self.context.distributed.get_rank(),
-                num_shards=self.context.distributed.get_size(),
+                shard_rank=self.context.distributed.rank,
+                num_shards=self.context.distributed.size,
                 repeat=True,
                 shuffle=self.context._fit_shuffle,
                 shuffle_seed=self.context.get_trial_seed(),
@@ -819,7 +824,7 @@ class TFKerasTrialController(det.TrialController):
         raise det.errors.WorkerFinishedGracefully()
 
     def _allreduce_logs(self, logs: Dict) -> Dict:
-        if not (self.context.distributed.size > 1 and self.use_horovod):
+        if not (self.context.distributed.size > 1):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
@@ -876,7 +881,7 @@ class TFKerasTrialController(det.TrialController):
                 "as this will affect Determined training behavior",
             )
 
-        if self.context.distributed.size > 1 and self.use_horovod:
+        if self.context.distributed.size > 1:
             num_inputs = self._hvd_allreduce(num_inputs, average=False, name="train_num_inputs")
             num_inputs = self._convert_possible_tensor(num_inputs)
 
@@ -913,7 +918,7 @@ class TFKerasTrialController(det.TrialController):
         metrics = self._launch_evaluate()
         num_inputs = self.multiplexer.get_test_inputs()
 
-        if self.context.distributed.size > 1 and self.use_horovod:
+        if self.context.distributed.size > 1:
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.

@@ -387,6 +387,10 @@ class EstimatorTrialController(det.TrialController):
                 f"field of the RunConfig not be set. Your estimator has "
                 f"eval_distribute={str(estimator.config.train_distribute.eval_distribute)}",
             )
+        if self.context.distributed.size > 1:
+            assert self.use_horovod, \
+                "Estimator trial must be run with a horovod backend if distributed training"
+
         self.estimator = estimator
         self.user_train_spec = user_train_spec
         self.val_spec = val_spec
@@ -616,7 +620,7 @@ class EstimatorTrialController(det.TrialController):
 
         self.train_hooks.append(DeterminedEarlyStoppingHook(self.context))
 
-        if self.context.distributed.size > 1 and self.use_horovod:
+        if self.context.distributed.size > 1:
             self.train_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
 
         # It is important that this hook is the final in the list so that if
@@ -645,7 +649,7 @@ class EstimatorTrialController(det.TrialController):
             gpus = tf.config.experimental.list_physical_devices("GPU")
 
             if len(gpus) > 0:
-                local_rank = hvd.local_rank()
+                local_rank = hvd.local_rank() if use_horovod else 0
                 gpu = gpus[local_rank]
                 tf.config.experimental.set_visible_devices(gpu, "GPU")
                 tf.config.experimental.set_memory_growth(gpu, True)
@@ -663,7 +667,6 @@ class EstimatorTrialController(det.TrialController):
 
         # The default session should already be defined, here we also set the session
         # for the estimator itself.
-        logging.info(f"Session config {self.use_horovod}")
         self._init_session_config(session_config, self.env, self.use_horovod)
 
         config = config.replace(
@@ -710,9 +713,7 @@ class EstimatorTrialController(det.TrialController):
         """
 
         # Add suffix so that horovod processes don't overwrite each other.
-        suffix = (
-            str(0) if not self.context.distributed.size > 1 else str(self.context.distributed.rank)
-        )
+        suffix = str(self.context.distributed.local_rank)
 
         if self.env.latest_checkpoint is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
@@ -767,7 +768,7 @@ class EstimatorTrialController(det.TrialController):
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        check.true(self.context.distributed.size > 1)
+        assert self.context.distributed.size > 1, "average_metrics can only be called during distributed training"
         all_metrics = self.context.distributed._zmq_gather(metrics)
         if not self.is_chief:
             return None
