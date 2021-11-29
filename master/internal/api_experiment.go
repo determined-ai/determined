@@ -706,8 +706,8 @@ func (a *apiServer) CreateExperiment(
 	}
 	a.m.system.ActorOf(experimentsAddr.Child(e.ID), e)
 
-	if (req.Activate) {
-		_, err := a.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+	if req.Activate {
+		_, err = a.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to activate experiment: %s", err)
 		}
@@ -717,7 +717,6 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, err
 	}
-
 	return &apiv1.CreateExperimentResponse{
 		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
 	}, nil

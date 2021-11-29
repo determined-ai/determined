@@ -140,7 +140,7 @@ const useCreateExperimentModal = (): ModalHooks => {
 
     try {
       const { id: newExperimentId } = await createExperiment({
-        activate: true,
+        activate: isFork,
         experimentConfig: newConfig,
         parentId: modalState.experiment.id,
       });

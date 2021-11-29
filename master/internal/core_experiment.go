@@ -499,7 +499,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
-	if (params.Activate) {
+	if params.Activate {
 		exp := actor.Addr("experiments", e.ID)
 		m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
 	}

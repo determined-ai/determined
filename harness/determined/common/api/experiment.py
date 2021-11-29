@@ -216,10 +216,10 @@ def create_experiment(
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:
     body = {
+        "activate": activate,
         "experiment_config": yaml.safe_dump(config),
         "model_definition": [e.dict() for e in model_context.entries],
         "validate_only": validate_only,
-        "activate": activate,
     }
     if template:
         body["template"] = template
