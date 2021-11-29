@@ -144,5 +144,3 @@ export const oneOfProperties = <T>(obj: any, props: string[]): T => {
   }
   throw new Error('no matching property');
 };
-
-export type Eventually<T> = T | Promise<T>;

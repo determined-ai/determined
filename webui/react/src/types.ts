@@ -12,6 +12,7 @@ export type Primitive = boolean | number | string;
 export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [ T, T ];
+export type Eventually<T> = T | Promise<T>;
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
