@@ -1,6 +1,9 @@
 import { Input, Modal, Select } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { Metadata } from 'types';
+
+import EditableMetadata from './Metadata/EditableMetadata';
 import css from './RegisterModelVersionModal.module.scss';
 import EditableTagList from './TagList';
 
@@ -16,6 +19,8 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
   const [ versionName, setVersionName ] = useState('');
   const [ modelDescription, setModelDescription ] = useState('');
   const [ tags, setTags ] = useState<string[]>([]);
+  const [ metadata, setMetadata ] = useState<Metadata>({});
+  const [ expandDetails, setExpandDetails ] = useState(false);
 
   const updateModel = useCallback((value) => {
     setModel(value);
@@ -31,6 +36,10 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
 
   const modelOptions = useMemo(() => {
     return [ '' ];
+  }, []);
+
+  const openDetails = useCallback(() => {
+    setExpandDetails(true);
   }, []);
 
   return (
@@ -61,14 +70,18 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
           <h2>Description <span>(optional)</span></h2>
           <Input.TextArea value={modelDescription} onChange={updateModelDescription} />
         </div>
-        <div>
-          <h2>Metadata <span>(optional)</span></h2>
-          <p>Placeholder</p>
-        </div>
-        <div>
-          <h2>Tags <span>(optional)</span></h2>
-          <EditableTagList tags={tags} onChange={setTags} />
-        </div>
+        {expandDetails ?
+          <>
+            <div>
+              <h2>Metadata <span>(optional)</span></h2>
+              <EditableMetadata editing={true} metadata={metadata} updateMetadata={setMetadata} />
+            </div>
+            <div>
+              <h2>Tags <span>(optional)</span></h2>
+              <EditableTagList tags={tags} onChange={setTags} />
+            </div>
+          </> :
+          <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
       </div>
     </Modal>
   );
