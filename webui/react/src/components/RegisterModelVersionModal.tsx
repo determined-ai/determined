@@ -89,6 +89,7 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
           <Select
             dropdownMatchSelectWidth={250}
             placeholder="Select a model..."
+            showSearch
             onChange={updateModel}>
             {modelOptions.map(option => (
               <Option key={option} value={option}>
