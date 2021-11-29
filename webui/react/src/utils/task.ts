@@ -1,67 +1,13 @@
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
-import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
-import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
 import { LaunchTensorBoardParams } from 'services/types';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
-  ExperimentItem, ExperimentOld, ExperimentTask, RawJson, RecentCommandTask, RecentEvent,
+  ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
-import { openCommand } from 'wait';
 
 import { isEqual } from './data';
-
-export const launchJupyterLab = async (
-  config?: RawJson,
-  slots?: number,
-  templateName?: string,
-  name?: string,
-  pool?:string,
-): Promise<void> => {
-  try {
-    const jupyterLab = await apiLaunchJupyterLab({
-      config: config || {
-        description: name === '' ? undefined : name,
-        resources: { resource_pool: pool === '' ? undefined : pool, slots },
-      },
-      templateName: templateName === '' ? undefined : templateName,
-    });
-    openCommand(jupyterLab);
-  } catch (e) {
-    handleError({
-      error: e,
-      level: ErrorLevel.Error,
-      message: e.message,
-      publicMessage: 'Please try again later.',
-      publicSubject: 'Unable to Launch JupyterLab',
-      silent: false,
-      type: ErrorType.Server,
-    });
-  }
-};
-
-export const previewJupyterLab = async (
-  slots?: number,
-  templateName?: string,
-  name?: string,
-  pool?: string,
-): Promise<RawJson> => {
-  try {
-    const config = await apiPreviewJupyterLab({
-      config: {
-        description: name === '' ? undefined : name,
-        resources: { resource_pool: pool === '' ? undefined : pool, slots },
-      },
-      preview: true,
-      templateName: templateName === '' ? undefined : templateName,
-    });
-    return config;
-  } catch (e) {
-    throw new Error('Unable to load JupyterLab config.');
-  }
-};
 
 export const canBeOpened = (task: AnyTask): boolean => {
   if (isExperimentTask(task)) return true;
