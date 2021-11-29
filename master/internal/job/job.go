@@ -1,4 +1,4 @@
-package job // jobqueue?
+package job
 
 import (
 	"fmt"
@@ -13,26 +13,6 @@ import (
 
 // JobsActorAddr is the address of the jobs actor.
 var JobsActorAddr = actor.Addr("jobs")
-
-// TODO these could be set up as jobs children.
-var jobManagers = [...]actor.Address{
-	actor.Addr("experiments"),
-	actor.Addr("tensorboard"), // should be tensorboards
-	actor.Addr("commands"),
-	actor.Addr("shells"),
-	actor.Addr("notebooks"),
-}
-
-// TODO attach jobs to jobs actor for direct access via id?
-// would need alias address support form the actor system
-// helper to get all the childrens of job managers addresse into a list.
-func getJobRefs(system *actor.System) []*actor.Ref {
-	jobRefs := make([]*actor.Ref, 0)
-	for _, addr := range jobManagers {
-		jobRefs = append(jobRefs, system.Get(addr).Children()...)
-	}
-	return jobRefs
-}
 
 // RMJobInfo packs information available only to the RM that updates frequently.
 type RMJobInfo struct { // rename ?
@@ -55,26 +35,43 @@ type GetJobQ struct {
 type GetJobQStats struct {
 }
 
-// type SetJobQ struct {
-// 	Identifier string
-// 	Queue      map[model.JobID]*RMJobInfo
-// }
+// RegisterJob Registers an active job with the jobs actor.
+// Used as to denote a child actor.
+type RegisterJob struct {
+	JobID    model.JobID
+	JobActor *actor.Ref
+}
+
+// UnregisterJob removes a job from the jobs actor.
+type UnregisterJob struct {
+	JobID model.JobID
+}
 
 // Jobs manage jobs.
 type Jobs struct {
-	RMRef *actor.Ref
-	// Queues map[string]map[model.JobID]*RMJobInfo
+	RMRef    *actor.Ref
+	jobsByID map[model.JobID]*actor.Ref
 }
 
 // AQueue is a map of jobID to RMJobInfo.
 type AQueue = map[model.JobID]*RMJobInfo
 
+// NewJobs creates a new jobs actor.
+func NewJobs(rmRef *actor.Ref) *Jobs {
+	return &Jobs{
+		RMRef:    rmRef,
+		jobsByID: make(map[model.JobID]*actor.Ref),
+	}
+}
+
 func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
-	children := getJobRefs(ctx.Self().System())
+	children := make([]*actor.Ref, 0)
+	for _, jobRef := range j.jobsByID {
+		children = append(children, jobRef)
+	}
+	// children := getJobRefs(ctx.Self().System())
 	fmt.Printf("children count %d \n", len(children))
-	// jobs := make([]*jobv1.Job, 0)
 	return ctx.AskAll(msg, children...).GetAll()
-	// IMPROVE. look up reflect
 }
 
 func (j *Jobs) parseV1JobResposnes(
@@ -98,6 +95,13 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
+	case RegisterJob:
+		fmt.Printf("RegisterJob %v \n, actor ref %s", msg.JobID, msg.JobActor.Address())
+		j.jobsByID[msg.JobID] = msg.JobActor
+
+	case UnregisterJob:
+		delete(j.jobsByID, msg.JobID)
+
 	case *apiv1.GetJobsRequest:
 		jobs, err := j.parseV1JobResposnes(j.askJobActors(ctx, msg))
 		if err != nil {
@@ -114,9 +118,6 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			}
 		}
 		ctx.Respond(jobsInRM)
-
-	// case SetJobQ:
-	// 	j.Queues[msg.Identifier] = msg.Queue
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
