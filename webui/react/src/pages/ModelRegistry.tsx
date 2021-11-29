@@ -424,7 +424,7 @@ const ModelRegistry: React.FC = () => {
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
       <Section title="Model Registry">
-        {models.length === 0 ?
+        {(models.length === 0 && !isLoading) ?
           <div className={css.emptyBase}>
             <div className={css.icon}>
               <Icon name="model" size="mega" />
