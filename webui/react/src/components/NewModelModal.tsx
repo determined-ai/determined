@@ -1,6 +1,8 @@
 import { Input, Modal } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import EditableMetadata from './Metadata/EditableMetadata';
+import css from './NewModelModal.module.scss';
 import EditableTagList from './TagList';
 
 interface Props {
@@ -28,15 +30,27 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
       title="New Model"
       visible={visible}
       onCancel={onClose}>
-      <p>Create a registered model to organize important checkpoints.</p>
-      <h2>Model name</h2>
-      <Input value={modelName} onChange={updateModelName} />
-      <h2>Description <span>(optional)</span></h2>
-      <Input.TextArea value={modelDescription} onChange={updateModelDescription} />
-      <h2>Metadata <span>(optional)</span></h2>
-      <p>Placeholder</p>
-      <h2>Tags <span>(optional)</span></h2>
-      <EditableTagList tags={tags} onChange={setTags} />
+      <div className={css.base}>
+        <p className={css.directions}>
+          Create a registered model to organize important checkpoints.
+        </p>
+        <div>
+          <h2>Model name</h2>
+          <Input value={modelName} onChange={updateModelName} />
+        </div>
+        <div>
+          <h2>Description <span>(optional)</span></h2>
+          <Input.TextArea value={modelDescription} onChange={updateModelDescription} />
+        </div>
+        <div>
+          <h2>Metadata <span>(optional)</span></h2>
+          <EditableMetadata editing={true} />
+        </div>
+        <div>
+          <h2>Tags <span>(optional)</span></h2>
+          <EditableTagList tags={tags} onChange={setTags} />
+        </div>
+      </div>
     </Modal>
   );
 };
