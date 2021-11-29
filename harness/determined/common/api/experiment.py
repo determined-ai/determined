@@ -219,6 +219,7 @@ def create_experiment(
         "experiment_config": yaml.safe_dump(config),
         "model_definition": [e.dict() for e in model_context.entries],
         "validate_only": validate_only,
+        "activate": activate,
     }
     if template:
         body["template"] = template
@@ -236,9 +237,6 @@ def create_experiment(
 
     new_resource = r.headers["Location"]
     experiment_id = int(new_resource.split("/")[-1])
-
-    if activate:
-        activate_experiment(master_url, experiment_id)
 
     return experiment_id
 

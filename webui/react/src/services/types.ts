@@ -162,6 +162,7 @@ export interface PatchModelVersionParams {
 }
 
 export interface CreateExperimentParams {
+  activate?: boolean;
   experimentConfig: string;
   parentId: number;
 }
