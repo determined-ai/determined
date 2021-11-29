@@ -272,10 +272,7 @@ class PyTorchTrialController(det.TrialController):
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Average training metrics across GPUs"""
-        check.true(
-            self.context.distributed.size > 1,
-            "Can only average training metrics in multi-GPU training.",
-        )
+        assert self.context.distributed.size > 1, "Can only average training metrics in multi-GPU training."
         metrics_timeseries = util._list_to_dict(per_batch_metrics)
 
         # combined_timeseries is: dict[metric_name] -> 2d-array.

@@ -2,11 +2,11 @@ from typing import Callable
 
 import determined as det
 from determined import _data_layer
-from determined._generic import DistributedContext
+import determined._generic
 
 
 class DataLayerContext:
-    def __init__(self, env: det.EnvContext, distributed_context: DistributedContext) -> None:
+    def __init__(self, env: det.EnvContext, distributed_context: determined._generic.DistributedContext) -> None:
         self._training_cacheable = _data_layer._CacheableDecorator(
             env=env,
             training=True,
