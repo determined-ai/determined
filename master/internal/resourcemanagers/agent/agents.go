@@ -2,7 +2,7 @@ package agent
 
 import (
 	"net/http"
-	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -37,12 +37,13 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	case api.WebSocketConnected:
 		id := msg.Ctx.QueryParam("id")
 		resourcePool := msg.Ctx.QueryParam("resource_pool")
-		reconnect, err := strconv.ParseBool(msg.Ctx.QueryParam("reconnect"))
+		reconnect, err := msg.IsReconnect()
 		if err != nil {
 			ctx.Respond(errors.Wrapf(err, "parsing reconnect query param"))
 			return nil
 		}
 
+		// Handle agent reconnecting after a network failure.
 		if reconnect {
 			if ctx.Child(id) != nil {
 				// If the agent actor is still alive on our side when an
@@ -56,13 +57,16 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		// There is a case not explicitly handled: !reconnect && ctx.Child(id) != nil.
-		// If the agent is unable to reconnect then crashes and _is_ able to reconnect,
-		// this may fail once with "actor already connected" while we wait to decide it
-		// is dead. We could also kill it and recreate it in this case, but then we also
-		// need to make sure it is not just a new agent using the same ID by checking our
-		// state to make sure we are disconnected. But this is a lot for an edge case that
-		// is very unlikely.
+
+		// Handle agent reconnecting within the timeout after a crash/restart.
+		// Based on ResourcePoolConfig AgentReattachEnabled, it will clear existing
+		// containers or will try to reattach them.
+		// That logic is located in agent.receive(ws.WebSocketConnected).
+		if existingRef := ctx.Child(id); existingRef != nil {
+			ctx.Log().Infof("restoring agent id: %s", id)
+			ctx.Respond(ctx.Ask(existingRef, msg).Get())
+			return nil
+		}
 
 		if ref, err := a.createAgentActor(ctx, id, resourcePool, a.opts); err != nil {
 			ctx.Respond(err)
@@ -97,11 +101,16 @@ func (a *agents) createAgentActor(
 	if err := sproto.ValidateResourcePool(ctx.Self().System(), resourcePool); err != nil {
 		return nil, errors.Wrapf(err, "cannot find specified resource pool for agent %s", id)
 	}
+
+	resourcePoolRef := sproto.GetRP(ctx.Self().System(), resourcePool)
+	rpConfig := ctx.Ask(resourcePoolRef, aproto.GetRPConfig{}).Get().(aproto.GetRPResponse)
 	ref, ok := ctx.ActorOf(id, &agent{
-		resourcePool:     sproto.GetRP(ctx.Self().System(), resourcePool),
-		resourcePoolName: resourcePool,
-		opts:             opts,
-		enabled:          true,
+		resourcePool:         resourcePoolRef,
+		resourcePoolName:     resourcePool,
+		agentReconnectWait:   time.Duration(rpConfig.AgentReconnectWait),
+		agentReattachEnabled: rpConfig.AgentReattachEnabled,
+		opts:                 opts,
+		enabled:              true,
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

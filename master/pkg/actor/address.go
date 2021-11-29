@@ -36,6 +36,11 @@ func Addr(rawPath ...interface{}) Address {
 	return Address{path: parsed.String()}
 }
 
+// AddrFromString is the inverse of `Address.String()`.
+func AddrFromString(fullPath string) Address {
+	return Address{path: fullPath}
+}
+
 func (a Address) String() string {
 	return a.path
 }

@@ -20,6 +20,8 @@ func (t *timer) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case actor.PreStart:
 		go t.awaitTimer(ctx)
+	case actor.PostStop:
+		t.Stop()
 	}
 	return nil
 }
@@ -32,8 +34,8 @@ func (t *timer) awaitTimer(ctx *actor.Context) {
 
 // NotifyAfter asynchronously notifies the context's recipient with the provided message when
 // after the provided duration.
-func NotifyAfter(ctx *actor.Context, d time.Duration, msg actor.Message) {
+func NotifyAfter(ctx *actor.Context, d time.Duration, msg actor.Message) (*actor.Ref, bool) {
 	addr := actor.Addr("notify-timer-" + uuid.New().String())
-	ctx.Self().System().ActorOf(addr,
+	return ctx.Self().System().ActorOf(addr,
 		&timer{Timer: time.NewTimer(d), recipient: ctx.Self(), msg: msg})
 }

@@ -19,6 +19,21 @@ stages:
         log:
           level: debug
         root: tools/build
+        resource_manager:
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+          scheduler:
+            fitting_policy: best
+          type: fair_share
+          type: agent
+        resource_pools:
+          - agent_reattach_enabled: true
+            agent_reconnect_wait: 25s
+            description: ''
+            max_aux_containers_per_agent: 100
+            pool_name: default
+            provider: null
+            task_container_defaults: null
 
   - custom:
       name: proxy
