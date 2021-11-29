@@ -8,7 +8,6 @@ from typing import Iterator, Optional
 
 import determined as det
 from determined import _generic, horovod, load
-from determined._trial_controller import DistributedBackend
 from determined.common.api import certs
 
 
@@ -85,8 +84,8 @@ def main(chief_ip: Optional[str]) -> int:
         # user implemented.
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
-        use_horovod = DistributedBackend.HOROVOD.value
-        use_torch_distributed = DistributedBackend.TORCH.value
+        use_horovod = det._DistributedBackend.HOROVOD.value
+        use_torch_distributed = det._DistributedBackend.TORCH.value
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
         controller_class.pre_execute_hook(env, use_horovod)

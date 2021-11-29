@@ -63,6 +63,10 @@ class PyTorchTrialController(det.TrialController):
 
         self.latest_batch = self.env.latest_batch
 
+        # Currently only horovod backend is supported if distributed training
+        if self.context.distributed.size > 1:
+            assert self.use_horovod, "Must use horovod for distributed training"
+
     @classmethod
     def pre_execute_hook(
         cls: Type["PyTorchTrialController"], env: det.EnvContext, use_horovod: bool
@@ -125,8 +129,8 @@ class PyTorchTrialController(det.TrialController):
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.latest_batch
 
-        nreplicas = self.context.distributed.get_size()
-        rank = self.context.distributed.get_rank()
+        nreplicas = self.context.distributed.size
+        rank = self.context.distributed.rank
 
         def _dataset_repro_warning(fn: str, data_obj: Any) -> str:
             return (
@@ -196,7 +200,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
 
-            if self.context.distributed.size > 1 and self.use_horovod:
+            if self.context.distributed.size > 1:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
@@ -268,10 +272,9 @@ class PyTorchTrialController(det.TrialController):
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Average training metrics across GPUs"""
-        check.true(
-            self.context.distributed.size > 1,
-            "Can only average training metrics in multi-GPU training.",
-        )
+        assert (
+            self.context.distributed.size > 1
+        ), "Can only average training metrics in multi-GPU training."
         metrics_timeseries = util._list_to_dict(per_batch_metrics)
 
         # combined_timeseries is: dict[metric_name] -> 2d-array.
@@ -293,7 +296,7 @@ class PyTorchTrialController(det.TrialController):
             combined_timeseries_type = Dict[str, List[List[Any]]]
             combined_timeseries = cast(combined_timeseries_type, combined_timeseries)
             num_batches = len(per_batch_metrics)
-            num_processes = self.context.distributed.get_size()
+            num_processes = self.context.distributed.size
             averaged_metrics_timeseries = {}  # type: Dict[str, List]
 
             for metric_name in combined_timeseries.keys():
@@ -429,19 +432,15 @@ class PyTorchTrialController(det.TrialController):
 
             batch_dur = time.time() - batch_start_time
             samples_per_second = batch_inputs / batch_dur
-            samples_per_second *= self.context.distributed.get_size()
+            samples_per_second *= self.context.distributed.size
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
-        if (
-            self.context.distributed.size > 1
-            and self.use_horovod
-            and self.context._average_training_metrics
-        ):
+        if self.context.distributed.size > 1 and self.context._average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
                 per_batch_metrics = self._average_training_metrics(per_batch_metrics)
-        num_inputs *= self.context.distributed.get_size()
+        num_inputs *= self.context.distributed.size
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
 
         # Ignore batch_metrics entirely for custom reducers; there's no guarantee that per-batch
@@ -538,7 +537,7 @@ class PyTorchTrialController(det.TrialController):
                 metrics_reducers=self._prepare_metrics_reducers(keys=keys),
             )
 
-            num_inputs *= self.context.distributed.get_size()
+            num_inputs *= self.context.distributed.size
 
         else:
             check.true(self._evaluate_full_dataset_defined())
@@ -557,15 +556,11 @@ class PyTorchTrialController(det.TrialController):
             self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
-        if (
-            self.context.distributed.size > 1
-            and self.use_horovod
-            and any(
-                map(
-                    lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-                    or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
-                    self.callbacks.values(),
-                )
+        if self.context.distributed.size > 1 and any(
+            map(
+                lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
+                or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
+                self.callbacks.values(),
             )
         ):
             logging.debug(
@@ -625,7 +620,7 @@ class PyTorchTrialController(det.TrialController):
             for name in keys or []
         }
 
-        if self.context.distributed.size > 1 and self.use_horovod:
+        if self.context.distributed.size > 1:
             # If using horovod combine metrics across all processes.
             # Only the chief process will receive all the metrics.
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
@@ -757,7 +752,7 @@ class PyTorchTrialController(det.TrialController):
             if torch.cuda.device_count():
                 if "gpu_rng_state" in rng_state:
                     torch.cuda.set_rng_state(
-                        rng_state["gpu_rng_state"], device=self.context.distributed.get_local_rank()
+                        rng_state["gpu_rng_state"], device=self.context.distributed.local_rank
                     )
                 else:
                     logging.warning(
@@ -801,7 +796,7 @@ class PyTorchTrialController(det.TrialController):
 
         if torch.cuda.device_count():
             rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(
-                self.context.distributed.get_local_rank()
+                self.context.distributed.local_rank
             )
 
         # PyTorch uses optimizer objects that take the model parameters to

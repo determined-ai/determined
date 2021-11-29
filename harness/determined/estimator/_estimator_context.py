@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, List, Tuple, Union, cast
+from typing import Any, Callable, List, Tuple, Union, cast
 
 import tensorflow as tf
 
@@ -44,17 +44,13 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         )
 
         if self.distributed.size > 1:
-            experiment_config = self.get_experiment_config()
-            optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
+            optimizations_config = self.env.experiment_config.get_optimizations_config()
             self.aggregation_frequency = cast(
                 int, optimizations_config.get("aggregation_frequency")
             )
             self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
             self.average_aggregated_gradients = cast(
                 bool, optimizations_config.get("average_aggregated_gradients")
-            )
-            self.average_training_metrics = cast(
-                bool, optimizations_config.get("average_training_metrics")
             )
 
         self.optimizer_initialized = False
@@ -72,7 +68,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             return optimizer
 
         self.optimizer_initialized = True
-        if not self.distributed.size > 1:
+        if self.distributed.size == 0:
             return optimizer
 
         check.check_false(
@@ -81,13 +77,12 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         )
 
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_optimizer was called.")
-        use_compression = self.fp16_compression
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
         hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
             "compression": hvd.compression.Compression.fp16
-            if use_compression
+            if self.fp16_compression
             else hvd.compression.Compression.none,
             "average_aggregated_gradients": self.average_aggregated_gradients,
         }
@@ -125,7 +120,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.distributed.size > 1 or not shard_dataset:
+        if self.distributed.size == 0 or not shard_dataset:
             if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset

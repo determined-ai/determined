@@ -1,7 +1,6 @@
 import abc
 import logging
 import os
-from distutils.util import strtobool
 from enum import Enum
 from typing import Any, Optional, Type
 
@@ -10,9 +9,9 @@ from determined import profiler, workload
 from determined.common import check
 
 
-class DistributedBackend(Enum):
-    HOROVOD = bool(strtobool(os.environ.get("USE_HOROVOD", "False")))
-    TORCH = bool(strtobool(os.environ.get("USE_TORCH_DISTRIBUTED", "False")))
+class _DistributedBackend(Enum):
+    HOROVOD = bool(os.environ.get("USE_HOROVOD", None))
+    TORCH = bool(os.environ.get("USE_TORCH_DISTRIBUTED", None))
 
 
 class TrialController(metaclass=abc.ABCMeta):
@@ -38,7 +37,7 @@ class TrialController(metaclass=abc.ABCMeta):
             context.distributed.rank,
         )
 
-        self.use_horovod = DistributedBackend.HOROVOD.value
+        self.use_horovod = _DistributedBackend.HOROVOD.value
         self._check_if_trial_supports_configurations(env)
 
         self.batch_size = self.context.get_per_slot_batch_size()

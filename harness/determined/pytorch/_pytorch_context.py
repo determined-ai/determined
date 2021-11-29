@@ -211,12 +211,13 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             )
 
             if self.distributed.size > 1 and self._use_horovod:
-                use_compression = self._fp16_compression
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
                     backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
-                    compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
+                    compression=hvd.Compression.fp16
+                    if self._fp16_compression
+                    else hvd.Compression.none,
                 )
                 logging.debug(
                     "Initialized optimizer for distributed and optimized parallel training."
