@@ -33,8 +33,8 @@ import { isEqual } from 'utils/data';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
-import { filterTasks } from 'utils/task';
-import { commandToTask, commandTypeToLabel, isTaskKillable } from 'utils/types';
+import { filterTasks, taskFromCommandTask } from 'utils/task';
+import { commandTypeToLabel, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';
@@ -73,7 +73,7 @@ const TaskList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = useMemo(() => tasks?.map(commandToTask) || [], [ tasks ]);
+  const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [ tasks ]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks<CommandType, CommandTask>(

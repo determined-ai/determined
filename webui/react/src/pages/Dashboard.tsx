@@ -25,8 +25,8 @@ import {
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
 import { isEqual, validateEnumList } from 'utils/data';
-import { filterTasks } from 'utils/task';
-import { activeCommandStates, activeRunStates, commandToTask, experimentToTask } from 'utils/types';
+import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
+import { activeCommandStates, activeRunStates } from 'utils/types';
 
 const defaultFilters: TaskFilters = {
   limit: 25,
@@ -146,8 +146,8 @@ const Dashboard: React.FC = () => {
 
   const filteredTasks = useMemo(() => {
     const sorted = [
-      ...(experiments || []).map(experimentToTask),
-      ...(tasks || []).map(commandToTask),
+      ...(experiments || []).map(taskFromExperiment),
+      ...(tasks || []).map(taskFromCommandTask),
     ].sort(
       (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
     );

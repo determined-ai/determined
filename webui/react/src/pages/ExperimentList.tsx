@@ -38,8 +38,9 @@ import {
 import { isBoolean, isEqual } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
+import { taskFromExperiment } from 'utils/task';
 import {
-  cancellableRunStates, deletableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
+  cancellableRunStates, deletableRunStates, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -285,7 +286,7 @@ const ExperimentList: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
-        task={experimentToTask(record)}
+        task={taskFromExperiment(record)}
         onComplete={handleActionComplete} />
     );
 

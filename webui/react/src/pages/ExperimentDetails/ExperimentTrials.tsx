@@ -29,7 +29,8 @@ import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
 } from 'types';
-import { getMetricValue, terminalRunStates } from 'utils/types';
+import { getMetricValue } from 'utils/metric';
+import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ExperimentTrials.module.scss';

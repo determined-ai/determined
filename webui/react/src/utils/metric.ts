@@ -1,5 +1,7 @@
-import { MetricName, MetricType, WorkloadGroup } from 'types';
+import { BaseWorkload, MetricName, MetricsWorkload, MetricType, WorkloadGroup } from 'types';
 import { metricNameSorter } from 'utils/sort';
+
+import { isMetricsWorkload } from './workload';
 
 export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {
   const trainingNames = workloads
@@ -37,6 +39,18 @@ export const extractMetricValue = (
 ): number | undefined => {
   const source = workload[metricName.type]?.metrics ?? {};
   return source[metricName.name];
+};
+
+export const getMetricValue = (
+  workload?: BaseWorkload,
+  metricName?: string,
+): number | undefined => {
+  const metricsWl = workload as MetricsWorkload;
+  if (!workload || !isMetricsWorkload(metricsWl) || !metricsWl.metrics) return undefined;
+
+  metricName = metricName || Object.keys(metricsWl.metrics)[0];
+
+  return metricsWl.metrics[metricName];
 };
 
 export const metricNameToStr = (metricName: MetricName, truncateLimit = 30): string => {

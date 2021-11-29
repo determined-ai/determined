@@ -1,46 +1,8 @@
-import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
-  AnyTask, BaseWorkload, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState,
-  CommandTask, CommandType, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
-  RecentExperimentTask, RecentTask, RecordKey, ResourceState, RunState, SlotState,
+  AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState,
+  CommandTask, CommandType, ExperimentItem, RecordKey, ResourceState, RunState, SlotState,
 } from 'types';
-
-import { LaunchTensorBoardParams } from '../services/types';
-
-import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
-import { isMetricsWorkload } from './workload';
-
-/* Conversions to Tasks */
-
-export const commandToTask = (command: CommandTask): RecentCommandTask => {
-  return {
-    ...command,
-    lastEvent: {
-      date: command.startTime,
-      name: 'requested',
-    },
-  };
-};
-
-export const experimentToTask = (experiment: ExperimentItem): RecentExperimentTask => {
-  const lastEvent = experiment.endTime ?
-    { date: experiment.endTime, name: 'finished' } :
-    { date: experiment.startTime, name: 'requested' };
-  const task: RecentTask = {
-    archived: experiment.archived,
-    id: `${experiment.id}`,
-    lastEvent,
-    name: experiment.name,
-    progress: experiment.progress,
-    resourcePool: experiment.resourcePool,
-    startTime: experiment.startTime,
-    state: experiment.state,
-    url: paths.experimentDetails(experiment.id),
-    username: experiment.username,
-  };
-  return task;
-};
 
 export const activeCommandStates = [
   CommandState.Assigned,
@@ -184,7 +146,7 @@ export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentIt
   return 'config' in obj && 'archived' in obj;
 };
 
-// differentiate Experiment from Task
+// differentiate Task from Experiment
 export const isCommandTask = (obj: Command | CommandTask): obj is CommandTask => {
   return 'type' in obj;
 };
@@ -205,82 +167,8 @@ export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): num
   return total;
 };
 
-/* Experiment Config */
-
-export const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, number] => {
-  const DEFAULT_BATCHES_PER_STEP = 100;
-  // provide backward compat for step count
-  const batchesPerStep = config.batches_per_step || DEFAULT_BATCHES_PER_STEP;
-  return [ 'batches', stepCount * batchesPerStep ];
-};
-
-const stepRemovalTranslations = [
-  { newName: 'searcher.max_length', oldName: 'searcher.max_steps' },
-  { oldName: 'min_validation_period' },
-  { oldName: 'min_checkpoint_period' },
-  { newName: 'searcher.max_length', oldName: 'searcher.target_trial_steps' },
-  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' },
-  { newName: 'searcher.budget', oldName: 'searcher.step_budget' },
-];
-
-// Add opportunistic backward compatibility to old configs.
-export const upgradeConfig = (config: RawJson): void => {
-  stepRemovalTranslations.forEach(translation => {
-    const oldPath = translation.oldName.split('.');
-    const curValue = getPathList<undefined | null | number | unknown>(config, oldPath);
-    if (curValue === undefined) return;
-    if (curValue === null) {
-      deletePathList(config, oldPath);
-    }
-    if (isNumber(curValue)) {
-      const [ key, count ] = getLengthFromStepCount(config, curValue);
-      const newPath = (translation.newName || translation.oldName).split('.');
-      setPathList(config, newPath, { [key]: count });
-      if (translation.newName) deletePathList(config, oldPath);
-    }
-  });
-
-  delete config.batches_per_step;
-};
-
-// Checks whether tensorboard source matches a given source list.
-export const tsbMatchesSource =
-  (tensorboard: CommandTask, source: LaunchTensorBoardParams): boolean => {
-    if (source.experimentIds) {
-      source.experimentIds?.sort();
-      tensorboard.misc?.experimentIds?.sort();
-
-      if (isEqual(tensorboard.misc?.experimentIds, source.experimentIds)) {
-        return true;
-      }
-    }
-
-    if (source.trialIds) {
-      source.trialIds?.sort();
-      tensorboard.misc?.trialIds?.sort();
-
-      if (isEqual(tensorboard.misc?.trialIds, source.trialIds)) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-export const getMetricValue = (
-  workload?: BaseWorkload,
-  metricName?: string,
-): number | undefined => {
-  const metricsWl = workload as MetricsWorkload;
-  if (!workload || !isMetricsWorkload(metricsWl) || !metricsWl.metrics) return undefined;
-
-  metricName = metricName || Object.keys(metricsWl.metrics)[0];
-
-  return metricsWl.metrics[metricName];
-};
-
 export const getBatchNumber = (
-  data: {batch: number} | {totalBatches: number},
+  data: { batch: number } | { totalBatches: number },
 ): number => {
   if ('batch' in data) {
     return data.batch;

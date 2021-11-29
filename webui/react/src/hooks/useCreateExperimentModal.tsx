@@ -10,7 +10,7 @@ import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone } from 'utils/data';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
-import { upgradeConfig } from 'utils/types';
+import { upgradeConfig } from 'utils/experiment';
 
 import css from './useCreateExperimentModal.module.scss';
 import usePrevious from './usePrevious';

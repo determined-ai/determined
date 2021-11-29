@@ -1,6 +1,8 @@
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { paths } from 'routes/utils';
 import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
 import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
+import { LaunchTensorBoardParams } from 'services/types';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
   ExperimentItem, ExperimentOld, ExperimentTask, RawJson, RecentCommandTask, RecentEvent,
@@ -8,6 +10,8 @@ import {
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
+
+import { isEqual } from './data';
 
 export const launchJupyterLab = async (
   config?: RawJson,
@@ -57,6 +61,12 @@ export const previewJupyterLab = async (
   } catch (e) {
     throw new Error('Unable to load JupyterLab config.');
   }
+};
+
+export const canBeOpened = (task: AnyTask): boolean => {
+  if (isExperimentTask(task)) return true;
+  if (terminalCommandStates.has(task.state)) return false;
+  return !!task.serviceAddress;
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -148,6 +158,7 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
     username: user.username,
   } as ExperimentOld;
 };
+
 export const generateOldExperiments = (count = 10): ExperimentOld[] => {
   return new Array(Math.floor(count))
     .fill(null)
@@ -187,12 +198,6 @@ export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
   return ('archived' in task) && !('type' in task);
 };
 
-export const canBeOpened = (task: AnyTask): boolean => {
-  if (isExperimentTask(task)) return true;
-  if (terminalCommandStates.has(task.state)) return false;
-  return !!task.serviceAddress;
-};
-
 const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = ''): boolean => {
   if (!search) return true;
   return task.id.toString().indexOf(search) !== -1 || task.name.indexOf(search) !== -1;
@@ -227,4 +232,61 @@ export const filterTasks = <
         (!isExperiment || !(task as ExperimentTask).archived);
     })
     .filter(task => matchesSearch<A>(task, search));
+};
+
+/* Conversions to Tasks */
+
+export const taskFromCommandTask = (command: CommandTask): RecentCommandTask => {
+  return {
+    ...command,
+    lastEvent: {
+      date: command.startTime,
+      name: 'requested',
+    },
+  };
+};
+
+export const taskFromExperiment = (experiment: ExperimentItem): RecentExperimentTask => {
+  const lastEvent = experiment.endTime ?
+    { date: experiment.endTime, name: 'finished' } :
+    { date: experiment.startTime, name: 'requested' };
+  const task: RecentTask = {
+    archived: experiment.archived,
+    id: `${experiment.id}`,
+    lastEvent,
+    name: experiment.name,
+    progress: experiment.progress,
+    resourcePool: experiment.resourcePool,
+    startTime: experiment.startTime,
+    state: experiment.state,
+    url: paths.experimentDetails(experiment.id),
+    username: experiment.username,
+  };
+  return task;
+};
+
+// Checks whether tensorboard source matches a given source list.
+export const tensorBoardMatchesSource = (
+  tensorBoard: CommandTask,
+  source: LaunchTensorBoardParams,
+): boolean => {
+  if (source.experimentIds) {
+    source.experimentIds?.sort();
+    tensorBoard.misc?.experimentIds?.sort();
+
+    if (isEqual(tensorBoard.misc?.experimentIds, source.experimentIds)) {
+      return true;
+    }
+  }
+
+  if (source.trialIds) {
+    source.trialIds?.sort();
+    tensorBoard.misc?.trialIds?.sort();
+
+    if (isEqual(tensorBoard.misc?.trialIds, source.trialIds)) {
+      return true;
+    }
+  }
+
+  return false;
 };
