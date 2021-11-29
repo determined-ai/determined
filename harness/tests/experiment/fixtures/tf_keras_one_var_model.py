@@ -22,10 +22,11 @@ def make_one_var_tf_dataset_loader(hparams: Dict[str, Any], batch_size: int):
 
 
 class OneVarTrial(keras.TFKerasTrial):
-    _searcher_metric = "loss"
     """
     Models a simple one variable(y = wx) neural network, and a MSE loss function.
     """
+
+    _searcher_metric = "loss"
 
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
