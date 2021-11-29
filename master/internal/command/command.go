@@ -182,6 +182,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}, c.db, sproto.GetRM(ctx.Self().System()))
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
+			JobID:    c.jobID,
+			JobActor: ctx.Self(),
+		})
+
 	case *job.RMJobInfo:
 		c.rmJobInfo = msg
 
@@ -196,6 +201,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
 		}
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
+			JobID: c.jobID,
+		})
+
 	case actor.ChildStopped:
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == c.allocationID.String() && c.exitStatus == nil {
