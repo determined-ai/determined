@@ -269,7 +269,7 @@ class TFKerasTrialContext(det.TrialContext):
 
         self.dataset_initialized = True
         if (
-            not self.distributed.size > 1
+            self.distributed.size == 0
             or not isinstance(dataset, tf.data.Dataset)
             or not shard_dataset
         ):
@@ -286,7 +286,7 @@ class TFKerasTrialContext(det.TrialContext):
     def _get_horovod_optimizer_if_using_horovod(
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
-        if not self.distributed.size > 1:
+        if self.distributed.size == 0:
             return optimizer
 
         # Horovod doesn't know how to handle string-based optimizers.
@@ -321,7 +321,7 @@ class TFKerasTrialContext(det.TrialContext):
             return optimizer
 
         logging.debug(f"Processing wrapped optimizer {optimizer}.")
-        if not self.distributed.size > 1:
+        if self.distributed.size == 0:
             self._wrapped_optimizers.append(optimizer)
             return optimizer
 
@@ -345,7 +345,7 @@ class TFKerasTrialContext(det.TrialContext):
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
         logging.debug(f"Processing compiled optimizer {optimizer}.")
-        if not self.distributed.size > 1:
+        if self.distributed.size == 0:
             self._compiled_optimizer = optimizer
             return optimizer
 
