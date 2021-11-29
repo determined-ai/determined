@@ -29,7 +29,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       if (!formRef.current) return;
       const formValues = formRef.current.getFieldsValue();
       try {
-        await detApi.Jobs.updateJobQueue({
+        await detApi.Internal.updateJobQueue({
           updates: [
             // TODO validate & avoid including all 3
             {
