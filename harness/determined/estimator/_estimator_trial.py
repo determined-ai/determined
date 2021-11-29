@@ -388,8 +388,9 @@ class EstimatorTrialController(det.TrialController):
                 f"eval_distribute={str(estimator.config.train_distribute.eval_distribute)}",
             )
         if self.context.distributed.size > 1:
-            assert self.use_horovod, \
-                "Estimator trial must be run with a horovod backend if distributed training"
+            assert (
+                self.use_horovod
+            ), "Estimator trial must be run with a horovod backend if distributed training"
 
         self.estimator = estimator
         self.user_train_spec = user_train_spec
@@ -768,7 +769,9 @@ class EstimatorTrialController(det.TrialController):
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        assert self.context.distributed.size > 1, "average_metrics can only be called during distributed training"
+        assert (
+            self.context.distributed.size > 1
+        ), "average_metrics can only be called during distributed training"
         all_metrics = self.context.distributed._zmq_gather(metrics)
         if not self.is_chief:
             return None

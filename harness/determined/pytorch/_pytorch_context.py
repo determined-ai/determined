@@ -212,7 +212,9 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
                     backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
-                    compression=hvd.Compression.fp16 if self._fp16_compression else hvd.Compression.none,
+                    compression=hvd.Compression.fp16
+                    if self._fp16_compression
+                    else hvd.Compression.none,
                 )
                 logging.debug(
                     "Initialized optimizer for distributed and optimized parallel training."

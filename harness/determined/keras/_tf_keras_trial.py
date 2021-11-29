@@ -342,8 +342,10 @@ class TFKerasTrialController(det.TrialController):
             self.validation_data = self.validation_data.sequence
 
         if self.context.distributed.size > 1:
-            assert self.use_horovod, "TF Keras trial must be launched with a horovod backend if " \
-                                     "doing distributed training"
+            assert self.use_horovod, (
+                "TF Keras trial must be launched with a horovod backend if "
+                "doing distributed training"
+            )
 
         self._check_training_data()
         self._check_validation_data()

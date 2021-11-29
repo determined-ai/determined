@@ -272,7 +272,9 @@ class PyTorchTrialController(det.TrialController):
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Average training metrics across GPUs"""
-        assert self.context.distributed.size > 1, "Can only average training metrics in multi-GPU training."
+        assert (
+            self.context.distributed.size > 1
+        ), "Can only average training metrics in multi-GPU training."
         metrics_timeseries = util._list_to_dict(per_batch_metrics)
 
         # combined_timeseries is: dict[metric_name] -> 2d-array.
@@ -435,10 +437,7 @@ class PyTorchTrialController(det.TrialController):
             per_batch_metrics.append(tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
-        if (
-            self.context.distributed.size > 1
-            and self.context._average_training_metrics
-        ):
+        if self.context.distributed.size > 1 and self.context._average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
                 per_batch_metrics = self._average_training_metrics(per_batch_metrics)
         num_inputs *= self.context.distributed.size
@@ -557,14 +556,11 @@ class PyTorchTrialController(det.TrialController):
             self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
-        if (
-            self.context.distributed.size > 1
-            and any(
-                map(
-                    lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-                    or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
-                    self.callbacks.values(),
-                )
+        if self.context.distributed.size > 1 and any(
+            map(
+                lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
+                or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
+                self.callbacks.values(),
             )
         ):
             logging.debug(
