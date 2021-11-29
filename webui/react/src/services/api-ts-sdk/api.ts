@@ -11044,6 +11044,46 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
+            }
+            const localVarPath = `/api/v1/resource-pools/queues`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1UpdateJobQueueRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -11539,6 +11579,25 @@ export const InternalApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateJobQueue(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -11817,6 +11876,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+            return InternalApiFp(configuration).updateJobQueue(body, options)(fetch, basePath);
         },
     };
 };
@@ -12146,6 +12215,18 @@ export class InternalApi extends BaseAPI {
         return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath);
     }
 
+    /**
+     * 
+     * @summary Control the job queues.
+     * @param {V1UpdateJobQueueRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+        return InternalApiFp(this.configuration).updateJobQueue(body, options)(this.fetch, this.basePath);
+    }
+
 }
 
 /**
@@ -12241,46 +12322,6 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * 
-         * @summary Control the job queues.
-         * @param {V1UpdateJobQueueRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        updateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
-            }
-            const localVarPath = `/api/v1/resource-pools/queues`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1UpdateJobQueueRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -12331,25 +12372,6 @@ export const JobsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
-        /**
-         * 
-         * @summary Control the job queues.
-         * @param {V1UpdateJobQueueRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).updateJobQueue(body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
     }
 };
 
@@ -12381,16 +12403,6 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          */
         getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
             return JobsApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Control the job queues.
-         * @param {V1UpdateJobQueueRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
-            return JobsApiFp(configuration).updateJobQueue(body, options)(fetch, basePath);
         },
     };
 };
@@ -12427,18 +12439,6 @@ export class JobsApi extends BaseAPI {
      */
     public getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
         return JobsApiFp(this.configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Control the job queues.
-     * @param {V1UpdateJobQueueRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApi
-     */
-    public updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
-        return JobsApiFp(this.configuration).updateJobQueue(body, options)(this.fetch, this.basePath);
     }
 
 }
