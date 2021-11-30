@@ -1,20 +1,20 @@
 import * as Type from 'types';
 
 // Checkpoint size in bytes.
-export const checkpointSize = (checkpoint: Type.Checkpoint | Type.CheckpointWorkload): number => {
-  if (!checkpoint.resources) return 0;
-  const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
-  return total;
+export const checkpointSize = (
+  checkpoint?: { resources?: Record<Type.RecordKey, number> },
+): number => {
+  if (checkpoint?.resources) {
+    return Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
+  }
+  return 0;
 };
 
 export const getBatchNumber = (
   data: { batch: number } | { totalBatches: number },
 ): number => {
-  if ('batch' in data) {
-    return data.batch;
-  } else {
-    return data.totalBatches;
-  }
+  if ('batch' in data) return data.batch;
+  return data.totalBatches;
 };
 
 export const getWorkload = (
@@ -23,12 +23,12 @@ export const getWorkload = (
   return Object.values(workload).find(val => !!val);
 };
 
-export const hasCheckpointStep = (step: Type.Step): boolean => {
-  return !!step.checkpoint && step.checkpoint.state !== Type.CheckpointState.Deleted;
-};
-
 export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => {
   return !!workload.checkpoint && workload.checkpoint.state !== Type.CheckpointState.Deleted;
+};
+
+export const hasCheckpointStep = (step: Type.Step): boolean => {
+  return !!step.checkpoint && step.checkpoint.state !== Type.CheckpointState.Deleted;
 };
 
 export const isMetricsWorkload = (
