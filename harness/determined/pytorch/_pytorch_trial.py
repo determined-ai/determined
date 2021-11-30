@@ -65,8 +65,9 @@ class PyTorchTrialController(det.TrialController):
 
         # Currently only horovod backend is supported if distributed training
         if self.context.distributed.size > 1:
-            assert self.use_horovod or self.use_torch_distributed, \
-                "Must use torch or horovod for distributed training"
+            assert (
+                self.use_horovod or self.use_torch_distributed
+            ), "Must use torch or horovod for distributed training"
 
     @classmethod
     def pre_execute_hook(

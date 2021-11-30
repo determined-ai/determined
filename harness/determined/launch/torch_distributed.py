@@ -1,8 +1,9 @@
-import determined as det
 import logging
 import os
 import subprocess
 import sys
+
+import determined as det
 
 
 def launch() -> int:
@@ -26,7 +27,7 @@ def launch() -> int:
         str(info.container_rank),
         "--nnodes",
         str(len(info.container_addrs)),
-        "--module"
+        "--module",
     ]
 
     os.environ["USE_TORCH_DISTRIBUTED"] = "True"
