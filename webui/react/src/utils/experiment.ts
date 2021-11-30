@@ -1,6 +1,6 @@
 import * as Type from 'types';
 
-import { deletePathList, getPathList, isNumber, setPathList, unflattenObject } from './data';
+import { clone, deletePathList, getPathList, isNumber, setPathList, unflattenObject } from './data';
 
 // Differentiate Experiment from Task.
 export const isExperiment = (
@@ -32,12 +32,12 @@ export const trialHParamsToExperimentHParams = (
 /* Experiment Config */
 
 const stepRemovalTranslations = [
-  { newName: 'searcher.max_length', oldName: 'searcher.max_steps' },
-  { oldName: 'min_validation_period' },
   { oldName: 'min_checkpoint_period' },
-  { newName: 'searcher.max_length', oldName: 'searcher.target_trial_steps' },
-  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' },
+  { oldName: 'min_validation_period' },
   { newName: 'searcher.budget', oldName: 'searcher.step_budget' },
+  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' },
+  { newName: 'searcher.max_length', oldName: 'searcher.max_steps' },
+  { newName: 'searcher.max_length', oldName: 'searcher.target_trial_steps' },
 ];
 
 const getLengthFromStepCount = (
@@ -51,21 +51,24 @@ const getLengthFromStepCount = (
 };
 
 // Add opportunistic backward compatibility to old configs.
-export const upgradeConfig = (config: Type.RawJson): void => {
+export const upgradeConfig = (config: Type.RawJson): Type.RawJson => {
+  const newConfig = clone(config);
+
   stepRemovalTranslations.forEach(translation => {
     const oldPath = translation.oldName.split('.');
-    const curValue = getPathList<undefined | null | number | unknown>(config, oldPath);
+    const curValue = getPathList<undefined | null | number | unknown>(newConfig, oldPath);
     if (curValue === undefined) return;
-    if (curValue === null) {
-      deletePathList(config, oldPath);
-    }
+    if (curValue === null) deletePathList(newConfig, oldPath);
     if (isNumber(curValue)) {
-      const [ key, count ] = getLengthFromStepCount(config, curValue);
+      const [ key, count ] = getLengthFromStepCount(newConfig, curValue);
       const newPath = (translation.newName || translation.oldName).split('.');
-      setPathList(config, newPath, { [key]: count });
-      if (translation.newName) deletePathList(config, oldPath);
+      setPathList(newConfig, newPath, { [key]: count });
+
+      if (translation.newName) deletePathList(newConfig, oldPath);
     }
   });
 
-  delete config.batches_per_step;
+  delete newConfig.batches_per_step;
+
+  return newConfig;
 };
