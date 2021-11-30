@@ -501,7 +501,14 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	if params.Activate {
 		exp := actor.Addr("experiments", e.ID)
-		m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+		resp := m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+		if resp.Source() == nil {
+			return nil, echo.NewHTTPError(http.StatusNotFound,
+				fmt.Sprintf("experiment not found: %d", e.ID))
+		}
+		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
+			return nil, errors.Errorf("attempt to activate experiment timed out")
+		}
 	}
 
 	c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
