@@ -10,7 +10,7 @@ for training and evaluation respectively.
 """
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
-
+import torch.distributed as dist
 import torch
 from torch import nn
 
@@ -32,7 +32,9 @@ class MNistTrial(PyTorchTrial):
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
-        self.model = self.context.wrap_model(nn.Sequential(
+        dist.init_process_group(backend="gloo")
+
+        model = self.context.wrap_model(nn.Sequential(
             nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
             nn.ReLU(),
             nn.Conv2d(
@@ -49,6 +51,8 @@ class MNistTrial(PyTorchTrial):
             nn.LogSoftmax(),
         ))
 
+        model = torch.nn.parallel.DistributedDataParallel(model)
+        self.model = model
         self.optimizer = self.context.wrap_optimizer(torch.optim.Adadelta(
             self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
         )

@@ -17,7 +17,7 @@ environment:
     gpu: determinedai/model-hub-mmdetection:0.17.4-dev0
   environment_variables:
       - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
-
+launch: ["python3", "-m", "determined.launch.torch_distributed"]
 resources:
   slots_per_trial: 8 # max number of GPUs a trial is allowed to individually use
   shm_size: 200000000000

@@ -20,15 +20,18 @@ def launch() -> int:
         "python3",
         "-m",
         "torch.distributed.run",
+        "--master_addr",
+        chief_ip,
+        "--master_port",
+        "7555",
+        "--rank",
+        str(info.container_rank),
+        "--nnodes",
+        str(len(info.container_addrs)),
         "--module"
     ]
 
-
     os.environ["USE_TORCH_DISTRIBUTED"] = "True"
-    os.environ["MASTER_ADDR"] = chief_ip
-    os.environ["MASTER_PORT"] = "7555"
-    os.environ["RANK"] = str(info.container_rank)
-    os.environ["WORLD_SIZE"] = str(len(info.container_addrs))
 
     return subprocess.Popen(launch_cmd + harness_cmd).wait()
 

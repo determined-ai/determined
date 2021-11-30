@@ -1261,6 +1261,16 @@ schemas = {
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
+        },
+        "launch": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     },
     "allOf": [
