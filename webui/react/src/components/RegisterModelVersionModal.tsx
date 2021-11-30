@@ -83,6 +83,10 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
     return models.map(model => ({ id: model.id, name: model.name }));
   }, [ models ]);
 
+  const selectedModelNumVersions = useMemo(() => {
+    return models.find(model => model.id === selectedModelId)?.numVersions ?? 0;
+  }, [ models, selectedModelId ]);
+
   const openDetails = useCallback(() => {
     setExpandDetails(true);
   }, []);
@@ -93,11 +97,11 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
 
   useEffect(() => {
     fetchModels();
-  }, []);
+  }, [ fetchModels ]);
 
   return (
     <Modal
-      okButtonProps={{ disabled: versionName === '' }}
+      okButtonProps={{ disabled: selectedModelId == null }}
       okText="Add Model Version"
       title="Register Model"
       visible={visible}
@@ -118,9 +122,13 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
               </Option>))}
           </Select>
         </div>
+        <div className={css.separator} />
         <div>
           <h2>Version Name</h2>
-          <Input value={versionName} onChange={updateVersionName} />
+          <Input
+            placeholder={`Version ${selectedModelNumVersions + 1}`}
+            value={versionName}
+            onChange={updateVersionName} />
         </div>
         <div>
           <h2>Description <span>(optional)</span></h2>
