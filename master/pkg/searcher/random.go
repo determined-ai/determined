@@ -83,15 +83,17 @@ func (s *randomSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
-		var ops []Operation
-		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
-		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
-		ops = append(ops, NewClose(create.RequestID))
-		// We don't increment CreatedTrials here because this trial is replacing the invalid trial.
-		s.PendingTrials++
-		return ops, nil
+	if s.SearchMethodType == RandomSearch {
+		if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
+			var ops []Operation
+			create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+			ops = append(ops, create)
+			ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+			ops = append(ops, NewClose(create.RequestID))
+			// We don't increment CreatedTrials here because this trial is replacing the invalid trial.
+			s.PendingTrials++
+			return ops, nil
+		}
 	}
 	return nil, nil
 }
