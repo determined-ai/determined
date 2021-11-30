@@ -140,6 +140,7 @@ const useCreateExperimentModal = (): ModalHooks => {
 
     try {
       const { id: newExperimentId } = await createExperiment({
+        activate: true,
         experimentConfig: newConfig,
         parentId: modalState.experiment.id,
       });

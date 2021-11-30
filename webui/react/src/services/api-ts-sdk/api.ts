@@ -1222,6 +1222,12 @@ export interface V1CreateExperimentRequest {
      * @memberof V1CreateExperimentRequest
      */
     parentId?: number;
+    /**
+     * Request to auto-activate the experiment.
+     * @type {boolean}
+     * @memberof V1CreateExperimentRequest
+     */
+    activate?: boolean;
 }
 
 /**
