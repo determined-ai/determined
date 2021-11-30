@@ -38,6 +38,8 @@ class TrialController(metaclass=abc.ABCMeta):
         )
 
         self.use_horovod = _DistributedBackend.HOROVOD.value
+        self.use_torch_distributed = _DistributedBackend.TORCH.value
+
         self._check_if_trial_supports_configurations(env)
 
         self.batch_size = self.context.get_per_slot_batch_size()
