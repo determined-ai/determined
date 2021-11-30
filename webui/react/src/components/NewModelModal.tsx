@@ -12,7 +12,7 @@ import css from './NewModelModal.module.scss';
 import EditableTagList from './TagList';
 
 interface Props {
-  onClose?: () => void;
+  onClose?: (newModelId?: number) => void;
   visible?: boolean;
 }
 
@@ -27,14 +27,14 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
 
   const createModel = useCallback(async () => {
     try {
-      await postModel({
+      const response = await postModel({
         description: modelDescription,
         labels: tags,
         metadata: metadata,
         name: modelName,
         username: user?.username,
       });
-      onClose?.();
+      onClose?.(response?.id);
     } catch {
       handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
     }
@@ -58,13 +58,17 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
     setExpandDetails(true);
   }, []);
 
+  const closeModal = useCallback(() => {
+    onClose?.();
+  }, [ onClose ]);
+
   return (
     <Modal
       okButtonProps={{ disabled: modelName === '' || !isNameUnique }}
       okText="Create Model"
       title="New Model"
       visible={visible}
-      onCancel={onClose}
+      onCancel={closeModal}
       onOk={createModel}>
       <div className={css.base}>
         <p className={css.directions}>

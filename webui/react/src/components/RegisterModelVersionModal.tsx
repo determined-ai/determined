@@ -9,6 +9,7 @@ import { Metadata, ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
 import EditableMetadata from './Metadata/EditableMetadata';
+import NewModelModal from './NewModelModal';
 import css from './RegisterModelVersionModal.module.scss';
 import EditableTagList from './TagList';
 
@@ -31,6 +32,7 @@ const RegisterModelVersionModal: React.FC<Props> = (
   const [ metadata, setMetadata ] = useState<Metadata>({});
   const [ expandDetails, setExpandDetails ] = useState(false);
   const [ canceler ] = useState(new AbortController());
+  const [ showNewModelModal, setShowNewModelModal ] = useState(false);
 
   const fetchModels = useCallback(async () => {
     try {
@@ -95,66 +97,84 @@ const RegisterModelVersionModal: React.FC<Props> = (
     setExpandDetails(true);
   }, []);
 
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [ canceler ]);
+  const closeNewModelModal = useCallback(async (newModelId?: number) => {
+    setShowNewModelModal(false);
+    if (newModelId) {
+      await fetchModels();
+      setSelectedModelId(newModelId);
+    }
+  }, [ fetchModels ]);
 
   useEffect(() => {
     fetchModels();
   }, [ fetchModels ]);
 
+  useEffect(() => {
+    if (selectedModelId === -1) {
+      setShowNewModelModal(true);
+    }
+  }, [ selectedModelId ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
+
   return (
-    <Modal
-      okButtonProps={{ disabled: selectedModelId == null }}
-      okText="Add Model Version"
-      title="Register Model"
-      visible={visible}
-      onCancel={onClose}
-      onOk={registerModelVersion}>
-      <div className={css.base}>
-        <p className={css.directions}>Save this checkpoint to the Model Registry</p>
-        <div>
-          <h2>Select Model</h2>
-          <Select
-            dropdownMatchSelectWidth={250}
-            placeholder="Select a model..."
-            showSearch
-            onChange={updateModel}>
-            {modelOptions.map(option => (
-              <Option
-                className={option.id === -1 ? css.newModel : undefined}
-                key={option.id}
-                value={option.id}>
-                {option.name}
-              </Option>))}
-          </Select>
+    <>
+      <Modal
+        okButtonProps={{ disabled: selectedModelId == null }}
+        okText="Add Model Version"
+        title="Register Model"
+        visible={visible}
+        onCancel={onClose}
+        onOk={registerModelVersion}>
+        <div className={css.base}>
+          <p className={css.directions}>Save this checkpoint to the Model Registry</p>
+          <div>
+            <h2>Select Model</h2>
+            <Select
+              dropdownMatchSelectWidth={250}
+              placeholder="Select a model..."
+              showSearch
+              value={selectedModelId}
+              onChange={updateModel}>
+              {modelOptions.map(option => (
+                <Option
+                  className={option.id === -1 ? css.newModel : undefined}
+                  key={option.id}
+                  value={option.id}>
+                  {option.name}
+                </Option>))}
+            </Select>
+          </div>
+          <div className={css.separator} />
+          <div>
+            <h2>Version Name</h2>
+            <Input
+              placeholder={`Version ${selectedModelNumVersions + 1}`}
+              value={versionName}
+              onChange={updateVersionName} />
+          </div>
+          <div>
+            <h2>Description <span>(optional)</span></h2>
+            <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
+          </div>
+          {expandDetails ?
+            <>
+              <div>
+                <h2>Metadata <span>(optional)</span></h2>
+                <EditableMetadata editing={true} metadata={metadata} updateMetadata={setMetadata} />
+              </div>
+              <div>
+                <h2>Tags <span>(optional)</span></h2>
+                <EditableTagList tags={tags} onChange={setTags} />
+              </div>
+            </> :
+            <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
         </div>
-        <div className={css.separator} />
-        <div>
-          <h2>Version Name</h2>
-          <Input
-            placeholder={`Version ${selectedModelNumVersions + 1}`}
-            value={versionName}
-            onChange={updateVersionName} />
-        </div>
-        <div>
-          <h2>Description <span>(optional)</span></h2>
-          <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
-        </div>
-        {expandDetails ?
-          <>
-            <div>
-              <h2>Metadata <span>(optional)</span></h2>
-              <EditableMetadata editing={true} metadata={metadata} updateMetadata={setMetadata} />
-            </div>
-            <div>
-              <h2>Tags <span>(optional)</span></h2>
-              <EditableTagList tags={tags} onChange={setTags} />
-            </div>
-          </> :
-          <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
-      </div>
-    </Modal>
+      </Modal>
+      <NewModelModal visible={showNewModelModal} onClose={closeNewModelModal} />
+    </>
   );
 };
 
