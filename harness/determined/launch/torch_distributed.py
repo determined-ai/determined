@@ -24,7 +24,7 @@ def launch() -> int:
         chief_ip,
         "--master_port",
         "7555",
-        "--rank",
+        "--node_rank",
         str(info.container_rank),
         "--nnodes",
         str(len(info.container_addrs)),

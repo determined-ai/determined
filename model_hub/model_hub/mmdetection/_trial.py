@@ -33,6 +33,7 @@ import mmdet.datasets
 import mmdet.models
 import numpy as np
 import torch
+import torch.distributed as dist
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
@@ -64,13 +65,17 @@ class MMDetTrial(det_torch.PyTorchTrial):
         # We will control how data is moved to GPU.
         self.context.experimental.disable_auto_to_device()
 
+        dist.init_process_group(backend="gloo")
+
         # Build model and make sure it's compatible with horovod.
-        self.model = mmdet.models.build_detector(self.cfg.model)
+        model = mmdet.models.build_detector(self.cfg.model)
+        self.model = torch.nn.parallel.DistributedDataParallel(model)
+
         # We need to monkey patch the reduce_mean function from mmdet.core.utils so that it uses
         # horovod's allreduce primitive instead of pytorch distributed's all_reduce function.
-        utils.monkey_patch_reduce_mean(self.model)
-        # We need to convert pytorch SyncBatchNorm layers to horovod's.
-        utils.convert_syncbn_model(self.model)
+        # utils.monkey_patch_reduce_mean(self.model)
+        # # We need to convert pytorch SyncBatchNorm layers to horovod's.
+        # utils.convert_syncbn_model(self.model)
 
         # Initialize model
         self.model.init_weights()
