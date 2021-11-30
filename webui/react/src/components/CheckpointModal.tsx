@@ -136,7 +136,10 @@ const CheckpointModal: React.FC<Props> = (
             </div>
           ),
         )}
-        {checkpoint.uuid && <RegisterModelVersionButton checkpointUuid={checkpoint.uuid} />}
+        {checkpoint.uuid && (
+          <div className={css.saveModelButton}>
+            <RegisterModelVersionButton checkpointUuid={checkpoint.uuid} onCloseAll={onHide} />
+          </div>)}
       </div>
     </Modal>
   );

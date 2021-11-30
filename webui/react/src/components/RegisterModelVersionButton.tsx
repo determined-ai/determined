@@ -5,9 +5,10 @@ import RegisterModelVersionModal from './RegisterModelVersionModal';
 
 interface Props {
   checkpointUuid: string;
+  onCloseAll?: () => void;
 }
 
-const RegisterModelVersionButton: React.FC<Props> = ({ checkpointUuid }) => {
+const RegisterModelVersionButton: React.FC<Props> = ({ checkpointUuid, onCloseAll }) => {
   const [ showRegisterVersionModal, setShowRegisterVersionModel ] = useState(false);
 
   const openModal = useCallback(() => {
@@ -18,15 +19,21 @@ const RegisterModelVersionButton: React.FC<Props> = ({ checkpointUuid }) => {
     setShowRegisterVersionModel(false);
   }, []);
 
+  const closeAllModals = useCallback(() => {
+    setShowRegisterVersionModel(false);
+    onCloseAll?.();
+  }, [ onCloseAll ]);
+
   return (
     <>
-      <Button onClick={openModal}>
+      <Button block onClick={openModal}>
       Register Model
       </Button>
       <RegisterModelVersionModal
         checkpointUuid={checkpointUuid}
         visible={showRegisterVersionModal}
-        onClose={closeModal} />
+        onClose={closeModal}
+        onCloseAll={closeAllModals} />
     </>
   );
 };

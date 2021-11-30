@@ -18,11 +18,12 @@ const { Option } = Select;
 interface Props {
   checkpointUuid: string;
   onClose?: () => void;
+  onCloseAll?: () => void;
   visible?: boolean;
 }
 
 const RegisterModelVersionModal: React.FC<Props> = (
-  { checkpointUuid, visible = false, onClose },
+  { checkpointUuid, visible = false, onClose, onCloseAll },
 ) => {
   const [ selectedModelId, setSelectedModelId ] = useState<number>();
   const [ models, setModels ] = useState<ModelItem[]>([]);
@@ -66,11 +67,17 @@ const RegisterModelVersionModal: React.FC<Props> = (
         },
         modelId: selectedModelId,
       });
-      onClose?.();
+      onCloseAll?.();
     } catch {
       handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
     }
-  }, [ checkpointUuid, metadata, tags, versionDescription, versionName, onClose, selectedModelId ]);
+  }, [ checkpointUuid,
+    metadata,
+    tags,
+    versionDescription,
+    versionName,
+    onCloseAll,
+    selectedModelId ]);
 
   const updateModel = useCallback((value) => {
     setSelectedModelId(value);
