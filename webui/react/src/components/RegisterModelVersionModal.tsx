@@ -1,13 +1,15 @@
-import { Input, Modal, Select } from 'antd';
+import { Input, Modal, notification, Select } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import handleError, { ErrorType } from 'ErrorHandler';
+import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { Metadata, ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
+import Link from './Link';
 import EditableMetadata from './Metadata/EditableMetadata';
 import NewModelModal from './NewModelModal';
 import css from './RegisterModelVersionModal.module.scss';
@@ -56,7 +58,7 @@ const RegisterModelVersionModal: React.FC<Props> = (
   const registerModelVersion = useCallback(async () => {
     if (!selectedModelId) return;
     try {
-      await postModelVersion({
+      const response = await postModelVersion({
         body: {
           checkpointUuid,
           comment: versionDescription,
@@ -68,6 +70,19 @@ const RegisterModelVersionModal: React.FC<Props> = (
         modelId: selectedModelId,
       });
       onCloseAll?.();
+      notification.open(
+        {
+          btn: null,
+          description: (
+            <div className={css.toast}>
+              <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
+              <Link path={paths.modelVersionDetails(selectedModelId, response?.id ?? 0)}>
+              View Model
+              </Link>
+            </div>),
+          message: '',
+        },
+      );
     } catch {
       handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
     }

@@ -1,12 +1,14 @@
-import { Input, Modal } from 'antd';
+import { Input, Modal, notification } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { debounce } from 'throttle-debounce';
 
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
 
+import Link from './Link';
 import EditableMetadata from './Metadata/EditableMetadata';
 import css from './NewModelModal.module.scss';
 import EditableTagList from './TagList';
@@ -35,6 +37,19 @@ const NewModelModal: React.FC<Props> = ({ visible = false, onClose }: Props) => 
         username: user?.username,
       });
       onClose?.(response?.id);
+      notification.open(
+        {
+          btn: null,
+          description: (
+            <div className={css.toast}>
+              <p>{`"${modelName}"`} created</p>
+              <Link path={paths.modelDetails(response?.id ?? 0)}>
+              View Model
+              </Link>
+            </div>),
+          message: '',
+        },
+      );
     } catch {
       handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
     }

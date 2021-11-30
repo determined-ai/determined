@@ -26,3 +26,7 @@
 .newModel {
   border-bottom: var(--theme-colors-monochrome-12) 1px solid;
 }
+.toast {
+  display: flex;
+  gap: var(--theme-sizes-layout-big);
+}
