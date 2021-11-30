@@ -47,7 +47,7 @@ type (
 		ContainerStopped *TaskContainerStopped
 	}
 
-	// UpdatePodStatus notifies the resource manager of experiment state change.
+	// UpdatePodStatus notifies the resource manager of job state changes.
 	UpdatePodStatus struct {
 		ContainerID string
 		State       job.SchedulingState
