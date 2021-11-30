@@ -8,6 +8,43 @@
  Version 0.17
 **************
 
+Version 0.17.4
+==============
+
+**Release Date:** November 30, 2021
+
+**New Features**
+
+-  WebUI: Add the :ref:`model registry <organizing-models>` as a new top-level navigation option,
+   allowing for viewing, editing, and deleting existing models created using the CLI.
+
+-  Add experimental support for `Multi-Instance GPU
+   <https://www.nvidia.com/en-us/technologies/multi-instance-gpu/>`__ (MIG). Static agents and
+   Kubernetes clusters may be able to use MIG instances for some workloads. Distributed training is
+   not supported, and all MIG instances and nodes within a resource pool must still be homogeneous.
+
+**Improvements**
+
+-  **Breaking Change**: Model Registry: The names of models in the model registry must now be
+   unique. If multiple models were previously created with the same name in the registry, the names
+   will change.
+
+-  Model Registry CLI: Allow models to be referred to by their now-unique names, not only by ID.
+
+-  Tasks: Historical usage over users now properly accounts for all task types (commands, notebooks,
+   etc.), not just trials.
+
+-  Images: Add environment images for TF 2.7.
+
+-  Agent: The ``environment.force_pull_image: true`` option no longer deletes the environment image
+   before re-pulling it. Now, it will only fetch updated layers, which is much less wasteful of
+   network resources and execution time.
+
+**Bug Fixes**
+
+-  Master: Fix a bug where deleting experiments with trial restarts always failed, and then failed
+   to be marked as failed.
+
 Version 0.17.3
 ==============
 
