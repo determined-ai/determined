@@ -3,7 +3,11 @@ import React, { useCallback, useState } from 'react';
 
 import RegisterModelVersionModal from './RegisterModelVersionModal';
 
-const RegisterModelVersionButton: React.FC = () => {
+interface Props {
+  checkpointUuid: string;
+}
+
+const RegisterModelVersionButton: React.FC<Props> = ({ checkpointUuid }) => {
   const [ showRegisterVersionModal, setShowRegisterVersionModel ] = useState(false);
 
   const openModal = useCallback(() => {
@@ -19,7 +23,10 @@ const RegisterModelVersionButton: React.FC = () => {
       <Button onClick={openModal}>
       Register Model
       </Button>
-      <RegisterModelVersionModal visible={showRegisterVersionModal} onClose={closeModal} />
+      <RegisterModelVersionModal
+        checkpointUuid={checkpointUuid}
+        visible={showRegisterVersionModal}
+        onClose={closeModal} />
     </>
   );
 };

@@ -15,11 +15,14 @@ import EditableTagList from './TagList';
 const { Option } = Select;
 
 interface Props {
+  checkpointUuid: string;
   onClose?: () => void;
   visible?: boolean;
 }
 
-const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }) => {
+const RegisterModelVersionModal: React.FC<Props> = (
+  { checkpointUuid, visible = false, onClose },
+) => {
   const [ selectedModelId, setSelectedModelId ] = useState<number>();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ versionName, setVersionName ] = useState('');
@@ -52,10 +55,10 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
     try {
       await postModelVersion({
         body: {
-          checkpointUuid: '',
+          checkpointUuid,
           comment: versionDescription,
           labels: tags,
-          metadata: metadata,
+          metadata,
           modelId: selectedModelId,
           name: versionName,
         },
@@ -65,18 +68,18 @@ const RegisterModelVersionModal: React.FC<Props> = ({ visible = false, onClose }
     } catch {
       handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
     }
-  }, [ metadata, tags, versionDescription, versionName, onClose, selectedModelId ]);
+  }, [ checkpointUuid, metadata, tags, versionDescription, versionName, onClose, selectedModelId ]);
 
   const updateModel = useCallback((value) => {
     setSelectedModelId(value);
   }, []);
 
-  const updateVersionName = useCallback((value) => {
-    setVersionName(value);
+  const updateVersionName = useCallback((e) => {
+    setVersionName(e.target.value);
   }, []);
 
-  const updateVersionDescription = useCallback((value) => {
-    setVersionDescription(value);
+  const updateVersionDescription = useCallback((e) => {
+    setVersionDescription(e.target.value);
   }, []);
 
   const modelOptions = useMemo(() => {
