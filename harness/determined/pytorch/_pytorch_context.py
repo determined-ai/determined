@@ -7,7 +7,6 @@ import torch.nn as nn
 
 import determined as det
 from determined import profiler, pytorch
-from determined._trial_controller import DistributedBackend
 from determined.common import check
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
@@ -83,7 +82,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
-        self._use_horovod = DistributedBackend.HOROVOD.value
+        self._use_horovod = det._DistributedBackend.HOROVOD.value
 
         optimizations_config = self.env.experiment_config.get_optimizations_config()
         self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
