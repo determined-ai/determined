@@ -83,7 +83,8 @@ const RegisterModelVersionModal: React.FC<Props> = (
   }, []);
 
   const modelOptions = useMemo(() => {
-    return models.map(model => ({ id: model.id, name: model.name }));
+    return [ { id: -1, name: 'New Model' },
+      ...models.map(model => ({ id: model.id, name: model.name })) ];
   }, [ models ]);
 
   const selectedModelNumVersions = useMemo(() => {
@@ -120,7 +121,10 @@ const RegisterModelVersionModal: React.FC<Props> = (
             showSearch
             onChange={updateModel}>
             {modelOptions.map(option => (
-              <Option key={option.id} value={option.id}>
+              <Option
+                className={option.id === -1 ? css.newModel : undefined}
+                key={option.id}
+                value={option.id}>
                 {option.name}
               </Option>))}
           </Select>
