@@ -524,6 +524,16 @@ const ioTaskEventToMessage = (event: string): string => {
   return event;
 };
 
+export const jsonToTaskLog = (data: unknown): types.Log => {
+  const logData = data as Sdk.V1TaskLogsResponse;
+  return ({
+    id: logData.id,
+    level: decodeV1LogLevelToLogLevel(logData.level ?? Sdk.V1LogLevel.UNSPECIFIED),
+    message: logData.message ?? '',
+    time: logData.timestamp as unknown as string,
+  });
+};
+
 export const jsonToTaskLogs = (data: unknown): types.Log[] => {
   const io = ioTypes.decode<ioTypes.ioTypeTaskLogs>(ioTypes.ioTaskLogs, data);
   return io
@@ -545,7 +555,7 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
         message = ioTaskEventToMessage(log.log_event);
       }
       return {
-        id: log.seq,
+        id: log.seq.toString(),
         message,
         time: log.time,
       };
