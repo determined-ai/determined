@@ -23,7 +23,7 @@ export const activeRunStates: Array<
 
 export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
 export const cancellableRunStates = [ RunState.Active, RunState.Paused ];
-export const killableCmdStates = [
+export const killableCommandStates = [
   CommandState.Assigned,
   CommandState.Pending,
   CommandState.Pulling,

@@ -1,4 +1,4 @@
-import { killableCmdStates, killableRunStates, terminalCommandStates } from 'constants/states';
+import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
 import { paths } from 'routes/utils';
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
@@ -147,7 +147,7 @@ export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTas
 
 export const isTaskKillable = (task: Type.AnyTask | Type.ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as Type.RunState)
-    || killableCmdStates.includes(task.state as Type.CommandState);
+    || killableCommandStates.includes(task.state as Type.CommandState);
 };
 
 const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
