@@ -523,7 +523,7 @@ export const jsonToTaskLog = (data: unknown): types.Log => {
   return ({
     id: logData.id,
     level: decodeV1LogLevelToLogLevel(logData.level ?? Sdk.V1LogLevel.UNSPECIFIED),
-    message: logData.message ?? '',
+    message: (logData.message ?? '').trim(),      // Task logs comes with tailing `\n`.
     time: logData.timestamp as unknown as string,
   });
 };
