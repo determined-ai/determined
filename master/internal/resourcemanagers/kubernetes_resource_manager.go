@@ -29,6 +29,7 @@ type kubernetesResourceManager struct {
 
 	reqList           *taskList
 	groups            map[*actor.Ref]*group
+	containerIDtoAddr map[string]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
 	// Represent all pods as a single agent.
@@ -52,6 +53,7 @@ func newKubernetesResourceManager(
 
 		reqList:           newTaskList(),
 		groups:            make(map[*actor.Ref]*group),
+		containerIDtoAddr: make(map[string]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
 
 		echoRef:         echoRef,
@@ -102,7 +104,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
-		sproto.ResourcesReleased:
+		sproto.ResourcesReleased,
+		sproto.UpdatePodStatus:
 		return k.receiveRequestMsg(ctx)
 
 	case
@@ -214,6 +217,19 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.ResourcesReleased:
 		k.resourcesReleased(ctx, msg.TaskActor)
 
+	case sproto.UpdatePodStatus:
+		var ref *actor.Ref
+		if addr, ok := k.containerIDtoAddr[msg.ContainerID]; ok {
+			ref = addr
+		}
+
+		for it := k.reqList.iterator(); it.next(); {
+			req := it.value()
+			if req.TaskActor == ref {
+				req.State = msg.State
+			}
+		}
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -310,6 +326,7 @@ func (k *kubernetesResourceManager) assignResources(
 			agent:     k.agent,
 			container: container,
 		})
+		k.containerIDtoAddr[container.id.String()] = req.TaskActor
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Reservations: allocations}
@@ -325,6 +342,15 @@ func (k *kubernetesResourceManager) assignResources(
 func (k *kubernetesResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	k.reqList.RemoveTaskByHandler(handler)
+
+	deleteID := ""
+	for id, addr := range k.containerIDtoAddr {
+		if addr == handler {
+			deleteID = id
+			delete(k.containerIDtoAddr, deleteID)
+			break
+		}
+	}
 
 	if req, ok := k.reqList.GetTaskByHandler(handler); ok {
 		group := k.groups[handler]
