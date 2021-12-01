@@ -78,4 +78,4 @@ fmt: fmt-js fmt-css
 
 .PHONY: test
 test:
-	npm run test -- --watchAll=false
+	npm run test:coverage -- --watchAll=false
