@@ -48,16 +48,13 @@ const (
 )
 
 var (
-	masterLogsBatchWaitTime     = 100 * time.Millisecond
 	masterLogsBatchMissWaitTime = time.Second
 
-	trialLogsBatchWaitTime     = 100 * time.Millisecond
 	trialLogsBatchMissWaitTime = time.Second
 	trialLogsTerminationDelay  = 2 * time.Second
 
 	distinctFieldBatchWaitTime = 5 * time.Second
 
-	trialProfilerMetricsBatchWaitTime     = 100 * time.Millisecond
 	trialProfilerMetricsBatchMissWaitTime = 5 * time.Second
 
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
@@ -141,8 +138,8 @@ func (a *apiServer) TrialLogs(
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
 		false,
-		trialLogsBatchWaitTime,
-		trialLogsBatchMissWaitTime,
+		nil,
+		&trialLogsBatchMissWaitTime,
 	).Run(resp.Context())
 }
 
@@ -231,8 +228,8 @@ func (a *apiServer) TrialLogsFields(
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
 		true,
-		distinctFieldBatchWaitTime,
-		distinctFieldBatchWaitTime,
+		&distinctFieldBatchWaitTime,
+		&distinctFieldBatchWaitTime,
 	).Run(resp.Context())
 }
 
@@ -464,8 +461,8 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		onBatch,
 		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
 		false,
-		trialProfilerMetricsBatchWaitTime,
-		trialProfilerMetricsBatchMissWaitTime,
+		nil,
+		&trialProfilerMetricsBatchMissWaitTime,
 	).Run(resp.Context())
 }
 
@@ -500,8 +497,8 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), -1),
 		true,
-		TrialAvailableSeriesBatchWaitTime,
-		TrialAvailableSeriesBatchWaitTime,
+		&TrialAvailableSeriesBatchWaitTime,
+		&TrialAvailableSeriesBatchWaitTime,
 	).Run(resp.Context())
 }
 
