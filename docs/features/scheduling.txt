@@ -109,8 +109,8 @@ Here is an example of how the priority scheduler behaves with preemption enabled
    priority 1 distributed training experiment starts running. Once that experiment is complete,
    distributed training experiment with priority 2 restarts.
 
-The priority scheduler can be used with Determined's :ref:`job-queue`, which allows more insight and
-control over scheduling decisions.
+The priority scheduler can be used with Determined's :ref:`job-queue`, which allows more insight
+into scheduling decisions.
 
 .. _gang-scheduling-on-kubernetes:
 
@@ -221,4 +221,4 @@ Below is an example that illustrates how to set priorities, tolerations, and nod
                effect: "NoSchedule"
 
 The Kubernetes priority scheduler can be used with Determined's :ref:`job-queue`, which allows more
-insight and control over scheduling decisions.
+insight into scheduling decisions.

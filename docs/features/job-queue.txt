@@ -19,5 +19,5 @@ To view the jobs that are currently active in the cluster, use the following com
 This will display a table of results, ordered by scheduling order. Note that the scheduling order is
 not necessarily the priority of the job. In addition to the order of the job, users can see the
 state of the jobs and how many slots each job is using. Jobs can be in the following states: queued,
-running, backfilled, or preempted. Jobs that have completed or errored out are not counted as active
-and are omitted from this list.
+scheduled, and scheduled backfilled. Jobs that have completed or errored out are not counted as
+active and are omitted from this list.
