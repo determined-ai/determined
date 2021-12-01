@@ -36,7 +36,7 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         self.parameters = parameters
 
     @abc.abstractmethod
-    def deploy(self) -> None:
+    def deploy(self, no_prompt: bool) -> None:
         pass
 
     def print(self) -> None:

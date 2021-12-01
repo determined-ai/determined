@@ -244,11 +244,11 @@ class EnvironmentImageV0(schemas.SchemaBase):
     def runtime_defaults(self) -> None:
         if self.cpu is None:
             self.cpu = (
-                "determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-35cccd2"
+                "determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-825e8ee"
             )
         if self.gpu is None:
             self.gpu = (
-                "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-35cccd2"
+                "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
             )
 
 
@@ -806,6 +806,7 @@ class S3ConfigV0(schemas.SchemaBase):
     bucket: str
     access_key: Optional[str] = None
     endpoint_url: Optional[str] = None
+    prefix: Optional[str] = None
     save_experiment_best: Optional[int] = None
     save_trial_best: Optional[int] = None
     save_trial_latest: Optional[int] = None
@@ -817,6 +818,7 @@ class S3ConfigV0(schemas.SchemaBase):
         bucket: str,
         access_key: Optional[str] = None,
         endpoint_url: Optional[str] = None,
+        prefix: Optional[str] = None,
         save_experiment_best: Optional[int] = None,
         save_trial_best: Optional[int] = None,
         save_trial_latest: Optional[int] = None,

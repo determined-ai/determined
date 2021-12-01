@@ -5,7 +5,7 @@ import pickle
 import random
 import sys
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Type, cast
 
 import h5py
 import numpy as np
@@ -17,8 +17,7 @@ from tensorflow.python.framework.ops import EagerTensor
 import determined as det
 from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check, experimental, storage
-from determined.common.api import certs
+from determined.common import check
 from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 
@@ -157,12 +156,14 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 
 class TFKerasTrialController(det.TrialController):
-    @staticmethod
-    def supports_averaging_training_metrics() -> bool:
+    @classmethod
+    def supports_averaging_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
         return True
 
-    @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    @classmethod
+    def pre_execute_hook(
+        cls: Type["TFKerasTrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+    ) -> None:
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
@@ -171,23 +172,24 @@ class TFKerasTrialController(det.TrialController):
         # Start with a clean graph.
         tf.compat.v1.reset_default_graph()
 
-        TFKerasTrialController._set_random_seeds(env.trial_seed)
+        cls._set_random_seeds(env.trial_seed)
 
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
             session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            TFKerasTrialController._configure_session(env, hvd_config, session_config)
+            cls._configure_session(env, hvd_config, session_config)
 
-    @staticmethod
-    def _set_random_seeds(seed: int) -> None:
+    @classmethod
+    def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes. When using horovod, each worker will
         # start at a unique offset in the dataset, ensuring it's processing a unique training batch.
         random.seed(seed)
         np.random.seed(seed)
         tf.compat.v1.set_random_seed(seed)
 
-    @staticmethod
+    @classmethod
     def _configure_session(
+        cls: Type["TFKerasTrialController"],
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
         session_config: tf.compat.v1.ConfigProto,
@@ -217,8 +219,9 @@ class TFKerasTrialController(det.TrialController):
 
             return None
 
-    @staticmethod
+    @classmethod
     def compile_model(
+        cls: Type["TFKerasTrialController"],
         context: keras.TFKerasTrialContext,
         compile_args: inspect.BoundArguments,
         env: det.EnvContext,
@@ -250,12 +253,12 @@ class TFKerasTrialController(det.TrialController):
         else:
             context.model.compile(*compile_args.args, **compile_args.kwargs)
 
-    @staticmethod
+    @classmethod
     def from_trial(
+        cls: Type["TFKerasTrialController"],
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
-        rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> det.TrialController:
@@ -267,7 +270,7 @@ class TFKerasTrialController(det.TrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
-        session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
+        session = cls._configure_session(env, hvd_config, trial.session_config())
 
         training_data = keras._adapt_data_from_data_loader(
             input_data=trial.build_training_data_loader(),
@@ -285,19 +288,18 @@ class TFKerasTrialController(det.TrialController):
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
 
-        TFKerasTrialController.compile_model(
+        cls.compile_model(
             context=context, compile_args=compile_args, env=env, hvd_config=hvd_config
         )
 
         tf_keras_callbacks = trial.keras_callbacks()
 
-        return TFKerasTrialController(
+        return cls(
             context.model,
             session,
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
             context,
             env,
-            rendezvous_info,
             hvd_config,
             workloads,
         )
@@ -346,17 +348,16 @@ class TFKerasTrialController(det.TrialController):
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
-            session = experimental.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session,
+                self.context._generic,
                 self.env,
-                self.context.distributed,
             )
 
         # If a load path is provided, load weights and restore the data location.
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
-            with self._generic._download_initial_checkpoint(
+            logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+            with self.context._generic.checkpointing.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self._load(pathlib.Path(load_path))
@@ -369,6 +370,8 @@ class TFKerasTrialController(det.TrialController):
         self.train_workload_inputs = 0
         self.train_workload_len = 0
         self.test_inputs = 0
+
+        self.latest_batch = self.env.latest_batch
 
     def _check_training_data(self) -> None:
         cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
@@ -790,14 +793,17 @@ class TFKerasTrialController(det.TrialController):
                 elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:
-                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        metadata = {
+                            "latest_batch": self.latest_batch,
+                            "framework": f"tensorflow-{tf.__version__}",
+                            "format": "saved_weights",
+                        }
+                        with self.context._generic.checkpointing.store_path(metadata) as (
+                            storage_id,
+                            path,
+                        ):
                             self._save_checkpoint(pathlib.Path(path))
-                            response = {
-                                "uuid": storage_id,
-                                "resources": storage.StorageManager._list_directory(path),
-                                "framework": f"tensorflow-{tf.__version__}",
-                                "format": "saved_weights",
-                            }
+                        response = {"uuid": storage_id}
                     else:
                         response = {}
 
@@ -859,6 +865,7 @@ class TFKerasTrialController(det.TrialController):
                 if k not in {"batch", "size"}
             }
         )
+        self.latest_batch += 1
         self.train_workload_inputs += num_inputs
         self.train_workload_batches += 1
         if self.train_workload_batches != self.train_workload_len:
@@ -866,8 +873,8 @@ class TFKerasTrialController(det.TrialController):
 
         if self.train_response_func is None:
             raise AssertionError(
-                "Callback should avoid calling model.predict(), "
-                "as this will affect Determined training behavior",
+                "train_response_func is not set.  This should not be possible; please file an "
+                "issue at github.com/determined-ai/determined so we can fix this bug."
             )
 
         if self.hvd_config.use:
@@ -950,11 +957,11 @@ class TFKerasTrial(det.Trial):
     :meth:`build_training_data_loader`, and :meth:`build_validation_data_loader`).
     In most cases you should provide a custom :meth:`__init__` method as well.
 
-    By default, experiments use TensorFlow 1.x. To configure your trial to use
-    TensorFlow 2.x, specify a TensorFlow 2.x image in the
+    By default, experiments use TensorFlow 2.x. To configure your trial to use
+    legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.4``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate
@@ -1078,9 +1085,6 @@ class TFKerasTrial(det.Trial):
         """
         Specifies a list of :class:`determined.keras.callbacks.Callback` objects to be used during
         training.
-
-        Callbacks should avoid calling ``model.predict()``, as this will affect Determined training
-        behavior.
 
         .. note:
            Note that :class:`determined.keras.callbacks.Callback` is a subclass of

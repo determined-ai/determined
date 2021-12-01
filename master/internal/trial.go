@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -35,6 +36,7 @@ import (
 type trial struct {
 	id           int
 	taskID       model.TaskID
+	jobID        model.JobID
 	idSet        bool
 	experimentID int
 
@@ -67,6 +69,7 @@ type trial struct {
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
 	taskID model.TaskID,
+	jobID model.JobID,
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
@@ -77,8 +80,8 @@ func newTrial(
 	taskSpec *tasks.TaskSpec,
 ) *trial {
 	return &trial{
-		taskID: taskID,
-
+		taskID:       taskID,
+		jobID:        jobID,
 		experimentID: experimentID,
 		state:        initialState,
 		searcher:     searcher,
@@ -222,7 +225,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	if t.generatedKeys == nil {
-		generatedKeys, err := ssh.GenerateKey(nil)
+		generatedKeys, err := ssh.GenerateKey(t.taskSpec.SSHRsaSize, nil)
 		if err != nil {
 			return tasks.TaskSpec{}, errors.Wrap(err, "failed to generate keys for trial")
 		}
@@ -231,6 +234,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 
 	if !t.idSet {
 		modelTrial := model.NewTrial(
+			t.jobID,
 			t.taskID,
 			t.searcher.Create.RequestID,
 			t.experimentID,
@@ -299,7 +303,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.ErrorState)
 		}
 		return t.transition(ctx, model.CompletedState)
-	case exit.Err != nil:
+	case exit.Err != nil && !aproto.IsRestartableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())

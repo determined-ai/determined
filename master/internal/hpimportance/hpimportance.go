@@ -13,6 +13,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -170,9 +171,12 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 		if record[1] == "metric" || record[1] == "numBatches" {
 			continue
 		}
-		hpi[record[1]], err = strconv.ParseFloat(record[2], 64)
+		value, err := strconv.ParseFloat(record[2], 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse HP importance value: %w", err)
+		}
+		if !math.IsNaN(value) && !math.IsInf(value, 0) {
+			hpi[record[1]] = value
 		}
 	}
 	return hpi, nil

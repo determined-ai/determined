@@ -51,6 +51,7 @@
         "container_path": true,
         "credential": true,
         "endpoint_url": true,
+        "prefix": true,
         "hdfs_path": true,
         "hdfs_url": true,
         "host_path": true,

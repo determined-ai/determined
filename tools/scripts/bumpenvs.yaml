@@ -1,153 +1,161 @@
 ap_northeast_1_agent_ami:
-  new: ami-063810b4c878d6a9d
-  old: ami-00a54935e2d05befd
+  new: ami-06f00e0cb0eece385
+  old: ami-0bcf7d2c956b2800c
 ap_northeast_1_bastion_ami:
-  new: ami-0adcb4f170c975f15
-  old: ami-0827d8ed0295e3feb
+  new: ami-036d0684fc96830ca
+  old: ami-0adcb4f170c975f15
 ap_northeast_1_master_ami:
-  new: ami-0adcb4f170c975f15
-  old: ami-0827d8ed0295e3feb
+  new: ami-036d0684fc96830ca
+  old: ami-0adcb4f170c975f15
 ap_northeast_2_agent_ami:
-  new: ami-0d834ff169f83ae0f
-  old: ami-086e1f0dba90bb7ba
+  new: ami-05c155db8d723e07b
+  old: ami-059460de724471f8c
 ap_northeast_2_bastion_ami:
-  new: ami-03cfe661d9d15b36a
-  old: ami-00bbba67d13faed04
+  new: ami-0f8b8babb98cc66d0
+  old: ami-03cfe661d9d15b36a
 ap_northeast_2_master_ami:
-  new: ami-03cfe661d9d15b36a
-  old: ami-00bbba67d13faed04
+  new: ami-0f8b8babb98cc66d0
+  old: ami-03cfe661d9d15b36a
 ap_southeast_1_agent_ami:
-  new: ami-01dc5daf99dcce887
-  old: ami-0198d8f4906b18985
+  new: ami-07fd7f175d15b20e1
+  old: ami-0f064fadd0c69116a
 ap_southeast_1_bastion_ami:
-  new: ami-04f13c4c90210365a
-  old: ami-0f6565c3d5328c913
+  new: ami-0fed77069cd5a6d6c
+  old: ami-04f13c4c90210365a
 ap_southeast_1_master_ami:
-  new: ami-04f13c4c90210365a
-  old: ami-0f6565c3d5328c913
+  new: ami-0fed77069cd5a6d6c
+  old: ami-04f13c4c90210365a
 ap_southeast_2_agent_ami:
-  new: ami-0e1252bc02c6da925
-  old: ami-079896b7907db321c
+  new: ami-0bceeb1faa2955d89
+  old: ami-06cf1a40fc7ad72d3
 ap_southeast_2_bastion_ami:
-  new: ami-0822e3e42cc9a4e38
-  old: ami-0a1002150df471b2b
+  new: ami-0bf8b986de7e3c7ce
+  old: ami-0822e3e42cc9a4e38
 ap_southeast_2_master_ami:
-  new: ami-0822e3e42cc9a4e38
-  old: ami-0a1002150df471b2b
+  new: ami-0bf8b986de7e3c7ce
+  old: ami-0822e3e42cc9a4e38
 eu_central_1_agent_ami:
-  new: ami-06bc201b35438dd93
-  old: ami-06107ccb8e050aba4
+  new: ami-0427f3d3d516ebde2
+  old: ami-0ebf2e096c954f98a
 eu_central_1_bastion_ami:
-  new: ami-0358b49d1ab873c60
-  old: ami-0bdbe51a2e8070ff2
+  new: ami-0a49b025fffbbdac6
+  old: ami-0358b49d1ab873c60
 eu_central_1_master_ami:
-  new: ami-0358b49d1ab873c60
-  old: ami-0bdbe51a2e8070ff2
+  new: ami-0a49b025fffbbdac6
+  old: ami-0358b49d1ab873c60
 eu_west_1_agent_ami:
-  new: ami-04077a8d8b4976ea5
-  old: ami-0c9e2e639fb2d6f58
+  new: ami-04a190f7ec1d3445f
+  old: ami-0838318c39c9b59d2
 eu_west_1_bastion_ami:
-  new: ami-0d7f394c51e3e7d3e
-  old: ami-03caf24deed650e2c
+  new: ami-08edbb0e85d6a0a07
+  old: ami-0d7f394c51e3e7d3e
 eu_west_1_master_ami:
-  new: ami-0d7f394c51e3e7d3e
-  old: ami-03caf24deed650e2c
+  new: ami-08edbb0e85d6a0a07
+  old: ami-0d7f394c51e3e7d3e
 eu_west_2_agent_ami:
-  new: ami-093a7711a6fc8da81
-  old: ami-0a6d6c4bcefab8cf7
+  new: ami-0cbf9a11092a1a5e7
+  old: ami-0256eb79c263fb607
 eu_west_2_bastion_ami:
-  new: ami-0553c8e502a474394
-  old: ami-093d303510c432519
+  new: ami-0fdf70ed5c34c5f52
+  old: ami-0553c8e502a474394
 eu_west_2_master_ami:
-  new: ami-0553c8e502a474394
-  old: ami-093d303510c432519
+  new: ami-0fdf70ed5c34c5f52
+  old: ami-0553c8e502a474394
 gcp_env:
-  new: det-environments-35cccd2
-  old: det-environments-f286b87
+  new: det-environments-825e8ee
+  old: det-environments-5e33300
 tf1_cpu_hashed:
-  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-35cccd2
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-f286b87
+  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-825e8ee
+  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-5e33300
 tf1_cpu_versioned:
-  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.2
-  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.1
+  new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.4
+  old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.2
 tf1_gpu_hashed:
-  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-35cccd2
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-f286b87
+  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-825e8ee
+  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-5e33300
 tf1_gpu_versioned:
-  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2
-  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.1
+  new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.4
+  old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2
 tf25_cpu_hashed:
-  new: determinedai/environments:py-3.8-tf-2.5-cpu-35cccd2
-  old: determinedai/environments:py-3.8-tf-2.5-cpu-f286b87
+  new: determinedai/environments:py-3.8-tf-2.5-cpu-825e8ee
+  old: determinedai/environments:py-3.8-tf-2.5-cpu-5e33300
 tf25_cpu_versioned:
-  new: determinedai/environments:py-3.8-tf-2.5-cpu-0.17.2
-  old: determinedai/environments:py-3.8-tf-2.5-cpu-0.17.1
+  new: determinedai/environments:py-3.8-tf-2.5-cpu-0.17.4
+  old: determinedai/environments:py-3.8-tf-2.5-cpu-0.17.2
 tf25_gpu_hashed:
-  new: determinedai/environments:cuda-11.2-tf-2.5-gpu-35cccd2
-  old: determinedai/environments:cuda-11.2-tf-2.5-gpu-f286b87
+  new: determinedai/environments:cuda-11.2-tf-2.5-gpu-825e8ee
+  old: determinedai/environments:cuda-11.2-tf-2.5-gpu-5e33300
 tf25_gpu_versioned:
-  new: determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-  old: determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.1
+  new: determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+  old: determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
 tf26_cpu_hashed:
-  new: determinedai/environments:py-3.8-tf-2.6-cpu-35cccd2
-  old: determinedai/environments:py-3.8-tf-2.6-cpu-f286b87
+  new: determinedai/environments:py-3.8-tf-2.6-cpu-825e8ee
+  old: determinedai/environments:py-3.8-tf-2.6-cpu-5e33300
 tf26_cpu_versioned:
-  new: determinedai/environments:py-3.8-tf-2.6-cpu-0.17.2
-  old: determinedai/environments:py-3.8-tf-2.6-cpu-0.17.1
+  new: determinedai/environments:py-3.8-tf-2.6-cpu-0.17.4
+  old: determinedai/environments:py-3.8-tf-2.6-cpu-0.17.2
 tf26_gpu_hashed:
-  new: determinedai/environments:cuda-11.2-tf-2.6-gpu-35cccd2
-  old: determinedai/environments:cuda-11.2-tf-2.6-gpu-f286b87
+  new: determinedai/environments:cuda-11.2-tf-2.6-gpu-825e8ee
+  old: determinedai/environments:cuda-11.2-tf-2.6-gpu-5e33300
 tf26_gpu_versioned:
-  new: determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
-  old: determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.1
+  new: determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+  old: determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+tf27_cpu_hashed:
+  new: determinedai/environments:py-3.8-tf-2.7-cpu-825e8ee
+tf27_cpu_versioned:
+  new: determinedai/environments:py-3.8-tf-2.7-cpu-0.17.4
+tf27_gpu_hashed:
+  new: determinedai/environments:cuda-11.2-tf-2.7-gpu-825e8ee
+tf27_gpu_versioned:
+  new: determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 tf2_cpu_hashed:
-  new: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-35cccd2
-  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-f286b87
+  new: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-825e8ee
+  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-5e33300
 tf2_cpu_versioned:
-  new: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2
-  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.1
+  new: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4
+  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2
 tf2_gpu_hashed:
-  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-35cccd2
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-f286b87
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-5e33300
 tf2_gpu_versioned:
-  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 us_east_1_agent_ami:
-  new: ami-0e1d5d6560654f115
-  old: ami-034e5480b611aa39d
+  new: ami-05be92a5d78bf2944
+  old: ami-024af5b8a01219c76
 us_east_1_bastion_ami:
-  new: ami-0a99b06fad09f48df
-  old: ami-0dd76f917833aac4b
+  new: ami-083654bd07b5da81d
+  old: ami-0a99b06fad09f48df
 us_east_1_master_ami:
-  new: ami-0a99b06fad09f48df
-  old: ami-0dd76f917833aac4b
+  new: ami-083654bd07b5da81d
+  old: ami-0a99b06fad09f48df
 us_east_2_agent_ami:
-  new: ami-0dd6958595a48caa9
-  old: ami-0a61d7004e5269652
+  new: ami-073889992e7259ceb
+  old: ami-01c05db8c991b06e3
 us_east_2_bastion_ami:
-  new: ami-0e5e17317f99b2932
-  old: ami-0b29b6e62f2343b46
+  new: ami-0629230e074c580f2
+  old: ami-0e5e17317f99b2932
 us_east_2_master_ami:
-  new: ami-0e5e17317f99b2932
-  old: ami-0b29b6e62f2343b46
+  new: ami-0629230e074c580f2
+  old: ami-0e5e17317f99b2932
 us_gov_east_1_agent_ami:
-  new: ami-0d7937c0f370a03dc
-  old: ami-0c6c6e03ef93941ce
+  new: ami-0580afb488d54593b
+  old: ami-070ca29979034f561
 us_gov_east_1_master_ami:
   new: ami-05c154cec85baeb50
   old: ami-0ce79d6fa9e9a242e
 us_gov_west_1_agent_ami:
-  new: ami-02344369720f18141
-  old: ami-078ffc0df9792e076
+  new: ami-03ab5165c1c1956c4
+  old: ami-0d5017aa884727075
 us_gov_west_1_master_ami:
   new: ami-05776a65d52ff7a9b
   old: ami-04a2f96ef9b12b2b1
 us_west_2_agent_ami:
-  new: ami-0c72cf73d47b32f73
-  old: ami-05fe39d9b183d72fb
+  new: ami-02e0bc462c0879512
+  old: ami-094405b185514826f
 us_west_2_bastion_ami:
-  new: ami-08f76d3bc7a0e55ce
-  old: ami-01773ce53581acf22
+  new: ami-036d46416a34a611c
+  old: ami-08f76d3bc7a0e55ce
 us_west_2_master_ami:
-  new: ami-08f76d3bc7a0e55ce
-  old: ami-01773ce53581acf22
+  new: ami-036d46416a34a611c
+  old: ami-08f76d3bc7a0e55ce

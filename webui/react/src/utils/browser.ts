@@ -50,7 +50,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
   await consumeStream<V1TrialLogsResponse>(
-    detApi.StreamingExperiments.determinedTrialLogs(trialId),
+    detApi.StreamingExperiments.trialLogs(trialId),
     (ev) => {
       downloadStringBuffer += ev.message;
       if (downloadStringBuffer.length > MAX_PART_SIZE) {
@@ -67,7 +67,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
 const generateLogStringBuffer = (count: number, avgLength: number): string => {
   const msg = new Array(avgLength).fill('a').join('') + '\n';
   let stringBuffer = '';
-  for (let i=0; i<count; i++) {
+  for (let i = 0; i < count; i++) {
     stringBuffer += (i + msg);
   }
   return stringBuffer;

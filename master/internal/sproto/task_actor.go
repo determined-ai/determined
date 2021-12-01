@@ -9,19 +9,19 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
 type (
 	// ContainerLog notifies the task actor that a new log message is available for the container.
 	// It is used by the resource providers to communicate internally and with the task handlers.
 	ContainerLog struct {
-		Container container.Container
+		Container cproto.Container
 		Timestamp time.Time
 
 		PullMessage *jsonmessage.JSONMessage
-		RunMessage  *agent.RunMessage
+		RunMessage  *aproto.RunMessage
 		AuxMessage  *string
 
 		// Level is typically unset, but set by parts of the system that know a log shouldn't
@@ -31,18 +31,23 @@ type (
 	}
 	// TaskContainerStarted contains the information needed by tasks from container started.
 	TaskContainerStarted struct {
-		Addresses []container.Address
+		Addresses []cproto.Address
 	}
 	// TaskContainerStopped contains the information needed by tasks from container stopped.
 	TaskContainerStopped struct {
-		agent.ContainerStopped
+		aproto.ContainerStopped
 	}
 	// TaskContainerStateChanged notifies that the task actor container state has been transitioned.
 	// It is used by the resource managers to communicate with the task handlers.
 	TaskContainerStateChanged struct {
-		Container        container.Container
+		Container        cproto.Container
 		ContainerStarted *TaskContainerStarted
 		ContainerStopped *TaskContainerStopped
+	}
+
+	// GetTaskContainerState requests cproto.Container state.
+	GetTaskContainerState struct {
+		ContainerID cproto.ID
 	}
 
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.

@@ -9,6 +9,7 @@ interface WithPagination {
 export type RecordKey = string | number | symbol;
 export type UnknownRecord = Record<RecordKey, unknown>;
 export type Primitive = boolean | number | string;
+export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [ T, T ];
 
@@ -399,9 +400,18 @@ export interface Step extends WorkloadWrapper, StartEndTimes {
   training: MetricsWorkload;
 }
 
+export interface Metrics {
+  numInputs?: number;
+  validationMetrics?: Record<string, number>;
+}
+
+export type Metadata = Record<RecordKey, string>;
+
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
+  metadata?: Metadata;
+  metrics?: Metrics;
 }
 
 export interface TrialPagination extends WithPagination {
@@ -471,6 +481,44 @@ export enum ExperimentVisualizationType {
   HpHeatMap = 'hp-heat-map',
   HpScatterPlots = 'hp-scatter-plots',
   LearningCurve = 'learning-curve',
+}
+
+export interface ModelItem {
+  archived?: boolean;
+  creationTime: string;
+  description?: string;
+  id: number;
+  labels?: string[];
+  lastUpdatedTime: string;
+  metadata: Metadata;
+  name: string;
+  notes?: string;
+  numVersions: number;
+  username: string;
+}
+
+export interface ModelVersion {
+  checkpoint: CheckpointDetail;
+  comment?: string;
+  creationTime: string;
+  id: number;
+  labels?: string[];
+  lastUpdatedTime?: string;
+  metadata?: Metadata;
+  model: ModelItem;
+  name?: string;
+  notes?: string;
+  username: string;
+  version: number;
+}
+
+export interface ModelPagination extends WithPagination {
+  models: ModelItem[];
+}
+
+export interface ModelVersions extends WithPagination {
+  model: ModelItem;
+  modelVersions: ModelVersion[]
 }
 
 export interface Task {
@@ -563,11 +611,11 @@ export interface Log {
   level?: LogLevel;
   message: string;
   meta?: string;
-  time?: string;
+  time: string;
 }
 
 export interface TrialLog {
-  id: string;
+  id: number;
   level?: LogLevel;
   message: string;
   time: string;

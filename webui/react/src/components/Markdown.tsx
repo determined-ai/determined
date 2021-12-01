@@ -26,10 +26,10 @@ enum TabType {
 }
 
 const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder }) => {
-  const showPlaceholdere = !markdown && placeholder;
+  const showPlaceholder = !markdown && placeholder;
   return (
     <div className={css.render}>
-      {showPlaceholdere ? (
+      {showPlaceholder ? (
         <div className={css.placeholder}>{placeholder}</div>
       ) : (
         <MarkdownViewer options={{ disableParsingRawHTML: true }}>

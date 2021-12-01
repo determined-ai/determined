@@ -36,7 +36,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
 
   const fetchTrialLogs = useCallback((trialId: number, time: string, canceler: AbortController) => {
     consumeStream(
-      detApi.StreamingExperiments.determinedTrialLogs(
+      detApi.StreamingExperiments.trialLogs(
         trialId,
         undefined,
         true,
@@ -68,7 +68,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
     canceler: AbortController,
   ) => {
     consumeStream(
-      detApi.StreamingExperiments.determinedTrialLogs(
+      detApi.StreamingExperiments.trialLogs(
         trialId,
         100,
         false,

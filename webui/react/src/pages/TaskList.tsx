@@ -31,7 +31,7 @@ import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
 import {
-  alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
+  alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
 import { filterTasks } from 'utils/task';
 import { commandToTask, commandTypeToLabel, isTaskKillable } from 'utils/types';
@@ -249,7 +249,7 @@ const TaskList: React.FC = () => {
       });
       info.plural = info.sources.length > 1 ? 's' : '';
       info.sources.sort((a, b) => {
-        if (a.type !== b.type) return alphanumericSorter(a.type, b.type);
+        if (a.type !== b.type) return alphaNumericSorter(a.type, b.type);
         return numericSorter(a.id, b.id);
       });
 
@@ -270,7 +270,7 @@ const TaskList: React.FC = () => {
         dataIndex: 'id',
         key: 'id',
         render: taskIdRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.id, b.id),
+        sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
         title: 'Short ID',
       },
       {
@@ -287,7 +287,7 @@ const TaskList: React.FC = () => {
         key: 'type',
         onHeaderCell: () => settings.type ? { className: tableCss.headerFilterOn } : {},
         render: taskTypeRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.type, b.type),
+        sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.type, b.type),
         title: 'Type',
       },
       {
@@ -296,7 +296,7 @@ const TaskList: React.FC = () => {
         key: 'name',
         onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
         render: nameNSourceRenderer,
-        sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
+        sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.name, b.name),
         title: 'Name',
       },
       {
@@ -305,7 +305,7 @@ const TaskList: React.FC = () => {
           return relativeTimeRenderer(new Date(record.startTime));
         },
         sorter: (a: CommandTask, b: CommandTask): number => {
-          return stringTimeSorter(a.startTime, b.startTime);
+          return dateTimeStringSorter(a.startTime, b.startTime);
         },
         title: 'Start Time',
       },
@@ -335,7 +335,7 @@ const TaskList: React.FC = () => {
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => {
-          return alphanumericSorter(a.username, b.username);
+          return alphaNumericSorter(a.username, b.username);
         },
         title: 'User',
       },

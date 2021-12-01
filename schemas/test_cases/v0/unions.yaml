@@ -1,7 +1,7 @@
 # One instance of each type in all the smaller union types.
 # (Other types like hyperparameters or searchers have their own files)
 
-- name: s3 checkpoint storage (valid)
+- name: s3 checkpoint storage (valid, no prefix)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/s3.json
     - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json

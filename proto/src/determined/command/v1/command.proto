@@ -19,6 +19,7 @@ message Command {
         "start_time",
         "state",
         "username",
+        "job_id",
         "resource_pool"
       ]
     }
@@ -39,4 +40,6 @@ message Command {
   string resource_pool = 11;
   // The exit status;
   string exit_status = 12;
+  // The associated job id.
+  string job_id = 13;
 }

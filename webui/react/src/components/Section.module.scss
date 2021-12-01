@@ -12,6 +12,7 @@
     display: flex;
     flex-shrink: 0;
     justify-content: space-between;
+    margin-bottom: var(--theme-sizes-layout-medium);
   }
   .title {
     align-items: center;
@@ -19,14 +20,13 @@
     flex-grow: 1;
     height: var(--theme-sizes-layout-giant);
     line-height: var(--theme-sizes-layout-giant);
-    margin-bottom: var(--theme-sizes-layout-medium);
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .title.string {
+    font-size: var(--theme-sizes-font-big);
   }
   .options {
     display: flex;
-    margin-bottom: var(--theme-sizes-layout-medium);
     margin-left: auto;
   }
   .title + .options {

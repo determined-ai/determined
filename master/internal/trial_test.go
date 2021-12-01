@@ -156,6 +156,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	tr := newTrial(
 		taskID,
+		model.JobID("1"),
 		1,
 		model.PausedState,
 		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
@@ -172,6 +173,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		&model.Checkpoint{},
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},
+			SSHRsaSize:     1024,
 		},
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)

@@ -24,6 +24,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
@@ -50,7 +51,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -69,7 +70,7 @@ type Master struct {
 	MasterID  string
 	Version   string
 
-	config   *Config
+	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
 	logs            *logger.LogBuffer
@@ -85,7 +86,7 @@ type Master struct {
 }
 
 // New creates an instance of the Determined master.
-func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
+func New(version string, logStore *logger.LogBuffer, config *config.Config) *Master {
 	logger.SetLogrus(config.Log)
 	return &Master{
 		MasterID: uuid.New().String(),
@@ -804,7 +805,6 @@ func (m *Master) Run(ctx context.Context) error {
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
-	trialsGroup.POST("/:trial_id/kill", api.Route(m.postTrialKill))
 
 	checkpointsGroup := m.echo.Group("/checkpoints", authFuncs...)
 	checkpointsGroup.GET("", api.Route(m.getCheckpoints))

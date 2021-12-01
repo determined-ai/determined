@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import pytest
+import yaml
 
 from tests import command as cmd
 from tests import config as conf
@@ -32,25 +33,29 @@ entrypoint: model_def:NoOpTrial
 """
 
 
-def s3_config(num_trials: int, secrets: Dict[str, str]) -> str:
-    return f"""
-description: noop_random
-checkpoint_storage:
-  type: s3
-  access_key: {secrets["INTEGRATIONS_S3_ACCESS_KEY"]}
-  secret_key: {secrets["INTEGRATIONS_S3_SECRET_KEY"]}
-  bucket: {secrets["INTEGRATIONS_S3_BUCKET"]}
-hyperparameters:
-  global_batch_size: 1
-searcher:
-  metric: validation_error
-  smaller_is_better: true
-  name: random
-  max_trials: {num_trials}
-  max_length:
-    batches: 100
-entrypoint: model_def:NoOpTrial
-"""
+def s3_config(num_trials: int, secrets: Dict[str, str], prefix: Optional[str] = None) -> str:
+    config_dict = {
+        "description": "noop_random",
+        "checkpoint_storage": {
+            "type": "s3",
+            "access_key": secrets["INTEGRATIONS_S3_ACCESS_KEY"],
+            "secret_key": secrets["INTEGRATIONS_S3_SECRET_KEY"],
+            "bucket": secrets["INTEGRATIONS_S3_BUCKET"],
+        },
+        "hyperparameters": {"global_batch_size": 1},
+        "searcher": {
+            "metric": "validation_error",
+            "smaller_is_better": True,
+            "name": "random",
+            "max_trials": num_trials,
+            "max_length": {"batches": 100},
+        },
+        "entrypoint": "model_def:NoOpTrial",
+    }
+    if prefix is not None:
+        config_dict["checkpoint_storage"]["prefix"] = prefix  # type: ignore
+
+    return str(yaml.dump(config_dict))
 
 
 @pytest.mark.slow
@@ -81,13 +86,16 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
 @pytest.mark.slow
 @pytest.mark.e2e_gpu
 @pytest.mark.tensorflow2
-def test_start_tensorboard_for_s3_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
+@pytest.mark.parametrize("prefix", [None, "my/test/prefix"])
+def test_start_tensorboard_for_s3_experiment(
+    tmp_path: Path, secrets: Dict[str, str], prefix: Optional[str]
+) -> None:
     """
     Start a random experiment configured with the s3 backend, start a
     TensorBoard instance pointed to the experiment, and kill the TensorBoard
     instance.
     """
-    with FileTree(tmp_path, {"config.yaml": s3_config(1, secrets)}) as tree:
+    with FileTree(tmp_path, {"config.yaml": s3_config(1, secrets, prefix)}) as tree:
         config_path = tree.joinpath("config.yaml")
         experiment_id = exp.run_basic_test(
             str(config_path), conf.fixtures_path("no_op"), num_trials
@@ -104,13 +112,13 @@ def test_start_tensorboard_for_s3_experiment(tmp_path: Path, secrets: Dict[str, 
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.tensorflow2
 def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
     """
     Start 3 random experiments configured with the s3 and shared_fs backends,
     start a TensorBoard instance pointed to the experiments and some select
     trials, and kill the TensorBoard instance.
     """
-
     with FileTree(
         tmp_path,
         {
@@ -139,6 +147,7 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
         "start",
         str(shared_fs_exp_id),
         str(s3_exp_id),
+        str(multi_trial_exp_id),
         "-t",
         *trial_ids,
         "--no-browser",
@@ -148,7 +157,5 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
         for line in tensorboard.stdout:
             if SERVICE_READY in line:
                 break
-            if AWAITING_METRICS in line:
-                raise AssertionError("Tensorboard did not find metrics")
         else:
             raise AssertionError(f"Did not find {SERVICE_READY} in output")

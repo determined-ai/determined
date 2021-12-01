@@ -5,7 +5,7 @@ import (
 	"regexp"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ssh"
@@ -68,7 +68,7 @@ func (s GenericCommandSpec) ToTaskSpec(
 		}...)
 	}
 
-	res.ExtraArchives = []container.RunArchive{
+	res.ExtraArchives = []cproto.RunArchive{
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), res.WorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
 	}

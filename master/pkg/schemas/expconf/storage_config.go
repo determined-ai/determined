@@ -3,6 +3,7 @@ package expconf
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -131,6 +132,20 @@ type S3ConfigV0 struct {
 	RawAccessKey   *string `json:"access_key"`
 	RawSecretKey   *string `json:"secret_key"`
 	RawEndpointURL *string `json:"endpoint_url"`
+	RawPrefix      *string `json:"prefix"`
+}
+
+// Validate implements the check.Validatable interface.
+func (t *S3ConfigV0) Validate() []error {
+	var errs []error
+	if t.RawPrefix != nil {
+		rawPrefix := *t.RawPrefix
+		if rawPrefix == ".." || strings.HasPrefix(rawPrefix, "../") ||
+			strings.HasSuffix(rawPrefix, "/..") || strings.Contains(rawPrefix, "/../") {
+			errs = append(errs, errors.New("prefix must not contain /../"))
+		}
+	}
+	return errs
 }
 
 //go:generate ../gen.sh

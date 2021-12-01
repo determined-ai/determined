@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Fix a bug where deleting experiments with trial restarts always failed, and then failed to be
+   marked as failed.

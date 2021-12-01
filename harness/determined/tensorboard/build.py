@@ -89,6 +89,7 @@ def build(
             checkpoint_config.get("access_key", None),
             checkpoint_config.get("secret_key", None),
             checkpoint_config.get("endpoint_url", None),
+            checkpoint_config.get("prefix", None),
             base_path,
             sync_path,
         )

@@ -26,7 +26,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.2.dev0
+    default: 0.17.4-dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,11 +100,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-35cccd2
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-825e8ee
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-35cccd2
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-825e8ee
 
   login-docker:
     parameters:
@@ -140,6 +140,7 @@ commands:
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
+      - install-devcluster
       - start-devcluster:
           target-stage: elastic
           devcluster-config: elastic.devcluster.yaml
@@ -295,6 +296,9 @@ commands:
       master-cert-name:
         type: string
         default: ""
+      managed-devcluster:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Split tests
@@ -313,10 +317,13 @@ commands:
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
-      - wait-for-master:
-          scheme: <<parameters.master-scheme>>
-          host: <<parameters.master-host>>
-          port: <<parameters.master-port>>
+      - unless:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - wait-for-master:
+                scheme: <<parameters.master-scheme>>
+                host: <<parameters.master-host>>
+                port: <<parameters.master-port>>
 
       - run:
           name: Run e2e tests
@@ -427,7 +434,9 @@ commands:
               --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
               --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-              --keypair <<parameters.keypair>>
+              --keypair <<parameters.keypair>> \
+              --no-prompt
+
   terminate-aws-cluster:
     parameters:
       cluster-id:
@@ -632,7 +641,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
         type: string
     steps:
       - set-cluster-id:
@@ -836,6 +845,15 @@ commands:
       - run: make -C master check
       - run: make -C agent check
 
+  install-devcluster:
+    steps:
+      - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
+      - run:
+          command: |
+            if ! [ -x "$(command -v socat)" ]; then
+              apt update && apt install -y socat
+            fi
+
   start-devcluster:
     parameters:
       devcluster-config:
@@ -845,7 +863,6 @@ commands:
         type: string
         default: agent1
     steps:
-      - run: pip install git+https://github.com/determined-ai/devcluster.git@1b9749e26271bbfae8a672f1ffe4ba82884bb9f7#egg=devcluster
       - run:
           command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
           background: true
@@ -1081,6 +1098,7 @@ jobs:
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - setup-python-venv:
           executor: ubuntu-2004:202101-01
+      - install-devcluster
       - start-devcluster:
           target-stage: db
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
@@ -1105,6 +1123,7 @@ jobs:
           executor: ubuntu-2004:202101-01
 
       - run: make -C master get-deps
+      - install-devcluster
       - start-devcluster
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
 
@@ -1117,7 +1136,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1125,7 +1144,7 @@ jobs:
 
   lint-webui-tests:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - run: make -C webui/tests get-deps
@@ -1137,7 +1156,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1154,7 +1173,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1162,7 +1181,7 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1369,6 +1388,7 @@ jobs:
     steps:
       - checkout
       - run: python --version
+      - run: pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
       - run: cd harness; python setup.py bdist_wheel -d ../build
@@ -1405,6 +1425,9 @@ jobs:
       target-stage:
         type: string
         default: agent1
+      managed-devcluster:
+        type: boolean
+        default: false
     machine:
       image: ubuntu-2004:202101-01
     resource_class: large
@@ -1423,9 +1446,13 @@ jobs:
           name: Get master dependencies
           command: make -C master get-deps
 
-      - start-devcluster:
-          devcluster-config: <<parameters.devcluster-config>>
-          target-stage: <<parameters.target-stage>>
+      - install-devcluster
+      - unless:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - start-devcluster:
+                devcluster-config: <<parameters.devcluster-config>>
+                target-stage: <<parameters.target-stage>>
 
       - pull-task-images:
           tf1: <<parameters.tf1>>
@@ -1434,6 +1461,7 @@ jobs:
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
+          managed-devcluster: <<parameters.managed-devcluster>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -1567,7 +1595,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.3-gke.2001"
+        default: "1.21.5-gke.1302"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1650,7 +1678,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.3-gke.2001"
+        default: "1.21.5-gke.1302"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1676,7 +1704,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
         type: string
     docker:
       - image: determinedai/cimg-base:stable
@@ -1769,7 +1797,7 @@ jobs:
       - slack/status:
           fail_only: True
           only_for_branches: master
-          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
           channel: "devops-ag"
 
 workflows:
@@ -1883,6 +1911,16 @@ workflows:
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          mark: managed_devcluster
+          managed-devcluster: true
 
       - test-e2e-webui:
           requires:
@@ -2194,7 +2232,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2213,7 +2251,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2229,8 +2267,9 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2249,8 +2288,9 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2417,7 +2457,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2432,7 +2472,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2444,8 +2484,9 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2460,8 +2501,9 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
   weekly-vuln-scan:
     triggers:
@@ -2490,13 +2532,6 @@ workflows:
             - build-helm
             - build-proto
 
-      - publish-python-package:
-          matrix:
-            parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
-          context: determined-production
-          filters: *release-and-rc-filters
-
       - package-and-push-system-rc:
           requires:
             - build-react
@@ -2504,12 +2539,32 @@ workflows:
           context: determined-production
           filters: *rc-filters
 
+      - publish-python-package:
+          name: publish-python-package-rc
+          matrix:
+            parameters:
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
+          context: determined-production
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc
+
       - package-and-push-system-release:
           requires:
             - build-react
             - build-docs
           context: determined-production
           filters: *release-filters
+
+      - publish-python-package:
+          name: publish-python-package-release
+          matrix:
+            parameters:
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
+          context: determined-production
+          filters: *release-filters
+          requires:
+            - package-and-push-system-release
 
       - publish-docs:
           requires:

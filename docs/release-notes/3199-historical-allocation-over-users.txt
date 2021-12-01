@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Tasks: Historical usage over users now properly accounts for all task types (commands, notebooks,
+   etc), not just trials.

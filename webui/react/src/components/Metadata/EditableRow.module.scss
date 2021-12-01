@@ -1,0 +1,15 @@
+.row {
+  display: flex !important;
+
+  .overflow {
+    border: 1px solid var(--theme-colors-monochrome-12);
+    padding: var(--theme-sizes-layout-small);
+  }
+  & input {
+    flex-basis: 45%;
+    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
+  }
+  & input:last-of-type {
+    flex-grow: 1;
+  }
+}

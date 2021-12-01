@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  The ``environment.force_pull_image: true`` behavior has improved when running on Determined
+   Agents. Previously, it would delete the image if it existed before re-pulling it. This behavior
+   was wasteful of network resources and execution time. Now, it will pull without deleting
+   anything, effectively pulling only the updated layers of the image.

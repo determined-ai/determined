@@ -109,7 +109,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             val = input(
                 "Deleting an AWS stack will lose all your data, including the created network "
                 "file system. Please back up the file system before deleting it. Do you still "
-                "want to delete the stack? [y/n]"
+                "want to delete the stack? [y/N]"
             )
             if val.lower() != "y":
                 print("Delete cancelled.")
@@ -207,7 +207,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     print("Starting Determined Deployment")
     try:
-        deployment_object.deploy()
+        deployment_object.deploy(args.no_prompt)
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
@@ -487,6 +487,11 @@ args_description = Cmd(
                     help="preexisting FSx that will be mounted into the task containers; "
                     "if not provided, a new FSx instance will be created.  Note that you need"
                     "to ensure that the agents can connect to the FSx instance.",
+                ),
+                Arg(
+                    "--no-prompt",
+                    action="store_true",
+                    help="no prompt when deployment would delete existing database",
                 ),
             ],
         ),

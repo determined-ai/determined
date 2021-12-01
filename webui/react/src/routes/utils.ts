@@ -27,7 +27,7 @@ export const checkServerAlive = async (address?: string): Promise<boolean> => {
   address = address || serverAddress();
   try {
     const clusterApi = new ClusterApi(new Configuration({ basePath: address }));
-    const data = await clusterApi.determinedGetMaster();
+    const data = await clusterApi.getMaster();
     const attrs = [ 'version', 'masterId', 'clusterId' ];
     for (const attr of attrs) {
       // The server doesn't look like a determined server.
@@ -208,6 +208,15 @@ export const paths = {
   },
   masterLogs: (): string => {
     return '/logs';
+  },
+  modelDetails: (modelId: number | string): string => {
+    return `/models/${modelId}`;
+  },
+  modelList: (): string => {
+    return '/models';
+  },
+  modelVersionDetails: (modelId: number | string, versionId: number | string): string => {
+    return `/models/${modelId}/versions/${versionId}`;
   },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;

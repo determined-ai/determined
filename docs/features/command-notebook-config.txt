@@ -46,8 +46,8 @@ The following configuration settings are supported:
       available via ``docker pull`` to every Determined agent machine in the cluster. Users can
       customize the image used for GPU vs. CPU agents by specifying a dict with two keys, ``cpu``
       and ``gpu``. Defaults to
-      ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2`` for CPU
-      agents and ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``
+      ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPU
+      agents and ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4``
       for GPU agents.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker

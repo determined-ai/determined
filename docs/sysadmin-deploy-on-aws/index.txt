@@ -18,7 +18,7 @@ visiting the WebUI hosted on the master. Nodes in the cluster communicate with o
 Virtual Private Cloud (VPC); users interact with the master via a designated external port
 configured during installation.
 
-.. image:: /assets/images/Determined-Cloud-Deployment-(Simple).png
+.. image:: /assets/images/det-cloud-architecture.png
 
 Following the diagram, a standard execution would be:
 

@@ -190,3 +190,93 @@
     container: my_container
     connection_string: my_conn_str
     credential: null
+
+- name: s3 checkpoint storage (valid, prefix single dot)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/s3.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    prefix: "this/./prefix"
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: s3 checkpoint storage (valid, prefix mangled looking)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/s3.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    prefix: "this/is/././.../a/prefix/"
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: s3 checkpoint storage (invalid, prefix ..)
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - "<config>.prefix: prefix cannot contain /../"
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    prefix: ".."
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: s3 checkpoint storage (invalid, prefix starts with ..)
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - "<config>.prefix: prefix cannot contain /../"
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    prefix: "../prefix"
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: s3 checkpoint storage (invalid, prefix contains /../)
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - "<config>.prefix: prefix cannot contain /../"
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    prefix: "this/../prefix"
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: s3 checkpoint storage (invalid, prefix ends with /..)
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - "<config>.prefix: prefix cannot contain /../"
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    prefix: "this/is/a/prefix/.."
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1

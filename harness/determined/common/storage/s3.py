@@ -1,17 +1,25 @@
 import contextlib
 import logging
 import os
+import re
 import tempfile
 from typing import Iterator, Optional
 
-import boto3
 import requests
 
 from determined import errors
 from determined.common import util
 from determined.common.storage.base import StorageManager
 
-from .boto3_credential_manager import initialize_boto3_credential_providers
+
+def normalize_prefix(prefix: Optional[str]) -> str:
+    new_prefix = ""
+    if prefix is not None and prefix != "":
+        banned_patterns = (r"^.*\/\.\.\/.*$", r"^\.\.\/.*", r".*\/\.\.$", r"^\.\.$")
+        if any([re.match(bp, prefix) for bp in banned_patterns]):
+            raise ValueError(f"prefix must not match: {' '.join(banned_patterns)}")
+        new_prefix = os.path.normpath(prefix).lstrip("/")
+    return new_prefix
 
 
 class S3StorageManager(StorageManager):
@@ -25,10 +33,15 @@ class S3StorageManager(StorageManager):
         access_key: Optional[str] = None,
         secret_key: Optional[str] = None,
         endpoint_url: Optional[str] = None,
+        prefix: Optional[str] = None,
         temp_dir: Optional[str] = None,
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
-        initialize_boto3_credential_providers()
+        import boto3
+
+        from determined.common.storage import boto3_credential_manager
+
+        boto3_credential_manager.initialize_boto3_credential_providers()
         self.bucket_name = bucket
         self.s3 = boto3.resource(
             "s3",
@@ -37,6 +50,8 @@ class S3StorageManager(StorageManager):
             aws_secret_access_key=secret_key,
         )
         self.bucket = self.s3.Bucket(self.bucket_name)
+
+        self.prefix = normalize_prefix(prefix)
 
         # Detect if we are talking to minio, because boto3 has a client-side bug parsing the output
         # of the minio server.
@@ -53,6 +68,9 @@ class S3StorageManager(StorageManager):
                         "MinIO backend detected.  To work around a boto3 bug, empty directories"
                         "will not be uploaded in checkpoints."
                     )
+
+    def get_storage_prefix(self, storage_id: str) -> str:
+        return os.path.join(self.prefix, storage_id)
 
     def post_store_path(self, storage_id: str, storage_dir: str) -> None:
         """post_store_path uploads the checkpoint to s3 and deletes the original files."""
@@ -77,7 +95,7 @@ class S3StorageManager(StorageManager):
 
     @util.preserve_random_state
     def upload(self, storage_id: str, storage_dir: str) -> None:
-        storage_prefix = storage_id
+        storage_prefix = self.get_storage_prefix(storage_id)
         for rel_path in sorted(self._list_directory(storage_dir)):
             key_name = f"{storage_prefix}/{rel_path}"
             logging.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
@@ -100,7 +118,7 @@ class S3StorageManager(StorageManager):
 
     @util.preserve_random_state
     def download(self, storage_id: str, storage_dir: str) -> None:
-        storage_prefix = storage_id
+        storage_prefix = self.get_storage_prefix(storage_id)
         found = False
         for obj in self.bucket.objects.filter(Prefix=storage_prefix):
             found = True
@@ -126,7 +144,7 @@ class S3StorageManager(StorageManager):
     def delete(self, storage_id: str) -> None:
         logging.info(f"Deleting checkpoint {storage_id} from S3")
 
-        storage_prefix = storage_id
+        storage_prefix = self.get_storage_prefix(storage_id)
         objects = [{"Key": obj.key} for obj in self.bucket.objects.filter(Prefix=storage_prefix)]
 
         # S3 delete_objects has a limit of 1000 objects.

@@ -1,5 +1,9 @@
+import json
+import subprocess
+import time
 from typing import Any, Dict
 
+import pytest
 import requests
 
 from determined.common import api
@@ -31,3 +35,39 @@ def num_free_slots() -> int:
         for agent_slots in cluster_slots().values()
         for slot in agent_slots
     )
+
+
+def run_command(sleep: int = 30, slots: int = 1) -> str:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "command",
+        "run",
+        "-d",
+        "--config",
+        "resources.slots=0",
+        "sleep",
+        str(sleep),
+    ]
+    return subprocess.check_output(command).decode().strip()
+
+
+def run_zero_slot_command(sleep: int = 30) -> str:
+    return run_command(sleep=sleep, slots=0)
+
+
+def get_command_info(command_id: str) -> Dict[str, Any]:
+    command = ["det", "-m", conf.make_master_url(), "command", "list", "--json"]
+    command_data = json.loads(subprocess.check_output(command).decode())
+    return next((d for d in command_data if d["id"] == command_id), {})
+
+
+def wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
+    for _ in range(ticks):
+        info = get_command_info(command_id)
+        if info.get("state") == state:
+            return
+        time.sleep(1)
+
+    pytest.fail(f"Command did't reach {state} state after {ticks} secs")

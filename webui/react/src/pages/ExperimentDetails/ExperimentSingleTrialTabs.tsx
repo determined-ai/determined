@@ -201,7 +201,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         <TabPane key="notes" tab="Notes">
           <NotesCard
             notes={experiment.notes ?? ''}
-            style={{ border: 0 }}
+            style={{ border: 0, height: '100%' }}
             onSave={handleNotesUpdate}
           />
         </TabPane>

@@ -4,15 +4,14 @@ import pickle
 import random
 import time
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 import torch
 
 import determined as det
 from determined import horovod, layers, pytorch, util, workload
-from determined.common import check, experimental, storage
-from determined.common.api import certs
+from determined.common import check
 from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 from determined.util import has_param
@@ -58,22 +57,25 @@ class PyTorchTrialController(det.TrialController):
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
-            session = experimental.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
 
-    @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        self.latest_batch = self.env.latest_batch
+
+    @classmethod
+    def pre_execute_hook(
+        cls: Type["PyTorchTrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+    ) -> None:
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
 
-        PyTorchTrialController._set_random_seeds(env.trial_seed)
+        cls._set_random_seeds(env.trial_seed)
 
-    @staticmethod
-    def _set_random_seeds(seed: int) -> None:
+    @classmethod
+    def _set_random_seeds(cls: Type["PyTorchTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will start at a unique
         # offset in the dataset, ensuring it's processing a unique
@@ -85,16 +87,18 @@ class PyTorchTrialController(det.TrialController):
         # torch.backends.cudnn.deterministic = True
         # torch.backends.cudnn.benchmark = False
 
-    @staticmethod
-    def from_trial(*args: Any, **kwargs: Any) -> det.TrialController:
-        return PyTorchTrialController(*args, **kwargs)
+    @classmethod
+    def from_trial(
+        cls: Type["PyTorchTrialController"], *args: Any, **kwargs: Any
+    ) -> det.TrialController:
+        return cls(*args, **kwargs)
 
-    @staticmethod
-    def supports_mixed_precision() -> bool:
+    @classmethod
+    def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
-    @staticmethod
-    def supports_averaging_training_metrics() -> bool:
+    @classmethod
+    def supports_averaging_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
     def _check_evaluate_implementation(self) -> None:
@@ -186,7 +190,8 @@ class PyTorchTrialController(det.TrialController):
         try:
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
-                with self._generic._download_initial_checkpoint(
+                logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+                with self.context._generic.checkpointing.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
@@ -234,14 +239,17 @@ class PyTorchTrialController(det.TrialController):
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:
-                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        metadata = {
+                            "latest_batch": self.latest_batch,
+                            "framework": f"torch-{torch.__version__}",
+                            "format": "pickle",
+                        }
+                        with self.context._generic.checkpointing.store_path(metadata) as (
+                            storage_id,
+                            path,
+                        ):
                             self._save(pathlib.Path(path))
-                            response = {
-                                "uuid": storage_id,
-                                "resources": storage.StorageManager._list_directory(path),
-                                "framework": f"torch-{torch.__version__}",
-                                "format": "pickle",
-                            }
+                        response = {"uuid": storage_id}
                     else:
                         response = {}
 
@@ -355,6 +363,7 @@ class PyTorchTrialController(det.TrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
+            self.latest_batch += 1
             batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next", requires_sync=False):
@@ -446,8 +455,10 @@ class PyTorchTrialController(det.TrialController):
 
         return metrics
 
-    @staticmethod
-    def _convert_metrics_to_numpy(metrics: Dict[str, Any]) -> Dict[str, Any]:
+    @classmethod
+    def _convert_metrics_to_numpy(
+        cls: Type["PyTorchTrialController"], metrics: Dict[str, Any]
+    ) -> Dict[str, Any]:
         for metric_name, metric_val in metrics.items():
             if isinstance(metric_val, torch.Tensor):
                 metrics[metric_name] = metric_val.cpu().numpy()

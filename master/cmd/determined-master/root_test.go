@@ -9,9 +9,10 @@ import (
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal"
-	"github.com/determined-ai/determined/master/internal/provisioner"
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -43,7 +44,7 @@ task_container_defaults:
       containers:
         - name: determined-container
 `
-	expected := internal.DefaultConfig()
+	expected := config.DefaultConfig()
 	providerConf := provisioner.DefaultConfig()
 	providerConf.GCP = provisioner.DefaultGCPClusterConfig()
 	providerConf.GCP.BaseConfig = &compute.Instance{
@@ -68,6 +69,7 @@ task_container_defaults:
 			PoolName:                 "default",
 			Provider:                 providerConf,
 			MaxAuxContainersPerAgent: 100,
+			AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
 		},
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{

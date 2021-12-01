@@ -159,6 +159,55 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
   return { config: template.config, name: template.name };
 };
 
+export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
+  return {
+    archived: model.archived,
+    creationTime: model.creationTime as unknown as string,
+    description: model.description,
+    id: model.id,
+    labels: model.labels,
+    lastUpdatedTime: model.lastUpdatedTime as unknown as string,
+    metadata: model.metadata,
+    name: model.name,
+    notes: model.notes,
+    numVersions: model.numVersions,
+    username: model.username,
+  };
+};
+
+export const mapV1ModelVersion = (
+  modelVersion: Sdk.V1ModelVersion,
+): types.ModelVersion => {
+  return {
+    checkpoint: decodeCheckpoint(modelVersion.checkpoint),
+    comment: modelVersion.comment,
+    creationTime: modelVersion.creationTime as unknown as string,
+    id: modelVersion.id,
+    labels: modelVersion.labels,
+    lastUpdatedTime: modelVersion.lastUpdatedTime as unknown as string,
+    metadata: modelVersion.metadata,
+    model: mapV1Model(modelVersion.model),
+    name: modelVersion.name,
+    notes: modelVersion.notes,
+    username: modelVersion.username,
+    version: modelVersion.version,
+  };
+};
+
+export const mapV1ModelDetails = (
+  modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
+): types.ModelVersions | undefined => {
+  if (!modelDetailsResponse.model ||
+    !modelDetailsResponse.modelVersions ||
+    !modelDetailsResponse.pagination) return;
+  return {
+    model: mapV1Model(modelDetailsResponse.model),
+    modelVersions: modelDetailsResponse.modelVersions.map(version =>
+      mapV1ModelVersion(version) as types.ModelVersion),
+    pagination: modelDetailsResponse.pagination,
+  };
+};
+
 const ioToHyperparametereter = (
   io: ioTypes.ioTypeHyperparameter,
 ): types.Hyperparameter => {
@@ -252,6 +301,7 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
   [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
   [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
+  [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
 };
 
 export const decodeCheckpointState = (
@@ -330,7 +380,9 @@ const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefin
   if (!isObject(metrics)) return undefined;
   const scalarMetrics: types.RawJson = {};
   for (const key in metrics){
-    if (isNumber(metrics[key])) {
+    if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
+      scalarMetrics[key] = Number(metrics[key]);
+    } else if (isNumber(metrics[key])) {
       scalarMetrics[key] = metrics[key];
     }
   }
@@ -371,6 +423,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
     batch: data.batchNumber,
     endTime: data.endTime && data.endTime as unknown as string,
     experimentId: data.experimentId,
+    metrics: data.metrics,
     resources,
     state: decodeCheckpointState(data.state),
     trialId: data.trialId,
@@ -417,15 +470,14 @@ export const decodeTrialResponseToTrialDetails = (
   };
 };
 
-export const jsonToLogs = (data: unknown): types.Log[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeLogs>(ioTypes.ioLogs, data);
-  return io.map(log => ({
-    id: log.id,
-    level: log.level ?
-      types.LogLevel[capitalize(log.level) as keyof typeof types.LogLevel] : undefined,
-    message: log.message,
-    time: log.time || undefined,
-  }));
+export const jsonToMasterLog = (data: unknown): types.Log => {
+  const logData = data as Sdk.V1MasterLogsResponse;
+  return ({
+    id: logData.logEntry?.id ?? 0,
+    level: decodeV1LogLevelToLogLevel(logData.logEntry?.level ?? Sdk.V1LogLevel.UNSPECIFIED),
+    message: logData.logEntry?.message ?? '',
+    time: logData.logEntry?.timestamp as unknown as string,
+  });
 };
 
 const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | undefined => {
@@ -447,7 +499,7 @@ const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(
 export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   const logData = data as Sdk.V1TrialLogsResponse;
   const log = {
-    id: logData.id,
+    id: parseInt(logData.id),
     level: decodeV1LogLevelToLogLevel(logData.level),
     message: logData.message,
     time: logData.timestamp as unknown as string,

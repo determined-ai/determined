@@ -65,8 +65,8 @@ func AsErrNotFound(msg string, args ...interface{}) error {
 	)
 }
 
-// APIErr2GRPC converts internal api error categories into grpc status.Errors.
-func APIErr2GRPC(err error) error {
+// APIErrToGRPC converts internal api error categories into grpc status.Errors.
+func APIErrToGRPC(err error) error {
 	switch {
 	case errors.Is(err, ErrInvalid):
 		return status.Errorf(
@@ -81,4 +81,29 @@ func APIErr2GRPC(err error) error {
 	default:
 		return err
 	}
+}
+
+// EchoErrToGRPC converts internal api error categories into grpc status.Errors.
+func EchoErrToGRPC(err error) (bool, error) {
+	if err, ok := err.(*echo.HTTPError); ok {
+		return true, status.Error(
+			codeFromHTTPStatus(err.Code),
+			err.Error(),
+		)
+	}
+	return false, err
+}
+
+func codeFromHTTPStatus(code int) codes.Code {
+	switch {
+	case code == 404:
+		return codes.NotFound
+	case code == 403, code == 401:
+		return codes.Unauthenticated
+	case code == 400:
+		return codes.InvalidArgument
+	case 200 <= code && code < 300:
+		return codes.OK
+	}
+	return codes.Internal
 }

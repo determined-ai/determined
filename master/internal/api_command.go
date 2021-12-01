@@ -92,6 +92,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = user
+	taskSpec.SSHRsaSize = a.m.config.Security.SSH.RsaKeySize
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
@@ -152,8 +153,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 func (a *apiServer) GetCommands(
 	_ context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
-	err = a.actorRequest(commandsAddr, req, &resp)
-	if err != nil {
+	if err = a.ask(commandsAddr, req, &resp); err != nil {
 		return nil, err
 	}
 	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
@@ -162,18 +162,18 @@ func (a *apiServer) GetCommands(
 
 func (a *apiServer) GetCommand(
 	_ context.Context, req *apiv1.GetCommandRequest) (resp *apiv1.GetCommandResponse, err error) {
-	return resp, a.actorRequest(commandsAddr.Child(req.CommandId), req, &resp)
+	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) KillCommand(
 	_ context.Context, req *apiv1.KillCommandRequest) (resp *apiv1.KillCommandResponse, err error) {
-	return resp, a.actorRequest(commandsAddr.Child(req.CommandId), req, &resp)
+	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) SetCommandPriority(
 	_ context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
-	return resp, a.actorRequest(commandsAddr.Child(req.CommandId), req, &resp)
+	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) LaunchCommand(
@@ -185,7 +185,7 @@ func (a *apiServer) LaunchCommand(
 		Files:        req.Files,
 	})
 	if err != nil {
-		return nil, api.APIErr2GRPC(err)
+		return nil, api.APIErrToGRPC(err)
 	}
 
 	// Postprocess the spec.
@@ -214,18 +214,18 @@ func (a *apiServer) LaunchCommand(
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCommand}
 
 	// Launch a command actor.
-	commandIDFut := a.m.system.AskAt(commandsAddr, *spec)
-	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
+	var cmdID model.TaskID
+	if err = a.ask(commandsAddr, *spec, &cmdID); err != nil {
 		return nil, err
 	}
-	cmdID := commandIDFut.Get().(model.TaskID)
-	cmd := a.m.system.AskAt(commandsAddr.Child(cmdID), &commandv1.Command{})
-	if err = api.ProcessActorResponseError(&cmd); err != nil {
+
+	var cmd *commandv1.Command
+	if err = a.ask(commandsAddr.Child(cmdID), &commandv1.Command{}, &cmd); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchCommandResponse{
-		Command: cmd.Get().(*commandv1.Command),
+		Command: cmd,
 		Config:  protoutils.ToStruct(spec.Config),
 	}, nil
 }

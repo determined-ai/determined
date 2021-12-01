@@ -229,6 +229,10 @@ store such as `MinIO <https://min.io/>`__.
 
 **Optional Fields**
 
+``prefix``
+   The optional path prefix to use. Must not contain `..`. Note: Prefix is normalized, e.g.,
+   `/pre/.//fix` -> `/pre/fix`
+
 ``endpoint_url``
    The endpoint to use for S3 clones, e.g., ``http://127.0.0.1:8080/``. If not specified, Amazon S3
    will be used.
@@ -792,9 +796,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for GPU vs. CPU agents by specifying a dict with two keys, ``cpu`` and ``gpu``. Default
    values:
 
-   -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2`` for agents
+   -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for agents
       with GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2`` for agents
+   -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for agents
       with only CPUs.
 
 ``force_pull_image``

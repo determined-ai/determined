@@ -43,6 +43,14 @@ func (s *S3ConfigV0) SetEndpointURL(val *string) {
 	s.RawEndpointURL = val
 }
 
+func (s S3ConfigV0) Prefix() *string {
+	return s.RawPrefix
+}
+
+func (s *S3ConfigV0) SetPrefix(val *string) {
+	s.RawPrefix = val
+}
+
 func (s S3ConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedS3ConfigV0()
 }

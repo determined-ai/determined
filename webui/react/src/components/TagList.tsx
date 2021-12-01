@@ -3,7 +3,7 @@ import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
-import { alphanumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 import { toHtmlId, truncate } from 'utils/string';
 
 import css from './TagList.module.scss';
@@ -14,6 +14,10 @@ interface Props {
   onChange?: (tags: string[]) => void;
   tags: string[];
 }
+
+export const ARIA_LABEL_CONTAINER = 'new-tag-container';
+export const ARIA_LABEL_TRIGGER = 'new-tag-trigger';
+export const ARIA_LABEL_INPUT = 'new-tag-input';
 
 const TAG_MAX_LENGTH = 10;
 const COMPACT_MAX_THRESHOLD = 4;
@@ -35,9 +39,7 @@ const EditableTagList: React.FC<Props> = (
   const editInputRef = useRef<Input>(null);
 
   const handleClose = useCallback(removedTag => {
-    if (onChange) {
-      onChange(tags.filter(tag => tag !== removedTag));
-    }
+    onChange?.(tags.filter(tag => tag !== removedTag));
   }, [ onChange, tags ]);
 
   const handleTagPlus = useCallback(() => {
@@ -64,8 +66,8 @@ const EditableTagList: React.FC<Props> = (
   const handleInputConfirm = useCallback(() => {
     const { inputValue } = state;
     const newTag = inputValue.trim();
-    if (onChange && newTag && tags.indexOf(newTag) === -1) {
-      onChange([ newTag, ...tags ]);
+    if (newTag && tags.indexOf(newTag) === -1) {
+      onChange?.([ newTag, ...tags ]);
     }
     setState(state => ({ ...state, inputValue: '', inputVisible: false }));
   }, [ onChange, state, tags ]);
@@ -84,12 +86,12 @@ const EditableTagList: React.FC<Props> = (
     const { editInputValue, editOldInputValue } = state;
     const oldTag = editOldInputValue.trim();
     const newTag = editInputValue.trim();
-    if (onChange && oldTag && newTag) {
+    if (oldTag && newTag) {
       const updatedTags = tags.filter(tag => tag !== oldTag);
       if (updatedTags.indexOf(newTag) === -1) {
         updatedTags.push(newTag);
       }
-      onChange(updatedTags);
+      onChange?.(updatedTags);
     }
     setState(state => ({
       ...state,
@@ -105,9 +107,9 @@ const EditableTagList: React.FC<Props> = (
   if (ghost) classes.push(css.ghost);
 
   return (
-    <div className={classes.join(' ')} onClick={stopPropagation}>
+    <div aria-label={ARIA_LABEL_CONTAINER} className={classes.join(' ')} onClick={stopPropagation}>
       {tags
-        .sort((a, b) => alphanumericSorter(a, b))
+        .sort((a, b) => alphaNumericSorter(a, b))
         .map((tag, index) => {
           if (compact && !showMore && index >= COMPACT_MAX_THRESHOLD) {
             if (index > COMPACT_MAX_THRESHOLD) return null;
@@ -120,6 +122,7 @@ const EditableTagList: React.FC<Props> = (
           if (editInputIndex === index) {
             return (
               <Input
+                aria-label={ARIA_LABEL_INPUT}
                 className={css.tagInput}
                 key={tag}
                 ref={editInputRef}
@@ -164,6 +167,7 @@ const EditableTagList: React.FC<Props> = (
         })}
       {inputVisible ? (
         <Input
+          aria-label={ARIA_LABEL_INPUT}
           className={css.tagInput}
           ref={inputRef}
           size="small"
@@ -174,7 +178,7 @@ const EditableTagList: React.FC<Props> = (
           onChange={handleInputChange}
           onPressEnter={handleInputConfirm} />
       ) : (
-        <Tag className={css.tagPlus} onClick={handleTagPlus}>
+        <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
           <PlusOutlined /> New Tag
         </Tag>
       )}

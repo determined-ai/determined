@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser } from 'types';
+import { CommandType, DetailedUser, RecordKey } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -104,6 +104,61 @@ export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
   | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
+}
+
+export interface GetModelsParams extends PaginationParams {
+  archived?: boolean;
+  description?: string;
+  labels?: string[];
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'
+  | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS';
+  users?: string[];
+}
+
+export interface GetModelParams {
+  modelId: number;
+}
+
+export type ArchiveModelParams = GetModelParams;
+
+export type DeleteModelParams = GetModelParams;
+
+export interface GetModelDetailsParams extends PaginationParams {
+  modelId: number;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
+}
+
+export interface GetModelVersionParams {
+  modelId: number;
+  versionId: number;
+}
+
+export type DeleteModelVersionParams = GetModelVersionParams;
+
+export interface PatchModelParams {
+  body: {
+    description?: string;
+    id: number;
+    labels?: string[];
+    metadata?: Record<RecordKey, string>;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+}
+
+export interface PatchModelVersionParams {
+  body: {
+    comment?: string;
+    id: number;
+    labels?: string[];
+    metadata?: Record<RecordKey, string>;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+  versionId: number;
 }
 
 export interface CreateExperimentParams {

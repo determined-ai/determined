@@ -128,7 +128,7 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		// Do nothing
 	case actor.ChildFailed:
-		ctx.Log().Warnf("hyperparameter importance worker failed: %+v", msg)
+		ctx.Log().Warnf("hp importance worker failed: %+v", msg)
 	case actor.ChildStopped:
 		// Do nothing - it'll respawn next time a request is received
 	case ExperimentCompleted:
@@ -146,7 +146,7 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	case workCompleted:
 		m.workCompleted(ctx, msg)
 	default:
-		ctx.Log().Errorf("unknown message received by hyperparameter importance manager: %v!",
+		ctx.Log().Errorf("unknown message received by hp importance manager: %v!",
 			ctx.Message())
 	}
 	return nil
@@ -213,7 +213,8 @@ func (m *manager) experimentProgress(ctx *actor.Context, msg ExperimentProgress)
 func (m *manager) workStarted(ctx *actor.Context, msg workStarted) {
 	hpi, err := m.db.GetHPImportance(msg.experimentID)
 	if err != nil {
-		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error reading hp importance state, starting on experiment %d: %s",
+			msg.experimentID, err.Error())
 		return
 	}
 	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
@@ -222,7 +223,8 @@ func (m *manager) workStarted(ctx *actor.Context, msg workStarted) {
 	hpi.SetMetricHPImportance(metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
-		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error writing hp importance state, starting on experiment %d: %s",
+			msg.experimentID, err.Error())
 		return
 	}
 }
@@ -230,7 +232,8 @@ func (m *manager) workStarted(ctx *actor.Context, msg workStarted) {
 func (m *manager) workFailed(ctx *actor.Context, msg workFailed) {
 	hpi, err := m.db.GetHPImportance(msg.experimentID)
 	if err != nil {
-		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error reading hp importance state, failing on experiment %d: %s",
+			msg.experimentID, err.Error())
 		return
 	}
 	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
@@ -240,7 +243,8 @@ func (m *manager) workFailed(ctx *actor.Context, msg workFailed) {
 
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
-		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error writing hp importance state, failing on experiment %d: %s",
+			msg.experimentID, err.Error())
 		return
 	}
 }
@@ -252,7 +256,8 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 	}
 	hpi, err := m.db.GetHPImportance(msg.experimentID)
 	if err != nil {
-		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error reading hp importance state, completing experiment %d: %s",
+			msg.experimentID, err.Error())
 		return
 	}
 	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
@@ -263,7 +268,8 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 	hpi.SetMetricHPImportance(metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
-		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error writing hp importance state, completing experiment %d: %s",
+			msg.experimentID, err.Error())
 		return
 	}
 }
@@ -271,7 +277,8 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 	hpi, err := m.db.GetHPImportance(msg.ExperimentID)
 	if err != nil {
-		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error reading hp importance state, requested for experiment %d: %s",
+			msg.ExperimentID, err.Error())
 		return
 	}
 
@@ -295,7 +302,8 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 	hpi.SetMetricHPImportance(metricHpi, msg.MetricName, msg.MetricType)
 	err = m.db.SetHPImportance(msg.ExperimentID, hpi)
 	if err != nil {
-		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error writing hp importance state, requested for experiment %d: %s",
+			msg.ExperimentID, err.Error())
 		return
 	}
 }
@@ -303,13 +311,14 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 	hpi, err := m.db.GetHPImportance(experimentID)
 	if err != nil {
-		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		ctx.Log().Errorf("error reading hp importance state, triggered for experiment %d: %s",
+			experimentID, err.Error())
 		return
 	}
 
 	config, err := m.db.ExperimentConfig(experimentID)
 	if err != nil {
-		ctx.Log().Errorf("error retrieving experiment config: %s", err.Error())
+		ctx.Log().Errorf("error reading config for experiment %d: %s", experimentID, err.Error())
 		return
 	}
 
@@ -360,7 +369,8 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 		}
 		err = m.db.SetHPImportance(experimentID, hpi)
 		if err != nil {
-			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+			ctx.Log().Errorf("error writing hp importance state, triggered for experiment %d: %s",
+				experimentID, err.Error())
 			return
 		}
 	}

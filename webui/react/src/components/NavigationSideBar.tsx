@@ -42,7 +42,6 @@ const settingsConfig: SettingsConfig = {
 
 const menuConfig = {
   bottom: [
-    { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
     { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
     {
       external: true,
@@ -55,8 +54,10 @@ const menuConfig = {
   top: [
     { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
     { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+    { icon: 'model', label: 'Model Registry', path: paths.modelList() },
     { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
     { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+    { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
   ],
 };
 
@@ -92,8 +93,8 @@ const NavigationSideBar: React.FC = () => {
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
-  const shortVersion = version.split('.').slice(0, 3).join('.');
-  const isVersionLong = (version.match(/\./g) || []).length > 2;
+  const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
+  const isVersionLong = version !== shortVersion;
   const username = auth.user?.username || 'Anonymous';
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;

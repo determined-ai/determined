@@ -232,9 +232,9 @@ The master supports the following configuration settings:
       in the cluster. Users can use different container images for GPU vs. CPU agents differently by
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default values:
 
-      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2`` for CPU
+      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPU
          agents
-      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2`` for GPU
+      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for GPU
          agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
@@ -668,6 +668,8 @@ The master supports the following configuration settings:
       -  ``bucket``: The S3 bucket name to use.
       -  ``access_key``: The AWS access key to use.
       -  ``secret_key``: The AWS secret key to use.
+      -  ``prefix``: The optional path prefix to use. Must not contain `..`. Note: Prefix is
+         normalized, e.g., `/pre/.//fix` -> `/pre/fix`
       -  ``endpoint_url``: The optional endpoint to use for S3 clones, e.g.,
          ``http://127.0.0.1:8080/``.
 
@@ -718,6 +720,11 @@ The master supports the following configuration settings:
 
       -  ``cert``: Certificate file to use for serving TLS.
       -  ``key``: Key file to use for serving TLS.
+
+   -  ``ssh``: Specifies configuration settings for SSH.
+
+      -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
+         size is 16384.
 
 -  ``telemetry``: Specifies whether we collect and report anonymous information about the usage of
    Determined. See :ref:`telemetry` for details on what kinds of information are reported.

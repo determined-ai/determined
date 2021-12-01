@@ -1,0 +1,33 @@
+.base {
+  background-color: var(--theme-colors-monochrome-17);
+  border-bottom: 1px solid var(--theme-colors-monochrome-12);
+  margin: 0;
+  padding: 12px;
+  width: 100%;
+
+  .breadcrumbs {
+    border-bottom: 1px solid var(--theme-colors-monochrome-12);
+    padding-bottom: 8px;
+
+    .leftIcon {
+      margin-right: 10px;
+    }
+  }
+  .headerContent {
+    margin: 0 24px;
+
+    .mainRow {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+
+      .nameAndIcon {
+        margin-block: var(--theme-sizes-layout-large);
+
+        .name {
+          margin: 0;
+        }
+      }
+    }
+  }
+}

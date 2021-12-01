@@ -46,7 +46,7 @@ export const isNotFound = (e: any): boolean => {
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAborted = (e: any): boolean => {
-  return e && e.name && e.name === 'AbortError'|| axios.isCancel(e);
+  return e?.name === 'AbortError' || axios.isCancel(e);
 };
 
 /* HTTP Helpers */
@@ -125,7 +125,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
   to make a request and handle events one by one.
   Example:
   consumeStream<Api.V1TrialLogsResponse>(
-    Api.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
+    Api.ExperimentsApiFetchParamCreator().trialLogs(1, undefined, undefined, true),
     console.log,
   ).then(() => console.log('finished'));
 */
@@ -146,7 +146,7 @@ export const consumeStream = async <T = unknown>(
     const reader = ndjsonStream(response.body).getReader();
 
     // Cancel reader if an abort signal is received.
-    if (options && options.signal) {
+    if (options?.signal) {
       const signal: AbortSignal = options.signal;
       const abortHandler = () => {
         reader.cancel();

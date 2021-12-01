@@ -95,24 +95,23 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
    -  ``type: s3``: Checkpoints are stored in Amazon S3.
 
       -  ``bucket``: The S3 bucket name to use.
-
       -  ``accessKey``: The AWS access key to use.
-
       -  ``secretKey``: The AWS secret key to use.
-
+      -  ``prefix``: The optional path prefix to use. Must not contain `..`. Note: Prefix is
+         normalized, e.g., `/pre/.//fix` -> `/prefix`
       -  ``endpointUrl``: The optional endpoint to use for S3 clones, e.g., http://127.0.0.1:8080/.
 
-      -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication
-         is performed by providing either a connection string, or an account URL and an optional
-         credential.
+   -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication is
+      performed by providing either a connection string, or an account URL and an optional
+      credential.
 
-         -  ``container``: The Azure Blob Storage container name to use.
-         -  ``connection_string``: The connection string for the service account to use.
-         -  ``account_url``: The account URL for the service account to use.
-         -  ``credential``: The optional credential to use in conjunction with the account URL.
+      -  ``container``: The Azure Blob Storage container name to use.
+      -  ``connection_string``: The connection string for the service account to use.
+      -  ``account_url``: The account URL for the service account to use.
+      -  ``credential``: The optional credential to use in conjunction with the account URL.
 
-         Please only specify either ``connection_string`` or the ``account_url`` and ``credential``
-         pair.
+      Please only specify either ``connection_string`` or the ``account_url`` and ``credential``
+      pair.
 
    -  ``type: shared_fs``: Checkpoints are written to a ``hostPath Volume``. Users are strongly
       discouraged from using ``shared_fs`` for storage beyond initial testing as most Kubernetes
@@ -176,11 +175,11 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
 
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2``.
+      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``.
+      to: ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 

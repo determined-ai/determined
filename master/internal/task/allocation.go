@@ -19,8 +19,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
@@ -167,6 +167,12 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 	case sproto.TaskContainerStateChanged:
 		a.TaskContainerStateChanged(ctx, msg)
+	case sproto.GetTaskContainerState:
+		if v, ok := a.reservations[msg.ContainerID]; ok {
+			ctx.Respond(*v.container)
+		} else {
+			ctx.Respond(errors.New(fmt.Sprintf("unknown container %s", msg.ContainerID)))
+		}
 	case sproto.ReleaseResources:
 		a.Terminate(ctx)
 	case actor.PostStop:
@@ -609,12 +615,12 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 				exit.Err = err
 				return
 			case aproto.AgentError, aproto.AgentFailed:
-				// Questionable, could be considered failures, but for now we don't.
 				ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
+				exit.Err = err
 				return
 			case aproto.TaskAborted:
-				// Definitely not a failure.
 				ctx.Log().WithError(err).Debugf("allocation aborted (%s)", err.FailureType)
+				exit.Err = err
 				return
 			default:
 				panic(errors.Wrapf(err, "unexpected allocation failure (%s)", err.Error()))

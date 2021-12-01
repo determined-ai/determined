@@ -202,13 +202,13 @@ args_description = Cmd(
                 Group(
                     Arg(
                         "--master-config-path",
-                        type=str,
+                        type=Path,
                         default=None,
                         help="path to master configuration",
                     ),
                     Arg(
                         "--storage-host-path",
-                        type=str,
+                        type=Path,
                         default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),

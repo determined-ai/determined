@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Agent: improve handling of master connection failures.

@@ -17,7 +17,8 @@ const { OptGroup, Option } = Select;
 export interface Props<T = SelectValue> extends SelectProps<T> {
   disableTags?: boolean;
   enableSearchFilter?: boolean;
-  label: string;
+  itemName?: string;
+  label?: string;
   ref?: React.Ref<RefSelectProps>;
   style?: React.CSSProperties;
   verticalLayout?: boolean;
@@ -52,6 +53,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
      */
     dropdownMatchSelectWidth = true,
     enableSearchFilter = true,
+    itemName,
     showSearch = true,
     verticalLayout = false,
     ...props
@@ -70,9 +72,11 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
     if (!disableTags) return [ undefined, props.maxTagPlaceholder ];
 
     const count = Array.isArray(props.value) ? props.value.length : (props.value ? 1 : 0);
-    const placeholder = count === optionsCount ? 'All' : `${count} selected`;
+    const isPlural = count > 1;
+    const itemLabel = itemName ? `${itemName}${isPlural ? 's' : ''}` : 'selected';
+    const placeholder = count === optionsCount ? 'All' : `${count} ${itemLabel}`;
     return isOpen ? [ 0, '' ] : [ 0, placeholder ];
-  }, [ disableTags, isOpen, optionsCount, props.maxTagPlaceholder, props.value ]);
+  }, [ disableTags, isOpen, itemName, optionsCount, props.maxTagPlaceholder, props.value ]);
 
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);
@@ -100,7 +104,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
 
   return (
     <div className={classes.join(' ')}>
-      <Label>{props.label}</Label>
+      {props.label && <Label>{props.label}</Label>}
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}

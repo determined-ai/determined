@@ -13,10 +13,35 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
     trial_info = det.TrialInfo._from_env()
     trial_info._to_file()
 
-    resp = request.get(
-        info.master_url, path=f"api/v1/experiments/{trial_info.experiment_id}/model_def", cert=cert
-    )
-    resp.raise_for_status()
+    path = f"api/v1/experiments/{trial_info.experiment_id}/model_def"
+    resp = None
+    try:
+        resp = request.get(info.master_url, path=path, cert=cert)
+        resp.raise_for_status()
+    except Exception:
+        # Since this is the very first api call in the entrypoint script, and the call is made
+        # before you can debug with a startup hook, we offer an overly-detailed explanation to help
+        # sysadmins debug their cluster.
+        resp_content = str(resp and resp.content)
+        noverify = info.master_cert_file == "noverify"
+        cert_content = None if noverify else info.master_cert_file
+        if cert_content is not None:
+            with open(cert_content) as f:
+                cert_content = f.read()
+        print(
+            "Failed to download model definition from master.  This may be due to an address\n"
+            "resolution problem, a certificate problem, a firewall problem, or some other\n"
+            "networking error.\n"
+            "Debug information:\n"
+            f"    master_url: {info.master_url}\n"
+            f"    endpoint: {path}\n"
+            f"    tls_verify_name: {info.master_cert_name}\n"
+            f"    tls_noverify: {noverify}\n"
+            f"    tls_cert: {cert_content}\n"
+            f"    response code: {resp and resp.status_code}\n"
+            f"    response content: {resp_content}\n"
+        )
+        raise
 
     tgz = base64.b64decode(resp.json()["b64Tgz"])
 

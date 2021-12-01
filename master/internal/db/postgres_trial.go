@@ -38,6 +38,7 @@ RETURNING id`, trial); err != nil {
 			TaskID:    trial.TaskID,
 			TaskType:  model.TaskTypeTrial,
 			StartTime: trial.StartTime,
+			JobID:     trial.JobID,
 		})
 	})
 }

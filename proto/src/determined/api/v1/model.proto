@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
@@ -75,10 +76,32 @@ message GetModelsResponse {
   Pagination pagination = 2;
 }
 
+// Get a list of model labels.
+message GetModelLabelsRequest {}
+
+// Response to GetModelLabelsRequest.
+message GetModelLabelsResponse {
+  // List of labels used across all models.
+  repeated string labels = 1;
+}
+
 // Request for creating a model in the registry.
 message PostModelRequest {
-  // The model to create.
-  determined.model.v1.Model model = 1;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
+  // The name of the model.
+  string name = 1;
+  // The description of the model.
+  string description = 2;
+  // The user-defined metadata of the model.
+  google.protobuf.Struct metadata = 3;
+  // Labels associated with this model.
+  repeated string labels = 4;
+  // User who is creating this model.
+  string username = 5;
+  // Notes associated with this model.
+  string notes = 6;
 }
 
 // Response to PostModelRequest.
@@ -90,7 +113,9 @@ message PostModelResponse {
 // Request for updating a model in the registry.
 message PatchModelRequest {
   // The model desired model fields and values.
-  determined.model.v1.Model model = 1;
+  determined.model.v1.PatchModel model = 1;
+  // The id of the model being updated.
+  int32 model_id = 2;
 }
 
 // Response to PatchModelRequest.
@@ -99,10 +124,37 @@ message PatchModelResponse {
   determined.model.v1.Model model = 1;
 }
 
-// Request for a version of a model in the regsitry.
+// Request for archiving a model in the registry.
+message ArchiveModelRequest {
+  // The id of the model to archive.
+  int32 model_id = 1;
+}
+
+// Response to ArchiveModelRequest
+message ArchiveModelResponse {}
+
+// Request for un-archiving a model in the registry.
+message UnarchiveModelRequest {
+  // The id of the model to un-archive.
+  int32 model_id = 1;
+}
+
+// Response to UnarchiveModelRequest
+message UnarchiveModelResponse {}
+
+// Request for deleting a model in the registry.
+message DeleteModelRequest {
+  // The id of the model to delete.
+  int32 model_id = 1;
+}
+
+// Response to DeleteModelRequest
+message DeleteModelResponse {}
+
+// Request for a version of a model in the registry.
 message GetModelVersionRequest {
-  // The name of the model.
-  string model_id = 1;
+  // The id of the model.
+  int32 model_id = 1;
   // The version number.
   int32 model_version = 2;
 }
@@ -150,10 +202,23 @@ message GetModelVersionsResponse {
 
 // Request for creating a model version.
 message PostModelVersionRequest {
-  // The id of the model to add a version to.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_id", "checkpoint_uuid" ] }
+  };
+  // The id of the model to add this version to.
   int32 model_id = 1;
-  // The checkpoint representing the new version.
+  // UUID of the checkpoint.
   string checkpoint_uuid = 2;
+  // User-friendly name for the model version.
+  string name = 3;
+  // User-written comment for the model version.
+  string comment = 4;
+  // The user-defined metadata of the model version.
+  google.protobuf.Struct metadata = 5;
+  // Labels associated with this model version.
+  repeated string labels = 6;
+  // Notes associated with this model version.
+  string notes = 7;
 }
 
 // Response for PostModelVersionRequest.
@@ -161,3 +226,30 @@ message PostModelVersionResponse {
   // The model version requested.
   determined.model.v1.ModelVersion model_version = 1;
 }
+
+// Request for updating a model version in the registry.
+message PatchModelVersionRequest {
+  // The id of the model being updated.
+  int32 model_id = 1;
+  // The model version being updated.
+  determined.model.v1.PatchModelVersion model_version = 2;
+  // The id of the model version being updated.
+  int32 model_version_id = 3;
+}
+
+// Response to PatchModelVersionRequest.
+message PatchModelVersionResponse {
+  // The model version created.
+  determined.model.v1.ModelVersion model_version = 1;
+}
+
+// Request for deleting a model version in the registry.
+message DeleteModelVersionRequest {
+  // The id of the model associated with the model version.
+  int32 model_id = 1;
+  // THe id of the model version to delete.
+  int32 model_version_id = 2;
+}
+
+// Response to DeleteModelVersionRequest
+message DeleteModelVersionResponse {}

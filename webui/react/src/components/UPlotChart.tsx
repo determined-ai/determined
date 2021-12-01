@@ -46,7 +46,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
     const trimmedData = chartData.map(series => series.slice(0, minDataLength));
 
     // Checking to make sure the X series has some data.
-    const hasXValues = trimmedData && trimmedData[0] && trimmedData[0].length !== 0;
+    const hasXValues = trimmedData?.[0]?.length !== 0;
 
     return [ hasXValues, trimmedData as unknown as AlignedData ];
   }, [ data ]);

@@ -53,7 +53,7 @@ const (
 	// DeletingState constant.
 	DeletingState State = "DELETING"
 	// DeleteFailedState constant.
-	DeleteFailedState State = "DELETE_ERROR"
+	DeleteFailedState State = "DELETE_FAILED"
 	// DeletedState constant.
 	DeletedState State = "DELETED"
 
@@ -259,6 +259,7 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
 	ID             int                      `db:"id"`
+	JobID          JobID                    `db:"job_id"`
 	State          State                    `db:"state"`
 	Notes          string                   `db:"notes"`
 	Config         expconf.ExperimentConfig `db:"config"`
@@ -305,6 +306,7 @@ func NewExperiment(
 	}
 	return &Experiment{
 		State:                PausedState,
+		JobID:                NewJobID(),
 		Config:               config,
 		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
@@ -351,11 +353,14 @@ type Trial struct {
 	HParams               JSONObj    `db:"hparams"`
 	WarmStartCheckpointID *int       `db:"warm_start_checkpoint_id"`
 	Seed                  int64      `db:"seed"`
+
+	JobID JobID
 }
 
 // NewTrial creates a new trial in the active state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	jobID JobID,
 	taskID TaskID,
 	requestID RequestID,
 	experimentID int,
@@ -376,6 +381,8 @@ func NewTrial(
 		HParams:               hparams,
 		WarmStartCheckpointID: warmStartCheckpointID,
 		Seed:                  trialSeed,
+
+		JobID: jobID,
 	}
 }
 

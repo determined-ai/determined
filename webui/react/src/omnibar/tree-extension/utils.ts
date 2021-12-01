@@ -36,7 +36,7 @@ export const traverseTree = async (
   let curNode: TreeNode = startNode;
   const path: TreePath = [ curNode ];
   let i = 0;
-  while(isNLNode(curNode) && i<address.length) {
+  while(isNLNode(curNode) && i < address.length) {
     const children: Children = await getNodeChildren(curNode);
     const rv = children.find(n => n.title === address[i]);
     if (rv === undefined) break;

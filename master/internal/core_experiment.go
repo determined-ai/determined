@@ -359,7 +359,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
-				taskID: model.TaskID(uuid.New().String()),
+				taskID: model.NewTaskID(),
 				GCCkptSpec: tasks.GCCkptSpec{
 					Base:               taskSpec,
 					ExperimentID:       dbExp.ID,
@@ -423,6 +423,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+
+	taskSpec.SSHRsaSize = m.config.Security.SSH.RsaKeySize
 
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(

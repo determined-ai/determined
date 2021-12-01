@@ -5,13 +5,14 @@ It launches the entrypoint script under horovodrun when slots_per_trial>1, or as
 subprocess otherwise.
 """
 
+import copy
+import json
 import logging
 import socket
 import subprocess
 import sys
 import time
-
-import simplejson
+from typing import Dict
 
 import determined as det
 import determined.common
@@ -19,6 +20,22 @@ from determined import horovod
 from determined.common import api, constants, storage
 from determined.common.api import certs
 from determined.constants import HOROVOD_SSH_PORT
+
+
+def mask_config_dict(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    # checkpoint_storage
+    hidden_checkpoint_storage_keys = ("access_key", "secret_key")
+    try:
+        for key in new_dict["checkpoint_storage"].keys():
+            if key in hidden_checkpoint_storage_keys:
+                new_dict["checkpoint_storage"][key] = mask
+    except KeyError:
+        pass
+
+    return new_dict
 
 
 def main() -> int:
@@ -34,7 +51,7 @@ def main() -> int:
 
     logging.info(
         f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
-        + simplejson.dumps(experiment_config)
+        + json.dumps(mask_config_dict(experiment_config))
     )
 
     # TODO: this should go in the chief worker, not in the launch layer.  For now, the
@@ -52,11 +69,16 @@ def main() -> int:
         # Non-distriubuted training; skip running in subprocesses to improve startup times.
         from determined.exec import harness
 
-        return harness.main()
+        return harness.main(chief_ip=None)
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
     certs.cli_cert = cert
+
+    # The launch layer should provide the chief_ip to the training code, so that the training code
+    # can function with a different launch layer in a different environment.  Inside Determined, the
+    # easiest way to get the chief_ip is with container_addrs.
+    chief_ip = info.container_addrs[0]
 
     if info.container_rank > 0:
         # Non-chief machines just run sshd.
@@ -181,6 +203,8 @@ def main() -> int:
         "python3",
         "-m",
         "determined.exec.harness",
+        "--chief-ip",
+        chief_ip,
     ]
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")

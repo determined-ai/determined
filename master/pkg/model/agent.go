@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
@@ -49,11 +49,11 @@ type SlotsSummary map[string]SlotSummary
 
 // SlotSummary summarizes the state of a slot.
 type SlotSummary struct {
-	ID        string               `json:"id"`
-	Device    device.Device        `json:"device"`
-	Enabled   bool                 `json:"enabled"`
-	Container *container.Container `json:"container"`
-	Draining  bool                 `json:"draining"`
+	ID        string            `json:"id"`
+	Device    device.Device     `json:"device"`
+	Enabled   bool              `json:"enabled"`
+	Container *cproto.Container `json:"container"`
+	Draining  bool              `json:"draining"`
 }
 
 // ToProto converts a SlotSummary to its protobuf representation.

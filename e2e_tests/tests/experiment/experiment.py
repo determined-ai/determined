@@ -677,13 +677,17 @@ def shared_fs_checkpoint_config() -> Dict[str, str]:
     }
 
 
-def s3_checkpoint_config(secrets: Dict[str, str]) -> Dict[str, str]:
-    return {
+def s3_checkpoint_config(secrets: Dict[str, str], prefix: Optional[str] = None) -> Dict[str, str]:
+    config_dict = {
         "type": "s3",
         "access_key": secrets["INTEGRATIONS_S3_ACCESS_KEY"],
         "secret_key": secrets["INTEGRATIONS_S3_SECRET_KEY"],
         "bucket": secrets["INTEGRATIONS_S3_BUCKET"],
     }
+    if prefix is not None:
+        config_dict["prefix"] = prefix
+
+    return config_dict
 
 
 def s3_checkpoint_config_no_creds() -> Dict[str, str]:

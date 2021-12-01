@@ -4,11 +4,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/master/internal/kubernetes"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -269,7 +269,7 @@ func (k *kubernetesResourceManager) assignResources(
 
 	allocations := make([]sproto.Reservation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
-		container := newContainer(req, k.agent, slotsPerPod)
+		container := newContainer(req, slotsPerPod)
 		allocations = append(allocations, &k8sPodReservation{
 			req:       req,
 			agent:     k.agent,
@@ -359,7 +359,7 @@ func (p k8sPodReservation) Start(
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
-	ctx.Tell(handler, sproto.StartTaskPod{
+	ctx.Tell(handler, kubernetes.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,
 		Slots:     p.container.slots,
@@ -370,7 +370,7 @@ func (p k8sPodReservation) Start(
 // Kill notifies the pods actor that it should stop the pod.
 func (p k8sPodReservation) Kill(ctx *actor.Context) {
 	handler := p.agent.handler
-	ctx.Tell(handler, sproto.KillTaskPod{
+	ctx.Tell(handler, kubernetes.KillTaskPod{
 		PodID: p.container.id,
 	})
 }

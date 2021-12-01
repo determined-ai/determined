@@ -8,8 +8,6 @@ from determined import errors
 from determined.common import util
 from determined.common.storage.base import StorageManager
 
-from .azure_client import AzureStorageClient
-
 import posixpath  # isort:skip
 
 
@@ -30,7 +28,11 @@ class AzureStorageManager(StorageManager):
         temp_dir: Optional[str] = None,
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
-        self.client = AzureStorageClient(container, connection_string, account_url, credential)
+        from determined.common.storage import azure_client
+
+        self.client = azure_client.AzureStorageClient(
+            container, connection_string, account_url, credential
+        )
         self.container = container if not container.endswith("/") else container[:-1]
 
     def post_store_path(self, storage_id: str, storage_dir: str) -> None:

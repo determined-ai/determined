@@ -1,0 +1,27 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 20px;
+
+  .center {
+    display: flex;
+    justify-content: center;
+  }
+  .overflow {
+    padding: var(--theme-sizes-layout-small);
+  }
+  .noVersions {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin: var(--theme-sizes-layout-huge);
+
+    .subtext {
+      color: var(--theme-colors-monochrome-9);
+      font-size: var(--theme-sizes-font-medium);
+      max-width: 370px;
+      text-align: center;
+    }
+  }
+}

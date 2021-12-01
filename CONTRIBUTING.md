@@ -52,7 +52,7 @@ git clone git@github.com:determined-ai/determined.git
 
 - Go (>= 1.17)
 - Python (>= 3.6, < 3.8)
-- Node (>= 12)
+- Node (>= 14.16)
 - NPM (>= 6.12)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
@@ -60,6 +60,7 @@ git clone git@github.com:determined-ai/determined.git
 - Java (>= 7)
 - cURL (>= 7)
 - jq (>= 1.6)
+- socat (>= 1.7)
 
 ### Building Determined
 

@@ -1,5 +1,5 @@
 import pathlib
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from determined.common import check, context, util, yaml
 from determined.common.api import authentication, certs
@@ -134,7 +134,11 @@ class Determined:
         return checkpoint.Checkpoint.from_json(r["checkpoint"], self._session)
 
     def create_model(
-        self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
+        self,
+        name: str,
+        description: Optional[str] = "",
+        metadata: Optional[Dict[str, Any]] = None,
+        labels: Optional[List[str]] = None,
     ) -> model.Model:
         """
         Add a model to the model registry.
@@ -145,8 +149,8 @@ class Determined:
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
         r = self._session.post(
-            "/api/v1/models/{}".format(name),
-            json={"description": description, "metadata": metadata},
+            "/api/v1/models",
+            json={"description": description, "metadata": metadata, "name": name, "labels": labels},
         )
 
         return model.Model.from_json(r.json().get("model"), self._session)
@@ -191,3 +195,12 @@ class Determined:
 
         models = r.json().get("models")
         return [model.Model.from_json(m, self._session) for m in models]
+
+    def get_model_labels(self) -> List[str]:
+        """
+        Get a list of labels used on any models, sorted from most-popular to least-popular.
+        """
+        r = self._session.get("/api/v1/model/labels")
+
+        labels = r.json().get("labels")
+        return cast(List[str], labels)

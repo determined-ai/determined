@@ -84,7 +84,6 @@ For example, the different commands within each of the blocks below all do the s
 
    # List all experiments.
    $ det experiment list
-   $ det exp list
    $ det e list
    $ det e
 

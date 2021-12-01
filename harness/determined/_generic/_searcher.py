@@ -143,3 +143,40 @@ class AdvancedSearcher:
         """
         logger.debug(f"acknowledge_out_of_ops(allocation_id:{self._allocation_id})")
         self._session.post(f"/api/v1/allocations/{self._allocation_id}/signals/ack_preemption")
+
+
+class DummySearcherOp(SearcherOp):
+    def __init__(self, unit: Unit, length: int) -> None:
+        self._unit = unit
+        self._length = length
+        self._completed = False
+
+    def report_progress(self, length: float) -> None:
+        if self._completed and length != self._length:
+            raise RuntimeError("you must not call op.report_progress() after op.complete()")
+        logger.info("progress report: {length}/{self._length}")
+
+    def complete(self, searcher_metric: float) -> None:
+        if self._completed:
+            raise RuntimeError("you may only call op.complete() once")
+        if math.isnan(searcher_metric):
+            raise RuntimeError("searcher_metric may not be NaN")
+        self._completed = True
+        logger.info(f"SearcherOp Complete: searcher_metric={det.util.json_encode(searcher_metric)}")
+
+
+class DummyAdvancedSearcher(AdvancedSearcher):
+    """Yield a singe search op.  We need a way for this to be configurable."""
+
+    def __init__(self, unit: Unit = Unit.EPOCHS, length: int = 1) -> None:
+        self._unit = unit
+        self._length = length
+
+    def ops(self, auto_ack: bool = True) -> Iterator[SearcherOp]:
+        op = DummySearcherOp(self._unit, self._length)
+        yield op
+        if not op._completed:
+            raise RuntimeError("you must call op.complete() on each operation")
+
+    def acknowledge_out_of_ops(self) -> None:
+        pass

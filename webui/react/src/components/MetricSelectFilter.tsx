@@ -145,7 +145,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     if (numVisibleOptions === totalNumMetrics) {
       allOptionLabel = 'All';
     } else {
-      allOptionLabel =`All ${numVisibleOptions} results`;
+      allOptionLabel = `All ${numVisibleOptions} results`;
     }
     return (
       <Option key={allOptionId} value={allOptionId}>

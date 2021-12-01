@@ -8,7 +8,7 @@ import random
 import shutil
 import tempfile
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Type, cast
 
 import numpy as np
 import tensorflow as tf
@@ -19,8 +19,7 @@ from tensorflow_estimator.python.estimator.training import _NewCheckpointListene
 import determined as det
 from determined import estimator, horovod, layers, monkey_patch, tensorboard, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check, experimental, storage
-from determined.common.api import certs
+from determined.common import check
 from determined.horovod import hvd
 
 VERY_LARGE_NUMBER = 9999999999999999
@@ -75,6 +74,8 @@ class DeterminedControlHook(estimator.RunHook):
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
 
         self.prof = estimator_trial_controller.prof
+
+        self.latest_batch = estimator_trial_controller.env.latest_batch
 
     def begin(self) -> None:
         # For performance reasons, we collect per batch metrics
@@ -136,6 +137,7 @@ class DeterminedControlHook(estimator.RunHook):
         )
         self._session = run_context.session
         self._current_global_step = int(run_values.results["global_step"])
+        self.latest_batch += 1
 
         self.num_batches = cast(int, self.num_batches)
         self._collect_batch_metrics(run_values)
@@ -272,7 +274,7 @@ class DeterminedControlHook(estimator.RunHook):
         return self.estimator_trial_controller.compute_validation_metrics()
 
     def control_loop(self) -> None:
-        _generic = self.estimator_trial_controller._generic
+        _generic = self.estimator_trial_controller.context._generic
 
         assert self.estimator_trial_controller.workloads is not None
         for wkld, response_func in self.estimator_trial_controller.workloads:
@@ -300,14 +302,14 @@ class DeterminedControlHook(estimator.RunHook):
                     action = "checkpointing"
                     self._save_model()
                     if self.estimator_trial_controller.is_chief:
-                        with _generic._storage_mgr.store_path() as (storage_id, path):
+                        metadata = {
+                            "latest_batch": self.latest_batch,
+                            "framework": f"tensorflow-{tf.__version__}",
+                            "format": "saved_model",
+                        }
+                        with _generic.checkpointing.store_path(metadata) as (storage_id, path):
                             self._checkpoint_model(pathlib.Path(path))
-                            response = {
-                                "uuid": storage_id,
-                                "resources": storage.StorageManager._list_directory(path),
-                                "framework": f"tensorflow-{tf.__version__}",
-                                "format": "saved_model",
-                            }
+                        response = {"uuid": storage_id}
                     else:
                         response = {}
 
@@ -392,15 +394,18 @@ class EstimatorTrialController(det.TrialController):
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
-            session = experimental.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
 
         self._init_model()
 
-    @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    @classmethod
+    def pre_execute_hook(
+        cls: Type["EstimatorTrialController"],
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+    ) -> None:
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
@@ -410,7 +415,7 @@ class EstimatorTrialController(det.TrialController):
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will receive a unique
         # shard of the dataset.
-        EstimatorTrialController.set_random_seed(env.trial_seed)
+        cls.set_random_seed(env.trial_seed)
 
         if version.parse(tf.__version__) >= version.parse("2.0.0"):
             tf.compat.v1.disable_v2_behavior()
@@ -419,9 +424,7 @@ class EstimatorTrialController(det.TrialController):
         # set and users call TF code that detects GPUs, it would map the processes to all of
         # the GPUs. We set the default session before importing any user code to prevent this
         # this problem. This default session does not have any effect within the Estimator itself.
-        EstimatorTrialController._set_default_tensorflow_session(
-            env=env, hvd_config=hvd_config, session_config=None
-        )
+        cls._set_default_tensorflow_session(env=env, hvd_config=hvd_config, session_config=None)
 
         logging.debug("Applying tf.estimator patches.")
 
@@ -434,29 +437,31 @@ class EstimatorTrialController(det.TrialController):
             # ultimately runs the evaluation.
             logging.info("Skipping %s(*%s, **%s)", original.__name__, args, kwargs)
 
-    @staticmethod
-    def set_random_seed(seed: int) -> None:
+    @classmethod
+    def set_random_seed(cls: Type["EstimatorTrialController"], seed: int) -> None:
         random.seed(seed)
         np.random.seed(seed)
         # This seed value will be overwritten by
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
 
-    @staticmethod
+    @classmethod
     def _set_default_tensorflow_session(
+        cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
         session_config: Optional[tf.compat.v1.ConfigProto],
     ) -> None:
-        session_config = EstimatorTrialController._init_session_config(
+        session_config = cls._init_session_config(
             session_config=session_config,
             env=env,
             hvd_config=hvd_config,
         )
         tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=session_config))
 
-    @staticmethod
+    @classmethod
     def from_trial(
+        cls: Type["EstimatorTrialController"],
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
@@ -475,7 +480,7 @@ class EstimatorTrialController(det.TrialController):
         )
         trial_inst = cast(EstimatorTrial, trial_inst)
 
-        return EstimatorTrialController(
+        return cls(
             trial_inst.build_estimator(),
             trial_inst.build_train_spec(),
             trial_inst.build_validation_spec(),
@@ -622,8 +627,9 @@ class EstimatorTrialController(det.TrialController):
     def _init_val_hooks(self) -> List[tf.estimator.SessionRunHook]:
         return [*self.val_spec.hooks, DeterminedEarlyStoppingHook(self.context)]
 
-    @staticmethod
+    @classmethod
     def _init_session_config(
+        cls: Type["EstimatorTrialController"],
         session_config: tf.compat.v1.ConfigProto,
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
@@ -658,11 +664,6 @@ class EstimatorTrialController(det.TrialController):
         # The default session should already be defined, here we also set the session
         # for the estimator itself.
         self._init_session_config(session_config, self.env, self.hvd_config)
-
-        if not self.hvd_config.use and len(self.env.container_gpus) > 1:
-            check.true(len(self.rendezvous_info.container_addrs) == 1)
-            train_distribute = tf.distribute.MirroredStrategy()
-            eval_distribute = tf.distribute.MirroredStrategy()
 
         config = config.replace(
             model_dir=str(self.estimator_dir),
@@ -715,7 +716,10 @@ class EstimatorTrialController(det.TrialController):
             logging.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
 
-        with self._generic._download_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+        logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+        with self.context._generic.checkpointing.restore_path(
+            self.env.latest_checkpoint
+        ) as load_path:
             for callback in self.train_hooks:
                 if isinstance(callback, estimator.RunHook):
                     callback.on_checkpoint_load(str(load_path))
@@ -778,7 +782,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``).
+    (e.g. ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

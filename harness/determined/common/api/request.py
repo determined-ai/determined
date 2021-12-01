@@ -1,3 +1,4 @@
+import json as _json
 import webbrowser
 from types import TracebackType
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
@@ -5,8 +6,8 @@ from urllib import parse
 
 import lomond
 import requests
-import simplejson
 
+import determined as det
 import determined.common.requests
 from determined.common.api import authentication, certs, errors
 
@@ -94,12 +95,14 @@ def do_request(
     if json is not None and data is not None:
         raise ValueError("json and data must not be provided together")
 
+    if json:
+        data = det.util.json_encode(json)
+
     try:
         r = determined.common.requests.request(
             method,
             make_url(host, path),
             params=params,
-            json=json,
             data=data,
             headers=h,
             verify=cert.bundle if cert else None,
@@ -116,7 +119,7 @@ def do_request(
 
     def _get_message(r: requests.models.Response) -> str:
         try:
-            return str(simplejson.loads(r.text).get("message"))
+            return str(_json.loads(r.text).get("message"))
         except Exception:
             return ""
 
@@ -294,7 +297,7 @@ class WebSocket:
             elif isinstance(event, lomond.events.Text):
                 # All web socket connections are expected to be in a JSON
                 # format.
-                yield simplejson.loads(event.text)
+                yield _json.loads(event.text)
 
     def __exit__(
         self,

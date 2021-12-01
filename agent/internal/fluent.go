@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/docker/docker/api/types"
@@ -160,6 +160,8 @@ func startLoggingContainer(
 		},
 		masterSetOpts.LoggingOptions,
 		tlsConfig,
+		// TODO(DET-6188): Run Fluent Bit as non-root on Determined agents.
+		false,
 	)
 
 	createResponse, err := docker.ContainerCreate(

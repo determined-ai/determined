@@ -11,4 +11,4 @@ sphinx==4.2.0
 # Plugins
 sphinx-reredirects
 
-git+https://github.com/determined-ai/determined_sphinx_theme.git@9edfa7c6ce6926def9fc69b8ddd7666f3419a907
+furo==2021.10.9

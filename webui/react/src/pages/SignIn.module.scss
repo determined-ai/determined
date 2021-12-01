@@ -14,4 +14,16 @@
     & > * { margin-bottom: var(--theme-sizes-layout-enormous); }
     & > *:last-child { margin-bottom: 0; }
   }
+  .ssoButton {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+  }
+  .ssoButton > img {
+    height: 20px;
+    margin: 0 var(--theme-sizes-layout-small);
+    width: 20px;
+  }
 }

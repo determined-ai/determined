@@ -46,6 +46,7 @@ module.exports = {
       'error',
       { args: 'after-used', ignoreRestSiblings: true },
     ],
+    '@typescript-eslint/prefer-optional-chain': [ 'error' ],
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
     'arrow-spacing': [ 'error', { after: true, before: true } ],
@@ -91,6 +92,7 @@ module.exports = {
     'object-property-newline': [ 'error', { allowAllPropertiesOnSameLine: true } ],
     'quote-props': [ 'error', 'consistent-as-needed' ],
     'quotes': [ 'error', 'single', { avoidEscape: true } ],
+    'react/display-name': 'off',
     'react/jsx-first-prop-new-line': [ 'error', 'multiline-multiprop' ],
     'react/jsx-max-props-per-line': [ 'error', { when: 'multiline' } ],
     'react/jsx-sort-props': [ 'error', {
@@ -120,6 +122,7 @@ module.exports = {
       natural: true,
     } ],
     'space-in-parens': [ 'error', 'never' ],
+    'space-infix-ops': [ 'error', { int32Hint: true } ],
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint
