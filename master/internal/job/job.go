@@ -95,13 +95,17 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		// Ask for a consistent snapshot of the job queue from the RM.
 		aResp := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: msg.ResourcePool})
 		if err := aResp.Error(); err != nil {
+			ctx.Log().WithError(err).Error("getting job queue info from RM")
 			ctx.Respond(err)
 			return nil
 		}
 
 		jobQ, ok := aResp.Get().(AQueue)
 		if !ok {
-			return fmt.Errorf("unexpected response type: %T", aResp.Get())
+			err := fmt.Errorf("unexpected response type: %T from RM", aResp.Get())
+			ctx.Log().WithError(err).Error("")
+			ctx.Respond(err)
+			return nil
 		}
 
 		// Get jobs from the job actors.
@@ -111,7 +115,9 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		}
 		jobs, err := j.parseV1JobMsgs(ctx.AskAll(msg, jobRefs...).GetAll())
 		if err != nil {
-			return err
+			ctx.Log().WithError(err).Error("parsing responses from job actors")
+			ctx.Respond(err)
+			return nil
 		}
 
 		// Merge the results.
