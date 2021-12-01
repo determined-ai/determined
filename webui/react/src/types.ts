@@ -598,7 +598,7 @@ export enum LogLevel {
 }
 
 export interface Log {
-  id: number;
+  id: number | string;
   level?: LogLevel;
   message: string;
   meta?: string;
