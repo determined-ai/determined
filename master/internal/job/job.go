@@ -3,8 +3,6 @@ package job
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -64,28 +62,19 @@ func NewJobs(rmRef *actor.Ref) *Jobs {
 	}
 }
 
-func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
-	children := make([]*actor.Ref, 0)
-	for _, jobRef := range j.jobsByID {
-		children = append(children, jobRef)
-	}
-	// children := getJobRefs(ctx.Self().System())
-	fmt.Printf("children count %d \n", len(children))
-	return ctx.AskAll(msg, children...).GetAll()
-}
-
-func (j *Jobs) parseV1JobResposnes(
-	responses map[*actor.Ref]actor.Message,
+func (j *Jobs) parseV1JobMsgs(
+	msgs map[*actor.Ref]actor.Message,
 ) (map[model.JobID]*jobv1.Job, error) {
 	jobs := make(map[model.JobID]*jobv1.Job)
-	for _, val := range responses {
+	for _, val := range msgs {
+		if val == nil {
+			continue
+		}
 		typed, ok := val.(*jobv1.Job)
 		if !ok {
-			return nil, errors.New("unexpected response type")
+			return nil, fmt.Errorf("unexpected response type: %T", val)
 		}
-		if typed != nil {
-			jobs[model.JobID(typed.JobId)] = typed
-		}
+		jobs[model.JobID(typed.JobId)] = typed
 	}
 	return jobs, nil
 }
@@ -103,13 +92,30 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.jobsByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		jobs, err := j.parseV1JobResposnes(j.askJobActors(ctx, msg))
+		// Ask for a consistent snapshot of the job queue from the RM.
+		aResp := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: msg.ResourcePool})
+		if err := aResp.Error(); err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+
+		jobQ, ok := aResp.Get().(AQueue)
+		if !ok {
+			return fmt.Errorf("unexpected response type: %T", aResp.Get())
+		}
+
+		// Get jobs from the job actors.
+		jobRefs := make([]*actor.Ref, 0)
+		for jID := range jobQ {
+			jobRefs = append(jobRefs, j.jobsByID[jID])
+		}
+		jobs, err := j.parseV1JobMsgs(ctx.AskAll(msg, jobRefs...).GetAll())
 		if err != nil {
 			return err
 		}
-		// ask for a consistent snapshot of the job queue from the RM
+
+		// Merge the results.
 		jobsInRM := make([]*jobv1.Job, 0)
-		jobQ := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: msg.ResourcePool}).Get().(AQueue)
 		for jID, jRMInfo := range jobQ {
 			v1Job, ok := jobs[jID]
 			if ok {
