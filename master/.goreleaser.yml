@@ -41,12 +41,10 @@ nfpms:
       - rpm
     config_files:
       "packaging/master.yaml": "/etc/determined/master.yaml"
-      "packaging/prometheus.yml": "/etc/determined/prometheus.yml"
     files:
       "build/**/*": "/usr/share/determined/master"
       "static/**/*": "/usr/share/determined/master/static"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
-      "packaging/determined-prom.service": "/lib/systemd/system/determined-prom.service"
     overrides:
       deb:
         scripts:
@@ -64,3 +62,24 @@ release:
     owner: determined-ai
     name: determined
 
+dockers:
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "determinedai/{{.ProjectName}}:latest"
+      - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
+      - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
+      - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
+      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
+      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
+      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.Env.VERSION}}"
+      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.ShortCommit}}"
+      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.FullCommit}}"
+    extra_files:
+      - "packaging/master.yaml"
+      - "packaging/LICENSE"
+      - "build"
+      - "static"
+    binaries:
+      - determined-master
+      - determined-gotmpl
