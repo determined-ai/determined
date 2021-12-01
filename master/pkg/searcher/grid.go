@@ -67,20 +67,20 @@ func (s *gridSearch) progress(
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
+	// Progress is calculated as follows:
+	//   - InvalidHP trials contribute max_length units since they represent one config within the grid
+	//     and are not replaced with a new config as with random search
+	//   - Other early-exit trials contribute max_length units
+	//   - In progress trials contribute units trained
 	unitsCompleted := 0.
-	for k, v := range trialsClosed {
-		if _, ok := trialProgress[k]; !ok {
-			if v {
-				unitsCompleted += float64(s.MaxLength().Units)
-			}
-		}
+	// trialsClosed includes InvalidHP trials and other exited trials
+	for range trialsClosed {
+		unitsCompleted += float64(s.MaxLength().Units)
 	}
+	// trialProgress records units trained for all trials except for InvalidHP trials.
+	// This can overlap with trialsClosed so we need to be sure to not double count.
 	for k, v := range trialProgress {
-		if closed, ok := trialsClosed[k]; ok {
-			if closed {
-				unitsCompleted += float64(s.MaxLength().Units)
-			}
-		} else {
+		if !trialsClosed[k] {
 			unitsCompleted += float64(v)
 		}
 	}

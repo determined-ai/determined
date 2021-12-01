@@ -115,16 +115,16 @@ func (s *tournamentSearch) progress(
 	trialProgress map[model.RequestID]model.PartialUnits,
 	trialsClosed map[model.RequestID]bool) float64 {
 	sum := 0.0
-	for id, subSearch := range s.subSearches {
+	for subSearchID, subSearch := range s.subSearches {
 		subSearchTrialProgress := map[model.RequestID]model.PartialUnits{}
 		for rID, p := range trialProgress {
-			if id == s.TrialTable[rID] {
+			if subSearchID == s.TrialTable[rID] {
 				subSearchTrialProgress[rID] = p
 			}
 		}
 		subSearchTrialsClosed := map[model.RequestID]bool{}
 		for rID, closed := range trialsClosed {
-			if id == s.TrialTable[rID] {
+			if subSearchID == s.TrialTable[rID] {
 				subSearchTrialsClosed[rID] = closed
 			}
 		}

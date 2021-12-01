@@ -74,12 +74,16 @@ func (s *randomSearch) progress(
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
+	// Progress is calculated as follows:
+	//   - InvalidHP trials contribute 0 since we do not count them against max_trials budget and are
+	//     replaced with another randomly sampled config
+	//   - Other early-exit trials contribute max_length units
+	//   - In progress trials contribute units trained
 	unitsCompleted := 0.
+	// trialProgress records units trained for all trials except for InvalidHP trials.
 	for k, v := range trialProgress {
-		if closed, ok := trialsClosed[k]; ok {
-			if closed {
-				unitsCompleted += float64(s.MaxLength().Units)
-			}
+		if trialsClosed[k] {
+			unitsCompleted += float64(s.MaxLength().Units)
 		} else {
 			unitsCompleted += float64(v)
 		}
