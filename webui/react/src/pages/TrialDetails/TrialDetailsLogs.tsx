@@ -162,7 +162,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     <div className={css.base}>
       <LogViewerCore
         decoder={jsonToTrialLog}
-        sortKey="time"
         title={trialLogFilters}
         onDownload={handleDownloadLogs}
         onFetch={handleFetch}
