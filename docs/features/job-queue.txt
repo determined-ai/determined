@@ -5,12 +5,17 @@
 ##################
 
 The Determined Queue Management system extends the functionality of scheduler options to offer users
-better functionality and control over scheduling decisions. Queue Management is currently in beta
-and is available to the priority scheduler and the Kubernetes priority scheduler. It is available in
-read-only mode, which allows users to observe all submitted jobs and their state, but does not allow
-users to modify the position or any configuration options.
+better functionality in scheduling decisions. The primary role of Queue Management is to provide
+better information about job order, which some schedulers are unable to provide. For example, the
+priority scheduler can provide job ordering information via priority, but the info can be inaccurate
+due to backfilling behavior.
 
-To view the jobs that are currently active in the cluster, use the following command in the CLI:
+Queue Management is currently in beta and is available to the priority scheduler and the Kubernetes
+priority scheduler. It is available in read-only mode, which allows users to observe all submitted
+jobs and their state, but does not allow users to modify the position or any configuration options.
+
+Queue Management's job queue can be viewed from the CLI or from the WebUI. To view it in the CLI,
+use the following command:
 
 .. code:: bash
 
@@ -21,3 +26,6 @@ not necessarily the priority of the job. In addition to the order of the job, us
 state of the jobs and how many slots each job is using. Jobs can be in the following states: queued,
 scheduled, and scheduled backfilled. Jobs that have completed or errored out are not counted as
 active and are omitted from this list.
+
+In upcoming releases, Queue Management will add features that allow for direct control and
+adjustment of jobs and their scheduling order.
