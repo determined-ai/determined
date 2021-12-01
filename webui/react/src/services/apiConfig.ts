@@ -27,6 +27,7 @@ export const detApi = {
   StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
+  StreamingJobs: Api.JobsApiFetchParamCreator(ApiConfig),
   StreamingProfiler: Api.ProfilerApiFetchParamCreator(ApiConfig),
   Tasks: new Api.TasksApi(ApiConfig),
   Templates: new Api.TemplatesApi(ApiConfig),
@@ -57,6 +58,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingCluster = Api.ClusterApiFetchParamCreator(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
   detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
+  detApi.StreamingJobs = Api.JobsApiFetchParamCreator(ApiConfig),
   detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
   detApi.Tasks = new Api.TasksApi(config);
   detApi.TensorBoards = new Api.TensorboardsApi(config);
