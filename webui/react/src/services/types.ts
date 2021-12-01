@@ -193,16 +193,6 @@ export interface LaunchJupyterLabParams {
   templateName?: string;
 }
 
-export interface LogsParams {
-  greaterThanId?: number;
-  tail?: number;
-}
-
-export interface TaskLogsParams extends LogsParams {
-  taskId: string;
-  taskType: CommandType;
-}
-
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export type EmptyParams = {}
 

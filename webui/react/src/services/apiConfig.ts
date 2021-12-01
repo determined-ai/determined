@@ -661,23 +661,3 @@ export const launchTensorBoard: Service.DetApi<
   request: (params: Service.LaunchTensorBoardParams) => detApi.TensorBoards
     .launchTensorboard(params),
 };
-
-/* Logs */
-
-const buildQuery = (params: Service.LogsParams): string => {
-  const queryParams: Record<string, number> = {};
-  if (params.tail) queryParams['tail'] = params.tail;
-  if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
-  return queryString.stringify(queryParams);
-};
-
-export const getTaskLogs: Service.HttpApi<Service.TaskLogsParams, Type.Log[]> = {
-  httpOptions: (params: Service.TaskLogsParams) => ({
-    url: [
-      `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
-      buildQuery(params),
-    ].join('?'),
-  }),
-  name: 'getTaskLogs',
-  postProcess: response => decoder.jsonToTaskLogs(response.data),
-};
