@@ -1181,6 +1181,8 @@ jobs:
       - run: make -C webui/react test
       - store_test_results:
           path: webui/react/coverage
+      - store_artifacts:
+          path: webui/react/coverage/lcov-report
 
   build-storybook:
     docker:
