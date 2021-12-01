@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job"
+
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -43,6 +45,16 @@ type (
 		Container        cproto.Container
 		ContainerStarted *TaskContainerStarted
 		ContainerStopped *TaskContainerStopped
+	}
+
+	// GetTaskContainerState requests cproto.Container state.
+	GetTaskContainerState struct {
+		ContainerID cproto.ID
+	}
+	// UpdatePodStatus notifies the resource manager of job state changes.
+	UpdatePodStatus struct {
+		ContainerID string
+		State       job.SchedulingState
 	}
 
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.
