@@ -518,14 +518,6 @@ export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   return log;
 };
 
-const ioTaskEventToMessage = (event: string): string => {
-  if (defaultRegex.test(event)) {
-    const matches = event.match(defaultRegex) || [];
-    return matches[2];
-  }
-  return event;
-};
-
 export const jsonToTaskLog = (data: unknown): types.Log => {
   const logData = data as Sdk.V1TaskLogsResponse;
   return ({
@@ -534,34 +526,6 @@ export const jsonToTaskLog = (data: unknown): types.Log => {
     message: logData.message ?? '',
     time: logData.timestamp as unknown as string,
   });
-};
-
-export const jsonToTaskLogs = (data: unknown): types.Log[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeTaskLogs>(ioTypes.ioTaskLogs, data);
-  return io
-    .filter(log => !log.service_ready_event)
-    .map(log => {
-      const description = log.description || '';
-      let message = '';
-      if (log.scheduled_event) {
-        message = `Scheduling ${log.parent_id} (id: ${description})...`;
-      } else if (log.assigned_event) {
-        message = `${description} was assigned to an agent...`;
-      } else if (log.container_started_event) {
-        message = `Container of ${description} has started...`;
-      } else if (log.terminate_request_event) {
-        message = `${description} was requested to terminate...`;
-      } else if (log.exited_event) {
-        message = `${description} was terminated: ${log.exited_event}`;
-      } else if (log.log_event) {
-        message = ioTaskEventToMessage(log.log_event);
-      }
-      return {
-        id: log.seq.toString(),
-        message,
-        time: log.time,
-      };
-    });
 };
 
 export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.ResourceType => {

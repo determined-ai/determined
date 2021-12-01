@@ -1,5 +1,4 @@
 import { sha512 } from 'js-sha512';
-import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
@@ -722,24 +721,4 @@ export const getJobQueueStats: Service.DetApi<
   name: 'getJobQStats',
   postProcess: identity,
   request: ({ resourcePools }) => detApi.Internal.getJobQueueStats(resourcePools),
-};
-
-/* Logs */
-
-const buildQuery = (params: Service.LogsParams): string => {
-  const queryParams: Record<string, number> = {};
-  if (params.tail) queryParams['tail'] = params.tail;
-  if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
-  return queryString.stringify(queryParams);
-};
-
-export const getTaskLogs: Service.HttpApi<Service.TaskLogsParams, Type.Log[]> = {
-  httpOptions: (params: Service.TaskLogsParams) => ({
-    url: [
-      `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
-      buildQuery(params),
-    ].join('?'),
-  }),
-  name: 'getTaskLogs',
-  postProcess: response => decoder.jsonToTaskLogs(response.data),
 };

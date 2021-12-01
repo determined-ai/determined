@@ -272,5 +272,3 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
-
-export const getTaskLogs = generateApi<Service.TaskLogsParams, Type.Log[]>(Config.getTaskLogs);
