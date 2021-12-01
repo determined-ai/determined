@@ -425,8 +425,6 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 
-	taskSpec.SSHRsaSize = m.config.Security.SSH.RsaKeySize
-
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, &m.config.CheckpointStorage,

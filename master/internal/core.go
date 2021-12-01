@@ -572,6 +572,7 @@ func (m *Master) Run(ctx context.Context) error {
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            cert,
+		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 	}
