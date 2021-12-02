@@ -2,6 +2,9 @@ import { Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import React, { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 
+import LogViewerEntry, {
+  DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH,
+} from 'components/LogViewer/LogViewerEntry';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
@@ -9,7 +12,6 @@ import { consumeStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
 import { formatDatetime } from 'utils/datetime';
 
-import LogViewerEntry, { DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 import css from './TrialLogPreview.module.scss';
 
 interface Props {

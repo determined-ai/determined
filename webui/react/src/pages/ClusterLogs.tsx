@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer';
+import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer/LogViewer';
 import Page from 'components/Page';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';

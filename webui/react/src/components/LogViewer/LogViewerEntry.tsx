@@ -1,11 +1,11 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
+import Icon from 'components/Icon';
 import { LogLevel } from 'types';
 import { ansiToHtml } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
-import Icon from './Icon';
 import css from './LogViewerEntry.module.scss';
 
 export interface LogEntry {
