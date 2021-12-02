@@ -1,7 +1,7 @@
 import abc
 import logging
 import os
-from enum import Enum
+import enum
 from typing import Any, Optional, Type
 
 import determined as det
@@ -9,7 +9,7 @@ from determined import profiler, workload
 from determined.common import check
 
 
-class _DistributedBackend(Enum):
+class _DistributedBackend(enum.Enum):
     HOROVOD = bool(os.environ.get("USE_HOROVOD", None))
 
 
