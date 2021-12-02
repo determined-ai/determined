@@ -2,7 +2,7 @@ import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
-import { generateApi, generateDetApi } from 'services/utils';
+import { generateDetApi } from 'services/utils';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 

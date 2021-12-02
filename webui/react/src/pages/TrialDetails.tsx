@@ -1,5 +1,4 @@
 import { Tabs } from 'antd';
-import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
@@ -45,7 +44,6 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 const TrialDetailsComp: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
-  const [ source ] = useState(axios.CancelToken.source());
   const history = useHistory();
   const routeParams = useParams<Params>();
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
@@ -54,7 +52,6 @@ const TrialDetailsComp: React.FC = () => {
     data: undefined,
     error: undefined,
     isLoading: true,
-    source,
   });
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
   const trialId = parseInt(routeParams.trialId);
@@ -77,7 +74,6 @@ const TrialDetailsComp: React.FC = () => {
         history.replace(paths.trialDetails(trial.id, trial.experimentId));
       }
     } catch (e) {
-      if (axios.isCancel(e)) return;
       handleError({
         error: e,
         message: 'Failed to load experiment details.',
@@ -140,11 +136,8 @@ const TrialDetailsComp: React.FC = () => {
   }, [ trialDetails.data, stopPolling ]);
 
   useEffect(() => {
-    return () => {
-      source.cancel();
-      canceler.abort();
-    };
-  }, [ canceler, source ]);
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   if (isNaN(trialId)) {
     return <Message title={`Invalid Trial ID ${routeParams.trialId}`} />;

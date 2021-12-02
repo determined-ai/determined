@@ -33,8 +33,9 @@ export const detApi = {
   Users: new Api.UsersApi(ApiConfig),
 };
 
-const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
-Api.ConfigurationParameters => {
+const updatedApiConfigParams = (
+  apiConfig?: Api.ConfigurationParameters,
+): Api.ConfigurationParameters => {
   return {
     apiKey: `Bearer ${globalStorage.authToken}`,
     basePath: serverAddress(),

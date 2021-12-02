@@ -1,9 +1,9 @@
 import { notification } from 'antd';
-import axios from 'axios';
 
 import { getAnalytics } from 'Analytics';
 import history from 'routes/history';
 import { filterOutLoginLocation, paths } from 'routes/utils';
+import { isAborted } from 'services/utils';
 import { isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';
@@ -74,7 +74,7 @@ const handleError = (e: DaError): DaError => {
   e = { ...defaultErrorParameters, ...e };
 
   // ignore request cancellation errors
-  if (axios.isCancel(e)) return e;
+  if (isAborted(e)) return e;
 
   if (e.type === ErrorType.Auth) {
     history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
