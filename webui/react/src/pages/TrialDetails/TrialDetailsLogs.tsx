@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer';
+import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer/LogViewer';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
