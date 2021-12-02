@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Add buttons to the WebUI to create new models in the Model Registry, as well as 
+  add checkpoints as versions to existing models.
