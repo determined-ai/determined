@@ -4,14 +4,14 @@ import React, { useCallback, useState } from 'react';
 import NewModelModal from './NewModelModal';
 
 const NewModelButton: React.FC = () => {
-  const [ showNewModelModal, setShowNewModelModel ] = useState(false);
+  const [ showNewModelModal, setShowNewModelModal ] = useState(false);
 
   const openModal = useCallback(() => {
-    setShowNewModelModel(true);
+    setShowNewModelModal(true);
   }, []);
 
   const closeModal = useCallback(() => {
-    setShowNewModelModel(false);
+    setShowNewModelModal(false);
   }, []);
 
   return (

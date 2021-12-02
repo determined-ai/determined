@@ -55,6 +55,10 @@ const RegisterModelVersionModal: React.FC<Props> = (
     }
   }, [ canceler.signal ]);
 
+  const selectedModelNumVersions = useMemo(() => {
+    return models.find(model => model.id === selectedModelId)?.numVersions ?? 0;
+  }, [ models, selectedModelId ]);
+
   const registerModelVersion = useCallback(async () => {
     if (!selectedModelId) return;
     try {
@@ -70,21 +74,26 @@ const RegisterModelVersionModal: React.FC<Props> = (
         modelId: selectedModelId,
       });
       onCloseAll?.();
+      if (!response) return;
       notification.open(
         {
           btn: null,
           description: (
             <div className={css.toast}>
               <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-              <Link path={paths.modelVersionDetails(selectedModelId, response?.id ?? 0)}>
-              View Model
+              <Link path={paths.modelVersionDetails(selectedModelId, response.id)}>
+              View Model Version
               </Link>
             </div>),
           message: '',
         },
       );
     } catch {
-      handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
+      handleError({
+        message: 'Unable to register model version.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     }
   }, [ checkpointUuid,
     metadata,
@@ -92,7 +101,8 @@ const RegisterModelVersionModal: React.FC<Props> = (
     versionDescription,
     versionName,
     onCloseAll,
-    selectedModelId ]);
+    selectedModelId,
+    selectedModelNumVersions ]);
 
   const updateModel = useCallback((value) => {
     setSelectedModelId(value);
@@ -110,10 +120,6 @@ const RegisterModelVersionModal: React.FC<Props> = (
     return [ { id: -1, name: 'New Model' },
       ...models.map(model => ({ id: model.id, name: model.name })) ];
   }, [ models ]);
-
-  const selectedModelNumVersions = useMemo(() => {
-    return models.find(model => model.id === selectedModelId)?.numVersions ?? 0;
-  }, [ models, selectedModelId ]);
 
   const openDetails = useCallback(() => {
     setExpandDetails(true);
