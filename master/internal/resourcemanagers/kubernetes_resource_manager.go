@@ -326,7 +326,11 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
+<<<<<<< HEAD
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
+=======
+	reqs := sortTasks(k.reqList, k.groups, true)
+>>>>>>> 8a883a1e4... fix: det job get returns inaccurate info (#3252)
 	jobQinfo, _ := mergeToJobQInfo(reqs)
 	return jobQinfo
 }
@@ -427,9 +431,14 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
+<<<<<<< HEAD
 
 	newPriority := KubernetesDefaultPriority
 	g := &group{handler: handler, weight: 1, priority: &newPriority, qPosition: -1}
+=======
+	priority := KubernetesDefaultPriority
+	g := &group{handler: handler, weight: 1, priority: &priority}
+>>>>>>> 8a883a1e4... fix: det job get returns inaccurate info (#3252)
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 
