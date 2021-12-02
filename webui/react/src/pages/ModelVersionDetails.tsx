@@ -17,7 +17,7 @@ import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/workload';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';

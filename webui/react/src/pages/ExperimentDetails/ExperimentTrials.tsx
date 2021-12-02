@@ -15,6 +15,7 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -29,7 +30,7 @@ import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
 } from 'types';
-import { getMetricValue, terminalRunStates } from 'utils/types';
+import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
 
 import css from './ExperimentTrials.module.scss';

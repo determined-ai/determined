@@ -1,9 +1,10 @@
+import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import * as Type from 'types';
-import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
+import { tensorBoardMatchesSource } from 'utils/task';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
@@ -234,7 +235,7 @@ export const openOrCreateTensorBoard = async (
   const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(tensorboard =>
     !terminalCommandStates.has(tensorboard.state)
-    && tsbMatchesSource(tensorboard, params));
+    && tensorBoardMatchesSource(tensorboard, params));
   if (match) return match;
   return launchTensorBoard(params);
 };

@@ -1,17 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Primitive, RawJson, RecordKey, UnknownRecord } from 'types';
 
-export const isMap = <T>(data: T): boolean => data instanceof Map;
+// `bigint` is not support yet for
+export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
+export const isMap = (data: unknown): boolean => data instanceof Map;
+export const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
-export const isObject = <T>(data: T): boolean => {
+export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };
-export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
-export const isSet = <T>(data: T): boolean => data instanceof Set;
+export const isPrimitive = (data: unknown): boolean => (
+  isBigInt(data) ||
+  isBoolean(data) ||
+  isNullOrUndefined(data) ||
+  isNumber(data) ||
+  isString(data) ||
+  isSymbol(data)
+);
+export const isSet = (data: unknown): boolean => data instanceof Set;
 export const isString = (data: unknown): data is string => typeof data === 'string';
-export const isFunction = (fn: unknown): boolean => {
-  return typeof fn === 'function';
-};
+export const isSymbol = (data: unknown): data is symbol => typeof data === 'symbol';
+export const isFunction = (fn: unknown): boolean => typeof fn === 'function';
 
 export const isAsyncFunction = (fn: unknown): boolean => {
   if (!isFunction(fn)) return false;
@@ -20,6 +30,22 @@ export const isAsyncFunction = (fn: unknown): boolean => {
 
 export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
+};
+
+export const isEqual = (a: unknown, b: unknown): boolean => {
+  if ((isMap(a) || isSet(b)) && (isMap(b) || isSet(b))) {
+    return JSON.stringify(Array.from(a as any)) === JSON.stringify(Array.from(b as any));
+  }
+  if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
+  if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);
+  return a === b;
+};
+
+export const clone = (data: any, deep = true): any => {
+  if (isPrimitive(data)) return data;
+  if (isMap(data)) return new Map(data);
+  if (isSet(data)) return new Set(data);
+  return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
 
 export const hasObjectKeys = (data: unknown): boolean => {
@@ -73,14 +99,6 @@ export const unflattenObject = <T = unknown>(
   return unflattened;
 };
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const clone = (data: any, deep = true): any => {
-  if (isPrimitive(data)) return data;
-  if (isMap(data)) return new Map(data);
-  if (isSet(data)) return new Set(data);
-  return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
-};
-
 export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   if (path === '') return obj as T;
@@ -102,16 +120,16 @@ export const getPathOrElse = <T>(
   return value !== undefined ? value : fallback;
 };
 
-/*
- * Categorize a list of items based on `keyFn` condition.
- */
-export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]> => {
-  const d: Record<string, T[]> = {};
-  array.forEach(item => {
-    const key = keyFn(item);
-    d[key] ? d[key].push(item) : d[key] = [ item ];
-  });
-  return d;
+export const setPathList = (obj: RawJson, path: string[], value: unknown): void => {
+  const lastIndex = path.length - 1;
+  const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
+  if (parentObj) parentObj[path[lastIndex]] = value;
+};
+
+export const deletePathList = (obj: RawJson, path: string[]): void => {
+  const lastIndex = path.length - 1;
+  const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
+  if (parentObj) delete parentObj[path[lastIndex]];
 };
 
 // We avoid exporting this type to discourage/disallow usage of any.
@@ -129,31 +147,12 @@ export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T =>
   return currentData;
 };
 
-export const isEqual = (a: unknown, b: unknown): boolean => {
-  if (a === b) return true;
-  return JSON.stringify(a) === JSON.stringify(b);
-};
-
-export const setPathList = (obj: RawJson, path: string[], value: unknown): void => {
-  const lastIndex = path.length - 1;
-  const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
-  if (parentObj) parentObj[path[lastIndex]] = value;
-};
-
-export const deletePathList = (obj: RawJson, path: string[]): void => {
-  const lastIndex = path.length - 1;
-  const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
-  if (parentObj) delete parentObj[path[lastIndex]];
-};
-
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const validateEnum = (enumObject: unknown, value?: unknown): any => {
   if (isObject(enumObject) && value !== undefined) {
     const enumRecord = enumObject as Record<string, string>;
     const stringValue = value as string;
-    const validOptions = Object
-      .values(enumRecord)
-      .filter((_, index) => index % 2 === 0);
+    const validOptions = Object.values(enumRecord);
     if (validOptions.includes(stringValue)) return stringValue;
   }
   return undefined;

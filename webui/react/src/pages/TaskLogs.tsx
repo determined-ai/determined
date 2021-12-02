@@ -3,13 +3,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
+import { commandTypeToLabel } from 'constants/states';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import { paths } from 'routes/utils';
 import { getTaskLogs } from 'services/api';
 import { TaskLogsParams } from 'services/types';
 import { CommandType, Log } from 'types';
-import { commandTypeToLabel } from 'utils/types';
 
 interface Params {
   taskId: string;

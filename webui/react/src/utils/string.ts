@@ -1,19 +1,34 @@
 import prettyBytes from 'pretty-bytes';
 
-import { MetricName, MetricType } from 'types';
+const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const CHARACTERS = `0123456789${LETTERS}`;
 
-export const capitalizeWord = (str: string): string => {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+export const DEFAULT_ALPHA_NUMERIC_LENGTH = 8;
+
+export const camelCaseToSentence = (text: string): string => {
+  const result = text.trim().replace(/([A-Z])/g, ' $1');
+  return result.charAt(0).toUpperCase() + result.slice(1);
 };
 
 export const capitalize = (str: string): string => {
   return str.split(/\s+/).map(part => capitalizeWord(part)).join(' ');
 };
 
-const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+export const capitalizeWord = (str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
 
-export const generateAlphaNumeric = (length = 8, chars = CHARACTERS): string => {
+export const floatToPercent = (num: number, precision = 2): string => {
+  if (isNaN(num)) return 'NaN';
+  if (num === Infinity) return 'Infinity';
+  if (num === -Infinity) return '-Infinity';
+  return (num * 100).toFixed(precision) + '%';
+};
+
+export const generateAlphaNumeric = (
+  length = DEFAULT_ALPHA_NUMERIC_LENGTH,
+  chars = CHARACTERS,
+): string => {
   let result = '';
   for (let i = length; i > 0; --i) {
     result += chars[ Math.floor(Math.random() * chars.length) ];
@@ -21,18 +36,16 @@ export const generateAlphaNumeric = (length = 8, chars = CHARACTERS): string => 
   return result;
 };
 
-export const generateLetters = (length = 8): string => {
+export const generateLetters = (length = DEFAULT_ALPHA_NUMERIC_LENGTH): string => {
   return generateAlphaNumeric(length, LETTERS);
 };
 
-export const truncate = (str: string, maxLen: number): string => {
-  if (maxLen < 4) {
-    str.slice(0, maxLen);
-  }
-  if (str.length <= maxLen) {
-    return str;
-  }
-  return str.slice(0, maxLen - 3) + '...';
+export const humanReadableBytes = (bytes: number): string => {
+  return prettyBytes(bytes);
+};
+
+export const listToStr = (list: (string | undefined)[], glue = ' '): string => {
+  return list.filter(item => !!item).join(glue);
 };
 
 export const toHtmlId = (str: string): string => {
@@ -42,29 +55,8 @@ export const toHtmlId = (str: string): string => {
     .toLowerCase();
 };
 
-export const listToStr = (list: (string|undefined)[], glue = ' '): string => {
-  return list.filter(item => !!item).join(glue);
-};
-
-export const floatToPercent = (num: number, precision = 2): string => {
-  if (isNaN(num)) num = 0;
-  return (num * 100).toFixed(precision) + '%';
-};
-
-export const humanReadableBytes = (bytes: number): string => {
-  return prettyBytes(bytes);
-};
-
-export const camelCaseToSentence = (text: string): string => {
-  const result = text.replace(/([A-Z])/g, ' $1');
-  const finalResult = result.charAt(0).toUpperCase() + result.slice(1);
-  return finalResult;
-};
-
-export const metricNameToStr = (metricName: MetricName): string => {
-  const MAX_METRIC_LABEL_SIZE = 30;
-  const type = metricName.type === MetricType.Training ? 'T' : 'V';
-  const name = metricName.name.length > MAX_METRIC_LABEL_SIZE ?
-    metricName.name.substr(0, MAX_METRIC_LABEL_SIZE) + '...' : metricName.name;
-  return `[${type}] ${name}`;
+export const truncate = (str: string, maxLength = 20): string => {
+  if (maxLength < 4) maxLength = 4;
+  if (str.length <= maxLength) return str;
+  return str.slice(0, maxLength - 3) + '...';
 };

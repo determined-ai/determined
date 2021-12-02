@@ -3,11 +3,11 @@ import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import { resourceStateToLabel } from 'constants/states';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
-import { ConditionalWrapper } from 'utils/react';
 import { floatToPercent } from 'utils/string';
-import { resourceStateToLabel } from 'utils/types';
 
 import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';

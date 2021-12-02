@@ -8,9 +8,9 @@ import { ShirtSize } from 'themes';
 import {
   CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
 } from 'types';
+import { durationInEnglish, getDuration } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;
@@ -53,7 +53,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         }
         <OverviewStats title="Start Time">
-          {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+          {durationInEnglish(getDuration({ startTime: trial.startTime }))} ago
         </OverviewStats>
         <OverviewStats title="Total Checkpoint Size">
           {totalCheckpointsSize}

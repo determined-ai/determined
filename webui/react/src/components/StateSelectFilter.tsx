@@ -2,8 +2,8 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
+import { commandStateToLabel, runStateToLabel } from 'constants/states';
 import { ALL_VALUE, CommandState, RunState } from 'types';
-import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
 import SelectFilter from './SelectFilter';
 

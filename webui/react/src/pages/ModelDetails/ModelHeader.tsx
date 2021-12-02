@@ -12,7 +12,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 
 import css from './ModelHeader.module.scss';
 
@@ -39,7 +39,7 @@ const ModelHeader: React.FC<Props> = (
       (<Space>
         <Avatar name={model.username} />
         {model.username + ' on ' +
-      formatDatetime(model.creationTime, 'MMM D, YYYY', false)}
+      formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}
       </Space>),
       label: 'Created by',
     },

@@ -7,6 +7,7 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
@@ -22,7 +23,6 @@ import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
-import { terminalRunStates } from 'utils/types';
 
 const { TabPane } = Tabs;
 

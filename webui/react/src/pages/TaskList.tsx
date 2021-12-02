@@ -20,6 +20,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -33,8 +34,7 @@ import { isEqual } from 'utils/data';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
-import { filterTasks } from 'utils/task';
-import { commandToTask, commandTypeToLabel, isTaskKillable } from 'utils/types';
+import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';
@@ -73,7 +73,7 @@ const TaskList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = useMemo(() => tasks?.map(commandToTask) || [], [ tasks ]);
+  const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [ tasks ]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks<CommandType, CommandTask>(
