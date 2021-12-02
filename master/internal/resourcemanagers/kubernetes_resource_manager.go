@@ -205,8 +205,14 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight, sproto.SetGroupPriority:
+	case sproto.SetGroupWeight:
 		// SetGroupWeight and SetGroupPriority are not supported by the Kubernetes RP.
+
+	case sproto.SetGroupPriority:
+		group := k.getOrCreateGroup(ctx, msg.Handler)
+		if msg.Priority != nil {
+			group.priority = msg.Priority
+		}
 
 	case sproto.SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
@@ -276,8 +282,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
-	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(k.reqList, k.groups, trueFilter)
-	reqs := orderTaskMaps(pendingMap, scheduledMap)
+	reqs := sortTasks(k.reqList, k.groups, true)
 	jobQinfo, _ := mergeToJobQInfo(reqs)
 	return jobQinfo
 }
@@ -368,7 +373,8 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
-	g := &group{handler: handler, weight: 1}
+	priority := KubernetesDefaultPriority
+	g := &group{handler: handler, weight: 1, priority: &priority}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 
