@@ -283,7 +283,7 @@ const LogViewer: React.FC<Props> = ({
       addLogs(logs);
 
       if (isNewestFirst) {
-        listRef.current?.scrollToItem(logs.length, 'end');
+        listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
       } else {
         listRef.current?.scrollToItem(0, 'start');
       }
