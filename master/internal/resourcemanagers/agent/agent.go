@@ -20,7 +20,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -182,7 +181,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.bufferForRecovery(ctx, msg)
 			return nil
 		}
-
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
 			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
 			msg.TaskActor.Address())
@@ -275,6 +273,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		ctx.Self().Stop()
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
+		prom.RemoveAgentAsTarget(ctx, a.uuid.String())
 		for cid := range a.containers {
 			stopped := aproto.ContainerError(
 				aproto.AgentFailed, errors.New("agent closed with allocated containers"))
@@ -360,6 +359,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		rsc.ContainerStarted = &sproto.TaskContainerStarted{
 			Addresses: sc.ContainerStarted.Addresses(),
 		}
+		prom.AssociateContainerRuntimeID(sc.Container.ID.String(), sc.ContainerStarted.ContainerInfo.ID)
 	case cproto.Terminated:
 		ctx.Log().
 			WithError(sc.ContainerStopped.Failure).

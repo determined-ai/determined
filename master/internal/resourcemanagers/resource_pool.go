@@ -3,8 +3,6 @@ package resourcemanagers
 import (
 	"crypto/tls"
 
-	"github.com/determined-ai/determined/master/internal/prom"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
@@ -139,11 +137,9 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
 	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
-	for _, allocation := range allocated.Reservations {
-		prom.AssociateTaskActor(req.TaskActor.Address().String(),
-			allocation.Summary().AllocationID.String())
-		prom.AddAllocation(allocation.Summary())
-	}
+	//for _, allocation := range allocated.Reservations {
+	//	prom.AddAllocationContainer(allocation.Summary())
+	//}
 
 	return true
 }
@@ -159,6 +155,7 @@ func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref
 		for _, allocation := range allocated.Reservations {
 			typed := allocation.(*containerReservation)
 			typed.agent.deallocateContainer(typed.container.id)
+			//prom.RemoveAllocationContainer(allocation.Summary())
 		}
 	}
 	rp.taskList.RemoveTaskByHandler(handler)

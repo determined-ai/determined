@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"github.com/determined-ai/determined/master/pkg/device"
 
 	"github.com/determined-ai/determined/master/internal/proxy"
@@ -165,6 +167,12 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {
 			a.Error(ctx, err)
 		}
+
+		for cID, _ := range a.reservations {
+			prom.AssociateAllocationTask(a.req.AllocationID.String(), a.req.TaskID.String())
+			prom.AddAllocationContainer(a.reservations[cID].Summary())
+		}
+
 	case sproto.TaskContainerStateChanged:
 		a.TaskContainerStateChanged(ctx, msg)
 	case sproto.GetTaskContainerState:
@@ -574,6 +582,13 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 }
 
 func (a *Allocation) terminated(ctx *actor.Context) {
+
+	for cID, _ := range a.reservations {
+		ctx.Log().Infof("Releasing container %s summary %v", cID, a.reservations[cID].Summary())
+		prom.DisassociateAllocationTask(a.req.AllocationID.String(), a.req.TaskID.String())
+		prom.RemoveAllocationContainer(a.reservations[cID].Summary())
+	}
+
 	a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.State()}
 	a.exited = true

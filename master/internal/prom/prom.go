@@ -15,21 +15,19 @@ import (
 )
 
 var (
-	// Gauge that maps tasks to their container IDs.
 	containerIDToAllocationID = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
 		Name:      "container_id_allocation_id",
 		Help: `
-Exposes mapping of container ID to allocation ID.
-
-Task ID is the ID of the task within determined. This can be a little opaque but is shown
-by 'det task list', which also provides a mapping to a more human-readable task name.
-
-Container ID is Determined's internal identifier for a container or pod and appears
-as a label on containers and metadata on pods (and thus in labels collected by monitoring tools).
-This is useful to join in on metrics from those monitoring tools (e.g. cAdvisor).
-`,
+Exposes mapping of allocation ID to container ID`,
 	}, []string{"container_id", "allocation_id"})
+
+	allocationIDToTaskID = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Subsystem: "det",
+		Name:      "allocation_id_task_id",
+		Help: `
+Exposes mapping of allocation ID to task ID`,
+	}, []string{"allocation_id", "task_id"})
 
 	containerIDToRuntimeID = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
@@ -37,17 +35,6 @@ This is useful to join in on metrics from those monitoring tools (e.g. cAdvisor)
 		Help:      "a mapping of the container ID to the container ID given be the runtime",
 	}, []string{"container_runtime_id", "container_id"})
 
-	taskActorToAllocation = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Subsystem: "det",
-		Name:      "allocation_id_task_actor",
-		Help:      "a mapping of the task ID to the task actor initiating it",
-	}, []string{"allocation_id", "task_actor"})
-
-	containerIDToExperimentID = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Subsystem: "det",
-		Name:      "container_id_experiment_id",
-		Help:      "a mapping of the container ID to the experiment and trial",
-	}, []string{"container_id", "experiment_id", "trial_id"})
 
 	experimentIDToLabels = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
@@ -59,15 +46,7 @@ This is useful to join in on metrics from those monitoring tools (e.g. cAdvisor)
 		Subsystem: "det",
 		Name:      "gpu_uuid_container_id",
 		Help: `
-Exposes mapping of task name to container ID to GPU uuid.
-
-Container ID is Determined's internal identifier for a container or pod and appears
-as a label on containers or pods (and thus in container or pod monitoring tools) as
-"ai.determined.container_id". This is useful to join in on metrics from those monitoring
-tools (e.g. cAdvisor).
-
-GPU UUID is the device ID as given by NVML (or nvidia-smi). This is useful to join in on
-GPU metrics from other monitoring tools (e.g. DCGM).
+Exposes mapping of Determined's internal container ID to the GPU UUID/device ID as given by nvidia-smi
 `,
 	}, []string{"gpu_uuid", "container_id"})
 
@@ -76,13 +55,12 @@ GPU metrics from other monitoring tools (e.g. DCGM).
 )
 
 const (
-	cAdvisorExporter = ":8080"
-	dcgmExporter     = ":9400"
+	cAdvisorPort = ":8080"
+	dcgmPort     = ":9400"
 
 	// The are extra labels added to metrics on scrape.
 	detAgentIDLabel      = "det_agent_id"
 	detResourcePoolLabel = "det_resource_pool"
-	detAgentName         = "det_label"
 
 	targetsFile = "/etc/determined/targets.json"
 )
@@ -96,46 +74,42 @@ func init() {
 	DetStateMetrics.MustRegister(containerIDToAllocationID)
 	DetStateMetrics.MustRegister(containerIDToRuntimeID)
 	DetStateMetrics.MustRegister(gpuUUIDToContainerID)
-	DetStateMetrics.MustRegister(taskActorToAllocation)
-	DetStateMetrics.MustRegister(containerIDToExperimentID)
 	DetStateMetrics.MustRegister(experimentIDToLabels)
+	DetStateMetrics.MustRegister(allocationIDToTaskID)
 }
 
-// AllocationContainer records the given task owns the given container.
-func AllocationContainer(cID string, aID string) {
+func AssociateAllocationContainer(aID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, aID).Inc()
 }
 
-// AddAllocation records the given allocation
-func AddAllocation(summary sproto.ContainerSummary) {
-	cID := summary.ID.String()
-	aID := summary.AllocationID.String()
-	containerIDToAllocationID.WithLabelValues(cID, aID).Inc()
-	AssociateContainerGPUs(cID, summary.Devices...)
+func AssociateAllocationTask(aID string, tID string) {
+	allocationIDToTaskID.WithLabelValues(aID, tID).Inc()
 }
 
-// DisassociateTaskContainer records the given task no longer owns the given container.
-func DisassociateTaskContainer(tID string, cID string) {
-	containerIDToAllocationID.WithLabelValues(cID, tID).Dec()
+func DisassociateAllocationTask(aID string, tID string) {
+	allocationIDToTaskID.WithLabelValues(aID, tID).Dec()
 }
 
-func AssociateTaskActor(actor string, aID string) {
-	taskActorToAllocation.WithLabelValues(actor, aID).Inc()
-}
-
-// DisassociateTaskActor records the given task owns the given container.
-func DisassociateTaskActor(tID string, actor string) {
-	taskActorToAllocation.WithLabelValues(tID, actor).Dec()
-}
-
-// AllocationContainer associated the given Determined container ID with a runtime ID (e.g. Docker ID).
 func AssociateContainerRuntimeID(cID string, dcID string) {
 	containerIDToRuntimeID.WithLabelValues(dcID, cID).Inc()
 }
 
-func AssociateContainerExperimentID(cID string, eID string, tID string) {
-	experimentIDToLabels.WithLabelValues(eID, "").Inc()
-	containerIDToExperimentID.WithLabelValues(cID, eID, tID).Inc()
+func AddAllocationContainer(summary sproto.ContainerSummary) {
+	AssociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
+	for _, d := range summary.Devices {
+		AssociateContainerGPU(summary.ID.String(), d)
+	}
+}
+
+func RemoveAllocationContainer(summary sproto.ContainerSummary) {
+	DisassociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
+	for _, d := range summary.Devices {
+		DisassociateContainerGPU(summary.ID.String(), d)
+	}
+}
+
+func DisassociateAllocationContainer(aID string, cID string) {
+	containerIDToAllocationID.WithLabelValues(cID, aID).Dec()
 }
 
 func AssociateExperimentIDLabels(eID string, labels []string) {
@@ -144,39 +118,21 @@ func AssociateExperimentIDLabels(eID string, labels []string) {
 	}
 }
 
-func DisassociateContainerExperimentID(cID string, eID string, tID string) {
-	containerIDToExperimentID.WithLabelValues(cID, eID, tID).Dec()
-}
-
-// DisassociateTaskContainer records the given task no longer owns the given container.
-func DisassociateContainerRuntimeID(cID string, dcID string) {
-	containerIDToAllocationID.WithLabelValues(cID, dcID).Dec()
-}
-
-// AssociateContainerGPUs records a usage of some devices by the specified a Determined container.
-func AssociateContainerGPUs(cID string, ds ...device.Device) {
-	for _, d := range ds {
-		if d.Type == device.GPU {
-			gpuUUIDToContainerID.
-				WithLabelValues(d.UUID, cID).
-				Inc()
-		}
+func AssociateContainerGPU(cID string, d device.Device) {
+	if d.Type == device.GPU {
+		gpuUUIDToContainerID.
+			WithLabelValues(d.UUID, cID).
+			Inc()
 	}
 }
 
-// DisassociateContainerGPUs records a completion of usage of some devices by the specified a Determined container.
-func DisassociateContainerGPUs(cID string, ds ...device.Device) {
-	for _, d := range ds {
-		if d.Type == device.GPU {
-			gpuUUIDToContainerID.
-				WithLabelValues(d.UUID, cID).
-				Dec()
-			//Need to Delete after prom has scraped the 0.
-			//gpuUUIDToContainerID.
-			//	// Note, theses labels are order-sensitive. Out of order is a memory leak.
-			//	DeleteLabelValues(d.UUID, cID)
-		}
+func DisassociateContainerGPU(cID string, d device.Device) {
+	if d.Type != device.GPU {
+		return
 	}
+
+	gpuUUIDToContainerID.WithLabelValues(d.UUID, cID).Dec()
+	gpuUUIDToContainerID.DeleteLabelValues(d.UUID, cID)
 }
 
 // AddAgentAsTarget adds an entry to a list of currently active agents in a target JSON-formatted file
@@ -201,8 +157,8 @@ func AddAgentAsTarget(
 
 	fileSDConfig := fileSDConfigEntry{
 		Targets: []string{
-			agentAddress + dcgmExporter,
-			agentAddress + cAdvisorExporter,
+			agentAddress + dcgmPort,
+			agentAddress + cAdvisorPort,
 		}, Labels: map[string]string{
 			detAgentIDLabel:      agentId,
 			detResourcePoolLabel: agentResourcePool,
@@ -217,6 +173,32 @@ func AddAgentAsTarget(
 
 	if err != nil {
 		ctx.Log().Errorf("Error adding entry to file %s", err)
+	}
+}
+
+// RemoveAgentAsTarget removes agent from the file SD targets config used by prometheus
+// to scrape agent addresses
+func RemoveAgentAsTarget(ctx *actor.Context,
+	agentId string,
+) {
+	ctx.Log().Infof("Removing %s as a target", agentId)
+
+	fileSDConfigs := getFileSDConfigs()
+
+	for i := range fileSDConfigs {
+		ctx.Log().Infof("Checking %s", fileSDConfigs[i].Labels[detAgentIDLabel])
+
+		if fileSDConfigs[i].Labels[detAgentIDLabel] == agentId {
+			ctx.Log().Infof("Removing agent %s from targets.json", agentId)
+			fileSDConfigs = append(fileSDConfigs[:i], fileSDConfigs[i+1:]...)
+			break
+		}
+	}
+
+	err := writeConfigsToTargetsFile(fileSDConfigs)
+
+	if err != nil {
+		ctx.Log().Errorf("Error updating targets file %s", err)
 	}
 }
 
@@ -238,7 +220,7 @@ func writeConfigsToTargetsFile(configs []fileSDConfigEntry) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(targetsFile, targetsJson, 0644)
+	err = ioutil.WriteFile(targetsFile, targetsJson, 0644) //nolint: gosec
 
 	if err != nil {
 		return err
