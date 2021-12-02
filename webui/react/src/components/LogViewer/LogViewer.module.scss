@@ -6,10 +6,19 @@
   width: 100%;
 
   .container {
+    height: 100%;
+    position: relative;
+  }
+  .container > .logs {
     font-family: 'Source Code Pro', monospace;
     font-size: var(--theme-sizes-font-small);
     height: 100%;
-    position: relative;
+  }
+  .container > .empty {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    width: 100%;
   }
   .scrollTo {
     bottom: var(--theme-sizes-layout-giant);
