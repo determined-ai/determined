@@ -7,6 +7,7 @@ import { throttle } from 'throttle-debounce';
 import { formatDatetime } from 'utils/datetime';
 
 import Icon from 'components/Icon';
+import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
@@ -95,15 +96,15 @@ const LogViewer: React.FC<Props> = ({
   ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const logsRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
   const local = useRef(clone(defaultLocal));
   const [ canceler ] = useState(new AbortController());
   const [ isNewestFirst, setIsNewestFirst ] = useState(true);
   const [ isTailing, setIsTailing ] = useState(true);
   const [ logs, setLogs ] = useState<ViewerLog[]>([]);
-  const containerSize = useResize(containerRef);
-  const charMeasures = useGetCharMeasureInContainer(containerRef);
+  const containerSize = useResize(logsRef);
+  const charMeasures = useGetCharMeasureInContainer(logsRef);
   const enableTailingClasses = [ css.enableTailing ];
 
   if (isTailing && isNewestFirst) enableTailingClasses.push(css.enabled);
@@ -376,9 +377,9 @@ const LogViewer: React.FC<Props> = ({
    * newline from that field.
    */
   useLayoutEffect(() => {
-    if (!containerRef.current) return;
+    if (!logsRef.current) return;
 
-    const target = containerRef.current;
+    const target = logsRef.current;
     const handleCopy = (e: ClipboardEvent): void => {
       const clipboardFormat = 'text/plain';
       const levelValues = Object.values(LogLevel).join('|');
@@ -462,17 +463,24 @@ const LogViewer: React.FC<Props> = ({
       options={logViewerOptions}
       title={props.title}>
       <div className={css.base} ref={baseRef}>
-        <div className={css.container} ref={containerRef}>
-          <VariableSizeList
-            height={containerSize.height}
-            itemCount={logs.length}
-            itemData={logs}
-            itemSize={getItemHeight}
-            ref={listRef}
-            width="100%"
-            onItemsRendered={handleItemsRendered}>
-            {LogViewerRow}
-          </VariableSizeList>
+        <div className={css.container}>
+          <div className={css.logs} ref={logsRef}>
+            <VariableSizeList
+              height={containerSize.height}
+              itemCount={logs.length}
+              itemData={logs}
+              itemSize={getItemHeight}
+              ref={listRef}
+              width="100%"
+              onItemsRendered={handleItemsRendered}>
+              {LogViewerRow}
+            </VariableSizeList>
+          </div>
+          {logs.length === 0 && (
+            <div className={css.empty}>
+              <Message title="No logs to show." type={MessageType.Empty} />
+            </div>
+          )}
         </div>
         <div className={css.scrollTo}>
           <Tooltip placement="left" title="Scroll to Oldest">
