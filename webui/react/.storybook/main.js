@@ -19,5 +19,6 @@ module.exports = {
     '@storybook/addon-postcss',
     '@storybook/addon-viewport',
   ],
+  staticDirs: [ { from: '../src/assets', to: '/assets' } ],
   stories: ['../src/**/*.stories.@(ts|tsx)'],
 };
