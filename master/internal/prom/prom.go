@@ -35,7 +35,6 @@ Exposes mapping of allocation ID to task ID`,
 		Help:      "a mapping of the container ID to the container ID given be the runtime",
 	}, []string{"container_runtime_id", "container_id"})
 
-
 	experimentIDToLabels = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
 		Name:      "experiment_id_label",
@@ -50,7 +49,7 @@ Exposes mapping of Determined's internal container ID to the GPU UUID/device ID 
 `,
 	}, []string{"gpu_uuid", "container_id"})
 
-	// Reg is a prometheus registry containing all exported user-facing metrics.
+	// DetStateMetrics is a prometheus registry containing all exported user-facing metrics.
 	DetStateMetrics = prometheus.NewRegistry()
 )
 
@@ -70,7 +69,7 @@ type fileSDConfigEntry struct {
 	Labels  map[string]string `json:"labels"`
 }
 
-func init() {
+func init() { //nolint: gochecknoinits
 	DetStateMetrics.MustRegister(containerIDToAllocationID)
 	DetStateMetrics.MustRegister(containerIDToRuntimeID)
 	DetStateMetrics.MustRegister(gpuUUIDToContainerID)
@@ -78,22 +77,27 @@ func init() {
 	DetStateMetrics.MustRegister(allocationIDToTaskID)
 }
 
+// AssociateAllocationContainer associates an allocation with its container ID
 func AssociateAllocationContainer(aID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, aID).Inc()
 }
 
+// AssociateAllocationTask associates an allocation ID with its task ID
 func AssociateAllocationTask(aID string, tID string) {
 	allocationIDToTaskID.WithLabelValues(aID, tID).Inc()
 }
 
+// DisassociateAllocationTask disassociates an allocation ID with its task ID
 func DisassociateAllocationTask(aID string, tID string) {
 	allocationIDToTaskID.WithLabelValues(aID, tID).Dec()
 }
 
+// AssociateContainerRuntimeID associates a Determined container ID with the docker container ID
 func AssociateContainerRuntimeID(cID string, dcID string) {
 	containerIDToRuntimeID.WithLabelValues(dcID, cID).Inc()
 }
 
+// AddAllocationContainer associates allocation and container and container and GPUs
 func AddAllocationContainer(summary sproto.ContainerSummary) {
 	AssociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
 	for _, d := range summary.Devices {
@@ -101,6 +105,7 @@ func AddAllocationContainer(summary sproto.ContainerSummary) {
 	}
 }
 
+// RemoveAllocationContainer disassociates allocation and container and container and its GPUs
 func RemoveAllocationContainer(summary sproto.ContainerSummary) {
 	DisassociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
 	for _, d := range summary.Devices {
@@ -108,16 +113,19 @@ func RemoveAllocationContainer(summary sproto.ContainerSummary) {
 	}
 }
 
+// DisassociateAllocationContainer disassociates allocation ID with its container ID
 func DisassociateAllocationContainer(aID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, aID).Dec()
 }
 
+// AssociateExperimentIDLabels assicates experiment ID with a list of labels
 func AssociateExperimentIDLabels(eID string, labels []string) {
 	for i := range labels {
 		experimentIDToLabels.WithLabelValues(eID, labels[i]).Inc()
 	}
 }
 
+// AssociateContainerGPU associates container ID with GPU device ID
 func AssociateContainerGPU(cID string, d device.Device) {
 	if d.Type == device.GPU {
 		gpuUUIDToContainerID.
@@ -126,6 +134,7 @@ func AssociateContainerGPU(cID string, d device.Device) {
 	}
 }
 
+// DisassociateContainerGPU removes association between container ID and device ID
 func DisassociateContainerGPU(cID string, d device.Device) {
 	if d.Type != device.GPU {
 		return
@@ -135,21 +144,17 @@ func DisassociateContainerGPU(cID string, d device.Device) {
 	gpuUUIDToContainerID.DeleteLabelValues(d.UUID, cID)
 }
 
-// AddAgentAsTarget adds an entry to a list of currently active agents in a target JSON-formatted file
-// This file is watched by Prometheus for changes to which targets to scrape
+// AddAgentAsTarget adds an entry to a list of currently active agents in a target JSON file.
+// This file is watched by Prometheus for changes to which targets to scrape.
 func AddAgentAsTarget(
 	ctx *actor.Context,
-	agentId string,
+	agentID string,
 	agentAddress string,
 	agentResourcePool string) {
-	ctx.Log().Infof("Adding agent %s at %s as a prometheus target", agentId, agentAddress)
+	ctx.Log().Infof("adding agent %s at %s as a prometheus target", agentID, agentAddress)
 
 	if _, err := os.Stat(targetsFile); os.IsNotExist(err) {
-		pwd, err := os.Getwd()
-		if err == nil {
-			ctx.Log().Infof("pwd %v", pwd)
-		}
-		_, err = os.OpenFile(targetsFile, os.O_RDONLY|os.O_CREATE, 0666)
+		_, err = os.OpenFile(targetsFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
 			ctx.Log().Errorf("Error creating targets config file %s", err)
 		}
@@ -160,7 +165,7 @@ func AddAgentAsTarget(
 			agentAddress + dcgmPort,
 			agentAddress + cAdvisorPort,
 		}, Labels: map[string]string{
-			detAgentIDLabel:      agentId,
+			detAgentIDLabel:      agentID,
 			detResourcePoolLabel: agentResourcePool,
 		},
 	}
@@ -176,8 +181,7 @@ func AddAgentAsTarget(
 	}
 }
 
-// RemoveAgentAsTarget removes agent from the file SD targets config used by prometheus
-// to scrape agent addresses
+// RemoveAgentAsTarget removes agent from the file SD targets config.
 func RemoveAgentAsTarget(ctx *actor.Context,
 	agentId string,
 ) {

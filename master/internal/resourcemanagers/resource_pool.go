@@ -137,9 +137,6 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
 	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
-	//for _, allocation := range allocated.Reservations {
-	//	prom.AddAllocationContainer(allocation.Summary())
-	//}
 
 	return true
 }
