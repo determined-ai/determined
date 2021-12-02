@@ -7,9 +7,6 @@ import { throttle } from 'throttle-debounce';
 import { formatDatetime } from 'utils/datetime';
 
 import Icon from 'components/Icon';
-import LogViewerEntry, {
-  DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH,
-} from 'components/LogViewerEntry';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
@@ -21,6 +18,7 @@ import { copyToClipboard } from 'utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
 import css from './LogViewer.module.scss';
+import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 
 interface Props {
   decoder: (data: unknown) => Log;
