@@ -6,9 +6,9 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
   ExperimentConfig, RunState } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/workload';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';

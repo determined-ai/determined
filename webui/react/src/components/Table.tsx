@@ -4,9 +4,11 @@ import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
+import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import {
   CheckpointState,
@@ -14,10 +16,8 @@ import {
   ModelItem,
   ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
-import { ConditionalWrapper } from 'utils/react';
+import { durationInEnglish, getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { commandTypeToLabel } from 'utils/types';
 import { waitPageUrl } from 'wait';
 
 import Link from './Link';
@@ -64,7 +64,7 @@ export const archivedRenderer = (archived: boolean): React.ReactNode => {
 };
 
 export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
-  return shortEnglishHumannizer(getDuration(times));
+  return durationInEnglish(getDuration(times));
 };
 
 export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
@@ -137,7 +137,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 /* Experiment Table Column Renderers */
 
 export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
-  return shortEnglishHumannizer(getDuration(record));
+  return durationInEnglish(getDuration(record));
 };
 
 export const experimentNameRenderer = (

@@ -14,7 +14,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelVersion } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { copyToClipboard } from 'utils/dom';
 
 import css from './ModelVersionHeader.module.scss';
@@ -63,7 +63,7 @@ const ModelVersionHeader: React.FC<Props> = (
           <Avatar name={modelVersion.username} /> :
           <Avatar name={modelVersion.model.username} />}
         {modelVersion.username ? modelVersion.username : modelVersion.model.username}
-        on {formatDatetime(modelVersion.creationTime, 'MMM D, YYYY', false)}
+        on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
       </Space>),
       label: 'Created by',
     },

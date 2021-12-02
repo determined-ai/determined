@@ -2,12 +2,12 @@ import { Alert, Button, InputNumber, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
-import React, { Dispatch, useCallback, useEffect, useReducer, useState } from 'react';
+import React, { Dispatch, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
+import useJupyterLab from 'hooks/useJupyterLab';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
-import { launchJupyterLab, previewJupyterLab } from 'utils/task';
 
 import css from './JupyterLabModal.module.scss';
 import Link from './Link';
@@ -20,11 +20,10 @@ const STORAGE_PATH = 'jupyter-lab-launch';
 const STORAGE_KEY = 'jupyter-lab-config';
 const DEFAULT_SLOT_COUNT = 1;
 
-type DispatchFunction =
-  (Dispatch<{
-    key: keyof JupyterLabConfig,
-    value: string | number | undefined
-  }>)
+type DispatchFunction = Dispatch<{
+  key: keyof JupyterLabConfig,
+  value: string | number | undefined
+}>;
 
 function reducer(
   state: JupyterLabConfig,
@@ -33,7 +32,7 @@ function reducer(
   return { ...state, [action.key]: action.value };
 }
 
-const useJupyterLabForm = (): [JupyterLabConfig, DispatchFunction] => {
+const useJupyterLabForm = (): [ JupyterLabConfig, DispatchFunction ] => {
   const storage = useStorage(STORAGE_PATH);
   const [ state, dispatch ] = useReducer(
     reducer,
@@ -59,20 +58,14 @@ interface JupyterLabModalProps extends ModalProps {
 
 interface FormProps {
   fields: JupyterLabConfig;
-  onChange: DispatchFunction;
+  onChange?: DispatchFunction;
 }
 
 interface FullConfigProps {
   config?: string;
   configError?: string;
-  onChange: (config: string) => void;
+  onChange?: (config: string) => void;
   setButtonDisabled: (buttonDisabled: boolean) => void;
-}
-
-interface ResourceInfo {
-  hasAux: boolean;
-  hasCompute: boolean;
-  maxSlots: number | undefined;
 }
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
@@ -80,25 +73,26 @@ const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 const JupyterLabModal: React.FC<JupyterLabModalProps> = (
   { visible = false, onLaunch, ...props }: JupyterLabModalProps,
 ) => {
-
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ fields, dispatch ] = useJupyterLabForm();
   const [ config, setConfig ] = useState<string | undefined>();
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
+  const [ fields, dispatch ] = useJupyterLabForm();
+  const { launchJupyterLab, previewJupyterLab } = useJupyterLab();
+
   const fetchConfig = useCallback(async () => {
     try {
-      const newConfig = await previewJupyterLab(
-        fields.slots,
-        fields.template,
-        fields.name,
-        fields.pool,
-      );
+      const newConfig = await previewJupyterLab({
+        name: fields.name,
+        pool: fields.pool,
+        slots: fields.slots,
+        templateName: fields.template,
+      });
       setConfig(yaml.dump(newConfig));
     } catch (e) {
       setConfig(undefined);
     }
-  }, [ fields ]);
+  }, [ fields, previewJupyterLab ]);
 
   useEffect(() => {
     if (showFullConfig) fetchConfig();
@@ -115,16 +109,15 @@ const JupyterLabModal: React.FC<JupyterLabModalProps> = (
     if (showFullConfig) {
       launchJupyterLab(yaml.load(config || '') as RawJson);
     } else {
-      launchJupyterLab(
-        undefined,
-        fields.slots,
-        fields.template,
-        fields.name,
-        fields.pool,
-      );
+      launchJupyterLab({
+        name: fields.name,
+        pool: fields.pool,
+        slots: fields.slots,
+        templateName: fields.template,
+      });
     }
     if (onLaunch) onLaunch();
-  }, [ config, fields, onLaunch, showFullConfig ]);
+  }, [ config, fields, launchJupyterLab, onLaunch, showFullConfig ]);
 
   const handleConfigChange = useCallback((config: string) => setConfig(config), []);
 
@@ -144,18 +137,20 @@ const JupyterLabModal: React.FC<JupyterLabModalProps> = (
       visible={visible}
       width={540}
       {...props}>
-      {showFullConfig ?
+      {showFullConfig ? (
         <JupyterLabFullConfig
           config={config}
           setButtonDisabled={setButtonDisabled}
-          onChange={handleConfigChange} /> :
+          onChange={handleConfigChange}
+        />
+      ) : (
         <JupyterLabForm fields={fields} onChange={dispatch} />
-      }
+      )}
     </Modal>
   );
 };
 
-const JupyterLabFullConfig:React.FC<FullConfigProps> = (
+const JupyterLabFullConfig: React.FC<FullConfigProps> = (
   { config, onChange, setButtonDisabled }: FullConfigProps,
 ) => {
   const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
@@ -164,7 +159,7 @@ const JupyterLabFullConfig:React.FC<FullConfigProps> = (
     if (!Array.isArray(allFields) || allFields.length === 0) return;
     try {
       const configString = allFields[0].value;
-      onChange(configString);
+      onChange?.(configString);
     } catch (e) {}
   }, [ onChange ]);
 
@@ -214,50 +209,35 @@ const JupyterLabFullConfig:React.FC<FullConfigProps> = (
   );
 };
 
-interface LabelledLineProps {
-  content: JSX.Element;
-  label: string;
-}
-
-const LabelledLine: React.FC<LabelledLineProps> = (
-  { label, content }: LabelledLineProps,
-) => {
-  return <div className={css.line}><p>{label}</p>{content}</div>;
-};
-
-const JupyterLabForm:React.FC<FormProps> = (
+const JupyterLabForm: React.FC<FormProps> = (
   { onChange, fields }: FormProps,
 ) => {
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ resourceInfo, setResourceInfo ] = useState<ResourceInfo>(
-    { hasAux: false, hasCompute: true, maxSlots: DEFAULT_SLOT_COUNT },
-  );
 
-  const calculateResourceInfo = useCallback((selectedPoolName: string | undefined) => {
-    const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
-    if (!selectedPool) {
-      return { hasAux: false, hasCompute: false, maxSlots: 0 };
-    }
+  const resourceInfo = useMemo(() => {
+    const selectedPool = resourcePools.find(pool => pool.name === fields.pool);
+    if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
+
     const hasAuxCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
-    const hasComputeCapacity = selectedPool.slotsAvailable > 0
-      || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
-    const maxSlots = hasComputeCapacity ?
-      (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0 ?
-        selectedPool.slotsPerAgent : undefined) : 0;
-    if (hasAuxCapacity && !hasComputeCapacity) {
-      onChange({ key: 'slots', value: 0 });
-    }
+    const hasSlots = selectedPool.slotsAvailable > 0;
+    const maxSlots = selectedPool.slotsPerAgent ?? 0;
+    const hasSlotsPerAgent = maxSlots > 0;
+    const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
+    if (hasAuxCapacity && !hasComputeCapacity) onChange?.({ key: 'slots', value: 0 });
+
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [ onChange, resourcePools ]);
+  }, [ fields.pool, onChange, resourcePools ]);
 
-  useEffect(() => {
-    setResourceInfo(calculateResourceInfo(fields.pool));
-  }, [ fields.pool, calculateResourceInfo ]);
+  const fetchResourcePools = useCallback(async () => {
+    try {
+      setResourcePools(await getResourcePools({}));
+    } catch {}
+  }, []);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -266,61 +246,69 @@ const JupyterLabForm:React.FC<FormProps> = (
   }, []);
 
   useEffect(() => {
-    fetchTemplates();
-  }, [ fetchTemplates ]);
-
-  const fetchResourcePools = useCallback(async () => {
-    try {
-      setResourcePools(await getResourcePools({}));
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     fetchResourcePools();
   }, [ fetchResourcePools ]);
 
+  useEffect(() => {
+    fetchTemplates();
+  }, [ fetchTemplates ]);
+
   return (
     <div className={css.form}>
-      <LabelledLine
-        content = {
-          <Select
-            allowClear
-            placeholder="No template (optional)"
-            value={fields.template}
-            onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
-            {templates.map(temp =>
-              <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
-          </Select>}
-        label="Template" />
-      <LabelledLine
-        content = {
-          <Input
-            placeholder="Name"
-            value={fields.name}
-            onChange={(e) => onChange({ key: 'name', value: e.target.value })} />}
-        label="Name" />
-      <LabelledLine
-        content = {
-          <Select
-            allowClear
-            placeholder="Pick the best option"
-            value={fields.pool}
-            onChange={(value) => onChange({ key: 'pool', value: value })}>
-            {resourcePools.map(pool =>
-              <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
-          </Select>}
-        label="Resource Pool" />
-      {resourceInfo.hasCompute &&
-        <LabelledLine
-          content = {
+      {[
+        {
+          content: (
+            <Select
+              allowClear
+              placeholder="No template (optional)"
+              value={fields.template}
+              onChange={value => onChange?.({ key: 'template', value: value?.toString() })}>
+              {templates.map(temp =>
+                <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+            </Select>
+          ),
+          label: 'Template',
+        },
+        {
+          content: (
+            <Input
+              placeholder="Name"
+              value={fields.name}
+              onChange={(e) => onChange?.({ key: 'name', value: e.target.value })}
+            />
+          ),
+          label: 'Name',
+        },
+        {
+          content: (
+            <Select
+              allowClear
+              placeholder="Pick the best option"
+              value={fields.pool}
+              onChange={value => onChange?.({ key: 'pool', value: value })}>
+              {resourcePools.map(pool =>
+                <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+            </Select>
+          ),
+          label: 'Resource Pool',
+        },
+        {
+          condition: resourceInfo.hasCompute,
+          content: (
             <InputNumber
               defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
               max={resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
-              onChange={(value) => onChange({ key: 'slots', value: value })} />}
-          label="Slots" />
-      }
+              onChange={(value) => onChange?.({ key: 'slots', value: value })}
+            />
+          ),
+          label: 'Slots',
+        },
+      ].map(row => {
+        if (row.condition === false) return null;
+        return <div className={css.line} key={row.label}><p>{row.label}</p>{row.content}</div>;
+      })}
     </div>
   );
 };

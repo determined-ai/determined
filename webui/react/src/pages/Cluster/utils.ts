@@ -1,6 +1,6 @@
 import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
 import { sumArrays } from 'utils/array';
-import { secondToHour } from 'utils/time';
+import { secondToHour } from 'utils/datetime';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 

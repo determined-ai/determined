@@ -9,6 +9,7 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -19,8 +20,7 @@ import {
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { flattenObject, isBoolean, isObject } from 'utils/data';
-import { metricNameToStr } from 'utils/string';
-import { terminalRunStates } from 'utils/types';
+import { metricNameToStr } from 'utils/metric';
 
 import css from './HpHeatMaps.module.scss';
 

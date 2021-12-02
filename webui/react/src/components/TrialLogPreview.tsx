@@ -7,7 +7,7 @@ import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 
 import LogViewerEntry, { DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 import css from './TrialLogPreview.module.scss';
@@ -54,7 +54,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
       event => {
         const entry = jsonToTrialLog(event);
         setLogEntry({
-          formattedTime: formatDatetime(entry.time, DATETIME_FORMAT),
+          formattedTime: formatDatetime(entry.time, { format: DATETIME_FORMAT }),
           level: entry.level || LogLevel.Info,
           message: entry.message,
         });

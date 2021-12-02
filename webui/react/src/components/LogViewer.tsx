@@ -12,7 +12,7 @@ import usePrevious from 'hooks/usePrevious';
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { ansiToHtml, copyToClipboard } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
@@ -224,7 +224,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     const newLogs = addedLogs
       .filter(log => log.id < logIdRange.min || log.id > logIdRange.max)
       .map(log => {
-        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+        const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
         return { ...log, formattedTime };
       });
     if (newLogs.length === 0) return;
@@ -410,7 +410,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const formatClipboardHeader = useCallback((log: Log): string => {
     const format = `%${MAX_DATETIME_LENGTH - 1}s `;
     const level = `<${log.level || ''}>`;
-    const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+    const datetime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
     return props.disableLevel ?
       sprintf(format, datetime) :
       sprintf(`%-9s ${format}`, level, datetime);

@@ -6,6 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
@@ -17,7 +18,6 @@ import {
   metricTypeParamMap, RunState,
 } from 'types';
 import { flattenObject } from 'utils/data';
-import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';

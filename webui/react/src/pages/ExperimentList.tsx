@@ -19,6 +19,7 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -38,9 +39,7 @@ import {
 import { isBoolean, isEqual } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
-import {
-  cancellableRunStates, deletableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
-} from 'utils/types';
+import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { openCommand } from 'wait';
 
 import settingsConfig, { Settings } from './ExperimentList.settings';
@@ -285,7 +284,7 @@ const ExperimentList: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
-        task={experimentToTask(record)}
+        task={taskFromExperiment(record)}
         onComplete={handleActionComplete} />
     );
 

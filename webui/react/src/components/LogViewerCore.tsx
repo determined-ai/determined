@@ -16,7 +16,7 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { Log, LogLevel, RecordKey } from 'types';
 import { clone } from 'utils/data';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { copyToClipboard } from 'utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
@@ -70,7 +70,7 @@ const defaultLocal = {
 const formatClipboardHeader = (log: Log): string => {
   const format = `%${MAX_DATETIME_LENGTH - 1}s `;
   const level = `<${log.level || ''}>`;
-  const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+  const datetime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
   return sprintf(`%-9s ${format}`, level, datetime);
 };
 
@@ -139,7 +139,7 @@ const LogViewerCore: React.FC<Props> = ({
         return false;
       })
       .map(log => {
-        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+        const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
         return { ...log, formattedTime };
       })
       .sort(logSorter(sortKey));

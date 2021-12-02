@@ -63,6 +63,7 @@ module.exports = {
       'newlines-between': 'always',
     } ],
     'indent': 'off',
+    'jest/valid-title': 'off',
     'jsx-quotes': [ 'error', 'prefer-double' ],
     'key-spacing': [ 'error', {
       multiLine: {

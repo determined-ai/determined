@@ -10,7 +10,7 @@ import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone } from 'utils/data';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
-import { upgradeConfig } from 'utils/types';
+import { upgradeConfig } from 'utils/experiment';
 
 import css from './useCreateExperimentModal.module.scss';
 import usePrevious from './usePrevious';
@@ -89,8 +89,8 @@ const useCreateExperimentModal = (): ModalHooks => {
 
   const showModal = useCallback(({ experiment, trial, type }: ShowProps) => {
     const isFork = type === CreateExperimentType.Fork;
+    let config = upgradeConfig(experiment.configRaw);
 
-    let config = clone(experiment.configRaw);
     if (!isFork && trial) {
       config = trialContinueConfig(config, trial.hyperparameters, trial.id);
       config.description = `Continuation of trial ${trial.id}, experiment ${experiment.id}` +
@@ -98,7 +98,6 @@ const useCreateExperimentModal = (): ModalHooks => {
     } else if (!isFork) {
       if (config.description) config.description = `Fork of ${config.description}`;
     }
-    upgradeConfig(config);
 
     setModalState({
       config,

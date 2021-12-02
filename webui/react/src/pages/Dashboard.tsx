@@ -7,6 +7,7 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
+import { activeCommandStates, activeRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
@@ -25,8 +26,7 @@ import {
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
 import { isEqual, validateEnumList } from 'utils/data';
-import { filterTasks } from 'utils/task';
-import { activeCommandStates, activeRunStates, commandToTask, experimentToTask } from 'utils/types';
+import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
 
 const defaultFilters: TaskFilters = {
   limit: 25,
@@ -146,8 +146,8 @@ const Dashboard: React.FC = () => {
 
   const filteredTasks = useMemo(() => {
     const sorted = [
-      ...(experiments || []).map(experimentToTask),
-      ...(tasks || []).map(commandToTask),
+      ...(experiments || []).map(taskFromExperiment),
+      ...(tasks || []).map(taskFromCommandTask),
     ].sort(
       (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
     );
