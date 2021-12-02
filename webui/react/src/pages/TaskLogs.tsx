@@ -1,16 +1,20 @@
 import queryString from 'query-string';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
+import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToTaskLog } from 'services/decoder';
+import { consumeStream } from 'services/utils';
 import { CommandType } from 'types';
 
+import TaskLogFilters, { Filters } from './TaskLogFilters';
 import css from './TaskLogs.module.scss';
+import settingsConfig, { Settings } from './TaskLogs.settings';
 
 interface Params {
   taskId: string;
@@ -20,10 +24,37 @@ interface Params {
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 const TaskLogs: React.FC = () => {
+  const [ filterOptions, setFilterOptions ] = useState<Filters>({});
   const { taskId, taskType } = useParams<Params>();
+
   const queries = queryString.parse(location.search);
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
   const title = `${queries.id ? `${queries.id} ` : ''}Logs`;
+
+  const {
+    resetSettings,
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
+
+  const filterValues: Filters = useMemo(() => ({
+    agentIds: settings.agentId,
+    containerIds: settings.containerId,
+    levels: settings.level,
+    rankIds: settings.rankId,
+  }), [ settings ]);
+
+  const handleFilterChange = useCallback((filters: Filters) => {
+    updateSettings({
+      agentId: filters.agentIds,
+      allocationId: filters.allocationIds,
+      containerId: filters.containerIds,
+      level: filters.levels,
+      rankId: filters.rankIds,
+    });
+  }, [ updateSettings ]);
+
+  const handleFilterReset = useCallback(() => resetSettings(), [ resetSettings ]);
 
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = {
@@ -53,11 +84,11 @@ const TaskLogs: React.FC = () => {
       taskId,
       options.limit,
       options.follow,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+      settings.allocationId,
+      settings.agentId,
+      settings.containerId,
+      settings.rankId,
+      settings.level,
       undefined,
       undefined,
       options.timestampBefore ? new Date(options.timestampBefore) : undefined,
@@ -65,7 +96,33 @@ const TaskLogs: React.FC = () => {
       options.orderBy as OrderBy,
       { signal: config.canceler.signal },
     );
+  }, [ settings, taskId ]);
+
+  useEffect(() => {
+    const canceler = new AbortController();
+
+    consumeStream(
+      detApi.StreamingJobs.taskLogsFields(
+        taskId,
+        true,
+        { signal: canceler.signal },
+      ),
+      event => setFilterOptions(event as Filters),
+    );
+
+    return () => canceler.abort();
   }, [ taskId ]);
+
+  const logFilters = (
+    <div className={css.filters}>
+      <TaskLogFilters
+        options={filterOptions}
+        values={filterValues}
+        onChange={handleFilterChange}
+        onReset={handleFilterReset}
+      />
+    </div>
+  );
 
   return (
     <Page
@@ -74,10 +131,11 @@ const TaskLogs: React.FC = () => {
         { breadcrumbName: 'Tasks', path: paths.taskList() },
         { breadcrumbName: `${taskTypeLabel} ${taskId.substr(0, 8)}`, path: '#' },
       ]}
-      id="task-logs">
+      id="task-logs"
+      title={title}>
       <LogViewerCore
         decoder={jsonToTaskLog}
-        title={<div className={css.title}>{title}</div>}
+        title={logFilters}
         onFetch={handleFetch}
       />
     </Page>
