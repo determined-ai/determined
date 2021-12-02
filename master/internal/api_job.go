@@ -78,18 +78,6 @@ func (a *apiServer) GetJobQueueStats(
 		}
 	}
 
-	for _, rpAddr := range rpAddresses {
-		stats := jobv1.QueueStats{}
-		qStats := apiv1.RPQueueStat{ResourcePool: rpAddr.Local()}
-		err = a.ask(
-			rpAddr, job.GetJobQStats{}, &stats,
-		)
-		if err != nil {
-			return nil, err
-		}
-		qStats.Stats = &stats
-		resp.Results = append(resp.Results, &qStats)
-	}
 	return resp, nil
 }
 
