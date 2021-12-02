@@ -202,7 +202,8 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 	return ops
 }
 
-func (s *asyncHalvingStoppingSearch) progress(map[model.RequestID]model.PartialUnits) float64 {
+func (s *asyncHalvingStoppingSearch) progress(
+	map[model.RequestID]model.PartialUnits, map[model.RequestID]bool) float64 {
 	allTrials := len(s.Rungs[0].Metrics)
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.MaxTrials()))
