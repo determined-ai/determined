@@ -23,9 +23,10 @@ import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 import css from './LogViewerCore.module.scss';
 
 interface Props {
-  decoder: (data: unknown) => Log,
+  decoder: (data: unknown) => Log;
+  initialLogs?: Log[];
   onDownload?: () => void;
-  onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
+  onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
   title?: React.ReactNode;
 }
@@ -67,11 +68,16 @@ const defaultLocal = {
   previousWidth: 0,
 };
 
+const formatLogEntry = (log: Log): ViewerLog => {
+  const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
+  return { ...log, formattedTime };
+};
+
 const formatClipboardHeader = (log: Log): string => {
+  const logEntry = formatLogEntry(log);
   const format = `%${MAX_DATETIME_LENGTH - 1}s `;
-  const level = `<${log.level || ''}>`;
-  const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
-  return sprintf(`%-9s ${format}`, level, datetime);
+  const level = `<${logEntry.level || ''}>`;
+  return sprintf(`%-9s ${format}`, level, logEntry.formattedTime);
 };
 
 const logSorter = (key: keyof Log) => (a: Log, b: Log): number => {
@@ -84,6 +90,7 @@ const logSorter = (key: keyof Log) => (a: Log, b: Log): number => {
 
 const LogViewerCore: React.FC<Props> = ({
   decoder,
+  initialLogs,
   onDownload,
   onFetch,
   sortKey = 'time',
@@ -155,6 +162,8 @@ const LogViewerCore: React.FC<Props> = ({
     config: Partial<FetchConfig>,
     type: FetchType,
   ): Promise<ViewerLog[]> => {
+    if (!onFetch) return [];
+
     const buffer: Log[] = [];
 
     local.current.isFetching = true;
@@ -310,7 +319,7 @@ const LogViewerCore: React.FC<Props> = ({
     };
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
 
-    if (isNewestFirst) {
+    if (isNewestFirst && onFetch) {
       consumeStream(
         onFetch({ canceler, isNewestFirst: true, limit: PAGE_LIMIT }, FetchType.Stream),
         event => {
@@ -334,6 +343,13 @@ const LogViewerCore: React.FC<Props> = ({
     setIsTailing(true);
     setIsNewestFirst(true);
   }, [ onFetch ]);
+
+  // Initialize logs if applicable.
+  useEffect(() => {
+    if (!initialLogs) return;
+
+    addLogs(initialLogs.map(log => formatLogEntry(log)));
+  }, [ addLogs, initialLogs ]);
 
   // Abort all outstanding API calls if log viewer unmounts.
   useEffect(() => {
