@@ -147,7 +147,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     return () => canceler.abort();
   }, [ trial.id ]);
 
-  const trialLogFilters = (
+  const logFilters = (
     <div className={css.filters}>
       <TrialLogFilters
         options={filterOptions}
@@ -162,7 +162,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     <div className={css.base}>
       <LogViewerCore
         decoder={jsonToTrialLog}
-        title={trialLogFilters}
+        title={logFilters}
         onDownload={handleDownloadLogs}
         onFetch={handleFetch}
       />
