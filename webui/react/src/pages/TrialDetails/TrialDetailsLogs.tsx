@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
@@ -164,7 +164,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   return (
     <div className={css.base}>
-      <LogViewerCore
+      <LogViewer
         decoder={jsonToTrialLog}
         title={logFilters}
         onDownload={handleDownloadLogs}

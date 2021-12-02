@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer';
 import Page from 'components/Page';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
@@ -39,8 +39,8 @@ const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
   }, []);
 
   return (
-    <Page bodyNoPadding className={className} id="master-logs">
-      <LogViewerCore
+    <Page bodyNoPadding id="master-logs">
+      <LogViewer
         decoder={jsonToClusterLog}
         hideTitle={hideTitle}
         sortKey="id"
