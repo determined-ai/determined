@@ -1,5 +1,4 @@
 import { sha512 } from 'js-sha512';
-import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
@@ -34,8 +33,9 @@ export const detApi = {
   Users: new Api.UsersApi(ApiConfig),
 };
 
-const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
-Api.ConfigurationParameters => {
+const updatedApiConfigParams = (
+  apiConfig?: Api.ConfigurationParameters,
+): Api.ConfigurationParameters => {
   return {
     apiKey: `Bearer ${globalStorage.authToken}`,
     basePath: serverAddress(),
