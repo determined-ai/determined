@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 
-import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer';
 import Page from 'components/Page';
 import { detApi } from 'services/apiConfig';
 import { jsonToMasterLog } from 'services/decoder';
@@ -35,7 +35,7 @@ const MasterLogs: React.FC = () => {
 
   return (
     <Page bodyNoPadding id="master-logs">
-      <LogViewerCore
+      <LogViewer
         decoder={jsonToMasterLog}
         sortKey="id"
         title={<div className={css.title}>Master Logs</div>}

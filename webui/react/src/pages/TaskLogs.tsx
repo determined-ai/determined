@@ -5,7 +5,7 @@ import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer';
 import Page from 'components/Page';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -135,7 +135,7 @@ const TaskLogs: React.FC = () => {
       ]}
       id="task-logs"
       title={title}>
-      <LogViewerCore
+      <LogViewer
         decoder={jsonToTaskLog}
         title={logFilters}
         onFetch={handleFetch}
