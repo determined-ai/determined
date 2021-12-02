@@ -430,7 +430,7 @@ type TrialLog struct {
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
 	// StringID doesn't have serialization tags because it is not part of
-	// _source and populated from from _id.
+	// _source and populated from _id.
 	StringID *string `json:"-"`
 
 	TrialID int    `db:"trial_id" json:"trial_id"`

@@ -38,7 +38,7 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
 "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
 
-READINESS_REGEX="^.*Jupyter Server .* is running.*$"
+READINESS_REGEX='^.*Jupyter Server .* is running.*$'
 exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.allow_origin="*" \
                  --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \

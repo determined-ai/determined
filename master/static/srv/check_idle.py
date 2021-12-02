@@ -1,10 +1,11 @@
-import requests
 import json
+import logging
 import os
 from time import sleep
+
+import requests
 from determined.common import api
 from determined.common.api import certs
-import logging
 
 ACTIVE = False
 IDLE = True
@@ -27,6 +28,7 @@ def get_execution_state(request_address):
     if len(kernels_data) == 0 and len(terminals_data) == 0 and len(sessions_data) == 0:
         return IDLE
     return ACTIVE
+
 
 def main():
     while True:

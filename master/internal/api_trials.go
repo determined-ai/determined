@@ -76,11 +76,15 @@ func (a *apiServer) TrialLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan api.BatchResult, 1)
 	switch t, err := a.m.db.TaskByID(taskID); {
-	case errors.Is(err, sql.ErrNoRows), t.LogVersion == 0:
+	case errors.Is(err, sql.ErrNoRows):
+		// This indicates the trial is existed before the task logs table, and has version 0.
+		fallthrough
+	case t.LogVersion == model.TaskLogVersion0:
+		// First stream the legacy logs.
+		res := make(chan api.BatchResult, 1)
 		go a.legacyTrialLogs(ctx, req, res)
-		return processBatches(res, func(b api.Batch) error {
+		if err := processBatches(res, func(b api.Batch) error {
 			return b.ForEach(func(i interface{}) error {
 				l, err := i.(*model.TrialLog).Proto()
 				if err != nil {
@@ -88,9 +92,15 @@ func (a *apiServer) TrialLogs(
 				}
 				return resp.Send(l)
 			})
-		})
-	default:
+		}); err != nil {
+			return err
+		}
+		// Then fallthrough and stream the remaining logs, in the event the trial spanned an
+		// upgrade. In the event it did not, this should return quickly anyway.
+		fallthrough
+	case t.LogVersion == model.TaskLogVersion1:
 		// Translate the request.
+		res := make(chan api.BatchResult, 1)
 		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
 			TaskId:          string(taskID),
 			Limit:           req.Limit,
@@ -119,6 +129,8 @@ func (a *apiServer) TrialLogs(
 				})
 			})
 		})
+	default:
+		panic(fmt.Errorf("unknown task log version: %d, please report this bug", t.LogVersion))
 	}
 }
 

@@ -23,8 +23,9 @@ def test_trial_logs() -> None:
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
-    task_id = exp.experiment_trials(experiment_id)[0]["task_id"]
+    trial = exp.experiment_trials(experiment_id)[0]
+    trial_id = trial["id"]
+    task_id = trial["task_id"]
 
     log_regex = re.compile("^.*New trial runner.*$")
     # Trial-specific APIs should work just fine.
@@ -44,7 +45,7 @@ def test_trial_logs() -> None:
         (command.TaskTypeNotebook, {}, {}, re.compile("^.*Jupyter Server .* is running.*$")),
         (command.TaskTypeShell, {}, {}, re.compile("^.*Server listening on.*$")),
         (
-            command.TaskTypeTensorboard,
+            command.TaskTypeTensorBoard,
             {},
             {"experiment_ids": [1]},
             re.compile("^.*TensorBoard .* at .*$"),
@@ -61,7 +62,7 @@ def test_task_logs(
 
     # Ensure tensorboard tests have an experiment to work with.
     if (
-        task_type == command.TaskTypeTensorboard
+        task_type == command.TaskTypeTensorBoard
         and not api.get(master_url, "/api/v1/experiments").json()["experiments"]
     ):
         exp.run_basic_test(conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1)
@@ -99,7 +100,7 @@ def check_logs(
     assert any(log_fn(master_url, entity_id, head=10)), "head returned no logs"
 
     # Task log fields should work, follow or no follow.
-    assert any(log_fields_fn(master_url, entity_id, follow=True))
+    assert any(log_fields_fn(master_url, entity_id, follow=True)), "log fields returned nothing"
     fields_list = list(log_fields_fn(master_url, entity_id))
     assert any(fields_list), "no task log fields were returned"
 
