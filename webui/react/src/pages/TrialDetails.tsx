@@ -154,10 +154,13 @@ const TrialDetailsComp: React.FC = () => {
     const message = isNotFound(trialDetails.error) ?
       `Unable to find Trial ${trialId}` :
       `Unable to fetch Trial ${trialId}`;
-    return <Message
-      message={trialDetails.error.message}
-      title={message}
-      type={MessageType.Warning} />;
+    return (
+      <Message
+        message={trialDetails.error.message}
+        title={message}
+        type={MessageType.Warning}
+      />
+    );
   }
 
   if (!trial || !experiment) {
@@ -167,12 +170,14 @@ const TrialDetailsComp: React.FC = () => {
   return (
     <Page
       bodyNoPadding
-      headerComponent={<TrialDetailsHeader
-        experiment={experiment}
-        fetchTrialDetails={fetchTrialDetails}
-        handleActionClick={handleActionClick}
-        trial={trial}
-      />}
+      headerComponent={(
+        <TrialDetailsHeader
+          experiment={experiment}
+          fetchTrialDetails={fetchTrialDetails}
+          handleActionClick={handleActionClick}
+          trial={trial}
+        />
+      )}
       stickyHeader
       title={`Trial ${trialId}`}>
       <TrialLogPreview

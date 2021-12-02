@@ -78,21 +78,18 @@ const commandTasks: CommandTask[] = new Array(20)
   .fill(null)
   .map((_, index) => generateCommandTask(index));
 
-export const LoadingTable = (): React.ReactNode => {
-  return <Table loading={true} />;
-};
+export const LoadingTable = (): React.ReactNode => <Table loading={true} />;
 
-export const EmptyTable = (): React.ReactNode => {
-  return <Table dataSource={[]} />;
-};
+export const EmptyTable = (): React.ReactNode => <Table dataSource={[]} />;
 
-export const TaskTable = (): React.ReactNode => {
-  return <Table
+export const TaskTable = (): React.ReactNode => (
+  <Table
     className={css.base}
     columns={columns}
     dataSource={commandTasks}
     loading={commandTasks === undefined}
     rowClassName={defaultRowClassName({ clickable: true })}
     rowKey="id"
-    showSorterTooltip={false} />;
-};
+    showSorterTooltip={false}
+  />
+);

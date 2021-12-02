@@ -284,7 +284,8 @@ const ExperimentVisualization: React.FC<Props> = ({
               <Link
                 external
                 path={paths.docs('/training-apis/experiment-config.html#searcher')}
-                popout>how to run a hyperparameter search</Link>.
+                popout>how to run a hyperparameter search
+              </Link>.
             </>
           )}
           message={alertMessage}
@@ -303,7 +304,8 @@ const ExperimentVisualization: React.FC<Props> = ({
       <div className={css.alert}>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );

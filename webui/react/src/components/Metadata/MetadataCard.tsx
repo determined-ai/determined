@@ -67,19 +67,23 @@ const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave }: Props) => {
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       title={'Metadata'}>
-      {showPlaceholder ?
+      {showPlaceholder ? (
         <div
           style={{ color: 'var(--theme-colors-monochrome-9)', fontStyle: 'italic' }}
           onClick={editMetadata}>
           Add Metadata...
-        </div> :
+        </div>
+      ) : (
         <Spinner spinning={isLoading}>
           <EditableMetadata
             editing={isEditing}
             metadata={editedMetadata}
-            updateMetadata={setEditedMetadata} />
-        </Spinner>}
-    </Card>);
+            updateMetadata={setEditedMetadata}
+          />
+        </Spinner>
+      )}
+    </Card>
+  );
 };
 
 export default MetadataCard;

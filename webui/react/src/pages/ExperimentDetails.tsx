@@ -100,25 +100,29 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       bodyNoPadding
-      headerComponent={<ExperimentDetailsHeader
-        curUser={user}
-        experiment={experiment}
-        fetchExperimentDetails={fetchExperimentDetails}
-        showContinueTrial={trial ? showContinueTrial : undefined}
-        showForkModal={showForkModal}
-        trial={trial}
-      />}
+      headerComponent={(
+        <ExperimentDetailsHeader
+          curUser={user}
+          experiment={experiment}
+          fetchExperimentDetails={fetchExperimentDetails}
+          showContinueTrial={trial ? showContinueTrial : undefined}
+          showForkModal={showForkModal}
+          trial={trial}
+        />
+      )}
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
         <ExperimentSingleTrialTabs
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
-          onTrialLoad={handleSingleTrialLoad} />
+          onTrialLoad={handleSingleTrialLoad}
+        />
       ) : (
         <ExperimentMultiTrialTabs
           experiment={experiment}
-          fetchExperimentDetails={fetchExperimentDetails} />
+          fetchExperimentDetails={fetchExperimentDetails}
+        />
       )}
     </Page>
   );

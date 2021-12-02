@@ -101,7 +101,8 @@ const TaskLogs: React.FC = () => {
         title,
       }}
       ref={logsRef}
-      onScrollToTop={handleScrollToTop} />
+      onScrollToTop={handleScrollToTop}
+    />
   );
 };
 

@@ -179,22 +179,24 @@ const ModelVersionDetails: React.FC = () => {
     const totalBatchesProcessed = getBatchNumber(modelVersion.checkpoint);
     return [
       {
-        content: <Breadcrumb className={css.link}>
-          <Breadcrumb.Item>
-            <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
-              Experiment {modelVersion.checkpoint.experimentId}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link path={paths.trialDetails(
-              modelVersion.checkpoint.trialId,
-              modelVersion.checkpoint.experimentId,
-            )}>
-              Trial {modelVersion.checkpoint.trialId}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
-        </Breadcrumb>,
+        content: (
+          <Breadcrumb className={css.link}>
+            <Breadcrumb.Item>
+              <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
+                Experiment {modelVersion.checkpoint.experimentId}
+              </Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>
+              <Link path={paths.trialDetails(
+                modelVersion.checkpoint.trialId,
+                modelVersion.checkpoint.experimentId,
+              )}>
+                Trial {modelVersion.checkpoint.trialId}
+              </Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
+          </Breadcrumb>
+        ),
         label: 'Source',
       },
       { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
@@ -234,12 +236,15 @@ const ModelVersionDetails: React.FC = () => {
     <Page
       bodyNoPadding
       docTitle="Model Version Details"
-      headerComponent={<ModelVersionHeader
-        modelVersion={modelVersion}
-        onDeregisterVersion={deleteVersion}
-        onSaveDescription={saveDescription}
-        onSaveName={saveName}
-        onUpdateTags={saveVersionTags} />}
+      headerComponent={(
+        <ModelVersionHeader
+          modelVersion={modelVersion}
+          onDeregisterVersion={deleteVersion}
+          onSaveDescription={saveDescription}
+          onSaveName={saveName}
+          onUpdateTags={saveVersionTags}
+        />
+      )}
       id="modelDetails">
       <Tabs
         defaultActiveKey="overview"
@@ -256,14 +261,16 @@ const ModelVersionDetails: React.FC = () => {
             </Card>
             <MetadataCard
               metadata={modelVersion.metadata}
-              onSave={saveMetadata} />
+              onSave={saveMetadata}
+            />
           </div>
         </TabPane>
         <TabPane key="notes" tab="Notes">
           <div className={css.base}>
             <NotesCard
               notes={modelVersion.notes ?? ''}
-              onSave={saveNotes} />
+              onSave={saveNotes}
+            />
           </div>
         </TabPane>
       </Tabs>

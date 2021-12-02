@@ -16,15 +16,13 @@ import css from './TaskCard.module.scss';
 type Props = AnyTask & RecentEvent & {curUser?: DetailedUser}
 
 const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
-  let [ hasProgress, isComplete ] = [ false, false ];
-  if (isExperimentTask(task)) {
-    hasProgress = !!task.progress;
-    isComplete = task.progress === 1;
-  }
   const classes = [ css.base ];
 
-  const iconName = isExperimentTask(task) ?
-    'experiment' : (task as RecentCommandTask).type.toLowerCase();
+  const isExperiment = isExperimentTask(task);
+  const hasProgress = isExperiment && !!task.progress;
+  const isComplete = isExperiment && task.progress === 1;
+  const iconName = isExperiment ? 'experiment' : (task as RecentCommandTask).type.toLowerCase();
+
   if (canBeOpened(task)) classes.push(css.link);
 
   return (
@@ -35,9 +33,11 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
         path={task.url ? task.url : undefined}
         popout={!isExperimentTask(task)}
         onClick={!isExperimentTask(task) ? (() => openCommand(task)) : undefined}>
-        {isExperimentTask(task) && <div className={css.progressBar}>
-          <ProgressBar barOnly percent={(task.progress || 0) * 100} state={task.state} />
-        </div>}
+        {isExperimentTask(task) && (
+          <div className={css.progressBar}>
+            <ProgressBar barOnly percent={(task.progress || 0) * 100} state={task.state} />
+          </div>
+        )}
         <div className={css.upper}>
           <div className={css.icon}><Icon name={iconName} /></div>
           <div className={css.info}>
@@ -52,8 +52,9 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
           <div className={css.badges}>
             <Badge type={BadgeType.Default}>{`${task.id}`.slice(0, 4)}</Badge>
             <Badge state={task.state} type={BadgeType.State} />
-            {isExperimentTask(task) && hasProgress && !isComplete
-                && <div className={css.percent}>{`${percent(task.progress || 0)}%`}</div>}
+            {isExperimentTask(task) && hasProgress && !isComplete && (
+              <div className={css.percent}>{`${percent(task.progress || 0)}%`}</div>
+            )}
           </div>
           <TaskActionDropdown curUser={curUser} task={task} />
         </div>

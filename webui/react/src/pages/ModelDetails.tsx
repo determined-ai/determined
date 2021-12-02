@@ -161,7 +161,7 @@ const ModelDetails: React.FC = () => {
                 disabled={!isDeletable}
                 key="delete-version"
                 onClick={() => showConfirmDelete(record)}>
-                  Delete Version
+                Delete Version
               </Menu.Item>
             </Menu>
           )}
@@ -173,12 +173,13 @@ const ModelDetails: React.FC = () => {
       );
     };
 
-    const descriptionRenderer = (value:string, record: ModelVersion) => {
-      return <InlineEditor
+    const descriptionRenderer = (value:string, record: ModelVersion) => (
+      <InlineEditor
         placeholder="Add description..."
         value={value}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)} />;
-    };
+        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
+      />
+    );
 
     const tableColumns: ColumnsType<ModelVersion> = [
       {
@@ -361,22 +362,26 @@ const ModelDetails: React.FC = () => {
   return (
     <Page
       docTitle="Model Details"
-      headerComponent={<ModelHeader
-        model={model.model}
-        onDelete={deleteCurrentModel}
-        onSaveDescription={saveDescription}
-        onSaveName={saveName}
-        onSwitchArchive={switchArchive}
-        onUpdateTags={saveModelTags} />}
+      headerComponent={(
+        <ModelHeader
+          model={model.model}
+          onDelete={deleteCurrentModel}
+          onSaveDescription={saveDescription}
+          onSaveName={saveName}
+          onSwitchArchive={switchArchive}
+          onUpdateTags={saveModelTags}
+        />
+      )}
       id="modelDetails">
       <div className={css.base}>
-        {model.modelVersions.length === 0 ?
+        {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>
             <p>No Model Versions</p>
             <p className={css.subtext}>
-                Register a checkpoint from an experiment to add it to this model
+              Register a checkpoint from an experiment to add it to this model
             </p>
-          </div> :
+          </div>
+        ) : (
           <ResponsiveTable
             columns={columns}
             dataSource={model.modelVersions}
@@ -389,11 +394,12 @@ const ModelDetails: React.FC = () => {
             size="small"
             onChange={handleTableChange}
           />
-        }
+        )}
         <NotesCard notes={model.model.notes ?? ''} onSave={saveNotes} />
         <MetadataCard
           metadata={model.model.metadata}
-          onSave={saveMetadata} />
+          onSave={saveMetadata}
+        />
       </div>
     </Page>
   );
@@ -402,18 +408,22 @@ const ModelDetails: React.FC = () => {
 const useActionRenderer = (_:string, record: ModelVersion) => {
   const [ showModal, setShowModal ] = useState(false);
 
-  return <div className={css.center}>
-    <IconButton
-      icon="download"
-      iconSize="large"
-      label="Download Model"
-      type="text"
-      onClick={() => setShowModal(true)} />
-    <DownloadModelModal
-      modelVersion={record}
-      visible={showModal}
-      onClose={() => setShowModal(false)} />
-  </div>;
+  return (
+    <div className={css.center}>
+      <IconButton
+        icon="download"
+        iconSize="large"
+        label="Download Model"
+        type="text"
+        onClick={() => setShowModal(true)}
+      />
+      <DownloadModelModal
+        modelVersion={record}
+        visible={showModal}
+        onClose={() => setShowModal(false)}
+      />
+    </div>
+  );
 };
 
 export default ModelDetails;

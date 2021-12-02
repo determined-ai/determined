@@ -143,44 +143,40 @@ export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
 export const experimentNameRenderer = (
   value: string | number | undefined,
   record: ExperimentItem,
-): React.ReactNode => {
-  return (
-    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
-  );
-};
+): React.ReactNode => (
+  <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+);
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  return record.progress ? <ProgressBar
-    percent={record.progress * 100}
-    state={record.state} /> : null;
+  return record.progress ? (
+    <ProgressBar percent={record.progress * 100} state={record.state} />
+  ) : null;
 };
 
 /* Model Table Column Renderers */
 
-export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
-  return (
-    <Space><Icon name="model" size="medium" />
-      <Link path={paths.modelDetails(record.id)}>{value}</Link>
-    </Space>
-  );
-};
+export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
+  <Space><Icon name="model" size="medium" />
+    <Link path={paths.modelDetails(record.id)}>{value}</Link>
+  </Space>
+);
 
-export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => {
-  return <Link path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
+export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
+  <Link path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
     {value ? value : 'Version ' + record.version}
-  </Link>;
-};
+  </Link>
+);
 
-export const modelVersionNumberRenderer =
-(value: string, record: ModelVersion): React.ReactNode => {
-  return (
-    <Link
-      className={css.versionBox}
-      path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
+export const modelVersionNumberRenderer = (
+  value: string,
+  record: ModelVersion,
+): React.ReactNode => (
+  <Link
+    className={css.versionBox}
+    path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
     V{record.version}
-    </Link>
-  );
-};
+  </Link>
+);
 
 /* Table Helper Functions */
 

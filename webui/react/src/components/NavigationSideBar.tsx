@@ -125,11 +125,13 @@ const NavigationSideBar: React.FC = () => {
       <nav className={css.base} ref={nodeRef}>
         <header>
           <Dropdown
-            content={<Menu>
-              <Menu.Item key="sign-out">
-                <Link path={paths.logout()}>Sign Out</Link>
-              </Menu.Item>
-            </Menu>}
+            content={(
+              <Menu>
+                <Menu.Item key="sign-out">
+                  <Link path={paths.logout()}>Sign Out</Link>
+                </Menu.Item>
+              </Menu>
+            )}
             offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.Right : Placement.BottomLeft}>
             <div className={css.user}>
@@ -143,19 +145,22 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => setShowJupyterLabModal(true)}>Launch JupyterLab</Button>
+                onClick={() => setShowJupyterLabModal(true)}>Launch JupyterLab
+              </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => setShowJupyterLabModal(true)}>
                   <Icon
                     name={'add-small'}
-                    size="tiny" />
+                    size="tiny"
+                  />
                 </Button>
               ) : null}
             </div>
             <JupyterLabModal
               visible={showJupyterLabModal}
               onCancel={() => setShowJupyterLabModal(false)}
-              onLaunch={() => setShowJupyterLabModal(false)} />
+              onLaunch={() => setShowJupyterLabModal(false)}
+            />
           </section>
           <section className={css.top}>
             {menuConfig.top.map(config => (
@@ -179,7 +184,8 @@ const NavigationSideBar: React.FC = () => {
               icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
               label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
               tooltip={settings.navbarCollapsed}
-              onClick={handleCollapse} />
+              onClick={handleCollapse}
+            />
           </section>
         </main>
         <footer>

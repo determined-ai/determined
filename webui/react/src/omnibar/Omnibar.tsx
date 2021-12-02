@@ -40,7 +40,8 @@ const Omnibar: React.FC = () => {
           maxResults={7}
           placeholder='Type a command or "help" for more info.'
           render={TreeNode}
-          onAction={onAction} />
+          onAction={onAction}
+        />
       </div>
     </div>
   );

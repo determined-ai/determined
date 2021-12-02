@@ -78,7 +78,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       multiple
       values={settings.state}
       onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset} />
+      onReset={handleStateFilterReset}
+    />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
   const dropDownOnTrigger = useCallback((trial: TrialItem) => {
@@ -121,21 +122,23 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           <Button
             aria-label="View Checkpoint"
             icon={<Icon name="checkpoint" />}
-            onClick={e => handleCheckpointShow(e, checkpoint)} />
+            onClick={e => handleCheckpointShow(e, checkpoint)}
+          />
         </Tooltip>
       );
     };
 
-    const actionRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      return <ActionDropdown<TrialAction>
+    const actionRenderer = (_: string, record: TrialItem): React.ReactNode => (
+      <ActionDropdown<TrialAction>
         actionOrder={[
           TrialAction.OpenTensorBoard,
           TrialAction.ViewLogs,
         ]}
         id={experiment.id + ''}
         kind="experiment"
-        onTrigger={dropDownOnTrigger(record)} />;
-    };
+        onTrigger={dropDownOnTrigger(record)}
+      />
+    );
 
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
@@ -328,21 +331,27 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           }}
           showSorterTooltip={false}
           size="small"
-          onChange={handleTableChange} />
+          onChange={handleTableChange}
+        />
       </Section>
-      {activeCheckpoint && <CheckpointModal
-        checkpoint={activeCheckpoint}
-        config={experiment.config}
-        show={showCheckpoint}
-        title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-        onHide={handleCheckpointDismiss} />}
-      {settings.compare &&
-      <TrialsComparisonModal
-        experiment={experiment}
-        trials={settings.row ?? []}
-        visible={settings.compare}
-        onCancel={handleTrialCompareCancel}
-        onUnselect={handleTrialUnselect} />}
+      {activeCheckpoint && (
+        <CheckpointModal
+          checkpoint={activeCheckpoint}
+          config={experiment.config}
+          show={showCheckpoint}
+          title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
+          onHide={handleCheckpointDismiss}
+        />
+      )}
+      {settings.compare && (
+        <TrialsComparisonModal
+          experiment={experiment}
+          trials={settings.row ?? []}
+          visible={settings.compare}
+          onCancel={handleTrialCompareCancel}
+          onUnselect={handleTrialUnselect}
+        />
+      )}
     </div>
   );
 };

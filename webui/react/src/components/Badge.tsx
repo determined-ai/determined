@@ -54,9 +54,11 @@ const Badge: React.FC<BadgeProps> = ({
     classes.push(css.header);
   }
 
-  const badge = <span className={classes.join(' ')} style={style}>
-    {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
-  </span>;
+  const badge = (
+    <span className={classes.join(' ')} style={style}>
+      {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
+    </span>
+  );
 
   return tooltip ? <Tooltip title={tooltip}>{badge}</Tooltip> : badge;
 };

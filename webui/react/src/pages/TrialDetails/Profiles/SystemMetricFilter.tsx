@@ -35,35 +35,30 @@ const SystemMetricFilter: React.FC = () => {
 
   return (
     <>
-
       <SelectFilter
         enableSearchFilter={false}
         label="Metric Name"
         showSearch={false}
         style={{ width: 220 }}
         value={settings.name}
-        onChange={handleChangeName}
-      >
+        onChange={handleChangeName}>
         {systemSeries && Object.keys(systemSeries).map(name => (
           <Option key={name} value={name}>{name}</Option>
         ))}
       </SelectFilter>
-
       <SelectFilter
         enableSearchFilter={false}
         label="Agent Name"
         showSearch={false}
         style={{ width: 220 }}
         value={settings.agentId}
-        onChange={handleChangeAgentId}
-      >
+        onChange={handleChangeAgentId}>
         {settings.name && Object.keys(systemSeries[settings.name]).map(agentId => (
           <Option key={agentId} value={agentId}>{agentId}</Option>
         ))}
       </SelectFilter>
-
-      { uuidOptions.length > 0 &&
-        (<SelectFilter
+      {uuidOptions.length > 0 && (
+        <SelectFilter
           allowClear={true}
           enableSearchFilter={false}
           label="GPU"
@@ -71,13 +66,12 @@ const SystemMetricFilter: React.FC = () => {
           showSearch={false}
           style={{ width: 220 }}
           value={settings.gpuUuid}
-          onChange={handleChangeGpuUuid}
-        >
+          onChange={handleChangeGpuUuid}>
           {uuidOptions.map(gpuUuid => (
             <Option key={gpuUuid} value={gpuUuid}>{gpuUuid}</Option>
           ))}
         </SelectFilter>
-        )}
+      )}
     </>
   );
 };

@@ -403,20 +403,23 @@ const LogViewerCore: React.FC<Props> = ({
             aria-label="Copy to Clipboard"
             disabled={logs.length === 0}
             icon={<Icon name="clipboard" />}
-            onClick={handleCopyToClipboard} />
+            onClick={handleCopyToClipboard}
+          />
         </Tooltip>
         <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
           <Button
             aria-label="Toggle Fullscreen Mode"
             icon={<Icon name="fullscreen" />}
-            onClick={handleFullScreen} />
+            onClick={handleFullScreen}
+          />
         </Tooltip>
         {onDownload && (
           <Tooltip placement="bottomRight" title="Download Logs">
             <Button
               aria-label="Download Logs"
               icon={<Icon name="download" />}
-              onClick={handleDownload} />
+              onClick={handleDownload}
+            />
           </Tooltip>
         )}
       </Space>
@@ -463,7 +466,8 @@ const LogViewerCore: React.FC<Props> = ({
               aria-label="Scroll to Oldest"
               className={[ css.scrollToTop, css.show ].join(' ')}
               icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToOldest} />
+              onClick={handleScrollToOldest}
+            />
           </Tooltip>
           <Tooltip
             placement="left"
@@ -472,7 +476,8 @@ const LogViewerCore: React.FC<Props> = ({
               aria-label="Enable Tailing"
               className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing} />
+              onClick={handleEnableTailing}
+            />
           </Tooltip>
         </div>
       </div>

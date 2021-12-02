@@ -116,21 +116,16 @@ const ExperimentHeaderState: React.FC<Props> = ({ experiment }: Props) => {
 
   return (
     <div className={css.base} style={{ backgroundColor }}>
-
       {experiment.state === RunState.Active && (
         <PauseButton experiment={experiment} />
       )}
-
       {experiment.state === RunState.Paused && (
         <PlayButton experiment={experiment} />
       )}
-
       {[ RunState.Active, RunState.Paused ].includes(experiment.state) && (
         <StopButton experiment={experiment} />
       )}
-
       <span className={css.state}>{experiment.state}</span>
-
     </div>
   );
 };
