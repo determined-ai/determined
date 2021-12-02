@@ -64,34 +64,34 @@ TensorboardTableHeader = OrderedDict(
 TaskTypeNotebook = "notebook"
 TaskTypeCommand = "command cmd"
 TaskTypeShell = "shell"
-TaskTypeTensorboard = "tensorboard"
+TaskTypeTensorBoard = "tensorboard"
 
 RemoteTaskName = {
-    "notebook": "notebook",
-    "command cmd": "command",
-    "shell": "shell",
-    "tensorboard": "tensorboard",
+    TaskTypeNotebook: "notebook",
+    TaskTypeCommand: "command",
+    TaskTypeShell: "shell",
+    TaskTypeTensorBoard: "tensorboard",
 }
 
 RemoteTaskLogName = {
-    "notebook": "Notebook",
-    "command cmd": "Command",
-    "shell": "Shell",
-    "tensorboard": "TensorBoard",
+    TaskTypeNotebook: "Notebook",
+    TaskTypeCommand: "Command",
+    TaskTypeShell: "Shell",
+    TaskTypeTensorBoard: "TensorBoard",
 }
 
 RemoteTaskNewAPIs = {
-    "notebook": "notebooks",
-    "command cmd": "commands",
-    "shell": "shells",
-    "tensorboard": "tensorboards",
+    TaskTypeNotebook: "notebooks",
+    TaskTypeCommand: "commands",
+    TaskTypeShell: "shells",
+    TaskTypeTensorBoard: "tensorboards",
 }
 
 RemoteTaskOldAPIs = {
-    "notebook": "notebooks",
-    "command cmd": "commands",
-    "shell": "shells",
-    "tensorboard": "tensorboard",
+    TaskTypeNotebook: "notebooks",
+    TaskTypeCommand: "commands",
+    TaskTypeShell: "shells",
+    TaskTypeTensorBoard: "tensorboard",
 }
 
 RemoteTaskListTableHeaders = {

@@ -202,6 +202,8 @@ WHERE end_time IS NULL
 	return nil
 }
 
+// taskLogsFieldMap is used to map fields in filters to expressions. This was used historically
+// in trial logs to either read timestamps or regex them out of logs.
 var taskLogsFieldMap = map[string]string{}
 
 // TaskLogs takes a task ID and log offset, limit and filters and returns matching logs.
@@ -228,7 +230,7 @@ SELECT
     l.level,
     l.stdtype,
     l.source,
-	l.log
+    l.log
 FROM task_logs l
 WHERE l.task_id = $1
 %s
@@ -317,7 +319,7 @@ func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsRespon
 }
 
 // MaxTerminationDelay is the max delay before a consumer can be sure all logs have been recevied.
-// For Postgres, we don't need to wait very log at all; this is just a hypothetical cap on fluent
+// For Postgres, we don't need to wait very long at all; this is just a hypothetical cap on fluent
 // to DB latency.
 func (db *PgDB) MaxTerminationDelay() time.Duration {
 	return 2 * time.Second

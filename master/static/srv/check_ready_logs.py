@@ -1,19 +1,18 @@
 """
-check_ready_logs.py accepts a task's logs as STDIN, runs a regex to determine readiness
-and reemits the logs to STDOUT
+check_ready_logs.py accepts a task's logs as STDIN, runs a regex to determine and report readiness.
+Callers should be aware it may terminate early, and stop reading from STDIN.
 """
 import argparse
 import os
-import sys
 import re
-import os
+import sys
 from time import sleep
+from typing import Any, Pattern
+
+import backoff
 from determined.common import api
 from determined.common.api import certs
-from typing import Any, Pattern
-import backoff
 from requests.exceptions import RequestException
-
 
 BACKOFF_SECONDS = 5
 
@@ -34,7 +33,7 @@ def post_ready(master_url: str, cert: certs.Cert, allocation_id: str):
     )
 
 
-def main(ready: Pattern) -> int:
+def main(ready: Pattern):
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
@@ -45,8 +44,12 @@ def main(ready: Pattern) -> int:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Read STDIN for a match and mark a task as ready')
-    parser.add_argument('--ready-regex', type=str, help='the pattern to match', required=True)
+    parser = argparse.ArgumentParser(
+        description="Read STDIN for a match and mark a task as ready"
+    )
+    parser.add_argument(
+        "--ready-regex", type=str, help="the pattern to match", required=True
+    )
     args = parser.parse_args()
 
     ready_regex = re.compile(args.ready_regex)
