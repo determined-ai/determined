@@ -45,7 +45,7 @@ Exposes mapping of allocation ID to task ID`,
 		Subsystem: "det",
 		Name:      "gpu_uuid_container_id",
 		Help: `
-Exposes mapping of Determined's internal container ID to the GPU UUID/device ID as given by nvidia-smi
+Exposes mapping of Determined's container ID to the GPU UUID/device ID as given by nvidia-smi
 `,
 	}, []string{"gpu_uuid", "container_id"})
 
@@ -77,27 +77,27 @@ func init() { //nolint: gochecknoinits
 	DetStateMetrics.MustRegister(allocationIDToTaskID)
 }
 
-// AssociateAllocationContainer associates an allocation with its container ID
+// AssociateAllocationContainer associates an allocation with its container ID.
 func AssociateAllocationContainer(aID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, aID).Inc()
 }
 
-// AssociateAllocationTask associates an allocation ID with its task ID
+// AssociateAllocationTask associates an allocation ID with its task ID.
 func AssociateAllocationTask(aID string, tID string) {
 	allocationIDToTaskID.WithLabelValues(aID, tID).Inc()
 }
 
-// DisassociateAllocationTask disassociates an allocation ID with its task ID
+// DisassociateAllocationTask disassociates an allocation ID with its task ID.
 func DisassociateAllocationTask(aID string, tID string) {
 	allocationIDToTaskID.WithLabelValues(aID, tID).Dec()
 }
 
-// AssociateContainerRuntimeID associates a Determined container ID with the docker container ID
+// AssociateContainerRuntimeID associates a Determined container ID with the docker container ID.
 func AssociateContainerRuntimeID(cID string, dcID string) {
 	containerIDToRuntimeID.WithLabelValues(dcID, cID).Inc()
 }
 
-// AddAllocationContainer associates allocation and container and container and GPUs
+// AddAllocationContainer associates allocation and container and container and GPUs.
 func AddAllocationContainer(summary sproto.ContainerSummary) {
 	AssociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
 	for _, d := range summary.Devices {
@@ -105,7 +105,7 @@ func AddAllocationContainer(summary sproto.ContainerSummary) {
 	}
 }
 
-// RemoveAllocationContainer disassociates allocation and container and container and its GPUs
+// RemoveAllocationContainer disassociates allocation and container and container and its GPUs.
 func RemoveAllocationContainer(summary sproto.ContainerSummary) {
 	DisassociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
 	for _, d := range summary.Devices {
@@ -113,19 +113,19 @@ func RemoveAllocationContainer(summary sproto.ContainerSummary) {
 	}
 }
 
-// DisassociateAllocationContainer disassociates allocation ID with its container ID
+// DisassociateAllocationContainer disassociates allocation ID with its container ID.
 func DisassociateAllocationContainer(aID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, aID).Dec()
 }
 
-// AssociateExperimentIDLabels assicates experiment ID with a list of labels
+// AssociateExperimentIDLabels assicates experiment ID with a list of labels.
 func AssociateExperimentIDLabels(eID string, labels []string) {
 	for i := range labels {
 		experimentIDToLabels.WithLabelValues(eID, labels[i]).Inc()
 	}
 }
 
-// AssociateContainerGPU associates container ID with GPU device ID
+// AssociateContainerGPU associates container ID with GPU device ID.
 func AssociateContainerGPU(cID string, d device.Device) {
 	if d.Type == device.GPU {
 		gpuUUIDToContainerID.
@@ -134,7 +134,7 @@ func AssociateContainerGPU(cID string, d device.Device) {
 	}
 }
 
-// DisassociateContainerGPU removes association between container ID and device ID
+// DisassociateContainerGPU removes association between container ID and device ID.
 func DisassociateContainerGPU(cID string, d device.Device) {
 	if d.Type != device.GPU {
 		return
@@ -183,17 +183,17 @@ func AddAgentAsTarget(
 
 // RemoveAgentAsTarget removes agent from the file SD targets config.
 func RemoveAgentAsTarget(ctx *actor.Context,
-	agentId string,
+	agentID string,
 ) {
-	ctx.Log().Infof("Removing %s as a target", agentId)
+	ctx.Log().Infof("Removing %s as a target", agentID)
 
 	fileSDConfigs := getFileSDConfigs()
 
 	for i := range fileSDConfigs {
 		ctx.Log().Infof("Checking %s", fileSDConfigs[i].Labels[detAgentIDLabel])
 
-		if fileSDConfigs[i].Labels[detAgentIDLabel] == agentId {
-			ctx.Log().Infof("Removing agent %s from targets.json", agentId)
+		if fileSDConfigs[i].Labels[detAgentIDLabel] == agentID {
+			ctx.Log().Infof("Removing agent %s from targets.json", agentID)
 			fileSDConfigs = append(fileSDConfigs[:i], fileSDConfigs[i+1:]...)
 			break
 		}
@@ -217,14 +217,13 @@ func getFileSDConfigs() []fileSDConfigEntry {
 }
 
 func writeConfigsToTargetsFile(configs []fileSDConfigEntry) error {
-
-	targetsJson, err := json.MarshalIndent(configs, "", "  ")
+	targetsJSON, err := json.MarshalIndent(configs, "", "  ")
 
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(targetsFile, targetsJson, 0644) //nolint: gosec
+	err = ioutil.WriteFile(targetsFile, targetsJSON, 0644) //nolint: gosec
 
 	if err != nil {
 		return err
