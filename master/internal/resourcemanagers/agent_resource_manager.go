@@ -115,7 +115,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		if msg.ResourcePool == "" {
 			msg.ResourcePool = a.config.DefaultComputeResourcePool
 		}
-		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
+
+		rpRef := ctx.Child(msg.ResourcePool)
+		if rpRef == nil {
+			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
+			return nil
+		}
+		resp := ctx.Ask(rpRef, msg).Get()
 		ctx.Respond(resp)
 
 	case *apiv1.GetJobQueueStatsRequest:

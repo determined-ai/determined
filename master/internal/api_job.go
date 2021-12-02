@@ -63,7 +63,7 @@ func (a *apiServer) GetJobQueueStats(
 	if err != nil {
 		return nil, err
 	}
-	return resp, err
+	return resp, nil
 }
 
 // UpdateJobQueue forwards the job queue message to the relevant resource pool.
