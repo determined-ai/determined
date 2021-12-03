@@ -75,7 +75,7 @@ fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-model_hub fmt-e2e_tests fmt-t
 test-%:
 	$(MAKE) -C $(subst -,/,$*) test
 .PHONY: test
-test: test-harness test-cli test-common test-model_hub test-master test-agent test-webui 
+test: test-harness test-common test-model_hub test-master test-agent test-webui 
 
 .PHONY: devcluster
 devcluster:
