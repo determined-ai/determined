@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 
-import logoDeterminedOnDarkHorizontal from 'assets/logo-determined-on-dark-horizontal.svg';
-import logoDeterminedOnDarkVertical from 'assets/logo-determined-on-dark-vertical.svg';
-import logoDeterminedOnLightHorizontal from 'assets/logo-determined-on-light-horizontal.svg';
-import logoDeterminedOnLightVertical from 'assets/logo-determined-on-light-vertical.svg';
-import logoHpeOnDarkHorizontal from 'assets/logo-hpe-on-dark-horizontal.svg';
-import logoHpeOnLightHorizontal from 'assets/logo-hpe-on-light-horizontal.svg';
+import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg';
+import logoDeterminedOnDarkVertical from 'assets/images/logo-determined-on-dark-vertical.svg';
+import logoDeterminedOnLightHorizontal from 'assets/images/logo-determined-on-light-horizontal.svg';
+import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-light-vertical.svg';
+import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg';
+import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg';
 import { reactHostAddress, serverAddress } from 'routes/utils';
 import { BrandingType } from 'types';
 
