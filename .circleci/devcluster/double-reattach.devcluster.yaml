@@ -37,6 +37,12 @@ stages:
             pool_name: default
             provider: null
             task_container_defaults: null
+        scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
 
   - custom:
       name: proxy
