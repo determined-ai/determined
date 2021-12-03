@@ -57,15 +57,15 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
 
 export const columns: ColumnType<Job>[] = [
   { key: 'jobsAhead' },
-  {
-    dataIndex: 'jobId',
-    key: 'jobId',
-    render: (_: unknown, record: Job): ReactNode => {
-      const label = truncate(record.jobId, 6, '');
-      return linkToEntityPage(record, label);
-    },
-    title: 'ID',
-  },
+  // { // We might want to show the entityId here instead.
+  //   dataIndex: 'jobId',
+  //   key: 'jobId',
+  //   render: (_: unknown, record: Job): ReactNode => {
+  //     const label = truncate(record.jobId, 6, '');
+  //     return linkToEntityPage(record, label);
+  //   },
+  //   title: 'ID',
+  // },
   {
     dataIndex: 'type',
     key: 'type',
