@@ -14,6 +14,8 @@ import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 import { waitPageUrl } from 'wait';
 
+import css from './JobQueue.module.scss';
+
 type Renderer<T> = (_: unknown, record: T) => ReactNode;
 export type JobTypeRenderer = Renderer<Job>;
 
@@ -128,10 +130,10 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'state',
     render: (_: unknown, record: Job): ReactNode => {
-      return <>
+      return <div className={css.state}>
         <Badge state={record.summary.state} type={BadgeType.State} />
         {(!!record?.progress) && <span> {floatToPercent(record.progress, 1)}</span>}
-      </>;
+      </div>;
     },
     title: 'Status',
   },
