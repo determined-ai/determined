@@ -45,11 +45,13 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
     });
   }, [ hasScrollBeenEnabled, resize, scroll ]);
 
-  return <div ref={tableRef}>
-    <Spinner spinning={spinning}>
-      <Table scroll={tableScroll} tableLayout="auto" {...props} />
-    </Spinner>
-  </div>;
+  return (
+    <div ref={tableRef}>
+      <Spinner spinning={spinning}>
+        <Table scroll={tableScroll} tableLayout="auto" {...props} />
+      </Spinner>
+    </div>
+  );
 };
 
 export default ResponsiveTable;

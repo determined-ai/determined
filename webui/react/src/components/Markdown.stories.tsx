@@ -140,7 +140,9 @@ export const Default = (): React.ReactNode => (
 export const Editing = (): React.ReactNode => {
   const [ editedMarkdown, setEditedMarkdown ] = useState(markdown);
 
-  return <div style={{ height: '80vh', width: '600px' }}>
-    <Markdown editing={true} markdown={editedMarkdown} onChange={setEditedMarkdown} />
-  </div>;
+  return (
+    <div style={{ height: '80vh', width: '600px' }}>
+      <Markdown editing={true} markdown={editedMarkdown} onChange={setEditedMarkdown} />
+    </div>
+  );
 };

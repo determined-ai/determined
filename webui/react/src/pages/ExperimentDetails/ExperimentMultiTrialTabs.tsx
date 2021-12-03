@@ -85,7 +85,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
           <ExperimentVisualization
             basePath={`${basePath}/${TabType.Visualization}`}
             experiment={experiment}
-            type={viz} />
+            type={viz}
+          />
         </React.Suspense>
       </TabPane>
       <TabPane key="trials" tab="Trials">
@@ -100,7 +101,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
         <NotesCard
           notes={experiment.notes ?? ''}
           style={{ border: 0 }}
-          onSave={handleNotesUpdate} />
+          onSave={handleNotesUpdate}
+        />
       </TabPane>
     </Tabs>
   );

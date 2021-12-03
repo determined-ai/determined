@@ -178,7 +178,8 @@ const TaskList: React.FC = () => {
       values={settings.type}
       width={180}
       onFilter={handleTypeFilterApply}
-      onReset={handleTypeFilterReset} />
+      onReset={handleTypeFilterReset}
+    />
   ), [ handleTypeFilterApply, handleTypeFilterReset, settings.type ]);
 
   const handleStateFilterApply = useCallback((states: string[]) => {
@@ -198,7 +199,8 @@ const TaskList: React.FC = () => {
       multiple
       values={settings.state}
       onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset} />
+      onReset={handleStateFilterReset}
+    />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
@@ -219,7 +221,8 @@ const TaskList: React.FC = () => {
       searchable
       values={settings.user}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const columns = useMemo(() => {
@@ -253,12 +256,14 @@ const TaskList: React.FC = () => {
         return numericSorter(a.id, b.id);
       });
 
-      return <div className={css.sourceName}>
-        {taskNameRenderer(_, record, index)}
-        <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
-          Show {info.sources.length} Source{info.plural}
-        </button>
-      </div>;
+      return (
+        <div className={css.sourceName}>
+          {taskNameRenderer(_, record, index)}
+          <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
+            Show {info.sources.length} Source{info.plural}
+          </button>
+        </div>
+      );
     };
 
     const actionRenderer: TaskRenderer = (_, record) => (
@@ -447,7 +452,7 @@ const TaskList: React.FC = () => {
   return (
     <Page
       id="tasks"
-      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} /> }
+      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
       title="Tasks">
       <div className={css.base}>
         <TableBatch
@@ -473,7 +478,8 @@ const TaskList: React.FC = () => {
           }}
           showSorterTooltip={false}
           size="small"
-          onChange={handleTableChange} />
+          onChange={handleTableChange}
+        />
       </div>
       <Modal
         footer={null}
@@ -486,9 +492,12 @@ const TaskList: React.FC = () => {
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.medium} minItemWidth={120}>
-            {sourcesModal?.sources.map(source => <Link
-              key={source.id}
-              path={source.path}>{source.type} {source.id}</Link>)}
+            {sourcesModal?.sources.map(source => (
+              <Link
+                key={source.id}
+                path={source.path}>{source.type} {source.id}
+              </Link>
+            ))}
           </Grid>
         </div>
       </Modal>

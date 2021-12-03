@@ -206,7 +206,8 @@ const LearningCurve: React.FC<Props> = ({
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -224,7 +225,8 @@ const LearningCurve: React.FC<Props> = ({
               trialIds={trialIds}
               xValues={batches}
               onTrialClick={handleTrialClick}
-              onTrialFocus={handleTrialFocus} />
+              onTrialFocus={handleTrialFocus}
+            />
           </div>
           <TableBatch
             actions={[
@@ -250,13 +252,15 @@ const LearningCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-      {showCompareTrials &&
-      <TrialsComparisonModal
-        experiment={experiment}
-        trials={selectedRowKeys}
-        visible={showCompareTrials}
-        onCancel={() => setShowCompareTrials(false)}
-        onUnselect={handleTrialUnselect} />}
+      {showCompareTrials && (
+        <TrialsComparisonModal
+          experiment={experiment}
+          trials={selectedRowKeys}
+          visible={showCompareTrials}
+          onCancel={() => setShowCompareTrials(false)}
+          onUnselect={handleTrialUnselect}
+        />
+      )}
     </div>
   );
 };

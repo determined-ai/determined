@@ -57,14 +57,17 @@ const ModelVersionHeader: React.FC<Props> = (
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
-      content:
-      (<Space>
-        {modelVersion.username ?
-          <Avatar name={modelVersion.username} /> :
-          <Avatar name={modelVersion.model.username} />}
-        {modelVersion.username ? modelVersion.username : modelVersion.model.username}
-        on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
-      </Space>),
+      content: (
+        <Space>
+          {modelVersion.username ? (
+            <Avatar name={modelVersion.username} />
+          ) : (
+            <Avatar name={modelVersion.model.username} />
+          )}
+          {modelVersion.username ? modelVersion.username : modelVersion.model.username}
+          on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+        </Space>
+      ),
       label: 'Created by',
     },
     {
@@ -74,18 +77,23 @@ const ModelVersionHeader: React.FC<Props> = (
       label: 'Updated',
     },
     {
-      content: <InlineEditor
-        placeholder="Add description..."
-        value={modelVersion.comment ?? ''}
-        onSave={onSaveDescription} />,
+      content: (
+        <InlineEditor
+          placeholder="Add description..."
+          value={modelVersion.comment ?? ''}
+          onSave={onSaveDescription}
+        />
+      ),
       label: 'Description',
     },
     {
-      content: <TagList
-        ghost={false}
-        tags={modelVersion.labels ?? []}
-        onChange={onUpdateTags}
-      />,
+      content: (
+        <TagList
+          ghost={false}
+          tags={modelVersion.labels ?? []}
+          onChange={onUpdateTags}
+        />
+      ),
       label: 'Tags',
     } ] as InfoRow[];
   }, [ modelVersion, onSaveDescription, onUpdateTags ]);
@@ -168,13 +176,13 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             <h1 className={css.versionName}>
               <InlineEditor
                 placeholder="Add name..."
-                value = {modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
+                value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
                 onSave={onSaveName}
               />
             </h1>
           </div>
           <div className={css.buttons}>
-            {actions.slice(0, 2).map(action =>
+            {actions.slice(0, 2).map(action => (
               <Button
                 className={css.buttonAction}
                 danger={action.danger}
@@ -182,11 +190,12 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                 key={action.key}
                 onClick={action.onClick}>
                 {action.text}
-              </Button>)}
+              </Button>
+            ))}
             <Dropdown
               overlay={(
                 <Menu className={css.overflow}>
-                  {actions.map(action =>
+                  {actions.map(action => (
                     <Menu.Item
                       className={css.overflowAction}
                       danger={action.danger}
@@ -194,7 +203,8 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                       key={action.key}
                       onClick={action.onClick}>
                       {action.text}
-                    </Menu.Item>)}
+                    </Menu.Item>
+                  ))}
                 </Menu>
               )}
               trigger={[ 'click' ]}>
@@ -209,7 +219,8 @@ model.load_state_dict(ckpt['models_state_dict'][0])
       <DownloadModelModal
         modelVersion={modelVersion}
         visible={showDownloadModel}
-        onClose={() => setShowDownloadModel(false)} />
+        onClose={() => setShowDownloadModel(false)}
+      />
       <Modal
         className={css.useNotebookModal}
         footer={null}

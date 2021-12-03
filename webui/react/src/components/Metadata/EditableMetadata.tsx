@@ -49,15 +49,19 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                   <EditableRow
                     key={field.key}
                     name={field.name}
-                    onDelete={fields.length > 1 ? () => remove(field.name) : undefined} />
+                    onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
+                  />
                 ))}
                 <Button
                   className={css.addRow}
                   type="link"
-                  onClick={add}>+ Add Row</Button>
-              </>)}
+                  onClick={add}>+ Add Row
+                </Button>
+              </>
+            )}
           </Form.List>
-        </>) : <InfoBox rows={metadataRows} />}
+        </>
+      ) : <InfoBox rows={metadataRows} />}
     </Form>
   );
 };

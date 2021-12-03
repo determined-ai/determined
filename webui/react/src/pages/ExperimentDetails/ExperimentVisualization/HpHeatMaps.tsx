@@ -219,7 +219,8 @@ const HpHeatMaps: React.FC<Props> = ({
       <div>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -241,7 +242,8 @@ const HpHeatMaps: React.FC<Props> = ({
               <div className={css.legend}>
                 <ColorLegend
                   colorScale={colorScale}
-                  title={<MetricBadgeTag metric={selectedMetric} />} />
+                  title={<MetricBadgeTag metric={selectedMetric} />}
+                />
               </div>
               <div className={css.charts}>
                 <Grid
@@ -281,19 +283,21 @@ const HpHeatMaps: React.FC<Props> = ({
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
         onPrevious={handleGalleryPrevious}>
-        {activeHParam && <ScatterPlot
-          colorScale={colorScale}
-          height={galleryHeight}
-          valueLabel={metricNameToStr(selectedMetric)}
-          values={chartData?.hpMetrics[generateHpKey(activeHParam[0], activeHParam[1])]}
-          width={350}
-          x={chartData?.hpValues[activeHParam[1]] || []}
-          xLabel={activeHParam[1]}
-          xLogScale={chartData?.hpLogScales[activeHParam[1]]}
-          y={chartData?.hpValues[activeHParam[0]] || []}
-          yLabel={activeHParam[0]}
-          yLogScale={chartData?.hpLogScales[activeHParam[0]]}
-        />}
+        {activeHParam && (
+          <ScatterPlot
+            colorScale={colorScale}
+            height={galleryHeight}
+            valueLabel={metricNameToStr(selectedMetric)}
+            values={chartData?.hpMetrics[generateHpKey(activeHParam[0], activeHParam[1])]}
+            width={350}
+            x={chartData?.hpValues[activeHParam[1]] || []}
+            xLabel={activeHParam[1]}
+            xLogScale={chartData?.hpLogScales[activeHParam[1]]}
+            y={chartData?.hpValues[activeHParam[0]] || []}
+            yLabel={activeHParam[0]}
+            yLogScale={chartData?.hpLogScales[activeHParam[0]]}
+          />
+        )}
       </GalleryModal>
     </div>
   );

@@ -94,7 +94,8 @@ const TrialChart: React.FC<Props> = ({
         metricNames={metricNames}
         multiple
         value={metrics}
-        onChange={onMetricChange} />
+        onChange={onMetricChange}
+      />
       <ScaleSelectFilter value={scale} onChange={setScale} />
     </ResponsiveFilters>
   );

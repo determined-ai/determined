@@ -35,28 +35,33 @@ const ModelHeader: React.FC<Props> = (
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
-      content:
-      (<Space>
-        <Avatar name={model.username} />
-        {model.username + ' on ' +
-      formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}
-      </Space>),
+      content: (
+        <Space>
+          <Avatar name={model.username} />
+          {`${model.username} on ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+        </Space>
+      ),
       label: 'Created by',
     },
     { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
     {
-      content: <InlineEditor
-        placeholder="Add description..."
-        value={model.description ?? ''}
-        onSave={onSaveDescription} />,
+      content: (
+        <InlineEditor
+          placeholder="Add description..."
+          value={model.description ?? ''}
+          onSave={onSaveDescription}
+        />
+      ),
       label: 'Description',
     },
     {
-      content: <TagList
-        ghost={false}
-        tags={model.labels ?? []}
-        onChange={onUpdateTags}
-      />,
+      content: (
+        <TagList
+          ghost={false}
+          tags={model.labels ?? []}
+          onChange={onUpdateTags}
+        />
+      ),
       label: 'Tags',
     } ] as InfoRow[];
   }, [ model, onSaveDescription, onUpdateTags ]);
@@ -103,7 +108,8 @@ const ModelHeader: React.FC<Props> = (
               <InlineEditor
                 placeholder="Add name..."
                 value={model.name}
-                onSave={onSaveName} />
+                onSave={onSaveName}
+              />
             </h1>
           </Space>
           <Space size="small">
@@ -118,7 +124,7 @@ const ModelHeader: React.FC<Props> = (
                     disabled={!isDeletable}
                     key="delete-model"
                     onClick={() => showConfirmDelete(model)}>
-                  Delete
+                    Delete
                   </Menu.Item>
                 </Menu>
               )}

@@ -175,7 +175,8 @@ const ModelRegistry: React.FC = () => {
       searchable
       values={settings.users}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.users ]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
@@ -288,7 +289,7 @@ const ModelRegistry: React.FC = () => {
                 disabled={!isDeletable}
                 key="delete-model"
                 onClick={() => showConfirmDelete(record)}>
-                  Delete Model
+                Delete Model
               </Menu.Item>
             </Menu>
           )}
@@ -300,12 +301,13 @@ const ModelRegistry: React.FC = () => {
       );
     };
 
-    const descriptionRenderer = (value:string, record: ModelItem) => {
-      return <InlineEditor
+    const descriptionRenderer = (value:string, record: ModelItem) => (
+      <InlineEditor
         placeholder="Add description..."
         value={value}
-        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)} />;
-    };
+        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)}
+      />
+    );
 
     const tableColumns: ColumnsType<ModelItem> = [
       {
@@ -424,7 +426,7 @@ const ModelRegistry: React.FC = () => {
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
       <Section title="Model Registry">
-        {(models.length === 0 && !isLoading) ?
+        {(models.length === 0 && !isLoading) ? (
           <div className={css.emptyBase}>
             <div className={css.icon}>
               <Icon name="model" size="mega" />
@@ -436,7 +438,8 @@ const ModelRegistry: React.FC = () => {
                 Learn more
               </Link>
             </p>
-          </div> :
+          </div>
+        ) : (
           <ResponsiveTable
             columns={columns}
             dataSource={models}
@@ -447,7 +450,9 @@ const ModelRegistry: React.FC = () => {
             }, total)}
             showSorterTooltip={false}
             size="small"
-            onChange={handleTableChange} />}
+            onChange={handleTableChange}
+          />
+        )}
       </Section>
     </Page>
   );

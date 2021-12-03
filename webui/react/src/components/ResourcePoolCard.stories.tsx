@@ -12,29 +12,29 @@ export default {
   title: 'ResourcePoolCard',
 };
 
-export const Default = (): React.ReactNode => {
-  return <ResourcePoolCard
+export const Default = (): React.ReactNode => (
+  <ResourcePoolCard
     computeContainerStates={[]}
     resourcePool={rps.random()}
     resourceType={ResourceType.GPU}
     totalComputeSlots={3}
-  />;
-};
+  />
+);
 
-export const CPU = (): React.ReactNode => {
-  return <ResourcePoolCard
+export const CPU = (): React.ReactNode => (
+  <ResourcePoolCard
     computeContainerStates={[]}
     resourcePool={rps.random()}
     resourceType={ResourceType.CPU}
     totalComputeSlots={3}
-  />;
-};
+  />
+);
 
-export const Aux = (): React.ReactNode => {
-  return <ResourcePoolCard
+export const Aux = (): React.ReactNode => (
+  <ResourcePoolCard
     computeContainerStates={[]}
     resourcePool={rps.random()}
     resourceType={ResourceType.UNSPECIFIED}
     totalComputeSlots={0}
-  />;
-};
+  />
+);

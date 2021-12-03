@@ -14,11 +14,13 @@ export const Default = (): React.ReactNode => (
 
 export const WithOptions = (): React.ReactNode => (
   <Section
-    options={<Space>
-      <Button key="1">Option 1</Button>
-      <Button key="2">Option 2</Button>
-    </Space>}
+    options={(
+      <Space>
+        <Button key="1">Option 1</Button>
+        <Button key="2">Option 2</Button>
+      </Space>
+    )}
     title="Section with Content">
-      Section Content
+    Section Content
   </Section>
 );

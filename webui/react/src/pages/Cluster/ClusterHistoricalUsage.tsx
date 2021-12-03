@@ -122,61 +122,55 @@ const ClusterHistoricalUsage: React.FC = () => {
           </Col>
         </Row>
       </div>
-
       <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
-        { chartSeries && (
+        {chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursTotal}
             time={chartSeries.time}
           />
-        ) }
+        )}
       </Section>
-
       <Section bodyBorder loading={!chartSeries} title="Compute Hours by User">
-        { chartSeries && (
+        {chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByUsername}
             hoursTotal={chartSeries?.hoursTotal?.total}
             time={chartSeries.time}
           />
-        ) }
+        )}
       </Section>
-
       <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
-        { chartSeries && (
+        {chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByExperimentLabel}
             hoursTotal={chartSeries?.hoursTotal?.total}
             time={chartSeries.time}
           />
-        ) }
+        )}
       </Section>
-
       <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
-        { chartSeries && (
+        {chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByResourcePool}
             hoursTotal={chartSeries?.hoursTotal?.total}
             time={chartSeries.time}
           />
-        ) }
+        )}
       </Section>
-
       <Section bodyBorder loading={!chartSeries} title="Compute Hours by Agent Label">
-        { chartSeries && (
+        {chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByAgentLabel}
             hoursTotal={chartSeries?.hoursTotal?.total}
             time={chartSeries.time}
           />
-        ) }
+        )}
       </Section>
-
       {isCsvModalVisible && (
         <ClusterHistoricalUsageCsvModal
           afterDate={csvAfterDate}

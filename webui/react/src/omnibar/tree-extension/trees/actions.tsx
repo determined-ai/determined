@@ -24,15 +24,11 @@ export const displayHelp = (): void => {
   Modal.info({
     content: (
       <>
-        <p>
-        Keyboard shortcuts:
-        </p>
+        <p>Keyboard shortcuts:</p>
         <ul>
           {keymap.map((el, idx) => <li key={idx}>{el}</li>)}
         </ul>
-        <p>
-        Available commands:
-        </p>
+        <p>Available commands:</p>
         <ul>
           {commands.map((el, idx) => <li key={idx}>{el}</li>)}
         </ul>

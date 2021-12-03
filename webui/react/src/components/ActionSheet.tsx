@@ -51,10 +51,12 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
               <div className={css.label}>{action.label}</div>
             </Link>
           ))}
-          {!props.hideCancel && <Link className={css.item} onClick={handleCancelClick}>
-            <Icon name="error" size="large" />
-            <div className={css.label}>Cancel</div>
-          </Link>}
+          {!props.hideCancel && (
+            <Link className={css.item} onClick={handleCancelClick}>
+              <Icon name="error" size="large" />
+              <div className={css.label}>Cancel</div>
+            </Link>
+          )}
         </div>
       </div>
     </CSSTransition>
