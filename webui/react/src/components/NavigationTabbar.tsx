@@ -96,10 +96,12 @@ const NavigationTabbar: React.FC = () => {
           },
         ]}
         show={isShowingOverflow}
-        onCancel={handleActionSheetCancel} />
+        onCancel={handleActionSheetCancel}
+      />
       <JupyterLabModal
         visible={showJupyterLabModal}
-        onCancel={() => setShowJupyterLabModal(false)} />
+        onCancel={() => setShowJupyterLabModal(false)}
+      />
     </nav>
   );
 };

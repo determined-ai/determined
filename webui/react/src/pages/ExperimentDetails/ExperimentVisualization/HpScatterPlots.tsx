@@ -159,7 +159,8 @@ const ScatterPlots: React.FC<Props> = ({
       <div>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -198,14 +199,16 @@ const ScatterPlots: React.FC<Props> = ({
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
         onPrevious={handleGalleryPrevious}>
-        {activeHParam && <ScatterPlot
-          height={galleryHeight}
-          x={chartData?.hpValues[activeHParam] || []}
-          xLabel={activeHParam}
-          xLogScale={chartData?.hpLogScales[activeHParam]}
-          y={chartData?.metricValues[activeHParam] || []}
-          yLabel={metricNameToStr(selectedMetric)}
-        />}
+        {activeHParam && (
+          <ScatterPlot
+            height={galleryHeight}
+            x={chartData?.hpValues[activeHParam] || []}
+            xLabel={activeHParam}
+            xLogScale={chartData?.hpLogScales[activeHParam]}
+            y={chartData?.metricValues[activeHParam] || []}
+            yLabel={metricNameToStr(selectedMetric)}
+          />
+        )}
       </GalleryModal>
     </div>
   );

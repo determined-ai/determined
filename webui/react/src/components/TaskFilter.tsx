@@ -83,15 +83,18 @@ const TaskFilter: TaskFilterFC = <T extends CommandType | TaskType = TaskType>({
         showCommandStates={true}
         showExperimentStates={showExperiments}
         value={filters.states}
-        onChange={handleStateChange} />
+        onChange={handleStateChange}
+      />
       <UserSelectFilter value={filters.users} onChange={handleUserChange} />
-      {showLimit && <SelectFilter
-        label="Limit"
-        showSearch={false}
-        value={filters.limit}
-        onSelect={handleLimitSelect}>
-        {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
-      </SelectFilter>}
+      {showLimit && (
+        <SelectFilter
+          label="Limit"
+          showSearch={false}
+          value={filters.limit}
+          onSelect={handleLimitSelect}>
+          {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
+        </SelectFilter>
+      )}
     </ResponsiveFilters>
   );
 };

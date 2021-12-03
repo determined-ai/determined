@@ -169,8 +169,8 @@ const HpTrialTable: React.FC<Props> = ({
       showSorterTooltip={false}
       size="small"
       onChange={handleTableChange}
-      onRow={handleTableRow} />
-
+      onRow={handleTableRow}
+    />
   );
 };
 

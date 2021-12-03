@@ -211,7 +211,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   return (
     <>
       <PageHeaderFoldable
-        foldableContent={
+        foldableContent={(
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
@@ -221,7 +221,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 maxLength={500}
                 placeholder="Add description"
                 value={experiment.description || ''}
-                onSave={handleDescriptionUpdate} />
+                onSave={handleDescriptionUpdate}
+              />
             </div>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Start Time:</span>
@@ -241,8 +242,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               onChange={experimentTags.handleTagListChange(experiment.id)}
             />
           </div>
-        }
-        leftContent={
+        )}
+        leftContent={(
           <div className={css.base}>
             <div className={css.experimentInfo}>
               <ExperimentState experiment={experiment} />
@@ -254,7 +255,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 maxLength={128}
                 placeholder="experiment name"
                 value={experiment.name}
-                onSave={handleNameUpdate} />
+                onSave={handleNameUpdate}
+              />
             </div>
             {trial ? (
               <>
@@ -263,7 +265,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </>
             ) : null}
           </div>
-        }
+        )}
         options={headerOptions}
         style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
       />

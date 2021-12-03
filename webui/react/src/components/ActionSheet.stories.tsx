@@ -37,7 +37,8 @@ const ActionSheetContainer = () => {
           popout: true,
         },
       ]}
-      show={isShowing} />
+      show={isShowing}
+    />
   );
 };
 

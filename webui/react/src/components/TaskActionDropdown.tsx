@@ -152,9 +152,11 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
   if (isExperiment) {
     menuItems.push(<Menu.Item key={Action.OpenTensorBoard}>View in TensorBoard</Menu.Item>);
   } else {
-    menuItems.push(<Menu.Item key="viewLogs">
-      <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
-    </Menu.Item>);
+    menuItems.push(
+      <Menu.Item key="viewLogs">
+        <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
+      </Menu.Item>,
+    );
   }
 
   if (menuItems.length === 0) {

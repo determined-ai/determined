@@ -24,12 +24,13 @@ export const renderRow = ({ label, content, separator }: InfoRowProps): React.Re
       className={[ css.info, separator ? css.separator : null ].join(' ')}
       key={label?.toString()}>
       <dt className={css.label}>{label}</dt>
-      {Array.isArray(content) ?
+      {Array.isArray(content) ? (
         <dd className={css.contentList}>
           {content.map((item, idx) => <div className={css.content} key={idx}>{item}</div>)}
-        </dd> :
+        </dd>
+      ) : (
         <dd className={css.content}>{content}</dd>
-      }
+      )}
 
     </div>
   );

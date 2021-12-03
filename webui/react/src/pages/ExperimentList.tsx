@@ -248,7 +248,8 @@ const ExperimentList: React.FC = () => {
       multiple
       values={settings.state}
       onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset} />
+      onReset={handleStateFilterReset}
+    />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
@@ -269,7 +270,8 @@ const ExperimentList: React.FC = () => {
       searchable
       values={settings.user}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const columns = useMemo(() => {
@@ -285,7 +287,8 @@ const ExperimentList: React.FC = () => {
       <TaskActionDropdown
         curUser={user}
         task={taskFromExperiment(record)}
-        onComplete={handleActionComplete} />
+        onComplete={handleActionComplete}
+      />
     );
 
     const tableColumns: ColumnsType<ExperimentItem> = [

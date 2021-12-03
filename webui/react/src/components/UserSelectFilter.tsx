@@ -31,9 +31,11 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     const list: React.ReactNode[] = [ <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option> ];
 
     if (authUser) {
-      list.push(<Option key={authUser.username} value={authUser.username}>
-        {authUser.username}
-      </Option>);
+      list.push(
+        <Option key={authUser.username} value={authUser.username}>
+          {authUser.username}
+        </Option>,
+      );
     }
 
     if (users) {
@@ -53,8 +55,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
       label="Users"
       style={{ maxWidth: 200 }}
       value={value || ALL_VALUE}
-      onSelect={handleSelect}
-    >
+      onSelect={handleSelect}>
       {options}
     </SelectFilter>
   );

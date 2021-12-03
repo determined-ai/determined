@@ -123,16 +123,19 @@ const JupyterLabModal: React.FC<JupyterLabModalProps> = (
 
   return (
     <Modal
-      footer={<>
-        <Button
-          onClick={handleSecondary}>
-          {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
-        </Button>
-        <Button
-          disabled={buttonDisabled}
-          type="primary"
-          onClick={handleCreateEnvironment}>Launch</Button>
-      </>}
+      footer={(
+        <>
+          <Button
+            onClick={handleSecondary}>
+            {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
+          </Button>
+          <Button
+            disabled={buttonDisabled}
+            type="primary"
+            onClick={handleCreateEnvironment}>Launch
+          </Button>
+        </>
+      )}
       title="Launch JupyterLab"
       visible={visible}
       width={540}
@@ -173,7 +176,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = (
       onFieldsChange={handleConfigChange}>
       <div className={css.note}>
         <Link external path="/docs/reference/api/command-notebook-config.html">
-        Read about JupyterLab settings
+          Read about JupyterLab settings
         </Link>
       </div>
       <React.Suspense

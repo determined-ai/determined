@@ -17,31 +17,37 @@ interface Props {
 const EditableRow: React.FC<Props> = (
   { name, onDelete, field }: Props,
 ) => {
-  return <Form.Item
-    {...field}
-    name={name}
-    noStyle>
-    <Input.Group className={css.row} compact>
-      <Form.Item name={[ name, 'key' ]} noStyle>
-        <Input placeholder="Enter metadata label" />
-      </Form.Item>
-      <Form.Item name={[ name, 'value' ]} noStyle>
-        <Input placeholder="Enter metadata value" />
-      </Form.Item>
-      {onDelete && <Dropdown
-        className={css.overflow}
-        overlay={(
-          <Menu>
-            <Menu.Item danger key="delete-metadata-row" onClick={onDelete}>Delete Row</Menu.Item>
-          </Menu>
+  return (
+    <Form.Item
+      {...field}
+      name={name}
+      noStyle>
+      <Input.Group className={css.row} compact>
+        <Form.Item name={[ name, 'key' ]} noStyle>
+          <Input placeholder="Enter metadata label" />
+        </Form.Item>
+        <Form.Item name={[ name, 'value' ]} noStyle>
+          <Input placeholder="Enter metadata value" />
+        </Form.Item>
+        {onDelete && (
+          <Dropdown
+            className={css.overflow}
+            overlay={(
+              <Menu>
+                <Menu.Item danger key="delete-metadata-row" onClick={onDelete}>
+                  Delete Row
+                </Menu.Item>
+              </Menu>
+            )}
+            trigger={[ 'click' ]}>
+            <Button type="text">
+              <Icon name="overflow-vertical" size="tiny" />
+            </Button>
+          </Dropdown>
         )}
-        trigger={[ 'click' ]}>
-        <Button type="text">
-          <Icon name="overflow-vertical" size="tiny" />
-        </Button>
-      </Dropdown>}
-    </Input.Group>
-  </Form.Item>;
+      </Input.Group>
+    </Form.Item>
+  );
 };
 
 export default EditableRow;

@@ -68,12 +68,15 @@ const Page: React.FC<Props> = (props: Props) => {
         )}
       </Helmet>
       {props.headerComponent}
-      {showHeader && <PageHeader
-        breadcrumb={props.breadcrumb}
-        options={props.options}
-        sticky={props.stickyHeader}
-        subTitle={props.subTitle}
-        title={props.title} />}
+      {showHeader && (
+        <PageHeader
+          breadcrumb={props.breadcrumb}
+          options={props.options}
+          sticky={props.stickyHeader}
+          subTitle={props.subTitle}
+          title={props.title}
+        />
+      )}
       <div className={css.body}>
         <Spinner spinning={!!props.loading}>{props.children}</Spinner>
       </div>

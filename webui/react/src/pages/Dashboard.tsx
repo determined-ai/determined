@@ -167,29 +167,43 @@ const Dashboard: React.FC = () => {
           <OverviewStats title="Cluster Allocation">
             {overview[ResourceType.ALL].allocation}<small>%</small>
           </OverviewStats>
-          {overview[ResourceType.GPU].total ? <OverviewStats title="Available GPUs">
-            {overview[ResourceType.GPU].available}
-            <small>/{overview[ResourceType.GPU].total}</small>
-          </OverviewStats> : null}
-          {overview[ResourceType.CPU].total ? <OverviewStats title="Available CPUs">
-            {overview[ResourceType.CPU].available}
-            <small>/{overview[ResourceType.CPU].total}</small>
-          </OverviewStats> : null}
-          {activeExperimentCount ? <OverviewStats title="Active Experiments">
-            {activeExperimentCount}
-          </OverviewStats> : null}
-          {activeTaskTally[CommandType.JupyterLab] ? <OverviewStats title="Active JupyterLabs">
-            {activeTaskTally[CommandType.JupyterLab]}
-          </OverviewStats> : null}
-          {activeTaskTally[CommandType.TensorBoard] ? <OverviewStats title="Active Tensorboards">
-            {activeTaskTally[CommandType.TensorBoard]}
-          </OverviewStats> : null}
-          {activeTaskTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
-            {activeTaskTally[CommandType.Shell]}
-          </OverviewStats> : null}
-          {activeTaskTally[CommandType.Command] ? <OverviewStats title="Active Commands">
-            {activeTaskTally[CommandType.Command]}
-          </OverviewStats> : null}
+          {overview[ResourceType.GPU].total ? (
+            <OverviewStats title="Available GPUs">
+              {overview[ResourceType.GPU].available}
+              <small>/{overview[ResourceType.GPU].total}</small>
+            </OverviewStats>
+          ) : null}
+          {overview[ResourceType.CPU].total ? (
+            <OverviewStats title="Available CPUs">
+              {overview[ResourceType.CPU].available}
+              <small>/{overview[ResourceType.CPU].total}</small>
+            </OverviewStats>
+          ) : null}
+          {activeExperimentCount ? (
+            <OverviewStats title="Active Experiments">
+              {activeExperimentCount}
+            </OverviewStats>
+          ) : null}
+          {activeTaskTally[CommandType.JupyterLab] ? (
+            <OverviewStats title="Active JupyterLabs">
+              {activeTaskTally[CommandType.JupyterLab]}
+            </OverviewStats>
+          ) : null}
+          {activeTaskTally[CommandType.TensorBoard] ? (
+            <OverviewStats title="Active Tensorboards">
+              {activeTaskTally[CommandType.TensorBoard]}
+            </OverviewStats>
+          ) : null}
+          {activeTaskTally[CommandType.Shell] ? (
+            <OverviewStats title="Active Shells">
+              {activeTaskTally[CommandType.Shell]}
+            </OverviewStats>
+          ) : null}
+          {activeTaskTally[CommandType.Command] ? (
+            <OverviewStats title="Active Commands">
+              {activeTaskTally[CommandType.Command]}
+            </OverviewStats>
+          ) : null}
         </Grid>
       </Section>
       <Section
@@ -197,18 +211,22 @@ const Dashboard: React.FC = () => {
         loading={!experiments || !tasks}
         options={<TaskFilter filters={filters} onChange={handleFilterChange} />}
         title="Recent Tasks">
-        {filteredTasks.length !== 0
-          ? (
-            <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
-              {filteredTasks.map((props: RecentTask) => <TaskCard
+        {filteredTasks.length !== 0 ? (
+          <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
+            {filteredTasks.map((props: RecentTask) => (
+              <TaskCard
                 curUser={user}
                 key={props.id}
-                {...props} />)}
-            </Grid>
-          ) : <Message
+                {...props}
+              />
+            ))}
+          </Grid>
+        ) : (
+          <Message
             title="No recent tasks matching the current filters"
-            type={MessageType.Empty} />
-        }
+            type={MessageType.Empty}
+          />
+        )}
       </Section>
     </Page>
   );

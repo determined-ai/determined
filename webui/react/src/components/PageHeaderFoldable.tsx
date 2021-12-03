@@ -47,8 +47,9 @@ const PageHeaderFoldable: React.FC<Props> = (
             className={css.optionsDropdownItem}
             disabled={!opt.onClick}
             key={opt.key}
-            onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}
-          >{renderOptionLabel(opt)}</Menu.Item>
+            onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}>
+            {renderOptionLabel(opt)}
+          </Menu.Item>
         ))}
       </Menu>
     );
@@ -57,17 +58,14 @@ const PageHeaderFoldable: React.FC<Props> = (
   return (
     <>
       <div className={css.base} style={style}>
-
         <div className={css.left}>
           {leftContent}
         </div>
-
         {foldableContent && (
           <div className={css.toggle} onClick={() => setIsExpanded(!isExpanded)}>
             <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} />
           </div>
         )}
-
         <div className={css.options}>
           {options?.slice(0, 3).map((opt, i) => (
             <Button
@@ -77,8 +75,8 @@ const PageHeaderFoldable: React.FC<Props> = (
               icon={opt?.icon}
               key={opt.key}
               loading={opt.isLoading}
-              onClick={opt.onClick}
-            >{renderOptionLabel(opt)}</Button>
+              onClick={opt.onClick}>{renderOptionLabel(opt)}
+            </Button>
           ))}
           {dropdownOptions && (
             <Dropdown arrow overlay={dropdownOptions} placement="bottomRight">
@@ -90,13 +88,11 @@ const PageHeaderFoldable: React.FC<Props> = (
             </Dropdown>
           )}
         </div>
-
         {foldableContent && isExpanded && (
           <div className={css.bottom}>
             {foldableContent}
           </div>
         )}
-
       </div>
     </>
   );

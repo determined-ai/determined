@@ -270,7 +270,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -326,13 +327,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </div>
         </div>
       </Section>
-      {showCompareTrials &&
-      <TrialsComparisonModal
-        experiment={experiment}
-        trials={selectedRowKeys}
-        visible={showCompareTrials}
-        onCancel={() => setShowCompareTrials(false)}
-        onUnselect={handleTrialUnselect} />}
+      {showCompareTrials && (
+        <TrialsComparisonModal
+          experiment={experiment}
+          trials={selectedRowKeys}
+          visible={showCompareTrials}
+          onCancel={() => setShowCompareTrials(false)}
+          onUnselect={handleTrialUnselect}
+        />
+      )}
     </div>
   );
 };

@@ -51,12 +51,13 @@ const AppView: React.FC = () => {
     if (!process.env.IS_DEV && info.version !== process.env.VERSION) {
       const btn = <Button type="primary" onClick={refreshPage}>Update Now</Button>;
       const message = 'New WebUI Version';
-      const description = <div>
-        WebUI version <b>v{info.version}</b> is available.
-        Check out what&apos;s new in our <Link external path={paths.docs('/release-notes.html')}>
-          release notes
-        </Link>.
-      </div>;
+      const description = (
+        <div>
+          WebUI version <b>v{info.version}</b> is available.
+          Check out what&apos;s new in our
+          <Link external path={paths.docs('/release-notes.html')}>release notes</Link>.
+        </div>
+      );
       notification.warn({
         btn,
         description,
@@ -116,8 +117,10 @@ const AppView: React.FC = () => {
         </Navigation>
       ) : (
         <PageMessage title="Server is Unreachable">
-          <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
-              Please check the firewall and cluster settings.</p>
+          <p>
+            Unable to communicate with the server at &quot;{serverAddress()}&quot;.
+            Please check the firewall and cluster settings.
+          </p>
           <Button onClick={refreshPage}>Try Again</Button>
         </PageMessage>
       )}

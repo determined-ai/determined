@@ -118,9 +118,7 @@ const ResourcePoolCard: React.FC<Props> = (
           backgroundColor: numAgents > 0 ?
             'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
         }}>
-        <p>
-          {agentStatusText(numAgents)}
-        </p>
+        <p>{agentStatusText(numAgents)}</p>
       </div>
       <div className={css.body}>
         <section className={descriptionClasses.join(' ')}>
@@ -132,8 +130,9 @@ const ResourcePoolCard: React.FC<Props> = (
         <section>
           <SlotAllocationBar
             resourceStates={computeContainerStates}
-            title={deviceTypes.has(resourceType) ? resourceType : undefined }
-            totalSlots={totalComputeSlots} />
+            title={deviceTypes.has(resourceType) ? resourceType : undefined}
+            totalSlots={totalComputeSlots}
+          />
           <div className={css.cpuContainers}>
             <span>Aux containers running:</span>
             <span>{rp.auxContainersRunning}</span>

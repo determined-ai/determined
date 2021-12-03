@@ -133,7 +133,8 @@ const EditableTagList: React.FC<Props> = (
                 onBlur={handleEditInputConfirm}
                 onChange={handleEditInputChange}
                 onFocus={handleEditInputFocus}
-                onPressEnter={handleEditInputConfirm} />
+                onPressEnter={handleEditInputConfirm}
+              />
             );
           }
 
@@ -176,7 +177,8 @@ const EditableTagList: React.FC<Props> = (
           value={inputValue}
           onBlur={handleInputConfirm}
           onChange={handleInputChange}
-          onPressEnter={handleInputConfirm} />
+          onPressEnter={handleInputConfirm}
+        />
       ) : (
         <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
           <PlusOutlined /> New Tag

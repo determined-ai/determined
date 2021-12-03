@@ -159,49 +159,57 @@ const MetricSelectFilter: React.FC<Props> = ({
     }
   }, [ metricValues, totalNumMetrics ]);
 
-  return <SelectFilter
-    autoClearSearchValue={false}
-    disableTags
-    dropdownMatchSelectWidth={dropdownMatchSelectWidth}
-    filterOption={handleFiltering}
-    label={label}
-    maxTagCount={maxTagCount}
-    maxTagPlaceholder={selectorPlaceholder}
-    mode={multiple ? 'multiple' : undefined}
-    ref={selectRef}
-    showArrow
-    style={{ width }}
-    value={metricValues}
-    verticalLayout={verticalLayout}
-    onBlur={handleBlur}
-    onDeselect={handleMetricDeselect}
-    onSearch={handleSearchInputChange}
-    onSelect={handleMetricSelect}>
-
-    { multiple && visibleMetrics.length > 0 &&
-      <Option key={resetOptionId} value={resetOptionId}>
-        <BadgeTag label="Reset to Default" />
-      </Option>}
-
-    { multiple && visibleMetrics.length > 1 && allOption}
-
-    {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
-      {validationMetricNames.map(key => {
-        const value = metricNameToValue(key);
-        return <Option key={value} value={value}>
-          <MetricBadgeTag metric={key} />
-        </Option>;
-      })}
-    </OptGroup>}
-    {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
-      {trainingMetricNames.map(key => {
-        const value = metricNameToValue(key);
-        return <Option key={value} value={value}>
-          <MetricBadgeTag metric={key} />
-        </Option>;
-      })}
-    </OptGroup>}
-  </SelectFilter>;
+  return (
+    <SelectFilter
+      autoClearSearchValue={false}
+      disableTags
+      dropdownMatchSelectWidth={dropdownMatchSelectWidth}
+      filterOption={handleFiltering}
+      label={label}
+      maxTagCount={maxTagCount}
+      maxTagPlaceholder={selectorPlaceholder}
+      mode={multiple ? 'multiple' : undefined}
+      ref={selectRef}
+      showArrow
+      style={{ width }}
+      value={metricValues}
+      verticalLayout={verticalLayout}
+      onBlur={handleBlur}
+      onDeselect={handleMetricDeselect}
+      onSearch={handleSearchInputChange}
+      onSelect={handleMetricSelect}>
+      {multiple && visibleMetrics.length > 0 && (
+        <Option key={resetOptionId} value={resetOptionId}>
+          <BadgeTag label="Reset to Default" />
+        </Option>
+      )}
+      {multiple && visibleMetrics.length > 1 && allOption}
+      {validationMetricNames.length > 0 && (
+        <OptGroup label="Validation Metrics">
+          {validationMetricNames.map(key => {
+            const value = metricNameToValue(key);
+            return (
+              <Option key={value} value={value}>
+                <MetricBadgeTag metric={key} />
+              </Option>
+            );
+          })}
+        </OptGroup>
+      )}
+      {trainingMetricNames.length > 0 && (
+        <OptGroup label="Training Metrics">
+          {trainingMetricNames.map(key => {
+            const value = metricNameToValue(key);
+            return (
+              <Option key={value} value={value}>
+                <MetricBadgeTag metric={key} />
+              </Option>
+            );
+          })}
+        </OptGroup>
+      )}
+    </SelectFilter>
+  );
 };
 
 export default MetricSelectFilter;
