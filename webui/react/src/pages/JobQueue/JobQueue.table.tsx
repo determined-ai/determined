@@ -83,8 +83,20 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
-      const label = record.name ?
-        record.name : <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+      let label: ReactNode = null;
+      switch (record.type) {
+        case JobType.EXPERIMENT:
+          label = <div>{record.name}
+            <Tooltip title="Experiment ID">
+              {` (${record.entityId})`}
+            </Tooltip>
+          </div>;
+          break;
+        default:
+          label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+          break;
+      }
+
       return linkToEntityPage(record, label);
     },
     title: 'Job Name',
