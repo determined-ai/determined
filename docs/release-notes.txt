@@ -18,8 +18,9 @@ Version 0.17.4
 -  WebUI: Add the :ref:`model registry <organizing-models>` as a new top-level navigation option,
    allowing for viewing, editing, and deleting existing models created using the CLI.
 
--  Add experimental support for `Multi-Instance GPU
-   <https://www.nvidia.com/en-us/technologies/multi-instance-gpu/>`__ (MIG). Static agents and
+-  Add experimental support for `Multi-Instance GPUs
+   <https://www.nvidia.com/en-us/technologies/multi-instance-gpu/>`__ (MIGs) to agent-based setups,
+   in parity with the experimental support for MIGs in Kubernetes-based setups. Static agents and
    Kubernetes clusters may be able to use MIG instances for some workloads. Distributed training is
    not supported, and all MIG instances and nodes within a resource pool must still be homogeneous.
 
