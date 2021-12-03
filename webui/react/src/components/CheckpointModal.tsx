@@ -1,8 +1,9 @@
 import { Modal } from 'antd';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
   ExperimentConfig, RunState } from 'types';
@@ -12,7 +13,6 @@ import { checkpointSize, getBatchNumber } from 'utils/workload';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';
-import RegisterModelVersionButton from './RegisterModelVersionButton';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
@@ -71,6 +71,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
 const CheckpointModal: React.FC<Props> = (
   { config, checkpoint, onHide, show, title, ...props }: Props,
 ) => {
+  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -85,6 +86,12 @@ const CheckpointModal: React.FC<Props> = (
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
   }, [ checkpoint.resources ]);
 
+  const launchRegisterCheckpointModal = useCallback(() => {
+    if (!checkpoint.uuid) return;
+    onHide?.();
+    showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
+  }, [ checkpoint.uuid, onHide, showRegisterCheckpointModal ]);
+
   const totalBatchesProcessed = getBatchNumber(checkpoint);
 
   const searcherMetric = props.searcherValidation !== undefined ?
@@ -97,7 +104,9 @@ const CheckpointModal: React.FC<Props> = (
 
   return (
     <Modal
-      footer={null}
+      footer={checkpoint.uuid ? undefined : null}
+      okButtonProps={{ onClick: launchRegisterCheckpointModal }}
+      okText="Register Checkpoint"
       title={title}
       visible={show}
       width={768}
@@ -136,10 +145,6 @@ const CheckpointModal: React.FC<Props> = (
             </div>
           ),
         )}
-        {checkpoint.uuid && (
-          <div className={css.saveModelButton}>
-            <RegisterModelVersionButton checkpointUuid={checkpoint.uuid} onCloseAll={onHide} />
-          </div>)}
       </div>
     </Modal>
   );
