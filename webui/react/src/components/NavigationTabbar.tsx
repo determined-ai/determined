@@ -77,8 +77,8 @@ const NavigationTabbar: React.FC = () => {
           },
           {
             icon: 'logs',
-            label: 'Master Logs',
-            onClick: e => handlePathUpdate(e, paths.masterLogs()),
+            label: 'Cluster Logs',
+            onClick: e => handlePathUpdate(e, paths.clusterLogs()),
           },
           {
             external: true,

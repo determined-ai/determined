@@ -470,7 +470,7 @@ export const decodeTrialResponseToTrialDetails = (
   };
 };
 
-export const jsonToMasterLog = (data: unknown): types.Log => {
+export const jsonToClusterLog = (data: unknown): types.Log => {
   const logData = data as Sdk.V1MasterLogsResponse;
   return ({
     id: logData.logEntry?.id ?? 0,
