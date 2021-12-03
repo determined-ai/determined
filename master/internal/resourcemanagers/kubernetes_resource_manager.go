@@ -115,7 +115,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobSummary,
 		job.GetJobQStats,
-		job.SetJobOrder:
+		job.SetJobOrder,
+		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -317,6 +318,14 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 				// do nothing if message is setting the weight
 			}
 		}
+
+	case *apiv1.GetJobQueueStatsRequest:
+		resp := &apiv1.GetJobQueueStatsResponse{
+			Results: make([]*apiv1.RPQueueStat, 0),
+		}
+		resp.Results = append(resp.Results, &apiv1.RPQueueStat{Stats: jobStats(k.reqList)})
+		ctx.Respond(resp)
+
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(k.reqList))
 	default:
@@ -326,11 +335,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
-<<<<<<< HEAD
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
-=======
-	reqs := sortTasks(k.reqList, k.groups, true)
->>>>>>> 8a883a1e4... fix: det job get returns inaccurate info (#3252)
 	jobQinfo, _ := mergeToJobQInfo(reqs)
 	return jobQinfo
 }
@@ -431,14 +436,10 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
-<<<<<<< HEAD
 
-	newPriority := KubernetesDefaultPriority
-	g := &group{handler: handler, weight: 1, priority: &newPriority, qPosition: -1}
-=======
 	priority := KubernetesDefaultPriority
-	g := &group{handler: handler, weight: 1, priority: &priority}
->>>>>>> 8a883a1e4... fix: det job get returns inaccurate info (#3252)
+	g := &group{handler: handler, weight: 1, priority: &priority, qPosition: -1}
+
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 
