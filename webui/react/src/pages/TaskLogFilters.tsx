@@ -80,7 +80,9 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
             style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
-            {selectOptions?.containerIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
+            {selectOptions?.containerIds?.map(id => (
+              <Option key={id} value={id}>{id || 'No Container'}</Option>
+            ))}
           </MultiSelect>
         )}
         {selectOptions?.rankIds?.length !== 0 && (
