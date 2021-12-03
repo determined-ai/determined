@@ -6,7 +6,7 @@ import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { AnyTask, DetailedUser, RecentCommandTask, RecentEvent } from 'types';
+import { AnyTask, DetailedUser, ExperimentTask, RecentCommandTask, RecentEvent } from 'types';
 import { percent } from 'utils/number';
 import { canBeOpened, isExperimentTask } from 'utils/task';
 import { openCommand } from 'wait';
@@ -19,8 +19,9 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
   const classes = [ css.base ];
 
   const isExperiment = isExperimentTask(task);
-  const hasProgress = isExperiment && !!task.progress;
-  const isComplete = isExperiment && task.progress === 1;
+  const progress = (task as ExperimentTask).progress;
+  const hasProgress = isExperiment && progress != null;
+  const isComplete = isExperiment && progress === 1;
   const iconName = isExperiment ? 'experiment' : (task as RecentCommandTask).type.toLowerCase();
 
   if (canBeOpened(task)) classes.push(css.link);
