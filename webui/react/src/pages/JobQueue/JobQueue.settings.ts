@@ -11,7 +11,7 @@ export interface Settings {
 const config: SettingsConfig = {
   settings: [
     {
-      defaultValue: true,
+      defaultValue: false,
       key: 'sortDesc',
       storageKey: 'sortDesc',
       type: { baseType: BaseType.Boolean },
