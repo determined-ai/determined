@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from datetime import datetime
 from typing import Any, List
 
 import yaml
@@ -18,7 +19,7 @@ def ls(args: Namespace) -> None:
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy="ORDER_BY_DESC" if not args.reverse else "ORDER_BY_ASC",
+        orderBy="ORDER_BY_ASC" if not args.reverse else "ORDER_BY_DESC",
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
@@ -26,16 +27,15 @@ def ls(args: Namespace) -> None:
         print(json.dumps(response.to_json(), indent=4, default=str))
     elif args.table or args.csv:
         headers = [
-            "Jobs Ahead",
+            "#",
             "ID",
-            "Entity ID",
-            "Status",
             "Type",
-            "Slots Acquired",
-            "Slots Requested",
-            "Name",
+            "Job Name",
+            "Priority",
+            "Submitted",
+            "Slots",
+            "Status",
             "User",
-            "Submission Time",
         ]
         values = [
             [
@@ -43,14 +43,13 @@ def ls(args: Namespace) -> None:
                 if j.summary is not None and j.summary.jobsAhead > -1
                 else "N/A",
                 j.jobId,
-                j.entityId,
-                j.summary.state if j.summary is not None else "N/A",
                 j.type,
-                j.allocatedSlots,
-                j.requestedSlots,
                 j.name,
+                j.priority,
+                datetime.fromisoformat(j.submissionTime.split(".")[0]),
+                f"{j.allocatedSlots}/{j.requestedSlots}",
+                j.summary.state if j.summary is not None else "N/A",
                 j.username,
-                j.submissionTime,
             ]
             for j in response.jobs
         ]
