@@ -28,7 +28,7 @@ type trialLogsFollowState struct {
 	// The last ID returned by the query. Historically the trial logs API when streaming
 	// repeatedly made a request like SELECT ... FROM trial_logs ... ORDER BY k OFFSET N LIMIT M.
 	// Since offset is less than optimal (no filtering is done during the initial
-	// index scan), we at least pass Postgres the id and let it begin after a certain ID rather
+	// index scan), we at least pass Postgres the ID and let it begin after a certain ID rather
 	// than offset N into the query.
 	id int64
 }
