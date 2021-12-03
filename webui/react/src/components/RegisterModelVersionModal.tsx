@@ -14,9 +14,6 @@ import EditableMetadata from './Metadata/EditableMetadata';
 import NewModelModal from './NewModelModal';
 import css from './RegisterModelVersionModal.module.scss';
 import EditableTagList from './TagList';
-
-const { Option } = Select;
-
 interface Props {
   checkpointUuid: string;
   onClose?: () => void;
@@ -117,8 +114,7 @@ const RegisterModelVersionModal: React.FC<Props> = (
   }, []);
 
   const modelOptions = useMemo(() => {
-    return [ { id: -1, name: 'New Model' },
-      ...models.map(model => ({ id: model.id, name: model.name })) ];
+    return models.map(model => ({ id: model.id, name: model.name }));
   }, [ models ]);
 
   const openDetails = useCallback(() => {
@@ -133,15 +129,13 @@ const RegisterModelVersionModal: React.FC<Props> = (
     }
   }, [ fetchModels ]);
 
+  const launchNewModelModal = useCallback(() => {
+    setShowNewModelModal(true);
+  }, []);
+
   useEffect(() => {
     fetchModels();
   }, [ fetchModels ]);
-
-  useEffect(() => {
-    if (selectedModelId === -1) {
-      setShowNewModelModal(true);
-    }
-  }, [ selectedModelId ]);
 
   useEffect(() => {
     return () => canceler.abort();
@@ -151,29 +145,28 @@ const RegisterModelVersionModal: React.FC<Props> = (
     <>
       <Modal
         okButtonProps={{ disabled: selectedModelId == null }}
-        okText="Add Model Version"
-        title="Register Model"
+        okText="Register Checkpoint"
+        title="Register Checkpoint"
         visible={visible}
         onCancel={onClose}
         onOk={registerModelVersion}>
         <div className={css.base}>
           <p className={css.directions}>Save this checkpoint to the Model Registry</p>
           <div>
-            <h2>Select Model</h2>
+            <div className={css.selectModelRow}>
+              <h2>Select Model</h2>
+              <p onClick={launchNewModelModal}>New Model</p>
+            </div>
             <Select
               dropdownMatchSelectWidth={250}
+              optionFilterProp="label"
+              options={modelOptions.map(option => (
+                { label: option.name, value: option.id }))}
               placeholder="Select a model..."
               showSearch
               value={selectedModelId}
-              onChange={updateModel}>
-              {modelOptions.map(option => (
-                <Option
-                  className={option.id === -1 ? css.newModel : undefined}
-                  key={option.id}
-                  value={option.id}>
-                  {option.name}
-                </Option>))}
-            </Select>
+              onChange={updateModel}
+            />
           </div>
           <div className={css.separator} />
           <div>
