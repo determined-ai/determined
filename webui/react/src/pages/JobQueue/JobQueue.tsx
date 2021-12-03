@@ -49,6 +49,7 @@ const JobQueue: React.FC = () => {
   const {
     settings,
     updateSettings,
+    resetSettings,
   } = useSettings<Settings>(settingsConfig);
 
   const fetchResourcePools = useFetchResourcePools(canceler);
@@ -200,10 +201,19 @@ const JobQueue: React.FC = () => {
   useEffect(() => {
     if (resourcePools.length === 0) {
       setSelectedRp(undefined);
+      resetSettings([ 'selectedRp' ]);
     } else if (!selectedRp) {
-      setSelectedRp(resourcePools[0]);
+      let rp: ResourcePool | undefined = undefined;
+      if (settings.selectedRp) {
+        rp = resourcePools.find(rp => rp.name === settings.selectedRp);
+      }
+      if (!rp) {
+        rp = resourcePools[0];
+      }
+      updateSettings({ selectedRp: rp.name });
+      setSelectedRp(rp);
     }
-  }, [ resourcePools, selectedRp ]);
+  }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedRp ]);
 
   useEffect(() => {
     fetchResourcePools();
@@ -234,8 +244,12 @@ const JobQueue: React.FC = () => {
   }, [ jobs, managingJob ]);
 
   const rpSwitcher = useCallback((rpName: string) => {
-    return () => setSelectedRp(resourcePools.find(rp => rp.name === rpName));
-  }, [ resourcePools ]);
+    return () => {
+      const rp = resourcePools.find(rp => rp.name === rpName) as ResourcePool;
+      setSelectedRp(rp);
+      updateSettings({ selectedRp: rp.name });
+    };
+  }, [ resourcePools, updateSettings ]);
 
   // table title using selectedRp and schedulerType from list of resource pools
   const tableTitle = useMemo(() => {

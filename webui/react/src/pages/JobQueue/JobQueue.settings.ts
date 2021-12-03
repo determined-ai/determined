@@ -2,6 +2,7 @@ import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 export interface Settings {
+  selectedRp: string;
   sortDesc: boolean;
   sortKey: 'jobsAhead';
   tableLimit: number;
@@ -20,6 +21,11 @@ const config: SettingsConfig = {
       defaultValue: 'jobsAhead',
       key: 'sortKey',
       storageKey: 'sortKey',
+      type: { baseType: BaseType.String },
+    },
+    {
+      key: 'selectedRp',
+      storageKey: 'selectedRp',
       type: { baseType: BaseType.String },
     },
     {
