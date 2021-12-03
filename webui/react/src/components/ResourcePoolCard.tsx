@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
-import awsLogo from 'assets/aws-logo.svg';
-import gcpLogo from 'assets/gcp-logo.svg';
-import k8sLogo from 'assets/k8s-logo.svg';
-import staticLogo from 'assets/on-prem-logo.svg';
+import awsLogo from 'assets/images/aws-logo.svg';
+import gcpLogo from 'assets/images/gcp-logo.svg';
+import k8sLogo from 'assets/images/k8s-logo.svg';
+import staticLogo from 'assets/images/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
