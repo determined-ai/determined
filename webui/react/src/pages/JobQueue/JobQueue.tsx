@@ -218,7 +218,7 @@ const JobQueue: React.FC = () => {
   useEffect(() => {
     fetchResourcePools();
     return () => canceler.abort();
-  });
+  }, [ canceler, fetchResourcePools ]);
 
   useEffect(() => {
     setPs(cur => ({ ...cur, isLoading: true }));
