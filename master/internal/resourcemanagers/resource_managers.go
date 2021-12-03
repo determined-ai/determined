@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"sort"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -61,15 +62,18 @@ func GetResourceManagerType(rmConfig *ResourceManagerConfig) string {
 	}
 }
 
-type orderedTaskMap = map[int][]*sproto.AllocateRequest
+type orderedTaskMap = map[int]AllocReqs
 
-func orderTaskMaps(pendingMap orderedTaskMap, scheduledMap orderedTaskMap) AllocReqs {
-	out := make(AllocReqs, 0, len(scheduledMap)+len(pendingMap))
-	for _, reqs := range scheduledMap {
-		out = append(out, reqs...)
+func orderTaskMapToSlice(taskMap orderedTaskMap) AllocReqs {
+	out := make(AllocReqs, 0)
+	keys := make([]int, 0, len(taskMap))
+	for k := range taskMap {
+		keys = append(keys, k)
 	}
-	for _, reqs := range pendingMap {
-		out = append(out, reqs...)
+	sort.Ints(keys)
+
+	for _, k := range keys {
+		out = append(out, taskMap[k]...)
 	}
 	return out
 }
