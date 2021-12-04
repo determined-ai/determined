@@ -46,7 +46,6 @@ func createGenericCommandActor(
 	jobID model.JobID,
 	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
-	mConfig *config.Config,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
@@ -60,7 +59,6 @@ func createGenericCommandActor(
 		jobType:        jobType,
 		serviceAddress: &serviceAddress,
 		jobID:          jobID,
-		mConfig:        mConfig,
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -92,7 +90,6 @@ type command struct {
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	rmJobInfo      *job.RMJobInfo
-	mConfig        *config.Config
 }
 
 // Receive implements the actor.Actor interface.
@@ -429,9 +426,9 @@ func (c *command) toV1Job() *jobv1.Job {
 		Name:           c.Config.Description,
 	}
 
-	j.IsPreemptible = config.ReadPreemptionStatus(c.mConfig, j.ResourcePool, &c.Config)
-	j.Priority = int32(config.ReadPriority(c.mConfig, j.ResourcePool, &c.Config))
-	j.Weight = config.ReadWeight(c.mConfig, j.ResourcePool, &c.Config)
+	j.IsPreemptible = config.ReadPreemptionStatus(config.Master(), j.ResourcePool, &c.Config)
+	j.Priority = int32(config.ReadPriority(config.Master(), j.ResourcePool, &c.Config))
+	j.Weight = config.ReadWeight(config.Master(), j.ResourcePool, &c.Config)
 
 	job.UpdateJobQInfo(&j, c.rmJobInfo)
 

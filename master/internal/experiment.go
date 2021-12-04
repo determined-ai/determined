@@ -86,7 +86,6 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		rmJobInfo             *job.RMJobInfo
-		mConfig               *config.Config
 	}
 )
 
@@ -152,7 +151,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
-		mConfig: master.config,
 	}, nil
 }
 
@@ -583,9 +581,9 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Name:           e.Config.Name().String(),
 	}
 
-	j.IsPreemptible = config.ReadPreemptionStatus(e.mConfig, j.ResourcePool, &e.Config)
-	j.Priority = int32(config.ReadPriority(e.mConfig, j.ResourcePool, &e.Config))
-	j.Weight = config.ReadWeight(e.mConfig, j.ResourcePool, &e.Config)
+	j.IsPreemptible = config.ReadPreemptionStatus(config.Master(), j.ResourcePool, &e.Config)
+	j.Priority = int32(config.ReadPriority(config.Master(), j.ResourcePool, &e.Config))
+	j.Weight = config.ReadWeight(config.Master(), j.ResourcePool, &e.Config)
 	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	return &j
