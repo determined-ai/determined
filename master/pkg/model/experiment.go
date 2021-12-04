@@ -416,6 +416,7 @@ type Checkpoint struct {
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
 	// A trial log should have one of these IDs. All should be unique.
+	// TODO(Brad): This must be int64.
 	ID *int `db:"id" json:"id,omitempty"`
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.

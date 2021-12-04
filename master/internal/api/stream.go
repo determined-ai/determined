@@ -85,8 +85,8 @@ type BatchStreamProcessor struct {
 	fetcher                FetchBatchFn
 	terminateCheck         TerminationCheckFn
 	alwaysCheckTermination bool
-	batchWaitTime          time.Duration
-	batchMissWaitTime      time.Duration
+	batchWaitTime          *time.Duration
+	batchMissWaitTime      *time.Duration
 }
 
 // NewBatchStreamProcessor creates a new BatchStreamProcessor.
@@ -95,8 +95,8 @@ func NewBatchStreamProcessor(
 	fetcher FetchBatchFn,
 	terminateCheck TerminationCheckFn,
 	alwaysCheckTermination bool,
-	batchWaitTime time.Duration,
-	batchMissWaitTime time.Duration,
+	batchWaitTime *time.Duration,
+	batchMissWaitTime *time.Duration,
 ) *BatchStreamProcessor {
 	return &BatchStreamProcessor{
 		req:                    req,
@@ -125,7 +125,6 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan BatchResult) {
 			if !p.req.Follow {
 				return
 			}
-			t.Reset(p.batchMissWaitTime)
 			miss = true
 		default:
 			// Check the ctx again before we process, since fetch takes most of the time and

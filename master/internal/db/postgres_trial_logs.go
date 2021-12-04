@@ -23,19 +23,30 @@ var trialLogsFieldMap = map[string]string{
      )`,
 }
 
+type trialLogsFollowState struct {
+	// The last ID returned by the query. Historically the trial logs API when streaming
+	// repeatedly made a request like SELECT ... FROM trial_logs ... ORDER BY k OFFSET N LIMIT M.
+	// Since offset is less than optimal (no filtering is done during the initial
+	// index scan), we at least pass Postgres the ID and let it begin after a certain ID rather
+	// than offset N into the query.
+	id int64
+}
+
 // TrialLogs takes a trial ID and log offset, limit and filters and returns matching trial logs.
 func (db *PgDB) TrialLogs(
 	trialID, limit int, fs []api.Filter, order apiv1.OrderBy, followState interface{},
 ) ([]*model.TrialLog, interface{}, error) {
-	var offset int
-	if followState == nil {
-		offset = 0
-	} else {
-		offset = followState.(int)
+	if followState != nil {
+		fs = append(fs, api.Filter{
+			Field:     "id",
+			Operation: api.FilterOperationGreaterThan,
+			Values:    []int64{followState.(*trialLogsFollowState).id},
+		})
 	}
 
-	params := []interface{}{trialID, offset, limit}
+	params := []interface{}{trialID, limit}
 	fragment, params := filtersToSQL(fs, params, trialLogsFieldMap)
+
 	query := fmt.Sprintf(`
 SELECT
     l.id,
@@ -66,7 +77,7 @@ SELECT
 FROM trial_logs l
 WHERE l.trial_id = $1
 %s
-ORDER BY timestamp %s OFFSET $2 LIMIT $3
+ORDER BY timestamp %s LIMIT $2
 `, fragment, orderByToSQL(order))
 
 	var b []*model.TrialLog
@@ -74,7 +85,12 @@ ORDER BY timestamp %s OFFSET $2 LIMIT $3
 		return nil, nil, err
 	}
 
-	return b, offset + len(b), nil
+	if len(b) > 0 {
+		lastLog := b[len(b)-1]
+		followState = &trialLogsFollowState{id: int64(*lastLog.ID)}
+	}
+
+	return b, followState, nil
 }
 
 // DeleteTrialLogs deletes the logs for the given trial IDs.
