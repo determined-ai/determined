@@ -268,12 +268,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 
-	case *apiv1.GetJobsRequest:
-		fmt.Printf("GetJobsReques eid %v t\n", e.ID)
-		if msg.ResourcePool != e.Config.Resources().ResourcePool() {
-			ctx.Respond(nil)
-			return nil
-		}
+	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
 	case *job.RMJobInfo:

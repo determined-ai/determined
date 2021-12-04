@@ -23,6 +23,9 @@ type RMJobInfo struct { // rename ?
 // GetJobSummary requests a summary of the job.
 type GetJobSummary struct{}
 
+// GetJob requests a job representation from a job.
+type GetJob struct{}
+
 // GetJobQ is used to get all job information in one go to avoid any inconsistencies.
 type GetJobQ struct {
 	ResourcePool string
@@ -85,7 +88,6 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case RegisterJob:
-		fmt.Printf("RegisterJob %v \n, actor ref %s", msg.JobID, msg.JobActor.Address())
 		j.jobsByID[msg.JobID] = msg.JobActor
 
 	case UnregisterJob:
@@ -113,7 +115,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		for jID := range jobQ {
 			jobRefs = append(jobRefs, j.jobsByID[jID])
 		}
-		jobs, err := j.parseV1JobMsgs(ctx.AskAll(msg, jobRefs...).GetAll())
+		jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
 		if err != nil {
 			ctx.Log().WithError(err).Error("parsing responses from job actors")
 			ctx.Respond(err)
