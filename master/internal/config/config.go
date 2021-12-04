@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -93,6 +94,17 @@ type Config struct {
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
+}
+
+var once sync.Once
+var masterConfig *Config
+
+// NewConfig returns reference to the master config singleton.
+func Master() *Config {
+	once.Do(func() {
+		masterConfig = DefaultConfig()
+	})
+	return masterConfig
 }
 
 // Printable returns a printable string.

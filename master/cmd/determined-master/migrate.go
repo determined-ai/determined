@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
@@ -29,11 +30,12 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 	logStore := logger.NewLogBuffer(logStoreSize)
 	log.AddHook(logStore)
 
-	config, err := initializeConfig()
+	err := initializeConfig()
 	if err != nil {
 		return err
 	}
 
+	config := config.Master()
 	database, err := db.Connect(&config.DB)
 	if err != nil {
 		return err

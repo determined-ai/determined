@@ -44,10 +44,11 @@ func runRoot() error {
 	logStore := logger.NewLogBuffer(logStoreSize)
 	log.AddHook(logStore)
 
-	config, err := initializeConfig()
+	err := initializeConfig()
 	if err != nil {
 		return err
 	}
+	config := config.Master()
 
 	printableConfig, err := config.Printable()
 	if err != nil {
@@ -59,36 +60,37 @@ func runRoot() error {
 	return m.Run(context.TODO())
 }
 
-// initializeConfig returns the validated configuration populated from config
+// initializeConfig initializes master config with the validated configuration populated from config
 // file, environment variables, and command line flags) and also initializes
 // global logging state based on those options.
-func initializeConfig() (*config.Config, error) {
+func initializeConfig() error {
 	// Fetch an initial config to get the config file path and read its settings into Viper.
 	initialConfig, err := getConfig(v.AllSettings())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	bs, err := readConfigFile(initialConfig.ConfigFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if err = mergeConfigBytesIntoViper(bs); err != nil {
-		return nil, err
+		return err
 	}
 
 	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
 	// environment variables, and the configuration file.
-	config, err := getConfig(v.AllSettings())
+	conf, err := getConfig(v.AllSettings())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := check.Validate(config); err != nil {
-		return nil, err
+	if err := check.Validate(conf); err != nil {
+		return err
 	}
 
-	return config, nil
+	*config.Master() = *conf // FIXME not thread safe but this is expected right?
+	return nil
 }
 
 func readConfigFile(configPath string) ([]byte, error) {
