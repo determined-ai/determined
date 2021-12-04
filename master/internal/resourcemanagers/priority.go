@@ -17,7 +17,7 @@ type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
-// AllocReqs is an alias for a list of Allocation Requests.
+// AllocReqs is an alias for a list of Allocate Requests.
 type AllocReqs = []*sproto.AllocateRequest
 
 // REMOVEME can't replace groups identifier with job id since not all groups are
@@ -80,7 +80,12 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		Once jobs carry a queue position attribute with them it'll be what
 		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
-	reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups, false)
+
+	//TODO: is sortTasksWithPosition no good?
+	//reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups, false)
+	pendingMap, scheduledMap := sortTasksByPriorityAndPositionAndTimestamp(rp.taskList, rp.groups, trueFilter)
+	reqs := orderTaskMapToSlice(scheduledMap)
+	reqs = append(reqs, orderTaskMapToSlice(pendingMap)...)
 	jobQInfo, _ := mergeToJobQInfo(reqs)
 	return jobQInfo
 }

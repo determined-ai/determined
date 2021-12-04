@@ -190,11 +190,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *job.RMJobInfo:
 		c.rmJobInfo = msg
 
-	case *apiv1.GetJobsRequest:
-		if msg.ResourcePool != c.Config.Resources.ResourcePool {
-			ctx.Respond(nil)
-			return nil
-		}
+	case job.GetJob:
 		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:

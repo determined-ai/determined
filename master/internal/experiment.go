@@ -286,12 +286,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		// TODO persist in memory as well (on new and on restore)
 
-	case *apiv1.GetJobsRequest:
-		fmt.Printf("GetJobsReques eid %v t\n", e.ID)
-		if msg.ResourcePool != e.Config.Resources().ResourcePool() {
-			ctx.Respond(nil)
-			return nil
-		}
+	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
 	case *job.RMJobInfo:

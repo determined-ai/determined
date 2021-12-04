@@ -11,4 +11,4 @@ sleep 0.5
 det notebook start > /dev/null &
 sleep 0.5
 
-curl-da.sh "${DET_MASTER}/api/v1/resource-pools/queues?resource_pool=default" -s | jq
+curl-da.sh "${DET_MASTER}/api/v1/resource-pools/queues" -s | jq
