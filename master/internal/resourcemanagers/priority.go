@@ -17,7 +17,7 @@ type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
-// AllocReqs is an alias for a list of Allocation Requests.
+// AllocReqs is an alias for a list of Allocate Requests.
 type AllocReqs = []*sproto.AllocateRequest
 
 // REMOVEME can't replace groups identifier with job id since not all groups are
@@ -77,7 +77,8 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		3. convert the resulting ordered list of jobids into a Job type for job apis
 	*/
 	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(rp.taskList, rp.groups, trueFilter)
-	reqs := orderTaskMaps(pendingMap, scheduledMap)
+	reqs := orderTaskMapToSlice(scheduledMap)
+	reqs = append(reqs, orderTaskMapToSlice(pendingMap)...)
 	jobQInfo, _ := mergeToJobQInfo(reqs)
 	return jobQInfo
 }
