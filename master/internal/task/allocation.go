@@ -174,6 +174,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			ctx.Respond(errors.New(fmt.Sprintf("unknown container %s", msg.ContainerID)))
 		}
 	case sproto.ReleaseResources:
+		ctx.Log().Info("scheduler asks to preempt")
 		a.Terminate(ctx)
 	case actor.PostStop:
 		a.Cleanup(ctx)
@@ -202,6 +203,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case MarkReservationDaemon:
 		a.SetReservationAsDaemon(ctx, msg.AllocationID, msg.ContainerID)
 	case AllocationSignal:
+		ctx.Log().Infof("received allocation signal: %s", msg)
 		a.HandleSignal(ctx, msg)
 	case AllocationState:
 		if ctx.ExpectingResponse() {
@@ -479,6 +481,7 @@ func (a *Allocation) Error(ctx *actor.Context, err error) {
 	if a.exitReason == nil {
 		a.exitReason = err
 	}
+	ctx.Log().WithError(err).Error("closing allocation due to an error, beginning the kill flow")
 	a.Kill(ctx)
 }
 

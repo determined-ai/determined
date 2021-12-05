@@ -76,8 +76,6 @@ func New(resourcePool string, config *Config, cert *tls.Certificate) (*Provision
 
 // Receive implements the actor.Actor interface.
 func (p *Provisioner) Receive(ctx *actor.Context) error {
-	ctx.AddLabel("resource-pool", ctx.Self().Parent().Address().Local())
-
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		p.provider.prestart(ctx)

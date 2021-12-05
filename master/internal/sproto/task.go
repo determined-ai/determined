@@ -70,11 +70,6 @@ type (
 	GetTaskSummary struct{ ID *model.AllocationID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
 	GetTaskSummaries struct{}
-	// SetTaskName sets the name of the task.
-	SetTaskName struct {
-		Name        string
-		TaskHandler *actor.Ref
-	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
 	// resource pool can (or, rather, if it's not impossible to) fulfill the command request

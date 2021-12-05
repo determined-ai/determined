@@ -105,12 +105,6 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	rp.taskList.AddTask(&msg)
 }
 
-func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
-	if task, found := rp.taskList.GetTaskByHandler(msg.TaskHandler); found {
-		task.Name = msg.Name
-	}
-}
-
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
 func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.AllocateRequest) bool {
@@ -208,8 +202,6 @@ func (rp *ResourcePool) sendScalingInfo(ctx *actor.Context) {
 
 // Receive implements the actor.Actor interface.
 func (rp *ResourcePool) Receive(ctx *actor.Context) error {
-	ctx.AddLabel("resource-pool", rp.config.PoolName)
-
 	reschedule := true
 	defer func() {
 		// Default to scheduling every 500ms if a message was received, but allow messages
@@ -238,7 +230,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
 		sproto.SetGroupPriority,
-		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
@@ -366,9 +357,6 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 			ctx.Log().Infof("setting priority for group of %s to %d",
 				msg.Handler.Address().String(), *group.priority)
 		}
-
-	case sproto.SetTaskName:
-		rp.receiveSetTaskName(ctx, msg)
 
 	case sproto.AllocateRequest:
 		rp.addTask(ctx, msg)

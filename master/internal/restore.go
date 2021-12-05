@@ -112,11 +112,11 @@ func (e *experiment) restoreTrial(
 	l := ctx.Log().WithField("request-id", searcher.Create.RequestID)
 	l.Debug("restoring trial")
 
-	var trialID *int
 	var terminal bool
-	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
+	trialModel, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID)
+	switch {
 	case errors.Cause(err) == db.ErrNotFound:
-		l.Debug("trial was never previously allocated")
+		l.Debug("trial db model was never previously created")
 	case err != nil:
 		// This is the only place we _have_ to error, because if the trial did previously exist
 		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
@@ -124,13 +124,12 @@ func (e *experiment) restoreTrial(
 		l.WithError(err).Error("failed to retrieve trial, aborting restore")
 		terminal = true
 	default:
-		trialID = &trial.ID
-		l = l.WithField("trial-id", trial.ID)
-		if model.TerminalStates[trial.State] {
-			l.Debugf("trial was in terminal state in restore: %s", trial.State)
+		l = l.WithField("trial-id", trialModel.ID)
+		if model.TerminalStates[trialModel.State] {
+			l.Debugf("trial was in terminal state in restore: %s", trialModel.State)
 			terminal = true
-		} else if !model.RunningStates[trial.State] {
-			l.Debugf("cannot restore trial in state: %s", trial.State)
+		} else if !model.RunningStates[trialModel.State] {
+			l.Debugf("cannot restore trial in state: %s", trialModel.State)
 			terminal = true
 		}
 	}
@@ -144,20 +143,33 @@ func (e *experiment) restoreTrial(
 	}
 
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
-	t := newTrial(
-		trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.ID, e.State, searcher, e.rm,
-		e.trialLogger, e.db, config, ckpt, e.taskSpec,
-	)
-	if trialID != nil {
-		t.id = *trialID
-		t.idSet = true
-		if _, ok := e.searcher.TrialsCreated[searcher.Create.RequestID]; !ok {
-			ctx.Tell(ctx.Self(), trialCreated{
-				requestID: searcher.Create.RequestID,
-			})
+	if trialModel == nil {
+		trialModel, err = e.createTrialModel(ctx, searcher.Create, ckpt)
+		if err != nil {
+			l.WithError(err).Error("failed to create a trial model, aborting restore")
+			if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
+				ctx.Tell(ctx.Self(), trialClosed{requestID: searcher.Create.RequestID})
+			}
+			return
 		}
 	}
-	ctx.ActorOf(searcher.Create.RequestID, t)
+	e.RequestIDsToTrialIDs[searcher.Create.RequestID] = trialModel.ID
+	e.TrialIDsToRequestIDs[trialModel.ID] = searcher.Create.RequestID
+
+	trialActor, err := newTrial(*trialModel, searcher, true,
+		e.rm, e.trialLogger, e.db, config, ckpt, e.taskSpec)
+	if err != nil {
+		l.WithError(err).Error("failed to create a trial model, aborting restore")
+		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
+			ctx.Tell(ctx.Self(), trialClosed{requestID: searcher.Create.RequestID})
+		}
+	}
+	ctx.ActorOf(TrialAddr(trialModel.ID), trialActor)
+
+	if _, ok := e.searcher.TrialsCreated[searcher.Create.RequestID]; !ok {
+		ctx.Tell(ctx.Self(), trialCreated{requestID: searcher.Create.RequestID})
+	}
+
 	l.Debug("restored trial")
 }
 

@@ -75,7 +75,7 @@ func TestTrial(t *testing.T) {
 	})
 	require.NoError(t, tr.allocation.StopAndAwaitTermination())
 	require.NoError(t, self.AwaitTermination())
-	require.True(t, model.TerminalStates[tr.state])
+	require.True(t, model.TerminalStates[tr.model.State])
 	require.True(t, db.AssertExpectations(t))
 }
 
@@ -127,7 +127,7 @@ func TestTrialRestarts(t *testing.T) {
 		}
 	}
 	require.NoError(t, self.AwaitTermination())
-	require.True(t, model.TerminalStates[tr.state])
+	require.True(t, model.TerminalStates[tr.model.State])
 }
 
 func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *actor.Ref) {
@@ -154,12 +154,11 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
-	tr := newTrial(
-		taskID,
-		model.JobID("1"),
-		1,
-		model.PausedState,
+	trialModel := model.NewTrial("1", taskID, rID, 1, model.PausedState, nil, &model.Checkpoint{}, 1)
+	tr, err := newTrial(
+		*trialModel,
 		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		false,
 		rm, logger,
 		db,
 		schemas.WithDefaults(expconf.ExperimentConfig{
@@ -176,6 +175,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 			SSHRsaSize:     1024,
 		},
 	)
+	require.NoError(t, err)
 	self := system.MustActorOf(actor.Addr("trial"), tr)
 	return system, db, rID, tr, self
 }

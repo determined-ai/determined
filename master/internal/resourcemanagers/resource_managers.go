@@ -27,8 +27,7 @@ func (rm *ResourceManagers) Receive(ctx *actor.Context) error {
 		sproto.AllocateRequest, sproto.ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
 		sproto.SetGroupPriority, sproto.GetTaskSummary,
-		sproto.GetTaskSummaries, sproto.SetTaskName,
-		sproto.GetTaskHandler:
+		sproto.GetTaskSummaries, sproto.GetTaskHandler:
 		rm.forward(ctx, msg)
 
 	default:

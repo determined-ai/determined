@@ -302,7 +302,7 @@ func (a *apiServer) KillTrial(
 		return nil, status.Errorf(codes.Internal, "failed to get trial: %s", err)
 	}
 
-	tr := actor.Addr("experiments", t.ExperimentID, t.RequestID)
+	tr := actor.Addr("experiments", t.ExperimentID, TrialAddr(int(req.Id)))
 	if err = a.ask(tr, model.StoppingKilledState, nil); err != nil {
 		return nil, err
 	}

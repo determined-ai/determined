@@ -80,9 +80,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetTaskSummaries:
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
 
-	case sproto.SetTaskName:
-		a.forwardToAllPools(ctx, msg)
-
 	case sproto.GetDefaultComputeResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
 			PoolName: a.config.DefaultComputeResourcePool,

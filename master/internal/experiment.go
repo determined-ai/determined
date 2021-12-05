@@ -63,8 +63,10 @@ type (
 	}
 
 	experimentState struct {
-		SearcherState      json.RawMessage                        `json:"searcher_state"`
-		TrialSearcherState map[model.RequestID]trialSearcherState `json:"trial_searcher_state"`
+		SearcherState        json.RawMessage                        `json:"searcher_state"`
+		TrialSearcherState   map[model.RequestID]trialSearcherState `json:"trial_searcher_state"`
+		RequestIDsToTrialIDs map[model.RequestID]int
+		TrialIDsToRequestIDs map[int]model.RequestID
 	}
 
 	experiment struct {
@@ -145,7 +147,9 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		faultToleranceEnabled: true,
 
 		experimentState: experimentState{
-			TrialSearcherState: map[model.RequestID]trialSearcherState{},
+			TrialSearcherState:   map[model.RequestID]trialSearcherState{},
+			RequestIDsToTrialIDs: map[model.RequestID]int{},
+			TrialIDsToRequestIDs: map[int]model.RequestID{},
 		},
 	}, nil
 }
@@ -178,8 +182,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.processOperations(ctx, ops, nil)
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 	case trialCreated:
-		ops, err := e.searcher.TrialCreated(msg.requestID)
-		e.processOperations(ctx, ops, err)
+		e.trialCreated(ctx, msg.requestID)
 	case trialCompleteOperation:
 		state, ok := e.TrialSearcherState[msg.op.RequestID]
 		switch {
@@ -196,7 +199,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		state.Complete = true
 		e.TrialSearcherState[msg.op.RequestID] = state
-		ctx.Tell(ctx.Child(msg.op.RequestID), state)
+		trialID, ok := e.RequestIDsToTrialIDs[msg.op.RequestID]
+		if !ok {
+			ctx.Respond(api.AsValidationError("trial has not created"))
+			return nil
+		}
+		ctx.Tell(ctx.Child(TrialAddr(trialID)), state)
 		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
 	case trialReportEarlyExit:
@@ -209,7 +217,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		state.Complete = true
 		state.Closed = true
 		e.TrialSearcherState[msg.requestID] = state
-		ctx.Tell(ctx.Child(msg.requestID), state)
+		trialID, ok := e.RequestIDsToTrialIDs[msg.requestID]
+		if !ok {
+			ctx.Respond(api.AsValidationError("trial has not created"))
+			return nil
+		}
+		ctx.Tell(ctx.Child(TrialAddr(trialID)), state)
 		ops, err := e.searcher.TrialExitedEarly(msg.requestID, msg.reason)
 		e.processOperations(ctx, ops, err)
 	case trialReportProgress:
@@ -228,9 +241,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Respond(state)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
-		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
+		requestID := e.TrialIDsToRequestIDs[MustParseTrialAddr(msg.Child.Address().Local())]
+		e.trialClosed(ctx, requestID)
 	case actor.ChildStopped:
-		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
+		requestID := e.TrialIDsToRequestIDs[MustParseTrialAddr(msg.Child.Address().Local())]
+		e.trialClosed(ctx, requestID)
 	case trialClosed:
 		e.trialClosed(ctx, msg.requestID)
 
@@ -362,12 +377,36 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (e *experiment) trialCreated(ctx *actor.Context, requestID model.RequestID) {
+	ops, err := e.searcher.TrialCreated(requestID)
+	e.processOperations(ctx, ops, err)
+}
+
 func (e *experiment) trialClosed(ctx *actor.Context, requestID model.RequestID) {
 	ops, err := e.searcher.TrialClosed(requestID)
 	e.processOperations(ctx, ops, err)
 	if e.canTerminate(ctx) {
 		ctx.Self().Stop()
 	}
+}
+
+func (e *experiment) createTrialModel(
+	ctx *actor.Context, op searcher.Create, ckpt *model.Checkpoint,
+) (*model.Trial, error) {
+	trialModel := model.NewTrial(
+		e.JobID,
+		trialTaskID(e.ID, op.RequestID),
+		op.RequestID,
+		e.ID,
+		model.ActiveState,
+		model.JSONObj(op.Hparams),
+		ckpt,
+		int64(op.TrialSeed),
+	)
+	if err := e.db.AddTrial(trialModel); err != nil {
+		return nil, err
+	}
+	return trialModel, nil
 }
 
 // restoreTrialsFromStates from the operations that were snapshotted with the
@@ -408,13 +447,39 @@ func (e *experiment) processOperations(
 				ctx.Log().Error(err)
 				return
 			}
-			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
-			ctx.ActorOf(op.RequestID, newTrial(
-				trialTaskID(e.ID, op.RequestID), e.JobID, e.ID, e.State, state, e.rm, e.trialLogger, e.db,
-				config, checkpoint, e.taskSpec,
-			))
+
+			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+			trialModel, err := e.createTrialModel(ctx, op, checkpoint)
+			if err != nil {
+				e.updateState(ctx, model.StoppingErrorState)
+				ctx.Log().WithError(err).Error("failed to create a trial db model")
+				if !e.searcher.TrialsClosed[op.RequestID] {
+					ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
+				}
+				continue
+			}
+			e.RequestIDsToTrialIDs[op.RequestID] = trialModel.ID
+			e.TrialIDsToRequestIDs[trialModel.ID] = op.RequestID
+
+			trialActor, err := newTrial(*trialModel, state, false,
+				e.rm, e.trialLogger, e.db, config, checkpoint, e.taskSpec)
+			if err != nil {
+				e.updateState(ctx, model.StoppingErrorState)
+				ctx.Log().WithError(err).Error("failed to create a trial actor")
+				if !e.searcher.TrialsClosed[op.RequestID] {
+					ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
+				}
+				continue
+			}
+			ctx.ActorOf(TrialAddr(trialModel.ID), trialActor)
+
+			if _, ok := e.searcher.TrialsCreated[op.RequestID]; !ok {
+				ctx.Tell(ctx.Self(), trialCreated{requestID: op.RequestID})
+			}
+
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Op = op
@@ -438,7 +503,11 @@ func (e *experiment) processOperations(
 	}
 
 	for requestID := range updatedTrials {
-		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
+		if trialID, ok := e.RequestIDsToTrialIDs[requestID]; ok {
+			ctx.Tell(ctx.Child(TrialAddr(trialID)), e.TrialSearcherState[requestID])
+		} else {
+			panic("cannot update trial if the actor does not exist")
+		}
 	}
 }
 
@@ -503,6 +572,8 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 	if err := json.Unmarshal(experimentSnapshot, &e.experimentState); err != nil {
 		return errors.Wrap(err, "failed to unmarshal experiment snapshot")
 	}
+	e.experimentState.RequestIDsToTrialIDs = make(map[model.RequestID]int)
+	e.experimentState.TrialIDsToRequestIDs = make(map[int]model.RequestID)
 	if err := e.searcher.Restore(e.SearcherState); err != nil {
 		return errors.Wrap(err, "failed to restore searcher snapshot")
 	}
