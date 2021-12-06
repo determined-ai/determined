@@ -98,7 +98,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = user
-	taskSpec.SSHRsaSize = a.m.config.Security.SSH.RsaKeySize
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
