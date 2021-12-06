@@ -1,6 +1,8 @@
 .base {
   display: flex;
   flex-direction: column;
+  max-height: 400px;
+  overflow: auto;
 
   .row {
     display: flex;
@@ -56,8 +58,5 @@
   .resourceSize {
     flex-shrink: 0;
     padding-left: var(--theme-sizes-layout-small);
-  }
-  .saveModelButton {
-    margin-top: var(--theme-sizes-layout-big);
   }
 }
