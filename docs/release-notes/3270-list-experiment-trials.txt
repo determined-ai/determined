@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+- API: Add a method for listing trials within an experiment.
+
