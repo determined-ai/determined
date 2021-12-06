@@ -2,5 +2,4 @@
 
 **New Features**
 
-- API: Add a method for listing trials within an experiment.
-
+-  API: Add a method for listing trials within an experiment.

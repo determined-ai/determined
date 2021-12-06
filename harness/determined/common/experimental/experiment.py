@@ -101,7 +101,7 @@ class ExperimentReference:
     def get_trials(
         self,
         sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
-        order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING
+        order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
     ) -> List[trial.TrialReference]:
         """
         Get the list of :class:`~determined.experimental.TrialReference` instances

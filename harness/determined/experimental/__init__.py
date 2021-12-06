@@ -7,7 +7,7 @@ from determined.common.experimental import (
     ModelSortBy,
     TrialReference,
     TrialOrderBy,
-    TrialSortBy
+    TrialSortBy,
 )
 from determined.experimental._native import (
     create,
