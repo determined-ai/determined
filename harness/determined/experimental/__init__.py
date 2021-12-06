@@ -6,6 +6,8 @@ from determined.common.experimental import (
     ModelOrderBy,
     ModelSortBy,
     TrialReference,
+    TrialOrderBy,
+    TrialSortBy
 )
 from determined.experimental._native import (
     create,
