@@ -157,9 +157,11 @@ func (users Users) Proto() []*userv1.User {
 // ExternalSessions provides an integration point for an external service to issue JWTs to control
 // access to the cluster.
 type ExternalSessions struct {
-	LoginURI  string `json:"login_uri"`
-	LogoutURI string `json:"logout_uri"`
-	JwtKey    string `json:"jwt_key"`
+	LoginURI  string    `json:"login_uri"`
+	LogoutURI string    `json:"logout_uri"`
+	JwtKey    string    `json:"jwt_key"`
+	OrgID     OrgID     `json:"org_id"`
+	ClusterID ClusterID `json:"cluster_id"`
 }
 
 // Enabled returns whether or not external sessions are enabled.
