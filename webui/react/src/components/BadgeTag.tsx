@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import React, { PropsWithChildren } from 'react';
 
-import Badge, { BadgeProps, BadgeType } from './Badge';
+import Badge, { BadgeProps } from './Badge';
 import css from './BadgeTag.module.scss';
 
 export { BadgeType } from './Badge';
@@ -24,7 +24,7 @@ const BadgeTag: React.FC<Props> = ({
       {preLabel && <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
         <span className={css.preLabel}>{preLabel}</span>
       </Tooltip>}
-      <Badge type={BadgeType.Id} {...props}>{children}</Badge>
+      <Badge {...props}>{children}</Badge>
       {label && <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
         <span className={css.label}>{label}</span>
       </Tooltip>}
