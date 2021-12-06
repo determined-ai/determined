@@ -4,6 +4,7 @@ import React, { ReactNode } from 'react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import BadgeTag from 'components/BadgeTag';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
@@ -88,11 +89,7 @@ export const columns: ColumnType<Job>[] = [
       let label: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
-          label = <div>{record.name}
-            <Tooltip title="Experiment ID">
-              {` (${record.entityId})`}
-            </Tooltip>
-          </div>;
+          label = <BadgeTag preLabel={record.name}>{record.entityId}</BadgeTag>;
           break;
         default:
           label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
