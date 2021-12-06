@@ -3,6 +3,7 @@ from argparse import Namespace
 from datetime import datetime
 from typing import Any, List
 
+import pytz
 import yaml
 
 from determined.cli import render
@@ -18,7 +19,7 @@ def ls(args: Namespace) -> None:
     priority = True
     config = api.get(args.master, "config").json()
     try:
-        for pool in range(config["resource_pools"]):
+        for pool in config["resource_pools"]:
             if (
                 pool["pool_name"] == args.resource_pool
                 and pool["scheduler"]["type"] == "fair_share"
@@ -63,7 +64,9 @@ def ls(args: Namespace) -> None:
                 j.type,
                 j.name,
                 j.priority if priority else j.weight,
-                datetime.fromisoformat(j.submissionTime.split(".")[0]),
+                pytz.utc.localize(
+                    datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
+                ),
                 f"{j.allocatedSlots}/{j.requestedSlots}",
                 j.summary.state if j.summary is not None else "N/A",
                 j.username,
