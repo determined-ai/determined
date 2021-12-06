@@ -7,6 +7,7 @@ import yaml
 
 from determined.cli import render
 from determined.cli.session import setup_session
+from determined.common import api
 from determined.common.api import authentication
 from determined.common.api.b import get_GetJobs
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -14,6 +15,14 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def ls(args: Namespace) -> None:
+    priority = True
+    config = api.get(args.master, "config").json()
+    try:
+        if config["resource_manager"]["scheduler"]["type"] == "fair_share":
+            priority = False
+    except KeyError:
+        pass
+
     response = get_GetJobs(
         setup_session(args),
         resourcePool=args.resource_pool,
@@ -31,7 +40,7 @@ def ls(args: Namespace) -> None:
             "ID",
             "Type",
             "Job Name",
-            "Priority",
+            "Priority" if priority else "Weight",
             "Submitted",
             "Slots",
             "Status",
@@ -45,7 +54,7 @@ def ls(args: Namespace) -> None:
                 j.jobId,
                 j.type,
                 j.name,
-                j.priority,
+                j.priority if priority else j.weight,
                 datetime.fromisoformat(j.submissionTime.split(".")[0]),
                 f"{j.allocatedSlots}/{j.requestedSlots}",
                 j.summary.state if j.summary is not None else "N/A",
