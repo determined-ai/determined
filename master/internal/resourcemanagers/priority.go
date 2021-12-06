@@ -296,12 +296,11 @@ func sortTasksByPriorityAndTimestamp(
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}
 
+		updateAllocateReqStates(req, taskList)
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
-			req.State = job.SchedulingStateQueued
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
-			req.State = job.SchedulingStateScheduled
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		}
 	}

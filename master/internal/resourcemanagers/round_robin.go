@@ -22,6 +22,7 @@ func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequ
 }
 
 func (p *roundRobinScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	// not supported
 	return make(map[model.JobID]*job.RMJobInfo)
 }
 

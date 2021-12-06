@@ -55,17 +55,10 @@ func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*ac
 }
 
 func (f *fairShare) createJobQInfo(
-	rp *ResourcePool,
+	taskList *taskList,
 ) (job.AQueue, map[model.JobID]*actor.Ref) {
-	for _, resAllocated := range rp.taskList.allocations {
-		req := rp.taskList.taskByID[resAllocated.ID]
-		if req.JobID == nil {
-			continue
-		}
-		req.State = job.SchedulingStateScheduled
-	}
 	reqs := make(AllocReqs, 0)
-	for _, req := range rp.taskList.taskByID {
+	for _, req := range taskList.taskByID {
 		reqs = append(reqs, req)
 	}
 	jobQ, jobActors := mergeToJobQInfo(reqs)
@@ -76,12 +69,12 @@ func (f *fairShare) createJobQInfo(
 }
 
 func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	jobQ, _ := f.createJobQInfo(rp)
+	jobQ, _ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
 
 func (f *fairShare) updateJobs(rp *ResourcePool) {
-	jobQ, jobActors := f.createJobQInfo(rp)
+	jobQ, jobActors := f.createJobQInfo(rp.taskList)
 	for jobID, jobActor := range jobActors {
 		jobActor.System().Tell(jobActor, jobQ[jobID])
 	}
@@ -99,6 +92,7 @@ func fairshareSchedule(
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
 		allocations := taskList.GetAllocations(req.TaskActor)
+		updateAllocateReqStates(req, taskList)
 		if req.SlotsNeeded == 0 && allocations == nil {
 			if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
 				continue
