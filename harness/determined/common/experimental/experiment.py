@@ -113,7 +113,7 @@ class ExperimentReference:
                 :class:`~determined.experimental.TrialOrderBy`.
         """
         r = self._session.get(f"/api/v1/experiments/{self.id}/trials")
-        trials = r.json().get("trials")
+        trials = r.json()["trials"]
         return [trial.TrialReference(t["id"], self._session) for t in trials]
 
     def kill(self) -> None:
