@@ -14,6 +14,8 @@ import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 import { waitPageUrl } from 'wait';
 
+import css from './JobQueue.module.scss';
+
 type Renderer<T> = (_: unknown, record: T) => ReactNode;
 export type JobTypeRenderer = Renderer<Job>;
 
@@ -57,15 +59,15 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
 
 export const columns: ColumnType<Job>[] = [
   { key: 'jobsAhead' },
-  {
-    dataIndex: 'jobId',
-    key: 'jobId',
-    render: (_: unknown, record: Job): ReactNode => {
-      const label = truncate(record.jobId, 6, '');
-      return linkToEntityPage(record, label);
-    },
-    title: 'ID',
-  },
+  // { // We might want to show the entityId here instead.
+  //   dataIndex: 'jobId',
+  //   key: 'jobId',
+  //   render: (_: unknown, record: Job): ReactNode => {
+  //     const label = truncate(record.jobId, 6, '');
+  //     return linkToEntityPage(record, label);
+  //   },
+  //   title: 'ID',
+  // },
   {
     dataIndex: 'type',
     key: 'type',
@@ -83,8 +85,20 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
-      const label = record.name ?
-        record.name : <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+      let label: ReactNode = null;
+      switch (record.type) {
+        case JobType.EXPERIMENT:
+          label = <div>{record.name}
+            <Tooltip title="Experiment ID">
+              {` (${record.entityId})`}
+            </Tooltip>
+          </div>;
+          break;
+        default:
+          label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+          break;
+      }
+
       return linkToEntityPage(record, label);
     },
     title: 'Job Name',
@@ -116,10 +130,10 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'state',
     render: (_: unknown, record: Job): ReactNode => {
-      return <>
+      return <div className={css.state}>
         <Badge state={record.summary.state} type={BadgeType.State} />
         {(!!record?.progress) && <span> {floatToPercent(record.progress, 1)}</span>}
-      </>;
+      </div>;
     },
     title: 'Status',
   },
