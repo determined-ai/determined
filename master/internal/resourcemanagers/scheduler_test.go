@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"log"
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -466,16 +465,14 @@ func TestJobStats(t *testing.T) {
 			{id: "agent1", slots: 1, maxZeroSlotContainers: 1},
 		}
 		groups := []*mockGroup{
-			{id: "group1", priority: &lowerPriority},
-			{id: "group2", priority: &higherPriority},
-			{id: "group3", priority: &lowerPriority},
-			{id: "group4", priority: &lowerPriority},
+			{id: "group1", priority: &lowerPriority, weight: 0.5},
+			{id: "group2", priority: &higherPriority, weight: 1},
 		}
 		tasks := []*mockTask{
 			{id: "task1", jobID: "job1", slotsNeeded: 1, group: groups[0]},
 			{id: "task2", jobID: "job2", slotsNeeded: 1, group: groups[1]},
-			{id: "task3", jobID: "job3", slotsNeeded: 0, group: groups[2]},
-			{id: "task4", jobID: "job4", slotsNeeded: 0, group: groups[3]},
+			{id: "task3", jobID: "job3", slotsNeeded: 0, group: groups[0]},
+			{id: "task4", jobID: "job4", slotsNeeded: 0, group: groups[0]},
 		}
 
 		return tasks, groups, agents
@@ -486,15 +483,9 @@ func TestJobStats(t *testing.T) {
 	tasks, groups, agents := prepTaskList()
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 	AllocateTasks(toAllocate, agentMap, taskList)
 	p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	for _, task := range toAllocate {
-		log.Printf("Allocate: %s", task.AllocationID)
-	}
-	for _, task := range toRelease {
-		log.Printf("Release: %s", task.Address())
-	}
 
 	stats := jobStats(taskList)
 	assert.Equal(t, stats.QueuedCount, int32(2))
