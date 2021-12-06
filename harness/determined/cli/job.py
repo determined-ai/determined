@@ -18,10 +18,18 @@ def ls(args: Namespace) -> None:
     priority = True
     config = api.get(args.master, "config").json()
     try:
-        if config["resource_manager"]["scheduler"]["type"] == "fair_share":
-            priority = False
+        for pool in range(config["resource_pools"]):
+            if (
+                pool["pool_name"] == args.resource_pool
+                and pool["scheduler"]["type"] == "fair_share"
+            ):
+                priority = False
     except KeyError:
-        pass
+        try:
+            if config["resource_manager"]["scheduler"]["type"] == "fair_share":
+                priority = False
+        except KeyError:
+            pass
 
     response = get_GetJobs(
         setup_session(args),
