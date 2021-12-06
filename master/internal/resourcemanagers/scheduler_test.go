@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"log"
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -51,6 +52,7 @@ type mockTask struct {
 	rmRef *actor.Ref
 
 	id               model.AllocationID
+	jobID            string
 	group            *mockGroup
 	slotsNeeded      int
 	nonPreemptible   bool
@@ -349,8 +351,15 @@ func setupSchedulerStates(
 
 		groups[ref] = &group{handler: ref}
 
+		var jobID *model.JobID
+		if mockTask.jobID != "" {
+			jid := model.JobID(mockTask.jobID)
+			jobID = &jid
+		}
+
 		req := &sproto.AllocateRequest{
 			AllocationID: mockTask.id,
+			JobID:        jobID,
 			SlotsNeeded:  mockTask.slotsNeeded,
 			Label:        mockTask.label,
 			TaskActor:    ref,
@@ -446,6 +455,63 @@ func assertEqualToRelease(
 	}
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected tasks must have the same length")
+}
+
+func TestJobStats(t *testing.T) {
+	prepTaskList := func() ([]*mockTask, []*mockGroup, []*mockAgent) {
+		lowerPriority := 50
+		higherPriority := 40
+
+		agents := []*mockAgent{
+			{id: "agent1", slots: 1, maxZeroSlotContainers: 1},
+		}
+		groups := []*mockGroup{
+			{id: "group1", priority: &lowerPriority},
+			{id: "group2", priority: &higherPriority},
+			{id: "group3", priority: &lowerPriority},
+			{id: "group4", priority: &lowerPriority},
+		}
+		tasks := []*mockTask{
+			{id: "task1", jobID: "job1", slotsNeeded: 1, group: groups[0]},
+			{id: "task2", jobID: "job2", slotsNeeded: 1, group: groups[1]},
+			{id: "task3", jobID: "job3", slotsNeeded: 0, group: groups[2]},
+			{id: "task4", jobID: "job4", slotsNeeded: 0, group: groups[3]},
+		}
+
+		return tasks, groups, agents
+	}
+
+	// priority scheduler
+	p := &priorityScheduler{}
+	tasks, groups, agents := prepTaskList()
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	AllocateTasks(toAllocate, agentMap, taskList)
+	p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	for _, task := range toAllocate {
+		log.Printf("Allocate: %s", task.AllocationID)
+	}
+	for _, task := range toRelease {
+		log.Printf("Release: %s", task.Address())
+	}
+
+	stats := jobStats(taskList)
+	assert.Equal(t, stats.QueuedCount, int32(2))
+	assert.Equal(t, stats.ScheduledCount, int32(2))
+
+	// fair share scheduler
+	system = actor.NewSystem(t.Name())
+	tasks, groups, agents = prepTaskList()
+	system = actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap = setupSchedulerStates(t, system, tasks, groups, agents)
+	toAllocate, _ = fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	AllocateTasks(toAllocate, agentMap, taskList)
+	fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+
+	stats = jobStats(taskList)
+	assert.Equal(t, stats.QueuedCount, int32(2))
+	assert.Equal(t, stats.ScheduledCount, int32(2))
 }
 
 // func TestFilterAllocateRequests(t *testing.T) {
