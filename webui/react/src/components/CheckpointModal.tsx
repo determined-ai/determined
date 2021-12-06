@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import useCreateModelModal from 'hooks/useCreateModelModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
@@ -71,7 +72,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
 const CheckpointModal: React.FC<Props> = (
   { config, checkpoint, onHide, show, title, ...props }: Props,
 ) => {
-  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
+  const { showModal: showCreateModelModal } = useCreateModelModal();
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -85,6 +86,14 @@ const CheckpointModal: React.FC<Props> = (
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
   }, [ checkpoint.resources ]);
+
+  const handleRegisterCheckpointClose = useCallback((checkpointUuid?: string) => {
+    if (checkpointUuid) showCreateModelModal({ checkpointUuid });
+  }, [ showCreateModelModal ]);
+
+  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal(
+    handleRegisterCheckpointClose,
+  );
 
   const launchRegisterCheckpointModal = useCallback(() => {
     if (!checkpoint.uuid) return;

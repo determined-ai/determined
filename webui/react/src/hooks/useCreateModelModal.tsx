@@ -15,7 +15,7 @@ import { Metadata } from 'types';
 import css from './useCreateModelModal.module.scss';
 import useRegisterCheckpointModal from './useRegisterCheckpointModal';
 
-interface ShowProps {
+export interface ShowCreateModelProps {
   checkpointUuid?: string;
 }
 
@@ -31,12 +31,12 @@ interface ModalState {
 }
 
 interface ModalHooks {
-  showModal: (props: ShowProps) => void;
+  showModal: (props: ShowCreateModelProps) => void;
 }
 
 const useCreateModelModal = (): ModalHooks => {
-  const modalRef = useRef<ReturnType<ModalFunc>>();
   const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
+  const modalRef = useRef<ReturnType<ModalFunc>>();
   const { auth: { user } } = useStore();
   const [ modalState, setModalState ] = useState<ModalState>({
     expandDetails: false,
@@ -48,7 +48,7 @@ const useCreateModelModal = (): ModalHooks => {
     visible: false,
   });
 
-  const showModal = useCallback(({ checkpointUuid }: ShowProps) => {
+  const showModal = useCallback(({ checkpointUuid }: ShowCreateModelProps) => {
     setModalState({
       checkpointUuid,
       expandDetails: false,
@@ -73,7 +73,7 @@ const useCreateModelModal = (): ModalHooks => {
   }, [ closeModal ]);
 
   const createModel = useCallback(async (state: ModalState) => {
-    const { modelDescription, tags, metadata, modelName, checkpointUuid } = state;
+    const { checkpointUuid, modelDescription, tags, metadata, modelName } = state;
     try {
       const response = await postModel({
         description: modelDescription,
@@ -119,12 +119,12 @@ const useCreateModelModal = (): ModalHooks => {
   }, []);
 
   const updateModelName = useCallback((e) => {
-    setModalState(prev => ({ ...prev, versionName: e.target.value }));
+    setModalState(prev => ({ ...prev, modelName: e.target.value }));
     debounce(250, () => findIsNameUnique(e.target.value))();
   }, [ findIsNameUnique ]);
 
   const updateModelDescription = useCallback((e) => {
-    setModalState(prev => ({ ...prev, versionDescription: e.target.value }));
+    setModalState(prev => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
   const openDetails = useCallback(() => {
@@ -195,10 +195,10 @@ const useCreateModelModal = (): ModalHooks => {
       icon: null,
       maskClosable: true,
       okButtonProps: { disabled: modelName === '' || !isNameUnique },
-      okText: 'Register Checkpoint',
+      okText: 'Create Model',
       onCancel: handleCancel,
       onOk: () => handleOk(state),
-      title: 'Register Checkpoint',
+      title: 'Create Model',
     };
 
     return modalProps;

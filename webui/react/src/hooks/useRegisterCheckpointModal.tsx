@@ -13,10 +13,9 @@ import { validateDetApiEnum } from 'services/utils';
 import { Metadata, ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
-import useCreateModelModal from './useCreateModelModal';
 import css from './useRegisterCheckpointModal.module.scss';
 
-interface ShowProps {
+export interface ShowRegisterCheckpointProps {
   checkpointUuid: string;
   selectedModelId?: number;
 }
@@ -34,14 +33,13 @@ interface ModalState {
 }
 
 interface ModalHooks {
-  showModal: (props: ShowProps) => void;
+  showModal: (props: ShowRegisterCheckpointProps) => void;
 }
 
-const useRegisterCheckpointModal = (): ModalHooks => {
+const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ canceler ] = useState(new AbortController());
-  const { showModal: showCreateModelModal } = useCreateModelModal();
   const [ modalState, setModalState ] = useState<ModalState>({
     expandDetails: false,
     metadata: {},
@@ -77,7 +75,10 @@ const useRegisterCheckpointModal = (): ModalHooks => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const showModal = useCallback(({ checkpointUuid, selectedModelId }: ShowProps) => {
+  const showModal = useCallback((
+    { checkpointUuid, selectedModelId }: ShowRegisterCheckpointProps,
+  ) => {
+    fetchModels();
     setModalState({
       checkpointUuid,
       expandDetails: false,
@@ -88,7 +89,7 @@ const useRegisterCheckpointModal = (): ModalHooks => {
       versionName: '',
       visible: true,
     });
-  }, []);
+  }, [ fetchModels ]);
 
   const closeModal = useCallback(() => {
     if (!modalRef.current) return;
@@ -181,11 +182,11 @@ const useRegisterCheckpointModal = (): ModalHooks => {
     setModalState(prev => ({ ...prev, tags: value }));
   }, []);
 
-  const launchNewModelModal = useCallback((state) => {
+  const launchNewModelModal = useCallback((state: ModalState) => {
     const { checkpointUuid } = state;
     closeModal();
-    showCreateModelModal({ checkpointUuid });
-  }, [ closeModal, showCreateModelModal ]);
+    onClose?.(checkpointUuid);
+  }, [ closeModal, onClose ]);
 
   const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
     const {
@@ -200,7 +201,7 @@ const useRegisterCheckpointModal = (): ModalHooks => {
         <div>
           <div className={css.selectModelRow}>
             <h2>Select Model</h2>
-            <p onClick={launchNewModelModal}>New Model</p>
+            <p onClick={() => launchNewModelModal(state)}>New Model</p>
           </div>
           <Select
             dropdownMatchSelectWidth={250}
