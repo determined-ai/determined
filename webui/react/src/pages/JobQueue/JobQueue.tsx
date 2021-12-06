@@ -203,15 +203,15 @@ const JobQueue: React.FC = () => {
       setSelectedRp(undefined);
       resetSettings([ 'selectedRp' ]);
     } else if (!selectedRp) {
-      let rp: ResourcePool | undefined = undefined;
+      let pool: ResourcePool | undefined = undefined;
       if (settings.selectedRp) {
-        rp = resourcePools.find(rp => rp.name === settings.selectedRp);
+        pool = resourcePools.find(pool => pool.name === settings.selectedRp);
       }
-      if (!rp) {
-        rp = resourcePools[0];
+      if (!pool) {
+        pool = resourcePools[0];
       }
-      updateSettings({ selectedRp: rp.name });
-      setSelectedRp(rp);
+      updateSettings({ selectedRp: pool.name });
+      setSelectedRp(pool);
     }
   }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedRp ]);
 

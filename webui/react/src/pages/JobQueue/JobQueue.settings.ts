@@ -25,7 +25,7 @@ const config: SettingsConfig = {
     },
     {
       key: 'selectedRp',
-      storageKey: 'selectedRp',
+      storageKey: 'selectedPool',
       type: { baseType: BaseType.String },
     },
     {
