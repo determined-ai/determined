@@ -6,7 +6,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import NewModelButton from 'components/NewModelButton';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -18,6 +17,7 @@ import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -41,6 +41,7 @@ const ModelRegistry: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
+  const { showModal } = useCreateModelModal();
 
   const {
     settings,
@@ -424,9 +425,15 @@ const ModelRegistry: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const showCreateModelModal = useCallback(() => {
+    showModal({});
+  }, [ showModal ]);
+
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
-      <Section options={<NewModelButton />} title="Model Registry">
+      <Section
+        options={<Button onClick={showCreateModelModal}>New Model</Button>}
+        title="Model Registry">
         {(models.length === 0 && !isLoading) ?
           <div className={css.emptyBase}>
             <div className={css.icon}>
