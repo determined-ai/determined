@@ -134,7 +134,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
             <div className={css.toast}>
               <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
               <Link path={paths.modelVersionDetails(selectedModelId, response.id)}>
-              View Model Version
+                View Model Version
               </Link>
             </div>),
           message: '',
@@ -214,36 +214,40 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
             onChange={updateModel}
           />
         </div>
-        {selectedModelId &&
-        <>
-          <div className={css.separator} />
-          <div>
-            <h2>Version Name</h2>
-            <Input
-              placeholder={`Version ${selectedModelNumVersions + 1}`}
-              value={versionName}
-              onChange={updateVersionName} />
-          </div>
-          <div>
-            <h2>Description <span>(optional)</span></h2>
-            <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
-          </div>
-          {expandDetails ?
-            <>
-              <div>
-                <h2>Metadata <span>(optional)</span></h2>
-                <EditableMetadata
-                  editing={true}
-                  metadata={metadata}
-                  updateMetadata={updateMetadata} />
-              </div>
-              <div>
-                <h2>Tags <span>(optional)</span></h2>
-                <EditableTagList tags={tags} onChange={updateTags} />
-              </div>
-            </> :
-            <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
-        </>}
+        {selectedModelId && (
+          <>
+            <div className={css.separator} />
+            <div>
+              <h2>Version Name</h2>
+              <Input
+                placeholder={`Version ${selectedModelNumVersions + 1}`}
+                value={versionName}
+                onChange={updateVersionName}
+              />
+            </div>
+            <div>
+              <h2>Description <span>(optional)</span></h2>
+              <Input.TextArea value={versionDescription} onChange={updateVersionDescription} />
+            </div>
+            {expandDetails ? (
+              <>
+                <div>
+                  <h2>Metadata <span>(optional)</span></h2>
+                  <EditableMetadata
+                    editing={true}
+                    metadata={metadata}
+                    updateMetadata={updateMetadata}
+                  />
+                </div>
+                <div>
+                  <h2>Tags <span>(optional)</span></h2>
+                  <EditableTagList tags={tags} onChange={updateTags} />
+                </div>
+              </>
+            ) :
+              <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
+          </>
+        )}
       </div>
     );
   }, [ launchNewModelModal,

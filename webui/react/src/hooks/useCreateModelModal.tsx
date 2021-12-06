@@ -94,7 +94,7 @@ const useCreateModelModal = (): ModalHooks => {
             <div className={css.toast}>
               <p>{`"${modelName}"`} created</p>
               <Link path={paths.modelDetails(response.id)}>
-              View Model
+                View Model
               </Link>
             </div>),
           message: '',
@@ -161,20 +161,22 @@ const useCreateModelModal = (): ModalHooks => {
           <h2>Description <span>(optional)</span></h2>
           <Input.TextArea value={modelDescription} onChange={updateModelDescription} />
         </div>
-        {expandDetails ?
+        {expandDetails ? (
           <>
             <div>
               <h2>Metadata <span>(optional)</span></h2>
               <EditableMetadata
                 editing={true}
                 metadata={metadata}
-                updateMetadata={updateMetadata} />
+                updateMetadata={updateMetadata}
+              />
             </div>
             <div>
               <h2>Tags <span>(optional)</span></h2>
               <EditableTagList tags={tags} onChange={updateTags} />
             </div>
-          </> :
+          </>
+        ) :
           <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
       </div>
     );
