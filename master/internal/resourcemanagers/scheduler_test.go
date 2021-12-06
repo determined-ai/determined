@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 
 	"github.com/google/uuid"
 
@@ -457,7 +458,7 @@ func assertEqualToRelease(
 }
 
 func TestJobStats(t *testing.T) {
-	prepTaskList := func() ([]*mockTask, []*mockGroup, []*mockAgent) {
+	prepMockData := func() ([]*mockTask, []*mockGroup, []*mockAgent) {
 		lowerPriority := 50
 		higherPriority := 40
 
@@ -478,31 +479,79 @@ func TestJobStats(t *testing.T) {
 		return tasks, groups, agents
 	}
 
-	// priority scheduler
-	p := &priorityScheduler{}
-	tasks, groups, agents := prepTaskList()
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	AllocateTasks(toAllocate, agentMap, taskList)
-	p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	assertStatsEqual := func(
+		t *testing.T,
+		actual *jobv1.QueueStats,
+		expected *jobv1.QueueStats,
+	) {
+		assert.Equal(t, actual.QueuedCount, expected.QueuedCount)
+		assert.Equal(t, actual.ScheduledCount, expected.ScheduledCount)
+	}
 
-	stats := jobStats(taskList)
-	assert.Equal(t, stats.QueuedCount, int32(2))
-	assert.Equal(t, stats.ScheduledCount, int32(2))
+	testPriority := func(
+		t *testing.T,
+		tasks []*mockTask,
+		groups []*mockGroup,
+		agents []*mockAgent,
+		expectedStats *jobv1.QueueStats,
+	) {
+		p := &priorityScheduler{}
+		system := actor.NewSystem(t.Name())
+		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+		AllocateTasks(toAllocate, agentMap, taskList)
+		p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 
-	// fair share scheduler
-	system = actor.NewSystem(t.Name())
-	tasks, groups, agents = prepTaskList()
-	system = actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap = setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, _ = fairshareSchedule(taskList, groupMap, agentMap, BestFit)
-	AllocateTasks(toAllocate, agentMap, taskList)
-	fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+		assertStatsEqual(t, jobStats(taskList), expectedStats)
 
-	stats = jobStats(taskList)
-	assert.Equal(t, stats.QueuedCount, int32(2))
-	assert.Equal(t, stats.ScheduledCount, int32(2))
+	}
+	testFairshare := func(
+		t *testing.T,
+		tasks []*mockTask,
+		groups []*mockGroup,
+		agents []*mockAgent,
+		expectedStats *jobv1.QueueStats,
+	) {
+		system := actor.NewSystem(t.Name())
+		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+		AllocateTasks(toAllocate, agentMap, taskList)
+		fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+
+		assertStatsEqual(t, jobStats(taskList), expectedStats)
+	}
+
+	tasks, groups, agents := prepMockData()
+	testPriority(t, tasks, groups, agents,
+		&jobv1.QueueStats{QueuedCount: int32(2), ScheduledCount: int32(2)})
+
+	tasks, groups, agents = prepMockData()
+	testFairshare(t, tasks, groups, agents,
+		&jobv1.QueueStats{QueuedCount: int32(2), ScheduledCount: int32(2)})
+
+	_, groups, agents = prepMockData()
+	tasks = []*mockTask{
+		{id: "task1.1", jobID: "job1", slotsNeeded: 2, group: groups[0]}, // same job
+		{id: "task1.2", jobID: "job1", slotsNeeded: 2, group: groups[0]},
+		{id: "task1.3", jobID: "job1", slotsNeeded: 2, group: groups[0]},
+		{id: "task2", jobID: "job2", slotsNeeded: 2, group: groups[1]},
+		{id: "task3", jobID: "job3", slotsNeeded: 2, group: groups[0]},
+		{id: "task4", jobID: "job4", slotsNeeded: 2, group: groups[0]},
+	}
+	testPriority(t, tasks, groups, agents,
+		&jobv1.QueueStats{QueuedCount: int32(4), ScheduledCount: int32(0)})
+
+	_, groups, agents = prepMockData()
+	tasks = []*mockTask{
+		{id: "task1.1", jobID: "job1", slotsNeeded: 2, group: groups[0]}, // same job
+		{id: "task1.2", jobID: "job1", slotsNeeded: 2, group: groups[0]},
+		{id: "task1.3", jobID: "job1", slotsNeeded: 2, group: groups[0]},
+		{id: "task2", jobID: "job2", slotsNeeded: 2, group: groups[1]},
+		{id: "task3", jobID: "job3", slotsNeeded: 2, group: groups[0]},
+		{id: "task4", jobID: "job4", slotsNeeded: 2, group: groups[0]},
+	}
+	testFairshare(t, tasks, groups, agents,
+		&jobv1.QueueStats{QueuedCount: int32(4), ScheduledCount: int32(0)})
 }
 
 // func TestFilterAllocateRequests(t *testing.T) {
