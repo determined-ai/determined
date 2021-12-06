@@ -435,32 +435,33 @@ const ModelRegistry: React.FC = () => {
         options={<Button onClick={showCreateModelModal}>New Model</Button>}
         title="Model Registry">
         {(models.length === 0 && !isLoading) ?
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="model" size="mega" />
+          (
+            <div className={css.emptyBase}>
+              <div className={css.icon}>
+                <Icon name="model" size="mega" />
+              </div>
+              <h4>No Models Registered</h4>
+              <p className={css.description}>
+                Track important checkpoints and versions from your experiments.&nbsp;
+                <Link external path={paths.docs('/post-training/model-registry.html')}>
+                  Learn more
+                </Link>
+              </p>
             </div>
-            <h4>No Models Registered</h4>
-            <p className={css.description}>
-              Track important checkpoints and versions from your experiments.&nbsp;
-              <Link external path={paths.docs('/post-training/model-registry.html')}>
-                Learn more
-              </Link>
-            </p>
-          </div>
-        ) : (
-          <ResponsiveTable
-            columns={columns}
-            dataSource={models}
-            loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
-            showSorterTooltip={false}
-            size="small"
-            onChange={handleTableChange}
-          />
-        )}
+          ) : (
+            <ResponsiveTable
+              columns={columns}
+              dataSource={models}
+              loading={isLoading}
+              pagination={getFullPaginationConfig({
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              }, total)}
+              showSorterTooltip={false}
+              size="small"
+              onChange={handleTableChange}
+            />
+          )}
       </Section>
     </Page>
   );
