@@ -21,7 +21,6 @@ export const detApi = {
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
-  Jobs: new Api.JobsApi(ApiConfig),
   Models: new Api.ModelsApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
@@ -51,7 +50,6 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.Internal = new Api.InternalApi(config);
-  detApi.Jobs = new Api.JobsApi(config);
   detApi.Models = new Api.ModelsApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
@@ -676,7 +674,7 @@ export const getJobQueue: Service.DetApi<
     // we don't work with jobs without a summary in the ui yet
     return response as Service.GetJobsResponse;
   },
-  request: (params: Service.GetJobQParams) => detApi.Jobs.getJobs(
+  request: (params: Service.GetJobQParams) => detApi.Internal.getJobs(
     params.offset,
     params.limit,
     params.resourcePool,

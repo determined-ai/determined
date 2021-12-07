@@ -10312,6 +10312,93 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get job queue stats for a resource pool.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/job-queues/stats`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (resourcePools) {
+                localVarQueryParameter['resourcePools'] = resourcePools;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [paginationOffset] The number of records to skip before returning results.
+         * @param {number} [paginationLimit] The amount of records limited in the results.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/job-queues`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (paginationOffset !== undefined) {
+                localVarQueryParameter['pagination.offset'] = paginationOffset;
+            }
+
+            if (paginationLimit !== undefined) {
+                localVarQueryParameter['pagination.limit'] = paginationLimit;
+            }
+
+            if (resourcePool !== undefined) {
+                localVarQueryParameter['resourcePool'] = resourcePool;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -11056,7 +11143,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
             }
-            const localVarPath = `/api/v1/resource-pools/queues`;
+            const localVarPath = `/api/v1/job-queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11259,6 +11346,47 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         getHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance(experimentId, periodSeconds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get job queue stats for a resource pool.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [paginationOffset] The number of records to skip before returning results.
+         * @param {number} [paginationLimit] The amount of records limited in the results.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11704,6 +11832,29 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get job queue stats for a resource pool.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+            return InternalApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [paginationOffset] The number of records to skip before returning results.
+         * @param {number} [paginationLimit] The amount of records limited in the results.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
+            return InternalApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -12012,6 +12163,33 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get job queue stats for a resource pool.
+     * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+        return InternalApiFp(this.configuration).getJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of jobs in queue.
+     * @param {number} [paginationOffset] The number of records to skip before returning results.
+     * @param {number} [paginationLimit] The amount of records limited in the results.
+     * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
+        return InternalApiFp(this.configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a list of all resource pools from the cluster.
      * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
      * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -12225,220 +12403,6 @@ export class InternalApi extends BaseAPI {
      */
     public updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
         return InternalApiFp(this.configuration).updateJobQueue(body, options)(this.fetch, this.basePath);
-    }
-
-}
-
-/**
- * JobsApi - fetch parameter creator
- * @export
- */
-export const JobsApiFetchParamCreator = function (configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @summary Get job queue stats for a resource pool.
-         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/resource-pools/queues/stats`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (resourcePools) {
-                localVarQueryParameter['resourcePools'] = resourcePools;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get a list of jobs in queue.
-         * @param {number} [paginationOffset] The number of records to skip before returning results.
-         * @param {number} [paginationLimit] The amount of records limited in the results.
-         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/resource-pools/queues`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (paginationOffset !== undefined) {
-                localVarQueryParameter['pagination.offset'] = paginationOffset;
-            }
-
-            if (paginationLimit !== undefined) {
-                localVarQueryParameter['pagination.limit'] = paginationLimit;
-            }
-
-            if (resourcePool !== undefined) {
-                localVarQueryParameter['resourcePool'] = resourcePool;
-            }
-
-            if (orderBy !== undefined) {
-                localVarQueryParameter['orderBy'] = orderBy;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-    }
-};
-
-/**
- * JobsApi - functional programming interface
- * @export
- */
-export const JobsApiFp = function(configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @summary Get job queue stats for a resource pool.
-         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get a list of jobs in queue.
-         * @param {number} [paginationOffset] The number of records to skip before returning results.
-         * @param {number} [paginationLimit] The amount of records limited in the results.
-         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-    }
-};
-
-/**
- * JobsApi - factory interface
- * @export
- */
-export const JobsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
-    return {
-        /**
-         * 
-         * @summary Get job queue stats for a resource pool.
-         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getJobQueueStats(resourcePools?: Array<string>, options?: any) {
-            return JobsApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get a list of jobs in queue.
-         * @param {number} [paginationOffset] The number of records to skip before returning results.
-         * @param {number} [paginationLimit] The amount of records limited in the results.
-         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
-            return JobsApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(fetch, basePath);
-        },
-    };
-};
-
-/**
- * JobsApi - object-oriented interface
- * @export
- * @class JobsApi
- * @extends {BaseAPI}
- */
-export class JobsApi extends BaseAPI {
-    /**
-     * 
-     * @summary Get job queue stats for a resource pool.
-     * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApi
-     */
-    public getJobQueueStats(resourcePools?: Array<string>, options?: any) {
-        return JobsApiFp(this.configuration).getJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get a list of jobs in queue.
-     * @param {number} [paginationOffset] The number of records to skip before returning results.
-     * @param {number} [paginationLimit] The amount of records limited in the results.
-     * @param {string} [resourcePool] The target resource-pool for agent resource manager.
-     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof JobsApi
-     */
-    public getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
-        return JobsApiFp(this.configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(this.fetch, this.basePath);
     }
 
 }
