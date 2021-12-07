@@ -49,12 +49,26 @@ example JSON representation of a model for illustration.
      }
    }
 
+WebUI
+=====
+
+Models can be created and edited through the WebUI. Some features can only be accessed through the
+WebUI, such as writing longform notes in Markdown.
+
+A new model can be created on the Model Registry page, which can be found in the navigation bar.
+This launches a modal where basic information can be specified before creation. A new version can be
+added to a model from the Checkpoint modal. This launches a model where basic information can be
+specified before registering the model version. A new model can also be created from here.
+
+Once a model and/or version is created, notes, metadata, and other information can be added and
+edited through the Model Registry page after selecting the model or model version in question.
+
 Registering Models
 ==================
 
-A model can be added to the registry via the Python API, REST API, or CLI. This guide will cover the
-Python and CLI methods. For information on the REST API, see the `Swagger API documentation
-<../rest-api/index.html#/Models>`__.
+A model can be added to the registry via the WebUI, Python API, REST API, or CLI. This guide will
+cover the Python and CLI methods. For information on the REST API, see the `Swagger API
+documentation <../rest-api/index.html#/Models>`__.
 
 The following example demonstrates how to add a new model to the registry;
 :func:`~determined.experimental.Determined.create_model` returns an instance of the
@@ -127,8 +141,8 @@ version of the model by default as well.
 Modifying Model Metadata
 ========================
 
-Currently, model metadata can only be edited via the Python API. The following example demonstrates
-how to use this API.
+Currently, model metadata can only be edited via the WebUI and Python API. The following example
+demonstrates how to use this API.
 
 .. code:: python
 
