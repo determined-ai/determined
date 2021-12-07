@@ -7,7 +7,7 @@ from typing import Iterator, Optional
 
 import determined as det
 from determined import _core, horovod, load
-from determined.common.api import certs
+from determined.common.api import analytics, certs
 
 
 def config_logging(debug: bool) -> None:
@@ -82,6 +82,11 @@ def main(chief_ip: Optional[str]) -> int:
         # without horovod, and we can't load the right horovod until we know which Trial class the
         # user implemented.
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
+        if info.container_rank == 0:
+            try:
+                analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
+            except Exception as e:
+                logging.debug(f"Cannot sending analytics: {e}")
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
         distributed_backend = det._DistributedBackend()

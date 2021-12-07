@@ -1,4 +1,4 @@
-from determined.common.api import authentication, errors, metric, request
+from determined.common.api import analytics, authentication, errors, metric, request
 from determined.common.api.authentication import Authentication, Session, salt_and_hash
 from determined.common.api.experiment import (
     activate_experiment,
@@ -26,9 +26,6 @@ from determined.common.api.request import (
     post,
     put,
     ws,
-)
-from determined.common.api.analytics import (
-    send_analytics,
 )
 from determined.common.api.profiler import (
     post_trial_profiler_metrics_batches,

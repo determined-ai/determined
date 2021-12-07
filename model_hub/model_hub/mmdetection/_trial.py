@@ -36,7 +36,6 @@ import torch
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
-from determined.common.api.analytics import send_analytics
 from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends
@@ -55,8 +54,6 @@ class MMDetTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
-        send_analytics("MMDetTrial Created")
-
         self.context = context
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
