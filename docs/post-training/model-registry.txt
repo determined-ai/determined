@@ -52,17 +52,13 @@ example JSON representation of a model for illustration.
 WebUI
 =====
 
-Models can be created and edited through the WebUI. A new model can be created on the Model Registry
-page, which can be found in the navigation bar. This launches a modal where basic information can be
-specified before creation. .. image::
-https://user-images.githubusercontent.com/15078396/144926889-eec0216a-dacc-4fe5-ac28-858ea6587d04.png
+Models can be created and edited through the WebUI. Some features can only be accessed through the
+WebUI, such as writing longform notes in Markdown.
 
-A new version can be added to a model from the Checkpoint modal. This launches a model where basic
-information can be specified before registering the model version. A new model can also be created
-from here. .. image::
-https://user-images.githubusercontent.com/15078396/144926870-bb93d587-f7ad-4052-a338-6fc000bd2ed9.png
-.. image::
-https://user-images.githubusercontent.com/15078396/144926881-98aeb187-aa3f-4e40-b502-d7af624573db.png
+A new model can be created on the Model Registry page, which can be found in the navigation bar.
+This launches a modal where basic information can be specified before creation. A new version can be
+added to a model from the Checkpoint modal. This launches a model where basic information can be
+specified before registering the model version. A new model can also be created from here.
 
 Once a model and/or version is created, notes, metadata, and other information can be added and
 edited through the Model Registry page after selecting the model or model version in question.
