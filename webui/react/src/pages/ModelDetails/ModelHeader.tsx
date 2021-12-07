@@ -106,6 +106,7 @@ const ModelHeader: React.FC<Props> = (
         <Alert
           message="This model has been archived and is now read-only."
           showIcon
+          style={{ marginTop: 8 }}
           type="warning"
         />
       )}
