@@ -1,8 +1,10 @@
 import { Modal } from 'antd';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import useCreateModelModal from 'hooks/useCreateModelModal';
+import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
   ExperimentConfig, RunState } from 'types';
@@ -70,6 +72,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
 const CheckpointModal: React.FC<Props> = (
   { config, checkpoint, onHide, show, title, ...props }: Props,
 ) => {
+  const { showModal: showCreateModelModal } = useCreateModelModal();
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -84,6 +87,20 @@ const CheckpointModal: React.FC<Props> = (
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
   }, [ checkpoint.resources ]);
 
+  const handleRegisterCheckpointClose = useCallback((checkpointUuid?: string) => {
+    if (checkpointUuid) showCreateModelModal({ checkpointUuid });
+  }, [ showCreateModelModal ]);
+
+  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal(
+    handleRegisterCheckpointClose,
+  );
+
+  const launchRegisterCheckpointModal = useCallback(() => {
+    if (!checkpoint.uuid) return;
+    onHide?.();
+    showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
+  }, [ checkpoint.uuid, onHide, showRegisterCheckpointModal ]);
+
   const totalBatchesProcessed = getBatchNumber(checkpoint);
 
   const searcherMetric = props.searcherValidation !== undefined ?
@@ -96,7 +113,9 @@ const CheckpointModal: React.FC<Props> = (
 
   return (
     <Modal
-      footer={null}
+      footer={checkpoint.uuid ? undefined : null}
+      okButtonProps={{ onClick: launchRegisterCheckpointModal }}
+      okText="Register Checkpoint"
       title={title}
       visible={show}
       width={768}

@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, RecordKey } from 'types';
+import { CommandType, DetailedUser, Metadata, RecordKey } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -159,6 +159,27 @@ export interface PatchModelVersionParams {
   }
   modelId: number;
   versionId: number;
+}
+
+export interface PostModelParams {
+  description?: string;
+  labels?: string[];
+  metadata?: Metadata;
+  name: string;
+  username?: string;
+}
+
+export interface PostModelVersionParams {
+  body: {
+    checkpointUuid: string;
+    comment?: string;
+    labels?: string[];
+    metadata?: Metadata;
+    modelId: number;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
 }
 
 export interface CreateExperimentParams {
