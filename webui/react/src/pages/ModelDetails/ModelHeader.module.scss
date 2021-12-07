@@ -14,7 +14,7 @@
     }
   }
   .headerContent {
-    margin: 0 24px;
+    margin: 0 12px;
 
     .mainRow {
       align-items: center;
@@ -25,6 +25,7 @@
         margin-block: var(--theme-sizes-layout-large);
 
         .name {
+          font-size: var(--theme-sizes-font-enormous);
           margin: 0;
         }
       }

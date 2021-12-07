@@ -156,7 +156,10 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
-  <Space><Icon name="model" size="medium" />
+  <Space>
+    <div style={{ paddingInline: 4 }}>
+      <Icon name="model" size="medium" />
+    </div>
     <Link path={paths.modelDetails(record.id)}>{value}</Link>
   </Space>
 );

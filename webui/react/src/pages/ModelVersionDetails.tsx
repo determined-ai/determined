@@ -249,7 +249,7 @@ const ModelVersionDetails: React.FC = () => {
       <Tabs
         defaultActiveKey="overview"
         style={{ height: 'auto' }}
-        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}
+        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
         onChange={handleTabChange}>
         <TabPane key="model" tab="Model">
           <div className={css.base}>
