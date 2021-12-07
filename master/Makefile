@@ -55,16 +55,24 @@ get-deps:
 	go get github.com/vektra/mockery/v2/.../@v2.9.2
 
 .PHONY: build
+build: export DET_SEGMENT_MASTER_KEY ?=
+build: export DET_SEGMENT_WEBUI_KEY ?=
 build: gen
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
+		-ldflags "-X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY)" \
+		-ldflags "-X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
 		-o build/determined-master \
 		./cmd/determined-master
 
 .PHONY: build-race
+build-race: export DET_SEGMENT_MASTER_KEY ?=
+build-race: export DET_SEGMENT_WEBUI_KEY ?=
 build-race: gen
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
+		-ldflags "-X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY)" \
+		-ldflags "-X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
 		-o build/determined-master \
 		-race \
 		./cmd/determined-master

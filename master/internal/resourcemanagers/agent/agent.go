@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
@@ -241,7 +240,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			// If we happen to fail before the agent has started and been registered with
 			// the resource manager, then nothing can be running on it. In this case we
 			// just fail outright and make it restart.
-			telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
 			return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
 		}
 
@@ -264,11 +262,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
-			telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
 			return errors.New("agent failed to reconnect by deadline")
 		}
 	case actor.ChildStopped:
-		telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
 		ctx.Self().Stop()
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
@@ -307,7 +303,6 @@ func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMessage) {
 	switch {
 	case msg.AgentStarted != nil:
-		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
 		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
 

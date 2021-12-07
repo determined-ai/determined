@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// GetClusterID queries the master uuid in the database, first adding it if it doesn't exist.
-func (db *PgDB) GetClusterID() (string, error) {
+// GetOrCreateClusterID queries the master uuid in the database, adding one if it doesn't exist.
+func (db *PgDB) GetOrCreateClusterID() (string, error) {
 	newUUID := uuid.New().String()
 
 	if _, err := db.sql.Exec(`
@@ -40,9 +40,12 @@ SELECT jsonb_build_object(
     'num_users', (SELECT count(*) FROM users),
     'num_experiments', (SELECT count(*) FROM experiments),
     'num_trials', (SELECT count(*) FROM trials),
-    'experiment_states', (SELECT jsonb_agg(t) FROM
-                           (SELECT state, count(*)
-                            FROM experiments GROUP BY state) t)
+	'num_jobs', (SELECT count(*) FROM jobs),
+	'num_tasks', (SELECT count(*) FROM tasks),
+	'num_allocations', (SELECT count(*) FROM allocations),
+    'num_allocations_today', (
+		SELECT count(*) FROM allocations WHERE DATE(start_time) >= CURRENT_DATE
+	)
 );
 `)
 }

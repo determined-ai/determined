@@ -26,7 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
-	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -76,7 +75,7 @@ func RunMaster(ctx context.Context, c *config.Config) (
 		c = dConf
 	}
 	logs := logger.NewLogBuffer(100)
-	m := internal.New(version.Version, logs, c)
+	m := internal.New(logs, c)
 	logrus.AddHook(logs)
 	go func() {
 		err := m.Run(ctx)
