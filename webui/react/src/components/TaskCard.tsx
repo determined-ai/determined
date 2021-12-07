@@ -1,5 +1,4 @@
 import React from 'react';
-import TimeAgo from 'timeago-react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
@@ -12,6 +11,7 @@ import { canBeOpened, isExperimentTask } from 'utils/task';
 import { openCommand } from 'wait';
 
 import css from './TaskCard.module.scss';
+import TimeAgo from './TimeAgo';
 
 type Props = AnyTask & RecentEvent & {curUser?: DetailedUser}
 

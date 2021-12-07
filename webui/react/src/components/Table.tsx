@@ -1,6 +1,5 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
-import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
@@ -22,6 +21,7 @@ import { waitPageUrl } from 'wait';
 
 import Link from './Link';
 import css from './Table.module.scss';
+import TimeAgo from './TimeAgo';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
