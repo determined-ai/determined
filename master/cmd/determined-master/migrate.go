@@ -35,7 +35,7 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	config := config.Master()
+	config := config.GetMasterConfig()
 	database, err := db.Connect(&config.DB)
 	if err != nil {
 		return err

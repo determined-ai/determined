@@ -48,7 +48,7 @@ func runRoot() error {
 	if err != nil {
 		return err
 	}
-	config := config.Master()
+	config := config.GetMasterConfig()
 
 	printableConfig, err := config.Printable()
 	if err != nil {
@@ -89,7 +89,7 @@ func initializeConfig() error {
 		return err
 	}
 
-	*config.Master() = *conf // FIXME not thread safe but this is expected right?
+	config.SetMasterConfig(conf)
 	return nil
 }
 

@@ -18,6 +18,8 @@ import (
 )
 
 // These are package-level variables so that they can be set at link time.
+var once sync.Once
+var masterConfig *Config
 var (
 	DefaultSegmentMasterKey = ""
 	DefaultSegmentWebUIKey  = ""
@@ -96,15 +98,16 @@ type Config struct {
 	InternalConfig InternalConfig `json:"__internal"`
 }
 
-var once sync.Once
-var masterConfig *Config
-
 // NewConfig returns reference to the master config singleton.
-func Master() *Config {
+func GetMasterConfig() *Config {
 	once.Do(func() {
 		masterConfig = DefaultConfig()
 	})
 	return masterConfig
+}
+
+func SetMasterConfig(config *Config) {
+	*masterConfig = *config // this is not thread safe.
 }
 
 // Printable returns a printable string.
@@ -337,10 +340,7 @@ func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
 }
 
 // ReadWeight resolves the weight value for a job.
-func ReadWeight(config *Config, rpName string, jobConf interface{}) float64 {
-	if config == nil {
-		panic("input config ptr is null")
-	}
+func ReadWeight(rpName string, jobConf interface{}) float64 {
 	var weight float64
 	switch conf := jobConf.(type) {
 	case *expconf.ExperimentConfig:
