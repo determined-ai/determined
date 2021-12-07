@@ -175,6 +175,14 @@ export const deleteModelVersion = generateDetApi<
   Service.DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 >(Config.deleteModelVersion);
 
+export const postModel = generateDetApi<
+  Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
+>(Config.postModel);
+
+export const postModelVersion = generateDetApi<
+  Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
+>(Config.postModelVersion);
+
 export const getModelLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);

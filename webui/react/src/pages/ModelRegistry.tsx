@@ -17,6 +17,7 @@ import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -40,6 +41,7 @@ const ModelRegistry: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
+  const { showModal } = useCreateModelModal();
 
   const {
     settings,
@@ -423,36 +425,43 @@ const ModelRegistry: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const showCreateModelModal = useCallback(() => {
+    showModal({});
+  }, [ showModal ]);
+
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
-      <Section title="Model Registry">
-        {(models.length === 0 && !isLoading) ? (
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="model" size="mega" />
+      <Section
+        options={<Button onClick={showCreateModelModal}>New Model</Button>}
+        title="Model Registry">
+        {(models.length === 0 && !isLoading) ?
+          (
+            <div className={css.emptyBase}>
+              <div className={css.icon}>
+                <Icon name="model" size="mega" />
+              </div>
+              <h4>No Models Registered</h4>
+              <p className={css.description}>
+                Track important checkpoints and versions from your experiments.&nbsp;
+                <Link external path={paths.docs('/post-training/model-registry.html')}>
+                  Learn more
+                </Link>
+              </p>
             </div>
-            <h4>No Models Registered</h4>
-            <p className={css.description}>
-              Track important checkpoints and versions from your experiments.&nbsp;
-              <Link external path={paths.docs('/post-training/model-registry.html')}>
-                Learn more
-              </Link>
-            </p>
-          </div>
-        ) : (
-          <ResponsiveTable
-            columns={columns}
-            dataSource={models}
-            loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
-            showSorterTooltip={false}
-            size="small"
-            onChange={handleTableChange}
-          />
-        )}
+          ) : (
+            <ResponsiveTable
+              columns={columns}
+              dataSource={models}
+              loading={isLoading}
+              pagination={getFullPaginationConfig({
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              }, total)}
+              showSorterTooltip={false}
+              size="small"
+              onChange={handleTableChange}
+            />
+          )}
       </Section>
     </Page>
   );
