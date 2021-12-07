@@ -105,7 +105,7 @@ const ModelVersionHeader: React.FC<Props> = (
         disabled: false,
         key: 'download-model',
         onClick: () => setShowDownloadModel(true),
-        text: 'Download Model',
+        text: 'Download',
       },
       {
         danger: false,
