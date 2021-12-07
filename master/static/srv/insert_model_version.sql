@@ -4,6 +4,8 @@ WITH mv AS (
 			model_id,
 			version,
 			checkpoint_uuid,
+			name,
+			comment,
 			metadata,
 			labels,
 			notes,
@@ -16,16 +18,18 @@ WITH mv AS (
 			(SELECT COALESCE(max(version), 0) + 1 FROM model_versions WHERE model_id = $1),
 			$2,
 			$3,
-			string_to_array($4, ','),
+			$4,
 			$5,
-			$6,
+			string_to_array($6, ','),
+			$7,
+			$8,
 			current_timestamp,
 			current_timestamp
 		)
 	RETURNING id, checkpoint_uuid, version, creation_time, name, comment, model_id, metadata, labels, user_id
 ),
 u AS (
-	SELECT username FROM users WHERE id = $6
+	SELECT username FROM users WHERE id = $8
 ),
 m AS (
   SELECT m.id, m.name, m.description, m.notes, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.archived, COUNT(mv.version) as num_versions

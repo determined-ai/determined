@@ -25,8 +25,7 @@ export const Default = (): React.ReactNode => {
       label={text('Label', 'Default Label')}
       placeholder={text('Placeholder', 'All')}
       value={value}
-      onChange={onChange}
-    >
+      onChange={onChange}>
       {new Array(count).fill(null).map((v, index) => (
         <Option key={index} value={String.fromCharCode(65 + index)}>
           Option {String.fromCharCode(65 + index)}

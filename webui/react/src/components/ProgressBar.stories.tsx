@@ -25,11 +25,13 @@ export const Default = (): React.ReactNode => <Wrapper percent={53} state={RunSt
 export const Full = (): React.ReactNode => <Wrapper percent={100} state={RunState.Completed} />;
 export const Empty = (): React.ReactNode => <Wrapper percent={0} state={RunState.Paused} />;
 
-export const Custom = (): React.ReactNode => <Wrapper
-  percent={number('Percent', 50, { max: 100, min: 0 })}
-  state={select<RunState | CommandState>(
-    'State',
-    { ...cmdStateOptions, ...runStateOptions },
-    RunState.Active,
-  )}
-/>;
+export const Custom = (): React.ReactNode => (
+  <Wrapper
+    percent={number('Percent', 50, { max: 100, min: 0 })}
+    state={select<RunState | CommandState>(
+      'State',
+      { ...cmdStateOptions, ...runStateOptions },
+      RunState.Active,
+    )}
+  />
+);

@@ -23,11 +23,13 @@ const NavigationTopbar: React.FC = () => {
       <Logo branding={info.branding} type={LogoType.OnDarkHorizontal} />
       <div className={css.user}>
         <Dropdown
-          content={<Menu>
-            <Menu.Item key="sign-out">
-              <Link path={paths.logout()}>Sign Out</Link>
-            </Menu.Item>
-          </Menu>}
+          content={(
+            <Menu>
+              <Menu.Item key="sign-out">
+                <Link path={paths.logout()}>Sign Out</Link>
+              </Menu.Item>
+            </Menu>
+          )}
           offset={{ x: 0, y: 8 }}
           placement={Placement.BottomRight}>
           <Avatar hideTooltip name={username} />

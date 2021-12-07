@@ -66,8 +66,8 @@ type BatchStreamProcessor struct {
 	process                OnBatchFn
 	terminateCheck         TerminationCheckFn
 	alwaysCheckTermination bool
-	batchWaitTime          time.Duration
-	batchMissWaitTime      time.Duration
+	batchWaitTime          *time.Duration
+	batchMissWaitTime      *time.Duration
 }
 
 // NewBatchStreamProcessor creates a new BatchStreamProcessor.
@@ -77,8 +77,8 @@ func NewBatchStreamProcessor(
 	process OnBatchFn,
 	terminateCheck TerminationCheckFn,
 	alwaysCheckTermination bool,
-	batchWaitTime time.Duration,
-	batchMissWaitTime time.Duration,
+	batchWaitTime *time.Duration,
+	batchMissWaitTime *time.Duration,
 ) *BatchStreamProcessor {
 	return &BatchStreamProcessor{
 		req:                    req,
@@ -93,8 +93,6 @@ func NewBatchStreamProcessor(
 
 // Run runs the batch stream processor.
 func (p *BatchStreamProcessor) Run(ctx context.Context) error {
-	t := time.NewTicker(p.batchWaitTime)
-	defer t.Stop()
 	for {
 		var miss bool
 		switch batch, err := p.fetcher(p.req); {
@@ -104,7 +102,6 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			if !p.req.Follow {
 				return nil
 			}
-			t.Reset(p.batchMissWaitTime)
 			miss = true
 		default:
 			// Check the ctx again before we process, since fetch takes most of the time and
@@ -131,15 +128,13 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			}
 		}
 
-		select {
-		case <-ctx.Done():
+		switch {
+		case ctx.Err() != nil:
 			return nil
-		case <-t.C:
-			if miss {
-				miss = false
-				t.Reset(p.batchWaitTime)
-			}
-			continue
+		case miss && p.batchMissWaitTime != nil:
+			time.Sleep(*p.batchMissWaitTime)
+		case p.batchWaitTime != nil:
+			time.Sleep(*p.batchWaitTime)
 		}
 	}
 }

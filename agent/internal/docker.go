@@ -13,6 +13,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -28,7 +29,6 @@ import (
 type dockerActor struct {
 	*client.Client
 	credentialStores map[string]*credentialStore
-	spec             *cproto.Spec
 }
 
 type (
@@ -40,13 +40,20 @@ type (
 		cproto.PullSpec
 		Name string
 	}
+	runContainer struct {
+		cproto.RunSpec
+	}
+	reattachContainer struct {
+		ID cproto.ID
+	}
+
 	imagePulled      struct{}
 	containerStarted struct {
 		dockerID      string
 		containerInfo types.ContainerJSON
 	}
 	containerTerminated struct {
-		ExitCode int64
+		ExitCode aproto.ExitCode
 	}
 	dockerErr struct{ Error error }
 )
@@ -74,8 +81,11 @@ func (d *dockerActor) Receive(ctx *actor.Context) error {
 	case pullImage:
 		go d.pullImage(ctx, msg)
 
-	case cproto.RunSpec:
-		go d.runContainer(ctx, msg)
+	case reattachContainer:
+		go d.reattachContainer(ctx, msg.ID)
+
+	case runContainer:
+		go d.runContainer(ctx, msg.RunSpec)
 
 	case signalContainer:
 		go d.signalContainer(ctx, msg)
@@ -157,7 +167,8 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
-	if !d.spec.RunSpec.UseFluentLogging {
+	useFluentLogging := msg.UseFluentLogging
+	if !useFluentLogging {
 		msg.HostConfig.AutoRemove = false
 	}
 
@@ -172,7 +183,7 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 		d.sendAuxLog(ctx, fmt.Sprintf("warning when creating container: %s", w))
 	}
 
-	if !d.spec.RunSpec.UseFluentLogging {
+	if !useFluentLogging {
 		defer func() {
 			if err = d.Client.ContainerRemove(
 				context.Background(), containerID, types.ContainerRemoveOptions{},
@@ -223,7 +234,7 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 		containerStarted{dockerID: response.ID, containerInfo: containerInfo},
 	)
 
-	if !d.spec.RunSpec.UseFluentLogging {
+	if !useFluentLogging {
 		if lerr := trackLogs(ctx, d.Client, containerID, ctx.Sender()); lerr != nil {
 			sendErr(ctx, lerr)
 		}
@@ -232,7 +243,45 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	case err = <-eerr:
 		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))
 	case exit := <-exit:
-		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: exit.StatusCode})
+		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
+	}
+}
+
+func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
+	containers, err := d.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("label", dockerContainerIDLabel+"="+id.String()),
+		),
+	})
+	if err != nil {
+		sendErr(ctx, errors.Wrap(err, "error while reattaching container"))
+		return
+	}
+
+	for _, cont := range containers {
+		// Subscribe to termination notifications first.
+		exit, eerr := d.ContainerWait(context.Background(), cont.ID, dcontainer.WaitConditionNextExit)
+
+		// Restore containerInfo.
+		containerInfo, err := d.ContainerInspect(context.Background(), cont.ID)
+		if err != nil {
+			sendErr(ctx, errors.Wrap(err, "error inspecting reattached container"))
+			return
+		}
+
+		// Check if container has exited while we were trying to reattach it.
+		if !containerInfo.State.Running {
+			ctx.Tell(
+				ctx.Sender(),
+				containerTerminated{ExitCode: aproto.ExitCode(containerInfo.State.ExitCode)})
+		} else {
+			select {
+			case err = <-eerr:
+				sendErr(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))
+			case exit := <-exit:
+				ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
+			}
+		}
 	}
 }
 

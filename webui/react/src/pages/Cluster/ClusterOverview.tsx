@@ -104,13 +104,15 @@ const ClusterOverview: React.FC = () => {
       const totalSlots = getSlotTypeOverview(rp.name, rp.slotType).total;
 
       if (totalSlots === 0) return null;
-      return <SlotAllocationBar
-        className={css.chartColumn}
-        hideHeader
-        resourceStates={containerStates}
-        title={rp.slotType}
-        totalSlots={totalSlots} />;
-
+      return (
+        <SlotAllocationBar
+          className={css.chartColumn}
+          hideHeader
+          resourceStates={containerStates}
+          title={rp.slotType}
+          totalSlots={totalSlots}
+        />
+      );
     };
 
     const newColumns = [ ...defaultColumns ].map(column => {
@@ -171,83 +173,87 @@ const ClusterOverview: React.FC = () => {
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
-          {overview.GPU.total ?
+          {overview.GPU.total ? (
             <OverviewStats title="GPU Slots Allocated">
               {overview.GPU.total - overview.GPU.available} <small>/ {overview.GPU.total}</small>
-            </OverviewStats> : null
-          }
-          {overview.CPU.total ?
+            </OverviewStats>
+          ) : null}
+          {overview.CPU.total ? (
             <OverviewStats title="CPU Slots Allocated">
               {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
-            </OverviewStats> : null
-          }
-          {auxContainers.total ?
+            </OverviewStats>
+          ) : null}
+          {auxContainers.total ? (
             <OverviewStats title="Aux Containers Running">
               {auxContainers.running} <small>/ {auxContainers.total}</small>
-            </OverviewStats> : null
-          }
+            </OverviewStats>
+          ) : null}
         </Grid>
       </Section>
       <Section hideTitle title="Overall Allocation">
-        {overview.ALL.total === 0 ?
-          <Message title="No connected agents." type={MessageType.Empty} /> : null }
-        {overview.GPU.total > 0 &&
+        {overview.ALL.total === 0 ? (
+          <Message title="No connected agents." type={MessageType.Empty} />
+        ) : null }
+        {overview.GPU.total > 0 && (
           <SlotAllocationBar
             resourceStates={gpuSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.GPU})`}
-            totalSlots={overview.GPU.total} />
-        }
-        {overview.CPU.total > 0 &&
+            totalSlots={overview.GPU.total}
+          />
+        )}
+        {overview.CPU.total > 0 && (
           <SlotAllocationBar
             resourceStates={cpuSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.CPU})`}
-            totalSlots={overview.CPU.total} />
-        }
+            totalSlots={overview.CPU.total}
+          />
+        )}
       </Section>
       <Section
         options={<GridListRadioGroup value={selectedView} onChange={handleRadioChange} />}
-        title={`${resourcePools.length} Resource Pools`}
-      >
-        {selectedView === GridListView.Grid &&
-        <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
-          {resourcePools.map((rp, idx) => {
-            return <ResourcePoolCard
-              computeContainerStates={
-                getSlotContainerStates(agents || [], rp.slotType, rp.name)
-              }
-              key={idx}
-              resourcePool={rp}
-              resourceType={rp.slotType}
-              totalComputeSlots={getSlotTypeOverview(rp.name, rp.slotType).total} />;
-          })}
-        </Grid>
-        }
-        {selectedView === GridListView.List &&
-        <ResponsiveTable<ResourcePool>
-          columns={columns}
-          dataSource={resourcePools}
-          loading={!agents} // TODO replace with resource pools
-          pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName({ clickable: true })}
-          rowKey="name"
-          scroll={{ x: 1000 }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-          onRow={handleTableRow}
-        />
-        }
+        title={`${resourcePools.length} Resource Pools`}>
+        {selectedView === GridListView.Grid && (
+          <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
+            {resourcePools.map((rp, idx) => (
+              <ResourcePoolCard
+                computeContainerStates={
+                  getSlotContainerStates(agents || [], rp.slotType, rp.name)
+                }
+                key={idx}
+                resourcePool={rp}
+                resourceType={rp.slotType}
+                totalComputeSlots={getSlotTypeOverview(rp.name, rp.slotType).total}
+              />
+            ))}
+          </Grid>
+        )}
+        {selectedView === GridListView.List && (
+          <ResponsiveTable<ResourcePool>
+            columns={columns}
+            dataSource={resourcePools}
+            loading={!agents} // TODO replace with resource pools
+            pagination={getFullPaginationConfig(pagination, total)}
+            rowClassName={defaultRowClassName({ clickable: true })}
+            rowKey="name"
+            scroll={{ x: 1000 }}
+            showSorterTooltip={false}
+            size="small"
+            onChange={handleTableChange}
+            onRow={handleTableRow}
+          />
+        )}
       </Section>
-      {!!rpDetail &&
-      <ResourcePoolDetails
-        finally={hideModal}
-        resourcePool={rpDetail}
-        visible={!!rpDetail} />
-      }
+      {!!rpDetail && (
+        <ResourcePoolDetails
+          finally={hideModal}
+          resourcePool={rpDetail}
+          visible={!!rpDetail}
+        />
+      )}
     </>
   );
 };

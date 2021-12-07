@@ -37,11 +37,23 @@ type MasterMessage struct {
 	ContainerLog          *ContainerLog
 }
 
+// ContainerReattach is a struct describing containers that can be reattached.
+type ContainerReattach struct {
+	Container cproto.Container
+}
+
+// ContainerReattachAck is a struct describing containers reattachment success.
+type ContainerReattachAck struct {
+	Container cproto.Container
+	Failure   *ContainerFailure
+}
+
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
-	Version string
-	Label   string
-	Devices []device.Device
+	Version              string
+	Label                string
+	Devices              []device.Device
+	ContainersReattached []ContainerReattachAck
 }
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.

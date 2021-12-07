@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
-import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
+import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -236,7 +236,7 @@ const ioToHyperparametereters = (
     const ioHp = io[key] as ioTypes.ioTypeHyperparameter;
     const valIsPrimitive = isPrimitive(ioHp.val);
     const valListIsPrimitive = Array.isArray(ioHp.vals) && ioHp.vals.reduce((acc, val) => {
-      return acc && (val != null && isPrimitive(val));
+      return acc && (isPrimitive(val) && !isNullOrUndefined(val));
     }, true);
     if (!ioHp.type && isObject(ioHp)) {
       hparams[key] = ioToHyperparametereters(ioHp as Record<string, unknown>);

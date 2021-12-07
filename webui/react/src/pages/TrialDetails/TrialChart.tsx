@@ -9,7 +9,7 @@ import UPlotChart, { Options } from 'components/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
-import { MetricName, MetricType, WorkloadWrapper } from 'types';
+import { MetricName, MetricType, WorkloadGroup } from 'types';
 import { glasbeyColor } from 'utils/color';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
   metricNames: MetricName[];
   metrics: MetricName[];
   onMetricChange: (value: MetricName[]) => void;
-  workloads?: WorkloadWrapper[];
+  workloads?: WorkloadGroup[];
 }
 
 const getChartMetricLabel = (metric: MetricName): string => {
@@ -94,7 +94,8 @@ const TrialChart: React.FC<Props> = ({
         metricNames={metricNames}
         multiple
         value={metrics}
-        onChange={onMetricChange} />
+        onChange={onMetricChange}
+      />
       <ScaleSelectFilter value={scale} onChange={setScale} />
     </ResponsiveFilters>
   );

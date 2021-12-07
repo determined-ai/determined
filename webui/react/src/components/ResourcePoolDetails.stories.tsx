@@ -14,13 +14,13 @@ export default {
   title: 'ResourcePoolDetails',
 };
 
-export const Default = (): React.ReactNode => {
-  return <ResourcePoolDetails
+export const Default = (): React.ReactNode => (
+  <ResourcePoolDetails
     resourcePool={resourcePools[number(
       'ResourcePool Index',
       0,
       { max: resourcePools.length - 1, min: 0, step: 1 },
     )]}
     visible={true}
-  />;
-};
+  />
+);

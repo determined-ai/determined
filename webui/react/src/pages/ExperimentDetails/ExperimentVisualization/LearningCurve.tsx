@@ -6,6 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
@@ -17,7 +18,6 @@ import {
   metricTypeParamMap, RunState,
 } from 'types';
 import { flattenObject } from 'utils/data';
-import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -206,7 +206,8 @@ const LearningCurve: React.FC<Props> = ({
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -224,7 +225,8 @@ const LearningCurve: React.FC<Props> = ({
               trialIds={trialIds}
               xValues={batches}
               onTrialClick={handleTrialClick}
-              onTrialFocus={handleTrialFocus} />
+              onTrialFocus={handleTrialFocus}
+            />
           </div>
           <TableBatch
             actions={[
@@ -250,13 +252,15 @@ const LearningCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-      {showCompareTrials &&
-      <TrialsComparisonModal
-        experiment={experiment}
-        trials={selectedRowKeys}
-        visible={showCompareTrials}
-        onCancel={() => setShowCompareTrials(false)}
-        onUnselect={handleTrialUnselect} />}
+      {showCompareTrials && (
+        <TrialsComparisonModal
+          experiment={experiment}
+          trials={selectedRowKeys}
+          visible={showCompareTrials}
+          onCancel={() => setShowCompareTrials(false)}
+          onUnselect={handleTrialUnselect}
+        />
+      )}
     </div>
   );
 };

@@ -148,10 +148,12 @@ const Dropdown: React.FC<Props> = ({
     return () => document.removeEventListener('click', handleClick);
   }, [ handleClick ]);
 
-  return <div className={classes.join(' ')}>
-    <div className={css.content} ref={dropdownRef} style={contentStyle}>{props.content}</div>
-    <div className={css.trigger} ref={triggerRef}>{props.children}</div>
-  </div>;
+  return (
+    <div className={classes.join(' ')}>
+      <div className={css.content} ref={dropdownRef} style={contentStyle}>{props.content}</div>
+      <div className={css.trigger} ref={triggerRef}>{props.children}</div>
+    </div>
+  );
 };
 
 export default Dropdown;

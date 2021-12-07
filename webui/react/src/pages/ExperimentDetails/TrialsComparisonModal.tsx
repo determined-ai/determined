@@ -16,9 +16,9 @@ import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';
 import { isNumber } from 'utils/data';
+import { extractMetricNames } from 'utils/metric';
 import { humanReadableBytes } from 'utils/string';
-import { extractMetricNames } from 'utils/trial';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize } from 'utils/workload';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -239,19 +239,22 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               />
             </div>
           </div>
-          {metricNames.filter(metric => selectedMetrics.map(m => m.name)
-            .includes(metric.name)).map(metric => (
-            <div className={css.row} key={metric.name}>
-              <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
-                <MetricBadgeTag metric={metric} />
-              </div>
-              {trials.map(trialId => (
-                <div className={css.cell} key={trialId}>
-                  <HumanReadableNumber num={metrics[trialId][metric.name]} />
+          {metricNames.filter(metric => selectedMetrics
+            .map(m => m.name)
+            .includes(metric.name))
+            .map(metric => (
+              <div className={css.row} key={metric.name}>
+                <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+                  <MetricBadgeTag metric={metric} />
                 </div>
-              ))}
-            </div>
-          ))}
+                {trials.map(trialId => (
+                  <div className={css.cell} key={trialId}>
+                    <HumanReadableNumber num={metrics[trialId][metric.name]} />
+                  </div>
+                ))}
+              </div>
+            ))
+          }
           <div className={[ css.row, css.header, css.spanAll ].join(' ')}>
             <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
               Hyperparameters

@@ -524,6 +524,35 @@ export const getModelLabels: Service.DetApi<
   request: (options) => detApi.Models.getModelLabels(options),
 };
 
+export const postModel: Service.DetApi<
+  Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
+> = {
+  name: 'postModel',
+  postProcess: (response) => {
+    return response.model ? decoder.mapV1Model(response.model) : undefined;
+  },
+  request: (params: Service.PostModelParams) => detApi.Models.postModel({
+    description: params.description,
+    labels: params.labels,
+    metadata: params.metadata,
+    name: params.name,
+    username: params.username,
+  }),
+};
+
+export const postModelVersion: Service.DetApi<
+  Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
+> = {
+  name: 'postModelVersion',
+  postProcess: (response) => {
+    return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
+  },
+  request: (params: Service.PostModelVersionParams) => detApi.Models.postModelVersion(
+    params.modelId,
+    params.body,
+  ),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<

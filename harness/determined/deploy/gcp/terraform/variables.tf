@@ -37,6 +37,11 @@ variable "subnetwork" {
   default = null
 }
 
+variable "no_filestore" {
+  type = bool
+  default = false
+}
+
 variable "filestore_address" {
   type = string
   default = ""

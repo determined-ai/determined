@@ -262,6 +262,13 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getResourceSummary(rp.agents))
 
+	case aproto.GetRPConfig:
+		reschedule = false
+		ctx.Respond(aproto.GetRPResponse{
+			AgentReconnectWait:   rp.config.AgentReconnectWait,
+			AgentReattachEnabled: rp.config.AgentReattachEnabled,
+		})
+
 	case schedulerTick:
 		if rp.reschedule {
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)

@@ -1,41 +1,62 @@
-import { CheckpointState, CheckpointWorkload, MetricsWorkload, Step,
-  WorkloadWrapper } from '../types';
+import * as Type from 'types';
 
-export const hasCheckpointStep = (step: Step): boolean => {
-  return !!step.checkpoint && step.checkpoint.state !== CheckpointState.Deleted;
+// Checkpoint size in bytes.
+export const checkpointSize = (
+  checkpoint?: { resources?: Record<Type.RecordKey, number> },
+): number => {
+  if (checkpoint?.resources) {
+    return Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
+  }
+  return 0;
 };
 
-export const hasCheckpoint = (workload: WorkloadWrapper): boolean => {
-  return !!workload.checkpoint && workload.checkpoint.state !== CheckpointState.Deleted;
+export const getBatchNumber = (
+  data: { batch: number } | { totalBatches: number },
+): number => {
+  if ('batch' in data) return data.batch;
+  return data.totalBatches;
 };
 
-export const getWorkload = (wrapper: WorkloadWrapper): MetricsWorkload | CheckpointWorkload => {
-  return Object.values(wrapper).find(val => !!val);
+export const getWorkload = (
+  workload: Type.WorkloadGroup,
+): Type.MetricsWorkload | Type.CheckpointWorkload => {
+  return Object.values(workload).find(val => !!val);
 };
 
-export const isMetricsWorkload = (workload: MetricsWorkload | CheckpointWorkload)
-: workload is MetricsWorkload => {
+export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => {
+  return !!workload.checkpoint && workload.checkpoint.state !== Type.CheckpointState.Deleted;
+};
+
+export const hasCheckpointStep = (step: Type.Step): boolean => {
+  return !!step.checkpoint && step.checkpoint.state !== Type.CheckpointState.Deleted;
+};
+
+export const isMetricsWorkload = (
+  workload: Type.MetricsWorkload | Type.CheckpointWorkload,
+): workload is Type.MetricsWorkload => {
   if ('uuid' in workload || 'resources' in workload) return false;
   if ('metrics' in workload) return true;
   // we can't determine which one it is.
   return false;
 };
 
-export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step[] => {
-  const stepsDict: Record<number, Partial<Step>> = {};
-  workloads.forEach(wlWrapper => {
-    const wl = getWorkload(wlWrapper);
+export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] => {
+  const stepsDict: Record<number, Partial<Type.Step>> = {};
+
+  workloads.forEach(workload => {
+    const wl = getWorkload(workload);
     const batchNum = wl.totalBatches;
     if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};
     stepsDict[batchNum].batchNum = batchNum;
 
-    if (wlWrapper.checkpoint) {
-      stepsDict[batchNum].checkpoint = wlWrapper.checkpoint;
-    } else if (wlWrapper.validation) {
-      stepsDict[batchNum].validation = wlWrapper.validation;
-    } else if (wlWrapper.training) {
-      stepsDict[batchNum].training = wlWrapper.training;
+    if (workload.checkpoint) {
+      stepsDict[batchNum].checkpoint = workload.checkpoint;
+    } else if (workload.validation) {
+      stepsDict[batchNum].validation = workload.validation;
+    } else if (workload.training) {
+      stepsDict[batchNum].training = workload.training;
     }
   });
-  return Object.values(stepsDict) as Step[];
+
+  return Object.values(stepsDict) as Type.Step[];
 };

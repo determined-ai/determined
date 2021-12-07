@@ -78,6 +78,12 @@ export interface Theme {
       medium: string;
       large: string;
       big: string;
+      great: string;
+      huge: string;
+      enormous: string;
+      giant: string;
+      jumbo: string;
+      mega: string;
     };
     /* eslint-enable @typescript-eslint/member-ordering */
     layout: {[size in ShirtSize]: string};
@@ -193,6 +199,12 @@ const lightDeterminedTheme: Theme = {
       medium: '20px',
       large: '24px',
       big: '28px',
+      great: '32px',
+      huge: '36px',
+      enormous: '40px',
+      giant: '44px',
+      jumbo: '48px',
+      mega: '52px',
     },
     layout: {
       micro: '2px',

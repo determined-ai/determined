@@ -83,7 +83,8 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
               'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
           );
         }}
-        when={editedNotes !== notes} />
+        when={editedNotes !== notes}
+      />
     </Card>
   );
 };

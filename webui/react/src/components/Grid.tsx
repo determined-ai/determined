@@ -33,8 +33,7 @@ const Grid: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   if (props.border) classes.push(css.border);
 
   return (
-    <div className={classes.join(' ')} style={style}>
-      {props.children}</div>
+    <div className={classes.join(' ')} style={style}>{props.children}</div>
   );
 };
 

@@ -20,11 +20,18 @@ stages:
           level: debug
         root: tools/build
 
+  - custom:
+      name: proxy
+      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
+      post:
+        - conncheck:
+            port: 8081
+
   - agent:
       name: agent1
       config_file:
         master_host: 127.0.0.1
-        master_port: 8080
+        master_port: 8081
         agent_id: agent1
         container_master_host: $DOCKER_LOCALHOST
 
@@ -32,7 +39,7 @@ stages:
       name: agent2
       config_file:
         master_host: 127.0.0.1
-        master_port: 8080
+        master_port: 8081
         agent_id: agent2
         container_master_host: $DOCKER_LOCALHOST
         fluent:

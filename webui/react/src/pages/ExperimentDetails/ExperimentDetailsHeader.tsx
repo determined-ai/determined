@@ -7,6 +7,7 @@ import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
+import { deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
@@ -18,8 +19,7 @@ import {
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { deletableRunStates, terminalRunStates } from 'utils/types';
+import { durationInEnglish, getDuration } from 'utils/datetime';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -211,7 +211,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   return (
     <>
       <PageHeaderFoldable
-        foldableContent={
+        foldableContent={(
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
@@ -221,7 +221,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 maxLength={500}
                 placeholder="Add description"
                 value={experiment.description || ''}
-                onSave={handleDescriptionUpdate} />
+                onSave={handleDescriptionUpdate}
+              />
             </div>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Start Time:</span>
@@ -232,7 +233,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {experiment.endTime != null && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Duration:</span>
-                {shortEnglishHumannizer(getDuration(experiment))}
+                {durationInEnglish(getDuration(experiment))}
               </div>
             )}
             <TagList
@@ -241,8 +242,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               onChange={experimentTags.handleTagListChange(experiment.id)}
             />
           </div>
-        }
-        leftContent={
+        )}
+        leftContent={(
           <div className={css.base}>
             <div className={css.experimentInfo}>
               <ExperimentState experiment={experiment} />
@@ -254,7 +255,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 maxLength={128}
                 placeholder="experiment name"
                 value={experiment.name}
-                onSave={handleNameUpdate} />
+                onSave={handleNameUpdate}
+              />
             </div>
             {trial ? (
               <>
@@ -263,7 +265,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </>
             ) : null}
           </div>
-        }
+        )}
         options={headerOptions}
         style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
       />

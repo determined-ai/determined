@@ -38,9 +38,10 @@ const DownloadModelPopover: React.FC<Props> = (
         </div>
         <Input
           className={css.codeSample}
-          value={downloadCommand} />
+          value={downloadCommand}
+        />
         <p className={css.bottomLine}>
-            Copy/paste command into the Determined CLI
+          Copy/paste command into the Determined CLI
         </p>
       </div>
     </Modal>

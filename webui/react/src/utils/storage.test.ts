@@ -69,4 +69,44 @@ describe('MemoryStore', () => {
     expect(() => testStorage.set(testKey, null)).toThrow();
     expect(() => testStorage.set(testKey, undefined)).toThrow();
   });
+
+  it('should return all previously set storage keys', () => {
+    expect(testStorage.keys()).toStrictEqual([]);
+
+    testStorage.set(testKey, true);
+    expect(testStorage.keys()).toStrictEqual([ testKey ]);
+
+    testStorage.set(anotherTestKey, true);
+    expect(testStorage.keys()).toStrictEqual([ testKey, anotherTestKey ]);
+  });
+
+  it('should dump the storage content into a string', () => {
+    testStorage.set(anotherTestKey, true);
+    testStorage.set(testKey, true);
+
+    const actual = testStorage.toString();
+    const result = JSON.stringify({ [anotherTestKey]: true, [testKey]: true });
+    expect(actual).toBe(result);
+  });
+
+  it('should restore storage from JSON record', () => {
+    const record = JSON.stringify({ [anotherTestKey]: 'abc', [testKey]: 'def' });
+    testStorage.fromString(record);
+    expect(testStorage.get(anotherTestKey)).toBe('abc');
+    expect(testStorage.get(testKey)).toBe('def');
+  });
+
+  it('should reset storage within a basePath', () => {
+    testStorage.set(testKey, true);
+
+    const basePath = 'test';
+    const forkedStorage = testStorage.fork(basePath);
+    forkedStorage.set(anotherTestKey, true);
+    expect(testStorage.keys()).toStrictEqual([ testKey, `${basePath}/${anotherTestKey}` ]);
+    expect(forkedStorage.keys()).toStrictEqual([ anotherTestKey ]);
+
+    forkedStorage.reset();
+    expect(testStorage.keys()).toStrictEqual([ testKey ]);
+    expect(forkedStorage.keys()).toStrictEqual([]);
+  });
 });

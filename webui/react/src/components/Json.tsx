@@ -27,22 +27,26 @@ const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => 
   } else {
     textValue = value.toString();
   }
-  return <li className={css.item} key={label}>
-    <span className={css.label}>
-      {typeof label === 'string' && translateLabel ? translateLabel(label) : label}
-      :</span>
-    <span className={css.value}>
-      {textValue}
-    </span>
-  </li>;
+  return (
+    <li className={css.item} key={label}>
+      <span className={css.label}>
+        {typeof label === 'string' && translateLabel ? translateLabel(label) : label}
+        :
+      </span>
+      <span className={css.value}>
+        {textValue}
+      </span>
+    </li>
+  );
 };
 
 const Json: React.FC<Props> = ({ json, translateLabel }: Props) => {
 
   return (
     <ul className={css.base}>
-      {Object.entries(json).map(([ label, value ]) =>
-        <Row key={label} label={label} translateLabel={translateLabel} value={value} />)}
+      {Object.entries(json).map(([ label, value ]) => (
+        <Row key={label} label={label} translateLabel={translateLabel} value={value} />
+      ))}
     </ul>
   );
 };

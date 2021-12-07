@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -16,9 +17,11 @@ import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -38,6 +41,7 @@ const ModelRegistry: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
+  const { showModal } = useCreateModelModal();
 
   const {
     settings,
@@ -173,7 +177,8 @@ const ModelRegistry: React.FC = () => {
       searchable
       values={settings.users}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.users ]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
@@ -286,7 +291,7 @@ const ModelRegistry: React.FC = () => {
                 disabled={!isDeletable}
                 key="delete-model"
                 onClick={() => showConfirmDelete(record)}>
-                  Delete Model
+                Delete Model
               </Menu.Item>
             </Menu>
           )}
@@ -298,12 +303,13 @@ const ModelRegistry: React.FC = () => {
       );
     };
 
-    const descriptionRenderer = (value:string, record: ModelItem) => {
-      return <InlineEditor
+    const descriptionRenderer = (value:string, record: ModelItem) => (
+      <InlineEditor
         placeholder="Add description..."
         value={value}
-        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)} />;
-    };
+        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)}
+      />
+    );
 
     const tableColumns: ColumnsType<ModelItem> = [
       {
@@ -419,20 +425,43 @@ const ModelRegistry: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const showCreateModelModal = useCallback(() => {
+    showModal({});
+  }, [ showModal ]);
+
   return (
-    <Page docTitle="Model Registry" id="models">
-      <Section title="Model Registry">
-        <ResponsiveTable
-          columns={columns}
-          dataSource={models}
-          loading={isLoading}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, total)}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange} />
+    <Page docTitle="Model Registry" id="models" loading={isLoading}>
+      <Section
+        options={<Button onClick={showCreateModelModal}>New Model</Button>}
+        title="Model Registry">
+        {(models.length === 0 && !isLoading) ?
+          (
+            <div className={css.emptyBase}>
+              <div className={css.icon}>
+                <Icon name="model" size="mega" />
+              </div>
+              <h4>No Models Registered</h4>
+              <p className={css.description}>
+                Track important checkpoints and versions from your experiments.&nbsp;
+                <Link external path={paths.docs('/post-training/model-registry.html')}>
+                  Learn more
+                </Link>
+              </p>
+            </div>
+          ) : (
+            <ResponsiveTable
+              columns={columns}
+              dataSource={models}
+              loading={isLoading}
+              pagination={getFullPaginationConfig({
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              }, total)}
+              showSorterTooltip={false}
+              size="small"
+              onChange={handleTableChange}
+            />
+          )}
       </Section>
     </Page>
   );

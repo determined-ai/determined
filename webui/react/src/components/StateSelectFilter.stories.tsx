@@ -9,17 +9,16 @@ export default {
   title: 'StateSelectFilter',
 };
 
-export const Default = (): React.ReactNode => (
-  <StateSelectFilter />
-);
+export const Default = (): React.ReactNode => <StateSelectFilter />;
 
 export const Custom = (): React.ReactNode => {
   const [ currentValue, setCurrentValue ] = useState('');
-
-  return <StateSelectFilter
-    showCommandStates={boolean('showCommandStates', true)}
-    showExperimentStates={boolean('showExperimentStates', true)}
-    value={currentValue}
-    onChange={(newValue) => setCurrentValue(newValue as string)}
-  />;
+  return (
+    <StateSelectFilter
+      showCommandStates={boolean('showCommandStates', true)}
+      showExperimentStates={boolean('showExperimentStates', true)}
+      value={currentValue}
+      onChange={(newValue) => setCurrentValue(newValue as string)}
+    />
+  );
 };
