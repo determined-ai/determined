@@ -107,14 +107,15 @@ func GetMasterConfig() *Config {
 }
 
 // SetMasterConfig sets the master config singleton.
-func SetMasterConfig(config *Config) {
+func SetMasterConfig(aConfig *Config) {
 	if masterConfig != nil {
 		panic("master config is already set")
 	}
-	if config == nil {
-		panic("passed config is nil")
+	if aConfig == nil {
+		panic("passed in config is nil")
 	}
-	masterConfig = config
+	config := GetMasterConfig()
+	*config = *aConfig
 }
 
 // Printable returns a printable string.
