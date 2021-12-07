@@ -78,7 +78,7 @@ const JobQueue: React.FC = () => {
   const fetchAll = useCallback(async () => {
     try {
       const promises = [
-        detApi.Jobs.getJobQueueStats().then(stats => {
+        detApi.Internal.getJobQueueStats().then(stats => {
           setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
         }),
         fetchJobs(),
