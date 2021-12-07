@@ -271,6 +271,7 @@ const ModelRegistry: React.FC = () => {
     const labelsRenderer = (value: string, record: ModelItem) => (
       <TagList
         compact
+        disabled={record.archived}
         tags={record.labels ?? []}
         onChange={(tags) => setModelTags(record.id, tags)}
       />

@@ -57,6 +57,7 @@ const ModelHeader: React.FC<Props> = (
     {
       content: (
         <TagList
+          disabled={model.archived}
           ghost={false}
           tags={model.labels ?? []}
           onChange={onUpdateTags}
