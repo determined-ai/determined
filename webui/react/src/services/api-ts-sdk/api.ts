@@ -4051,7 +4051,7 @@ export interface V1QueueControl {
 }
 
 /**
- * Statistics for (part of) a queue.
+ * Statistics for a queue.
  * @export
  * @interface V1QueueStats
  */
@@ -4068,12 +4068,6 @@ export interface V1QueueStats {
      * @memberof V1QueueStats
      */
     scheduledCount: number;
-    /**
-     * Number of preemptible jobs in the queue.
-     * @type {number}
-     * @memberof V1QueueStats
-     */
-    preemptibleCount: number;
 }
 
 /**
