@@ -111,7 +111,10 @@ func SetMasterConfig(config *Config) {
 	if masterConfig != nil {
 		panic("master config is already set")
 	}
-	*masterConfig = *config
+	if config == nil {
+		panic("passed config is nil")
+	}
+	masterConfig = config
 }
 
 // Printable returns a printable string.
