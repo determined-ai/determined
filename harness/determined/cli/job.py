@@ -16,7 +16,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def ls(args: Namespace) -> None:
-    priority = True
+    is_priority = True
     config = api.get(args.master, "config").json()
     try:
         for pool in config["resource_pools"]:
@@ -24,11 +24,11 @@ def ls(args: Namespace) -> None:
                 pool["pool_name"] == args.resource_pool
                 and pool["scheduler"]["type"] == "fair_share"
             ):
-                priority = False
+                is_priority = False
     except KeyError:
         try:
             if config["resource_manager"]["scheduler"]["type"] == "fair_share":
-                priority = False
+                is_priority = False
         except KeyError:
             pass
 
@@ -49,9 +49,9 @@ def ls(args: Namespace) -> None:
             "ID",
             "Type",
             "Job Name",
-            "Priority" if priority else "Weight",
+            "Priority" if is_priority else "Weight",
             "Submitted",
-            "Slots",
+            "Slots (acquired/needed)",
             "Status",
             "User",
         ]
@@ -63,7 +63,7 @@ def ls(args: Namespace) -> None:
                 j.jobId,
                 j.type,
                 j.name,
-                j.priority if priority else j.weight,
+                j.priority if is_priority else j.weight,
                 pytz.utc.localize(
                     datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
                 ),
