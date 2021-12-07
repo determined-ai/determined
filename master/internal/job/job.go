@@ -113,7 +113,10 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		// Get jobs from the job actors.
 		jobRefs := make([]*actor.Ref, 0)
 		for jID := range jobQ {
-			jobRefs = append(jobRefs, j.jobsByID[jID])
+			jobRef, ok := j.jobsByID[jID]
+			if ok {
+				jobRefs = append(jobRefs, jobRef)
+			}
 		}
 		jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
 		if err != nil {
