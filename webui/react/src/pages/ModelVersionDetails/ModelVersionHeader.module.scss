@@ -9,7 +9,7 @@
     padding-bottom: 8px,
   }
   .headerContent {
-    margin: 0 24px;
+    margin: 0 12px;
 
     .mainRow {
       align-items: center;
@@ -30,6 +30,7 @@
           width: min-content;
         }
         .versionName {
+          font-size: var(--theme-sizes-font-enormous);
           margin: 0;
         }
       }

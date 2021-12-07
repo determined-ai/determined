@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: 0 20px;
+  margin: 0;
 
   .center {
     display: flex;
@@ -13,13 +13,21 @@
   }
   .noVersions {
     align-items: center;
+    background-color: var(--theme-colors-monochrome-17);
+    border: 1px solid #f0f0f0;
+    border-radius: 2px;
     display: flex;
     flex-direction: column;
-    margin: var(--theme-sizes-layout-huge);
+    margin: 0;
+    padding: var(--theme-sizes-layout-enormous);
 
+    .header {
+      margin-bottom: var(--theme-sizes-layout-medium);
+    }
     .subtext {
       color: var(--theme-colors-monochrome-9);
       font-size: var(--theme-sizes-font-medium);
+      margin: 0;
       max-width: 370px;
       text-align: center;
     }
