@@ -504,7 +504,6 @@ func TestJobStats(t *testing.T) {
 		p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 
 		assertStatsEqual(t, jobStats(taskList), expectedStats)
-
 	}
 	testFairshare := func(
 		t *testing.T,
