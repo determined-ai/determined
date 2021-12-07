@@ -1,5 +1,5 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
@@ -100,6 +100,13 @@ const ModelHeader: React.FC<Props> = (
           <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
+      {model.archived && (
+        <Alert
+          message="This model has been archived and is now read-only."
+          showIcon
+          type="warning"
+        />
+      )}
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>

@@ -395,8 +395,13 @@ const ModelDetails: React.FC = () => {
             onChange={handleTableChange}
           />
         )}
-        <NotesCard notes={model.model.notes ?? ''} onSave={saveNotes} />
+        <NotesCard
+          disabled={model.model.archived}
+          notes={model.model.notes ?? ''}
+          onSave={saveNotes}
+        />
         <MetadataCard
+          disabled={model.model.archived}
           metadata={model.model.metadata}
           onSave={saveMetadata}
         />

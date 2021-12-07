@@ -105,7 +105,8 @@ const ModelRegistry: React.FC = () => {
 
   const deleteCurrentModel = useCallback((model: ModelItem) => {
     deleteModel({ modelId: model.id });
-  }, []);
+    fetchModels();
+  }, [ fetchModels ]);
 
   const switchArchived = useCallback(async (model: ModelItem) => {
     try {
