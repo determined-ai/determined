@@ -47,6 +47,7 @@ const ModelHeader: React.FC<Props> = (
     {
       content: (
         <InlineEditor
+          disabled={model.archived}
           placeholder="Add description..."
           value={model.description ?? ''}
           onSave={onSaveDescription}
@@ -114,6 +115,8 @@ const ModelHeader: React.FC<Props> = (
             <Icon name="model" size="big" />
             <h1 className={css.name}>
               <InlineEditor
+                allowClear={false}
+                disabled={model.archived}
                 placeholder="Add name..."
                 value={model.name}
                 onSave={onSaveName}

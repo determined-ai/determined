@@ -175,6 +175,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             </div>
             <h1 className={css.versionName}>
               <InlineEditor
+                allowClear={false}
                 placeholder="Add name..."
                 value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
                 onSave={onSaveName}

@@ -307,6 +307,7 @@ const ModelRegistry: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: ModelItem) => (
       <InlineEditor
+        disabled={record.archived}
         placeholder="Add description..."
         value={value}
         onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)}

@@ -6,7 +6,9 @@ import css from './InlineEditor.module.scss';
 import Spinner from './Spinner';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
+  allowClear?: boolean;
   allowNewline?: boolean;
+  disabled?: boolean;
   isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
@@ -19,7 +21,9 @@ const CODE_ENTER = 'Enter';
 const CODE_ESCAPE = 'Escape';
 
 const InlineEditor: React.FC<Props> = ({
+  allowClear = true,
   allowNewline = false,
+  disabled = false,
   isOnDark = false,
   maxLength,
   placeholder,
@@ -67,8 +71,9 @@ const InlineEditor: React.FC<Props> = ({
   }, [ onSave ]);
 
   const handleWrapperClick = useCallback(() => {
+    if (disabled) return;
     setIsEditable(true);
-  }, []);
+  }, [ disabled ]);
 
   /*
    * To trigger a save or cancel, we trigger the blur.
@@ -79,11 +84,11 @@ const InlineEditor: React.FC<Props> = ({
     if (!textareaRef.current) return;
 
     const newValue = textareaRef.current.value.trim();
-    !!newValue && newValue !== value ? save(newValue) : cancel();
+    (!!newValue || allowClear) && newValue !== value ? save(newValue) : cancel();
 
     // Reset `isEditable` to false if the blur was user triggered.
     setIsEditable(false);
-  }, [ cancel, save, value ]);
+  }, [ allowClear, cancel, save, value ]);
 
   const handleTextareaChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
