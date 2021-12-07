@@ -246,8 +246,10 @@ func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 }
 
 // ReadPreemptionStatus resolves the desired preemption status for a job.
-func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
-	config := GetMasterConfig()
+func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bool {
+	if config == nil {
+		panic("input config ptr is null")
+	}
 	var jobPreemptible bool
 	switch jobConf.(type) {
 	case *expconf.ExperimentConfig:
@@ -295,8 +297,10 @@ func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
 }
 
 // ReadPriority resolves the priority value for a job.
-func ReadPriority(rpName string, jobConf interface{}) int {
-	config := GetMasterConfig()
+func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
+	if config == nil {
+		panic("input config ptr is null")
+	}
 	var prio *int
 	// look at the idividual job config
 	switch conf := jobConf.(type) {

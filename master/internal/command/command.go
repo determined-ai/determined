@@ -426,8 +426,8 @@ func (c *command) toV1Job() *jobv1.Job {
 		Name:           c.Config.Description,
 	}
 
-	j.IsPreemptible = config.ReadPreemptionStatus(j.ResourcePool, &c.Config)
-	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
+	j.IsPreemptible = config.ReadPreemptionStatus(config.GetMasterConfig(), j.ResourcePool, &c.Config)
+	j.Priority = int32(config.ReadPriority(config.GetMasterConfig(), j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
 
 	job.UpdateJobQInfo(&j, c.rmJobInfo)
