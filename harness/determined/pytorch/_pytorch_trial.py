@@ -69,10 +69,12 @@ class PyTorchTrialController(det.TrialController):
 
     @classmethod
     def pre_execute_hook(
-        cls: Type["PyTorchTrialController"], env: det.EnvContext, use_horovod: bool
+        cls: Type["PyTorchTrialController"],
+        env: det.EnvContext,
+        distributed_backend: det._DistributedBackend,
     ) -> None:
         # Initialize the correct horovod.
-        if use_horovod:
+        if distributed_backend.use_horovod():
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
 

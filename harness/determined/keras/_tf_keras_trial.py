@@ -162,10 +162,12 @@ class TFKerasTrialController(det.TrialController):
 
     @classmethod
     def pre_execute_hook(
-        cls: Type["TFKerasTrialController"], env: det.EnvContext, use_horovod: bool
+        cls: Type["TFKerasTrialController"],
+        env: det.EnvContext,
+        distributed_backend: det._DistributedBackend,
     ) -> None:
         # Initialize the correct horovod.
-        if use_horovod:
+        if distributed_backend.use_horovod():
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
             hvd.init()
 
@@ -177,7 +179,7 @@ class TFKerasTrialController(det.TrialController):
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
             session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            cls._configure_session(env, session_config, use_horovod)
+            cls._configure_session(env, session_config, distributed_backend.use_horovod())
 
     @classmethod
     def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:

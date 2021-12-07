@@ -5,8 +5,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, errors, keras
-from determined._generic import DistributedContext
+from determined import _data_layer, _generic, errors, keras
 from determined.common import check
 from determined.horovod import hvd
 
@@ -269,7 +268,7 @@ class TFKerasTrialContext(det.TrialContext):
 
         self.dataset_initialized = True
         if (
-            self.distributed.size == 0
+            self.distributed.size == 1
             or not isinstance(dataset, tf.data.Dataset)
             or not shard_dataset
         ):
@@ -286,7 +285,7 @@ class TFKerasTrialContext(det.TrialContext):
     def _get_horovod_optimizer_if_using_horovod(
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
-        if self.distributed.size == 0:
+        if self.distributed.size == 1:
             return optimizer
 
         # Horovod doesn't know how to handle string-based optimizers.
@@ -321,7 +320,7 @@ class TFKerasTrialContext(det.TrialContext):
             return optimizer
 
         logging.debug(f"Processing wrapped optimizer {optimizer}.")
-        if self.distributed.size == 0:
+        if self.distributed.size == 1:
             self._wrapped_optimizers.append(optimizer)
             return optimizer
 
@@ -345,7 +344,7 @@ class TFKerasTrialContext(det.TrialContext):
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
         logging.debug(f"Processing compiled optimizer {optimizer}.")
-        if self.distributed.size == 0:
+        if self.distributed.size == 1:
             self._compiled_optimizer = optimizer
             return optimizer
 
@@ -418,5 +417,7 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(self, env: det.EnvContext, distributed_context: DistributedContext) -> None:
+    def __init__(
+        self, env: det.EnvContext, distributed_context: _generic.DistributedContext
+    ) -> None:
         super().__init__(env=env, distributed_context=distributed_context)

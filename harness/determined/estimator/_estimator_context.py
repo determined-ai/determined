@@ -5,8 +5,8 @@ from typing import Any, Callable, List, Tuple, Union, cast
 import tensorflow as tf
 
 import determined as det
+import determined._generic
 from determined import _data_layer, estimator, util
-from determined._generic import DistributedContext
 from determined.common import check
 from determined.horovod import hvd
 
@@ -68,7 +68,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             return optimizer
 
         self.optimizer_initialized = True
-        if self.distributed.size == 0:
+        if self.distributed.size == 1:
             return optimizer
 
         check.check_false(
@@ -120,7 +120,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if self.distributed.size == 0 or not shard_dataset:
+        if self.distributed.size == 1 or not shard_dataset:
             if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset
@@ -143,7 +143,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
         self,
         env: det.EnvContext,
         parent: EstimatorTrialContext,
-        distributed_context: DistributedContext,
+        distributed_context: determined._generic.DistributedContext,
     ) -> None:
         super().__init__(env=env, distributed_context=distributed_context)
         self._parent = parent
