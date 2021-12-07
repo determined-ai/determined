@@ -199,7 +199,7 @@ def get_GetJobs(
     }
     _req = session._do_request(
         method="GET",
-        path="/api/v1/resource-pools/queues",
+        path="/api/v1/job-queues",
         params=_params,
         json=None,
         data=None,

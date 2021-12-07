@@ -667,10 +667,10 @@ service Determined {
   // Get a list of jobs in queue.
   rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/resource-pools/queues"
+      get: "/api/v1/job-queues"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Jobs"
+      tags: "Internal"
     };
   }
 
@@ -678,22 +678,20 @@ service Determined {
   rpc GetJobQueueStats(GetJobQueueStatsRequest)
       returns (GetJobQueueStatsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/resource-pools/queues/stats"
+      get: "/api/v1/job-queues/stats"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Jobs"
+      tags: "Internal"
     };
   }
 
   // Control the job queues.
   rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
     option (google.api.http) = {
-      post: "/api/v1/resource-pools/queues"
+      post: "/api/v1/job-queues"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      // TODO(hamidzr) update me once the write side of job queue is released.
-      // Here to enable dev webui code that depends on it.
       tags: "Internal"
     };
   }
