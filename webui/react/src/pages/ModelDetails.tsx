@@ -376,7 +376,7 @@ const ModelDetails: React.FC = () => {
       <div className={css.base}>
         {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>
-            <p>No Model Versions</p>
+            <p className={css.header}>No Model Versions</p>
             <p className={css.subtext}>
               Register a checkpoint from an experiment to add it to this model
             </p>
