@@ -18,12 +18,12 @@ import (
 )
 
 // These are package-level variables so that they can be set at link time.
-var once sync.Once
-var masterConfig *Config
 var (
 	DefaultSegmentMasterKey = ""
 	DefaultSegmentWebUIKey  = ""
 )
+var once sync.Once
+var masterConfig *Config
 
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
