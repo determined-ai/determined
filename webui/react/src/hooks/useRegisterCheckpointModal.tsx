@@ -98,8 +98,6 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
   }, []);
 
   const handleCancel = useCallback(() => {
-    if (!modalRef.current) return;
-
     closeModal();
   }, [ closeModal ]);
 
@@ -204,12 +202,12 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
             <p onClick={() => launchNewModelModal(state)}>New Model</p>
           </div>
           <Select
-            dropdownMatchSelectWidth={250}
             optionFilterProp="label"
             options={modelOptions.map(option => (
               { label: option.name, value: option.id }))}
             placeholder="Select a model..."
             showSearch
+            style={{ width: '100%' }}
             value={selectedModelId}
             onChange={updateModel}
           />
