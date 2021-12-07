@@ -98,7 +98,7 @@ type Config struct {
 	InternalConfig InternalConfig `json:"__internal"`
 }
 
-// NewConfig returns reference to the master config singleton.
+// GetMasterConfig returns reference to the master config singleton.
 func GetMasterConfig() *Config {
 	once.Do(func() {
 		masterConfig = DefaultConfig()
@@ -106,8 +106,12 @@ func GetMasterConfig() *Config {
 	return masterConfig
 }
 
+// SetMasterConfig sets the master config singleton.
 func SetMasterConfig(config *Config) {
-	*masterConfig = *config // this is not thread safe.
+	if masterConfig != nil {
+		panic("master config is already set")
+	}
+	*masterConfig = *config
 }
 
 // Printable returns a printable string.
