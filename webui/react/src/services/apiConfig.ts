@@ -222,6 +222,7 @@ export const createExperiment: Service.DetApi<
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
       {
+        activate: params.activate,
         config: params.experimentConfig,
         parentId: params.parentId,
       },
