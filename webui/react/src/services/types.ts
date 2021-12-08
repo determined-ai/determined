@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, Metadata, Job, RecordKey } from 'types';
+import { CommandType, DetailedUser, Job, Metadata, RecordKey } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 

@@ -27,9 +27,11 @@ const Icon: React.FC<Props> = ({ name, title, size, ...rest }: Props) => {
   const icon = <i className={classes.join(' ')} {...rest} />;
 
   if (title) {
-    return <Tooltip title={title}>
-      {icon}
-    </Tooltip>;
+    return (
+      <Tooltip title={title}>
+        {icon}
+      </Tooltip>
+    );
   }
   return icon;
 };

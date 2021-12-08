@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Icon from 'components/Icon';
 import StopExperimentModal, { ActionType } from 'components/StopExperimentModal';
+import { stateToLabel } from 'constants/states';
 import { activateExperiment, pauseExperiment } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentBase, JobState, RunState } from 'types';
-import { stateToLabel } from 'utils/types';
 
 import css from './ExperimentHeaderState.module.scss';
 
