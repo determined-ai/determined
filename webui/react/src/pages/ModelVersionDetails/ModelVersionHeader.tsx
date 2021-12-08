@@ -129,16 +129,21 @@ const ModelVersionHeader: React.FC<Props> = (
   const referenceText = useMemo(() => {
     return (
       `from determined.experimental import Determined
-model = Determined().get_model(${modelVersion?.model?.id})
-ckpt = model.get_version(${modelVersion?.id}).checkpoint
+client = Determined()
+model_entry = client.get_model(name="${modelVersion.model.name}")
+ckpt = model_entry.get_version(${modelVersion.version})
+      
+################ Approach 1 ################
+# You can load the trial directly without having to instantiate the model. 
+# The trial should have the model as an attribute.
+trial = ckpt.load() 
+      
+################ Approach 2 ################
+# You can download the checkpoint and load the model state manually.
 ckpt_path = ckpt.download()
-
-# WARNING: From here on out, this might not be possible to automate. Requires research.
-from model import build_model
-model = build_model()
-model.load_state_dict(ckpt['models_state_dict'][0])
-
-# If you get this far, you should be able to run \`model.eval()\``);
+ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
+# assuming your model is already instantiated, you can then load the state_dict
+my_model.load_state_dict(ckpt['models_state_dict'][0])`);
   }, [ modelVersion ]);
 
   const handleCopy = useCallback(async () => {
