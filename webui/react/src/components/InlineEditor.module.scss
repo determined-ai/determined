@@ -101,3 +101,6 @@
     border-color: var(--theme-colors-danger-light);
   }
 }
+.base.disabled .growWrap:hover > textarea {
+  border-color: transparent;
+}
