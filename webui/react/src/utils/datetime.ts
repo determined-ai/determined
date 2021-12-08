@@ -8,7 +8,24 @@ dayjs.extend(utc);
 /* eslint-disable @typescript-eslint/no-var-requires */
 const humanizeDuration = require('humanize-duration');
 
+export const DURATION_SECOND = 1000;
+export const DURATION_MINUTE = 60 * DURATION_SECOND;
+export const DURATION_HOUR = 60 * DURATION_MINUTE;
+export const DURATION_DAY = 24 * DURATION_HOUR;
+export const DURATION_WEEK = 7 * DURATION_DAY;
+export const DURATION_YEAR = 365 * DURATION_DAY;
+export const DURATION_MONTH = DURATION_YEAR / 12;
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
+export const DURATION_UNIT_MEASURES = {
+  d: DURATION_DAY,
+  h: DURATION_HOUR,
+  m: DURATION_MINUTE,
+  mo: DURATION_MONTH, // Override incorrect default of 2629800000
+  ms: 1,
+  s: DURATION_SECOND,
+  w: DURATION_WEEK,
+  y: DURATION_YEAR, // Override incorrect default of 31557600000
+};
 
 export const durationInEnglish = humanizeDuration.humanizer({
   conjunction: ' ',
@@ -28,16 +45,7 @@ export const durationInEnglish = humanizeDuration.humanizer({
   largest: 2,
   round: true,
   spacer: '',
-  unitMeasures: {
-    d: 86400000,
-    h: 3600000,
-    m: 60000,
-    mo: 2628000000, // Override incorrect default of 2629800000
-    ms: 1,
-    s: 1000,
-    w: 604800000,
-    y: 31536000000, // Override incorrect default of 31557600000
-  },
+  unitMeasures: DURATION_UNIT_MEASURES,
   units: [ 'y', 'mo', 'w', 'd', 'h', 'm', 's', 'ms' ],
 });
 

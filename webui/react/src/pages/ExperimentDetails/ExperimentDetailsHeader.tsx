@@ -1,12 +1,13 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal, Tooltip } from 'antd';
+import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
+import TimeAgo from 'components/TimeAgo';
+import TimeDuration from 'components/TimeDuration';
 import { deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -19,7 +20,7 @@ import {
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
-import { durationInEnglish, getDuration } from 'utils/datetime';
+import { getDuration } from 'utils/datetime';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -226,14 +227,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             </div>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Start Time:</span>
-              <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
-                <TimeAgo datetime={new Date(experiment.startTime)} />
-              </Tooltip>
+              <TimeAgo datetime={experiment.startTime} long />
             </div>
             {experiment.endTime != null && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Duration:</span>
-                {durationInEnglish(getDuration(experiment))}
+                <TimeDuration duration={getDuration(experiment)} />
               </div>
             )}
             <TagList
