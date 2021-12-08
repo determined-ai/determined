@@ -25,7 +25,7 @@ def ls(args: Namespace) -> None:
                 and pool["scheduler"]["type"] == "fair_share"
             ):
                 is_priority = False
-    except KeyError:
+    except (KeyError, TypeError):
         try:
             if config["resource_manager"]["scheduler"]["type"] == "fair_share":
                 is_priority = False
