@@ -1157,6 +1157,7 @@ jobs:
         default: false
     docker:
       - image: cimg/node:14.16
+    resource_class: large
     steps:
       - checkout
       - react-get-deps
