@@ -112,7 +112,13 @@ class ExperimentReference:
             order_by: Whether to sort in ascending or descending order. See
                 :class:`~determined.experimental.TrialOrderBy`.
         """
-        r = self._session.get(f"/api/v1/experiments/{self.id}/trials")
+        r = self._session.get(
+            f"/api/v1/experiments/{self.id}/trials",
+            params={
+                "sort_by": sort_by.value,
+                "order_by": order_by.value,
+            },
+        )
         trials = r.json()["trials"]
         return [trial.TrialReference(t["id"], self._session) for t in trials]
 
