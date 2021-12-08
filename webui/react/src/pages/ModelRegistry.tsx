@@ -346,7 +346,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-        render: relativeTimeRenderer,
+        render: (date) => relativeTimeRenderer(new Date(date)),
         sorter: true,
         title: 'Last updated',
         width: 150,
