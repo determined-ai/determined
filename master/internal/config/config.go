@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -21,6 +22,8 @@ var (
 	DefaultSegmentMasterKey = ""
 	DefaultSegmentWebUIKey  = ""
 )
+var once sync.Once
+var masterConfig *Config
 
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
@@ -93,6 +96,26 @@ type Config struct {
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
+}
+
+// GetMasterConfig returns reference to the master config singleton.
+func GetMasterConfig() *Config {
+	once.Do(func() {
+		masterConfig = DefaultConfig()
+	})
+	return masterConfig
+}
+
+// SetMasterConfig sets the master config singleton.
+func SetMasterConfig(aConfig *Config) {
+	if masterConfig != nil {
+		panic("master config is already set")
+	}
+	if aConfig == nil {
+		panic("passed in config is nil")
+	}
+	config := GetMasterConfig()
+	*config = *aConfig
 }
 
 // Printable returns a printable string.
@@ -227,10 +250,8 @@ func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 }
 
 // ReadPreemptionStatus resolves the desired preemption status for a job.
-func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bool {
-	if config == nil {
-		panic("input config ptr is null")
-	}
+func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
+	config := GetMasterConfig()
 	var jobPreemptible bool
 	switch jobConf.(type) {
 	case *expconf.ExperimentConfig:
@@ -278,10 +299,8 @@ func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bo
 }
 
 // ReadPriority resolves the priority value for a job.
-func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
-	if config == nil {
-		panic("input config ptr is null")
-	}
+func ReadPriority(rpName string, jobConf interface{}) int {
+	config := GetMasterConfig()
 	var prio *int
 	// look at the idividual job config
 	switch conf := jobConf.(type) {
@@ -325,10 +344,7 @@ func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
 }
 
 // ReadWeight resolves the weight value for a job.
-func ReadWeight(config *Config, rpName string, jobConf interface{}) float64 {
-	if config == nil {
-		panic("input config ptr is null")
-	}
+func ReadWeight(rpName string, jobConf interface{}) float64 {
 	var weight float64
 	switch conf := jobConf.(type) {
 	case *expconf.ExperimentConfig:
