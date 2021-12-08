@@ -79,6 +79,7 @@ const ModelVersionHeader: React.FC<Props> = (
     {
       content: (
         <InlineEditor
+          disabled={modelVersion.model.archived}
           placeholder="Add description..."
           value={modelVersion.comment ?? ''}
           onSave={onSaveDescription}
@@ -89,6 +90,7 @@ const ModelVersionHeader: React.FC<Props> = (
     {
       content: (
         <TagList
+          disabled={modelVersion.model.archived}
           ghost={false}
           tags={modelVersion.labels ?? []}
           onChange={onUpdateTags}
@@ -175,6 +177,8 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             </div>
             <h1 className={css.versionName}>
               <InlineEditor
+                allowClear={false}
+                disabled={modelVersion.model.archived}
                 placeholder="Add name..."
                 value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
                 onSave={onSaveName}

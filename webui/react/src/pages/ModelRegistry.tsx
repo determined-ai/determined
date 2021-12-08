@@ -105,7 +105,8 @@ const ModelRegistry: React.FC = () => {
 
   const deleteCurrentModel = useCallback((model: ModelItem) => {
     deleteModel({ modelId: model.id });
-  }, []);
+    fetchModels();
+  }, [ fetchModels ]);
 
   const switchArchived = useCallback(async (model: ModelItem) => {
     try {
@@ -270,6 +271,7 @@ const ModelRegistry: React.FC = () => {
     const labelsRenderer = (value: string, record: ModelItem) => (
       <TagList
         compact
+        disabled={record.archived}
         tags={record.labels ?? []}
         onChange={(tags) => setModelTags(record.id, tags)}
       />
@@ -305,6 +307,7 @@ const ModelRegistry: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: ModelItem) => (
       <InlineEditor
+        disabled={record.archived}
         placeholder="Add description..."
         value={value}
         onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)}
@@ -343,7 +346,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-        render: relativeTimeRenderer,
+        render: (date) => relativeTimeRenderer(new Date(date)),
         sorter: true,
         title: 'Last updated',
         width: 150,
