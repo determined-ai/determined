@@ -1,12 +1,9 @@
 import { Tooltip } from 'antd';
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
-import {
-  checkpointStateToLabel, commandStateToLabel, resourceStateToLabel,
-  runStateToLabel, slotStateToLabel,
-} from 'constants/states';
-import { getStateColorCssVar } from 'themes';
-import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
+import { stateToLabel } from 'constants/states';
+import { getStateColorCssVar, StateOfUnion } from 'themes';
+import { RunState, SlotState } from 'types';
 
 import css from './Badge.module.scss';
 
@@ -18,20 +15,10 @@ export enum BadgeType {
 }
 
 export interface BadgeProps {
-  state?: RunState | CommandState | CheckpointState | ResourceState | SlotState;
+  state?: StateOfUnion;
   tooltip?: string;
   type?: BadgeType;
 }
-
-const stateToLabel = (
-  state: RunState | CommandState | CheckpointState | ResourceState | SlotState,
-): string => {
-  return runStateToLabel[state as RunState]
-    || commandStateToLabel[state as CommandState]
-    || resourceStateToLabel[state as ResourceState]
-    || checkpointStateToLabel[state as CheckpointState]
-    || slotStateToLabel[state as SlotState];
-};
 
 const Badge: React.FC<BadgeProps> = ({
   state = RunState.Active,

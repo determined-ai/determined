@@ -9,11 +9,10 @@ import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import { StateOfUnion } from 'themes';
 import {
-  CheckpointState,
-  CommandState, CommandTask, CommandType, ExperimentItem,
-  ModelItem,
-  ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
+  CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion, Pagination,
+  StartEndTimes, TrialItem,
 } from 'types';
 import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
@@ -80,7 +79,7 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
   );
 };
 
-export const stateRenderer: Renderer<{ state: CommandState | RunState | CheckpointState }> =
+export const stateRenderer: Renderer<{ state: StateOfUnion}> =
 (_, record) => (
   <div className={css.centerVertically}>
     <Badge state={record.state} type={BadgeType.State} />

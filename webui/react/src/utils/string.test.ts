@@ -149,5 +149,24 @@ describe('String Utilities', () => {
     it('should skip truncating if string is within max length', () => {
       expect(utils.truncate('abc', 3)).toBe('abc');
     });
+
+    it('should avoid changing short strings', () => {
+      const s = 'abc';
+      expect(utils.truncate(s, s.length + 1)).toBe(s);
+    });
+
+    it('should add a suffix when truncating', () => {
+      const testStr = 'adoptacat';
+      const suffix = '...';
+      const size = 4;
+      expect(utils.truncate(testStr, size, suffix))
+        .toBe(testStr.substring(0, size - suffix.length) + suffix);
+    });
+
+    it('should support skipping the suffix', () => {
+      const testStr = 'adoptacat';
+      const size = 4;
+      expect(utils.truncate(testStr, size, '')).toBe(testStr.substring(0, size));
+    });
   });
 });

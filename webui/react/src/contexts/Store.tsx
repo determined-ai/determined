@@ -3,7 +3,7 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 import { globalStorage } from 'globalStorage';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, ResourceType,
+  DetailedUser, DeterminedInfo, ResourcePool, ResourceType,
 } from 'types';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
@@ -28,6 +28,7 @@ export interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  resourcePools: ResourcePool[];
   ui: UI;
   users: DetailedUser[];
 }
@@ -60,6 +61,9 @@ export enum StoreAction {
   // Omnibar
   HideOmnibar,
   ShowOmnibar,
+
+  // ResourcePools
+  SetResourcePools,
 }
 
 export type Action =
@@ -76,6 +80,7 @@ export type Action =
 | { type: StoreAction.ShowUIChrome }
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
+| { type: StoreAction.SetResourcePools; value: ResourcePool[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
 
@@ -112,6 +117,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  resourcePools: [],
   ui: initUI,
   users: [],
 };
@@ -193,6 +199,9 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
+    case StoreAction.SetResourcePools:
+      if (isEqual(state.resourcePools, action.value)) return state;
+      return { ...state, resourcePools: action.value };
     case StoreAction.HideOmnibar:
       if (!state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };

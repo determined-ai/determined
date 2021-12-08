@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -16,6 +17,8 @@ type (
 		// Identifying information.
 		AllocationID model.AllocationID
 		TaskID       model.TaskID
+		JobID        *model.JobID
+		State        job.SchedulingState
 		Name         string
 		TaskActor    *actor.Ref
 		Group        *actor.Ref
