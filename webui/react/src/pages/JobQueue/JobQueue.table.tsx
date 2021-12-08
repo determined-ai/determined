@@ -7,12 +7,12 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
-import { openBlank, paths } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
-import { waitPageUrl } from 'wait';
+import { openCommand } from 'wait';
 
 import css from './JobQueue.module.scss';
 
@@ -36,8 +36,7 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
 
   const task = cmds.find(t => t.id === taskId);
   if (task) {
-    const url = waitPageUrl(task);
-    openBlank(url);
+    openCommand(task);
   } else {
     throw new Error(`${jobType} ${taskId} not found`);
   }
