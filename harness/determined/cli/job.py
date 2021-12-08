@@ -1,11 +1,14 @@
 import json
 from argparse import Namespace
+from datetime import datetime
 from typing import Any, List
 
+import pytz
 import yaml
 
 from determined.cli import render
 from determined.cli.session import setup_session
+from determined.common import api
 from determined.common.api import authentication
 from determined.common.api.b import get_GetJobs
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -13,12 +16,28 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def ls(args: Namespace) -> None:
+    is_priority = True
+    config = api.get(args.master, "config").json()
+    try:
+        for pool in config["resource_pools"]:
+            if (
+                pool["pool_name"] == args.resource_pool
+                and pool["scheduler"]["type"] == "fair_share"
+            ):
+                is_priority = False
+    except KeyError:
+        try:
+            if config["resource_manager"]["scheduler"]["type"] == "fair_share":
+                is_priority = False
+        except KeyError:
+            pass
+
     response = get_GetJobs(
         setup_session(args),
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy="ORDER_BY_DESC" if not args.reverse else "ORDER_BY_ASC",
+        orderBy="ORDER_BY_ASC" if not args.reverse else "ORDER_BY_DESC",
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
@@ -26,16 +45,15 @@ def ls(args: Namespace) -> None:
         print(json.dumps(response.to_json(), indent=4, default=str))
     elif args.table or args.csv:
         headers = [
-            "Jobs Ahead",
+            "#",
             "ID",
-            "Entity ID",
-            "Status",
             "Type",
-            "Slots Acquired",
-            "Slots Requested",
-            "Name",
+            "Job Name",
+            "Priority" if is_priority else "Weight",
+            "Submitted",
+            "Slots (acquired/needed)",
+            "Status",
             "User",
-            "Submission Time",
         ]
         values = [
             [
@@ -43,14 +61,15 @@ def ls(args: Namespace) -> None:
                 if j.summary is not None and j.summary.jobsAhead > -1
                 else "N/A",
                 j.jobId,
-                j.entityId,
-                j.summary.state if j.summary is not None else "N/A",
                 j.type,
-                j.allocatedSlots,
-                j.requestedSlots,
                 j.name,
+                j.priority if is_priority else j.weight,
+                pytz.utc.localize(
+                    datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
+                ),
+                f"{j.allocatedSlots}/{j.requestedSlots}",
+                j.summary.state if j.summary is not None else "N/A",
                 j.username,
-                j.submissionTime,
             ]
             for j in response.jobs
         ]
