@@ -98,8 +98,19 @@ describe('TimeAgo', () => {
   });
 
   it('should render long format', () => {
+    render(<TimeAgo datetime={shared.now - DURATION_DAY} long />);
+    expect(screen.getByText(/1 day ago/i)).toBeInTheDocument();
+  });
+
+  it('should render plural in long format', () => {
     render(<TimeAgo datetime={shared.now - offsetDays} long />);
     expect(screen.getByText(/5 days ago/i)).toBeInTheDocument();
+  });
+
+  it('should render multiple units in long format', () => {
+    const datetime = shared.now - DURATION_DAY - DURATION_HOUR - DURATION_MINUTE;
+    render(<TimeAgo datetime={datetime} long units={3} />);
+    expect(screen.getByText(/1 day 1 hour 1 minute ago/i)).toBeInTheDocument();
   });
 
   it('should render updates', async () => {
