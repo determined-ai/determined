@@ -45,6 +45,7 @@ const InlineEditor: React.FC<Props> = ({
   if (maxLength && currentValue && currentValue.length === maxLength) {
     classes.push(css.maxLength);
   }
+  if (disabled) classes.push(css.disabled);
 
   const updateEditorValue = useCallback((value: string) => {
     let newValue = value;
