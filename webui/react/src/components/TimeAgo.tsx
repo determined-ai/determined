@@ -3,7 +3,10 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { isNumber, isString } from 'utils/data';
-import { durationInEnglish } from 'utils/datetime';
+import {
+  DURATION_DAY, DURATION_HOUR, DURATION_MINUTE, DURATION_SECOND,
+  DURATION_YEAR, durationInEnglish,
+} from 'utils/datetime';
 import { capitalize, capitalizeWord } from 'utils/string';
 
 interface Props {
@@ -22,11 +25,6 @@ export enum TimeAgoCase {
   Title = 'title',
 }
 
-export const DURATION_SECOND = 1000;
-export const DURATION_MINUTE = 60 * DURATION_SECOND;
-export const DURATION_HOUR = 60 * DURATION_MINUTE;
-export const DURATION_DAY = 24 * DURATION_HOUR;
-export const DURATION_YEAR = 365 * DURATION_DAY;
 export const JUST_NOW = 'Just Now';
 export const TOOLTIP_FORMAT = 'MMM D, YYYY - h:mm a';
 

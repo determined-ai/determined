@@ -2,14 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
 import React from 'react';
 
-import TimeAgo, {
-  DURATION_DAY,
-  DURATION_HOUR,
-  DURATION_MINUTE,
-  DURATION_SECOND,
-  DURATION_YEAR,
-  TimeAgoCase,
-} from './TimeAgo';
+import {
+  DURATION_DAY, DURATION_HOUR, DURATION_MINUTE, DURATION_SECOND, DURATION_YEAR,
+} from 'utils/datetime';
+
+import TimeAgo, { TimeAgoCase } from './TimeAgo';
 
 describe('TimeAgo', () => {
   const shared = { now: Date.now() };
