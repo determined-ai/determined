@@ -9,6 +9,7 @@ import Section from 'components/Section';
 import {
   defaultRowClassName, getFullPaginationConfig,
 } from 'components/Table';
+import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -23,7 +24,6 @@ import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
-import { V1SchedulerTypeToLabel } from 'utils/types';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -136,24 +136,26 @@ const JobQueue: React.FC = () => {
       switch (col.key) {
         case 'actions':
           col.render = (_, record) => {
-            return <div>
-              <ActionDropdown<JobAction>
-                actionOrder={[
-                  JobAction.ManageJob,
-                  JobAction.MoveToTop,
-                  JobAction.Cancel,
-                  JobAction.Kill,
-                ]}
-                confirmations={{
-                  [JobAction.Cancel]: { cancelText: 'Abort' },
-                  [JobAction.Kill]: {},
-                  [JobAction.MoveToTop]: {},
-                }}
-                id={record.name}
-                kind="job"
-                onTrigger={dropDownOnTrigger(record)}
-              />
-            </div>;
+            return (
+              <div>
+                <ActionDropdown<JobAction>
+                  actionOrder={[
+                    JobAction.ManageJob,
+                    JobAction.MoveToTop,
+                    JobAction.Cancel,
+                    JobAction.Kill,
+                  ]}
+                  confirmations={{
+                    [JobAction.Cancel]: { cancelText: 'Abort' },
+                    [JobAction.Kill]: {},
+                    [JobAction.MoveToTop]: {},
+                  }}
+                  id={record.name}
+                  kind="job"
+                  onTrigger={dropDownOnTrigger(record)}
+                />
+              </div>
+            );
           };
           break;
         case SCHEDULING_VAL_KEY:
@@ -171,10 +173,12 @@ const JobQueue: React.FC = () => {
           break;
         case 'jobsAhead':
           col.render = (_: unknown, record) => {
-            return <div className={css.centerVertically}>
-              {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
-              {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
-            </div>;
+            return (
+              <div className={css.centerVertically}>
+                {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
+                {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+              </div>
+            );
           };
           if (selectedRp && !orderdQTypes.includes(selectedRp.schedulerType)) {
             col.sorter = undefined;
@@ -255,10 +259,12 @@ const JobQueue: React.FC = () => {
   const tableTitle = useMemo(() => {
     if (!selectedRp) return '';
     const schedulerType = V1SchedulerTypeToLabel[selectedRp.schedulerType];
-    return <div>
-      {`${capitalize(selectedRp.name)} (${schedulerType.toLowerCase()}) `}
-      <Icon name="info" title={`Job Queue for resource pool "${selectedRp.name}"`} />
-    </div>;
+    return (
+      <div>
+        {`${capitalize(selectedRp.name)} (${schedulerType.toLowerCase()}) `}
+        <Icon name="info" title={`Job Queue for resource pool "${selectedRp.name}"`} />
+      </div>
+    );
   }, [ selectedRp ]);
 
   return (
@@ -271,12 +277,14 @@ const JobQueue: React.FC = () => {
             if (!isTargetRp) {
               onClick = rpSwitcher(stats.resourcePool);
             }
-            return <RPStatsOverview
-              focused={isTargetRp}
-              key={idx}
-              stats={stats}
-              onClick={onClick}
-            />;
+            return (
+              <RPStatsOverview
+                focused={isTargetRp}
+                key={idx}
+                stats={stats}
+                onClick={onClick}
+              />
+            );
           })}
         </Grid>
       </Section>
@@ -297,13 +305,14 @@ const JobQueue: React.FC = () => {
           onChange={handleTableChange(columns, settings, updateSettings)}
         />
       </Section>
-      {!!managingJob && !!selectedRp &&
+      {!!managingJob && !!selectedRp && (
         <ManageJob
           job={managingJob}
           schedulerType={selectedRp.schedulerType}
           selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
-          onFinish={hideModal} />
-      }
+          onFinish={hideModal}
+        />
+      )}
 
     </Page>
   );

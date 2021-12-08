@@ -11,17 +11,19 @@ interface Props {
 }
 
 const RPStatsOverview: React.FC<Props> = ({ focused, onClick, stats }) => {
-  return <OverviewStats
-    focused={focused}
-    title={stats.resourcePool}
-    onClick={onClick}
-  >
-    <Tooltip title="Scheduled Jobs">
-      {stats.stats.scheduledCount}
-    </Tooltip> / <Tooltip title="All Jobs">
-      {stats.stats.queuedCount + stats.stats.scheduledCount}
-    </Tooltip>
-  </OverviewStats>;
+  return (
+    <OverviewStats
+      focused={focused}
+      title={stats.resourcePool}
+      onClick={onClick}>
+      <Tooltip title="Scheduled Jobs">
+        {stats.stats.scheduledCount}
+      </Tooltip>{' / '}
+      <Tooltip title="All Jobs">
+        {stats.stats.queuedCount + stats.stats.scheduledCount}
+      </Tooltip>
+    </OverviewStats>
+  );
 };
 
 export default RPStatsOverview;
