@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -27,6 +28,7 @@ export const DURATION_HOUR = 60 * DURATION_MINUTE;
 export const DURATION_DAY = 24 * DURATION_HOUR;
 export const DURATION_YEAR = 365 * DURATION_DAY;
 export const JUST_NOW = 'Just Now';
+export const TOOLTIP_FORMAT = 'MMM D, YYYY - h:mm a';
 
 const TimeAgo: React.FC<Props> = ({
   className,
@@ -105,7 +107,9 @@ const TimeAgo: React.FC<Props> = ({
   }, [ updateInterval ]);
 
   return (
-    <div className={classes.join(' ')}>{durationString}</div>
+    <Tooltip title={dayjs(milliseconds).format(TOOLTIP_FORMAT)}>
+      <div className={classes.join(' ')}>{durationString}</div>
+    </Tooltip>
   );
 };
 
