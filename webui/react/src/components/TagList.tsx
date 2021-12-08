@@ -10,6 +10,7 @@ import css from './TagList.module.scss';
 
 interface Props {
   compact?: boolean;
+  disabled?: boolean;
   ghost?: boolean;
   onChange?: (tags: string[]) => void;
   tags: string[];
@@ -23,7 +24,7 @@ const TAG_MAX_LENGTH = 10;
 const COMPACT_MAX_THRESHOLD = 4;
 
 const EditableTagList: React.FC<Props> = (
-  { compact, ghost, tags, onChange }: Props,
+  { compact, disabled = false, ghost, tags, onChange }: Props,
 ) => {
   const initialState = {
     editInputIndex: -1,
@@ -144,13 +145,14 @@ const EditableTagList: React.FC<Props> = (
           const tagElement = (
             <Tag
               className={css.tagEdit}
-              closable={true}
+              closable={!disabled}
               id={htmlId}
               key={tag}
               onClose={() => handleClose(tag)}>
               <span
                 onClick={e => {
                   e.preventDefault();
+                  if (disabled) return;
                   const element = document.getElementById(htmlId);
                   const rect = element?.getBoundingClientRect();
                   setState(state => ({
@@ -180,9 +182,11 @@ const EditableTagList: React.FC<Props> = (
           onPressEnter={handleInputConfirm}
         />
       ) : (
-        <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
-          <PlusOutlined /> New Tag
-        </Tag>
+        !disabled && (
+          <Tag aria-label={ARIA_LABEL_TRIGGER} className={css.tagPlus} onClick={handleTagPlus}>
+            <PlusOutlined /> New Tag
+          </Tag>
+        )
       )}
     </div>
   );
