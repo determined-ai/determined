@@ -185,6 +185,9 @@ export const paths = {
   cluster: (): string => {
     return '/cluster';
   },
+  clusterLogs: (): string => {
+    return '/logs';
+  },
   dashboard: (): string => {
     return '/dashboard';
   },
@@ -205,9 +208,6 @@ export const paths = {
   },
   logout: (): string => {
     return '/logout';
-  },
-  masterLogs: (): string => {
-    return '/logs';
   },
   modelDetails: (modelId: number | string): string => {
     return `/models/${modelId}`;

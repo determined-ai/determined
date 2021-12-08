@@ -93,8 +93,8 @@ const locations: TreeNode[] = [
     title: 'jupyterLab',
   },
   {
-    onAction: visitAction(paths.masterLogs()),
-    title: 'masterLogs',
+    onAction: visitAction(paths.clusterLogs()),
+    title: 'clusterLogs',
   },
 ];
 
