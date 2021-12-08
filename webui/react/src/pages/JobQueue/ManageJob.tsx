@@ -62,8 +62,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable} </p>
       <RPStatsOverview stats={selectedRPStats} />
       <p>Jobs in queue:
-        {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount + ' '}
-        ({selectedRPStats.stats.preemptibleCount} preemptible)
+        {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
       </p>
       <p>Spot instance pool: {!!curRP?.details.aws?.spotEnabled + ''}</p>
     </div>
