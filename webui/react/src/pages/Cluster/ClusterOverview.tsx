@@ -14,11 +14,10 @@ import {
   defaultRowClassName, getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { agentsToOverview, initResourceTally, useStore } from 'contexts/Store';
-import { useFetchAgents } from 'hooks/useFetch';
+import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
-import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource, Pagination, ResourcePool, ResourceState, ResourceType,
@@ -39,27 +38,23 @@ const ClusterOverview: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
-  const { agents, cluster: overview } = useStore();
+  const { agents, cluster: overview, resourcePools } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
   const [ selectedView, setSelectedView ] = useState<GridListView>(() => {
     if (initView && Object.values(GridListView).includes(initView as GridListView)) return initView;
     return GridListView.Grid;
   });
-  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
+  const fetchResourcePools = useFetchResourcePools(canceler);
 
-  const fetchResourcePools = useCallback(async () => {
-    try {
-      const resourcePools = await getResourcePools({});
-      setResourcePools(resourcePools);
-      setTotal(resourcePools.length || 0);
-    } catch (e) {}
-  }, []);
+  useEffect(() => {
+    setTotal(resourcePools.length || 0);
+  }, [ resourcePools ]);
 
   usePolling(fetchResourcePools, { interval: 10000 });
 

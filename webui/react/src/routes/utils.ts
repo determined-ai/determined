@@ -181,6 +181,11 @@ export const linkPath = (aPath: string, external = false): string => {
   return path;
 };
 
+const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
+  acc[cur.id] = cur;
+  return acc;
+}, {} as Record<string, RouteConfig>);
+
 export const paths = {
   cluster: (): string => {
     return '/cluster';
@@ -202,6 +207,10 @@ export const paths = {
   },
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
+  },
+  jobs: (): string => {
+    return routeById.jobs.path;
+
   },
   login: (): string => {
     return '/login';

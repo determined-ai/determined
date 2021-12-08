@@ -34,6 +34,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
+		jobID := model.NewJobID()
 		return createGenericCommandActor(
 			ctx, c.db, c.taskLogger, taskID, model.TaskTypeCommand, model.JobTypeCommand, msg,
 		)

@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // Experiment-specific actor messages.
@@ -83,6 +84,7 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
+		rmJobInfo             *job.RMJobInfo
 	}
 )
 
@@ -167,6 +169,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			Handler:  ctx.Self(),
 		})
 
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
+			JobID:    e.JobID,
+			JobActor: ctx.Self(),
+		})
+
 		if e.restored {
 			e.restoreTrials(ctx)
 			return nil
@@ -178,6 +185,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		e.processOperations(ctx, ops, nil)
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
+
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.requestID)
 		e.processOperations(ctx, ops, err)
@@ -257,11 +265,24 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 
+	case job.GetJob:
+		ctx.Respond(e.toV1Job())
+
+	case *job.RMJobInfo:
+		e.rmJobInfo = msg
+
+	case job.GetJobSummary:
+		ctx.Respond(e.toV1Job().Summary)
+
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
 			ctx.Log().Error(err)
 		}
+
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
+			JobID: e.JobID,
+		})
 
 		state := model.StoppingToTerminalStates[e.State]
 		if wasPatched, err := e.Transition(state); err != nil {
@@ -330,6 +351,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
+		e.clearJobInfo()
 
 	case *apiv1.CancelExperimentRequest:
 		switch {
@@ -344,6 +366,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.CancelExperimentResponse{})
 			}
 		}
+		e.clearJobInfo()
 
 	case *apiv1.KillExperimentRequest:
 		switch {
@@ -358,6 +381,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
+		e.clearJobInfo()
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil
@@ -539,4 +566,29 @@ func checkpointFromTrialIDOrUUID(
 		}
 	}
 	return checkpoint, nil
+}
+
+func (e *experiment) toV1Job() *jobv1.Job {
+	j := jobv1.Job{
+		JobId:          e.JobID.String(),
+		EntityId:       fmt.Sprint(e.ID),
+		Type:           jobv1.Type_TYPE_EXPERIMENT,
+		ResourcePool:   e.Config.Resources().ResourcePool(),
+		SubmissionTime: timestamppb.New(e.StartTime),
+		Username:       e.Username,
+		Progress:       float32(e.searcher.Progress()),
+		Name:           e.Config.Name().String(),
+	}
+
+	j.IsPreemptible = config.ReadPreemptionStatus(j.ResourcePool, &e.Config)
+	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
+	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
+	job.UpdateJobQInfo(&j, e.rmJobInfo)
+
+	return &j
+}
+
+// clearJobInfo clears the job info from the experiment.
+func (e *experiment) clearJobInfo() {
+	e.rmJobInfo = nil
 }

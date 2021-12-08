@@ -5,6 +5,7 @@ import StoreDecorator from 'storybook/StoreDecorator';
 import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
   RunState, TrialDetails } from 'types';
+import { generateExperiments } from 'utils/task';
 
 import TrialRangeHyperparameters from './TrialRangeHyperparameters';
 
@@ -15,7 +16,9 @@ export default {
 };
 
 const TrialRangeHyperparametersContainer = () => {
+  const exp = generateExperiments(1)[0];
   const sampleExp: ExperimentBase = {
+    ...exp,
     archived: false,
     config: {
       checkpointPolicy: 'best',

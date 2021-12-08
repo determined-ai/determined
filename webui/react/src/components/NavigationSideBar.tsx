@@ -57,6 +57,7 @@ const menuConfig = {
     { icon: 'model', label: 'Model Registry', path: paths.modelList() },
     { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
     { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+    { icon: 'queue', label: 'Jobs', path: paths.jobs() },
     { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
   ],
 };
