@@ -9,6 +9,16 @@ dayjs.extend(utc);
 const humanizeDuration = require('humanize-duration');
 
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
+export const DURATION_UNIT_MEASURES = {
+  d: 86400000,
+  h: 3600000,
+  m: 60000,
+  mo: 2628000000, // Override incorrect default of 2629800000
+  ms: 1,
+  s: 1000,
+  w: 604800000,
+  y: 31536000000, // Override incorrect default of 31557600000
+};
 
 export const durationInEnglish = humanizeDuration.humanizer({
   conjunction: ' ',
@@ -28,16 +38,7 @@ export const durationInEnglish = humanizeDuration.humanizer({
   largest: 2,
   round: true,
   spacer: '',
-  unitMeasures: {
-    d: 86400000,
-    h: 3600000,
-    m: 60000,
-    mo: 2628000000, // Override incorrect default of 2629800000
-    ms: 1,
-    s: 1000,
-    w: 604800000,
-    y: 31536000000, // Override incorrect default of 31557600000
-  },
+  unitMeasures: DURATION_UNIT_MEASURES,
   units: [ 'y', 'mo', 'w', 'd', 'h', 'm', 's', 'ms' ],
 });
 
