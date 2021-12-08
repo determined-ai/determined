@@ -143,6 +143,7 @@ const ModelDetails: React.FC = () => {
     const labelsRenderer = (value: string, record: ModelVersion) => (
       <TagList
         compact
+        disabled={record.model.archived}
         tags={record.labels ?? []}
         onChange={(tags) => saveModelVersionTags(record.model.id, record.id, tags)}
       />
