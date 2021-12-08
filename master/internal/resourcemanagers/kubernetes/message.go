@@ -19,4 +19,9 @@ type (
 	KillTaskPod struct {
 		PodID cproto.ID
 	}
+
+	// PreemptTaskPod notifies the pods actor to preempt a pod.
+	PreemptTaskPod struct {
+		PodName string
+	}
 )

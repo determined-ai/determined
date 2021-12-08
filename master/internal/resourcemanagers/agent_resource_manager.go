@@ -9,10 +9,12 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
@@ -108,6 +110,50 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
 		ctx.Respond(resp)
+
+	case job.GetJobQ:
+		if msg.ResourcePool == "" {
+			msg.ResourcePool = a.config.DefaultComputeResourcePool
+		}
+
+		rpRef := ctx.Child(msg.ResourcePool)
+		if rpRef == nil {
+			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
+			return nil
+		}
+		resp := ctx.Ask(rpRef, msg).Get()
+		ctx.Respond(resp)
+
+	case *apiv1.GetJobQueueStatsRequest:
+		rpRefs := make([]*actor.Ref, 0)
+		if len(msg.ResourcePools) == 0 {
+			rpRefs = append(rpRefs, ctx.Children()...)
+		} else {
+			for _, rp := range msg.ResourcePools {
+				rpRefs = append(rpRefs, ctx.Child(rp))
+			}
+		}
+		resp := &apiv1.GetJobQueueStatsResponse{
+			Results: make([]*apiv1.RPQueueStat, 0),
+		}
+		actorResps := ctx.AskAll(job.GetJobQStats{}, rpRefs...).GetAll()
+		for _, rpRef := range rpRefs {
+			qStats := apiv1.RPQueueStat{ResourcePool: rpRef.Address().Local()}
+			aResp := actorResps[rpRef]
+			switch aMsg := aResp.(type) {
+			case error:
+				ctx.Log().WithError(aMsg).Error("")
+				ctx.Respond(aMsg)
+				return nil
+			case jobv1.QueueStats:
+				qStats.Stats = &aMsg
+				resp.Results = append(resp.Results, &qStats)
+			default:
+				return fmt.Errorf("unexpected response type: %T", aMsg)
+			}
+		}
+		ctx.Respond(resp)
+		return nil
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

@@ -5,6 +5,7 @@ import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
 import { deletableRunStates, terminalRunStates } from 'constants/states';
@@ -234,6 +235,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Duration:</span>
                 {durationInEnglish(getDuration(experiment))}
+              </div>
+            )}
+            {experiment.jobSummary && ! terminalRunStates.has(experiment.state) && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Job Info:</span>
+                <Link path={paths.jobs()}>
+                  {experiment.jobSummary?.jobsAhead || 'No'}{' '}
+                  job{experiment.jobSummary?.jobsAhead > 1 ? 's' : ''} ahead of this one.
+                </Link>
               </div>
             )}
             <TagList

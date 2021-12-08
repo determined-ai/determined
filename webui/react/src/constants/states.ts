@@ -1,7 +1,10 @@
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { StateOfUnion } from 'themes';
 import {
-  CheckpointState, CommandState, CommandType, ResourceState, RunState, SlotState,
+  CheckpointState, CommandState, CommandType, CompoundRunState, JobState, ResourceState, RunState,
+  SlotState,
 } from 'types';
+import { jobStateToLabel } from 'utils/job';
 
 export const activeCommandStates = [
   CommandState.Assigned,
@@ -21,8 +24,9 @@ export const activeRunStates: Array<
   'STATE_STOPPING_ERROR',
 ];
 
-export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
-export const cancellableRunStates = [ RunState.Active, RunState.Paused ];
+export const killableRunStates: CompoundRunState[] =
+  [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
+export const cancellableRunStates: CompoundRunState[] = [ RunState.Active, RunState.Paused ];
 export const killableCommandStates = [
   CommandState.Assigned,
   CommandState.Pending,
@@ -36,14 +40,14 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-export const terminalRunStates: Set<RunState> = new Set([
+export const terminalRunStates: Set<CompoundRunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
   RunState.Deleted,
 ]);
 
-export const deletableRunStates: Set<RunState> = new Set([
+export const deletableRunStates: Set<CompoundRunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
@@ -120,3 +124,14 @@ export const commandTypeToLabel: { [key in CommandType]: string } = {
   [CommandType.Shell]: 'Shell',
   [CommandType.TensorBoard]: 'TensorBoard',
 };
+
+export function stateToLabel(
+  state: StateOfUnion,
+): string {
+  return runStateToLabel[state as RunState]
+  || commandStateToLabel[state as CommandState]
+  || resourceStateToLabel[state as ResourceState]
+  || checkpointStateToLabel[state as CheckpointState]
+  || jobStateToLabel[state as JobState]
+  || slotStateToLabel[state as SlotState];
+}

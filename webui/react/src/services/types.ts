@@ -1,7 +1,9 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, Metadata, RecordKey } from 'types';
+import { CommandType, DetailedUser, Job, Metadata, RecordKey } from 'types';
+
+import * as Api from './api-ts-sdk/api';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -248,4 +250,12 @@ export interface GetResourceAllocationAggregatedParams {
   period: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
   | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
   startDate: Dayjs,
+}
+
+export interface GetJobQParams extends PaginationParams, FetchOptions {
+  resourcePool: string;
+}
+
+export interface GetJobsResponse extends Api.V1GetJobsResponse {
+  jobs: Job[];
 }

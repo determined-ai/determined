@@ -55,8 +55,12 @@ export const toHtmlId = (str: string): string => {
     .toLowerCase();
 };
 
-export const truncate = (str: string, maxLength = 20): string => {
-  if (maxLength < 4) maxLength = 4;
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + '...';
+export const truncate = (str: string, maxLength = 20, suffix = '...'): string => {
+  if (maxLength < suffix.length + 1) {
+    maxLength = suffix.length + 1;
+  }
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return str.slice(0, maxLength - suffix.length) + suffix;
 };

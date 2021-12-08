@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -19,12 +20,16 @@ import (
 const kubernetesScheduler = "kubernetes"
 const kubernetesDummyResourcePool = "kubernetes"
 
+// KubernetesDefaultPriority is the default K8 resource manager priority.
+const KubernetesDefaultPriority = 50
+
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config *KubernetesResourceManagerConfig
 
 	reqList           *taskList
 	groups            map[*actor.Ref]*group
+	containerIDtoAddr map[string]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
 	// Represent all pods as a single agent.
@@ -48,6 +53,7 @@ func newKubernetesResourceManager(
 
 		reqList:           newTaskList(),
 		groups:            make(map[*actor.Ref]*group),
+		containerIDtoAddr: make(map[string]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
 
 		echoRef:         echoRef,
@@ -98,8 +104,15 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
-		sproto.ResourcesReleased:
+		sproto.ResourcesReleased,
+		sproto.UpdatePodStatus:
 		return k.receiveRequestMsg(ctx)
+
+	case
+		job.GetJobQ,
+		job.GetJobSummary,
+		*apiv1.GetJobQueueStatsRequest:
+		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
 		reschedule = false
@@ -192,8 +205,14 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight, sproto.SetGroupPriority:
+	case sproto.SetGroupWeight:
 		// SetGroupWeight and SetGroupPriority are not supported by the Kubernetes RP.
+
+	case sproto.SetGroupPriority:
+		group := k.getOrCreateGroup(ctx, msg.Handler)
+		if msg.Priority != nil {
+			group.priority = msg.Priority
+		}
 
 	case sproto.SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
@@ -203,6 +222,19 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case sproto.ResourcesReleased:
 		k.resourcesReleased(ctx, msg.TaskActor)
+
+	case sproto.UpdatePodStatus:
+		var ref *actor.Ref
+		if addr, ok := k.containerIDtoAddr[msg.ContainerID]; ok {
+			ref = addr
+		}
+
+		for it := k.reqList.iterator(); it.next(); {
+			req := it.value()
+			if req.TaskActor == ref {
+				req.State = msg.State
+			}
+		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -229,6 +261,33 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
 	k.reqList.AddTask(&msg)
+}
+
+func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch ctx.Message().(type) {
+	case job.GetJobQ:
+		ctx.Respond(k.jobQInfo())
+
+	case *apiv1.GetJobQueueStatsRequest:
+		resp := &apiv1.GetJobQueueStatsResponse{
+			Results: make([]*apiv1.RPQueueStat, 0),
+		}
+		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
+			Stats:        jobStats(k.reqList),
+			ResourcePool: kubernetesDummyResourcePool},
+		)
+		ctx.Respond(resp)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
+	reqs := sortTasks(k.reqList, k.groups, true)
+	jobQinfo, _ := mergeToJobQInfo(reqs)
+	return jobQinfo
 }
 
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
@@ -275,6 +334,7 @@ func (k *kubernetesResourceManager) assignResources(
 			agent:     k.agent,
 			container: container,
 		})
+		k.containerIDtoAddr[container.id.String()] = req.TaskActor
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Reservations: allocations}
@@ -290,6 +350,15 @@ func (k *kubernetesResourceManager) assignResources(
 func (k *kubernetesResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	k.reqList.RemoveTaskByHandler(handler)
+
+	deleteID := ""
+	for id, addr := range k.containerIDtoAddr {
+		if addr == handler {
+			deleteID = id
+			delete(k.containerIDtoAddr, deleteID)
+			break
+		}
+	}
 
 	if req, ok := k.reqList.GetTaskByHandler(handler); ok {
 		group := k.groups[handler]
@@ -307,7 +376,8 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
-	g := &group{handler: handler, weight: 1}
+	priority := KubernetesDefaultPriority
+	g := &group{handler: handler, weight: 1, priority: &priority}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 

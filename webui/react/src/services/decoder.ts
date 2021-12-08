@@ -19,6 +19,13 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
+export const mapV1Pagination = (data: Sdk.V1Pagination): types.Pagination => {
+  return {
+    limit: data.limit ?? 0,
+    offset: data.offset ?? 0,
+  };
+};
+
 export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   // Validate branding against `BrandingType` enum.
   const branding = Object.values(types.BrandingType).reduce((acc, value) => {
@@ -114,7 +121,7 @@ const mapV1TaskState =
   };
 
 const mapCommonV1Task = (
-  task: Sdk.V1Command|Sdk.V1Notebook|Sdk.V1Shell|Sdk.V1Tensorboard,
+  task: Sdk.V1Command | Sdk.V1Notebook | Sdk.V1Shell | Sdk.V1Tensorboard,
   type: types.CommandType,
 ): types.CommandTask => {
   return {
@@ -323,7 +330,7 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
 };
 
 export const mapV1GetExperimentResponse = (
-  { experiment: exp, config }: Sdk.V1GetExperimentResponse,
+  { experiment: exp, config, jobSummary }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
@@ -332,23 +339,17 @@ export const mapV1GetExperimentResponse = (
     ioConfig.hyperparameters,
     { continueFn },
   ) as types.HyperparametersFlattened;
+  const v1Exp = mapV1Experiment(exp);
+  v1Exp.jobSummary = jobSummary;
+  const resolvedState = v1Exp.state === types.RunState.Active && v1Exp.jobSummary ?
+    v1Exp.jobSummary.state : v1Exp.state;
+  v1Exp.state = resolvedState;
+
   return {
-    archived: exp.archived,
+    ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
     configRaw: config,
-    description: exp.description,
-    endTime: exp.endTime as unknown as string,
     hyperparameters,
-    id: exp.id,
-    // numTrials
-    // labels
-    name: exp.name,
-    notes: exp.notes,
-    progress: exp.progress != null ? exp.progress : undefined,
-    resourcePool: exp.resourcePool || '',
-    startTime: exp.startTime as unknown as string,
-    state: decodeExperimentState(exp.state),
-    username: exp.username,
   };
 };
 
@@ -360,6 +361,7 @@ export const mapV1Experiment = (
     description: data.description,
     endTime: data.endTime as unknown as string,
     id: data.id,
+    jobId: data.jobId,
     labels: data.labels || [],
     name: data.name,
     notes: data.notes,
@@ -379,7 +381,7 @@ export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentI
 const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefined => {
   if (!isObject(metrics)) return undefined;
   const scalarMetrics: types.RawJson = {};
-  for (const key in metrics){
+  for (const key in metrics) {
     if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
       scalarMetrics[key] = Number(metrics[key]);
     } else if (isNumber(metrics[key])) {
@@ -552,7 +554,7 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
     });
 };
 
-export const mapV1DeviceType = (data: Sdk.Devicev1Type): types.ResourceType => {
+export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.ResourceType => {
   return types.ResourceType[
     data.toString().toUpperCase()
       .replace('TYPE_', '') as keyof typeof types.ResourceType
