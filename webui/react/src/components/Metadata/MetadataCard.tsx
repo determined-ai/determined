@@ -63,9 +63,11 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
           <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
         </Space>
       ) : (
-        <Tooltip title={disabled ? 'Disabled' : 'Edit'}>
-          <EditOutlined onClick={editMetadata} />
-        </Tooltip>
+        disabled || (
+          <Tooltip title="Edit">
+            <EditOutlined onClick={editMetadata} />
+          </Tooltip>
+        )
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       title={'Metadata'}>

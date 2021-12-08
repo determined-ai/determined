@@ -260,6 +260,7 @@ const ModelVersionDetails: React.FC = () => {
               <InfoBox rows={validationMetrics} separator />
             </Card>
             <MetadataCard
+              disabled={modelVersion.model.archived}
               metadata={modelVersion.metadata}
               onSave={saveMetadata}
             />
@@ -268,6 +269,7 @@ const ModelVersionDetails: React.FC = () => {
         <TabPane key="notes" tab="Notes">
           <div className={css.base}>
             <NotesCard
+              disabled={modelVersion.model.archived}
               notes={modelVersion.notes ?? ''}
               onSave={saveNotes}
             />

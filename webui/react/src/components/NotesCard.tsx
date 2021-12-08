@@ -62,9 +62,11 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
           <Button size="small" type="primary" onClick={saveNotes}>Save</Button>
         </Space>
       ) : (
-        <Tooltip title={disabled ? 'Disabled' : 'Edit'}>
-          <EditOutlined onClick={editNotes} />
-        </Tooltip>
+        disabled || (
+          <Tooltip title="Edit">
+            <EditOutlined onClick={editNotes} />
+          </Tooltip>
+        )
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
