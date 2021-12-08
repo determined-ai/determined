@@ -117,7 +117,7 @@ class ExperimentReference:
             params={
                 "sort_by": sort_by.value,
                 "order_by": order_by.value,
-            }
+            },
         )
         trials = r.json()["trials"]
         return [trial.TrialReference(t["id"], self._session) for t in trials]
