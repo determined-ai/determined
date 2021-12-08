@@ -20,7 +20,7 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
 
   const isExperiment = isExperimentTask(task);
   const progress = (task as ExperimentTask).progress;
-  const hasProgress = isExperiment && progress != null;
+  const hasProgress = isExperiment && progress !== undefined && progress > 0;
   const isComplete = isExperiment && progress === 1;
   const iconName = isExperiment ? 'experiment' : (task as RecentCommandTask).type.toLowerCase();
 
@@ -34,7 +34,7 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
         path={task.url ? task.url : undefined}
         popout={!isExperimentTask(task)}
         onClick={!isExperimentTask(task) ? (() => openCommand(task)) : undefined}>
-        {isExperimentTask(task) && (
+        {isExperimentTask(task) && hasProgress && (
           <div className={css.progressBar}>
             <ProgressBar barOnly percent={(task.progress || 0) * 100} state={task.state} />
           </div>
