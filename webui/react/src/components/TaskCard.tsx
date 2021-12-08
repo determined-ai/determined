@@ -20,7 +20,7 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
 
   const isExperiment = isExperimentTask(task);
   const progress = (task as ExperimentTask).progress;
-  const hasProgress = isExperiment && progress != null;
+  const hasProgress = isExperiment && progress !== undefined && progress > 0;
   const isComplete = isExperiment && progress === 1;
   const iconName = isExperiment ? 'experiment' : (task as RecentCommandTask).type.toLowerCase();
 
