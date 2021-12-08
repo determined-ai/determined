@@ -167,12 +167,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {
 			a.Error(ctx, err)
 		}
-
-		for cID := range a.reservations {
-			prom.AssociateAllocationTask(a.req.AllocationID.String(), a.req.TaskID.String())
-			prom.AddAllocationContainer(a.reservations[cID].Summary())
-		}
-
 	case sproto.TaskContainerStateChanged:
 		a.TaskContainerStateChanged(ctx, msg)
 	case sproto.GetTaskContainerState:
@@ -424,6 +418,11 @@ func (a *Allocation) TaskContainerStateChanged(
 				ContainerStartedEvent: msg.ContainerStarted,
 			})
 		}
+		prom.AssociateAllocationTask(a.req.AllocationID,
+			a.req.TaskID,
+			a.req.TaskActor.Address())
+		prom.AddAllocationReservation(a.reservations[msg.Container.ID].Summary(), msg.ContainerStarted)
+
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
 		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
@@ -436,6 +435,13 @@ func (a *Allocation) TaskContainerStateChanged(
 			a.Error(ctx, *msg.ContainerStopped.Failure)
 		default:
 			a.Exit(ctx)
+		}
+
+		for cID := range a.reservations {
+			prom.DisassociateAllocationTask(a.req.AllocationID.String(),
+				a.req.TaskID.String(),
+				a.req.TaskActor.Address().String())
+			prom.RemoveAllocationReservation(a.reservations[cID].Summary())
 		}
 	}
 }
@@ -582,11 +588,6 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 }
 
 func (a *Allocation) terminated(ctx *actor.Context) {
-	for cID := range a.reservations {
-		prom.DisassociateAllocationTask(a.req.AllocationID.String(), a.req.TaskID.String())
-		prom.RemoveAllocationContainer(a.reservations[cID].Summary())
-	}
-
 	a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.State()}
 	a.exited = true

@@ -566,6 +566,8 @@ func (a *apiServer) PatchExperiment(
 			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
+			prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
+				req.Experiment.Labels)
 		case path == "description":
 			exp.Description = req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
@@ -608,8 +610,6 @@ func (a *apiServer) PatchExperiment(
 			req.Experiment.Id,
 			marshalledPatches,
 		)
-		prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
-			patches.Labels)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to update experiment")
 		}

@@ -1,16 +1,14 @@
 package prom
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
-
-	"github.com/determined-ai/determined/master/internal/sproto"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
@@ -22,12 +20,12 @@ var (
 Exposes mapping of allocation ID to container ID`,
 	}, []string{"container_id", "allocation_id"})
 
-	allocationIDToTaskID = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	allocationIDToTask = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
-		Name:      "allocation_id_task_id",
+		Name:      "allocation_id_task_id_task_actor",
 		Help: `
-Exposes mapping of allocation ID to task ID`,
-	}, []string{"allocation_id", "task_id"})
+Exposes mapping of allocation ID to task ID and actor`,
+	}, []string{"allocation_id", "task_id", "task_actor"})
 
 	containerIDToRuntimeID = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
@@ -54,17 +52,21 @@ Exposes mapping of Determined's container ID to the GPU UUID/device ID as given 
 )
 
 const (
-	cAdvisorPort = ":8080"
-	dcgmPort     = ":9400"
+	// CAdvisorPort is the default port for cAdvisor
+	CAdvisorPort = ":8080"
 
-	// The are extra labels added to metrics on scrape.
-	detAgentIDLabel      = "det_agent_id"
-	detResourcePoolLabel = "det_resource_pool"
+	// DcgmPort is the default port for DCGM
+	DcgmPort = ":9400"
 
-	targetsFile = "/etc/determined/targets.json"
+	// DetAgentIDLabel is the internal ID for the Determined agent
+	DetAgentIDLabel = "det_agent_id"
+
+	// DetResourcePoolLabel is the resource pool name
+	DetResourcePoolLabel = "det_resource_pool"
 )
 
-type fileSDConfigEntry struct {
+// TargetSDConfig is the format for specifying targets for prometheus service discovery.
+type TargetSDConfig struct {
 	Targets []string          `json:"targets"`
 	Labels  map[string]string `json:"labels"`
 }
@@ -74,7 +76,7 @@ func init() { //nolint: gochecknoinits
 	DetStateMetrics.MustRegister(containerIDToRuntimeID)
 	DetStateMetrics.MustRegister(gpuUUIDToContainerID)
 	DetStateMetrics.MustRegister(experimentIDToLabels)
-	DetStateMetrics.MustRegister(allocationIDToTaskID)
+	DetStateMetrics.MustRegister(allocationIDToTask)
 }
 
 // AssociateAllocationContainer associates an allocation with its container ID.
@@ -82,31 +84,35 @@ func AssociateAllocationContainer(aID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, aID).Inc()
 }
 
-// AssociateAllocationTask associates an allocation ID with its task ID.
-func AssociateAllocationTask(aID string, tID string) {
-	allocationIDToTaskID.WithLabelValues(aID, tID).Inc()
+// AssociateAllocationTask associates an allocation ID with its task info.
+func AssociateAllocationTask(aID model.AllocationID,
+	tID model.TaskID,
+	taskActor actor.Address) { //nolint: interfacer
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String()).Inc()
 }
 
-// DisassociateAllocationTask disassociates an allocation ID with its task ID.
-func DisassociateAllocationTask(aID string, tID string) {
-	allocationIDToTaskID.WithLabelValues(aID, tID).Dec()
+// DisassociateAllocationTask disassociates an allocation ID with its task info.
+func DisassociateAllocationTask(aID string, tID string, taskActor string) {
+	allocationIDToTask.WithLabelValues(aID, tID, taskActor).Dec()
 }
 
-// AssociateContainerRuntimeID associates a Determined container ID with the docker container ID.
+// AssociateContainerRuntimeID associates a Determined container ID with the runtime container ID.
 func AssociateContainerRuntimeID(cID string, dcID string) {
 	containerIDToRuntimeID.WithLabelValues(dcID, cID).Inc()
 }
 
-// AddAllocationContainer associates allocation and container and container and GPUs.
-func AddAllocationContainer(summary sproto.ContainerSummary) {
+// AddAllocationReservation associates allocation and container and container and GPUs.
+func AddAllocationReservation(summary sproto.ContainerSummary,
+	containerStarted *sproto.TaskContainerStarted) {
 	AssociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
+	AssociateContainerRuntimeID(summary.ID.String(), containerStarted.NativeReservationID)
 	for _, d := range summary.Devices {
-		AssociateContainerGPU(summary.ID.String(), d)
+		AssociateContainerGPU(summary.ID, d)
 	}
 }
 
-// RemoveAllocationContainer disassociates allocation and container and container and its GPUs.
-func RemoveAllocationContainer(summary sproto.ContainerSummary) {
+// RemoveAllocationReservation disassociates allocation and container and container and its GPUs.
+func RemoveAllocationReservation(summary sproto.ContainerSummary) {
 	DisassociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
 	for _, d := range summary.Devices {
 		DisassociateContainerGPU(summary.ID.String(), d)
@@ -126,10 +132,10 @@ func AssociateExperimentIDLabels(eID string, labels []string) {
 }
 
 // AssociateContainerGPU associates container ID with GPU device ID.
-func AssociateContainerGPU(cID string, d device.Device) {
+func AssociateContainerGPU(cID cproto.ID, d device.Device) { //nolint: interfacer
 	if d.Type == device.GPU {
 		gpuUUIDToContainerID.
-			WithLabelValues(d.UUID, cID).
+			WithLabelValues(d.UUID, cID.String()).
 			Inc()
 	}
 }
@@ -142,92 +148,4 @@ func DisassociateContainerGPU(cID string, d device.Device) {
 
 	gpuUUIDToContainerID.WithLabelValues(d.UUID, cID).Dec()
 	gpuUUIDToContainerID.DeleteLabelValues(d.UUID, cID)
-}
-
-// AddAgentAsTarget adds an entry to a list of currently active agents in a target JSON file.
-// This file is watched by Prometheus for changes to which targets to scrape.
-func AddAgentAsTarget(
-	ctx *actor.Context,
-	agentID string,
-	agentAddress string,
-	agentResourcePool string) {
-	ctx.Log().Infof("adding agent %s at %s as a prometheus target", agentID, agentAddress)
-
-	if _, err := os.Stat(targetsFile); os.IsNotExist(err) {
-		_, err = os.OpenFile(targetsFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-		if err != nil {
-			ctx.Log().Errorf("Error creating targets config file %s", err)
-		}
-	}
-
-	fileSDConfig := fileSDConfigEntry{
-		Targets: []string{
-			agentAddress + dcgmPort,
-			agentAddress + cAdvisorPort,
-		}, Labels: map[string]string{
-			detAgentIDLabel:      agentID,
-			detResourcePoolLabel: agentResourcePool,
-		},
-	}
-
-	fileSDConfigs := getFileSDConfigs()
-
-	fileSDConfigs = append(fileSDConfigs, fileSDConfig)
-
-	err := writeConfigsToTargetsFile(fileSDConfigs)
-
-	if err != nil {
-		ctx.Log().Errorf("Error adding entry to file %s", err)
-	}
-}
-
-// RemoveAgentAsTarget removes agent from the file SD targets config.
-func RemoveAgentAsTarget(ctx *actor.Context,
-	agentID string,
-) {
-	ctx.Log().Infof("Removing %s as a target", agentID)
-
-	fileSDConfigs := getFileSDConfigs()
-
-	for i := range fileSDConfigs {
-		ctx.Log().Infof("Checking %s", fileSDConfigs[i].Labels[detAgentIDLabel])
-
-		if fileSDConfigs[i].Labels[detAgentIDLabel] == agentID {
-			ctx.Log().Infof("Removing agent %s from targets.json", agentID)
-			fileSDConfigs = append(fileSDConfigs[:i], fileSDConfigs[i+1:]...)
-			break
-		}
-	}
-
-	err := writeConfigsToTargetsFile(fileSDConfigs)
-
-	if err != nil {
-		ctx.Log().Errorf("Error updating targets file %s", err)
-	}
-}
-
-func getFileSDConfigs() []fileSDConfigEntry {
-	var fileSDConfigs []fileSDConfigEntry
-
-	fileContent, _ := ioutil.ReadFile(targetsFile)
-
-	_ = json.Unmarshal(fileContent, &fileSDConfigs)
-
-	return fileSDConfigs
-}
-
-func writeConfigsToTargetsFile(configs []fileSDConfigEntry) error {
-	targetsJSON, err := json.MarshalIndent(configs, "", "  ")
-
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(targetsFile, targetsJSON, 0644) //nolint: gosec
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

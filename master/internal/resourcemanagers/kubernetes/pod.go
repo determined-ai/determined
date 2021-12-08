@@ -248,7 +248,6 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-
 		// testLogStreamer is a testing flag only set in the pod_tests.
 		// This allows us to bypass the need for a log streamer or REST server.
 		if !p.testLogStreamer {

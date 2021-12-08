@@ -831,8 +831,10 @@ func (m *Master) Run(ctx context.Context) error {
 		p := prometheus.NewPrometheus("echo", nil)
 		p.Use(m.echo)
 		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))
-		m.echo.Any("/debug/prom/det-metrics",
+		m.echo.Any("/prom/det-state-metrics",
 			echo.WrapHandler(promhttp.HandlerFor(prom.DetStateMetrics, promhttp.HandlerOpts{})))
+		m.echo.Any("/prom/det-http-sd-config",
+			api.Route(m.getPrometheusTargets))
 	}
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})

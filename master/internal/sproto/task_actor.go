@@ -31,7 +31,8 @@ type (
 	}
 	// TaskContainerStarted contains the information needed by tasks from container started.
 	TaskContainerStarted struct {
-		Addresses []cproto.Address
+		Addresses           []cproto.Address
+		NativeReservationID string
 	}
 	// TaskContainerStopped contains the information needed by tasks from container stopped.
 	TaskContainerStopped struct {
