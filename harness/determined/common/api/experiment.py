@@ -133,7 +133,7 @@ def create_experiment(
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:
     body = {
-        "activate": activate,
+        "activate": False,
         "experiment_config": yaml.safe_dump(config),
         "model_definition": [e.dict() for e in model_context.entries],
         "validate_only": validate_only,
@@ -154,6 +154,9 @@ def create_experiment(
 
     new_resource = r.headers["Location"]
     experiment_id = int(new_resource.split("/")[-1])
+
+    if activate:
+        activate_experiment(master_url, experiment_id)
 
     return experiment_id
 
