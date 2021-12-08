@@ -385,7 +385,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.clearJobInfo()
 
 	default:
-		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil

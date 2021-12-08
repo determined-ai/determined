@@ -59,7 +59,7 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 	return stats
 }
 
-func updateAllocateReqStates(req *sproto.AllocateRequest, taskList *taskList) {
+func updateAllocateReqState(req *sproto.AllocateRequest, taskList *taskList) {
 	allocations := taskList.GetAllocations(req.TaskActor)
 	if allocations == nil || len(allocations.Reservations) == 0 {
 		req.State = job.SchedulingStateQueued

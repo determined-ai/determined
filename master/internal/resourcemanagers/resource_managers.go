@@ -77,7 +77,3 @@ func orderTaskMapToSlice(taskMap orderedTaskMap) AllocReqs {
 	}
 	return out
 }
-
-func trueFilter(req *sproto.AllocateRequest) bool {
-	return true
-}

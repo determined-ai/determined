@@ -20,9 +20,6 @@ type priorityScheduler struct {
 // AllocReqs is an alias for a list of Allocate Requests.
 type AllocReqs = []*sproto.AllocateRequest
 
-// REMOVEME can't replace groups identifier with job id since not all groups are
-// associated with a job, eg GC tasks that aren't related to a job.
-
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 	return &priorityScheduler{
@@ -38,21 +35,8 @@ func (p *priorityScheduler) createJobQInfo(
 	pending map[int]AllocReqs,
 	scheduled map[int]AllocReqs,
 ) (job.AQueue, map[model.JobID]*actor.Ref) {
-	reqs := make(AllocReqs, 0)
-	// FIXME there is gotta be a friendlier version of this.
-	// can we stick to slices together quickly in Go?
-	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
-		if out == nil {
-			panic("missing output array. (nil pointer)")
-		}
-		priorities := getOrderedPriorities(aMap)
-		for _, priority := range priorities {
-			*out = append(*out, aMap[priority]...)
-		}
-	}
-
-	readFromPrioToTask(scheduled, &reqs)
-	readFromPrioToTask(pending, &reqs)
+	reqs := orderTaskMapToSlice(scheduled)
+	reqs = append(reqs, orderTaskMapToSlice(pending)...)
 	jobQInfo, jobActors := mergeToJobQInfo(reqs)
 	return jobQInfo, jobActors
 }
@@ -65,21 +49,12 @@ func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled 
 }
 
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	/*
-		compute a single numerical ordering for allocationreuqests that can be modified.
-		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms
-		of priority. do we completely hide these from the user? discussed: we shouldn't show these to
-		the user
-		. either way we
-		1. get a total ordering of allocation requests
-		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any,
-		maphallocationrequests to their jobid, per job id only keep the first occurrence
-		3. convert the resulting ordered list of jobids into a Job type for job apis
-	*/
-	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(rp.taskList, rp.groups, trueFilter)
-	reqs := orderTaskMapToSlice(scheduledMap)
-	reqs = append(reqs, orderTaskMapToSlice(pendingMap)...)
-	jobQInfo, _ := mergeToJobQInfo(reqs)
+	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(
+		rp.taskList,
+		rp.groups,
+		func(req *sproto.AllocateRequest) bool { return true },
+	)
+	jobQInfo, _ := p.createJobQInfo(pendingMap, scheduledMap)
 	return jobQInfo
 }
 
@@ -296,7 +271,7 @@ func sortTasksByPriorityAndTimestamp(
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}
 
-		updateAllocateReqStates(req, taskList)
+		updateAllocateReqState(req, taskList)
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
@@ -384,6 +359,7 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 	}
 }
 
+// TODO probably should be shared with between the k8 and priority scheduler.
 func sortTasks(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
