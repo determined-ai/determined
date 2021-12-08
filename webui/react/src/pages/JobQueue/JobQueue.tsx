@@ -208,16 +208,16 @@ const JobQueue: React.FC = () => {
       resetSettings([ 'selectedRp' ]);
     } else if (!selectedRp) {
       let pool: ResourcePool | undefined = undefined;
-      if (settings.selectedRp) {
-        pool = resourcePools.find(pool => pool.name === settings.selectedRp);
+      if (settings.selectedPool) {
+        pool = resourcePools.find(pool => pool.name === settings.selectedPool);
       }
       if (!pool) {
         pool = resourcePools[0];
       }
-      updateSettings({ selectedRp: pool.name });
+      updateSettings({ selectedPool: pool.name });
       setSelectedRp(pool);
     }
-  }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedRp ]);
+  }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedPool ]);
 
   useEffect(() => {
     fetchResourcePools();
@@ -251,7 +251,7 @@ const JobQueue: React.FC = () => {
     return () => {
       const rp = resourcePools.find(rp => rp.name === rpName) as ResourcePool;
       setSelectedRp(rp);
-      updateSettings({ selectedRp: rp.name });
+      updateSettings({ selectedPool: rp.name });
     };
   }, [ resourcePools, updateSettings ]);
 
