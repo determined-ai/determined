@@ -1125,7 +1125,8 @@ jobs:
       # job should depend on build-go
       # - run: make -C master get-deps
       - install-devcluster
-      - start-devcluster
+      - start-devcluster:
+          devcluster-config: single.devcluster.yaml
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
 
       - run-e2e-webui-tests
@@ -1219,6 +1220,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
+            - "proto/build"
             - "master/build"
             - "agent/build"
 
