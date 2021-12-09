@@ -19,7 +19,8 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'constants/states';
+import { cancellableRunStates, deletableRunStates, pausableRunStates,
+  terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -92,12 +93,12 @@ const ExperimentList: React.FC = () => {
       const experiment = experimentMap[id];
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
-      const isCancelable = cancellableRunStates.includes(experiment.state);
+      const isCancelable = cancellableRunStates.has(experiment.state);
       const isDeletable = deletableRunStates.has(experiment.state) &&
         user && (user.isAdmin || user.username === experiment.username);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
-      const isPausable = experiment.state === RunState.Active;
+      const isPausable = pausableRunStates.has(experiment.state);
       if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
       if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
       if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;

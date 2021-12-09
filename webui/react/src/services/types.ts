@@ -259,3 +259,6 @@ export interface GetJobQParams extends PaginationParams, FetchOptions {
 export interface GetJobsResponse extends Api.V1GetJobsResponse {
   jobs: Job[];
 }
+export interface GetJobQStatsParams extends FetchOptions {
+  resourcePools?: string[];
+}

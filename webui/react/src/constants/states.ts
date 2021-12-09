@@ -24,9 +24,29 @@ export const activeRunStates: Array<
   'STATE_STOPPING_ERROR',
 ];
 
+const jobStates: Array<JobState> = [
+  JobState.QUEUED, JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED,
+];
+// DISCUSS maybe not combining the states would have been better as JobState is
+// a subset of RunState.Active
 export const killableRunStates: CompoundRunState[] =
-  [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
-export const cancellableRunStates: CompoundRunState[] = [ RunState.Active, RunState.Paused ];
+  [ RunState.Active,
+    RunState.Paused,
+    RunState.StoppingCanceled,
+    ...jobStates,
+  ];
+
+export const pausableRunStates: Set<CompoundRunState> = new Set([ RunState.Active, ...jobStates ]);
+export const isProgressingRunStates: Set<CompoundRunState> = new Set([ RunState.Active,
+  JobState.SCHEDULED,
+  JobState.SCHEDULEDBACKFILLED ]);
+
+export const cancellableRunStates: Set<CompoundRunState> = new Set([
+  RunState.Active,
+  RunState.Paused,
+  ...jobStates,
+]);
+
 export const killableCommandStates = [
   CommandState.Assigned,
   CommandState.Pending,
@@ -40,18 +60,16 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-export const terminalRunStates: Set<CompoundRunState> = new Set([
-  RunState.Canceled,
-  RunState.Completed,
-  RunState.Errored,
-  RunState.Deleted,
-]);
-
 export const deletableRunStates: Set<CompoundRunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
   RunState.DeleteFailed,
+]);
+
+export const terminalRunStates: Set<CompoundRunState> = new Set([
+  ...deletableRunStates,
+  RunState.Deleted,
 ]);
 
 export const runStateToLabel: { [key in RunState]: string } = {
