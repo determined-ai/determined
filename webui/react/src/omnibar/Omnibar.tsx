@@ -1,5 +1,5 @@
 import OmnibarNpm from 'omnibar';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import * as Tree from 'omnibar/tree-extension/index';
@@ -9,7 +9,15 @@ import { isTreeNode } from 'omnibar/tree-extension/utils';
 
 import css from './Omnibar.module.scss';
 
-const Omnibar: React.FC = () => {
+interface Props {
+  visible?: boolean;
+}
+
+const omnibarInput = () => document.querySelector(
+  '#omnibar input[type="text"]',
+) as (HTMLInputElement | null);
+
+const Omnibar: React.FC<Props> = ({ visible }) => {
   const storeDispatch = useStoreDispatch();
 
   const hideBar = useCallback(
@@ -23,15 +31,23 @@ const Omnibar: React.FC = () => {
     A potential option is use the value prop in combinatio with encoding the tree path into
     the options returned by the tree extension.
     */
-    const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
+    const input: HTMLInputElement|null = omnibarInput();
+
     if (!input) return;
     if (isTreeNode(item)) {
       return Tree.onAction(input, item, query);
     }
   }, []);
 
+  useEffect(() => {
+    if (visible) {
+      const input: HTMLInputElement|null = omnibarInput();
+      if (input) input.focus();
+    }
+  }, [ visible ]);
+
   return (
-    <div className={css.base}>
+    <div className={css.base} style={{ display: visible ? 'unset' : 'none' }}>
       <div className={css.backdrop} onClick={hideBar} />
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>
