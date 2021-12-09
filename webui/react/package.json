@@ -13,7 +13,7 @@
     "lint:js": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:css": "stylelint --config .stylelintrc.js \"src/**/*.{css,less,scss}\"",
     "test": "craco test --config jest.config.js",
-    "test:coverage": "CI=true JEST_JUNIT_OUTPUT_DIR=coverage npm test -- --env=jsdom --coverage --reporters=default --reporters=jest-junit",
+    "test:coverage": "npm test -- --env=jsdom --coverage --reporters default",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "storybook": "NODE_PATH=src start-storybook -p 9009",

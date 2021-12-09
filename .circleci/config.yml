@@ -1175,10 +1175,12 @@ jobs:
   test-unit-react:
     docker:
       - image: cimg/node:14.16
+        environment:
+          CI: "true"
     steps:
       - checkout
       - react-get-deps
-      - run: make -C webui/react test
+      - run: make -C webui/react test-ci
       - store_test_results:
           path: webui/react/coverage
       - store_artifacts:
