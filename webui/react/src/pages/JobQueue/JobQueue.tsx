@@ -77,14 +77,14 @@ const JobQueue: React.FC = () => {
   const fetchAll = useCallback(async () => {
     try {
       const promises = [
-        getJobQStats({}).then(stats => {
+        getJobQStats({}, { signal: canceler.signal }).then(stats => {
           setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
         }),
         fetchJobs(),
       ] as Promise<unknown>[];
       await Promise.all(promises);
     } catch (e) { }
-  }, [ fetchJobs ]);
+  }, [ fetchJobs, canceler.signal ]);
 
   usePolling(fetchAll);
 
@@ -225,10 +225,10 @@ const JobQueue: React.FC = () => {
 
   useEffect(() => {
     setPs(cur => ({ ...cur, isLoading: true }));
-    fetchJobs();
+    fetchAll();
     return () => canceler.abort();
   }, [
-    fetchJobs,
+    fetchAll,
     canceler,
     settings.sortDesc,
     settings.sortKey,
@@ -248,7 +248,8 @@ const JobQueue: React.FC = () => {
 
   const rpSwitcher = useCallback((rpName: string) => {
     return () => {
-      const rp = resourcePools.find(rp => rp.name === rpName) as ResourcePool;
+      const rp = resourcePools.find(rp => rp.name === rpName);
+      if (!rp) return;
       setSelectedRp(rp);
       updateSettings({ selectedPool: rp.name });
     };
