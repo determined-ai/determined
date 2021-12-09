@@ -438,9 +438,9 @@ func (a *Allocation) TaskContainerStateChanged(
 		}
 
 		for cID := range a.reservations {
-			prom.DisassociateAllocationTask(a.req.AllocationID.String(),
-				a.req.TaskID.String(),
-				a.req.TaskActor.Address().String())
+			prom.DisassociateAllocationTask(a.req.AllocationID,
+				a.req.TaskID,
+				a.req.TaskActor.Address())
 			prom.RemoveAllocationReservation(a.reservations[cID].Summary())
 		}
 	}

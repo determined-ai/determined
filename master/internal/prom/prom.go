@@ -80,32 +80,35 @@ func init() { //nolint: gochecknoinits
 }
 
 // AssociateAllocationContainer associates an allocation with its container ID.
-func AssociateAllocationContainer(aID string, cID string) {
-	containerIDToAllocationID.WithLabelValues(cID, aID).Inc()
+//nolint: interfacer
+func AssociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
+	containerIDToAllocationID.WithLabelValues(cID.String(), aID.String()).Inc()
 }
 
 // AssociateAllocationTask associates an allocation ID with its task info.
+//nolint: interfacer
 func AssociateAllocationTask(aID model.AllocationID,
 	tID model.TaskID,
-	taskActor actor.Address) { //nolint: interfacer
+	taskActor actor.Address) {
 	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String()).Inc()
 }
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
-func DisassociateAllocationTask(aID string, tID string, taskActor string) {
-	allocationIDToTask.WithLabelValues(aID, tID, taskActor).Dec()
+//nolint: interfacer
+func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address) {
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String()).Dec()
 }
 
 // AssociateContainerRuntimeID associates a Determined container ID with the runtime container ID.
-func AssociateContainerRuntimeID(cID string, dcID string) {
-	containerIDToRuntimeID.WithLabelValues(dcID, cID).Inc()
+func AssociateContainerRuntimeID(cID cproto.ID, dcID string) {
+	containerIDToRuntimeID.WithLabelValues(dcID, cID.String()).Inc()
 }
 
 // AddAllocationReservation associates allocation and container and container and GPUs.
 func AddAllocationReservation(summary sproto.ContainerSummary,
 	containerStarted *sproto.TaskContainerStarted) {
-	AssociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
-	AssociateContainerRuntimeID(summary.ID.String(), containerStarted.NativeReservationID)
+	AssociateAllocationContainer(summary.AllocationID, summary.ID)
+	AssociateContainerRuntimeID(summary.ID, containerStarted.NativeReservationID)
 	for _, d := range summary.Devices {
 		AssociateContainerGPU(summary.ID, d)
 	}
@@ -113,15 +116,16 @@ func AddAllocationReservation(summary sproto.ContainerSummary,
 
 // RemoveAllocationReservation disassociates allocation and container and container and its GPUs.
 func RemoveAllocationReservation(summary sproto.ContainerSummary) {
-	DisassociateAllocationContainer(summary.AllocationID.String(), summary.ID.String())
+	DisassociateAllocationContainer(summary.AllocationID, summary.ID)
 	for _, d := range summary.Devices {
-		DisassociateContainerGPU(summary.ID.String(), d)
+		DisassociateContainerGPU(summary.ID, d)
 	}
 }
 
 // DisassociateAllocationContainer disassociates allocation ID with its container ID.
-func DisassociateAllocationContainer(aID string, cID string) {
-	containerIDToAllocationID.WithLabelValues(cID, aID).Dec()
+//nolint: interfacer
+func DisassociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
+	containerIDToAllocationID.WithLabelValues(cID.String(), aID.String()).Dec()
 }
 
 // AssociateExperimentIDLabels assicates experiment ID with a list of labels.
@@ -132,7 +136,8 @@ func AssociateExperimentIDLabels(eID string, labels []string) {
 }
 
 // AssociateContainerGPU associates container ID with GPU device ID.
-func AssociateContainerGPU(cID cproto.ID, d device.Device) { //nolint: interfacer
+//nolint: interfacer
+func AssociateContainerGPU(cID cproto.ID, d device.Device) {
 	if d.Type == device.GPU {
 		gpuUUIDToContainerID.
 			WithLabelValues(d.UUID, cID.String()).
@@ -141,11 +146,12 @@ func AssociateContainerGPU(cID cproto.ID, d device.Device) { //nolint: interface
 }
 
 // DisassociateContainerGPU removes association between container ID and device ID.
-func DisassociateContainerGPU(cID string, d device.Device) {
+//nolint: interfacer
+func DisassociateContainerGPU(cID cproto.ID, d device.Device) {
 	if d.Type != device.GPU {
 		return
 	}
 
-	gpuUUIDToContainerID.WithLabelValues(d.UUID, cID).Dec()
-	gpuUUIDToContainerID.DeleteLabelValues(d.UUID, cID)
+	gpuUUIDToContainerID.WithLabelValues(d.UUID, cID.String()).Dec()
+	gpuUUIDToContainerID.DeleteLabelValues(d.UUID, cID.String())
 }
