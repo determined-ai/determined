@@ -6,7 +6,8 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Icon from 'components/Icon';
-import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'constants/states';
+import { cancellableRunStates, deletableRunStates, pausableRunStates,
+  terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
@@ -39,11 +40,11 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
   const isUnarchivable = isExperiment && isExperimentTerminal && (task as ExperimentTask).archived;
   const isKillable = isTaskKillable(task);
   const isPausable = isExperiment
-    && task.state === RunState.Active;
+    && pausableRunStates.has(task.state as RunState);
   const isResumable = isExperiment
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
-    && cancellableRunStates.includes(task.state as RunState);
+    && cancellableRunStates.has(task.state as RunState);
   const isDeletable = (
     isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
   ) ? deletableRunStates.has(task.state) : false;
