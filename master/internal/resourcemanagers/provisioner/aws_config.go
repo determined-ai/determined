@@ -30,7 +30,8 @@ type AWSClusterConfig struct {
 	NetworkInterface      ec2NetworkInterface `json:"network_interface"`
 	IamInstanceProfileArn string              `json:"iam_instance_profile_arn"`
 
-	InstanceType ec2InstanceType `json:"instance_type"`
+	InstanceType  ec2InstanceType `json:"instance_type"`
+	InstanceSlots *int            `json:"instance_slots,omitempty"`
 
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
@@ -124,6 +125,30 @@ func (c *AWSClusterConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, DefaultParser(c))
 }
 
+func validateInstanceTypeSlots(c AWSClusterConfig) error {
+	// Must have an instance in ec2InstanceSlots map or InstanceSlots set
+	instanceType := c.InstanceType
+	if _, ok := ec2InstanceSlots[instanceType]; ok {
+		return nil
+	}
+
+	instanceSlots := c.InstanceSlots
+	if instanceSlots != nil {
+		if *instanceSlots < 0 {
+			return errors.Errorf("ec2 'instance_slots' must be greater than or equal to 0")
+		}
+		ec2InstanceSlots[instanceType] = *instanceSlots
+		return nil
+	}
+
+	strs := make([]string, 0, len(ec2InstanceSlots))
+	for t := range ec2InstanceSlots {
+		strs = append(strs, t.name())
+	}
+	return errors.Errorf("Either ec2 'instance_type' and 'instance_slots' must be specified or "+
+		"the ec2 'instance_type' must be one of types: %s", strings.Join(strs, ", "))
+}
+
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
 	var spotPriceIsNotValidNumberErr error
@@ -134,6 +159,7 @@ func (c AWSClusterConfig) Validate() []error {
 		check.GreaterThan(len(c.SSHKeyName), 0, "ec2 key name must be non-empty"),
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
 		spotPriceIsNotValidNumberErr,
+		validateInstanceTypeSlots(c),
 	}
 }
 
@@ -207,23 +233,10 @@ func (t ec2InstanceType) Slots() int {
 	return 0
 }
 
-func (t ec2InstanceType) Validate() []error {
-	if _, ok := ec2InstanceSlots[t]; ok {
-		return nil
-	}
-	strs := make([]string, 0, len(ec2InstanceSlots))
-	for t := range ec2InstanceSlots {
-		strs = append(strs, t.name())
-	}
-	return []error{
-		errors.Errorf("ec2 instance type must be valid type: %s", strings.Join(strs, ", ")),
-	}
-}
-
 // This map tracks how many slots are available in each instance type. It also
 // serves as the list of instance types that the provisioner may provision - if
-// the master.yaml is configured with an instance type not on this list, the
-// provisioner will consider it an error.
+// the master.yaml is configured with an instance type and instance slots are
+// not specified the provisioner will consider it an error.
 var ec2InstanceSlots = map[ec2InstanceType]int{
 	"g4dn.xlarge":   1,
 	"g4dn.2xlarge":  1,
