@@ -27,8 +27,6 @@ export const activeRunStates: Array<
 const jobStates: Array<JobState> = [
   JobState.QUEUED, JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED,
 ];
-// DISCUSS maybe not combining the states would have been better as JobState is
-// a subset of RunState.Active
 export const killableRunStates: CompoundRunState[] =
   [ RunState.Active,
     RunState.Paused,
