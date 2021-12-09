@@ -15,10 +15,9 @@ import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
-import { cancelExperiment, getJobQ, killCommand, killExperiment,
+import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
@@ -78,7 +77,7 @@ const JobQueue: React.FC = () => {
   const fetchAll = useCallback(async () => {
     try {
       const promises = [
-        detApi.Internal.getJobQueueStats().then(stats => {
+        getJobQStats({}).then(stats => {
           setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
         }),
         fetchJobs(),
