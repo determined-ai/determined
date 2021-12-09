@@ -713,7 +713,8 @@ export const getJobQueue: Service.DetApi<
 };
 
 export const getJobQueueStats: Service.DetApi<
-  Service.GetJobQStatsParams, Api.V1GetJobQueueStatsResponse,
+  Service.GetJobQStatsParams,
+  Api.V1GetJobQueueStatsResponse,
   Api.V1GetJobQueueStatsResponse
 > = {
   name: 'getJobQStats',
