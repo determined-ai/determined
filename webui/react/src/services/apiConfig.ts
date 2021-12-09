@@ -8,7 +8,7 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import * as Type from 'types';
 
-import { noOp } from './utils';
+import { identity, noOp } from './utils';
 
 const ApiConfig = new Api.Configuration({
   apiKey: `Bearer ${globalStorage.authToken}`,
@@ -710,6 +710,15 @@ export const getJobQueue: Service.DetApi<
     params.resourcePool,
     params.orderBy,
   ),
+};
+
+export const getJobQueueStats: Service.DetApi<
+  Service.GetJobQStatsParams, Api.V1GetJobQueueStatsResponse,
+  Api.V1GetJobQueueStatsResponse
+> = {
+  name: 'getJobQStats',
+  postProcess: identity,
+  request: ({ resourcePools }) => detApi.Internal.getJobQueueStats(resourcePools),
 };
 
 /* Logs */
