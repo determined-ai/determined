@@ -46,7 +46,7 @@ const JobQueue: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const [ selectedRp, setSelectedRp ] = useState<ResourcePool>();
-  const [ ps, setPs ] = useState<{isLoading: boolean}>({ isLoading: true }); // house keeping states
+  const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
   const {
     settings,
     updateSettings,
@@ -91,7 +91,7 @@ const JobQueue: React.FC = () => {
         type: ErrorType.Server,
       });
     } finally {
-      setPs(cur => ({ ...cur, isLoading: false }));
+      setPageState(cur => ({ ...cur, isLoading: false }));
     }
   }, [ canceler.signal, selectedRp?.name, settings ]);
 
@@ -233,7 +233,7 @@ const JobQueue: React.FC = () => {
   }, [ canceler, fetchResourcePools ]);
 
   useEffect(() => {
-    setPs(cur => ({ ...cur, isLoading: true }));
+    setPageState(cur => ({ ...cur, isLoading: true }));
     fetchAll();
     return () => canceler.abort();
   }, [
@@ -301,7 +301,7 @@ const JobQueue: React.FC = () => {
         <ResponsiveTable<Job>
           columns={columns}
           dataSource={jobs}
-          loading={ps.isLoading}
+          loading={pageState.isLoading}
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
