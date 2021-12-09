@@ -88,7 +88,7 @@ export const onAction = async (
   inputEl: HTMLInputElement,
   item: TreeNode,
   query: (inputEl: string) => void,
-): Promise<void> => {
+): Promise<boolean> => {
   const { path } = await parseInput(inputEl.value, root);
   // update the omnibar text to reflect the current path
   inputEl.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
@@ -98,10 +98,10 @@ export const onAction = async (
     // if we opt to auto close the bar for user in some scenarios this
     // would be the place to check for it.
     message.info('Action executed.', 1);
-  } else {
-    // trigger the query.
-    inputEl.value = inputEl.value + SEPARATOR;
-    query(inputEl.value);
+    return Promise.resolve(true);
   }
-  return Promise.resolve();
+  // trigger the query.
+  inputEl.value = inputEl.value + SEPARATOR;
+  query(inputEl.value);
+  return Promise.resolve(false);
 };

@@ -25,7 +25,7 @@ const Omnibar: React.FC<Props> = ({ visible }) => {
     [ storeDispatch ],
   );
 
-  const onAction = useCallback((item, query) => {
+  const onAction = useCallback(async (item, query) => {
     /*
     Ideally we wouldn't need to access the element like this.
     A potential option is use the value prop in combinatio with encoding the tree path into
@@ -35,9 +35,10 @@ const Omnibar: React.FC<Props> = ({ visible }) => {
 
     if (!input) return;
     if (isTreeNode(item)) {
-      return Tree.onAction(input, item, query);
+      const close = await Tree.onAction(input, item, query);
+      if (close) hideBar();
     }
-  }, []);
+  }, [ hideBar ]);
 
   useEffect(() => {
     if (visible) {
