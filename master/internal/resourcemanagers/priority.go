@@ -31,30 +31,25 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-func (p *priorityScheduler) createJobQInfo(
-	pending map[int]AllocReqs,
-	scheduled map[int]AllocReqs,
-) (job.AQueue, map[model.JobID]*actor.Ref) {
-	reqs := orderTaskMapToSlice(scheduled)
-	reqs = append(reqs, orderTaskMapToSlice(pending)...)
+func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
+	reqs := sortTasks(taskList, groups, false)
 	jobQInfo, jobActors := mergeToJobQInfo(reqs)
-	return jobQInfo, jobActors
-}
-
-func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) {
-	jobQ, jobActors := p.createJobQInfo(pending, scheduled)
 	for jobID, jobActor := range jobActors {
-		jobActor.System().Tell(jobActor, jobQ[jobID])
+		rmJobInfo, ok := jobQInfo[jobID]
+		if jobActor == nil || !ok || rmJobInfo == nil {
+			continue
+		}
+		jobActor.System().Tell(jobActor, rmJobInfo)
 	}
 }
 
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	pendingMap, scheduledMap := sortTasksByPriorityAndTimestamp(
-		rp.taskList,
-		rp.groups,
-		func(req *sproto.AllocateRequest) bool { return true },
-	)
-	jobQInfo, _ := p.createJobQInfo(pendingMap, scheduledMap)
+	for it := rp.taskList.iterator(); it.next(); {
+		req := it.value()
+		updateAllocateReqState(req, rp.taskList)
+	}
+	reqs := sortTasks(rp.taskList, rp.groups, false)
+	jobQInfo, _ := mergeToJobQInfo(reqs)
 	return jobQInfo
 }
 
@@ -80,13 +75,7 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
-	if len(agents) == 0 { // report queue state if no agents are available
-		for _, zeroSlots := range []bool{false, true} {
-			priorityToPendingTasksMap, priorityToScheduledTaskMap :=
-				sortTasksByPriorityAndTimestamp(taskList, groups, taskFilter("", zeroSlots))
-			p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
-		}
-	}
+	p.reportJobQInfo(taskList, groups)
 
 	return toAllocate, toRelease
 }
@@ -110,7 +99,6 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
 		sortTasksByPriorityAndTimestamp(taskList, groups, filter)
 
-	p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
@@ -287,7 +275,7 @@ func sortTasksByPriorityAndTimestamp(
 	} {
 		for _, tasks := range tasksMap {
 			sort.Slice(tasks, func(i, j int) bool {
-				return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+				return compareByRegisteredTime(tasks, i, j)
 			})
 		}
 	}
@@ -359,7 +347,11 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 	}
 }
 
-// TODO probably should be shared with between the k8 and priority scheduler.
+// compareByRegisteredTime sorts tasks by their registration time.
+func compareByRegisteredTime(tasks []*sproto.AllocateRequest, i, j int) bool {
+	return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+}
+
 func sortTasks(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
@@ -390,7 +382,7 @@ func sortTasks(
 			}
 		}
 
-		return reqs[i].TaskActor.RegisteredTime().Before(reqs[j].TaskActor.RegisteredTime())
+		return compareByRegisteredTime(reqs, i, j)
 	})
 
 	return reqs
