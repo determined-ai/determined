@@ -2,6 +2,7 @@ import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import handleError from 'ErrorHandler';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
@@ -35,8 +36,12 @@ const Omnibar: React.FC<Props> = ({ visible }) => {
 
     if (!input) return;
     if (isTreeNode(item)) {
-      const close = await Tree.onAction(input, item, query);
-      if (close) hideBar();
+      try {
+        const close = await Tree.onAction(input, item, query);
+        if (close) hideBar();
+      } catch (e) {
+        handleError(e);
+      }
     }
   }, [ hideBar ]);
 

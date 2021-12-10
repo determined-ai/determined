@@ -1,4 +1,5 @@
 import { resetServerAddress, setServerAddress } from 'dev';
+import { DaError, ErrorLevel, ErrorType } from 'ErrorHandler';
 import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
@@ -21,9 +22,16 @@ const dev: TreeNode[] = [
               const isAlive = await checkServerAlive(inp);
               if (isAlive) {
                 setServerAddress(inp);
-              } else {
-                alertAction(`Could not find a valid server at ${inp}`)();
               }
+              const error: DaError = {
+                isUserTriggered: true,
+                level: ErrorLevel.Error,
+                message: `Could not find a valid server at "${inp}"`,
+                publicMessage: `Could not find a valid server at "${inp}"`,
+                publicSubject: 'Server not found',
+                type: ErrorType.Ui,
+              };
+              throw error;
             },
             title: inp,
           } ];
