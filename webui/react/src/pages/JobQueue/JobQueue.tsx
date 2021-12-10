@@ -11,6 +11,7 @@ import {
 } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -18,6 +19,7 @@ import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/Jo
 import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
+import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
@@ -44,7 +46,7 @@ const JobQueue: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const [ selectedRp, setSelectedRp ] = useState<ResourcePool>();
-  const [ ps, setPs ] = useState<{isLoading: boolean}>({ isLoading: true }); // house keeping states
+  const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
   const {
     settings,
     updateSettings,
@@ -53,38 +55,45 @@ const JobQueue: React.FC = () => {
 
   const fetchResourcePools = useFetchResourcePools(canceler);
 
-  const fetchJobs = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     if (!selectedRp?.name) return;
+
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      const tJobs = await getJobQ(
-        {
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-          orderBy,
-          resourcePool: selectedRp.name,
-        },
-        { signal: canceler.signal },
-      );
-      setJobs(tJobs.jobs);
-      tJobs.pagination.total && setTotal(tJobs.pagination.total);
-      return tJobs;
-    } catch (e) { } finally {
-      setPs(cur => ({ ...cur, isLoading: false }));
-    }
-  }, [ selectedRp?.name, canceler, settings ]);
-
-  const fetchAll = useCallback(async () => {
-    try {
       const promises = [
-        getJobQStats({}, { signal: canceler.signal }).then(stats => {
-          setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
-        }),
-        fetchJobs(),
-      ] as Promise<unknown>[];
-      await Promise.all(promises);
-    } catch (e) { }
-  }, [ fetchJobs, canceler.signal ]);
+        getJobQ(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+            orderBy,
+            resourcePool: selectedRp.name,
+          },
+          { signal: canceler.signal },
+        ),
+        getJobQStats({}, { signal: canceler.signal }),
+      ] as [ Promise<GetJobsResponse>, Promise<Api.V1GetJobQueueStatsResponse> ];
+
+      const [ jobs, stats ] = await Promise.all(promises);
+
+      // Process jobs response.
+      setJobs(jobs.jobs);
+      if (jobs.pagination.total) setTotal(jobs.pagination.total);
+
+      // Process job stats response.
+      setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicSubject: 'Unable to fetch job queue and stats.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    } finally {
+      setPageState(cur => ({ ...cur, isLoading: false }));
+    }
+  }, [ canceler.signal, selectedRp?.name, settings ]);
 
   usePolling(fetchAll);
 
@@ -224,7 +233,7 @@ const JobQueue: React.FC = () => {
   }, [ canceler, fetchResourcePools ]);
 
   useEffect(() => {
-    setPs(cur => ({ ...cur, isLoading: true }));
+    setPageState(cur => ({ ...cur, isLoading: true }));
     fetchAll();
     return () => canceler.abort();
   }, [
@@ -292,7 +301,7 @@ const JobQueue: React.FC = () => {
         <ResponsiveTable<Job>
           columns={columns}
           dataSource={jobs}
-          loading={ps.isLoading}
+          loading={pageState.isLoading}
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
