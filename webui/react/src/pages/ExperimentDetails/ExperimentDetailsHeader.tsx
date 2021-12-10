@@ -1,22 +1,25 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
+import useModalExperimentStop from 'hooks/useModalExperimentStop';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
-import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
 import { handlePath, paths, routeToReactUrl } from 'routes/utils';
 import {
+  activateExperiment,
   archiveExperiment, deleteExperiment, openOrCreateTensorBoard, patchExperiment,
+  pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
@@ -43,6 +46,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   showForkModal,
   trial,
 }: Props) => {
+  const [ isChangingState, setIsChangingState ] = useState(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
@@ -50,6 +54,54 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     experiment.state === RunState.Deleting,
   );
   const experimentTags = useExperimentTags(fetchExperimentDetails);
+
+  const { modalOpen } = useModalExperimentStop({ experiment });
+
+  const backgroundColor = useMemo(() => {
+    return getStateColorCssVar(experiment.state);
+  }, [ experiment.state ]);
+
+  const handlePauseClick = useCallback(async () => {
+    setIsChangingState(true);
+    try {
+      await pauseExperiment({ experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to pause experiment.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    } finally {
+      setIsChangingState(false);
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
+  const handlePlayClick = useCallback(async () => {
+    setIsChangingState(true);
+    try {
+      await activateExperiment({ experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to activate experiment.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    } finally {
+      setIsChangingState(false);
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
+  const handleStopClick = useCallback(() => modalOpen(), [ modalOpen ]);
 
   const deleteExperimentHandler = useCallback(() => {
     Modal.confirm({
@@ -255,7 +307,38 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         leftContent={(
           <div className={css.base}>
             <div className={css.experimentInfo}>
-              <ExperimentState experiment={experiment} />
+              <Spinner spinning={isChangingState}>
+                <div className={css.experimentState} style={{ backgroundColor }}>
+                  {experiment.state === RunState.Active && (
+                    <Button
+                      className={css.buttonPause}
+                      ghost={true}
+                      icon={<Icon name="pause" size="large" />}
+                      shape="circle"
+                      onClick={handlePauseClick}
+                    />
+                  )}
+                  {experiment.state === RunState.Paused && (
+                    <Button
+                      className={css.buttonPlay}
+                      ghost={true}
+                      icon={<Icon name="play" size="large" />}
+                      shape="circle"
+                      onClick={handlePlayClick}
+                    />
+                  )}
+                  {[ RunState.Active, RunState.Paused ].includes(experiment.state) && (
+                    <Button
+                      className={css.buttonStop}
+                      ghost={true}
+                      icon={<Icon name="stop" size="large" />}
+                      shape="circle"
+                      onClick={handleStopClick}
+                    />
+                  )}
+                  <span className={css.state}>{experiment.state}</span>
+                </div>
+              </Spinner>
               <div className={css.experimentId}>Experiment {experiment.id}</div>
             </div>
             <div className={css.experimentName}>
