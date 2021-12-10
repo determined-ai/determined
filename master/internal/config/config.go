@@ -251,40 +251,32 @@ func ReadPreemptionStatus(rpName string, jobPreemptible bool) bool {
 
 func readRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
-	RMPremption := false // Whether the RM supports preemption
 
 	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.PoolName != rpName {
 			continue
 		}
-		if preemption := resourcemanagers.ReadPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
-			RMPremption = *preemption
-			return RMPremption
+		if rpConfig.Scheduler != nil {
+			return rpConfig.Scheduler.GetPreemption()
 		}
 		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
-			RMPremption = rpConfig.Provider.GCP.InstanceType.Preemptible
-			return RMPremption
+			return rpConfig.Provider.GCP.InstanceType.Preemptible
 		}
 		break
 	}
 
 	// if not found, fall back to resource manager config
-	if config.ResourceManager.AgentRM != nil {
-		if preemption := resourcemanagers.ReadPreemptionFromScheduler(
-			config.ResourceManager.AgentRM.Scheduler,
-		); preemption != nil {
-			RMPremption = *preemption
-			return RMPremption
+	switch {
+	case config.ResourceManager.AgentRM != nil:
+		if config.ResourceManager.AgentRM.Scheduler == nil {
+			panic("scheduler not configured")
 		}
+		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
+	case config.ResourceManager.KubernetesRM != nil:
+		return config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption"
+	default:
+		panic("unexpected resource configuration")
 	}
-
-	if config.ResourceManager.KubernetesRM != nil {
-		if config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption" {
-			RMPremption = true
-		}
-	}
-
-	return RMPremption
 }
 
 // ReadPriority resolves the priority value for a job.

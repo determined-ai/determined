@@ -91,6 +91,21 @@ func (s *SchedulerConfig) GetType() string {
 	}
 }
 
+// GetType returns the type of scheduler that is configured.
+func (s *SchedulerConfig) GetPreemption() bool {
+	var preemptionEnabled bool
+	switch {
+	case s.FairShare != nil:
+		preemptionEnabled = true
+	case s.Priority != nil:
+		preemptionEnabled = s.Priority.Preemption
+	case s.RoundRobin != nil:
+		preemptionEnabled = false
+	}
+	return preemptionEnabled
+}
+
+// FairShareSchedulerConfig holds configurations for the fair share scheduler.
 // FairShareSchedulerConfig holds configurations for the fair share scheduler.
 type FairShareSchedulerConfig struct{}
 

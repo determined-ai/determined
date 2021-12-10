@@ -450,31 +450,12 @@ func (c containerReservation) Kill(ctx *actor.Context) {
 	})
 }
 
-// ReadPreemptionFromScheduler resolves preemption status for a scheduler.
-func ReadPreemptionFromScheduler(config *SchedulerConfig) *bool {
-	if config == nil {
-		return nil
-	}
-	var preemptionEnabled bool
-	switch {
-	case config.FairShare != nil:
-		preemptionEnabled = true
-	case config.Priority != nil:
-		preemptionEnabled = config.Priority.Preemption
-	case config.RoundRobin != nil:
-		preemptionEnabled = false
-	}
-	return &preemptionEnabled
-}
-
 func reportResourcePoolCreated(system *actor.System, config *ResourcePoolConfig) {
-	preemptionEnabled := ReadPreemptionFromScheduler(config.Scheduler)
-	if preemptionEnabled == nil {
+	if config.Scheduler == nil {
 		panic("scheduler not configured in resource pool")
 	}
-
 	telemetry.ReportResourcePoolCreated(
 		system, config.PoolName, config.Scheduler.GetType(),
-		config.Scheduler.FittingPolicy, *preemptionEnabled,
+		config.Scheduler.FittingPolicy, config.Scheduler.GetPreemption(),
 	)
 }
