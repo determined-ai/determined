@@ -36,6 +36,7 @@ setup(
         "termcolor>=1.1.0",
         "boto3",
         # CLI:
+        "pytz",
         "argcomplete>=1.9.4",
         "gitpython>=3.1.3",
         "pyOpenSSL>= 19.1.0",
