@@ -49,7 +49,7 @@ The following configuration settings are supported:
 
       -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for
          NVIDIA GPUs.
-      -  ``determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da`` for ROCm.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.6`` for ROCm.
       -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker

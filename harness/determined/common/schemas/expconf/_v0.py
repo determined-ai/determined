@@ -253,7 +253,7 @@ class EnvironmentImageV0(schemas.SchemaBase):
                 "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
             )
         if self.rocm is None:
-            self.rocm = "determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da"
+            self.rocm = "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-4537b95"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
