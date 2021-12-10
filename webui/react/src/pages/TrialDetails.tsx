@@ -9,7 +9,7 @@ import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorType } from 'ErrorHandler';
-import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
+import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useModal/useModalExperimentCreate';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -60,7 +60,7 @@ const TrialDetailsComp: React.FC = () => {
   const trialId = parseInt(routeParams.trialId);
   const trial = trialDetails.data;
 
-  const { showModal } = useCreateExperimentModal();
+  const { modalOpen } = useCreateExperimentModal();
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -108,14 +108,12 @@ const TrialDetailsComp: React.FC = () => {
   const handleActionClick = useCallback((action: Action) => {
     switch (action) {
       case Action.ContinueTrial:
-        if (experiment && trial) showModal({
-          experiment,
-          trial,
-          type: CreateExperimentType.ContinueTrial,
-        });
+        if (experiment && trial) {
+          modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+        }
         break;
     }
-  }, [ experiment, showModal, trial ]);
+  }, [ experiment, modalOpen, trial ]);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);

@@ -6,7 +6,9 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
+import useCreateExperimentModal, {
+  CreateExperimentType,
+} from 'hooks/useModal/useModalExperimentCreate';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import {
@@ -36,7 +38,7 @@ const ExperimentDetails: React.FC = () => {
 
   const id = parseInt(experimentId);
 
-  const { showModal } = useCreateExperimentModal();
+  const { modalOpen } = useCreateExperimentModal();
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
@@ -63,14 +65,15 @@ const ExperimentDetails: React.FC = () => {
   const { stopPolling } = usePolling(fetchExperimentDetails);
 
   const showForkModal = useCallback((): void => {
+    console.log('showForkModal');
     if (!experiment) return;
-    showModal({ experiment, type: CreateExperimentType.Fork });
-  }, [ experiment, showModal ]);
+    modalOpen({ experiment, type: CreateExperimentType.Fork });
+  }, [ experiment, modalOpen ]);
 
   const showContinueTrial = useCallback((): void => {
     if (!experiment || !trial) return;
-    showModal({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [ experiment, showModal, trial ]);
+    modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+  }, [ experiment, modalOpen, trial ]);
 
   const handleSingleTrialLoad = useCallback((trial: TrialDetails) => {
     setTrial(trial);
