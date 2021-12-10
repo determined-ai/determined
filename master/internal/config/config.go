@@ -243,19 +243,14 @@ func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 	return conf.Priority.DefaultPriority
 }
 
-// ReadPreemptionStatus resolves the desired preemption status for a job.
-func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
-	config := GetMasterConfig()
-	var jobPreemptible bool
-	switch jobConf.(type) {
-	case *expconf.ExperimentConfig:
-		jobPreemptible = true
-	case *model.CommandConfig:
-		jobPreemptible = false
-	default:
-		panic("unexpected jobConf type")
-	}
+// TODO rename to preemtible
+// ReadPreemptionStatus resolves the final preemtible status for a job.
+func ReadPreemptionStatus(rpName string, jobPreemptible bool) bool {
+	return jobPreemptible && readRMPreemptionStatus(rpName)
+}
 
+func readRMPreemptionStatus(rpName string) bool {
+	config := GetMasterConfig()
 	RMPremption := false // Whether the RM supports preemption
 
 	for _, rpConfig := range config.ResourcePools {
@@ -264,11 +259,11 @@ func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
 		}
 		if preemption := resourcemanagers.ReadPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
 			RMPremption = *preemption
-			return jobPreemptible && RMPremption
+			return RMPremption
 		}
 		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
 			RMPremption = rpConfig.Provider.GCP.InstanceType.Preemptible
-			return jobPreemptible && RMPremption
+			return RMPremption
 		}
 		break
 	}
@@ -279,7 +274,7 @@ func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
 			config.ResourceManager.AgentRM.Scheduler,
 		); preemption != nil {
 			RMPremption = *preemption
-			return jobPreemptible && RMPremption
+			return RMPremption
 		}
 	}
 
@@ -289,7 +284,7 @@ func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
 		}
 	}
 
-	return jobPreemptible && RMPremption
+	return RMPremption
 }
 
 // ReadPriority resolves the priority value for a job.
