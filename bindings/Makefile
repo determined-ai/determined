@@ -19,7 +19,6 @@ build/typescript-fetch: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l typescript-fetch -o build/typescript-fetch
 	touch build/typescript-fetch
-	$(MAKE) copy-bindings
 
 .PHONY: copy-bindings
 copy-bindings:
@@ -30,7 +29,7 @@ copy-bindings:
 build: build/typescript-fetch
 	# This target has a dependency on ../proto/ that isn't captured here for CI's sake as they'd need
 	# different dependencies in their environement.
-	# $(MAKE) -C ../proto build
+	$(MAKE) copy-bindings
 
 .PHONY: check
 check: build
