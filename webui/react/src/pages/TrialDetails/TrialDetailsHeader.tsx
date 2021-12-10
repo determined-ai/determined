@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
+import useCreateExperimentModal, {
+  CreateExperimentType,
+} from 'hooks/useModal/useModalExperimentCreate';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
@@ -21,14 +24,23 @@ export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
 interface Props {
   experiment: ExperimentBase;
   fetchTrialDetails: () => void;
-  handleActionClick: (action: Action) => void;
   trial: TrialDetails;
 }
 
-const TrialDetailsHeader: React.FC<Props> = (
-  { experiment, fetchTrialDetails, handleActionClick, trial }: Props,
-) => {
+const TrialDetailsHeader: React.FC<Props> = ({
+  experiment,
+  fetchTrialDetails,
+  trial,
+}: Props) => {
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
+
+  const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
+
+  const { modalOpen } = useCreateExperimentModal({ onClose: handleModalClose });
+
+  const handleContinueTrial = useCallback(() => {
+    modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+  }, [ experiment, modalOpen, trial ]);
 
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
@@ -54,7 +66,7 @@ const TrialDetailsHeader: React.FC<Props> = (
         icon: <Icon name="fork" size="small" />,
         key: Action.ContinueTrial,
         label: 'Continue Trial',
-        onClick: () => handleActionClick(Action.ContinueTrial),
+        onClick: handleContinueTrial,
       });
     } else {
       options.push({
@@ -68,7 +80,7 @@ const TrialDetailsHeader: React.FC<Props> = (
     return options;
   }, [
     fetchTrialDetails,
-    handleActionClick,
+    handleContinueTrial,
     isRunningTensorBoard,
     trial,
   ]);

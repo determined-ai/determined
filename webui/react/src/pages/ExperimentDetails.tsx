@@ -6,9 +6,6 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import useCreateExperimentModal, {
-  CreateExperimentType,
-} from 'hooks/useModal/useModalExperimentCreate';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import {
@@ -38,8 +35,6 @@ const ExperimentDetails: React.FC = () => {
 
   const id = parseInt(experimentId);
 
-  const { modalOpen } = useCreateExperimentModal();
-
   const fetchExperimentDetails = useCallback(async () => {
     try {
       const [ experimentData, validationHistory ] = await Promise.all([
@@ -63,17 +58,6 @@ const ExperimentDetails: React.FC = () => {
   ]);
 
   const { stopPolling } = usePolling(fetchExperimentDetails);
-
-  const showForkModal = useCallback((): void => {
-    console.log('showForkModal');
-    if (!experiment) return;
-    modalOpen({ experiment, type: CreateExperimentType.Fork });
-  }, [ experiment, modalOpen ]);
-
-  const showContinueTrial = useCallback((): void => {
-    if (!experiment || !trial) return;
-    modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [ experiment, modalOpen, trial ]);
 
   const handleSingleTrialLoad = useCallback((trial: TrialDetails) => {
     setTrial(trial);
@@ -108,8 +92,6 @@ const ExperimentDetails: React.FC = () => {
           curUser={user}
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
-          showContinueTrial={trial ? showContinueTrial : undefined}
-          showForkModal={showForkModal}
           trial={trial}
         />
       )}

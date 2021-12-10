@@ -20,6 +20,10 @@ export enum CreateExperimentType {
   ContinueTrial = 'Continue Trial',
 }
 
+interface Props {
+  onClose?: () => void;
+}
+
 interface OpenProps {
   experiment: ExperimentBase;
   trial?: TrialDetails;
@@ -83,12 +87,15 @@ const DEFAULT_MODAL_STATE = {
   visible: false,
 };
 
-const useModalExperimentCreate = (): ModalHooks => {
+const useModalExperimentCreate = (props?: Props): ModalHooks => {
   const formRef = useRef<FormInstance>(null);
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
 
-  const handleModalClose = useCallback(() => setModalState(DEFAULT_MODAL_STATE), []);
+  const handleModalClose = useCallback(() => {
+    setModalState(DEFAULT_MODAL_STATE);
+    props?.onClose?.();
+  }, [ props ]);
 
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(
     handleModalClose,

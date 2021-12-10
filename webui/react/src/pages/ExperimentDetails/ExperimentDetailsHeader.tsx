@@ -1,5 +1,4 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -13,6 +12,9 @@ import TimeDuration from 'components/TimeDuration';
 import { deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
+import useModalExperimentCreate, {
+  CreateExperimentType,
+} from 'hooks/useModal/useModalExperimentCreate';
 import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
 import useModalExperimentStop from 'hooks/useModal/useModalExperimentStop';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
@@ -34,8 +36,6 @@ interface Props {
   curUser?: DetailedUser;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  showContinueTrial?: () => void;
-  showForkModal?: () => void;
   trial?: TrialDetails;
 }
 
@@ -43,8 +43,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   curUser,
   experiment,
   fetchExperimentDetails,
-  showContinueTrial,
-  showForkModal,
   trial,
 }: Props) => {
   const [ isChangingState, setIsChangingState ] = useState(false);
@@ -64,6 +62,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   });
 
   const { modalOpen: openModalDelete } = useModalExperimentDelete({ experimentId: experiment.id });
+
+  const { modalOpen: openModalCreate } = useModalExperimentCreate();
 
   const backgroundColor = useMemo(() => {
     return getStateColorCssVar(experiment.state);
@@ -112,6 +112,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleStopClick = useCallback(() => openModalStop(), [ openModalStop ]);
 
   const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
+
+  const handleContinueTrialClick = useCallback(() => {
+    openModalCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+  }, [ experiment, openModalCreate, trial ]);
+
+  const handleForkClick = useCallback(() => {
+    openModalCreate({ experiment, type: CreateExperimentType.Fork });
+  }, [ experiment, openModalCreate ]);
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -175,7 +183,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       continueTrial: {
         key: 'continue-trial',
         label: 'Continue Trial',
-        onClick: showContinueTrial,
+        onClick: handleContinueTrialClick,
       },
       delete: {
         icon: <Icon name="fork" size="small" />,
@@ -196,7 +204,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         icon: <Icon name="fork" size="small" />,
         key: 'fork',
         label: 'Fork',
-        onClick: showForkModal,
+        onClick: handleForkClick,
       },
       tensorboard: {
         icon: <Icon name="tensorboard" size="small" />,
@@ -230,8 +238,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
     return [
-      showForkModal && options.fork,
-      showContinueTrial && options.continueTrial,
+      options.fork,
+      trial?.id && options.continueTrial,
       options.tensorboard,
       options.downloadModel,
       terminalRunStates.has(experiment.state) && (
@@ -248,12 +256,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     experiment.state,
     experiment.username,
     fetchExperimentDetails,
+    handleContinueTrialClick,
     handleDeleteClick,
+    handleForkClick,
     isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,
-    showContinueTrial,
-    showForkModal,
+    trial?.id,
   ]);
 
   return (
