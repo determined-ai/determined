@@ -72,7 +72,8 @@ export const getJobQ = generateDetApi<
 >(Config.getJobQueue);
 
 export const getJobQStats = generateDetApi<
-  Service.GetJobQStatsParams, Api.V1GetJobQueueStatsResponse,
+  Service.GetJobQStatsParams,
+  Api.V1GetJobQueueStatsResponse,
   Api.V1GetJobQueueStatsResponse
 >(Config.getJobQueueStats);
 
