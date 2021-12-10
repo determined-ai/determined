@@ -2,7 +2,11 @@
 import { Modal } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { isAsyncFunction } from 'utils/data';
+
+import usePrevious from './usePrevious';
 
 export interface ModalHooks {
   modalClose: () => void;
@@ -10,46 +14,77 @@ export interface ModalHooks {
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
 }
 
-const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = { style: { minWidth: 600 } };
+export enum ModalCloseReason {
+  Cancel = 'Cancel',
+  Ok = 'Ok',
+}
+
+const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
+  maskClosable: true,
+  style: { minWidth: 600 },
+  visible: true,
+};
 
 type AntModalPromise = (...args: any[]) => any;
 
-/*
- * This utility function is needed for `antd` modal `onOk` handlers.
- * If an async function is passed directly to `onOk` the modal
- * will NOT block the UI with a spinner on the `Ok` button.
- * Wrapping a promise around the async function is the current work
- * around until `antd` supports async handlers in the future.
- */
-export const asyncToPromise = (fn: any): AntModalPromise => {
-  return (...args: any[]) => new Promise((resolve, reject) => {
-    return fn(...args).then(resolve).catch(reject);
-  }) as unknown as AntModalPromise;
-};
-
-const useModal = (onClose?: () => void): ModalHooks => {
+const useModal = (onClose?: (reason: ModalCloseReason) => void): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
+  const [ modalProps, setModalProps ] = useState<ModalFuncProps>();
+  const prevModalProps = usePrevious(modalProps, undefined);
 
   const modalOpen = useCallback((props: ModalFuncProps = {}) => {
-    const modalProps = { ...DEFAULT_MODAL_PROPS, ...props };
-    if (modalRef.current) {
-      modalRef.current.update(prev => ({ ...prev, ...modalProps }));
-    } else {
-      modalRef.current = Modal.confirm(modalProps);
-    }
+    setModalProps(props);
   }, []);
 
-  const modalClose = useCallback(() => {
+  const modalClose = useCallback((reason?: ModalCloseReason) => {
     if (!modalRef.current) return;
     modalRef.current.destroy();
     modalRef.current = undefined;
-    onClose?.();
+    if (reason) onClose?.(reason);
   }, [ onClose ]);
 
-  // When the component using the hook unmounts, remove the modal automatically.
-  useEffect(() => {
-    return () => modalClose();
+  /*
+   * Adds `modalClose` to event handlers `onOk` and `onCancel`.
+   * Handles `undefined`, asynchronous and synchronous event handlers.
+   */
+  const extendEventHandler = useCallback((fn: any, reason: ModalCloseReason): AntModalPromise => {
+    if (fn === undefined) {
+      return () => modalClose(reason);
+    } else if (isAsyncFunction(fn)) {
+      return (...args: any[]) => new Promise((resolve, reject) => {
+        return fn(...args)
+          .then((...thenArgs: any[]) => {
+            resolve(thenArgs);
+            modalClose(reason);
+          })
+          .catch(reject);
+      }) as unknown as AntModalPromise;
+    } else {
+      return async (...args: any[]) => {
+        await fn(...args);
+        modalClose(reason);
+      };
+    }
   }, [ modalClose ]);
+
+  useEffect(() => {
+    // Only render/re-render when modal props have changed.
+    if (!modalProps || modalProps === prevModalProps) return;
+
+    const completeModalProps: ModalFuncProps = {
+      ...DEFAULT_MODAL_PROPS,
+      ...modalProps,
+      onCancel: extendEventHandler(modalProps.onCancel, ModalCloseReason.Cancel),
+      onOk: extendEventHandler(modalProps.onOk, ModalCloseReason.Ok),
+    };
+
+    // Update the modal if it already exists, otherwise open a new modal.
+    if (modalRef.current) {
+      modalRef.current.update(completeModalProps);
+    } else {
+      modalRef.current = Modal.confirm(completeModalProps);
+    }
+  }, [ extendEventHandler, modalProps, prevModalProps ]);
 
   return { modalClose, modalOpen, modalRef };
 };

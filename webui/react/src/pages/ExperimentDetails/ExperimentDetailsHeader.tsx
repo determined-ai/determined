@@ -55,7 +55,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   );
   const experimentTags = useExperimentTags(fetchExperimentDetails);
 
-  const { modalOpen } = useModalExperimentStop({ experiment });
+  const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
+
+  const { modalOpen } = useModalExperimentStop({
+    experimentId: experiment.id,
+    onClose: handleModalClose,
+  });
 
   const backgroundColor = useMemo(() => {
     return getStateColorCssVar(experiment.state);
