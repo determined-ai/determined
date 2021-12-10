@@ -77,3 +77,22 @@ Please verify the following in the model code:
 -  The LR scheduler is wrapped with :meth:`wrap_lr_scheduler
    <determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler>` and based on the output of
    ``wrap_optimizer``, not the original unwrapped optimizer.
+
+**************
+ ROCm Support
+**************
+
+.. _rocm-support:
+
+Can I use AMD GPUs or ROCm with Determined?
+===========================================
+
+Determined has experimental support for ROCm. It is . Determined provides a prebuilt Docker image
+that includes ROCm 4.2, Pytorch 1.9 and Tensorflow 2.5:
+
+-  ``determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da``
+
+Known limitations:
+
+-  Only agent-based deployments are available, kubernetes is not yet supported.
+-  GPU profiling is not yet supported.

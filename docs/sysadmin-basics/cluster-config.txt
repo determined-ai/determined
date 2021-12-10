@@ -229,13 +229,14 @@ The master supports the following configuration settings:
    -  ``image``: Defines the default docker image to use when executing the workload. If a docker
       image is specified in the :ref:`experiment config <exp-environment-image>` this default is
       overriden. This image must be accessible via ``docker pull`` to every Determined agent machine
-      in the cluster. Users can use different container images for GPU vs. CPU agents differently by
-      specifying a dict with two keys, ``cpu`` and ``gpu``. Default values:
+      in the cluster. Users can configure different container images for NVIDIA GPU tasks using
+      ``gpu`` key, CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default
+      values:
 
-      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPU
-         agents
-      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for GPU
-         agents.
+      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for
+         NVIDIA GPUs.
+      -  ``determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPUs.
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
@@ -827,7 +828,7 @@ The master supports the following configuration settings:
 
 -  ``visible_gpus``: The GPUs that should be exposed as slots by the agent. A comma-separated list
    of GPUs, each specified by a 0-based index, UUID, PCI bus ID, or board serial number. The 0-based
-   index of NVIDIA GPUs can be obtained via the ``nvidia-smi`` command.
+   index of NVIDIA GPUs or AMD GPUs can be obtained via the ``nvidia-smi`` or ``rocm-smi`` commands.
 
 -  ``slot_type``: The slot type that should be exposed. Dynamic agents having GPUs will be
    configured to ``gpu``, agents without GPUs with ``cpu_slots_allowed: true`` provisioner option
@@ -837,8 +838,9 @@ The master supports the following configuration settings:
    -  ``auto``: Automatically detects the slot type. The agent will detect if there are GPUs. If
       there are GPUs, it maps each GPU to one slot. Otherwise, it maps all the CPUs to a slot.
    -  ``none``: The agent will not create any slots for detected devices.
-   -  ``gpu``: The agent will map each detected GPU to a slot.
+   -  ``gpu``: The agent will map each detected NVIDIA GPU to a slot.
    -  ``cpu``: Map all the CPUs to a slot, even when GPUs are present.
+   -  ``rocm``: The agent will map each detected ROCm AMD GPU to a slot.
 
 -  ``http_proxy``: The HTTP proxy address for the agent's containers.
 
