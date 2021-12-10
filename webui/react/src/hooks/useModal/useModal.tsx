@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isAsyncFunction } from 'utils/data';
 
-import usePrevious from './usePrevious';
+import usePrevious from '../usePrevious';
 
 export interface ModalHooks {
   modalClose: () => void;

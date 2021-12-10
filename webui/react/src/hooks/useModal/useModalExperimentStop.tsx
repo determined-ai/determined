@@ -4,7 +4,7 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal';
+import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { cancelExperiment, killExperiment } from 'services/api';
 
 import css from './useModalExperimentStop.module.scss';
@@ -14,7 +14,7 @@ export enum ActionType {
   Kill = 'Kill',
 }
 
-interface Props extends Omit<ModalFuncProps, 'type'> {
+interface Props {
   experimentId: number;
   onClose?: (type?: ActionType) => void;
 }

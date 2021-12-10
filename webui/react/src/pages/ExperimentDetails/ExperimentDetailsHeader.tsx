@@ -13,12 +13,13 @@ import TimeDuration from 'components/TimeDuration';
 import { deletableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalExperimentStop from 'hooks/useModalExperimentStop';
+import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
+import useModalExperimentStop from 'hooks/useModal/useModalExperimentStop';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
-import { handlePath, paths, routeToReactUrl } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import {
   activateExperiment,
-  archiveExperiment, deleteExperiment, openOrCreateTensorBoard, patchExperiment,
+  archiveExperiment, openOrCreateTensorBoard, patchExperiment,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
@@ -57,10 +58,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
 
-  const { modalOpen } = useModalExperimentStop({
+  const { modalOpen: openModalStop } = useModalExperimentStop({
     experimentId: experiment.id,
     onClose: handleModalClose,
   });
+
+  const { modalOpen: openModalDelete } = useModalExperimentDelete({ experimentId: experiment.id });
 
   const backgroundColor = useMemo(() => {
     return getStateColorCssVar(experiment.state);
@@ -106,23 +109,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }
   }, [ experiment.id, fetchExperimentDetails ]);
 
-  const handleStopClick = useCallback(() => modalOpen(), [ modalOpen ]);
+  const handleStopClick = useCallback(() => openModalStop(), [ openModalStop ]);
 
-  const deleteExperimentHandler = useCallback(() => {
-    Modal.confirm({
-      content: `
-      Are you sure you want to delete
-      this experiment?
-    `,
-      icon: <ExclamationCircleOutlined />,
-      okText: 'Delete',
-      onOk: async () => {
-        await deleteExperiment({ experimentId: experiment.id });
-        routeToReactUrl(paths.experimentList());
-      },
-      title: 'Confirm Experiment Deletion',
-    });
-  }, [ experiment.id ]);
+  const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -193,7 +182,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         isLoading: isRunningDelete,
         key: 'delete',
         label: 'Delete',
-        onClick: deleteExperimentHandler,
+        onClick: handleDeleteClick,
       },
       downloadModel: {
         icon: <Icon name="download" size="small" />,
@@ -253,13 +242,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     ].filter(option => !!option) as Option[];
   }, [
     curUser,
-    deleteExperimentHandler,
     isRunningDelete,
     experiment.archived,
     experiment.id,
     experiment.state,
     experiment.username,
     fetchExperimentDetails,
+    handleDeleteClick,
     isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,
