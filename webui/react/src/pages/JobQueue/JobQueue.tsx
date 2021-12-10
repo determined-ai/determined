@@ -277,7 +277,7 @@ const JobQueue: React.FC = () => {
   }, [ selectedRp ]);
 
   return (
-    <Page className={css.base} id="jobs" title="Job Queues by Resource Pool">
+    <Page className={css.base} id="jobs" title="Job Queue by Resource Pool">
       <Section hideTitle title="Resource Pools">
         <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
           {rpStats.map((stats, idx) => {
