@@ -236,13 +236,6 @@ type ObservabilityConfig struct {
 	EnablePrometheus bool `json:"enable_prometheus"`
 }
 
-func readPreemptionFromScheduler(conf *resourcemanagers.SchedulerConfig) *bool {
-	if conf == nil || conf.Priority == nil {
-		return nil
-	}
-	return &conf.Priority.Preemption
-}
-
 func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 	if conf == nil || conf.Priority == nil {
 		return nil
@@ -269,7 +262,7 @@ func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
 		if rpConfig.PoolName != rpName {
 			continue
 		}
-		if preemption := readPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
+		if preemption := resourcemanagers.ReadPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
 			RMPremption = *preemption
 			return jobPreemptible && RMPremption
 		}
@@ -282,7 +275,7 @@ func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
 
 	// if not found, fall back to resource manager config
 	if config.ResourceManager.AgentRM != nil {
-		if preemption := readPreemptionFromScheduler(
+		if preemption := resourcemanagers.ReadPreemptionFromScheduler(
 			config.ResourceManager.AgentRM.Scheduler,
 		); preemption != nil {
 			RMPremption = *preemption
