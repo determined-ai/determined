@@ -8,7 +8,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
+func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
 	isAdded := make(map[model.JobID]*job.RMJobInfo)
 	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
@@ -48,7 +48,7 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 		}
 		reqs = append(reqs, req)
 	}
-	jobsMap, _ := mergeToJobQInfo(reqs)
+	jobsMap, _ := reduceToJobQInfo(reqs)
 	for _, jobInfo := range jobsMap {
 		if jobInfo.State == job.SchedulingStateQueued {
 			stats.QueuedCount++

@@ -33,7 +33,7 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
 	reqs := sortTasks(taskList, groups, false)
-	jobQInfo, jobActors := mergeToJobQInfo(reqs)
+	jobQInfo, jobActors := reduceToJobQInfo(reqs)
 	for jobID, jobActor := range jobActors {
 		rmJobInfo, ok := jobQInfo[jobID]
 		if jobActor == nil || !ok || rmJobInfo == nil {
@@ -49,7 +49,7 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		updateAllocateReqState(req, rp.taskList)
 	}
 	reqs := sortTasks(rp.taskList, rp.groups, false)
-	jobQInfo, _ := mergeToJobQInfo(reqs)
+	jobQInfo, _ := reduceToJobQInfo(reqs)
 	return jobQInfo
 }
 

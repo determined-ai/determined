@@ -286,7 +286,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasks(k.reqList, k.groups, true)
-	jobQinfo, _ := mergeToJobQInfo(reqs)
+	jobQinfo, _ := reduceToJobQInfo(reqs)
 	return jobQinfo
 }
 
