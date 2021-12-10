@@ -19,6 +19,10 @@ export const isPrimitive = (data: unknown): boolean => (
   isString(data) ||
   isSymbol(data)
 );
+export const isPromise = (data: unknown): data is Promise<unknown> => {
+  if (!isObject(data)) return false;
+  return typeof (data as { then?: any }).then === 'function';
+};
 export const isSet = (data: unknown): boolean => data instanceof Set;
 export const isString = (data: unknown): data is string => typeof data === 'string';
 export const isSymbol = (data: unknown): data is symbol => typeof data === 'symbol';
