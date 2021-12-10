@@ -92,7 +92,6 @@ func fairshareSchedule(
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
 		allocations := taskList.GetAllocations(req.TaskActor)
-		updateAllocateReqState(req, taskList)
 		if req.SlotsNeeded == 0 && allocations == nil {
 			if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
 				continue

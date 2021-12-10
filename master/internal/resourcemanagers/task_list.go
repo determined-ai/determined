@@ -7,6 +7,7 @@ import (
 
 	"github.com/emirpasic/gods/sets/treeset"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -75,11 +76,21 @@ func (l *taskList) GetAllocations(handler *actor.Ref) *sproto.ResourcesAllocated
 }
 
 func (l *taskList) SetAllocations(handler *actor.Ref, assigned *sproto.ResourcesAllocated) {
+	if assignmentIsScheduled(assigned) {
+		l.taskByHandler[handler].State = job.SchedulingStateScheduled
+	} else {
+		l.taskByHandler[handler].State = job.SchedulingStateQueued
+	}
+	l.SetAllocationsRaw(handler, assigned)
+}
+
+func (l *taskList) SetAllocationsRaw(handler *actor.Ref, assigned *sproto.ResourcesAllocated) {
 	l.allocations[handler] = assigned
 }
 
 func (l *taskList) RemoveAllocations(handler *actor.Ref) {
 	delete(l.allocations, handler)
+	l.taskByHandler[handler].State = job.SchedulingStateQueued
 }
 
 type taskIterator struct{ it treeset.Iterator }

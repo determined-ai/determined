@@ -44,10 +44,6 @@ func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor
 }
 
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	for it := rp.taskList.iterator(); it.next(); {
-		req := it.value()
-		updateAllocateReqState(req, rp.taskList)
-	}
 	reqs := sortTasks(rp.taskList, rp.groups, false)
 	jobQInfo, _ := reduceToJobQInfo(reqs)
 	return jobQInfo
@@ -259,12 +255,11 @@ func sortTasksByPriorityAndTimestamp(
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}
 
-		updateAllocateReqState(req, taskList)
 		assigned := taskList.GetAllocations(req.TaskActor)
-		if assigned == nil || len(assigned.Reservations) == 0 {
-			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
-		} else {
+		if assignmentIsScheduled(assigned) {
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
+		} else {
+			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		}
 	}
 

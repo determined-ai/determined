@@ -59,11 +59,8 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 	return stats
 }
 
-func updateAllocateReqState(req *sproto.AllocateRequest, taskList *taskList) {
-	allocations := taskList.GetAllocations(req.TaskActor)
-	if allocations == nil || len(allocations.Reservations) == 0 {
-		req.State = job.SchedulingStateQueued
-	} else {
-		req.State = job.SchedulingStateScheduled
-	}
+// assignmentIsScheduled determines if a resource allocation assignment is considered equivalent to
+// being scheduled.
+func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
+	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
 }
