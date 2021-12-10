@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Add support for reporting job queue and job status for all active jobs. Check out where your job
-   is in the queue and what status it has through Determined WebUI, and CLI.
