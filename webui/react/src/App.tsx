@@ -125,7 +125,7 @@ const AppView: React.FC = () => {
           <Button onClick={refreshPage}>Try Again</Button>
         </PageMessage>
       )}
-      <Omnibar visible={ui.omnibar.isShowing} />
+      <Omnibar />
     </div>
   );
 };
