@@ -9,9 +9,14 @@ import { isAsyncFunction } from 'utils/data';
 import usePrevious from '../usePrevious';
 
 export interface ModalHooks {
-  modalClose: () => void;
+  modalClose: (reason?: ModalCloseReason) => void;
   modalOpen: (modalProps?: ModalFuncProps) => void;
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
+}
+
+interface ModalOptions {
+  rawCancel?: boolean;
+  rawOk?: boolean;
 }
 
 export enum ModalCloseReason {
@@ -27,7 +32,10 @@ const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
 
 type AntModalPromise = (...args: any[]) => any;
 
-const useModal = (onClose?: (reason: ModalCloseReason) => void): ModalHooks => {
+const useModal = (
+  onClose?: (reason: ModalCloseReason) => void,
+  options?: ModalOptions,
+): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const [ modalProps, setModalProps ] = useState<ModalFuncProps>();
   const prevModalProps = usePrevious(modalProps, undefined);
@@ -74,8 +82,12 @@ const useModal = (onClose?: (reason: ModalCloseReason) => void): ModalHooks => {
     const completeModalProps: ModalFuncProps = {
       ...DEFAULT_MODAL_PROPS,
       ...modalProps,
-      onCancel: extendEventHandler(modalProps.onCancel, ModalCloseReason.Cancel),
-      onOk: extendEventHandler(modalProps.onOk, ModalCloseReason.Ok),
+      onCancel: options?.rawCancel
+        ? modalProps.onCancel
+        : extendEventHandler(modalProps.onCancel, ModalCloseReason.Cancel),
+      onOk: options?.rawOk
+        ? modalProps.onOk
+        : extendEventHandler(modalProps.onOk, ModalCloseReason.Ok),
     };
 
     // Update the modal if it already exists, otherwise open a new modal.
@@ -84,7 +96,7 @@ const useModal = (onClose?: (reason: ModalCloseReason) => void): ModalHooks => {
     } else {
       modalRef.current = Modal.confirm(completeModalProps);
     }
-  }, [ extendEventHandler, modalProps, prevModalProps ]);
+  }, [ extendEventHandler, modalProps, options, prevModalProps ]);
 
   return { modalClose, modalOpen, modalRef };
 };
