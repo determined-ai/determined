@@ -26,9 +26,9 @@ setup(
         "certifi",
         "filelock",
         # google-cloud-storage<=1.40 is required for the latest google-cloud-core.
-        "google-cloud-storage>=1.20.0,<=1.40.0",
+        "google-cloud-storage",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
-        "google-cloud-core<1.4.2",
+        "google-cloud-core",
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
