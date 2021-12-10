@@ -22,9 +22,11 @@ interface Props {
 const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks => {
   const [ type, setType ] = useState<ActionType>(ActionType.Cancel);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal((reason) => {
+  const handleClose = useCallback(reason => {
     onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
-  });
+  }, [ onClose, type ]);
+
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(handleClose);
 
   const modalContent = useMemo(() => {
     const isCancel = type === ActionType.Cancel;
