@@ -37,8 +37,8 @@ const Omnibar: React.FC<Props> = ({ visible }) => {
     if (!input) return;
     if (isTreeNode(item)) {
       try {
-        const close = await Tree.onAction(input, item, query);
-        if (close) hideBar();
+        await Tree.onAction(input, item, query);
+        if (item.closeBar) hideBar();
       } catch (e) {
         handleError(e);
       }

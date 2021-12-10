@@ -88,7 +88,7 @@ export const onAction = async (
   inputEl: HTMLInputElement,
   item: TreeNode,
   query: (inputEl: string) => void,
-): Promise<boolean> => {
+): Promise<void> => {
   const { path } = await parseInput(inputEl.value, root);
   // update the omnibar text to reflect the current path
   inputEl.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
@@ -96,10 +96,9 @@ export const onAction = async (
   if (isLeafNode(item)) {
     await item.onAction(item);
     message.info('Action executed.', 1);
-    return true;
+    return;
   }
   // trigger the query.
   inputEl.value = inputEl.value + SEPARATOR;
   query(inputEl.value);
-  return false;
 };
