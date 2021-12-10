@@ -2,8 +2,8 @@ import { Button } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Icon from 'components/Icon';
-import StopExperimentModal, { ActionType } from 'components/StopExperimentModal';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
+import useModalExperimentStop from 'hooks/useModalExperimentStop';
 import { activateExperiment, pauseExperiment } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentBase, RunState } from 'types';
@@ -77,38 +77,24 @@ const PlayButton: React.FC<Props> = ({ experiment }: Props) => {
 };
 
 const StopButton: React.FC<Props> = ({ experiment }: Props) => {
-  const [ isLoading, setIsLoading ] = useState<boolean>(false);
-  const [ isOpen, setIsOpen ] = useState<boolean>(false);
+  const classes = [ css.stopButton ];
 
-  useEffect(() => {
-    setIsLoading(false);
-  }, [ experiment.state ]);
-
-  const onClose = useCallback((type: ActionType) => {
-    setIsLoading(type !== ActionType.None);
-    setIsOpen(false);
+  const handleClose = useCallback((a) => {
+    console.log('CLOSED!', a);
   }, []);
 
-  const classes = [ css.stopButton ];
-  if (isLoading) classes.push(css.loadingButton);
+  const { modalOpen } = useModalExperimentStop({ experiment, onClose: handleClose });
+
+  const handleClick = useCallback(() => modalOpen(), [ modalOpen ]);
 
   return (
-    <>
-      <Button
-        className={classes.join(' ')}
-        ghost={true}
-        icon={<Icon name="stop" size="large" />}
-        loading={isLoading}
-        shape="circle"
-        onClick={() => setIsOpen(true)}
-      />
-      {isOpen && (
-        <StopExperimentModal
-          experiment={experiment}
-          onClose={onClose}
-        />
-      )}
-    </>
+    <Button
+      className={classes.join(' ')}
+      ghost={true}
+      icon={<Icon name="stop" size="large" />}
+      shape="circle"
+      onClick={handleClick}
+    />
   );
 };
 
