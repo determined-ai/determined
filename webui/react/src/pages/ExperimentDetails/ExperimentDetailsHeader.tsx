@@ -9,7 +9,7 @@ import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
-import { deletableRunStates, terminalRunStates } from 'constants/states';
+import { deletableRunStates, pausableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
@@ -312,7 +312,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.experimentInfo}>
               <Spinner spinning={isChangingState}>
                 <div className={css.experimentState} style={{ backgroundColor }}>
-                  {experiment.state === RunState.Active && (
+                  {pausableRunStates.has(experiment.state) && (
                     <Button
                       className={css.buttonPause}
                       ghost={true}
@@ -330,7 +330,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       onClick={handlePlayClick}
                     />
                   )}
-                  {[ RunState.Active, RunState.Paused ].includes(experiment.state) && (
+                  {!terminalRunStates.has(experiment.state) && (
                     <Button
                       className={css.buttonStop}
                       ghost={true}
