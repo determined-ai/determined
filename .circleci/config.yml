@@ -257,7 +257,12 @@ commands:
           steps:
             - run:
                 name: Install mmdetection dependencies
-                command: sudo apt-get install -y ffmpeg libsm6 libxext6
+                command: |
+                  SUDO=
+                  if ! [ $(id -u) = 0 ]; then
+                    SUDO=sudo
+                  fi
+                  $SUDO apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
                 package-location: ~/project/model_hub
