@@ -39,6 +39,14 @@ type TaskContainerDefaultsConfig struct {
 	WorkDir    *string          `json:"work_dir"`
 }
 
+// DefaultTaskContainerDefaults returns the default for TaskContainerDefaultsConfig.
+func DefaultTaskContainerDefaults() *TaskContainerDefaultsConfig {
+	return &TaskContainerDefaultsConfig{
+		ShmSizeBytes: 4294967296,
+		NetworkMode:  "bridge",
+	}
+}
+
 func validatePortRange(portRange string) []error {
 	var errs []error
 

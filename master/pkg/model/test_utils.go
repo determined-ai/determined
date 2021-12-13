@@ -1,36 +1,35 @@
 //go:build integration
-// +build integration
 
-package testutils
+package model
 
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 var (
-	defaultDeterminedUID model.UserID = 2
+	defaultDeterminedUID UserID = 2
 )
 
 // ExperimentModelOption is an option that can be applied to update an experiment.
 type ExperimentModelOption interface {
-	apply(*model.Experiment)
+	apply(*Experiment)
 }
 
 // ExperimentModelOptionFunc is a type that implements ExperimentModelOption.
-type ExperimentModelOptionFunc func(*model.Experiment)
+type ExperimentModelOptionFunc func(*Experiment)
 
-func (f ExperimentModelOptionFunc) apply(experiment *model.Experiment) {
+func (f ExperimentModelOptionFunc) apply(experiment *Experiment) {
 	f(experiment)
 }
 
 // ExperimentModel returns a new experiment with the specified options.
-func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
+func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 	maxLength := expconf.NewLengthInBatches(100)
 	eConf := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
@@ -52,11 +51,11 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 		},
 	}
 	eConf = schemas.WithDefaults(eConf).(expconf.ExperimentConfig)
-	config.DefaultConfig().TaskContainerDefaults.MergeIntoExpConfig(&eConf)
+	DefaultTaskContainerDefaults().MergeIntoExpConfig(&eConf)
 
-	e := &model.Experiment{
-		JobID:                model.NewJobID(),
-		State:                model.ActiveState,
+	e := &Experiment{
+		JobID:                NewJobID(),
+		State:                ActiveState,
 		Config:               eConf,
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
@@ -71,30 +70,30 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 
 // TrialModelOption is an option that can be applied to a trial.
 type TrialModelOption interface {
-	apply(*model.Trial)
+	apply(*Trial)
 }
 
 // TrialModelOptionFunc is a type that implements TrialModelOption.
-type TrialModelOptionFunc func(*model.Trial)
+type TrialModelOptionFunc func(*Trial)
 
-func (f TrialModelOptionFunc) apply(trial *model.Trial) {
+func (f TrialModelOptionFunc) apply(trial *Trial) {
 	f(trial)
 }
 
 // WithTrialState is a TrialModeOption that sets a trials state.
-func WithTrialState(state model.State) TrialModelOption {
-	return TrialModelOptionFunc(func(trial *model.Trial) {
+func WithTrialState(state State) TrialModelOption {
+	return TrialModelOptionFunc(func(trial *Trial) {
 		trial.State = state
 	})
 }
 
 // TrialModel returns a new trial with the specified options.
-func TrialModel(eID int, jobID model.JobID, opts ...TrialModelOption) *model.Trial {
-	t := &model.Trial{
+func TrialModel(eID int, jobID JobID, opts ...TrialModelOption) *Trial {
+	t := &Trial{
+		TaskID:       TaskID(uuid.New().String()),
 		JobID:        jobID,
-		TaskID:       model.NewTaskID(),
 		ExperimentID: eID,
-		State:        model.ActiveState,
+		State:        ActiveState,
 		StartTime:    time.Now(),
 	}
 	for _, o := range opts {
