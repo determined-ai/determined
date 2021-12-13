@@ -213,7 +213,7 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y python3-venv
-            /usr/bin/python3 -m venv /tmp/venv
+            python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
@@ -1299,7 +1299,7 @@ jobs:
 
   lint-python:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: python:3.7
     steps:
       - checkout
       - setup-python-venv:

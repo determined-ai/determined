@@ -3,6 +3,7 @@ import logging
 import os
 import tempfile
 from typing import Iterator, Optional
+from google.api_core.retry import if_exception_type
 
 import requests.exceptions
 import urllib3.exceptions
