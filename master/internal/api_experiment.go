@@ -373,7 +373,7 @@ func (a *apiServer) PreviewHPSearch(
 		case expconf.Records:
 			return []*experimentv1.RunnableOperation{
 				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
 						Unit:   experimentv1.TrainingLength_UNIT_RECORDS,
 						Length: int32(op.Length.Units),
