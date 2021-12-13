@@ -21,8 +21,7 @@ following features of the Determined platform:
 
 * metrics tracking & visualizations
 * checkpoint tracking
-* basic hyperparameter search
-* advanced hyperparameter search
+* hyperparameter search
 * pausing & resuming jobs interactively from the webui
 * performant spot-instance support
 * running on one gpu, or across many gpus
@@ -172,8 +171,7 @@ searcher:
     name: "single"
     # we have to configure the searcher for the master even though
     # our training script is going to totally ignore it.
-    max_length:
-        epochs: 1
+    max_length: 1
 
 # note that for the script to save the checkpoint
 # to a persistent location, you would have to set
@@ -291,8 +289,7 @@ than hacking something together with bindmounts:
         name: "single"
         # we have to configure the searcher for the master even though
         # our training script is going to totally ignore it.
-        max_length:
-            epochs: 50
+        max_length: 1
 -
 -   # since we are using context.checkpoint.save_path(),
 -   # we don't need bind_mounts anymore
@@ -301,19 +298,19 @@ than hacking something together with bindmounts:
 -       container_path: ./checkpoint_dir
 ```
 
-## Step 2: Basic HP Search + best practices
+## Step 2: HP Search + best practices
 
 You already have many great benefits of Determined with very little work.  Now,
-let's add support for basic hyperparameter searches.  After this, you'll be
-able to run random searches, grid searches, and even hyperband searches, using
-the "adaptive" searcher, Determined's state-of-the-art implementation of the
+let's add support for hyperparameter search.  After this, you'll be able to run
+random searches, grid searches, and even hyperband searches, using the
+"adaptive" searcher, Determined's state-of-the-art implementation of the
 hyperband algorithm!
 
 As we introduce HP search, we are also going to implement some best practices
 for model definitions, including:
 
 * seed our RNGs with the Determined-tracked seed for an experiment,
-  significantly improving our ability to reproducibility training results
+  significantly improving our ability to reproduce training results
 * separate configuration from code, to be able to easily browse configs and
   even configure new experiments interactively!
 
@@ -351,13 +348,24 @@ for model definitions, including:
         batches_trained = 0
 
 -       for epoch in range(config.EPOCHS):
-+       searcher = context.training.get_basic_searcher()
-+       for epoch in searcher.epochs(initial_epoch=0):
-            # train model
-            ...
++       # iterate through searcher operations, which are unitless
++       # lengths that we choose here to treat as epochs
++       epochs_trained = 0
++       for op in context.searcher.ops():
++           # every op represents an absolute length of training,
++           # followed by a validation
++           while epochs_trained < op.length:
+                # train model
+                ...
 
-            # report training metrics to the master
-            ...
+                # report training metrics to the master
+                ...
+
++               # track how much we have trained
++               epochs_trained += 1
++
++               # update progress in the webui
++               op.report_progress(epochs_trained)
 
             # evaluate model
             ...
@@ -365,8 +373,8 @@ for model definitions, including:
             # report validation metrics to the master
             ...
 
-+           # report this epochs value of the searcher_metric
-+           searcher.report(eval_loss)
++           # report evaluation of the searcher_metric for this op
++           op.complete(eval_loss)
 
         # checkpoint model
         with context.checkpoint.save_path() as path:
@@ -406,10 +414,9 @@ the controls in one place:
 -       name: "single"
 +       # use a real hp search instead of the single searcher
 +       name: "random"
-        max_length:
--           epochs: 1
-+           # we are now honoring max_length in train.py
-+           epochs: 50
+-       max_length: 1
++       # we are now honoring max_length in train.py
++       max_length: 50
 +
 +       max_trials: 10
 ```
@@ -428,28 +435,41 @@ all you have to do for fault tolerance is load that checkpoint and go!
 ```diff
     model, loss_fn, opt = build_model(hparams["learning_rate"])
 
-+   last_epoch = -1
     batches_trained = 0
+    epochs_complete = 0
 
 +   # read state from the last checkpoint
 +   if context.latest_checkpoint is not None:
 +       with context.latest_checkpoint as path:
 +           state = torch.load(f"{path]/my_checkpoint")
 +       model.load_state(state["model"])
-+       last_epoch = state["epoch"]
 +       batches_trained = state["batches_trained"]
++       epochs_trained = state["epochs_trained"]
 
-    searcher_op = context.training.basic_search()
+    for op in context.searcher.ops():
+        while epochs_trained < op.length:
+            # train model
+            ...
 
-    searcher = context.training.get_basic_searcher()
--   for epoch in searcher.epochs(initial_epoch=0):
-+   # Only train for the amount that remains
-+   for epoch in searcher.epochs(initial_epoch=last_epoch):
-        # train model
-        ...
+            # report training metrics to the master
+            ...
 
-        # report training metrics to the master
-        ...
+            # track how much we have trained
+            epochs_complete += 1
+
+            # update progress in the webui
+            ...
+
++           # checkpoint every epoch for high fault-tolerance
++           # also track how far we have trained
++           state = {
++               "model": model.state_dict(),
++               "epoch": epoch,
++               "batches_trained": batches_trained,
++               "epochs_complete": epochs_complete,
++           }
++           with context.checkpoint.save_path() as path:
++               torch.save(state, f"{path]/my_checkpoint")
 
         # evaluate model
         ...
@@ -457,18 +477,8 @@ all you have to do for fault tolerance is load that checkpoint and go!
         # report validation metrics to the master
         ...
 
-        # report searcher_metric
+        # report evaluation of the searcher_metric for this op
         ...
-
-+       # checkpoint every epoch for high fault-tolerance
-+       # also track how far we have trained
-+       state = {
-+           "model": model.state_dict(),
-+           "epoch": epoch,
-+           "batches_trained": batches_trained,
-+       }
-+       with context.checkpoint.save_path() as path:
-+           torch.save(state, f"{path]/my_checkpoint")
 
 -   with context.checkpoint.save_path() as path:
 -       torch.save(model.state_dict(), f"{path]/my_checkpoint")
@@ -494,7 +504,7 @@ loop complexity.
 Here we show the simple, per-epoch version:
 
 ```diff
-    for epoch in range(last_epoch, searcher_op.epochs):
+    while epochs_trained < op.length:
 +       if context.should_preempt():
 +           break
 
@@ -543,10 +553,6 @@ entrypoint_script: python3 horovod_model.py
 
 TODO: decide on an API for writing your own launch layer from scratch and
 include examples.
-
-### Advanced Hyperparameter Search
-
-This API isn't finalized yet, sorry.
 
 ### API reference
 
