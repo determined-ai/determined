@@ -262,6 +262,7 @@ commands:
                   if ! [ $(id -u) = 0 ]; then
                     SUDO=sudo
                   fi
+                  $SUDO apt-get update
                   $SUDO apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
