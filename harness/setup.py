@@ -38,6 +38,7 @@ setup(
         "gitpython>=3.1.3",
         "pyOpenSSL>= 19.1.0",
         "python-dateutil",
+        "pytz",
         "tabulate>=0.8.3",
         # det preview-search "pretty-dumps" a sub-yaml with an API added in 0.15.29
         "ruamel.yaml>=0.15.29",
