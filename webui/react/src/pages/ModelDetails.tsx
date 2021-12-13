@@ -142,6 +142,7 @@ const ModelDetails: React.FC = () => {
     const labelsRenderer = (value: string, record: ModelVersion) => (
       <TagList
         compact
+        disabled={record.model.archived}
         tags={record.labels ?? []}
         onChange={(tags) => saveModelVersionTags(record.model.id, record.id, tags)}
       />
@@ -175,6 +176,7 @@ const ModelDetails: React.FC = () => {
 
     const descriptionRenderer = (value:string, record: ModelVersion) => (
       <InlineEditor
+        disabled={record.model.archived}
         placeholder="Add description..."
         value={value}
         onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
@@ -394,8 +396,13 @@ const ModelDetails: React.FC = () => {
             onChange={handleTableChange}
           />
         )}
-        <NotesCard notes={model.model.notes ?? ''} onSave={saveNotes} />
+        <NotesCard
+          disabled={model.model.archived}
+          notes={model.model.notes ?? ''}
+          onSave={saveNotes}
+        />
         <MetadataCard
+          disabled={model.model.archived}
           metadata={model.model.metadata}
           onSave={saveMetadata}
         />

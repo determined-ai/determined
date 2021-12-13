@@ -17,8 +17,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    & > small { font-size: var(--theme-sizes-font-medium); }
+    & > small {
+      font-size: var(--theme-sizes-font-medium);
+    }
   }
+}
+.base.focused {
+  background-color: var(--theme-colors-monochrome-12);
 }
 .clickable {
   cursor: pointer;

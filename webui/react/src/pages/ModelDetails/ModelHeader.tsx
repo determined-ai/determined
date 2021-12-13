@@ -1,5 +1,5 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
@@ -47,6 +47,7 @@ const ModelHeader: React.FC<Props> = (
     {
       content: (
         <InlineEditor
+          disabled={model.archived}
           placeholder="Add description..."
           value={model.description ?? ''}
           onSave={onSaveDescription}
@@ -57,6 +58,7 @@ const ModelHeader: React.FC<Props> = (
     {
       content: (
         <TagList
+          disabled={model.archived}
           ghost={false}
           tags={model.labels ?? []}
           onChange={onUpdateTags}
@@ -100,12 +102,22 @@ const ModelHeader: React.FC<Props> = (
           <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
+      {model.archived && (
+        <Alert
+          message="This model has been archived and is now read-only."
+          showIcon
+          style={{ marginTop: 8 }}
+          type="warning"
+        />
+      )}
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
             <Icon name="model" size="big" />
             <h1 className={css.name}>
               <InlineEditor
+                allowClear={false}
+                disabled={model.archived}
                 placeholder="Add name..."
                 value={model.name}
                 onSave={onSaveName}

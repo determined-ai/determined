@@ -1,14 +1,49 @@
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
+import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 
 import Spinner from './Spinner';
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+type Comparable = any;
+
+interface Settings {
+  sortDesc: boolean;
+  sortKey: Comparable;
+  tableLimit: number;
+  tableOffset: number;
+}
+
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
+
+export const handleTableChange = (
+  columns: {key?: Comparable}[],
+  settings: Settings,
+  updateSettings: (s: Settings, b: boolean) => void,
+) => {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return (tablePagination: any, tableFilters: any, tableSorter: any): void => {
+    if (Array.isArray(tableSorter)) return;
+
+    const { columnKey, order } = tableSorter as SorterResult<unknown>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    const newSettings = {
+      sortDesc: order === 'descend',
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      sortKey: columnKey as any,
+      tableLimit: tablePagination.pageSize,
+      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+    };
+    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+    updateSettings(newSettings, shouldPush);
+  };
+};
 
 const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);

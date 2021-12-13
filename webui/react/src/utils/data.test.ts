@@ -7,6 +7,7 @@ enum Type {
   AsyncFn = 'async-function',
   BigInt = 'bigint',
   Boolean = 'boolean',
+  Date = 'date',
   Fn = 'function',
   Map = 'map',
   NullOrUndefined = 'null-or-undefined',
@@ -22,6 +23,7 @@ const testGroups = [
   { fn: utils.isAsyncFunction, type: Type.AsyncFn },
   { fn: utils.isBigInt, type: Type.BigInt },
   { fn: utils.isBoolean, type: Type.Boolean },
+  { fn: utils.isDate, type: Type.Date },
   { fn: utils.isFunction, type: Type.Fn },
   { fn: utils.isMap, type: Type.Map },
   { fn: utils.isNullOrUndefined, type: Type.NullOrUndefined },
@@ -83,6 +85,7 @@ describe('Data Utilities', () => {
       { type: [ Type.Primitive, Type.String ], value: 'Jalapeño' },
 
       // Objects
+      { type: [ Type.Date, Type.Object ], value: new Date() },
       { type: Type.Object, value: {} },
       { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
       { type: [ Type.Primitive, Type.String ], value: 'hello world' },

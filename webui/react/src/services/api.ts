@@ -65,6 +65,18 @@ export const getResourceAllocationAggregated = generateDetApi<
   Api.V1ResourceAllocationAggregatedResponse
 >(Config.getResourceAllocationAggregated);
 
+/* Jobs */
+
+export const getJobQ = generateDetApi<
+  Service.GetJobQParams, Api.V1GetJobsResponse, Service.GetJobsResponse
+>(Config.getJobQueue);
+
+export const getJobQStats = generateDetApi<
+  Service.GetJobQStatsParams,
+  Api.V1GetJobQueueStatsResponse,
+  Api.V1GetJobQueueStatsResponse
+>(Config.getJobQueueStats);
+
 /* Experiments */
 
 export const getExperiments = generateDetApi<

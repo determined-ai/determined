@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -34,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 var experimentsAddr = actor.Addr("experiments")
@@ -59,6 +61,7 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 		return nil, errors.Wrapf(err,
 			"error fetching experiment from database: %d", experimentID)
 	}
+
 	return exp, nil
 }
 
@@ -81,7 +84,24 @@ func (a *apiServer) GetExperiment(
 		return nil, errors.Wrapf(err,
 			"error unmarshalling experiment config: %d", req.ExperimentId)
 	}
-	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
+
+	resp := apiv1.GetExperimentResponse{
+		Experiment: exp,
+		Config:     protoutils.ToStruct(conf),
+		JobSummary: &jobv1.JobSummary{},
+	}
+
+	if model.TerminalStates[model.StateFromProto(exp.State)] {
+		return &resp, nil
+	}
+
+	err = a.ask(actor.Addr("experiments").Child(exp.Id),
+		job.GetJobSummary{}, &resp.JobSummary)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }
 
 func (a *apiServer) DeleteExperiment(
@@ -353,7 +373,7 @@ func (a *apiServer) PreviewHPSearch(
 		case expconf.Records:
 			return []*experimentv1.RunnableOperation{
 				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
 						Unit:   experimentv1.TrainingLength_UNIT_RECORDS,
 						Length: int32(op.Length.Units),

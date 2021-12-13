@@ -1,7 +1,10 @@
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { StateOfUnion } from 'themes';
 import {
-  CheckpointState, CommandState, CommandType, ResourceState, RunState, SlotState,
+  CheckpointState, CommandState, CommandType, CompoundRunState, JobState, ResourceState, RunState,
+  SlotState,
 } from 'types';
+import { jobStateToLabel } from 'utils/job';
 
 export const activeCommandStates = [
   CommandState.Assigned,
@@ -21,8 +24,27 @@ export const activeRunStates: Array<
   'STATE_STOPPING_ERROR',
 ];
 
-export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
-export const cancellableRunStates = [ RunState.Active, RunState.Paused ];
+const jobStates: Array<JobState> = [
+  JobState.QUEUED, JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED,
+];
+export const killableRunStates: CompoundRunState[] =
+  [ RunState.Active,
+    RunState.Paused,
+    RunState.StoppingCanceled,
+    ...jobStates,
+  ];
+
+export const pausableRunStates: Set<CompoundRunState> = new Set([ RunState.Active, ...jobStates ]);
+export const isProgressingRunStates: Set<CompoundRunState> = new Set([ RunState.Active,
+  JobState.SCHEDULED,
+  JobState.SCHEDULEDBACKFILLED ]);
+
+export const cancellableRunStates: Set<CompoundRunState> = new Set([
+  RunState.Active,
+  RunState.Paused,
+  ...jobStates,
+]);
+
 export const killableCommandStates = [
   CommandState.Assigned,
   CommandState.Pending,
@@ -36,18 +58,16 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-export const terminalRunStates: Set<RunState> = new Set([
-  RunState.Canceled,
-  RunState.Completed,
-  RunState.Errored,
-  RunState.Deleted,
-]);
-
-export const deletableRunStates: Set<RunState> = new Set([
+export const deletableRunStates: Set<CompoundRunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
   RunState.DeleteFailed,
+]);
+
+export const terminalRunStates: Set<CompoundRunState> = new Set([
+  ...deletableRunStates,
+  RunState.Deleted,
 ]);
 
 export const runStateToLabel: { [key in RunState]: string } = {
@@ -120,3 +140,14 @@ export const commandTypeToLabel: { [key in CommandType]: string } = {
   [CommandType.Shell]: 'Shell',
   [CommandType.TensorBoard]: 'TensorBoard',
 };
+
+export function stateToLabel(
+  state: StateOfUnion,
+): string {
+  return runStateToLabel[state as RunState]
+  || commandStateToLabel[state as CommandState]
+  || resourceStateToLabel[state as ResourceState]
+  || checkpointStateToLabel[state as CheckpointState]
+  || jobStateToLabel[state as JobState]
+  || slotStateToLabel[state as SlotState];
+}

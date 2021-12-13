@@ -10,11 +10,12 @@ import Spinner from '../Spinner';
 import EditableMetadata from './EditableMetadata';
 
 interface Props {
+  disabled?: boolean;
   metadata?: Metadata;
   onSave?: (newMetadata: Metadata) => Promise<void>;
 }
 
-const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave }: Props) => {
+const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave }: Props) => {
   const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Metadata>(metadata ?? {});
@@ -26,8 +27,9 @@ const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave }: Props) => {
   }, [ metadata ]);
 
   const editMetadata = useCallback(() => {
+    if (disabled) return;
     setIsEditing(true);
-  }, []);
+  }, [ disabled ]);
 
   const saveMetadata = useCallback(async () => {
     try {
@@ -61,9 +63,11 @@ const MetadataCard: React.FC<Props> = ({ metadata = {}, onSave }: Props) => {
           <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
         </Space>
       ) : (
-        <Tooltip title="Edit">
-          <EditOutlined onClick={editMetadata} />
-        </Tooltip>
+        disabled || (
+          <Tooltip title="Edit">
+            <EditOutlined onClick={editMetadata} />
+          </Tooltip>
+        )
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       title={'Metadata'}>

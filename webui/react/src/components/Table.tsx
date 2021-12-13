@@ -1,6 +1,5 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
-import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
@@ -10,18 +9,19 @@ import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import { StateOfUnion } from 'themes';
 import {
-  CheckpointState,
-  CommandState, CommandTask, CommandType, ExperimentItem,
-  ModelItem,
-  ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
+  CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion, Pagination,
+  StartEndTimes, TrialItem,
 } from 'types';
-import { durationInEnglish, getDuration } from 'utils/datetime';
+import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { waitPageUrl } from 'wait';
 
 import Link from './Link';
 import css from './Table.module.scss';
+import TimeAgo from './TimeAgo';
+import TimeDuration from './TimeDuration';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
@@ -63,9 +63,9 @@ export const archivedRenderer = (archived: boolean): React.ReactNode => {
   return archived ? <Icon name="checkmark" /> : null;
 };
 
-export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
-  return durationInEnglish(getDuration(times));
-};
+export const durationRenderer = (times: StartEndTimes): React.ReactNode => (
+  <TimeDuration duration={getDuration(times)} />
+);
 
 export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
   return <HumanReadableNumber num={num} />;
@@ -79,7 +79,7 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
   );
 };
 
-export const stateRenderer: Renderer<{ state: CommandState | RunState | CheckpointState }> =
+export const stateRenderer: Renderer<{ state: StateOfUnion}> =
 (_, record) => (
   <div className={css.centerVertically}>
     <Badge state={record.state} type={BadgeType.State} />
@@ -136,9 +136,9 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 /* Experiment Table Column Renderers */
 
-export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
-  return durationInEnglish(getDuration(record));
-};
+export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
+  <TimeDuration duration={getDuration(record)} />
+);
 
 export const experimentNameRenderer = (
   value: string | number | undefined,

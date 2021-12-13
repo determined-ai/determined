@@ -4,11 +4,11 @@ import CheckpointModal from 'components/CheckpointModal';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
+import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
 import {
   CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
 } from 'types';
-import { durationInEnglish, getDuration } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
@@ -53,7 +53,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
         <OverviewStats title="Start Time">
-          {durationInEnglish(getDuration({ startTime: trial.startTime }))} ago
+          <TimeAgo datetime={trial.startTime} />
         </OverviewStats>
         <OverviewStats title="Total Checkpoint Size">
           {totalCheckpointsSize}

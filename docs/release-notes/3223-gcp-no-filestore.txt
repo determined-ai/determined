@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Fix a bug GCP clusters created with ``det deploy gcp up --no-filestore`` still had unused
-   filestores created.

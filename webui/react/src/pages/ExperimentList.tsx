@@ -1,13 +1,13 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import Page from 'components/Page';
-import ResponsiveTable from 'components/ResponsiveTable';
+import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
   archivedRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
@@ -19,7 +19,8 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { cancellableRunStates, deletableRunStates, terminalRunStates } from 'constants/states';
+import { cancellableRunStates, deletableRunStates, pausableRunStates,
+  terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -92,12 +93,12 @@ const ExperimentList: React.FC = () => {
       const experiment = experimentMap[id];
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
-      const isCancelable = cancellableRunStates.includes(experiment.state);
+      const isCancelable = cancellableRunStates.has(experiment.state);
       const isDeletable = deletableRunStates.has(experiment.state) &&
         user && (user.isAdmin || user.username === experiment.username);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
-      const isPausable = experiment.state === RunState.Active;
+      const isPausable = pausableRunStates.has(experiment.state);
       if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
       if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
       if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
@@ -133,9 +134,9 @@ const ExperimentList: React.FC = () => {
         if (isEqual(prev, response.experiments)) return prev;
         return response.experiments;
       });
-      setIsLoading(false);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+    } finally {
       setIsLoading(false);
     }
   }, [ canceler,
@@ -502,23 +503,6 @@ const ExperimentList: React.FC = () => {
     }
   }, [ submitBatchAction, showConfirmation ]);
 
-  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
-    if (Array.isArray(tableSorter)) return;
-
-    const { columnKey, order } = tableSorter as SorterResult<ExperimentItem>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
-
-    const newSettings = {
-      sortDesc: order === 'descend',
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortKey: columnKey as any,
-      tableLimit: tablePagination.pageSize,
-      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
-    };
-    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-    updateSettings(newSettings, shouldPush);
-  }, [ columns, settings.tableOffset, updateSettings ]);
-
   const handleTableRowSelect = useCallback(rowKeys => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
@@ -592,7 +576,7 @@ const ExperimentList: React.FC = () => {
         }}
         showSorterTooltip={false}
         size="small"
-        onChange={handleTableChange}
+        onChange={handleTableChange(columns, settings, updateSettings)}
       />
     </Page>
   );

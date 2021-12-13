@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -16,6 +17,9 @@ type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
+// AllocReqs is an alias for a list of Allocate Requests.
+type AllocReqs = []*sproto.AllocateRequest
+
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 	return &priorityScheduler{
@@ -25,6 +29,28 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+}
+
+func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
+	reqs := sortTasks(taskList, groups, false)
+	jobQInfo, jobActors := mergeToJobQInfo(reqs)
+	for jobID, jobActor := range jobActors {
+		rmJobInfo, ok := jobQInfo[jobID]
+		if jobActor == nil || !ok || rmJobInfo == nil {
+			continue
+		}
+		jobActor.System().Tell(jobActor, rmJobInfo)
+	}
+}
+
+func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	for it := rp.taskList.iterator(); it.next(); {
+		req := it.value()
+		updateAllocateReqState(req, rp.taskList)
+	}
+	reqs := sortTasks(rp.taskList, rp.groups, false)
+	jobQInfo, _ := mergeToJobQInfo(reqs)
+	return jobQInfo
 }
 
 func (p *priorityScheduler) prioritySchedule(
@@ -49,6 +75,7 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
+	p.reportJobQInfo(taskList, groups)
 
 	return toAllocate, toRelease
 }
@@ -69,10 +96,9 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		taskList, groups, filter)
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndTimestamp(taskList, groups, filter)
 
-	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
@@ -100,6 +126,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
+					allocatedTask.State = job.SchedulingStateScheduledBackfilled
 					toAllocate = append(toAllocate, allocatedTask)
 				}
 			}
@@ -232,6 +259,7 @@ func sortTasksByPriorityAndTimestamp(
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}
 
+		updateAllocateReqState(req, taskList)
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
@@ -247,7 +275,7 @@ func sortTasksByPriorityAndTimestamp(
 	} {
 		for _, tasks := range tasksMap {
 			sort.Slice(tasks, func(i, j int) bool {
-				return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+				return compareByRegisteredTime(tasks, i, j)
 			})
 		}
 	}
@@ -317,4 +345,45 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 	return func(request *sproto.AllocateRequest) bool {
 		return request.Label == label && (request.SlotsNeeded == 0) == zeroSlots
 	}
+}
+
+// compareByRegisteredTime sorts tasks by their registration time.
+func compareByRegisteredTime(tasks []*sproto.AllocateRequest, i, j int) bool {
+	return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+}
+
+func sortTasks(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	k8s bool,
+) []*sproto.AllocateRequest {
+	var reqs []*sproto.AllocateRequest
+
+	for it := taskList.iterator(); it.next(); {
+		reqs = append(reqs, it.value())
+	}
+
+	sort.Slice(reqs, func(i, j int) bool {
+		p1 := *groups[reqs[i].Group].priority
+		p2 := *groups[reqs[j].Group].priority
+		if k8s { // in k8s, higher priority == more prioritized
+			switch {
+			case p1 > p2:
+				return true
+			case p2 > p1:
+				return false
+			}
+		} else {
+			switch {
+			case p1 > p2:
+				return false
+			case p2 > p1:
+				return true
+			}
+		}
+
+		return compareByRegisteredTime(reqs, i, j)
+	})
+
+	return reqs
 }

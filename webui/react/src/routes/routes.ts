@@ -80,10 +80,10 @@ const routes: RouteConfig[] = [
   },
   {
     icon: 'logs',
-    id: 'masterLogs',
+    id: 'clusterLogs',
     needAuth: true,
     path: '/logs',
-    title: 'Master Logs',
+    title: 'Cluster Logs',
   },
   {
     icon: 'user',
@@ -114,6 +114,12 @@ const routes: RouteConfig[] = [
     needAuth: false,
     path: '/reload',
     title: 'Reload',
+  },
+  {
+    id: 'jobs',
+    needAuth: true,
+    path: '/jobs',
+    title: 'Job Queue',
   },
 ];
 
