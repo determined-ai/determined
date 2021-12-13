@@ -29,8 +29,8 @@ class TrialController(metaclass=abc.ABCMeta):
 
         self.prof = profiler.ProfilerAgent.from_env(
             env,
-            context.distributed.cross_rank,
-            context.distributed.rank,
+            global_rank=context.distributed.rank,
+            local_rank=context.distributed.local_rank,
         )
 
         self._check_if_trial_supports_configurations(env)
