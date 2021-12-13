@@ -272,7 +272,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		ctx.Self().Stop()
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
-		//prom.RemoveAgentAsTarget(ctx, a.uuid.String())
 		for cid := range a.containers {
 			stopped := aproto.ContainerError(
 				aproto.AgentFailed, errors.New("agent closed with allocated containers"))
@@ -309,7 +308,6 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	switch {
 	case msg.AgentStarted != nil:
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
-		//prom.AddAgentAsTarget(ctx, a.uuid.String(), a.address, a.resourcePoolName)
 		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
 

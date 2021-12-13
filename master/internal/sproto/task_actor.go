@@ -32,6 +32,8 @@ type (
 	// TaskContainerStarted contains the information needed by tasks from container started.
 	TaskContainerStarted struct {
 		Addresses           []cproto.Address
+
+		// NativeReservationID is the native Docker hex container ID of the Determined container.
 		NativeReservationID string
 	}
 	// TaskContainerStopped contains the information needed by tasks from container stopped.
