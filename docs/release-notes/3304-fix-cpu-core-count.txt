@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Agent: fix displayed CPU core count for CPU slots.
