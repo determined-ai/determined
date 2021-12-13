@@ -2,7 +2,7 @@
 # /master/internal/scheduler/
 
 # Provisioner
-/master/internal/provisioner/  @shiyuann
+/master/internal/provisioner/
 
 # Model registry
 #/master/pkg/model
@@ -43,7 +43,7 @@
 # /agent/
 
 # Harness, container
-/harness/                      @shiyuann
+/harness/
 
 # D-train
 # /harness/determined/horovod.py
