@@ -1,6 +1,11 @@
+// Package command provides utilities for commands. This package comment is to satisfy linters
+// without disabling golint for the file.
+//nolint:dupl // So easy with generics, so hard without; just wait.
 package command
 
 import (
+	"github.com/labstack/echo/v4"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,9 +39,17 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
-		return createGenericCommandActor(
+		if err := createGenericCommandActor(
 			ctx, s.db, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg,
-		)
+		); err != nil {
+			ctx.Log().WithError(err).Error("failed to launch shell")
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(taskID)
+		}
+
+	case echo.Context:
+		ctx.Respond(echo.ErrNotFound)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

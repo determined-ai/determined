@@ -1,6 +1,10 @@
+// Package command provides utilities for commands.
+//nolint:dupl
 package command
 
 import (
+	"github.com/labstack/echo/v4"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,9 +38,17 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
-		return createGenericCommandActor(
+		if err := createGenericCommandActor(
 			ctx, t.db, taskID, model.TaskTypeTensorboard, jobID, model.JobTypeTensorboard, msg,
-		)
+		); err != nil {
+			ctx.Log().WithError(err).Error("failed to launch tensorboard")
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(taskID)
+		}
+
+	case echo.Context:
+		ctx.Respond(echo.ErrNotFound)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

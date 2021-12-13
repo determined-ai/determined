@@ -1,6 +1,10 @@
+// Package command provides utilities for commands.
+//nolint:dupl
 package command
 
 import (
+	"github.com/labstack/echo/v4"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -33,9 +37,17 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
-		return createGenericCommandActor(
+		if err := createGenericCommandActor(
 			ctx, c.db, taskID, model.TaskTypeCommand, jobID, model.JobTypeCommand, msg,
-		)
+		); err != nil {
+			ctx.Log().WithError(err).Error("failed to launch command")
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(taskID)
+		}
+
+	case echo.Context:
+		ctx.Respond(echo.ErrNotFound)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
