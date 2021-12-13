@@ -24,9 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-
-	// "os"
-	// "github.com/docker/docker/pkg/streamformatter"
 )
 
 type dockerActor struct {
@@ -307,103 +304,22 @@ func (d *dockerActor) sendAuxLog(ctx *actor.Context, msg string) {
 	})
 }
 
-/*
-type JSONMessage struct {
-	Stream          string        `json:"stream,omitempty"`
-	Status          string        `json:"status,omitempty"`
-	Progress        *JSONProgress `json:"progressDetail,omitempty"`
-	ProgressMessage string        `json:"progress,omitempty"` // deprecated
-	ID              string        `json:"id,omitempty"`
-	From            string        `json:"from,omitempty"`
-	Time            int64         `json:"time,omitempty"`
-	TimeNano        int64         `json:"timeNano,omitempty"`
-	Error           *JSONError    `json:"errorDetail,omitempty"`
-	ErrorMessage    string        `json:"error,omitempty"` // deprecated
-	// Aux contains out-of-band data, such as digests for push signing and image id after building.
-	Aux *json.RawMessage `json:"aux,omitempty"`
-}
-*/
-
-// // pullLogWriter implements io.Writer.
-// struct pullLogWriter {
-// 	ctx *actor.Context
-// 	out io.Writer
-// }
-//
-// func (w pullLogWriter) Write(msg []byte) (n int, err error){
-// 	ctx.Tell(ctx.Sender(), aproto.ContainerLog{
-// 		Timestamp:   time.Now().UTC(),
-// 		PullMessage: &log,
-// 	}
-// 	return n, nil
-// }
-
 type pullInfo struct {
 	DownloadStarted bool
-	ExtractStarted bool
-	Total int64
-	Downloaded int64
-	Extracted int64
+	ExtractStarted  bool
+	Total           int64
+	Downloaded      int64
+	Extracted       int64
 }
 
 type pullLogFormatter struct {
-	Order []string
-	Known map[string]*pullInfo
+	Order   []string
+	Known   map[string]*pullInfo
 	Backoff time.Time
 }
 
-func (f *pullLogFormatter) printUpdate() {
-	var total int64
-	var downloaded int64
-	var extracted int64
-	invalid := 0
-	count := len(f.Known)
-	complete := 0
-	for _, info := range f.Known {
-		total += info.Total
-		downloaded += info.Downloaded
-		extracted += info.Extracted
-		if !info.DownloadStarted {
-			// We don't know the Total size of this layer until the first Downloading message.
-			invalid += 1
-		}else if info.Extracted == info.Total {
-			// This layer is done pulling.
-			complete += 1
-		}
-	}
-
-	if invalid > 0 {
-		fmt.Printf(
-			"Downloaded: %v/?? (??%%), Extracted %v/?? (??%%), Complete Layers: %v/%v (%v)\n",
-			downloaded,
-			extracted,
-			complete,
-			count,
-			invalid,
-		)
-		return
-	}
-
-	downloadProgress := 0.0
-	extractProgress := 0.0
-	if total > 0 {
-		downloadProgress = float64(downloaded * 10000 / total) / 100.0
-		extractProgress = float64(downloaded * 10000 / total) / 100.0
-	}
-	fmt.Printf(
-		"Downloaded: %v/%v (%v%%), Extracted %v/%v (%v%%), Complete Layers: %v/%v\n",
-		downloaded,
-		total,
-		downloadProgress,
-		extracted,
-		total,
-		extractProgress,
-		complete,
-		count,
-	)
-}
-
-func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) {
+// renderProgress generates human-readable and log-file-friendly progress messages.
+//
 // Every layer goes through the following stages:
 // - 1 Pulling fs layer (ID but no size)
 // - 1 Waiting (ID but no size)
@@ -412,176 +328,20 @@ func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) {
 // - 1 Download Complete
 // - 1+ Extracting
 // - 1 Pull Complete
-
-	if msg.Error != nil {
-		fmt.Printf("%v\n", msg.Error)
-		return
-	}
-
-	if msg.Status == "Pulling fs layer" || msg.Status == "Waiting" {
-		f.Known[msg.ID] = &pullInfo{}
-		return
-	}
-
-	if msg.Status == "Downloading" {
-		info := f.Known[msg.ID]
-		if info.ExtractStarted {
-			panic("already extracting!")
-		}
-		info.Downloaded = msg.Progress.Current
-		// The first "Downloading" msg is important, as it gives us the layer size.
-		if !info.DownloadStarted {
-			info.DownloadStarted = true
-			info.Total = msg.Progress.Total
-		}
-		f.printUpdate()
-		return
-	}
-
-	if msg.Status == "Extracting" {
-		info := f.Known[msg.ID]
-		info.Extracted = msg.Progress.Current
-		if !info.ExtractStarted {
-			info.ExtractStarted = true
-			// Forcibly mark Downloaded as completed.
-			info.Downloaded = info.Total
-		}
-		f.printUpdate()
-		return
-	}
-
-	if msg.Status == "Pull complete" {
-		info := f.Known[msg.ID]
-		// Forcibly mark Extracted as completed.
-		info.Extracted = info.Total
-		f.printUpdate()
-		return
-	}
-}
-
-/////////////////////////////////////////////////////
-
-func (f *pullLogFormatter) printUpdate2(force bool) {
-	if !force {
-		// log at most one line every 3 seconds
-		now := time.Now()
-		if now.Before(f.Backoff) {
-			return
-		}
-		f.Backoff = now.Add(1*time.Second)
-	}
-
-	var downloaded int64
-	var extracted int64
-	bars := ""
-	for _, id := range f.Order {
-		info := f.Known[id]
-		downloaded += info.Downloaded
-		extracted += info.Extracted
-		switch {
-		case !info.DownloadStarted:
-			bars += "."
-		case info.Extracted == info.Total:
-			bars += "█"
-		case info.Downloaded == info.Total:
-			bars += "▄"
-		default:
-			bars += "_"
-		}
-	}
-
-	fmt.Printf(
-		"Downloaded: %.1fMB, Extracted %.1fMB: Progress: %v\n",
-		float64(downloaded) / 1e6,
-		float64(extracted) / 1e6,
-		bars,
-	)
-	return
-}
-
-
-
-
-func (f *pullLogFormatter) Update2(msg jsonmessage.JSONMessage) {
-// Every layer goes through the following stages:
-// - 1 Pulling fs layer (ID but no size)
-// - 1 Waiting (ID but no size)
-// - 1+ Downloading
-// - 1 Verifying Checksum
-// - 1 Download Complete
-// - 1+ Extracting
-// - 1 Pull Complete
+//
 // You can't really estimate global progress because the log stream doesn't tell you how big the
 // full download size is at any point, it only tells you how big each layer is, and only when that
 // layer starts downloading.  The downloads are staggered, so when many layers are present you
 // wouldn't know the full download size until you're basically done.
 //
-// So since showing users some concept of 'progress' seems important but since we need log files
-// to still be human-readable, we will render single-line updates to multiple layers at once.
-
-	if msg.Error != nil {
-		fmt.Printf("%v\n", msg.Error)
-		return
-	}
-
-	if msg.Status == "Pulling fs layer" || msg.Status == "Waiting" {
-		if _, ok := f.Known[msg.ID]; !ok {
-			// new layer!
-			f.Known[msg.ID] = &pullInfo{}
-			f.Order = append(f.Order, msg.ID)
-		}
-		return
-	}
-
-	if msg.Status == "Downloading" {
-		info := f.Known[msg.ID]
-		if info.ExtractStarted {
-			panic("already extracting!")
-		}
-		info.Downloaded = msg.Progress.Current
-		// The first "Downloading" msg is important, as it gives us the layer size.
-		if !info.DownloadStarted {
-			info.DownloadStarted = true
-			info.Total = msg.Progress.Total
-		}
-		f.printUpdate2(false)
-		return
-	}
-
-	if msg.Status == "Extracting" {
-		info := f.Known[msg.ID]
-		info.Extracted = msg.Progress.Current
-		if !info.ExtractStarted {
-			info.ExtractStarted = true
-			// Forcibly mark Downloaded as completed.
-			info.Downloaded = info.Total
-		}
-		f.printUpdate2(false)
-		return
-	}
-
-	if msg.Status == "Pull complete" {
-		info := f.Known[msg.ID]
-		// Forcibly mark Extracted as completed.
-		info.Extracted = info.Total
-		f.printUpdate2(false)
-		return
-	}
-}
-
-
-/////////////////////////////////////////////////////
-
-func (f *pullLogFormatter) printUpdate3(force bool) {
-	if !force {
-		// log at most one line every 1 second
-		now := time.Now()
-		if now.Before(f.Backoff) {
-			return
-		}
-		f.Backoff = now.Add(1*time.Second)
-	}
-
+// Showing a per-layer status bar is practically impossible without an interactive terminal (as
+// docker run would have).
+//
+// So instead we create a weighted-average status bar, where every layer's download and extraction
+// count as equal parts.  The status bar ends up pretty jerky but it still gives a "sensation" of
+// progress; things don't look frozen, the user has a rough idea of how far along you are, and the
+// logs are still sane afterwards.
+func (f *pullLogFormatter) RenderProgress() string {
 	var downloaded int64
 	var extracted int64
 	progress := 0.0
@@ -597,7 +357,7 @@ func (f *pullLogFormatter) printUpdate3(force bool) {
 			progress += 1.0
 		case info.Downloaded == info.Total:
 			// download complete, extraction in progress
-			progress += 0.5 + 0.5 * float64(info.Extracted) / float64(info.Total)
+			progress += 0.5 + 0.5*float64(info.Extracted)/float64(info.Total)
 		default:
 			progress += 0.5 * float64(info.Extracted) / float64(info.Total)
 		}
@@ -618,47 +378,40 @@ func (f *pullLogFormatter) printUpdate3(force bool) {
 		}
 	}
 
-	fmt.Printf(
-		"[%v] Downloaded: %.1fMB, Extracted %.1fMB\n",
+	return fmt.Sprintf(
+		"[%v] Downloaded: %.1fMB, Extracted %.1fMB",
 		bar,
-		float64(downloaded) / 1e6,
-		float64(extracted) / 1e6,
+		float64(downloaded)/1e6,
+		float64(extracted)/1e6,
 	)
-	return
 }
 
+func (f *pullLogFormatter) backoffOrRenderProgress() *string {
+	// log at most one line every 1 second
+	now := time.Now()
+	if now.Before(f.Backoff) {
+		return nil
+	}
+	f.Backoff = now.Add(1 * time.Second)
 
+	progress := f.RenderProgress()
+	return &progress
+}
 
-
-func (f *pullLogFormatter) Update3(msg jsonmessage.JSONMessage) {
-// Every layer goes through the following stages:
-// - 1 Pulling fs layer (ID but no size)
-// - 1 Waiting (ID but no size)
-// - 1+ Downloading
-// - 1 Verifying Checksum
-// - 1 Download Complete
-// - 1+ Extracting
-// - 1 Pull Complete
-// You can't really estimate global progress because the log stream doesn't tell you how big the
-// full download size is at any point, it only tells you how big each layer is, and only when that
-// layer starts downloading.  The downloads are staggered, so when many layers are present you
-// wouldn't know the full download size until you're basically done.
-//
-// So since showing users some concept of 'progress' seems important but since we need log files
-// to still be human-readable, we will render single-line updates to multiple layers at once.
-
+// Update returns nil or a rendered progress update for the end user.
+func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) *string {
 	if msg.Error != nil {
 		fmt.Printf("%v\n", msg.Error)
-		return
+		return nil
 	}
 
 	if msg.Status == "Pulling fs layer" || msg.Status == "Waiting" {
 		if _, ok := f.Known[msg.ID]; !ok {
-			// new layer!
+			// New layer!
 			f.Known[msg.ID] = &pullInfo{}
 			f.Order = append(f.Order, msg.ID)
 		}
-		return
+		return nil
 	}
 
 	if msg.Status == "Downloading" {
@@ -672,8 +425,7 @@ func (f *pullLogFormatter) Update3(msg jsonmessage.JSONMessage) {
 			info.DownloadStarted = true
 			info.Total = msg.Progress.Total
 		}
-		f.printUpdate3(false)
-		return
+		return f.backoffOrRenderProgress()
 	}
 
 	if msg.Status == "Extracting" {
@@ -684,64 +436,43 @@ func (f *pullLogFormatter) Update3(msg jsonmessage.JSONMessage) {
 			// Forcibly mark Downloaded as completed.
 			info.Downloaded = info.Total
 		}
-		f.printUpdate3(false)
-		return
+		return f.backoffOrRenderProgress()
 	}
 
 	if msg.Status == "Pull complete" {
 		info := f.Known[msg.ID]
 		// Forcibly mark Extracted as completed.
 		info.Extracted = info.Total
-		f.printUpdate3(false)
-		return
+		return f.backoffOrRenderProgress()
 	}
+
+	return nil
 }
 
-
 func (d *dockerActor) sendPullLogs(ctx *actor.Context, r io.Reader) error {
-	// jsonmessage.DisplayJSONMessagesStream(r, os.Stdout, 1, false, nil)
-	// return nil
-
 	plf := pullLogFormatter{Known: map[string]*pullInfo{}}
-	// po1 := streamformatter.NewProgressOutput(os.Stdout)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-
 		log := jsonmessage.JSONMessage{}
 		if err := json.Unmarshal(scanner.Bytes(), &log); err != nil {
 			return errors.Wrapf(err, "error parsing log message: %#v", log)
 		}
 
-		plf.Update3(log)
-		// po1.WriteProgress(log)
-
-		// fmt.Printf("------------------\n")
-		// fmt.Printf("Stream: %v\n", log.Stream)
-		// fmt.Printf("Status: %v\n", log.Status)
-		// if log.Progress != nil {
-		// 	fmt.Printf("Progress.Current: %v\n", log.Progress.Current)
-		// 	fmt.Printf("Progress.Total: %v\n", log.Progress.Total)
-		// 	fmt.Printf("Progress.Start: %v\n", log.Progress.Start)
-		// 	fmt.Printf("Progress.Units: %v\n", log.Progress.Units)
-		// }
-		// fmt.Printf("ID: %v\n", log.ID)
-		// fmt.Printf("From: %v\n", log.From)
-		// fmt.Printf("Error: %v\n", log.Error)
-		// if log.Aux != nil {
-		// 	bytes, err := json.Marshal(log.Aux)
-		// 	if err != nil {
-		// 		panic(err.Error())
-		// 	}
-		// 	fmt.Printf("Aux: %v\n", string(bytes))
-		// }
-		ctx.Tell(ctx.Sender(), aproto.ContainerLog{
-			Timestamp:   time.Now().UTC(),
-			PullMessage: &log,
-		})
+		logMsg := plf.Update(log)
+		if logMsg != nil {
+			ctx.Tell(ctx.Sender(), aproto.ContainerLog{
+				Timestamp:   time.Now().UTC(),
+				PullMessage: logMsg,
+			})
+		}
 	}
-	// always print the complete progress bar, regardless of the backoff time
-	plf.printUpdate3(true)
+	// Always print the complete progress bar, regardless of the backoff time.
+	finalLogMsg := plf.RenderProgress()
+	ctx.Tell(ctx.Sender(), aproto.ContainerLog{
+		Timestamp:   time.Now().UTC(),
+		PullMessage: &finalLogMsg,
+	})
 	return scanner.Err()
 }
 
