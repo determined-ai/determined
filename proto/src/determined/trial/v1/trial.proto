@@ -83,7 +83,7 @@ message Trial {
   string runner_state = 11;
   // The wall clock time is all active time of the cluster for the trial,
   // inclusive of everything (restarts, initiailization, etc), in seconds.
-  int64 wall_clock_time = 12;
+  double wall_clock_time = 12;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

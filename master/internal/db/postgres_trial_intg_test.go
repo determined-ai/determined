@@ -52,5 +52,5 @@ func TestProtoGetTrial(t *testing.T) {
 		"{"+strconv.Itoa(int(tr.ID))+"}",
 	)
 	require.NoError(t, err, "failed to query trial")
-	require.Equal(t, trResp.WallClockTime, int64(3), "wall clock time is wrong")
+	require.Equal(t, trResp.WallClockTime, float64(3), "wall clock time is wrong")
 }
