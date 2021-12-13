@@ -1,4 +1,5 @@
 import pathlib
+from typing import Any
 
 import numpy as np
 import tensorflow as tf
@@ -18,7 +19,7 @@ class RuntimeErrorTrial(TFKerasTrial):
     def __init__(self, context: TFKerasTrialContext) -> None:
         self.context = context
 
-    def build_model(self):
+    def build_model(self) -> Any:
         model = keras.Sequential([keras.layers.Dense(10)])
         model = self.context.wrap_model(model)
         model.compile(
@@ -30,10 +31,10 @@ class RuntimeErrorTrial(TFKerasTrial):
         )
         return model
 
-    def build_training_data_loader(self):
+    def build_training_data_loader(self) -> Any:
         return np.zeros(1), np.zeros(1)
 
-    def build_validation_data_loader(self):
+    def build_validation_data_loader(self) -> Any:
         return np.zeros(1), np.zeros(1)
 
 

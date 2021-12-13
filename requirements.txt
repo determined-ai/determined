@@ -20,8 +20,27 @@ flake8-docstrings>=1.4.0
 flake8-quotes>=2.1.0
 flake8-tuple>=0.4.0
 isort==5.9.3
-mypy==0.790
+mypy==0.910
 bump2version>=1.0.1
 # Earlier versions had different type annotations
 pyzmq>=22
 devcluster>=1,<2
+# typeshed
+types-certifi
+types-chardet
+types-cryptography
+types-enum34
+types-filelock
+types-futures
+types-ipaddress
+types-protobuf
+types-pyOpenSSL
+types-python-dateutil
+types-pytz
+types-PyYAML
+types-requests
+types-setuptools
+types-six
+types-tabulate
+types-termcolor
+types-toml

@@ -28,7 +28,7 @@ def render_table(
     # Only display selected columns
     values = select_values(values, headers)
 
-    print(tabulate.tabulate(values, headers, tablefmt=table_fmt), flush=False)  # type: ignore
+    print(tabulate.tabulate(values, headers, tablefmt=table_fmt), flush=False)
 
 
 def unmarshal(
@@ -122,7 +122,7 @@ def tabulate_or_csv(
         # Tabulate needs to accept dict[str, str], but mypy thinks it cannot, so
         # we suppress that error.
         print(
-            tabulate.tabulate(values, headers, tablefmt="presto"),  # type: ignore
+            tabulate.tabulate(values, headers, tablefmt="presto"),
             file=out,
             flush=False,
         )

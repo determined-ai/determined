@@ -1,3 +1,4 @@
+# type: ignore
 from typing import Any, Dict, cast
 
 import numpy as np
@@ -15,7 +16,7 @@ def error_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
     check.equal_lengths(predictions, labels)
     check.len_eq(labels.shape, 1, "Labels must be a column vector")
 
-    return (  # type: ignore
+    return (
         1.0 - float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
     )
 

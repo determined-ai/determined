@@ -10,11 +10,12 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import mean_squared_error
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
+from tensorflow.python.data.ops.dataset_ops import ZipDataset
 
 from determined import keras
 
 
-def make_one_var_tf_dataset_loader(hparams: Dict[str, Any], batch_size: int):
+def make_one_var_tf_dataset_loader(hparams: Dict[str, Any], batch_size: int) -> ZipDataset:
     dataset_range = hparams["dataset_range"]
 
     xtrain = tf.data.Dataset.range(dataset_range).batch(batch_size)

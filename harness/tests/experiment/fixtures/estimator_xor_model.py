@@ -1,3 +1,4 @@
+# type: ignore
 import os
 from typing import Any, Callable, Dict, Tuple
 
@@ -62,7 +63,7 @@ def xor_input_fn_data_layer(
     return _input_fn
 
 
-class StopVeryEarly(tf.compat.v1.train.SessionRunHook):  # type: ignore
+class StopVeryEarly(tf.compat.v1.train.SessionRunHook):
     def after_run(
         self, run_context: tf.estimator.SessionRunContext, run_values: tf.estimator.SessionRunValues
     ) -> None:
