@@ -27,12 +27,12 @@ parameters:
   det-version:
     type: string
     default: 0.17.6-dev0
-  python-version:
-    type: string
-    default: "3.7.11"
-  python-image:
+  docker-image:
     type: string
     default: cimg/base:2021.11
+  machine-image:
+    type: string
+    default: ubuntu-2004:202101-01
   cache-buster:
     type: string
     default: v1dev10
@@ -216,6 +216,9 @@ commands:
         default: ""
       executor:
         type: string
+      python-version:
+        type: string
+        default: "3.7.12"
     steps:
       - run:
           name: prepare conda PATH
@@ -251,7 +254,7 @@ commands:
       - run:
           name: run conda install_python.sh
           command: |
-            sudo bash /tmp/install_python.sh <<pipeline.parameters.python-version>>
+            sudo bash /tmp/install_python.sh <<parameters.python-version>>
 
       - run:
           name: Setup venv
@@ -915,7 +918,7 @@ commands:
 jobs:
   build-helm:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - helm/install-helm-client
@@ -931,7 +934,7 @@ jobs:
 
   build-docs:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - helm/install-helm-client
@@ -940,7 +943,7 @@ jobs:
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
       - run: make -C helm build
       - attach_workspace:
@@ -1082,7 +1085,7 @@ jobs:
 
   publish-helm:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - attach_workspace:
@@ -1097,12 +1100,12 @@ jobs:
       path:
         type: string
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           extras-requires: "twine"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
@@ -1122,17 +1125,17 @@ jobs:
 
   upload-try-now-template:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           extras-requires: "awscli"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness upload-try-now-template
 
   test-debian-packaging:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
       - attach_workspace:
@@ -1142,7 +1145,7 @@ jobs:
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
       - start-devcluster:
           target-stage: db
@@ -1154,7 +1157,7 @@ jobs:
 
   test-e2e-webui:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: medium
     steps:
       - checkout
@@ -1165,7 +1168,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "webui/tests/requirements.txt"
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
 
       - run: make -C master get-deps
       - install-devcluster
@@ -1294,7 +1297,7 @@ jobs:
 
   test-intg-master:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
       - checkout
@@ -1302,13 +1305,13 @@ jobs:
           at: .
       - reinstall-go
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C master test-intg
 
   test-intg-agent:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
       - checkout
@@ -1316,23 +1319,23 @@ jobs:
           at: .
       - reinstall-go
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
 
   lint-docs:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           extra-requirements-file: "docs/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C docs check
 
   lint-secrets:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - run: git clone https://github.com/awslabs/git-secrets /tmp/git-secrets
       - run: cd /tmp/git-secrets && sudo make install
@@ -1344,7 +1347,7 @@ jobs:
 
   lint-python:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
@@ -1352,7 +1355,7 @@ jobs:
           extras-requires: "torch==1.9.0"
           model-hub: true
           extra-requirements-file: "requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
@@ -1365,43 +1368,43 @@ jobs:
 
   test-unit-harness:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness test
 
   test-unit-harness-tf2:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness test-tf2
 
   test-unit-storage:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
 
   test-unit-model-hub:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
@@ -1409,18 +1412,18 @@ jobs:
           model-hub: true
           extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C model_hub test
 
   test-examples:
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extra-requirements-file: "examples/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
           only_on_branch: master
@@ -1475,7 +1478,7 @@ jobs:
         type: boolean
         default: false
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1486,7 +1489,7 @@ jobs:
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
 
       - run:
           name: Get master dependencies
@@ -1530,7 +1533,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - queue/until_front_of_line:
           only-on-branch: master
@@ -1541,7 +1544,7 @@ jobs:
       - set-slack-user-id
       - setup-python-venv:
           determined: true
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - deploy-aws-cluster:
           cluster-id: <<parameters.cluster-id>>
           det-version: ${CIRCLE_SHA1}
@@ -1587,7 +1590,7 @@ jobs:
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
@@ -1595,7 +1598,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - when:
           condition: <<parameters.enable-tls>>
           steps:
@@ -1678,7 +1681,7 @@ jobs:
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
@@ -1686,7 +1689,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -1753,7 +1756,7 @@ jobs:
         default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
         type: string
     docker:
-      - image: <<pipeline.parameters.python-image>>
+      - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
     environment:
       # Using the TF2-only image here is a hack to get more test coverage since TF1 is still the
@@ -1770,7 +1773,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: <<pipeline.parameters.python-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - setup-gke-cluster-cuda-11:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -1806,7 +1809,7 @@ jobs:
       det-version:
         type: string
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1819,7 +1822,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
 
       - pull-task-images:
           tf1: True
@@ -1830,12 +1833,12 @@ jobs:
 
   scan-docker-images:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
           extras-requires: anchorecli
       - run: sudo snap install yq
       - run: sudo apt-get install -y jq
