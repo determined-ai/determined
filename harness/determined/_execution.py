@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import _generic, constants, gpu, horovod
+from determined import _generic, constants, gpu
 from determined.common import api
 
 
@@ -94,7 +94,7 @@ def _make_local_execution_env(
     checkpoint_dir: str,
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
-) -> Tuple[_generic.Context, det.EnvContext, horovod.HorovodContext]:
+) -> Tuple[_generic.Context, det.EnvContext]:
     config = det.ExperimentConfig(
         _make_local_execution_exp_config(
             config, checkpoint_dir, managed_training=managed_training, test_mode=test_mode
@@ -128,11 +128,10 @@ def _make_local_execution_env(
         test_mode=test_mode,
         on_cluster=False,
     )
-    hvd_config = horovod.HorovodContext.from_configs(env.experiment_config, env.hparams)
 
     generic_context = _generic._dummy_init()
 
-    return generic_context, env, hvd_config
+    return generic_context, env
 
 
 @contextlib.contextmanager

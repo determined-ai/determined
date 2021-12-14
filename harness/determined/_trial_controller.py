@@ -1,11 +1,23 @@
 import abc
 import logging
+import os
 from typing import Any, Optional, Type
 
 import determined as det
-from determined import horovod, profiler, workload
+from determined import profiler, workload
 from determined.common import check
-from determined.horovod import hvd
+
+
+class _DistributedBackend:
+    """
+    _DistributedBackend contains the supported backends for distributed training. These constants
+    are read from environment variables to determine which backends are in use.
+    """
+
+    HOROVOD = "USE_HOROVOD"
+
+    def use_horovod(self) -> bool:
+        return bool(os.environ.get(self.HOROVOD, None))
 
 
 class TrialController(metaclass=abc.ABCMeta):
@@ -18,12 +30,10 @@ class TrialController(metaclass=abc.ABCMeta):
         self,
         context: Any,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> None:
         self.context = context
         self.env = env
-        self.hvd_config = hvd_config
         # The only time that workloads should be non-None here is unit tests or test mode.
         self.workloads = workloads
 
@@ -33,17 +43,16 @@ class TrialController(metaclass=abc.ABCMeta):
             context.distributed.rank,
         )
 
+        distributed_backend = _DistributedBackend()
+        self.use_horovod = distributed_backend.use_horovod()
         self._check_if_trial_supports_configurations(env)
 
         self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()
 
-        if self.hvd_config.use:
-            self.is_chief = hvd.rank() == 0
-        else:
-            self.is_chief = True
+        self.is_chief = context.distributed.rank == 0
 
-        if self.hvd_config.use and not self.is_chief:
+        if context.distributed.size > 1 and not self.is_chief:
             log_level = (
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )
@@ -52,7 +61,7 @@ class TrialController(metaclass=abc.ABCMeta):
     @classmethod
     @abc.abstractmethod
     def pre_execute_hook(
-        cls: Type["TrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+        cls: Type["TrialController"], env: det.EnvContext, distributed_backend: _DistributedBackend
     ) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)
@@ -67,7 +76,6 @@ class TrialController(metaclass=abc.ABCMeta):
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> "TrialController":
         """

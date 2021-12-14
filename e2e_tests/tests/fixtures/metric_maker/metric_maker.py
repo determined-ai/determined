@@ -6,7 +6,7 @@ from typing import Any, Dict
 import numpy as np
 
 import determined as det
-from determined import horovod, layers, workload
+from determined import layers, workload
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -97,7 +97,7 @@ class MetricMaker(det.TrialController):
         return MetricMaker(*args, **kwargs)
 
     @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         pass
 
     def run(self) -> None:

@@ -15,7 +15,7 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 
 import determined as det
-from determined import horovod, keras, layers, util, workload
+from determined import keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.common.api.analytics import send_analytics
@@ -162,10 +162,12 @@ class TFKerasTrialController(det.TrialController):
 
     @classmethod
     def pre_execute_hook(
-        cls: Type["TFKerasTrialController"], env: det.EnvContext, hvd_config: horovod.HorovodContext
+        cls: Type["TFKerasTrialController"],
+        env: det.EnvContext,
+        distributed_backend: det._DistributedBackend,
     ) -> None:
         # Initialize the correct horovod.
-        if hvd_config.use:
+        if distributed_backend.use_horovod():
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
             hvd.init()
 
@@ -177,7 +179,7 @@ class TFKerasTrialController(det.TrialController):
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
             session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            cls._configure_session(env, hvd_config, session_config)
+            cls._configure_session(env, session_config, distributed_backend.use_horovod())
 
     @classmethod
     def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:
@@ -191,12 +193,12 @@ class TFKerasTrialController(det.TrialController):
     def _configure_session(
         cls: Type["TFKerasTrialController"],
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         session_config: tf.compat.v1.ConfigProto,
+        use_horovod: bool = False,
     ) -> Optional[tf.compat.v1.Session]:
         if not tf.executing_eagerly():
             session_config.gpu_options.allow_growth = True
-            if hvd_config.use:
+            if use_horovod:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
                 session_config.gpu_options.visible_device_list = str(hvd.local_rank())
@@ -212,7 +214,7 @@ class TFKerasTrialController(det.TrialController):
             gpus = tf.config.experimental.list_physical_devices("GPU")
 
             if len(gpus) > 0:
-                local_rank = hvd.local_rank() if hvd_config.use else 0
+                local_rank = hvd.local_rank() if use_horovod else 0
                 gpu = gpus[local_rank]
                 tf.config.experimental.set_visible_devices(gpu, "GPU")
                 tf.config.experimental.set_memory_growth(gpu, True)
@@ -225,7 +227,6 @@ class TFKerasTrialController(det.TrialController):
         context: keras.TFKerasTrialContext,
         compile_args: inspect.BoundArguments,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
     ) -> None:
         if "optimizer" in compile_args.arguments:
             # For backwards compatibility we check if an optimizer is passed as part
@@ -239,7 +240,7 @@ class TFKerasTrialController(det.TrialController):
         # be none because we check that in `from_trial`.
         assert context.model is not None
 
-        if hvd_config.use and version.parse("2.0.0") <= version.parse(
+        if context.distributed.size > 1 and version.parse("2.0.0") <= version.parse(
             tf.__version__
         ) < version.parse("2.2.0"):
             logging.info(
@@ -259,7 +260,6 @@ class TFKerasTrialController(det.TrialController):
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> det.TrialController:
         check.is_instance(
@@ -270,7 +270,10 @@ class TFKerasTrialController(det.TrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
-        session = cls._configure_session(env, hvd_config, trial.session_config())
+        # Keras only supports horovod backend for distributed training
+        session = cls._configure_session(
+            env, trial.session_config(), use_horovod=context.distributed.size > 1
+        )
 
         training_data = keras._adapt_data_from_data_loader(
             input_data=trial.build_training_data_loader(),
@@ -288,9 +291,7 @@ class TFKerasTrialController(det.TrialController):
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
 
-        cls.compile_model(
-            context=context, compile_args=compile_args, env=env, hvd_config=hvd_config
-        )
+        cls.compile_model(context=context, compile_args=compile_args, env=env)
 
         tf_keras_callbacks = trial.keras_callbacks()
 
@@ -300,7 +301,6 @@ class TFKerasTrialController(det.TrialController):
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
             context,
             env,
-            hvd_config,
             workloads,
         )
 
@@ -322,7 +322,9 @@ class TFKerasTrialController(det.TrialController):
         self.context._select_optimizers()
 
         keras._check_if_aggregation_frequency_will_work(
-            model=self.model, hvd_config=self.hvd_config
+            model=self.model,
+            use_horovod=self.use_horovod,
+            aggregation_frequency=self.context._aggregation_frequency,
         )
 
         self.training_data = train_config.training_data
@@ -340,6 +342,12 @@ class TFKerasTrialController(det.TrialController):
         if isinstance(self.validation_data, keras.SequenceAdapter):
             # Ignore these settings and use the same settings as for the fit call.
             self.validation_data = self.validation_data.sequence
+
+        if self.context.distributed.size > 1:
+            assert self.use_horovod, (
+                "TF Keras trial must be launched with a horovod backend if "
+                "doing distributed training"
+            )
 
         self._check_training_data()
         self._check_validation_data()
@@ -507,7 +515,7 @@ class TFKerasTrialController(det.TrialController):
         )
         callbacks = [self.multiplexer]
 
-        if self.hvd_config.use:
+        if self.context.distributed.size > 1:
             # Horovod synchronization of initial variables should happen even before we enter our
             # control loop, in case we have an initial validation requested.
             callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)] + callbacks
@@ -658,8 +666,8 @@ class TFKerasTrialController(det.TrialController):
                 workers=self.context._fit_workers,
                 use_multiprocessing=self.context._fit_use_multiprocessing,
                 max_queue_size=self.context._fit_max_queue_size,
-                shard_rank=self.context.distributed.get_rank(),
-                num_shards=self.context.distributed.get_size(),
+                shard_rank=self.context.distributed.rank,
+                num_shards=self.context.distributed.size,
                 repeat=True,
                 shuffle=self.context._fit_shuffle,
                 shuffle_seed=self.context.get_trial_seed(),
@@ -820,7 +828,7 @@ class TFKerasTrialController(det.TrialController):
         raise det.errors.WorkerFinishedGracefully()
 
     def _allreduce_logs(self, logs: Dict) -> Dict:
-        if not self.hvd_config.use:
+        if not (self.context.distributed.size > 1):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
@@ -877,7 +885,7 @@ class TFKerasTrialController(det.TrialController):
                 "issue at github.com/determined-ai/determined so we can fix this bug."
             )
 
-        if self.hvd_config.use:
+        if self.context.distributed.size > 1:
             num_inputs = self._hvd_allreduce(num_inputs, average=False, name="train_num_inputs")
             num_inputs = self._convert_possible_tensor(num_inputs)
 
@@ -914,7 +922,7 @@ class TFKerasTrialController(det.TrialController):
         metrics = self._launch_evaluate()
         num_inputs = self.multiplexer.get_test_inputs()
 
-        if self.hvd_config.use:
+        if self.context.distributed.size > 1:
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.

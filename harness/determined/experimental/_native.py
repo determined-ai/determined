@@ -118,14 +118,14 @@ def _load_trial_for_checkpoint_export(
 ) -> Tuple[Type[det.Trial], det.TrialContext]:
     with det._local_execution_manager(context_dir):
         trial_class = load.trial_class_from_entrypoint(config["entrypoint"])
-        generic_context, env, hvd_config = det._make_local_execution_env(
+        generic_context, env = det._make_local_execution_env(
             managed_training=managed_training,
             test_mode=False,
             config=config,
             checkpoint_dir="/tmp",
             hparams=hparams,
         )
-        trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+        trial_context = trial_class.trial_context_class(generic_context, env)
     return trial_class, trial_context
 
 
@@ -138,7 +138,7 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     with tempfile.TemporaryDirectory() as checkpoint_dir:
-        generic_context, env, hvd_config = det._make_local_execution_env(
+        generic_context, env = det._make_local_execution_env(
             managed_training=True,
             test_mode=True,
             config=config,
@@ -150,11 +150,12 @@ def test_one_batch(
         logging.info(f"Using hyperparameters: {env.hparams}.")
         logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
+        distributed_backend = det._DistributedBackend()
         controller_class = trial_class.trial_controller_class
         assert controller_class is not None
-        controller_class.pre_execute_hook(env, hvd_config)
+        controller_class.pre_execute_hook(env, distributed_backend)
 
-        trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+        trial_context = trial_class.trial_context_class(generic_context, env)
         logging.info(f"Creating {trial_class.__name__}.")
         trial_inst = trial_class(trial_context)
 
@@ -162,7 +163,6 @@ def test_one_batch(
             trial_inst=trial_inst,
             context=trial_context,
             env=env,
-            hvd_config=hvd_config,
             workloads=workloads,
         )
 
@@ -304,12 +304,12 @@ def create_trial_instance(
     determined.common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
-    generic_context, env, hvd_config = det._make_local_execution_env(
+    generic_context, env = det._make_local_execution_env(
         managed_training=False,
         test_mode=False,
         config=config,
         checkpoint_dir="/tmp",
         hparams=hparams,
     )
-    trial_context = trial_def.trial_context_class(generic_context, env, hvd_config)
+    trial_context = trial_def.trial_context_class(generic_context, env)
     return trial_def(trial_context)
