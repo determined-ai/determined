@@ -92,8 +92,56 @@ class SearcherOp:
         )
 
 
-class AdvancedSearcher:
-    """A namespaced API to make it clear which searcher-related things go to which API"""
+class Searcher:
+    """
+    Searcher gives direct access to operations emitted by the search algorithm in the master.  Each
+    SearcherOp emitted has a (unitless) length that you should train for, then you complete the op
+    by reporting the validation metric you are searching over.
+
+    It is the user's responsibility to execute the required training.  Since the user configured the
+    length of the searcher in the experiment configuration, the user should know if the unitless
+    length represents epochs, batches, records, etc.
+
+    It is also the user's responsibility to evaluate the model after training and report the correct
+    metric; if you intend to search over a metric called val_accuracy, you should report
+    val_accuracy.
+
+    Lastly, it is recommended (not required) to report progress periodically, so that the webui can
+    accurately reflect current progress.  Progress is another unitless length.
+
+    Example:
+
+    .. code:: python
+
+       # We'll pretend we configured we configured the searcher
+       # in terms of batches, so we will interpet the the op.length as a
+       # count of batches.
+       # Note that you'll have to load your starting point from a
+       # checkpoint if you want to support pausing/continuing training.
+       batches_trained = 0
+
+       for op in generic_context.searcher.ops():
+           # Train for however long the op requires you to.
+           # Note that op.length is an absolute length, not an
+           # incremental length:
+           while batches_trained < op.length:
+               my_train_batch()
+
+               batches_trained += 1
+
+               # Reporting progress every batch would be expensive:
+               if batches_trained % 1000:
+                   op.report_progress(batches_trained)
+
+           # After training the required amount, pass your searcher
+           # metric to op.complete():
+           val_metrics = my_validate()
+           op.complete(val_metrics["my_searcher_metric"])
+
+    Note that reporting metrics is completely independent of the Searcher API, via
+    ``core_context.training.report_training_metrics()`` or
+    ``core_context.training.report_validation_metrics()``.
+    """
 
     def __init__(self, session: Session, trial_id: int, run_id: int, allocation_id: str) -> None:
         self._session = session
@@ -165,7 +213,7 @@ class DummySearcherOp(SearcherOp):
         logger.info(f"SearcherOp Complete: searcher_metric={det.util.json_encode(searcher_metric)}")
 
 
-class DummyAdvancedSearcher(AdvancedSearcher):
+class DummySearcher(Searcher):
     """Yield a singe search op.  We need a way for this to be configurable."""
 
     def __init__(self, unit: Unit = Unit.EPOCHS, length: int = 1) -> None:
