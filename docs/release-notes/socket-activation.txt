@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  Add support for `systemd socket activation
+   <https://0pointer.de/blog/projects/socket-activation.html>`__ to the master. See :ref:`the
+   documentation <socket-activation>` for more information.

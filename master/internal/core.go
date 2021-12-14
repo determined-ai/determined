@@ -22,6 +22,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/coreos/go-systemd/activation"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -387,14 +388,38 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	return nil
 }
 
+func (m *Master) getSystemdListener() (net.Listener, error) {
+	switch systemdListeners, err := activation.Listeners(); {
+	case err != nil:
+		return nil, errors.Wrap(err, "failed to find systemd listeners")
+	case len(systemdListeners) == 0:
+		return nil, nil
+	case len(systemdListeners) == 1:
+		return systemdListeners[0], nil
+	default:
+		return nil, errors.Errorf("expected at most 1 systemd listener, got %d", len(systemdListeners))
+	}
+}
+
 func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error {
-	// Create the base TCP socket listener and, if configured, set up TLS wrapping.
-	baseListener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
-	if err != nil {
-		return err
+	// Create the base socket listener by either fetching one passed to us from systemd or creating a
+	// TCP listener manually.
+	var baseListener net.Listener
+	systemdListener, err := m.getSystemdListener()
+	switch {
+	case err != nil:
+		return errors.Wrap(err, "failed to find systemd listeners")
+	case systemdListener != nil:
+		baseListener = systemdListener
+	default:
+		baseListener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
+		if err != nil {
+			return err
+		}
 	}
 	defer closeWithErrCheck("base", baseListener)
 
+	// If configured, set up TLS wrapping.
 	if cert != nil {
 		baseListener = tls.NewListener(baseListener, &tls.Config{
 			Certificates:             []tls.Certificate{*cert},
@@ -449,7 +474,11 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	})
 	start("cmux listener", mux.Serve)
 
-	log.Infof("accepting incoming connections on port %d", m.config.Port)
+	if systemdListener != nil {
+		log.Infof("accepting incoming connections on a socket inherited from systemd")
+	} else {
+		log.Infof("accepting incoming connections on port %d", m.config.Port)
+	}
 	select {
 	case err := <-errs:
 		return err
