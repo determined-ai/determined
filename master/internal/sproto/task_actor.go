@@ -1,15 +1,11 @@
 package sproto
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job"
-
-	"github.com/docker/docker/pkg/jsonmessage"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -22,7 +18,7 @@ type (
 		Container cproto.Container
 		Timestamp time.Time
 
-		PullMessage *jsonmessage.JSONMessage
+		PullMessage *string
 		RunMessage  *aproto.RunMessage
 		AuxMessage  *string
 
@@ -85,16 +81,7 @@ func (c ContainerLog) Message() string {
 	case c.RunMessage != nil:
 		return strings.TrimSuffix(c.RunMessage.Value, "\n")
 	case c.PullMessage != nil:
-		buf := new(bytes.Buffer)
-		if err := c.PullMessage.Display(buf, false); err != nil {
-			return err.Error()
-		}
-		msg := buf.String()
-		// Docker disables printing the progress bar in non-terminal mode.
-		if msg == "" && c.PullMessage.Progress != nil {
-			msg = c.PullMessage.Progress.String()
-		}
-		return strings.TrimSpace(msg)
+		return *c.PullMessage
 	default:
 		panic("unknown log message received")
 	}
