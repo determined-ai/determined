@@ -152,7 +152,6 @@ func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref
 		for _, allocation := range allocated.Reservations {
 			typed := allocation.(*containerReservation)
 			typed.agent.deallocateContainer(typed.container.id)
-			//prom.RemoveAllocationContainer(allocation.Summary())
 		}
 	}
 	rp.taskList.RemoveTaskByHandler(handler)

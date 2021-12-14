@@ -213,5 +213,5 @@ type InternalConfig struct {
 
 // ObservabilityConfig is the configuration for observability metrics.
 type ObservabilityConfig struct {
-	EnablePrometheus      bool                              `json:"enable_prometheus"`
+	EnablePrometheus bool `json:"enable_prometheus"`
 }
