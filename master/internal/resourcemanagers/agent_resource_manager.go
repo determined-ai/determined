@@ -108,7 +108,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
 		ctx.Respond(resp)
-
+	case *apiv1.GetAgentsRequest:
+		response := ctx.Self().System().AskAt(sproto.AgentsAddr, msg)
+		ctx.Respond(response.Get())
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
