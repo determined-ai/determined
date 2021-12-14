@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"time"
 
 	"k8s.io/apimachinery/pkg/watch"
@@ -68,7 +69,8 @@ func (i *informer) Receive(ctx *actor.Context) error {
 }
 
 func (i *informer) startInformer(ctx *actor.Context) {
-	pods, err := i.podInterface.List(metaV1.ListOptions{LabelSelector: determinedLabel})
+	pods, err := i.podInterface.List(
+		context.TODO(), metaV1.ListOptions{LabelSelector: determinedLabel})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startInformer{})
@@ -77,7 +79,8 @@ func (i *informer) startInformer(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return i.podInterface.Watch(metaV1.ListOptions{LabelSelector: determinedLabel})
+			return i.podInterface.Watch(
+				context.TODO(), metaV1.ListOptions{LabelSelector: determinedLabel})
 		},
 	})
 	if err != nil {

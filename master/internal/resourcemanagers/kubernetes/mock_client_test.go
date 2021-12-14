@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -19,7 +20,9 @@ type mockConfigMapInterface struct {
 	mux        sync.Mutex
 }
 
-func (m *mockConfigMapInterface) Create(cm *k8sV1.ConfigMap) (*k8sV1.ConfigMap, error) {
+func (m *mockConfigMapInterface) Create(
+	ctx context.Context, cm *k8sV1.ConfigMap, opts metaV1.CreateOptions,
+) (*k8sV1.ConfigMap, error) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -31,11 +34,15 @@ func (m *mockConfigMapInterface) Create(cm *k8sV1.ConfigMap) (*k8sV1.ConfigMap, 
 	return m.configMaps[cm.Name], nil
 }
 
-func (m *mockConfigMapInterface) Update(*k8sV1.ConfigMap) (*k8sV1.ConfigMap, error) {
+func (m *mockConfigMapInterface) Update(
+	context.Context, *k8sV1.ConfigMap, metaV1.UpdateOptions,
+) (*k8sV1.ConfigMap, error) {
 	panic("implement me")
 }
 
-func (m *mockConfigMapInterface) Delete(name string, options *metaV1.DeleteOptions) error {
+func (m *mockConfigMapInterface) Delete(
+	ctx context.Context, name string, options metaV1.DeleteOptions,
+) error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
@@ -48,31 +55,31 @@ func (m *mockConfigMapInterface) Delete(name string, options *metaV1.DeleteOptio
 }
 
 func (m *mockConfigMapInterface) DeleteCollection(
-	options *metaV1.DeleteOptions,
-	listOptions metaV1.ListOptions,
+	ctx context.Context, options metaV1.DeleteOptions, listOptions metaV1.ListOptions,
 ) error {
 	panic("implement me")
 }
 
 func (m *mockConfigMapInterface) Get(
-	name string,
-	options metaV1.GetOptions,
+	ctx context.Context, name string, options metaV1.GetOptions,
 ) (*k8sV1.ConfigMap, error) {
 	panic("implement me")
 }
 
-func (m *mockConfigMapInterface) List(opts metaV1.ListOptions) (*k8sV1.ConfigMapList, error) {
+func (m *mockConfigMapInterface) List(
+	ctx context.Context, opts metaV1.ListOptions,
+) (*k8sV1.ConfigMapList, error) {
 	panic("implement me")
 }
 
-func (m *mockConfigMapInterface) Watch(opts metaV1.ListOptions) (watch.Interface, error) {
+func (m *mockConfigMapInterface) Watch(
+	ctx context.Context, opts metaV1.ListOptions,
+) (watch.Interface, error) {
 	panic("implement me")
 }
 
 func (m *mockConfigMapInterface) Patch(
-	name string,
-	pt types.PatchType,
-	data []byte,
+	ctx context.Context, name string, pt types.PatchType, data []byte, opts metaV1.PatchOptions,
 	subresources ...string,
 ) (result *k8sV1.ConfigMap, err error) {
 	panic("implement me")
@@ -85,7 +92,9 @@ type mockPodInterface struct {
 	mux              sync.Mutex
 }
 
-func (m *mockPodInterface) Create(pod *k8sV1.Pod) (*k8sV1.Pod, error) {
+func (m *mockPodInterface) Create(
+	ctx context.Context, pod *k8sV1.Pod, opts metaV1.CreateOptions,
+) (*k8sV1.Pod, error) {
 	time.Sleep(m.operationalDelay)
 	m.mux.Lock()
 	defer m.mux.Unlock()
@@ -98,15 +107,21 @@ func (m *mockPodInterface) Create(pod *k8sV1.Pod) (*k8sV1.Pod, error) {
 	return m.pods[pod.Name], nil
 }
 
-func (m *mockPodInterface) Update(*k8sV1.Pod) (*k8sV1.Pod, error) {
+func (m *mockPodInterface) Update(
+	context.Context, *k8sV1.Pod, metaV1.UpdateOptions,
+) (*k8sV1.Pod, error) {
 	panic("implement me")
 }
 
-func (m *mockPodInterface) UpdateStatus(*k8sV1.Pod) (*k8sV1.Pod, error) {
+func (m *mockPodInterface) UpdateStatus(
+	context.Context, *k8sV1.Pod, metaV1.UpdateOptions,
+) (*k8sV1.Pod, error) {
 	panic("implement me")
 }
 
-func (m *mockPodInterface) Delete(name string, options *metaV1.DeleteOptions) error {
+func (m *mockPodInterface) Delete(
+	ctx context.Context, name string, options metaV1.DeleteOptions,
+) error {
 	time.Sleep(m.operationalDelay)
 	m.mux.Lock()
 	defer m.mux.Unlock()
@@ -120,17 +135,20 @@ func (m *mockPodInterface) Delete(name string, options *metaV1.DeleteOptions) er
 }
 
 func (m *mockPodInterface) DeleteCollection(
-	options *metaV1.DeleteOptions,
-	listOptions metaV1.ListOptions,
+	ctx context.Context, options metaV1.DeleteOptions, listOptions metaV1.ListOptions,
 ) error {
 	panic("implement me")
 }
 
-func (m *mockPodInterface) Get(name string, options metaV1.GetOptions) (*k8sV1.Pod, error) {
+func (m *mockPodInterface) Get(
+	ctx context.Context, name string, options metaV1.GetOptions,
+) (*k8sV1.Pod, error) {
 	panic("implement me")
 }
 
-func (m *mockPodInterface) List(opts metaV1.ListOptions) (*k8sV1.PodList, error) {
+func (m *mockPodInterface) List(
+	ctx context.Context, opts metaV1.ListOptions,
+) (*k8sV1.PodList, error) {
 	time.Sleep(m.operationalDelay)
 	m.mux.Lock()
 	defer m.mux.Unlock()
@@ -143,41 +161,46 @@ func (m *mockPodInterface) List(opts metaV1.ListOptions) (*k8sV1.PodList, error)
 	return podList, nil
 }
 
-func (m *mockPodInterface) Watch(opts metaV1.ListOptions) (watch.Interface, error) {
+func (m *mockPodInterface) Watch(
+	ctx context.Context, opts metaV1.ListOptions,
+) (watch.Interface, error) {
 	panic("implement me")
 }
 
 func (m *mockPodInterface) Patch(
-	name string,
-	pt types.PatchType,
-	data []byte,
+	ctx context.Context, name string, pt types.PatchType, data []byte, opts metaV1.PatchOptions,
 	subresources ...string,
 ) (result *k8sV1.Pod, err error) {
 	panic("implement me")
 }
 
 func (m *mockPodInterface) GetEphemeralContainers(
-	podName string,
-	options metaV1.GetOptions,
+	ctx context.Context, podName string, options metaV1.GetOptions,
 ) (*k8sV1.EphemeralContainers, error) {
 	panic("implement me")
 }
 
 func (m *mockPodInterface) UpdateEphemeralContainers(
-	podName string,
-	ephemeralContainers *k8sV1.EphemeralContainers,
+	ctx context.Context, podName string, ephemeralContainers *k8sV1.EphemeralContainers,
+	opts metaV1.UpdateOptions,
 ) (*k8sV1.EphemeralContainers, error) {
 	panic("implement me")
 }
 
-func (m *mockPodInterface) Bind(binding *k8sV1.Binding) error {
+func (m *mockPodInterface) Bind(context.Context, *k8sV1.Binding, metaV1.CreateOptions) error {
 	panic("implement me")
 }
 
-func (m *mockPodInterface) Evict(eviction *v1beta1.Eviction) error {
+func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction) error {
 	panic("implement me")
 }
 
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
+	panic("implement me")
+}
+
+func (m *mockPodInterface) ProxyGet(
+	string, string, string, string, map[string]string,
+) rest.ResponseWrapper {
 	panic("implement me")
 }
