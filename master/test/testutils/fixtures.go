@@ -24,7 +24,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/determined-ai/determined/master/internal"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/version"
@@ -50,16 +49,6 @@ db:
 root: ../../..
 `
 )
-
-// ResolvePostgres resolves a connection to a postgres database. To debug tests that use this
-// (or otherwise run the tests outside of the Makefile), make sure to set DET_INTEGRATION_POSTGRES_URL.
-func ResolvePostgres() (*db.PgDB, error) {
-	pgDB, err := db.ConnectPostgres(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
-	}
-	return pgDB, nil
-}
 
 // ResolveElastic resolves a connection to an elasticsearch database. To debug tests that use this
 // (or otherwise run the tests outside of the Makefile), make sure to set DET_INTEGRATION_ES_HOST and
