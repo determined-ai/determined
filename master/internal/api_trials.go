@@ -39,7 +39,6 @@ const (
 
 var (
 	trialLogsBatchMissWaitTime = time.Second
-	trialLogsTerminationDelay  = 5 * time.Second
 
 	distinctFieldBatchWaitTime = 5 * time.Second
 
