@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"strings"
@@ -189,18 +188,7 @@ func (c *containerActor) makeTaskLog(log aproto.ContainerLog) model.TaskLog {
 		source = "agent"
 		msg = *log.AuxMessage
 	case log.PullMessage != nil:
-		source = "pull"
-		buf := new(bytes.Buffer)
-		if err := log.PullMessage.Display(buf, false); err != nil {
-			msg = err.Error()
-		} else {
-			msg = buf.String()
-			// Docker disables printing the progress bar in non-terminal mode.
-			if msg == "" && log.PullMessage.Progress != nil {
-				msg = log.PullMessage.Progress.String()
-			}
-			msg = strings.TrimSpace(msg)
-		}
+		msg = *log.PullMessage
 	case log.RunMessage != nil:
 		panic(fmt.Sprintf("unexpected run message from container on Fluent logging: %v", log.RunMessage))
 	default:
