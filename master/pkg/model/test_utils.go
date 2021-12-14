@@ -6,8 +6,6 @@ package model
 import (
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -91,7 +89,7 @@ func WithTrialState(state State) TrialModelOption {
 // TrialModel returns a new trial with the specified options.
 func TrialModel(eID int, jobID JobID, opts ...TrialModelOption) *Trial {
 	t := &Trial{
-		TaskID:       TaskID(uuid.New().String()),
+		TaskID:       NewTaskID(),
 		JobID:        jobID,
 		ExperimentID: eID,
 		State:        ActiveState,
