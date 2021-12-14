@@ -24,7 +24,6 @@ const (
 var (
 	taskReadyCheckLogs = "/run/determined/check_ready_logs.py"
 
-	taskLogsBatchWaitTime       = 100 * time.Millisecond
 	taskLogsBatchMissWaitTime   = time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 
