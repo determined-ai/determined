@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -359,11 +360,11 @@ func (f *pullLogFormatter) RenderProgress() string {
 			// download complete, extraction in progress
 			progress += 0.5 + 0.5*float64(info.Extracted)/float64(info.Total)
 		default:
-			progress += 0.5 * float64(info.Extracted) / float64(info.Total)
+			progress += 0.5 * float64(info.Downloaded) / float64(info.Total)
 		}
 	}
 
-	// normalize by layer count
+	// Normalize by layer count.
 	progress /= float64(len(f.Known))
 
 	// 40-character progress bar
@@ -371,8 +372,14 @@ func (f *pullLogFormatter) RenderProgress() string {
 
 	bar := ""
 	for i := 0; i < 40; i++ {
-		if prog > i {
-			bar += "="
+		if i <= prog {
+			if prog == 40 || i+1 <= prog {
+				// Download is full, or middle of bar.
+				bar += "="
+			} else {
+				// Boundary between bar and spaces.
+				bar += ">"
+			}
 		} else {
 			bar += " "
 		}
@@ -388,7 +395,7 @@ func (f *pullLogFormatter) RenderProgress() string {
 
 func (f *pullLogFormatter) backoffOrRenderProgress() *string {
 	// log at most one line every 1 second
-	now := time.Now()
+	now := time.Now().UTC()
 	if now.Before(f.Backoff) {
 		return nil
 	}
@@ -401,23 +408,32 @@ func (f *pullLogFormatter) backoffOrRenderProgress() *string {
 // Update returns nil or a rendered progress update for the end user.
 func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) *string {
 	if msg.Error != nil {
-		fmt.Printf("%v\n", msg.Error)
+		log.Errorf("%d: %v", msg.Error.Code, msg.Error.Message)
 		return nil
 	}
 
-	if msg.Status == "Pulling fs layer" || msg.Status == "Waiting" {
-		if _, ok := f.Known[msg.ID]; !ok {
+	var info *pullInfo
+	var ok bool
+
+	switch msg.Status {
+	case "Pulling fs layer":
+		fallthrough
+	case "Waiting":
+		if _, ok = f.Known[msg.ID]; !ok {
 			// New layer!
 			f.Known[msg.ID] = &pullInfo{}
 			f.Order = append(f.Order, msg.ID)
 		}
 		return nil
-	}
 
-	if msg.Status == "Downloading" {
-		info := f.Known[msg.ID]
+	case "Downloading":
+		if info, ok = f.Known[msg.ID]; !ok {
+			log.Error("message ID not found for downloading message!")
+			return nil
+		}
 		if info.ExtractStarted {
-			panic("already extracting!")
+			log.Error("got downloading message after extraction started!")
+			return nil
 		}
 		info.Downloaded = msg.Progress.Current
 		// The first "Downloading" msg is important, as it gives us the layer size.
@@ -426,10 +442,12 @@ func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) *string {
 			info.Total = msg.Progress.Total
 		}
 		return f.backoffOrRenderProgress()
-	}
 
-	if msg.Status == "Extracting" {
-		info := f.Known[msg.ID]
+	case "Extracting":
+		if info, ok = f.Known[msg.ID]; !ok {
+			log.Error("message ID not found for extracting message!")
+			return nil
+		}
 		info.Extracted = msg.Progress.Current
 		if !info.ExtractStarted {
 			info.ExtractStarted = true
@@ -437,10 +455,12 @@ func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) *string {
 			info.Downloaded = info.Total
 		}
 		return f.backoffOrRenderProgress()
-	}
 
-	if msg.Status == "Pull complete" {
-		info := f.Known[msg.ID]
+	case "Pull complete":
+		if info, ok = f.Known[msg.ID]; !ok {
+			log.Error("message ID not found for completed message!")
+			return nil
+		}
 		// Forcibly mark Extracted as completed.
 		info.Extracted = info.Total
 		return f.backoffOrRenderProgress()
