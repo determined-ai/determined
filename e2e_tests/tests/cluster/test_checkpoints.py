@@ -1,4 +1,5 @@
 import operator
+import sys
 import tempfile
 import time
 from typing import Dict, Set
@@ -64,7 +65,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 by_state.setdefault(checkpoint["state"], set()).add(checkpoint["total_batches"])
 
             if by_state == result:
-                all_checkpoints.append((config, checkpoints))
+                all_checkpoints.append((config, checkpoints, trials[0]["id"]))
                 break
 
             if retry + 1 == retries:
@@ -79,7 +80,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     for i in range(max_checks):
         time.sleep(1)
         try:
-            for config, checkpoints in all_checkpoints:
+            for config, checkpoints, trial_id in all_checkpoints:
                 checkpoint_config = config["checkpoint_storage"]
 
                 storage_manager = storage.build(checkpoint_config, container_path=None)
@@ -91,6 +92,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                     elif checkpoint["state"] == "DELETED":
                         try:
                             with storage_manager.restore_path(storage_id):
+                                exp.print_trial_logs(trial_id)
                                 raise AssertionError("checkpoint not deleted")
                         except errors.CheckpointNotFound:
                             pass

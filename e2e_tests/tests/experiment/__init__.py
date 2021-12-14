@@ -22,6 +22,7 @@ from .experiment import (
     maybe_create_experiment,
     maybe_create_native_experiment,
     pause_experiment,
+    print_trial_logs,
     root_user_home_bind_mount,
     run_basic_test,
     run_basic_test_with_temp_config,
