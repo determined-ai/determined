@@ -18,10 +18,6 @@ check:
 	flake8
 	mypy .
 
-.PHONY: test
-test:
-	pytest tests
-
 .PHONY: clean
 clean:
 	rm -rf .pytest_cache/

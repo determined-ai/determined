@@ -8,6 +8,76 @@
  Version 0.17
 **************
 
+Version 0.17.5
+==============
+
+**Release Date:** December 10, 2021
+
+**New Features**
+
+-  Add reporting of job queue state. The ordering of jobs in the queue and their status can be
+   viewed through Determined WebUI, and CLI.
+
+-  WebUI: Add buttons to the WebUI to create new models in the Model Registry, as well as add
+   checkpoints as versions to existing models. The Register Checkpoint modal can be accessed through
+   the Checkpoint modal. The New Model modal can be accessed through the Register Checkpoint modal
+   or on the Model Registry page.
+
+   .. image:: https://user-images.githubusercontent.com/15078396/144926870-bb93d587-f7ad-4052-a338-6fc000bd2ed9.png
+
+   .. image:: https://user-images.githubusercontent.com/15078396/144926881-98aeb187-aa3f-4e40-b502-d7af624573db.png
+
+   .. image:: https://user-images.githubusercontent.com/15078396/144926889-eec0216a-dacc-4fe5-ac28-858ea6587d04.png
+
+-  API: Add a method for listing trials within an experiment.
+
+**Improvements**
+
+-  Agent: Improve handling of master connection failures.
+
+**Bug Fixes**
+
+-  Deploy: Fix a bug where GCP clusters created with ``--no-filestore`` still had unused filestores
+   created.
+
+Version 0.17.4
+==============
+
+**Release Date:** November 30, 2021
+
+**New Features**
+
+-  WebUI: Add the :ref:`model registry <organizing-models>` as a new top-level navigation option,
+   allowing for viewing, editing, and deleting existing models created using the CLI.
+
+-  Add experimental support for `Multi-Instance GPUs
+   <https://www.nvidia.com/en-us/technologies/multi-instance-gpu/>`__ (MIGs) to agent-based setups,
+   in parity with the experimental support for MIGs in Kubernetes-based setups. Static agents and
+   Kubernetes clusters may be able to use MIG instances for some workloads. Distributed training is
+   not supported, and all MIG instances and nodes within a resource pool must still be homogeneous.
+
+**Improvements**
+
+-  **Breaking Change**: Model Registry: The names of models in the model registry must now be
+   unique. If multiple models were previously created with the same name in the registry, the names
+   will change.
+
+-  Model Registry CLI: Allow models to be referred to by their now-unique names, not only by ID.
+
+-  Tasks: Historical usage over users now properly accounts for all task types (commands, notebooks,
+   etc.), not just trials.
+
+-  Images: Add environment images for TF 2.7.
+
+-  Agent: The ``environment.force_pull_image: true`` option no longer deletes the environment image
+   before re-pulling it. Now, it will only fetch updated layers, which is much less wasteful of
+   network resources and execution time.
+
+**Bug Fixes**
+
+-  Master: Fix a bug where deleting experiments with trial restarts always failed, and then failed
+   to be marked as failed.
+
 Version 0.17.3
 ==============
 

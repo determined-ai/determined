@@ -206,7 +206,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           multiple={false}
           value={localFilters.metric}
           width={'100%'}
-          onChange={handleMetricChange} />
+          onChange={handleMetricChange}
+        />
       )}
       {showHParams && (
         <HpSelectFilter
@@ -214,7 +215,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
-          onChange={handleHParamChange} />
+          onChange={handleHParamChange}
+        />
       )}
       {showViews && (
         <RadioGroup
@@ -224,7 +226,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             { icon: 'list', id: ViewType.List, label: 'Wrapped View' },
           ]}
           value={localFilters.view}
-          onChange={handleViewChange} />
+          onChange={handleViewChange}
+        />
       )}
       <div className={css.buttons}>
         <IconButton icon="reset" label="Reset" onClick={handleReset} />

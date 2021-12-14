@@ -1,8 +1,8 @@
 import { ColumnType } from 'antd/es/table';
 
+import { V1ResourcePoolTypeToLabel } from 'constants/states';
 import { ResourcePool } from 'types';
 import { alphaNumericSorter, numericSorter } from 'utils/sort';
-import { V1ResourcePoolTypeToLabel } from 'utils/types';
 
 export const columns: ColumnType<ResourcePool>[] = [
   {

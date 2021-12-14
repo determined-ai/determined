@@ -13,6 +13,7 @@ from determined._trial_context import TrialContext
 from determined._trial import Trial
 from determined._hparam import Categorical, Constant, Double, Integer, Log
 from determined._trial_controller import (
+    _DistributedBackend,
     TrialController,
 )
 from determined import errors

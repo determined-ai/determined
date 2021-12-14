@@ -1,14 +1,13 @@
 import React from 'react';
 
 import Bar from 'components/Bar';
-import { getStateColorCssVar } from 'themes';
-import { CommandState, RunState } from 'types';
+import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { floatToPercent } from 'utils/string';
 
 export interface Props {
   barOnly?: boolean;
   percent: number;
-  state: RunState | CommandState;
+  state: StateOfUnion;
 }
 
 const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
@@ -19,7 +18,8 @@ const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
         color: getStateColorCssVar(state),
         label: floatToPercent(percent / 100, 0),
         percent: percent / 100,
-      } ]} />
+      } ]}
+    />
   );
 };
 

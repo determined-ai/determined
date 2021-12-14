@@ -2,11 +2,11 @@ import React, { useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import { terminalRunStates } from 'constants/states';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
-import { terminalRunStates } from 'utils/types';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
 

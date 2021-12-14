@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import horovod, layers, workload
+from determined import layers, workload
 from determined.common import check
 
 
@@ -81,7 +81,7 @@ class NoOpTrialController(det.TrialController):
         return NoOpTrialController(*args, **kwargs)
 
     @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         np.random.seed(env.trial_seed)
 
     def run(self) -> None:

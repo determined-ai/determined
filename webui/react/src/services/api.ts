@@ -1,9 +1,10 @@
+import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import * as Type from 'types';
-import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
+import { tensorBoardMatchesSource } from 'utils/task';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
@@ -63,6 +64,18 @@ export const getResourceAllocationAggregated = generateDetApi<
   Api.V1ResourceAllocationAggregatedResponse,
   Api.V1ResourceAllocationAggregatedResponse
 >(Config.getResourceAllocationAggregated);
+
+/* Jobs */
+
+export const getJobQ = generateDetApi<
+  Service.GetJobQParams, Api.V1GetJobsResponse, Service.GetJobsResponse
+>(Config.getJobQueue);
+
+export const getJobQStats = generateDetApi<
+  Service.GetJobQStatsParams,
+  Api.V1GetJobQueueStatsResponse,
+  Api.V1GetJobQueueStatsResponse
+>(Config.getJobQueueStats);
 
 /* Experiments */
 
@@ -174,6 +187,14 @@ export const deleteModelVersion = generateDetApi<
   Service.DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 >(Config.deleteModelVersion);
 
+export const postModel = generateDetApi<
+  Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
+>(Config.postModel);
+
+export const postModelVersion = generateDetApi<
+  Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
+>(Config.postModelVersion);
+
 export const getModelLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
@@ -234,7 +255,7 @@ export const openOrCreateTensorBoard = async (
   const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(tensorboard =>
     !terminalCommandStates.has(tensorboard.state)
-    && tsbMatchesSource(tensorboard, params));
+    && tensorBoardMatchesSource(tensorboard, params));
   if (match) return match;
   return launchTensorBoard(params);
 };

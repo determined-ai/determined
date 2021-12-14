@@ -159,12 +159,16 @@ const TableFilterDropdown: React.FC<Props> = ({
           disabled={Object.keys(selectedMap).length === 0}
           size="small"
           type="link"
-          onClick={handleReset}>Reset</Button>
+          onClick={handleReset}>
+          Reset
+        </Button>
         <Button
           aria-label={ARIA_LABEL_APPLY}
           size="small"
           type="primary"
-          onClick={handleFilter}>Ok</Button>
+          onClick={handleFilter}>
+          Ok
+        </Button>
       </div>
     </div>
   );

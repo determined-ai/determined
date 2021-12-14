@@ -7,6 +7,7 @@ import Message, { MessageType } from 'components/Message';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -15,8 +16,7 @@ import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Primitive,
 } from 'types';
 import { flattenObject, isBoolean } from 'utils/data';
-import { metricNameToStr } from 'utils/string';
-import { terminalRunStates } from 'utils/types';
+import { metricNameToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
 
@@ -159,7 +159,8 @@ const ScatterPlots: React.FC<Props> = ({
       <div>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -198,14 +199,16 @@ const ScatterPlots: React.FC<Props> = ({
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
         onPrevious={handleGalleryPrevious}>
-        {activeHParam && <ScatterPlot
-          height={galleryHeight}
-          x={chartData?.hpValues[activeHParam] || []}
-          xLabel={activeHParam}
-          xLogScale={chartData?.hpLogScales[activeHParam]}
-          y={chartData?.metricValues[activeHParam] || []}
-          yLabel={metricNameToStr(selectedMetric)}
-        />}
+        {activeHParam && (
+          <ScatterPlot
+            height={galleryHeight}
+            x={chartData?.hpValues[activeHParam] || []}
+            xLabel={activeHParam}
+            xLogScale={chartData?.hpLogScales[activeHParam]}
+            y={chartData?.metricValues[activeHParam] || []}
+            yLabel={metricNameToStr(selectedMetric)}
+          />
+        )}
       </GalleryModal>
     </div>
   );

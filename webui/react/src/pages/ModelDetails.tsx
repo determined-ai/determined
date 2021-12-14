@@ -6,7 +6,6 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import DownloadModelModal from 'components/DownloadModelModal';
 import Icon from 'components/Icon';
-import IconButton from 'components/IconButton';
 import InlineEditor from 'components/InlineEditor';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
@@ -143,12 +142,13 @@ const ModelDetails: React.FC = () => {
     const labelsRenderer = (value: string, record: ModelVersion) => (
       <TagList
         compact
+        disabled={record.model.archived}
         tags={record.labels ?? []}
         onChange={(tags) => saveModelVersionTags(record.model.id, record.id, tags)}
       />
     );
 
-    const overflowRenderer = (_:string, record: ModelVersion) => {
+    const OverflowRenderer = (_:string, record: ModelVersion) => {
       const isDeletable = user?.isAdmin
         || user?.username === model?.model.username
         || user?.username === record.username;
@@ -156,12 +156,13 @@ const ModelDetails: React.FC = () => {
         <Dropdown
           overlay={(
             <Menu>
+              {useActionRenderer(_, record)}
               <Menu.Item
                 danger
                 disabled={!isDeletable}
                 key="delete-version"
                 onClick={() => showConfirmDelete(record)}>
-                  Delete Version
+                Delete Version
               </Menu.Item>
             </Menu>
           )}
@@ -173,12 +174,14 @@ const ModelDetails: React.FC = () => {
       );
     };
 
-    const descriptionRenderer = (value:string, record: ModelVersion) => {
-      return <InlineEditor
+    const descriptionRenderer = (value:string, record: ModelVersion) => (
+      <InlineEditor
+        disabled={record.model.archived}
         placeholder="Add description..."
         value={value}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)} />;
-    };
+        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
+      />
+    );
 
     const tableColumns: ColumnsType<ModelVersion> = [
       {
@@ -217,8 +220,7 @@ const ModelDetails: React.FC = () => {
         width: 1,
       },
       { dataIndex: 'labels', render: labelsRenderer, title: 'Tags', width: 120 },
-      { render: useActionRenderer, title: 'Actions', width: 1 },
-      { render: overflowRenderer, title: '', width: 1 },
+      { render: OverflowRenderer, title: '', width: 1 },
     ];
 
     return tableColumns.map(column => {
@@ -361,22 +363,26 @@ const ModelDetails: React.FC = () => {
   return (
     <Page
       docTitle="Model Details"
-      headerComponent={<ModelHeader
-        model={model.model}
-        onDelete={deleteCurrentModel}
-        onSaveDescription={saveDescription}
-        onSaveName={saveName}
-        onSwitchArchive={switchArchive}
-        onUpdateTags={saveModelTags} />}
+      headerComponent={(
+        <ModelHeader
+          model={model.model}
+          onDelete={deleteCurrentModel}
+          onSaveDescription={saveDescription}
+          onSaveName={saveName}
+          onSwitchArchive={switchArchive}
+          onUpdateTags={saveModelTags}
+        />
+      )}
       id="modelDetails">
       <div className={css.base}>
-        {model.modelVersions.length === 0 ?
+        {model.modelVersions.length === 0 ? (
           <div className={css.noVersions}>
-            <p>No Model Versions</p>
+            <p className={css.header}>No Model Versions</p>
             <p className={css.subtext}>
-                Register a checkpoint from an experiment to add it to this model
+              Register a checkpoint from an experiment to add it to this model
             </p>
-          </div> :
+          </div>
+        ) : (
           <ResponsiveTable
             columns={columns}
             dataSource={model.modelVersions}
@@ -389,11 +395,17 @@ const ModelDetails: React.FC = () => {
             size="small"
             onChange={handleTableChange}
           />
-        }
-        <NotesCard notes={model.model.notes ?? ''} onSave={saveNotes} />
+        )}
+        <NotesCard
+          disabled={model.model.archived}
+          notes={model.model.notes ?? ''}
+          onSave={saveNotes}
+        />
         <MetadataCard
+          disabled={model.model.archived}
           metadata={model.model.metadata}
-          onSave={saveMetadata} />
+          onSave={saveMetadata}
+        />
       </div>
     </Page>
   );
@@ -402,18 +414,20 @@ const ModelDetails: React.FC = () => {
 const useActionRenderer = (_:string, record: ModelVersion) => {
   const [ showModal, setShowModal ] = useState(false);
 
-  return <div className={css.center}>
-    <IconButton
-      icon="download"
-      iconSize="large"
-      label="Download Model"
-      type="text"
-      onClick={() => setShowModal(true)} />
-    <DownloadModelModal
-      modelVersion={record}
-      visible={showModal}
-      onClose={() => setShowModal(false)} />
-  </div>;
+  return (
+    <>
+      <Menu.Item
+        key="download"
+        onClick={() => setShowModal(true)}>
+        Download
+      </Menu.Item>
+      <DownloadModelModal
+        modelVersion={record}
+        visible={showModal}
+        onClose={() => setShowModal(false)}
+      />
+    </>
+  );
 };
 
 export default ModelDetails;

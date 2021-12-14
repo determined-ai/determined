@@ -12,7 +12,7 @@ import usePrevious from 'hooks/usePrevious';
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { ansiToHtml, copyToClipboard } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
@@ -224,7 +224,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     const newLogs = addedLogs
       .filter(log => log.id < logIdRange.min || log.id > logIdRange.max)
       .map(log => {
-        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+        const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
         return { ...log, formattedTime };
       });
     if (newLogs.length === 0) return;
@@ -410,7 +410,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const formatClipboardHeader = useCallback((log: Log): string => {
     const format = `%${MAX_DATETIME_LENGTH - 1}s `;
     const level = `<${log.level || ''}>`;
-    const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+    const datetime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
     return props.disableLevel ?
       sprintf(format, datetime) :
       sprintf(`%-9s ${format}`, level, datetime);
@@ -456,32 +456,39 @@ const LogViewer: React.FC<Props> = forwardRef((
   const logOptions = (
     <Space>
       {props.filterOptions}
-      {props.debugMode && <div className={css.debugger}>
-        <span data-label="ScrollLeft:">{scroll.scrollLeft}</span>
-        <span data-label="ScrollTop:">{scroll.scrollTop}</span>
-        <span data-label="ScrollWidth:">{scroll.scrollWidth}</span>
-        <span data-label="ScrollHeight:">{scroll.scrollHeight}</span>
-      </div>}
+      {props.debugMode && (
+        <div className={css.debugger}>
+          <span data-label="ScrollLeft:">{scroll.scrollLeft}</span>
+          <span data-label="ScrollTop:">{scroll.scrollTop}</span>
+          <span data-label="ScrollWidth:">{scroll.scrollWidth}</span>
+          <span data-label="ScrollHeight:">{scroll.scrollHeight}</span>
+        </div>
+      )}
       <Tooltip placement="bottomRight" title="Copy to Clipboard">
         <Button
           aria-label="Copy to Clipboard"
           disabled={logs.length === 0}
           icon={<Icon name="clipboard" />}
-          onClick={handleCopyToClipboard} />
+          onClick={handleCopyToClipboard}
+        />
       </Tooltip>
       <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
         <Button
           aria-label="Toggle Fullscreen Mode"
           icon={<Icon name="fullscreen" />}
-          onClick={handleFullScreen} />
+          onClick={handleFullScreen}
+        />
       </Tooltip>
-      {onDownload && <Tooltip placement="bottomRight" title="Download Logs">
-        <Button
-          aria-label="Download Logs"
-          icon={<Icon name="download" />}
-          loading={props.isDownloading}
-          onClick={handleDownload} />
-      </Tooltip>}
+      {onDownload && (
+        <Tooltip placement="bottomRight" title="Download Logs">
+          <Button
+            aria-label="Download Logs"
+            icon={<Icon name="download" />}
+            loading={props.isDownloading}
+            onClick={handleDownload}
+          />
+        </Tooltip>
+      )}
     </Space>
   );
 
@@ -519,7 +526,8 @@ const LogViewer: React.FC<Props> = forwardRef((
                 <div
                   className={levelCss(css.message, log.level)}
                   dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
-                  style={messageStyle} />
+                  style={messageStyle}
+                />
               </div>
             ))}
           </div>
@@ -531,14 +539,16 @@ const LogViewer: React.FC<Props> = forwardRef((
               aria-label="Scroll to Top"
               className={scrollToTopClasses.join(' ')}
               icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToTop} />
+              onClick={handleScrollToTop}
+            />
           </Tooltip>
           <Tooltip placement="topRight" title={isTailing ? 'Tailing Enabled' : 'Enable Tailing'}>
             <Button
               aria-label="Enable Tailing"
               className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing} />
+              onClick={handleEnableTailing}
+            />
           </Tooltip>
         </div>
       </div>

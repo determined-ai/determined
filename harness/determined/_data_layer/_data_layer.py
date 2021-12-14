@@ -10,9 +10,8 @@ import yogadl
 from yogadl import storage, tensorflow
 
 import determined as det
-from determined import horovod
+from determined import _generic
 from determined.common import check
-from determined.horovod import hvd
 
 
 def init_container_storage_path(configured_storage_path: Optional[str]) -> pathlib.Path:
@@ -35,12 +34,12 @@ class _CacheableDecorator:
     def __init__(
         self,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         training: bool,
         per_slot_batch_size: int,
+        distributed_context: _generic.DistributedContext,
     ) -> None:
         self._env = env
-        self._hvd_config = hvd_config
+        self._distributed_context = distributed_context
         self._training = training
         self._per_slot_batch_size = per_slot_batch_size
 
@@ -63,20 +62,22 @@ class _CacheableDecorator:
         self._offset = self._env.latest_batch * batch_size
 
     def _init_shard(self) -> None:
-        if not self._hvd_config.use:
+        if self._distributed_context.size == 0:
             return
 
-        self._shard_rank = hvd.rank()
-        self._num_shards = hvd.size()
+        self._shard_rank = self._distributed_context.rank
+        self._num_shards = self._distributed_context.size
 
     def _configure_storage(self) -> None:
         session_config = None  # type: Optional[tf.compat.v1.ConfigProto]
-        if self._hvd_config.use:
+        if self._distributed_context.size > 1:
             # For multi-GPU training, we map processes to individual GPUs. TF requires
             # that for each instantiation of `tf.Session`, the process is mapped
             # to the same GPU.
             session_config = tf.compat.v1.ConfigProto()
-            session_config.gpu_options.visible_device_list = str(hvd.local_rank())
+            session_config.gpu_options.visible_device_list = str(
+                self._distributed_context.local_rank
+            )
 
         parsed = parse.urlparse(self._env.master_url)
         scheme = "wss" if parsed.scheme == "https" else "ws"

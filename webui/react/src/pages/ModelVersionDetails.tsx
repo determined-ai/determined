@@ -17,7 +17,7 @@ import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/workload';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
@@ -179,22 +179,24 @@ const ModelVersionDetails: React.FC = () => {
     const totalBatchesProcessed = getBatchNumber(modelVersion.checkpoint);
     return [
       {
-        content: <Breadcrumb className={css.link}>
-          <Breadcrumb.Item>
-            <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
-              Experiment {modelVersion.checkpoint.experimentId}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link path={paths.trialDetails(
-              modelVersion.checkpoint.trialId,
-              modelVersion.checkpoint.experimentId,
-            )}>
-              Trial {modelVersion.checkpoint.trialId}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
-        </Breadcrumb>,
+        content: (
+          <Breadcrumb className={css.link}>
+            <Breadcrumb.Item>
+              <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
+                Experiment {modelVersion.checkpoint.experimentId}
+              </Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>
+              <Link path={paths.trialDetails(
+                modelVersion.checkpoint.trialId,
+                modelVersion.checkpoint.experimentId,
+              )}>
+                Trial {modelVersion.checkpoint.trialId}
+              </Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
+          </Breadcrumb>
+        ),
         label: 'Source',
       },
       { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
@@ -234,17 +236,20 @@ const ModelVersionDetails: React.FC = () => {
     <Page
       bodyNoPadding
       docTitle="Model Version Details"
-      headerComponent={<ModelVersionHeader
-        modelVersion={modelVersion}
-        onDeregisterVersion={deleteVersion}
-        onSaveDescription={saveDescription}
-        onSaveName={saveName}
-        onUpdateTags={saveVersionTags} />}
+      headerComponent={(
+        <ModelVersionHeader
+          modelVersion={modelVersion}
+          onDeregisterVersion={deleteVersion}
+          onSaveDescription={saveDescription}
+          onSaveName={saveName}
+          onUpdateTags={saveVersionTags}
+        />
+      )}
       id="modelDetails">
       <Tabs
         defaultActiveKey="overview"
         style={{ height: 'auto' }}
-        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}
+        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
         onChange={handleTabChange}>
         <TabPane key="model" tab="Model">
           <div className={css.base}>
@@ -255,15 +260,19 @@ const ModelVersionDetails: React.FC = () => {
               <InfoBox rows={validationMetrics} separator />
             </Card>
             <MetadataCard
+              disabled={modelVersion.model.archived}
               metadata={modelVersion.metadata}
-              onSave={saveMetadata} />
+              onSave={saveMetadata}
+            />
           </div>
         </TabPane>
         <TabPane key="notes" tab="Notes">
           <div className={css.base}>
             <NotesCard
+              disabled={modelVersion.model.archived}
               notes={modelVersion.notes ?? ''}
-              onSave={saveNotes} />
+              onSave={saveNotes}
+            />
           </div>
         </TabPane>
       </Tabs>

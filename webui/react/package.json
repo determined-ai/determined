@@ -16,8 +16,8 @@
     "test:coverage": "CI=true npm test -- --env=jsdom --coverage",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "storybook": "NODE_PATH=src start-storybook -p 9009 -s public",
-    "storybook:build": "NODE_PATH=src build-storybook -s public -o build-storybook"
+    "storybook": "NODE_PATH=src start-storybook -p 9009",
+    "storybook:build": "NODE_PATH=src build-storybook -o build-storybook"
   },
   "dependencies": {
     "ansi-to-html": "^0.7.1",
@@ -48,7 +48,6 @@
     "screenfull": "^5.1.0",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
-    "timeago-react": "^3.0.3",
     "uplot": "^1.6.15",
     "websocket": "^1.0.34"
   },

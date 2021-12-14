@@ -3,11 +3,11 @@ import React, { useCallback } from 'react';
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
 import Page from 'components/Page';
 import { detApi } from 'services/apiConfig';
-import { jsonToMasterLog } from 'services/decoder';
+import { jsonToClusterLog } from 'services/decoder';
 
-import css from './MasterLogs.module.scss';
+import css from './ClusterLogs.module.scss';
 
-const MasterLogs: React.FC = () => {
+const ClusterLogs: React.FC = () => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
 
@@ -34,13 +34,13 @@ const MasterLogs: React.FC = () => {
   return (
     <Page bodyNoPadding id="master-logs">
       <LogViewerCore
-        decoder={jsonToMasterLog}
+        decoder={jsonToClusterLog}
         sortKey="id"
-        title={<div className={css.title}>Master Logs</div>}
+        title={<div className={css.title}>Cluster Logs</div>}
         onFetch={handleFetch}
       />
     </Page>
   );
 };
 
-export default MasterLogs;
+export default ClusterLogs;

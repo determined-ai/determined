@@ -8,6 +8,7 @@ import ParallelCoordinates, {
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
@@ -19,9 +20,8 @@ import {
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
+import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
-import { metricNameToStr } from 'utils/string';
-import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -270,7 +270,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to plot." />
+          message="Not enough data points to plot."
+        />
         <Spinner />
       </div>
     );
@@ -326,13 +327,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </div>
         </div>
       </Section>
-      {showCompareTrials &&
-      <TrialsComparisonModal
-        experiment={experiment}
-        trials={selectedRowKeys}
-        visible={showCompareTrials}
-        onCancel={() => setShowCompareTrials(false)}
-        onUnselect={handleTrialUnselect} />}
+      {showCompareTrials && (
+        <TrialsComparisonModal
+          experiment={experiment}
+          trials={selectedRowKeys}
+          visible={showCompareTrials}
+          onCancel={() => setShowCompareTrials(false)}
+          onUnselect={handleTrialUnselect}
+        />
+      )}
     </div>
   );
 };

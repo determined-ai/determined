@@ -28,19 +28,20 @@ const DownloadModelPopover: React.FC<Props> = (
   return (
     <Modal
       footer={null}
-      title="Download with Determined CLI"
+      title="Download"
       visible={visible}
       onCancel={onClose}>
       <div className={css.base}>
         <div className={css.topLine}>
-          <p>Download model using the Determined CLI</p>
+          <p>Download Model Command</p>
           <CopyButton onCopy={handleCopy} />
         </div>
         <Input
           className={css.codeSample}
-          value={downloadCommand} />
+          value={downloadCommand}
+        />
         <p className={css.bottomLine}>
-            Copy/paste command into the Determined CLI
+          Copy/paste command into the Determined CLI
         </p>
       </div>
     </Modal>

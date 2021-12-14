@@ -387,6 +387,11 @@ class EstimatorTrialController(det.TrialController):
                 f"field of the RunConfig not be set. Your estimator has "
                 f"eval_distribute={str(estimator.config.train_distribute.eval_distribute)}",
             )
+        if self.context.distributed.size > 1:
+            assert (
+                self.use_horovod
+            ), "Estimator trial must be run with a horovod backend if distributed training"
+
         self.estimator = estimator
         self.user_train_spec = user_train_spec
         self.val_spec = val_spec
@@ -404,10 +409,10 @@ class EstimatorTrialController(det.TrialController):
     def pre_execute_hook(
         cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
+        distributed_backend: det._DistributedBackend,
     ) -> None:
         # Initialize the correct horovod.
-        if hvd_config.use:
+        if distributed_backend.use_horovod():
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
             hvd.init()
 
@@ -424,7 +429,9 @@ class EstimatorTrialController(det.TrialController):
         # set and users call TF code that detects GPUs, it would map the processes to all of
         # the GPUs. We set the default session before importing any user code to prevent this
         # this problem. This default session does not have any effect within the Estimator itself.
-        cls._set_default_tensorflow_session(env=env, hvd_config=hvd_config, session_config=None)
+        cls._set_default_tensorflow_session(
+            env=env, session_config=None, use_horovod=distributed_backend.use_horovod()
+        )
 
         logging.debug("Applying tf.estimator patches.")
 
@@ -449,13 +456,13 @@ class EstimatorTrialController(det.TrialController):
     def _set_default_tensorflow_session(
         cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         session_config: Optional[tf.compat.v1.ConfigProto],
+        use_horovod: bool = False,
     ) -> None:
         session_config = cls._init_session_config(
             session_config=session_config,
             env=env,
-            hvd_config=hvd_config,
+            use_horovod=use_horovod,
         )
         tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=session_config))
 
@@ -549,8 +556,8 @@ class EstimatorTrialController(det.TrialController):
 
             self._set_default_tensorflow_session(
                 env=self.env,
-                hvd_config=self.hvd_config,
                 session_config=config.session_config,
+                use_horovod=self.use_horovod,
             )
 
             return f(features, **kwargs)
@@ -616,7 +623,7 @@ class EstimatorTrialController(det.TrialController):
 
         self.train_hooks.append(DeterminedEarlyStoppingHook(self.context))
 
-        if self.hvd_config.use:
+        if self.context.distributed.size > 1:
             self.train_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
 
         # It is important that this hook is the final in the list so that if
@@ -632,20 +639,20 @@ class EstimatorTrialController(det.TrialController):
         cls: Type["EstimatorTrialController"],
         session_config: tf.compat.v1.ConfigProto,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
+        use_horovod: bool = False,
     ) -> tf.compat.v1.ConfigProto:
         if session_config is None:
             session_config = tf.compat.v1.ConfigProto()
         session_config.gpu_options.allow_growth = True
 
-        if not hvd_config.use:
+        if not use_horovod:
             return session_config
 
         if version.parse(tf.__version__) >= version.parse("2.5.0"):
             gpus = tf.config.experimental.list_physical_devices("GPU")
 
             if len(gpus) > 0:
-                local_rank = hvd.local_rank() if hvd_config.use else 0
+                local_rank = hvd.local_rank() if use_horovod else 0
                 gpu = gpus[local_rank]
                 tf.config.experimental.set_visible_devices(gpu, "GPU")
                 tf.config.experimental.set_memory_growth(gpu, True)
@@ -663,7 +670,7 @@ class EstimatorTrialController(det.TrialController):
 
         # The default session should already be defined, here we also set the session
         # for the estimator itself.
-        self._init_session_config(session_config, self.env, self.hvd_config)
+        self._init_session_config(session_config, self.env, self.use_horovod)
 
         config = config.replace(
             model_dir=str(self.estimator_dir),
@@ -709,7 +716,7 @@ class EstimatorTrialController(det.TrialController):
         """
 
         # Add suffix so that horovod processes don't overwrite each other.
-        suffix = str(0) if not self.hvd_config.use else str(hvd.local_rank())
+        suffix = str(self.context.distributed.local_rank)
 
         if self.env.latest_checkpoint is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
@@ -746,7 +753,7 @@ class EstimatorTrialController(det.TrialController):
             input_fn=self.eval_spec.input_fn, steps=steps, hooks=self.eval_spec.hooks
         )
 
-        if self.hvd_config.use:
+        if self.context.distributed.size > 1:
             metrics = self.average_metrics(metrics)
             if self.is_chief:
                 logging.debug(f"Averaged validation metrics: {metrics}.")
@@ -764,7 +771,9 @@ class EstimatorTrialController(det.TrialController):
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        check.true(self.hvd_config.use)
+        assert (
+            self.context.distributed.size > 1
+        ), "average_metrics can only be called during distributed training"
         all_metrics = self.context.distributed._zmq_gather(metrics)
         if not self.is_chief:
             return None

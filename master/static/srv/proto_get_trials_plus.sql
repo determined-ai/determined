@@ -117,7 +117,12 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
     ORDER BY s.total_batches DESC
     LIMIT 1
   ) AS total_batches_processed,
-   t.runner_state
+   t.runner_state,
+  (
+    SELECT extract(epoch from sum(coalesce(a.end_time, now()) - a.start_time))
+    FROM allocations a
+    WHERE a.task_id = t.task_id
+  ) AS wall_clock_time
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id

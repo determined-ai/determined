@@ -1,27 +1,27 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
-import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
+import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import { StateOfUnion } from 'themes';
 import {
-  CheckpointState,
-  CommandState, CommandTask, CommandType, ExperimentItem,
-  ModelItem,
-  ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
+  CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion, Pagination,
+  StartEndTimes, TrialItem,
 } from 'types';
-import { ConditionalWrapper } from 'utils/react';
+import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { commandTypeToLabel } from 'utils/types';
 import { waitPageUrl } from 'wait';
 
 import Link from './Link';
 import css from './Table.module.scss';
+import TimeAgo from './TimeAgo';
+import TimeDuration from './TimeDuration';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
@@ -63,9 +63,9 @@ export const archivedRenderer = (archived: boolean): React.ReactNode => {
   return archived ? <Icon name="checkmark" /> : null;
 };
 
-export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
-  return shortEnglishHumannizer(getDuration(times));
-};
+export const durationRenderer = (times: StartEndTimes): React.ReactNode => (
+  <TimeDuration duration={getDuration(times)} />
+);
 
 export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
   return <HumanReadableNumber num={num} />;
@@ -79,7 +79,7 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
   );
 };
 
-export const stateRenderer: Renderer<{ state: CommandState | RunState | CheckpointState }> =
+export const stateRenderer: Renderer<{ state: StateOfUnion}> =
 (_, record) => (
   <div className={css.centerVertically}>
     <Badge state={record.state} type={BadgeType.State} />
@@ -136,51 +136,50 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 /* Experiment Table Column Renderers */
 
-export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
-  return shortEnglishHumannizer(getDuration(record));
-};
+export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
+  <TimeDuration duration={getDuration(record)} />
+);
 
 export const experimentNameRenderer = (
   value: string | number | undefined,
   record: ExperimentItem,
-): React.ReactNode => {
-  return (
-    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
-  );
-};
+): React.ReactNode => (
+  <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+);
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  return record.progress ? <ProgressBar
-    percent={record.progress * 100}
-    state={record.state} /> : null;
+  return record.progress ? (
+    <ProgressBar percent={record.progress * 100} state={record.state} />
+  ) : null;
 };
 
 /* Model Table Column Renderers */
 
-export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
-  return (
-    <Space><Icon name="model" size="medium" />
-      <Link path={paths.modelDetails(record.id)}>{value}</Link>
-    </Space>
-  );
-};
+export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
+  <Space>
+    <div style={{ paddingInline: 4 }}>
+      <Icon name="model" size="medium" />
+    </div>
+    <Link path={paths.modelDetails(record.id)}>{value}</Link>
+  </Space>
+);
 
-export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => {
-  return <Link path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
+export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
+  <Link path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
     {value ? value : 'Version ' + record.version}
-  </Link>;
-};
+  </Link>
+);
 
-export const modelVersionNumberRenderer =
-(value: string, record: ModelVersion): React.ReactNode => {
-  return (
-    <Link
-      className={css.versionBox}
-      path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
+export const modelVersionNumberRenderer = (
+  value: string,
+  record: ModelVersion,
+): React.ReactNode => (
+  <Link
+    className={css.versionBox}
+    path={paths.modelVersionDetails(record.model?.id ?? 0, record.id)}>
     V{record.version}
-    </Link>
-  );
-};
+  </Link>
+);
 
 /* Table Helper Functions */
 

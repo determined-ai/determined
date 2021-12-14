@@ -9,7 +9,8 @@ WITH mv AS (
     metadata,
     labels,
     notes,
-    username
+    username,
+    last_updated_time
   FROM model_versions
   LEFT JOIN users ON users.id = model_versions.user_id
   WHERE model_id = $1
@@ -53,6 +54,6 @@ SELECT
     array_to_json(mv.labels) AS labels,
     mv.version, mv.id,
     mv.creation_time, mv.notes,
-    mv.name, mv.comment, mv.metadata
+    mv.name, mv.comment, mv.metadata, mv.last_updated_time
     FROM c, mv, m
     WHERE c.uuid = mv.checkpoint_uuid::text;

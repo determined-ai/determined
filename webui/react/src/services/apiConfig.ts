@@ -8,7 +8,7 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import * as Type from 'types';
 
-import { noOp } from './utils';
+import { identity, noOp } from './utils';
 
 const ApiConfig = new Api.Configuration({
   apiKey: `Bearer ${globalStorage.authToken}`,
@@ -205,8 +205,11 @@ export const getExperiment: Service.DetApi<
   Service.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
 > = {
   name: 'getExperiment',
-  postProcess: (response: Api.V1GetExperimentResponse) =>
-    decoder.mapV1Experiment(response.experiment),
+  postProcess: (response: Api.V1GetExperimentResponse) => {
+    const exp = decoder.mapV1Experiment(response.experiment);
+    exp.jobSummary = response.jobSummary;
+    return exp;
+  },
   request: (params: Service.GetExperimentParams) => {
     return detApi.Experiments.getExperiment(params.id);
   },
@@ -222,6 +225,7 @@ export const createExperiment: Service.DetApi<
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
       {
+        activate: params.activate,
         config: params.experimentConfig,
         parentId: params.parentId,
       },
@@ -524,6 +528,35 @@ export const getModelLabels: Service.DetApi<
   request: (options) => detApi.Models.getModelLabels(options),
 };
 
+export const postModel: Service.DetApi<
+  Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
+> = {
+  name: 'postModel',
+  postProcess: (response) => {
+    return response.model ? decoder.mapV1Model(response.model) : undefined;
+  },
+  request: (params: Service.PostModelParams) => detApi.Models.postModel({
+    description: params.description,
+    labels: params.labels,
+    metadata: params.metadata,
+    name: params.name,
+    username: params.username,
+  }),
+};
+
+export const postModelVersion: Service.DetApi<
+  Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
+> = {
+  name: 'postModelVersion',
+  postProcess: (response) => {
+    return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
+  },
+  request: (params: Service.PostModelVersionParams) => detApi.Models.postModelVersion(
+    params.modelId,
+    params.body,
+  ),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<
@@ -658,6 +691,35 @@ export const launchTensorBoard: Service.DetApi<
   postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
   request: (params: Service.LaunchTensorBoardParams) => detApi.TensorBoards
     .launchTensorboard(params),
+};
+
+/* Jobs */
+
+export const getJobQueue: Service.DetApi<
+  Service.GetJobQParams, Api.V1GetJobsResponse, Service.GetJobsResponse
+> = {
+  name: 'getJobQ',
+  postProcess: (response) => {
+    response.jobs = response.jobs.filter(job => !!job.summary);
+    // we don't work with jobs without a summary in the ui yet
+    return response as Service.GetJobsResponse;
+  },
+  request: (params: Service.GetJobQParams) => detApi.Internal.getJobs(
+    params.offset,
+    params.limit,
+    params.resourcePool,
+    params.orderBy,
+  ),
+};
+
+export const getJobQueueStats: Service.DetApi<
+  Service.GetJobQStatsParams,
+  Api.V1GetJobQueueStatsResponse,
+  Api.V1GetJobQueueStatsResponse
+> = {
+  name: 'getJobQStats',
+  postProcess: identity,
+  request: ({ resourcePools }) => detApi.Internal.getJobQueueStats(resourcePools),
 };
 
 /* Logs */

@@ -94,7 +94,7 @@ message LaunchShellRequest {
 // Response to LaunchShellRequest.
 message LaunchShellResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "notebook", "config" ] }
+    json_schema: { required: [ "shell", "config" ] }
   };
   // The requested shell.
   determined.shell.v1.Shell shell = 1;

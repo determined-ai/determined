@@ -17,6 +17,7 @@ import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -40,6 +41,7 @@ const ModelRegistry: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
+  const { showModal } = useCreateModelModal();
 
   const {
     settings,
@@ -103,7 +105,8 @@ const ModelRegistry: React.FC = () => {
 
   const deleteCurrentModel = useCallback((model: ModelItem) => {
     deleteModel({ modelId: model.id });
-  }, []);
+    fetchModels();
+  }, [ fetchModels ]);
 
   const switchArchived = useCallback(async (model: ModelItem) => {
     try {
@@ -175,7 +178,8 @@ const ModelRegistry: React.FC = () => {
       searchable
       values={settings.users}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.users ]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
@@ -267,6 +271,7 @@ const ModelRegistry: React.FC = () => {
     const labelsRenderer = (value: string, record: ModelItem) => (
       <TagList
         compact
+        disabled={record.archived}
         tags={record.labels ?? []}
         onChange={(tags) => setModelTags(record.id, tags)}
       />
@@ -288,7 +293,7 @@ const ModelRegistry: React.FC = () => {
                 disabled={!isDeletable}
                 key="delete-model"
                 onClick={() => showConfirmDelete(record)}>
-                  Delete Model
+                Delete Model
               </Menu.Item>
             </Menu>
           )}
@@ -300,12 +305,14 @@ const ModelRegistry: React.FC = () => {
       );
     };
 
-    const descriptionRenderer = (value:string, record: ModelItem) => {
-      return <InlineEditor
+    const descriptionRenderer = (value:string, record: ModelItem) => (
+      <InlineEditor
+        disabled={record.archived}
         placeholder="Add description..."
         value={value}
-        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)} />;
-    };
+        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)}
+      />
+    );
 
     const tableColumns: ColumnsType<ModelItem> = [
       {
@@ -339,7 +346,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-        render: relativeTimeRenderer,
+        render: (date) => relativeTimeRenderer(new Date(date)),
         sorter: true,
         title: 'Last updated',
         width: 150,
@@ -421,33 +428,43 @@ const ModelRegistry: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const showCreateModelModal = useCallback(() => {
+    showModal({});
+  }, [ showModal ]);
+
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
-      <Section title="Model Registry">
+      <Section
+        options={<Button onClick={showCreateModelModal}>New Model</Button>}
+        title="Model Registry">
         {(models.length === 0 && !isLoading) ?
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="model" size="mega" />
+          (
+            <div className={css.emptyBase}>
+              <div className={css.icon}>
+                <Icon name="model" size="mega" />
+              </div>
+              <h4>No Models Registered</h4>
+              <p className={css.description}>
+                Track important checkpoints and versions from your experiments.&nbsp;
+                <Link external path={paths.docs('/post-training/model-registry.html')}>
+                  Learn more
+                </Link>
+              </p>
             </div>
-            <h4>No Models Registered</h4>
-            <p className={css.description}>
-              Track important checkpoints and versions from your experiments.&nbsp;
-              <Link external path={paths.docs('/post-training/model-registry.html')}>
-                Learn more
-              </Link>
-            </p>
-          </div> :
-          <ResponsiveTable
-            columns={columns}
-            dataSource={models}
-            loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
-            showSorterTooltip={false}
-            size="small"
-            onChange={handleTableChange} />}
+          ) : (
+            <ResponsiveTable
+              columns={columns}
+              dataSource={models}
+              loading={isLoading}
+              pagination={getFullPaginationConfig({
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              }, total)}
+              showSorterTooltip={false}
+              size="small"
+              onChange={handleTableChange}
+            />
+          )}
       </Section>
     </Page>
   );

@@ -2,8 +2,8 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
+import { commandStateToLabel, runStateToLabel } from 'constants/states';
 import { ALL_VALUE, CommandState, RunState } from 'types';
-import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
 import SelectFilter from './SelectFilter';
 
@@ -37,10 +37,12 @@ const StateSelectFilter: React.FC<Props> = ({
 }: Props) => {
   const options = useMemo(() => {
     if (showExperimentStates && showCommandStates) {
-      return <>
-        <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>
-        <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>
-      </>;
+      return (
+        <>
+          <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>
+          <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>
+        </>
+      );
     } else if (showExperimentStates) {
       return experimentOptions;
     } else if (showCommandStates) {
@@ -59,8 +61,7 @@ const StateSelectFilter: React.FC<Props> = ({
       dropdownMatchSelectWidth={150}
       label="State"
       value={value}
-      onSelect={handleSelect}
-    >
+      onSelect={handleSelect}>
       <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
       {options}
     </SelectFilter>

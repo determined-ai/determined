@@ -4,8 +4,8 @@ import React, { JSXElementConstructor } from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { Eventually } from 'types';
 import { capitalize } from 'utils/string';
-import { Eventually } from 'utils/types';
 
 import css from './ActionDropdown.module.scss';
 

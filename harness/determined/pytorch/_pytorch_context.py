@@ -1,6 +1,6 @@
 import contextlib
 import logging
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union, cast
 
 import torch
 import torch.nn as nn
@@ -82,6 +82,16 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
+        optimizations_config = self.env.experiment_config.get_optimizations_config()
+        self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+        self._fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
+        self._average_aggregated_gradients = cast(
+            bool, optimizations_config.get("average_aggregated_gradients")
+        )
+        self._average_training_metrics = cast(
+            bool, optimizations_config.get("average_training_metrics")
+        )
+
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
         class _AutocastForwardPassModel(type(to_wrap)):  # type: ignore
@@ -139,9 +149,9 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             check.false(self._use_apex, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
-            if not self.hvd_config.use and self.n_gpus > 1:
+            if not self.distributed.size > 1 and self.n_gpus > 1:
                 check.eq(
-                    self.hvd_config.aggregation_frequency,
+                    self._aggregation_frequency,
                     1,
                     "Please enable `optimized_parallel` to use aggregation "
                     "frequency greater than 1 for single machine multi-GPU "
@@ -197,14 +207,14 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "backward_passes_per_step for local gradient aggregation must be >= 1",
             )
 
-            if self.hvd_config.use:
-                use_compression = self.hvd_config.fp16_compression
+            if self.distributed.size > 1:
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
-                    backward_passes_per_step=backward_passes_per_step
-                    * self.hvd_config.aggregation_frequency,
-                    compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
+                    backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
+                    compression=hvd.Compression.fp16
+                    if self._fp16_compression
+                    else hvd.Compression.none,
                 )
                 logging.debug(
                     "Initialized optimizer for distributed and optimized parallel training."
@@ -291,7 +301,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
-        if self.hvd_config.use:
+        if self.distributed.size > 1:
             if self.n_gpus > 0:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
@@ -426,7 +436,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         check.is_none(self._scaler, "Do not mix APEX with PyTorch AMP")
 
         check.false(self._use_apex, "Please only call configure_apex_amp once.")
-        if self.hvd_config.use:
+        if self.distributed.size > 1:
             check.eq(
                 num_losses,
                 1,
@@ -436,9 +446,9 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         self._use_apex = True
 
-        if self.hvd_config.use:
+        if self.distributed.size > 1:
             check.eq(
-                self.hvd_config.aggregation_frequency,
+                self._aggregation_frequency,
                 1,
                 "Mixed precision training (AMP) is not supported with "
                 "aggregation frequency > 1.",
@@ -479,7 +489,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             return True
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
-        return (self._current_batch_idx + 1) % self.hvd_config.aggregation_frequency == 0
+        return (self._current_batch_idx + 1) % self._aggregation_frequency == 0
 
     def backward(
         self,
@@ -542,7 +552,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
 
-                if self.hvd_config.use and self._should_communicate_and_update():
+                if self.distributed.size > 1 and self._should_communicate_and_update():
                     # When we exit out of this context manager, we need to finish
                     # communicating gradient updates before they are unscaled.
                     #
@@ -617,7 +627,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         """
 
         check.true(
-            auto_zero_grads or self.hvd_config.aggregation_frequency == 1,
+            auto_zero_grads or self._aggregation_frequency == 1,
             "if optimizations.aggregation_frequency is larger than 1, "
             "you can only set auto_zero_grads to be true. ",
         )
@@ -629,7 +639,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # before we apply gradient clipping and `step()`. In the case of APEX
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
-        if self.hvd_config.use and not self._use_apex:
+        if self.distributed.size > 1 and not self._use_apex:
             with self._record_timing("train_batch.sync_optimizers", accumulate=True):
                 optimizer.synchronize()  # type: ignore
 
@@ -639,10 +649,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             else apex.amp.master_params(optimizer)
         )
 
-        if self.hvd_config.average_aggregated_gradients:
-            self._average_gradients(
-                parameters=parameters, divisor=self.hvd_config.aggregation_frequency
-            )
+        if self._average_aggregated_gradients:
+            self._average_gradients(parameters=parameters, divisor=self._aggregation_frequency)
 
         if clip_grads is not None:
             if self._scaler and self.experimental._auto_amp:
@@ -661,7 +669,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         else:
             step_fn = optimizer.step  # type: ignore
 
-        if self.hvd_config.use:
+        if self.distributed.size > 1:
             with optimizer.skip_synchronize():  # type: ignore
                 step_fn()
         else:

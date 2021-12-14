@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 
 class ExperimentConfig(dict):
@@ -59,3 +59,9 @@ class ExperimentConfig(dict):
         min_checkpoint_period = self.get("min_checkpoint_period", {})
         assert isinstance(min_checkpoint_period, dict)
         return min_checkpoint_period
+
+    def get_optimizations_config(self) -> Dict[str, Any]:
+        """
+        Return the optimizations configuration.
+        """
+        return self.get("optimizations", {})

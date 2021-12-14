@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -10,6 +11,7 @@ import (
 	"github.com/jackc/pgtype"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/pkg/errors"
@@ -60,6 +62,12 @@ const (
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
 )
+
+// StateFromProto maps experimentv1.State to State.
+func StateFromProto(state experimentv1.State) State {
+	str := state.String()
+	return State(strings.TrimPrefix(str, "STATE_"))
+}
 
 // States and transitions
 
@@ -275,6 +283,7 @@ type Experiment struct {
 	GitCommitter         *string    `db:"git_committer"`
 	GitCommitDate        *time.Time `db:"git_commit_date"`
 	OwnerID              *UserID    `db:"owner_id"`
+	Username             string     `db:"username"`
 }
 
 // ExperimentDescriptor is a minimal description of an experiment.
@@ -416,6 +425,7 @@ type Checkpoint struct {
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
 	// A trial log should have one of these IDs. All should be unique.
+	// TODO(Brad): This must be int64.
 	ID *int `db:"id" json:"id,omitempty"`
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.

@@ -253,8 +253,8 @@ export default class StepImplementation {
     await goto(`${BASE_URL}/tasks`);
   }
 
-  @Step('Navigate to master logs page')
-  public async navigateToMasterLogs() {
+  @Step('Navigate to cluster logs page')
+  public async navigateToClusterLogs() {
     await goto(`${BASE_URL}/logs`);
   }
 

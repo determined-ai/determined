@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
-import { extractMetricNames } from 'utils/trial';
+import { extractMetricNames } from 'utils/metric';
 
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';

@@ -67,8 +67,22 @@ func detectCPUs() ([]device.Device, error) {
 	case len(cpuInfo) == 0:
 		return nil, errors.New("no CPUs detected")
 	default:
-		brand := fmt.Sprintf("%s x %d physical cores", cpuInfo[0].ModelName, cpuInfo[0].Cores)
+		// Use uuid from the first `cpuinfo` entry.
+		// All cores are exposed as a single slot; we aggregate the core counts by model name
+		// to produce a display string for device description.
 		uuid := cpuInfo[0].VendorID
+
+		coreCounts := map[string]int32{}
+		for _, entry := range cpuInfo {
+			coreCounts[entry.ModelName] += entry.Cores
+		}
+
+		brands := []string{}
+		for modelName := range coreCounts {
+			brands = append(brands, fmt.Sprintf("%s x %d cores", modelName, coreCounts[modelName]))
+		}
+
+		brand := strings.Join(brands, ", ")
 		return []device.Device{{ID: 0, Brand: brand, UUID: uuid, Type: device.CPU}}, nil
 	}
 }
