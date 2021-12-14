@@ -3,6 +3,8 @@
 package command
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -47,7 +49,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		}
 
 	case echo.Context:
-		ctx.Respond(echo.ErrNotFound)
+		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
