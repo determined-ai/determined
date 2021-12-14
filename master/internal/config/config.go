@@ -28,14 +28,11 @@ var masterConfig *Config
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{
-		ConfigFile: "",
-		Log:        *logger.DefaultConfig(),
-		DB:         *db.DefaultConfig(),
-		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-			ShmSizeBytes: 4294967296,
-			NetworkMode:  "bridge",
-		},
-		TensorBoardTimeout: 5 * 60,
+		ConfigFile:            "",
+		Log:                   *logger.DefaultConfig(),
+		DB:                    *db.DefaultConfig(),
+		TaskContainerDefaults: *model.DefaultTaskContainerDefaults(),
+		TensorBoardTimeout:    5 * 60,
 		Security: SecurityConfig{
 			DefaultTask: model.AgentUserGroup{
 				UID:   0,

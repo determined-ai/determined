@@ -704,6 +704,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     runnerState?: string;
+    /**
+     * The wall clock time is all active time of the cluster for the trial, inclusive of everything (restarts, initiailization, etc), in seconds.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    wallClockTime?: number;
 }
 
 /**
