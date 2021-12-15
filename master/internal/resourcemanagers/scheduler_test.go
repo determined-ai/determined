@@ -458,7 +458,6 @@ func assertEqualToRelease(
 		"actual tasks and expected tasks must have the same length")
 }
 
-
 func TestJobStats(t *testing.T) {
 	prepMockData := func() ([]*mockTask, []*mockGroup, []*mockAgent) {
 		lowerPriority := 50

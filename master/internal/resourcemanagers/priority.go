@@ -35,7 +35,6 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
 	reqs := sortTasks(taskList, groups, false)
 	jobQInfo, jobActors := reduceToJobQInfo(reqs)

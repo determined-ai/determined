@@ -9,7 +9,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-
 func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
 	isAdded := make(map[model.JobID]*job.RMJobInfo)
 	jobActors := make(map[model.JobID]*actor.Ref)

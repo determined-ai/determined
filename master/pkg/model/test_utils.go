@@ -91,7 +91,6 @@ func TrialModel(eID int, jobID JobID, opts ...TrialModelOption) *Trial {
 	t := &Trial{
 		TaskID:       NewTaskID(),
 		JobID:        jobID,
-		TaskID:       model.NewTaskID(),
 		ExperimentID: eID,
 		State:        ActiveState,
 		StartTime:    time.Now(),

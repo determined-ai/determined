@@ -340,7 +340,6 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
-
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
 	jobQinfo, _ := reduceToJobQInfo(reqs)
 

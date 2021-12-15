@@ -158,20 +158,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 		return nil
 
-	// case sproto.GetJobQInfo, sproto.GetJobQStats, sproto.SetJobOrder:
-	// could I look at ResourcePool here?
-	case job.GetJobQ:
-		if msg.ResourcePool == "" {
-			msg.ResourcePool = a.config.DefaultComputeResourcePool
-		}
-
-		rpRef := ctx.Child(msg.ResourcePool)
-		if rpRef == nil {
-			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
-			return nil
-		}
-		resp := ctx.Ask(rpRef, msg).Get()
-		ctx.Respond(resp)
 	case job.GetJobQStats:
 		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
 		ctx.Respond(resp)
