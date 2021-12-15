@@ -291,7 +291,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <TimeDuration duration={getDuration(experiment)} />
               </div>
             )}
-            {experiment.jobSummary && ! terminalRunStates.has(experiment.state) && (
+            {experiment.jobSummary && !terminalRunStates.has(experiment.state) && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Job Info:</span>
                 <Link path={paths.jobs()}>

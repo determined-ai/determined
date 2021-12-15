@@ -14,6 +14,14 @@ export interface ModalHooks {
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
 }
 
+/*
+ * By default we add modal close calls to the tail end of both `Ok` and
+ * `Cancel` callbacks. `rawCancel` and `rawOk` allow us to override and
+ * skip this automatic addition as we might not want this behavior.
+ * For example, there may be different modes within the modal and the
+ * cancel button might be used to toggle between the modes instead of
+ * cancelling out of the modal.
+ */
 interface ModalOptions {
   rawCancel?: boolean;
   rawOk?: boolean;
