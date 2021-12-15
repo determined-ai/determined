@@ -424,7 +424,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		Name:           c.Config.Description,
 	}
 
-	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) && false // CHECK we can't make command preemptible can we?
+	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) && false
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
 
