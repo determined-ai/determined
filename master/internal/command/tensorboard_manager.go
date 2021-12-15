@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -11,7 +12,8 @@ import (
 )
 
 type tensorboardManager struct {
-	db *db.PgDB
+	db      *db.PgDB
+	mConfig *config.Config
 }
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {

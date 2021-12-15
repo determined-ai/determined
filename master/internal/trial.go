@@ -218,7 +218,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			SingleAgent: false,
 		},
 
-		Preemptible:  true,
+		Preemptible:  true, // TODO should this read from config files?
 		DoRendezvous: true,
 	}, t.db, t.rm))
 	return nil

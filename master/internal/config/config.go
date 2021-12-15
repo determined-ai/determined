@@ -355,3 +355,130 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 	}
 	return weight
 }
+
+func readPreemptionFromScheduler(conf *resourcemanagers.SchedulerConfig) *bool {
+	if conf == nil || conf.Priority == nil {
+		return nil
+	}
+	return &conf.Priority.Preemption
+}
+
+func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
+	if conf == nil || conf.Priority == nil {
+		return nil
+	}
+	return conf.Priority.DefaultPriority
+}
+
+// ReadPreemptionStatus resolves the desired preemption status for a job.
+func ReadPreemptionStatus(config *Config, rpName string, jobConf interface{}) bool {
+	if config == nil {
+		panic("input config ptr is null")
+	}
+	var jobPreemptible bool
+	switch jobConf.(type) {
+	case *expconf.ExperimentConfig:
+		jobPreemptible = true
+	case *model.CommandConfig:
+		jobPreemptible = false
+	default:
+		panic("unexpected jobConf type")
+	}
+
+	RMPremption := false // Whether the RM supports preemption
+
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.PoolName != rpName {
+			continue
+		}
+		if preemption := readPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
+			RMPremption = *preemption
+			return jobPreemptible && RMPremption
+		}
+		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
+			RMPremption = rpConfig.Provider.GCP.InstanceType.Preemptible
+			return jobPreemptible && RMPremption
+		}
+		break
+	}
+
+	// if not found, fall back to resource manager config
+	if config.ResourceManager.AgentRM != nil {
+		if preemption := readPreemptionFromScheduler(
+			config.ResourceManager.AgentRM.Scheduler,
+		); preemption != nil {
+			RMPremption = *preemption
+			return jobPreemptible && RMPremption
+		}
+	}
+
+	if config.ResourceManager.KubernetesRM != nil {
+		if config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption" {
+			RMPremption = true
+		}
+	}
+
+	return jobPreemptible && RMPremption
+}
+
+// ReadPriority resolves the priority value for a job.
+func ReadPriority(config *Config, rpName string, jobConf interface{}) int {
+	if config == nil {
+		panic("input config ptr is null")
+	}
+	var prio *int
+	// look at the idividual job config
+	switch conf := jobConf.(type) {
+	case *expconf.ExperimentConfig:
+		prio = conf.Resources().Priority()
+	case *model.CommandConfig:
+		prio = conf.Resources.Priority
+	}
+	if prio != nil {
+		return *prio
+	}
+
+	var schedulerConf *resourcemanagers.SchedulerConfig
+
+	// if not found, fall back to the resource pools config
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.PoolName != rpName {
+			continue
+		}
+		schedulerConf = rpConfig.Scheduler
+	}
+	prio = readPriorityFromScheduler(schedulerConf)
+	if prio != nil {
+		return *prio
+	}
+
+	// if not found, fall back to resource manager config
+	if config.ResourceManager.AgentRM != nil {
+		schedulerConf = config.ResourceManager.AgentRM.Scheduler
+		prio = readPriorityFromScheduler(schedulerConf)
+		if prio != nil {
+			return *prio
+		}
+	}
+
+	if config.ResourceManager.KubernetesRM != nil {
+		return resourcemanagers.KubernetesDefaultPriority
+	}
+
+	return resourcemanagers.DefaultSchedulingPriority
+}
+
+// ReadWeight resolves the weight value for a job.
+func ReadWeight(config *Config, rpName string, jobConf interface{}) float64 {
+	if config == nil {
+		panic("input config ptr is null")
+	}
+	var weight float64
+	switch conf := jobConf.(type) {
+	case *expconf.ExperimentConfig:
+		weight = conf.Resources().Weight()
+	case *model.CommandConfig:
+		weight = conf.Resources.Weight
+	}
+	return weight
+}
