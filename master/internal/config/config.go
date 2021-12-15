@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -268,7 +269,7 @@ func ReadRMPreemptionStatus(rpName string) bool {
 		}
 		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
 	case config.ResourceManager.KubernetesRM != nil:
-		return config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption"
+		return config.ResourceManager.KubernetesRM.DefaultScheduler == kubernetes.PreemptionScheduler
 	default:
 		panic("unexpected resource configuration")
 	}
