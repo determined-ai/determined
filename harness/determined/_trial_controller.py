@@ -39,8 +39,8 @@ class TrialController(metaclass=abc.ABCMeta):
 
         self.prof = profiler.ProfilerAgent.from_env(
             env,
-            context.distributed.cross_rank,
-            context.distributed.rank,
+            global_rank=context.distributed.rank,
+            local_rank=context.distributed.local_rank,
         )
 
         distributed_backend = _DistributedBackend()
