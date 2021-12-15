@@ -111,7 +111,7 @@ func defaultAgentConfig() Options {
 }
 
 func defaultContainerMasterHost() string {
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == osDarwin {
 		return "host.docker.internal"
 	}
 	return ""

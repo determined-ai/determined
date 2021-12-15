@@ -21,6 +21,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
+const (
+	osDarwin = "darwin"
+)
+
 func (a *agent) detect() error {
 	switch {
 	case a.ArtificialSlots > 0:
@@ -70,11 +74,10 @@ func detectCPUs() ([]device.Device, error) {
 		if errno, ok := err.(syscall.Errno); ok {
 			switch errno {
 			case syscall.ENOENT:
-				if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" {
+				if runtime.GOARCH == "arm64" && runtime.GOOS == osDarwin {
 					return []device.Device{{ID: 0, Brand: "Apple", UUID: "AppleM1", Type: device.CPU}}, nil
-				} else {
-					return nil, errors.Wrap(err, "error while gathering CPU info on a non-AppleM1 system")
 				}
+				return nil, errors.Wrap(err, "error while gathering CPU info on a non-AppleM1 system")
 			default:
 				return nil, errors.Wrap(err, "error while gathering CPU info")
 			}
