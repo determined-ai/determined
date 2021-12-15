@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
@@ -584,6 +586,8 @@ func (a *apiServer) PatchExperiment(
 			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
+			prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
+				req.Experiment.Labels)
 		case path == "description":
 			exp.Description = req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):

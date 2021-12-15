@@ -152,7 +152,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.reschedule = false
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
-
+	case *apiv1.GetAgentsRequest:
+		resp := ctx.Ask(k.agent.handler, msg)
+		ctx.Respond(resp.Get())
 	default:
 		reschedule = false
 		ctx.Log().Errorf("unexpected message %T", msg)
