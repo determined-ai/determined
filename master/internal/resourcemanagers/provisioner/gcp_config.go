@@ -215,7 +215,7 @@ func (c GCPClusterConfig) SlotsPerInstance() int {
 func (c GCPClusterConfig) SlotType() device.Type {
 	slots := c.InstanceType.Slots()
 	if slots > 0 {
-		return device.GPU
+		return device.CUDA
 	}
 	if c.CPUSlotsAllowed {
 		return device.CPU

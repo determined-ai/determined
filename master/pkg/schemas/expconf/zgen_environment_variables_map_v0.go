@@ -16,6 +16,14 @@ func (e *EnvironmentVariablesMapV0) SetCPU(val []string) {
 	e.RawCPU = val
 }
 
+func (e EnvironmentVariablesMapV0) CUDA() []string {
+	return e.RawCUDA
+}
+
+func (e *EnvironmentVariablesMapV0) SetCUDA(val []string) {
+	e.RawCUDA = val
+}
+
 func (e EnvironmentVariablesMapV0) GPU() []string {
 	return e.RawGPU
 }

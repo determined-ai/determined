@@ -39,8 +39,10 @@ type Environment struct {
 // RuntimeItem configures the runtime image.
 type RuntimeItem struct {
 	CPU  string `json:"cpu,omitempty"`
-	GPU  string `json:"gpu,omitempty"`
+	CUDA string `json:"cuda,omitempty"`
 	ROCM string `json:"rocm,omitempty"`
+	// Deprecated: use CUDA instead.
+	GPU string `json:"gpu,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -48,8 +50,9 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 	var plain string
 	if err := json.Unmarshal(data, &plain); err == nil {
 		r.CPU = plain
-		r.GPU = plain
 		r.ROCM = plain
+		r.CUDA = plain
+		r.GPU = r.CUDA
 		return nil
 	}
 	type DefaultParser RuntimeItem
@@ -58,8 +61,12 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 		return errors.Wrapf(err, "failed to parse runtime item")
 	}
 	r.CPU = jsonItem.CPU
-	r.GPU = jsonItem.GPU
 	r.ROCM = jsonItem.ROCM
+	r.CUDA = jsonItem.CUDA
+	if r.CUDA == "" && jsonItem.GPU != "" {
+		r.CUDA = jsonItem.GPU
+	}
+	r.GPU = r.CUDA
 	return nil
 }
 
@@ -68,8 +75,8 @@ func (r RuntimeItem) For(deviceType device.Type) string {
 	switch deviceType {
 	case device.CPU:
 		return r.CPU
-	case device.GPU:
-		return r.GPU
+	case device.CUDA:
+		return r.CUDA
 	case device.ROCM:
 		return r.ROCM
 	default:
@@ -80,8 +87,10 @@ func (r RuntimeItem) For(deviceType device.Type) string {
 // RuntimeItems configures the runtime environment variables.
 type RuntimeItems struct {
 	CPU  []string `json:"cpu,omitempty"`
-	GPU  []string `json:"gpu,omitempty"`
+	CUDA []string `json:"cuda,omitempty"`
 	ROCM []string `json:"rocm,omitempty"`
+	// Deprecated: use CUDA instead
+	GPU []string `json:"gpu,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -89,8 +98,9 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 	var plain []string
 	if err := json.Unmarshal(data, &plain); err == nil {
 		r.CPU = append(r.CPU, plain...)
-		r.GPU = append(r.GPU, plain...)
 		r.ROCM = append(r.ROCM, plain...)
+		r.CUDA = append(r.CUDA, plain...)
+		r.GPU = r.CUDA
 		return nil
 	}
 	type DefaultParser RuntimeItems
@@ -99,8 +109,13 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 		return errors.Wrapf(err, "failed to parse runtime items")
 	}
 	r.CPU = append(r.CPU, jsonItems.CPU...)
-	r.GPU = append(r.GPU, jsonItems.GPU...)
 	r.ROCM = append(r.ROCM, jsonItems.ROCM...)
+
+	r.CUDA = append(r.CUDA, jsonItems.CUDA...)
+	if len(r.CUDA) == 0 && len(jsonItems.GPU) > 0 {
+		r.CUDA = append(r.CUDA, jsonItems.GPU...)
+	}
+	r.GPU = r.CUDA
 	return nil
 }
 
@@ -109,8 +124,8 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 	switch deviceType {
 	case device.CPU:
 		return r.CPU
-	case device.GPU:
-		return r.GPU
+	case device.CUDA:
+		return r.CUDA
 	case device.ROCM:
 		return r.ROCM
 	default:

@@ -503,12 +503,12 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 			deviceType = device.CPU
 		case device.ROCM:
 			panic("ROCm is not supported on k8s yet")
-		case device.GPU:
+		case device.CUDA:
 			fallthrough
 		default:
 			resources := node.Status.Allocatable["nvidia.com/gpu"]
 			numSlots = resources.Value()
-			deviceType = device.GPU
+			deviceType = device.CUDA
 		}
 		if numSlots < 1 {
 			continue

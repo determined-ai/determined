@@ -390,6 +390,7 @@ func TestExperiment(t *testing.T) {
 			Image: RuntimeItem{
 				CPU:  "my_image",
 				GPU:  "my_image",
+				CUDA: "my_image",
 				ROCM: "my_image",
 			},
 		},
@@ -452,9 +453,12 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 
 	expected := DefaultExperimentConfig(nil)
 	myTestImage := "my-test-image"
-	expected.Environment.Image.CPU = myTestImage
-	expected.Environment.Image.GPU = myTestImage
-	expected.Environment.Image.ROCM = myTestImage
+	expected.Environment.Image = RuntimeItem{
+		CPU:  myTestImage,
+		CUDA: myTestImage,
+		GPU:  myTestImage,
+		ROCM: myTestImage,
+	}
 	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)

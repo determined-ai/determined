@@ -10,7 +10,7 @@ enum Type {
   // A CPU device.
   TYPE_CPU = 1;
   // CUDA device.
-  TYPE_GPU = 2;
+  TYPE_CUDA = 2;
   // ROCM.
   TYPE_ROCM = 3;
 }

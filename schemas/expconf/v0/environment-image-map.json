@@ -7,7 +7,7 @@
     "required": [],
     "eventuallyRequired": [
         "cpu",
-        "gpu",
+        "cuda",
         "rocm"
     ],
     "properties": {
@@ -18,19 +18,27 @@
             ],
             "default": null
         },
-        "gpu": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
+		"cuda": {
+			"type": [
+				"string",
+				"null"
+			],
+			"default": null
+		},
         "rocm": {
             "type": [
                 "string",
                 "null"
             ],
             "default": null
-        }
+        },
+		"gpu": {
+			"type": [
+				"string",
+				"null"
+			],
+			"default": null,
+			"deprecated": true
+		}
     }
 }

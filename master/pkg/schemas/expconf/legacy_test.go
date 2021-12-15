@@ -104,6 +104,7 @@ func TestLegacyConfig(t *testing.T) {
 				bindMounts: BindMountsConfig{},
 				envvars: EnvironmentVariablesMap{
 					RawCPU:  []string{"HOME=/where/the/heart/is"},
+					RawCUDA: []string{"HOME=/where/the/heart/is"},
 					RawGPU:  []string{"HOME=/where/the/heart/is"},
 					RawROCM: []string{"HOME=/where/the/heart/is"},
 				},
@@ -216,6 +217,7 @@ func TestLegacyConfig(t *testing.T) {
 				bindMounts: BindMountsConfig{},
 				envvars: EnvironmentVariablesMap{
 					RawCPU:  []string{"HOME=/where/the/heart/is"},
+					RawCUDA: []string{"HOME=/where/the/cuda/is"},
 					RawGPU:  []string{"HOME=/where/the/cuda/is"},
 					RawROCM: []string{},
 				},
@@ -347,6 +349,7 @@ func TestLegacyConfig(t *testing.T) {
 				},
 				envvars: EnvironmentVariablesMap{
 					RawCPU:  []string{},
+					RawCUDA: []string{},
 					RawGPU:  []string{},
 					RawROCM: []string{},
 				},

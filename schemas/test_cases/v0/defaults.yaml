@@ -37,6 +37,8 @@
     environment_variables:
       cpu:
         - ASDF=asdf
+      cuda:
+        - ASDF=asdf
       gpu:
         - ASDF=asdf
       rocm:
@@ -44,6 +46,7 @@
     force_pull_image: false
     image:
       cpu: '*'
+      cuda: '*'
       gpu: '*'
       rocm: '*'
     # go will generate some non-empty struct here, but python will not

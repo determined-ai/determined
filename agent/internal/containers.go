@@ -200,7 +200,7 @@ func overwriteSpec(
 		spec.RunSpec.ContainerConfig.Labels[k] = v
 	}
 
-	if len(cont.DeviceUUIDsByType(device.GPU)) > 0 {
+	if len(cont.DeviceUUIDsByType(device.CUDA)) > 0 {
 		spec.RunSpec.HostConfig.DeviceRequests = append(
 			spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
 	}

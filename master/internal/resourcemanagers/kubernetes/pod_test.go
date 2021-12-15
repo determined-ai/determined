@@ -75,7 +75,7 @@ func createPod(
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
 	leaveKubernetesResources := false
-	slotType := device.GPU
+	slotType := device.CUDA
 	slotResourceRequests := PodSlotResourceRequests{}
 
 	newPodHandler := newPod(

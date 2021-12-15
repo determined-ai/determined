@@ -42,7 +42,7 @@ func (c Container) DeviceUUIDsByType(deviceType device.Type) (uuids []string) {
 
 // GPUDeviceUUIDs returns the UUIDs of the devices for this container that are GPUs.
 func (c Container) GPUDeviceUUIDs() []string {
-	return c.DeviceUUIDsByType(device.GPU)
+	return c.DeviceUUIDsByType(device.CUDA)
 }
 
 // Proto returns the proto representation of the container.

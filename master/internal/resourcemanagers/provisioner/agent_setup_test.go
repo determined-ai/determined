@@ -24,7 +24,7 @@ func TestAgentSetupScript(t *testing.T) {
 		StartupScriptBase64:          encodedScript,
 		ContainerStartupScriptBase64: encodedContainerScript,
 		MasterCertBase64:             encodedMasterCert,
-		SlotType:                     device.GPU,
+		SlotType:                     device.CUDA,
 		AgentDockerImage:             "test_docker_image",
 		AgentFluentImage:             "fluent-test",
 		AgentDockerRuntime:           "runc",

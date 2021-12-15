@@ -796,7 +796,7 @@ schemas = {
     "required": [],
     "eventuallyRequired": [
         "cpu",
-        "gpu",
+        "cuda",
         "rocm"
     ],
     "properties": {
@@ -807,20 +807,28 @@ schemas = {
             ],
             "default": null
         },
-        "gpu": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
+		"cuda": {
+			"type": [
+				"string",
+				"null"
+			],
+			"default": null
+		},
         "rocm": {
             "type": [
                 "string",
                 "null"
             ],
             "default": null
-        }
+        },
+		"gpu": {
+			"type": [
+				"string",
+				"null"
+			],
+			"default": null,
+			"deprecated": true
+		}
     }
 }
 
@@ -868,16 +876,16 @@ schemas = {
                 "type": "string"
             }
         },
-        "gpu": {
-            "type": [
-                "array",
-                "null"
-            ],
-            "default": [],
-            "items": {
-                "type": "string"
-            }
-        },
+		"cuda": {
+			"type": [
+				"array",
+				"null"
+			],
+			"default": [],
+			"items": {
+				"type": "string"
+			}
+		},
         "rocm": {
             "type": [
                 "array",
@@ -887,7 +895,18 @@ schemas = {
             "items": {
                 "type": "string"
             }
-        }
+        },
+		"gpu": {
+			"type": [
+				"array",
+				"null"
+			],
+			"default": [],
+			"items": {
+				"type": "string"
+			},
+			"deprecated": true
+		}
     }
 }
 

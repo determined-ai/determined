@@ -19,15 +19,23 @@ func (e *EnvironmentImageMapV0) SetCPU(val string) {
 	e.RawCPU = &val
 }
 
-func (e EnvironmentImageMapV0) GPU() string {
-	if e.RawGPU == nil {
-		panic("You must call WithDefaults on EnvironmentImageMapV0 before .GPU")
+func (e EnvironmentImageMapV0) CUDA() string {
+	if e.RawCUDA == nil {
+		panic("You must call WithDefaults on EnvironmentImageMapV0 before .CUDA")
 	}
-	return *e.RawGPU
+	return *e.RawCUDA
 }
 
-func (e *EnvironmentImageMapV0) SetGPU(val string) {
-	e.RawGPU = &val
+func (e *EnvironmentImageMapV0) SetCUDA(val string) {
+	e.RawCUDA = &val
+}
+
+func (e EnvironmentImageMapV0) GPU() *string {
+	return e.RawGPU
+}
+
+func (e *EnvironmentImageMapV0) SetGPU(val *string) {
+	e.RawGPU = val
 }
 
 func (e EnvironmentImageMapV0) ROCM() string {
