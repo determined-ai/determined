@@ -6,10 +6,16 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 )
 
 // HParamSample is a sampling of the hyperparameters for a model.
 type HParamSample map[string]interface{}
+
+// HParamSampleFromProto converts a proto map to an HParamSample.
+func HParamSampleFromProto(p *structpb.Struct) HParamSample {
+	return HParamSample(p.AsMap())
+}
 
 // GlobalBatchSize returns the `global_batch_size` hyperparameter as an integer.
 func (h HParamSample) GlobalBatchSize() int {

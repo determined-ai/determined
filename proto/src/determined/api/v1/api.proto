@@ -402,6 +402,28 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Request a trial from a manual searcher.
+  rpc AddManualSearcherTrial(AddManualSearcherTrialRequest)
+      returns (AddManualSearcherTrialResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/searcher/trial"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experimental"
+    };
+  }
+  // Request manual searcher to shutdown.
+  rpc CloseManualSearcherTrial(CloseManualSearcherTrialRequest)
+      returns (CloseManualSearcherTrialResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/searcher/{request_id}/close"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experimental"
+    };
+  }
 
   // Get a list of checkpoints for an experiment.
   rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest)

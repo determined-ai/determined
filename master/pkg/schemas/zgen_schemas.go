@@ -2597,6 +2597,53 @@ var (
     }
 }
 `)
+	textManualConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-manual.json",
+    "title": "ManualConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "manual"
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+`)
 	textPBTConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
@@ -2971,7 +3018,7 @@ var (
         },
         "enforce": {
             "union": {
-                "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
+                "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', 'pbt', or 'manual'",
                 "items": [
                     {
                         "unionKey": "const:name=single",
@@ -2996,6 +3043,10 @@ var (
                     {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                    },
+                    {
+                        "unionKey": "const:name=manual",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-manual.json"
                     },
                     {
                         "$comment": "this is an EOL searcher, not to be used in new experiments",
@@ -3455,6 +3506,8 @@ var (
 	schemaAsyncHalvingConfigV0 interface{}
 
 	schemaGridConfigV0 interface{}
+
+	schemaManualConfigV0 interface{}
 
 	schemaPBTConfigV0 interface{}
 
@@ -4389,6 +4442,26 @@ func ParsedGridConfigV0() interface{} {
 	return schemaGridConfigV0
 }
 
+func ParsedManualConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaManualConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaManualConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaManualConfigV0 != nil {
+		return schemaManualConfigV0
+	}
+	err := json.Unmarshal(textManualConfigV0, &schemaManualConfigV0)
+	if err != nil {
+		panic("invalid embedded json for ManualConfigV0")
+	}
+	return schemaManualConfigV0
+}
+
 func ParsedPBTConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaPBTConfigV0 != nil {
@@ -4754,6 +4827,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textAsyncHalvingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
 	cachedSchemaBytesMap[url] = textGridConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/searcher-manual.json"
+	cachedSchemaBytesMap[url] = textManualConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
 	cachedSchemaBytesMap[url] = textPBTConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-random.json"

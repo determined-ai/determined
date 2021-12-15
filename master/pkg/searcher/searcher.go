@@ -85,6 +85,29 @@ func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) 
 	return operations, nil
 }
 
+// ManualRequestTrial informs the searcher that the user has requested a trial be created.
+func (s *Searcher) ManualRequestTrial(l expconf.Length, hparams HParamSample) (
+	model.RequestID, []Operation, error,
+) {
+	if _, ok := s.method.(*manualSearch); !ok {
+		return model.RequestID{}, nil, errors.New("cannot request trials for non-manual searchers")
+	}
+
+	create := NewCreate(s.Rand, hparams, model.TrialWorkloadSequencerType)
+	ops := []Operation{create, NewValidateAfter(create.RequestID, l)}
+	s.Record(ops)
+	return create.RequestID, ops, nil
+}
+
+// TrialRequested informs the searcher that the user has requested a trial be created.
+func (s *Searcher) ManualCloseTrial(rID model.RequestID) ([]Operation, error) {
+	if _, ok := s.method.(*manualSearch); !ok {
+		return nil, errors.New("cannot close trials for non-manual searchers")
+	}
+
+	return []Operation{NewClose(rID)}, nil
+}
+
 // TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
 func (s *Searcher) TrialExitedEarly(
 	requestID model.RequestID, exitedReason model.ExitedReason,

@@ -18,6 +18,7 @@ type SearcherConfigV0 struct {
 	RawAsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
 	RawPBTConfig          *PBTConfigV0          `union:"name,pbt" json:"-"`
+	RawManualConfig       *ManualConfigV0       `union:"name,manual" json:"-"`
 
 	// These searchers are allowed only to help parse old experiment configs.
 	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
@@ -243,4 +244,14 @@ func (s SearcherConfig) AssertCurrent() error {
 		)
 	}
 	return nil
+}
+
+//go:generate ../gen.sh
+// ManualConfigV0 configures a manual search.
+type ManualConfigV0 struct {
+}
+
+// Unit implements the model.InUnits interface.
+func (m ManualConfigV0) Unit() Unit {
+	return Unspecified
 }

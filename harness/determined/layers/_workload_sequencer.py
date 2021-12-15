@@ -372,6 +372,7 @@ class WorkloadSequencer(workload.Source):
                 yield from self.validate(None)
 
             for op in self.generic.searcher.ops():
+                print(op)
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(

@@ -47,6 +47,13 @@ type (
 		requestID model.RequestID
 		progress  model.PartialUnits
 	}
+	manualRequestTrial struct {
+		length  expconf.Length
+		hparams searcher.HParamSample
+	}
+	manualCloseTrial struct {
+		requestID model.RequestID
+	}
 	trialGetSearcherState struct {
 		requestID model.RequestID
 	}
@@ -229,6 +236,29 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
+
+	case manualRequestTrial:
+		match := true
+		e.Config.Hyperparameters().Each(func(name string, param expconf.HyperparameterV0) {
+			if _, ok := msg.hparams[name]; !ok {
+				match = false
+			}
+		})
+		if !match {
+			ctx.Respond(errors.New("must contain the same hparams declared in the expconf"))
+			return nil
+		}
+		rID, ops, err := e.searcher.ManualRequestTrial(msg.length, msg.hparams)
+		ctx.Respond(rID)
+		e.processOperations(ctx, ops, err)
+	case manualCloseTrial:
+		if _, ok := e.TrialSearcherState[msg.requestID]; !ok {
+			ctx.Respond(api.AsErrNotFound("no such trial"))
+			return nil
+		}
+		ops, err := e.searcher.ManualCloseTrial(msg.requestID)
+		e.processOperations(ctx, ops, err)
+
 	case trialGetSearcherState:
 		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {

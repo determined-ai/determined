@@ -58,6 +58,8 @@ const (
 	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
 	// PBTSearch is the SearchMethodType for a PBT searcher.
 	PBTSearch SearchMethodType = "pbt"
+	// ManualSearch is the SearchMethodType for a manual searcher.
+	ManualSearch SearchMethodType = "manual"
 )
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
@@ -78,6 +80,8 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
 	case c.RawPBTConfig != nil:
 		return newPBTSearch(*c.RawPBTConfig, c.SmallerIsBetter())
+	case c.RawManualConfig != nil:
+		return newManualSearch(*c.RawManualConfig)
 	default:
 		panic("no searcher type specified")
 	}

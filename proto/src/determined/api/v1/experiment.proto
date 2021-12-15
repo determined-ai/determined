@@ -122,6 +122,32 @@ message GetBestSearcherValidationMetricResponse {
   float metric = 1;
 }
 
+// Request a manual searcher adds a trial.
+message AddManualSearcherTrialRequest {
+  // The ID of the experiment to add the trial to.
+  int64 experiment_id = 1;
+  // The length for the requested trial.
+  determined.experiment.v1.TrainingLength length = 2;
+  // The hyperparameters for the trial.
+  google.protobuf.Struct hparams = 3;
+}
+// Response to AddManualSearcherTrialRequest.
+message AddManualSearcherTrialResponse {
+  // The request ID of the trial. Used to later close the trial once finished.
+  string request_id = 1;
+}
+
+// Request a manual searcher shutdown.
+message CloseManualSearcherTrialRequest {
+  // The ID of the experiment to add the trial to.
+  int64 experiment_id = 1;
+  // The request ID of the trial to close.
+  string request_id = 2;
+}
+// Response to CloseManualSearcherTrialRequest.
+message CloseManualSearcherTrialResponse {
+}
+
 // Preview hyperparameter search.
 message PreviewHPSearchRequest {
   // The experiment config to simulate.

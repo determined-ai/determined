@@ -65,6 +65,9 @@ func (s SearcherConfigV0) GetUnionMember() interface{} {
 	if s.RawPBTConfig != nil {
 		return *s.RawPBTConfig
 	}
+	if s.RawManualConfig != nil {
+		return *s.RawManualConfig
+	}
 	if s.RawSyncHalvingConfig != nil {
 		return *s.RawSyncHalvingConfig
 	}

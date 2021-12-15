@@ -1311,3 +1311,40 @@ func (a *apiServer) GetModelDef(
 
 	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
 }
+
+func (a *apiServer) AddManualSearcherTrial(
+	_ context.Context, req *apiv1.AddManualSearcherTrialRequest,
+) (*apiv1.AddManualSearcherTrialResponse, error) {
+	hparams := searcher.HParamSampleFromProto(req.Hparams)
+	if _, ok := hparams[expconf.GlobalBatchSize]; !ok {
+		return nil, status.Error(codes.InvalidArgument, "missing global batch size")
+	}
+
+	if req.Length.Length <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "non zero length required")
+	}
+
+	var requestID model.RequestID
+	exp := experimentsAddr.Child(req.ExperimentId)
+	if err := a.ask(exp, manualRequestTrial{
+		length:  expconf.LengthFromProto(req.Length),
+		hparams: searcher.HParamSampleFromProto(req.Hparams),
+	}, &requestID); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.AddManualSearcherTrialResponse{RequestId: requestID.String()}, nil
+}
+
+func (a *apiServer) CloseManualSearcherTrial(
+	_ context.Context, req *apiv1.CloseManualSearcherTrialRequest,
+) (*apiv1.CloseManualSearcherTrialResponse, error) {
+	exp := experimentsAddr.Child(req.ExperimentId)
+	if err := a.ask(exp, manualCloseTrial{
+		requestID: model.MustParseRequestID(req.RequestId),
+	}, nil); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.CloseManualSearcherTrialResponse{}, nil
+}
