@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"fmt"
+
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -63,4 +65,89 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 // being scheduled.
 func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
+}
+
+// TODO add a comment.
+func adjustPriorities(positions *jobSortState) {
+	// prev := float64(0)
+	// i := 0
+
+	// TODO make sure the highest qposition doesn't increase.. even when moving jobs
+
+	// for i < len(reqs) {
+	// 	if groups[reqs[i].Group].qPosition == -1 {
+	// 		if i == len(reqs)-1 {
+	// 			groups[reqs[i].Group].qPosition = prev + 1
+	// 		} else {
+	// 			// seek the next populated value
+	// 			var seeker int
+	// 			for loc := i + 1; loc < len(reqs); loc++ {
+	// 				seeker = loc
+	// 				if groups[reqs[loc].Group].qPosition != -1 {
+	// 					break
+	// 				} else if loc == len(reqs) {
+	// 					break
+	// 				}
+	// 			}
+
+	// 			// set queue positions
+	// 			if seeker >= len(reqs)-1 {
+	// 				for setter := i; setter < len(reqs); setter++ {
+	// 					groups[reqs[setter].Group].qPosition = prev + 1
+	// 					prev++
+	// 				}
+	// 			} else {
+	// 				maxValue := groups[reqs[seeker].Group].qPosition
+	// 				diff := float64(seeker - i)
+	// 				increment := (maxValue - prev) / diff
+
+	// 				for setter := i; setter < seeker; setter++ {
+	// 					groups[reqs[setter].Group].qPosition = prev + increment
+	// 					prev += increment
+	// 				}
+	// 			} // find the value of the non negative position and add increments
+	// 		}
+	// 	}
+	// 	prev = groups[reqs[i].Group].qPosition
+	// 	i++
+	// }
+}
+
+type jobSortState = map[model.JobID]float64
+
+func computeNewJobPos(msg job.MoveJob, jobQ job.AQueue, qPositions jobSortState) (float64, error) {
+	if msg.Anchor == msg.ID {
+		return 0, fmt.Errorf("cannot move job relative to itself")
+	}
+	// find what that position of the anchor job is
+	// anchorInfo, ok := jobQ[msg.Anchor]
+	// if !ok {
+	// 	return 0, fmt.Errorf("could not find anchor job %s", msg.Anchor)
+	// }
+
+	// get q positions for anchor, anchor.next or before
+	qPos1, ok := qPositions[msg.Anchor]
+	if !ok {
+		return 0, fmt.Errorf("could not find anchor job %s", msg.Anchor)
+	}
+
+	/*
+		consider:
+			- moving to ahead of the first job
+			- movingto behind of the last job
+				WARN consider a job initialized at current time as the upper bound of qposValue
+	*/
+
+	// qPos2 := rp.queuePositions[nextOrBefore]
+
+	// find the mid point and update the id's qPosition.
+
+	// FIXME
+	epsilon := 1.0
+	if msg.AheadOf {
+		epsilon *= -1
+	}
+	newPos := qPos1 + epsilon
+
+	return newPos, nil
 }

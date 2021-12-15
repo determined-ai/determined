@@ -3512,7 +3512,6 @@ class v1QueueControl:
         aheadOf: "typing.Optional[str]" = None,
         behindOf: "typing.Optional[str]" = None,
         priority: "typing.Optional[int]" = None,
-        queuePosition: "typing.Optional[float]" = None,
         resourcePool: "typing.Optional[str]" = None,
         weight: "typing.Optional[float]" = None,
     ):
@@ -3522,7 +3521,6 @@ class v1QueueControl:
         self.resourcePool = resourcePool
         self.priority = priority
         self.weight = weight
-        self.queuePosition = queuePosition
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueueControl":
@@ -3533,7 +3531,6 @@ class v1QueueControl:
             resourcePool=obj.get("resourcePool", None),
             priority=obj.get("priority", None),
             weight=float(obj["weight"]) if obj.get("weight", None) is not None else None,
-            queuePosition=float(obj["queuePosition"]) if obj.get("queuePosition", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -3544,7 +3541,6 @@ class v1QueueControl:
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "priority": self.priority if self.priority is not None else None,
             "weight": dump_float(self.weight) if self.weight is not None else None,
-            "queuePosition": dump_float(self.queuePosition) if self.queuePosition is not None else None,
         }
 
 class v1QueueStats:

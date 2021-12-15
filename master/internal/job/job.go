@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -58,6 +57,12 @@ type (
 	SetResourcePool struct {
 		ResourcePool string
 		Handler      *actor.Ref
+	}
+	// MoveJob requests the job to be moved within a priority queue relative to another job.
+	MoveJob struct {
+		ID      model.JobID
+		Anchor  model.JobID
+		AheadOf bool
 	}
 )
 
@@ -215,13 +220,24 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())
 				}
-			case *jobv1.QueueControl_QueuePosition:
-				// REMOVEME: keep this until ahead_of and behind_of are implemented
-				ctx.Respond(api.ErrNotImplemented)
-				return nil
-			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
-				ctx.Respond(api.ErrNotImplemented)
-				return nil
+			case *jobv1.QueueControl_AheadOf:
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:      jobID,
+					Anchor:  model.JobID(action.AheadOf),
+					AheadOf: true,
+				})
+				if err := resp.Error(); err != nil {
+					errors = append(errors, err.Error())
+				}
+			case *jobv1.QueueControl_BehindOf:
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:      jobID,
+					Anchor:  model.JobID(action.BehindOf),
+					AheadOf: false,
+				})
+				if err := resp.Error(); err != nil {
+					errors = append(errors, err.Error())
+				}
 			default:
 				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
 				return nil
