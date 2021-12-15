@@ -54,6 +54,12 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// SetGroupOrder sets the order of the group in the priority scheduler.
+	SetGroupOrder struct {
+		QPosition    float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
 )
 
 // RegisterJob Registers an active job with the jobs actor.
