@@ -34,6 +34,7 @@ type kubernetesResourceManager struct {
 
 	reschedule bool
 
+	queuePositions  jobSortState
 	echoRef         *echo.Echo
 	masterTLSConfig model.TLSClientConfig
 	loggingConfig   model.LoggingConfig
@@ -53,6 +54,7 @@ func newKubernetesResourceManager(
 		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
+		queuePositions:    make(jobSortState),
 
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
@@ -90,8 +92,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
-		job.SetGroupWeight,
-		job.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased,
@@ -102,6 +102,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobSummary,
 		job.GetJobQStats,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -290,7 +292,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 }
 
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
 	case job.GetJobQ:
 		ctx.Respond(k.jobQInfo())
 
@@ -307,6 +309,23 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(k.reqList))
 
+	case job.SetGroupWeight:
+		// setting weights in kubernetes is not supported
+
+	case job.SetGroupPriority:
+		group := k.getOrCreateGroup(ctx, msg.Handler)
+		group.priority = &msg.Priority
+
+		for it := k.reqList.iterator(); it.next(); {
+			if it.value().Group == msg.Handler {
+				taskActor := it.value().TaskActor
+				if id, ok := k.addrToContainerID[taskActor]; ok {
+					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
+					delete(k.addrToContainerID, taskActor)
+				}
+			}
+		}
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -314,8 +333,9 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
-	reqs := sortTasks(k.reqList, k.groups, true)
+	reqs := sortTasksWithPosition(k.reqList, k.groups, k.queuePositions, true)
 	jobQinfo, _ := reduceToJobQInfo(reqs)
+
 	return jobQinfo
 }
 
@@ -366,6 +386,12 @@ func (k *kubernetesResourceManager) assignResources(
 		})
 
 		k.addrToContainerID[req.TaskActor] = container.id
+		ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{
+			QPosition: -1,
+			PodID:     container.id,
+		})
+
+		k.addrToContainerID[req.TaskActor] = container.id
 		k.containerIDtoAddr[container.id.String()] = req.TaskActor
 	}
 
@@ -410,6 +436,7 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	}
 	priority := config.KubernetesDefaultPriority
 	g := &group{handler: handler, weight: 1, priority: &priority}
+
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 

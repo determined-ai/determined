@@ -117,6 +117,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 			JobID:      c.jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
+			// TODO why do we persist the task when the underlying command isn't persisted?
+			// or is it now persisted?
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 

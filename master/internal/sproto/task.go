@@ -204,3 +204,14 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 		Log:         message,
 	}
 }
+
+// InitialQueuePosition blah.. TODO this shouldn't be on allocateRequest.
+func (r AllocateRequest) InitialQueuePosition() float64 {
+	startTime, err := time.Parse(time.RFC3339, "2010-01-01T12:00:00Z")
+	if err != nil {
+		panic(err)
+	}
+	n := r.JobSubmissionTime.UnixMicro()
+	n -= startTime.UnixMicro()
+	return float64(n)
+}
