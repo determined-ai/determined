@@ -288,7 +288,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasks(k.reqList, k.groups, true)
-	jobQinfo, _ := mergeToJobQInfo(reqs)
+	jobQinfo, _ := reduceToJobQInfo(reqs)
 	return jobQinfo
 }
 
@@ -340,7 +340,7 @@ func (k *kubernetesResourceManager) assignResources(
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Reservations: allocations}
-	k.reqList.SetAllocations(req.TaskActor, &assigned)
+	k.reqList.SetAllocationsRaw(req.TaskActor, &assigned)
 	req.TaskActor.System().Tell(req.TaskActor, assigned)
 
 	ctx.Log().
@@ -394,7 +394,7 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 		req := it.value()
 		group := k.groups[req.Group]
 		assigned := k.reqList.GetAllocations(req.TaskActor)
-		if unassigned := assigned == nil || len(assigned.Reservations) == 0; unassigned {
+		if !assignmentIsScheduled(assigned) {
 			if maxSlots := group.maxSlots; maxSlots != nil {
 				if k.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
 					continue
