@@ -112,6 +112,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 			StartTime: c.registeredTime,
 			JobID:     c.jobID,
 		}); err != nil {
+			// TODO why do we persist the task when the underlying command isn't persisted?
+			// or is it now persisted?
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 
@@ -302,6 +304,17 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case terminateForGC:
 		ctx.Self().Stop()
+
+	case sproto.SetGroupOrder:
+		// TODO persist in the job actor if we want to report it
+
+	case sproto.SetGroupWeight:
+		c.Config.Resources.Weight = msg.Weight
+
+	case sproto.SetGroupPriority:
+		c.Config.Resources.Priority = msg.Priority
+		// QUESTION: where do these get persisted?
+		// these operations do not require special handling by commands
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
