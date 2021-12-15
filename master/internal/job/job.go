@@ -34,6 +34,16 @@ type GetJobQ struct {
 // GetJobQStats requests stats for a queue.
 // Expected response: jobv1.QueueStats.
 type GetJobQStats struct {
+	ResourcePool string
+}
+
+// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
+type SetJobOrder struct {
+	ResourcePool string
+	QPosition    float64
+	Weight       float64
+	Priority     *int
+	JobID        model.JobID
 }
 
 // RegisterJob Registers an active job with the jobs actor.
