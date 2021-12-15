@@ -87,7 +87,7 @@ Intense colors:
 export const Ansi = (): React.ReactNode => (
   <div style={{ height: '100vh' }}>
     <LogViewer
-      decoder={jsonToMasterLog}
+      decoder={jsonToClusterLog}
       initialLogs={[
         { id: '0', message: 'example of logs with ANSI color codes', time: '2020-06-02T21:48:07.456381-06:00' },
         { id: '1', message: ansiText, time: '2020-06-02T21:48:08.456381-06:00' },
