@@ -243,13 +243,8 @@ func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 	return conf.Priority.DefaultPriority
 }
 
-// TODO rename to preemtible
-// ReadPreemptionStatus resolves the final preemtible status for a job.
-func ReadPreemptionStatus(rpName string, jobPreemptible bool) bool {
-	return jobPreemptible && readRMPreemptionStatus(rpName)
-}
-
-func readRMPreemptionStatus(rpName string) bool {
+// ReadRMPreemptionStatus resolves the preemption status for a resource manager.
+func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
 
 	for _, rpConfig := range config.ResourcePools {

@@ -106,7 +106,6 @@ func (s *SchedulerConfig) GetPreemption() bool {
 }
 
 // FairShareSchedulerConfig holds configurations for the fair share scheduler.
-// FairShareSchedulerConfig holds configurations for the fair share scheduler.
 type FairShareSchedulerConfig struct{}
 
 // PrioritySchedulerConfig holds the configurations for the priority scheduler.
