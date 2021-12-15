@@ -7,8 +7,10 @@ import (
 	"io"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/google/uuid"
 
@@ -63,6 +65,20 @@ func (a *agent) detect() error {
 func detectCPUs() ([]device.Device, error) {
 	switch cpuInfo, err := cpu.Info(); {
 	case err != nil:
+		// Apple M1 does not report CPU frequency,
+		// and that can result in an error here
+		if errno, ok := err.(syscall.Errno); ok {
+			switch errno {
+			case syscall.ENOENT:
+				if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" {
+					return []device.Device{{ID: 0, Brand: "Apple", UUID: "AppleM1", Type: device.CPU}}, nil
+				} else {
+					return nil, errors.Wrap(err, "error while gathering CPU info on a non-AppleM1 system")
+				}
+			default:
+				return nil, errors.Wrap(err, "error while gathering CPU info")
+			}
+		}
 		return nil, errors.Wrap(err, "error while gathering CPU info")
 	case len(cpuInfo) == 0:
 		return nil, errors.New("no CPUs detected")
