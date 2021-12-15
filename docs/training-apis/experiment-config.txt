@@ -812,13 +812,13 @@ workloads for this experiment. For more information on customizing the trial env
 ``image``
    The Docker image to use when executing the workload. This image must be accessible via ``docker
    pull`` to every Determined agent machine in the cluster. Users can configure different container
-   images for NVIDIA GPU tasks using ``gpu`` key, CPU tasks using ``cpu`` key, and ROCm (AMD GPU)
-   tasks using ``rocm`` key. Default values:
+   images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
+   key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
    -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for NVIDIA
       GPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.6`` for ROCm.
    -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPUs.
+   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.6`` for ROCm.
 
 ``force_pull_image``
    Forcibly pull the image from the Docker registry, bypassing the Docker cache. Defaults to
@@ -837,8 +837,9 @@ workloads for this experiment. For more information on customizing the trial env
 ``environment_variables``
    A list of environment variables that will be set in every trial container. Each element of the
    list should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables` for more
-   details. Users can customize environment variables for GPU, CPU, and ROCm tasks differently by
-   specifying a dict with ``gpu``, ``cpu``, and ``rocm`` keys.
+   details. Users can customize environment variables for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU)
+   tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and
+   ``rocm`` keys.
 
 .. _exp-environment-pod-spec:
 
