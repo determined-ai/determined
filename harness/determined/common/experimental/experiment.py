@@ -3,7 +3,7 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, cast
 
-from determined.common.experimental import checkpoint, session
+from determined.common.experimental import checkpoint, session, trial
 
 
 class ExperimentState(enum.Enum):
@@ -97,6 +97,30 @@ class ExperimentReference:
 
     def get_config(self) -> Dict[str, Any]:
         return self._get().config
+
+    def get_trials(
+        self,
+        sort_by: trial.TrialSortBy = trial.TrialSortBy.ID,
+        order_by: trial.TrialOrderBy = trial.TrialOrderBy.ASCENDING,
+    ) -> List[trial.TrialReference]:
+        """
+        Get the list of :class:`~determined.experimental.TrialReference` instances
+        representing trials for an experiment.
+
+        Arguments:
+            sort_by: Which field to sort by. See :class:`~determined.experimental.TrialSortBy`.
+            order_by: Whether to sort in ascending or descending order. See
+                :class:`~determined.experimental.TrialOrderBy`.
+        """
+        r = self._session.get(
+            f"/api/v1/experiments/{self.id}/trials",
+            params={
+                "sort_by": sort_by.value,
+                "order_by": order_by.value,
+            },
+        )
+        trials = r.json()["trials"]
+        return [trial.TrialReference(t["id"], self._session) for t in trials]
 
     def kill(self) -> None:
         self._session.post(f"/api/v1/experiments/{self.id}/kill")

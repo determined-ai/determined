@@ -245,9 +245,11 @@ def make_trial_controller_from_trial_implementation(
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
     generic_context = _generic._dummy_init(storage_manager=storage_manager)
 
+    distributed_backend = det._DistributedBackend()
+
     controller_class = trial_class.trial_controller_class
     assert controller_class is not None
-    controller_class.pre_execute_hook(env, False)
+    controller_class.pre_execute_hook(env, distributed_backend)
 
     trial_context = trial_class.trial_context_class(generic_context, env)
     trial_inst = trial_class(trial_context)

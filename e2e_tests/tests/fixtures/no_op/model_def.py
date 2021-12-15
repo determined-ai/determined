@@ -81,7 +81,7 @@ class NoOpTrialController(det.TrialController):
         return NoOpTrialController(*args, **kwargs)
 
     @staticmethod
-    def pre_execute_hook(env: det.EnvContext, use_horovod: bool) -> None:
+    def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         np.random.seed(env.trial_seed)
 
     def run(self) -> None:

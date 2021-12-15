@@ -1,7 +1,6 @@
 import abc
 import logging
 import os
-from enum import Enum
 from typing import Any, Optional, Type
 
 import determined as det
@@ -9,9 +8,16 @@ from determined import profiler, workload
 from determined.common import check
 
 
-class _DistributedBackend(Enum):
-    HOROVOD = bool(os.environ.get("USE_HOROVOD", None))
-    TORCH = bool(os.environ.get("USE_TORCH_DISTRIBUTED", None))
+class _DistributedBackend:
+    """
+    _DistributedBackend contains the supported backends for distributed training. These constants
+    are read from environment variables to determine which backends are in use.
+    """
+
+    HOROVOD = "USE_HOROVOD"
+
+    def use_horovod(self) -> bool:
+        return bool(os.environ.get(self.HOROVOD, None))
 
 
 class TrialController(metaclass=abc.ABCMeta):
@@ -37,9 +43,8 @@ class TrialController(metaclass=abc.ABCMeta):
             context.distributed.rank,
         )
 
-        self.use_horovod = _DistributedBackend.HOROVOD.value
-        self.use_torch_distributed = _DistributedBackend.TORCH.value
-
+        distributed_backend = _DistributedBackend()
+        self.use_horovod = distributed_backend.use_horovod()
         self._check_if_trial_supports_configurations(env)
 
         self.batch_size = self.context.get_per_slot_batch_size()
@@ -56,7 +61,7 @@ class TrialController(metaclass=abc.ABCMeta):
     @classmethod
     @abc.abstractmethod
     def pre_execute_hook(
-        cls: Type["TrialController"], env: det.EnvContext, use_horovod: bool
+        cls: Type["TrialController"], env: det.EnvContext, distributed_backend: _DistributedBackend
     ) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)

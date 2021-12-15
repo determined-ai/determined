@@ -417,12 +417,16 @@ func (a *agent) setup(ctx *actor.Context) error {
 		return errors.Wrap(err, "error initializing container manager")
 	}
 	a.cm, _ = ctx.ActorOf("containers", cm)
+	res := ctx.Ask(a.cm, requestReattachContainers{
+		a.MasterSetAgentOptions.ContainersToReattach,
+	}).Get().(responseReattachContainers)
 
 	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
 		AgentStarted: &aproto.AgentStarted{
-			Version: a.Version,
-			Devices: a.Devices,
-			Label:   a.Label,
+			Version:              a.Version,
+			Devices:              a.Devices,
+			Label:                a.Label,
+			ContainersReattached: res.ContainersReattached,
 		},
 	}})
 	return nil

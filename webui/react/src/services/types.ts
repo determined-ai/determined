@@ -1,7 +1,9 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser } from 'types';
+import { CommandType, DetailedUser, Job, Metadata, RecordKey } from 'types';
+
+import * as Api from './api-ts-sdk/api';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -106,7 +108,84 @@ export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
 }
 
+export interface GetModelsParams extends PaginationParams {
+  archived?: boolean;
+  description?: string;
+  labels?: string[];
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'
+  | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS';
+  users?: string[];
+}
+
+export interface GetModelParams {
+  modelId: number;
+}
+
+export type ArchiveModelParams = GetModelParams;
+
+export type DeleteModelParams = GetModelParams;
+
+export interface GetModelDetailsParams extends PaginationParams {
+  modelId: number;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
+}
+
+export interface GetModelVersionParams {
+  modelId: number;
+  versionId: number;
+}
+
+export type DeleteModelVersionParams = GetModelVersionParams;
+
+export interface PatchModelParams {
+  body: {
+    description?: string;
+    id: number;
+    labels?: string[];
+    metadata?: Record<RecordKey, string>;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+}
+
+export interface PatchModelVersionParams {
+  body: {
+    comment?: string;
+    id: number;
+    labels?: string[];
+    metadata?: Record<RecordKey, string>;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+  versionId: number;
+}
+
+export interface PostModelParams {
+  description?: string;
+  labels?: string[];
+  metadata?: Metadata;
+  name: string;
+  username?: string;
+}
+
+export interface PostModelVersionParams {
+  body: {
+    checkpointUuid: string;
+    comment?: string;
+    labels?: string[];
+    metadata?: Metadata;
+    modelId: number;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+}
+
 export interface CreateExperimentParams {
+  activate?: boolean;
   experimentConfig: string;
   parentId: number;
 }
@@ -171,4 +250,15 @@ export interface GetResourceAllocationAggregatedParams {
   period: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
   | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
   startDate: Dayjs,
+}
+
+export interface GetJobQParams extends PaginationParams, FetchOptions {
+  resourcePool: string;
+}
+
+export interface GetJobsResponse extends Api.V1GetJobsResponse {
+  jobs: Job[];
+}
+export interface GetJobQStatsParams extends FetchOptions {
+  resourcePools?: string[];
 }

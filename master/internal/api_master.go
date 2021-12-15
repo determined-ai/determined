@@ -94,8 +94,8 @@ func (a *apiServer) MasterLogs(
 		onBatch,
 		nil,
 		false,
-		masterLogsBatchWaitTime,
-		masterLogsBatchMissWaitTime,
+		nil,
+		&masterLogsBatchMissWaitTime,
 	).Run(resp.Context())
 }
 

@@ -97,7 +97,7 @@ class MetricMaker(det.TrialController):
         return MetricMaker(*args, **kwargs)
 
     @staticmethod
-    def pre_execute_hook(env: det.EnvContext, use_horovod: bool) -> None:
+    def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         pass
 
     def run(self) -> None:

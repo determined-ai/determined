@@ -63,12 +63,16 @@ const TableFilterSearch: React.FC<Props> = ({
           aria-label="Reset Search"
           size="small"
           type="link"
-          onClick={handleReset}>Reset</Button>
+          onClick={handleReset}>
+          Reset
+        </Button>
         <Button
           aria-label="Apply Search"
           size="small"
           type="primary"
-          onClick={handleSearch}>Search</Button>
+          onClick={handleSearch}>
+          Search
+        </Button>
       </div>
     </div>
   );

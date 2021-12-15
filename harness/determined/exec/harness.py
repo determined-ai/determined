@@ -88,13 +88,13 @@ def main(chief_ip: Optional[str]) -> int:
         use_torch_distributed = det._DistributedBackend.TORCH.value
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
-        controller_class.pre_execute_hook(env, use_horovod)
+        distributed_backend = det._DistributedBackend()
+        controller_class.pre_execute_hook(env, distributed_backend)
 
         # Step 3: Now that horovod is initialized, we can build a RankInfo object.
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
-
-        if use_horovod:
+        if distributed_backend.use_horovod():
             distributed = _generic.DistributedContext(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),

@@ -10,19 +10,21 @@ export default {
   title: 'TaskActionDropdown',
 };
 
-export const ExperimentActive = (): React.ReactNode => {
-  return <TaskActionDropdown
+export const ExperimentActive = (): React.ReactNode => (
+  <TaskActionDropdown
     task={{
       ...generateExperimentTask(0),
       state: RunState.Active,
-    }} />;
-};
+    }}
+  />
+);
 
-export const NoActions = (): React.ReactNode => {
-  return <TaskActionDropdown
+export const NoActions = (): React.ReactNode => (
+  <TaskActionDropdown
     task={{
       ...generateCommandTask(0),
       state: CommandState.Terminated,
       type: CommandType.Shell,
-    }} />;
-};
+    }}
+  />
+);

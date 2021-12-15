@@ -2,6 +2,7 @@ import { Button, Tooltip } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -14,11 +15,11 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
-import TrialActionDropdown from 'components/TrialActionDropdown';
+import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { paths } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
@@ -29,7 +30,7 @@ import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
 } from 'types';
-import { getMetricValue, terminalRunStates } from 'utils/types';
+import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
 
 import css from './ExperimentTrials.module.scss';
@@ -39,6 +40,11 @@ import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
+}
+
+enum TrialAction {
+  OpenTensorBoard = 'Open Tensorboard',
+  ViewLogs = 'View Logs',
 }
 
 const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
@@ -72,8 +78,20 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       multiple
       values={settings.state}
       onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset} />
+      onReset={handleStateFilterReset}
+    />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
+
+  const dropDownOnTrigger = useCallback((trial: TrialItem) => {
+    return {
+      [TrialAction.OpenTensorBoard]: async () => {
+        openCommand(await openOrCreateTensorBoard({ trialIds: [ trial.id ] }));
+      },
+      [TrialAction.ViewLogs]: () => {
+        routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
+      },
+    };
+  }, [ experiment.id ]);
 
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
@@ -104,14 +122,23 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           <Button
             aria-label="View Checkpoint"
             icon={<Icon name="checkpoint" />}
-            onClick={e => handleCheckpointShow(e, checkpoint)} />
+            onClick={e => handleCheckpointShow(e, checkpoint)}
+          />
         </Tooltip>
       );
     };
 
-    const actionRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      return <TrialActionDropdown experimentId={experiment.id} trial={record} />;
-    };
+    const actionRenderer = (_: string, record: TrialItem): React.ReactNode => (
+      <ActionDropdown<TrialAction>
+        actionOrder={[
+          TrialAction.OpenTensorBoard,
+          TrialAction.ViewLogs,
+        ]}
+        id={experiment.id + ''}
+        kind="experiment"
+        onTrigger={dropDownOnTrigger(record)}
+      />
+    );
 
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
@@ -141,7 +168,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     });
 
     return newColumns;
-  }, [ experiment.config, experiment.id, settings, stateFilterDropdown ]);
+  }, [ experiment.config, experiment.id, settings, stateFilterDropdown, dropDownOnTrigger ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -304,21 +331,27 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           }}
           showSorterTooltip={false}
           size="small"
-          onChange={handleTableChange} />
+          onChange={handleTableChange}
+        />
       </Section>
-      {activeCheckpoint && <CheckpointModal
-        checkpoint={activeCheckpoint}
-        config={experiment.config}
-        show={showCheckpoint}
-        title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-        onHide={handleCheckpointDismiss} />}
-      {settings.compare &&
-      <TrialsComparisonModal
-        experiment={experiment}
-        trials={settings.row ?? []}
-        visible={settings.compare}
-        onCancel={handleTrialCompareCancel}
-        onUnselect={handleTrialUnselect} />}
+      {activeCheckpoint && (
+        <CheckpointModal
+          checkpoint={activeCheckpoint}
+          config={experiment.config}
+          show={showCheckpoint}
+          title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
+          onHide={handleCheckpointDismiss}
+        />
+      )}
+      {settings.compare && (
+        <TrialsComparisonModal
+          experiment={experiment}
+          trials={settings.row ?? []}
+          visible={settings.compare}
+          onCancel={handleTrialCompareCancel}
+          onUnselect={handleTrialUnselect}
+        />
+      )}
     </div>
   );
 };

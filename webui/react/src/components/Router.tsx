@@ -38,14 +38,20 @@ const Router: React.FC<Props> = (props: Props) => {
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
           if (!auth.checked) return <Route key={route.id} {...route} />;
-          return <Route
-            key={route.id}
-            {...route}
-            render={({ location }): ReactNode => <Redirect to={{
-              pathname: paths.login(),
-              state: { loginRedirect: filterOutLoginLocation(location) },
-            }} />}
-          />;
+          return (
+            <Route
+              key={route.id}
+              {...route}
+              render={({ location }): ReactNode => (
+                <Redirect
+                  to={{
+                    pathname: paths.login(),
+                    state: { loginRedirect: filterOutLoginLocation(location) },
+                  }}
+                />
+              )}
+            />
+          );
         } else if (route.redirect) {
           /*
           * We treat '*' as a catch-all path and specifically avoid wrapping the

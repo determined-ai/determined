@@ -21,7 +21,7 @@ var (
 
 func TestMain(m *testing.M) {
 	var err error
-	pgDB, err = testutils.ResolvePostgres()
+	pgDB, err = db.ResolveTestPostgres()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

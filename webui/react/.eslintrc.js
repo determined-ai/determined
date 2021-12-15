@@ -63,6 +63,7 @@ module.exports = {
       'newlines-between': 'always',
     } ],
     'indent': 'off',
+    'jest/valid-title': 'off',
     'jsx-quotes': [ 'error', 'prefer-double' ],
     'key-spacing': [ 'error', {
       multiLine: {
@@ -92,8 +93,18 @@ module.exports = {
     'object-property-newline': [ 'error', { allowAllPropertiesOnSameLine: true } ],
     'quote-props': [ 'error', 'consistent-as-needed' ],
     'quotes': [ 'error', 'single', { avoidEscape: true } ],
+    'react/display-name': 'off',
+    'react/jsx-closing-bracket-location': [ 'error', {
+      nonEmpty: 'after-props',
+      selfClosing: 'tag-aligned',
+    } ],
+    'react/jsx-closing-tag-location': [ 'error' ],
+    'react/jsx-curly-spacing': [ 'error', { children: false, when: 'never' } ],
+    'react/jsx-equals-spacing': [ 'error', 'never' ],
     'react/jsx-first-prop-new-line': [ 'error', 'multiline-multiprop' ],
+    'react/jsx-indent': [ 'error', 2 ],
     'react/jsx-max-props-per-line': [ 'error', { when: 'multiline' } ],
+    'react/jsx-newline': [ 'error', { prevent: true } ],
     'react/jsx-sort-props': [ 'error', {
       callbacksLast: true,
       ignoreCase: true,
@@ -103,6 +114,15 @@ module.exports = {
       beforeClosing: 'never',
       beforeSelfClosing: 'always',
       closingSlash: 'never',
+    } ],
+    'react/jsx-wrap-multilines': [ 'error', {
+      arrow: 'parens-new-line',
+      assignment: 'parens-new-line',
+      condition: 'parens-new-line',
+      declaration: 'parens-new-line',
+      logical: 'parens-new-line',
+      prop: 'parens-new-line',
+      return: 'parens-new-line',
     } ],
     'react/prop-types': 'off',
     'react/self-closing-comp': [ 'error', {
@@ -121,6 +141,7 @@ module.exports = {
       natural: true,
     } ],
     'space-in-parens': [ 'error', 'never' ],
+    'space-infix-ops': [ 'error', { int32Hint: true } ],
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint

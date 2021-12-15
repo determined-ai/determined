@@ -129,11 +129,12 @@ func trialDetailAPITests(
 
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment := testutils.ExperimentModel()
+			experiment := model.ExperimentModel()
 			err := db.AddExperiment(experiment)
 			assert.NilError(t, err, "failed to insert experiment")
 
-			trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+			trial := model.TrialModel(
+				experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
 			err = db.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
@@ -171,12 +172,13 @@ func trialProfilerMetricsTests(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
 	// Given an experiment.
-	experiment := testutils.ExperimentModel()
+	experiment := model.ExperimentModel()
 	err := db.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	// With a trial.
-	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	trial := model.TrialModel(
+		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
@@ -245,11 +247,12 @@ func trialProfilerMetricsTests(
 func trialProfilerMetricsAvailableSeriesTests(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
-	experiment := testutils.ExperimentModel()
+	experiment := model.ExperimentModel()
 	err := db.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
-	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	trial := model.TrialModel(
+		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
@@ -482,11 +485,12 @@ func trialLogAPITests(
 
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment := testutils.ExperimentModel()
+			experiment := model.ExperimentModel()
 			err := pgDB.AddExperiment(experiment)
 			assert.NilError(t, err, "failed to insert experiment")
 
-			trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+			trial := model.TrialModel(
+				experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
 			err = pgDB.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
@@ -553,11 +557,12 @@ func trialLogFollowingTests(
 	t *testing.T, ctx context.Context, creds context.Context, cl apiv1.DeterminedClient,
 	backend internal.TrialLogBackend,
 ) {
-	experiment := testutils.ExperimentModel()
+	experiment := model.ExperimentModel()
 	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
-	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	trial := model.TrialModel(
+		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
 	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 

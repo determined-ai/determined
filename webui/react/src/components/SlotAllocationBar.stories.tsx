@@ -18,29 +18,41 @@ const Wrapper: React.FC<SlotAllocationProps> = props => (
   </div>
 );
 
-export const Default = (): React.ReactNode => <Wrapper
-  resourceStates={[
-    ResourceState.Pulling, ResourceState.Running,
-  ]}
-  showLegends
-  size={ShirtSize.big}
-  totalSlots={4} />;
+export const Default = (): React.ReactNode => (
+  <Wrapper
+    resourceStates={[
+      ResourceState.Pulling, ResourceState.Running,
+    ]}
+    showLegends
+    size={ShirtSize.big}
+    totalSlots={4}
+  />
+);
 
-export const NoLegends = (): React.ReactNode => <Wrapper
-  resourceStates={[
-    ResourceState.Pulling, ResourceState.Running,
-  ]}
-  size={ShirtSize.big}
-  totalSlots={4} />;
+export const NoLegends = (): React.ReactNode => (
+  <Wrapper
+    resourceStates={[
+      ResourceState.Pulling, ResourceState.Running,
+    ]}
+    size={ShirtSize.big}
+    totalSlots={4}
+  />
+);
 
-export const ZeroTotalSlots = (): React.ReactNode => <Wrapper
-  resourceStates={[]}
-  showLegends
-  size={ShirtSize.big}
-  totalSlots={0} />;
+export const ZeroTotalSlots = (): React.ReactNode => (
+  <Wrapper
+    resourceStates={[]}
+    showLegends
+    size={ShirtSize.big}
+    totalSlots={0}
+  />
+);
 
-export const ZeroTotalSlotsWithMismatchingProps = (): React.ReactNode => <Wrapper
-  resourceStates={[ ResourceState.Running ]}
-  showLegends
-  size={ShirtSize.big}
-  totalSlots={0} />;
+export const ZeroTotalSlotsWithMismatchingProps = (): React.ReactNode => (
+  <Wrapper
+    resourceStates={[ ResourceState.Running ]}
+    showLegends
+    size={ShirtSize.big}
+    totalSlots={0}
+  />
+);

@@ -36,15 +36,15 @@ user_agg AS (
         sum(allocs_in_range.seconds) AS seconds
     FROM
         allocs_in_range,
-        trials,
-        experiments,
+        tasks,
+        jobs,
         -- Since a job is a user submission by definition, eventually user information
         -- should live in the generic job table and this can use that.
         users
     WHERE
-        allocs_in_range.task_id = trials.task_id
-        AND trials.experiment_id = experiments.id
-        AND experiments.owner_id = users.id
+        allocs_in_range.task_id = tasks.task_id
+        AND tasks.job_id = jobs.job_id
+        AND jobs.owner_id = users.id
     GROUP BY
         users.username
 ),

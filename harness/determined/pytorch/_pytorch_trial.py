@@ -65,16 +65,16 @@ class PyTorchTrialController(det.TrialController):
 
         # Currently only horovod backend is supported if distributed training
         if self.context.distributed.size > 1:
-            assert (
-                self.use_horovod or self.use_torch_distributed
-            ), "Must use torch or horovod for distributed training"
+            assert self.use_horovod, "Must use horovod for distributed training"
 
     @classmethod
     def pre_execute_hook(
-        cls: Type["PyTorchTrialController"], env: det.EnvContext, use_horovod: bool
+        cls: Type["PyTorchTrialController"],
+        env: det.EnvContext,
+        distributed_backend: det._DistributedBackend,
     ) -> None:
         # Initialize the correct horovod.
-        if use_horovod:
+        if distributed_backend.use_horovod():
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
 
@@ -202,7 +202,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
 
-            if self.context.distributed.size > 1 and self.use_horovod:
+            if self.context.distributed.size > 1:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)

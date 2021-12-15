@@ -11,6 +11,7 @@ import "determined/api/v1/auth.proto";
 import "determined/api/v1/checkpoint.proto";
 import "determined/api/v1/command.proto";
 import "determined/api/v1/experiment.proto";
+import "determined/api/v1/job.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
@@ -655,6 +656,40 @@ service Determined {
       returns (AllocationRendezvousInfoResponse) {
     option (google.api.http) = {
       get: "/api/v1/allocations/{allocation_id}/rendezvous_info/{container_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  /* Jobs Queue */
+
+  // Get a list of jobs in queue.
+  rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/job-queues"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get job queue stats for a resource pool.
+  rpc GetJobQueueStats(GetJobQueueStatsRequest)
+      returns (GetJobQueueStatsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/job-queues/stats"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Control the job queues.
+  rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/job-queues"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

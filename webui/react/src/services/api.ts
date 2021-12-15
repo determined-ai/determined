@@ -1,9 +1,10 @@
+import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import * as Type from 'types';
-import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
+import { tensorBoardMatchesSource } from 'utils/task';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
@@ -63,6 +64,18 @@ export const getResourceAllocationAggregated = generateDetApi<
   Api.V1ResourceAllocationAggregatedResponse,
   Api.V1ResourceAllocationAggregatedResponse
 >(Config.getResourceAllocationAggregated);
+
+/* Jobs */
+
+export const getJobQ = generateDetApi<
+  Service.GetJobQParams, Api.V1GetJobsResponse, Service.GetJobsResponse
+>(Config.getJobQueue);
+
+export const getJobQStats = generateDetApi<
+  Service.GetJobQStatsParams,
+  Api.V1GetJobQueueStatsResponse,
+  Api.V1GetJobQueueStatsResponse
+>(Config.getJobQueueStats);
 
 /* Experiments */
 
@@ -132,6 +145,60 @@ export const getExperimentLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
+/* Models */
+
+export const getModels = generateDetApi<
+  Service.GetModelsParams, Api.V1GetModelsResponse, Type.ModelPagination
+>(Config.getModels);
+
+export const getModel = generateDetApi<
+  Service.GetModelParams, Api.V1GetModelResponse, Type.ModelItem | undefined
+>(Config.getModel);
+
+export const patchModel = generateDetApi<
+  Service.PatchModelParams, Api.V1PatchModelResponse, Type.ModelItem | undefined
+>(Config.patchModel);
+
+export const getModelDetails = generateDetApi<
+  Service.GetModelDetailsParams, Api.V1GetModelVersionsResponse, Type.ModelVersions | undefined
+>(Config.getModelDetails);
+
+export const getModelVersion = generateDetApi<
+  Service.GetModelVersionParams, Api.V1GetModelVersionResponse, Type.ModelVersion | undefined
+>(Config.getModelVersion);
+
+export const patchModelVersion = generateDetApi<
+  Service.PatchModelVersionParams, Api.V1PatchModelVersionResponse, Type.ModelVersion | undefined
+>(Config.patchModelVersion);
+
+export const archiveModel = generateDetApi<
+  Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void
+>(Config.archiveModel);
+
+export const unarchiveModel = generateDetApi<
+  Service.ArchiveModelParams, Api.V1UnarchiveModelResponse, void
+>(Config.unarchiveModel);
+
+export const deleteModel = generateDetApi<
+  Service.DeleteModelParams, Api.V1DeleteModelResponse, void
+>(Config.deleteModel);
+
+export const deleteModelVersion = generateDetApi<
+  Service.DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
+>(Config.deleteModelVersion);
+
+export const postModel = generateDetApi<
+  Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
+>(Config.postModel);
+
+export const postModelVersion = generateDetApi<
+  Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
+>(Config.postModelVersion);
+
+export const getModelLabels = generateDetApi<
+  Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
+>(Config.getModelLabels);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
@@ -188,7 +255,7 @@ export const openOrCreateTensorBoard = async (
   const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(tensorboard =>
     !terminalCommandStates.has(tensorboard.state)
-    && tsbMatchesSource(tensorboard, params));
+    && tensorBoardMatchesSource(tensorboard, params));
   if (match) return match;
   return launchTensorBoard(params);
 };

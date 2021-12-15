@@ -53,6 +53,25 @@ const routes: RouteConfig[] = [
     title: 'Experiments',
   },
   {
+    id: 'modelVersionDetails',
+    needAuth: true,
+    path: '/models/:modelId/versions/:versionId',
+    title: 'Version Details',
+  },
+  {
+    id: 'modelDetails',
+    needAuth: true,
+    path: '/models/:modelId',
+    title: 'Model Details',
+  },
+  {
+    icon: 'model',
+    id: 'models',
+    needAuth: true,
+    path: '/models',
+    title: 'Model Registry',
+  },
+  {
     icon: 'cluster',
     id: 'cluster',
     needAuth: true,
@@ -61,10 +80,10 @@ const routes: RouteConfig[] = [
   },
   {
     icon: 'logs',
-    id: 'masterLogs',
+    id: 'clusterLogs',
     needAuth: true,
     path: '/logs',
-    title: 'Master Logs',
+    title: 'Cluster Logs',
   },
   {
     icon: 'user',
@@ -95,6 +114,12 @@ const routes: RouteConfig[] = [
     needAuth: false,
     path: '/reload',
     title: 'Reload',
+  },
+  {
+    id: 'jobs',
+    needAuth: true,
+    path: '/jobs',
+    title: 'Job Queue',
   },
 ];
 

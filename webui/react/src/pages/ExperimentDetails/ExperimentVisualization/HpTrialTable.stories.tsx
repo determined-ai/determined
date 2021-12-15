@@ -12,8 +12,8 @@ export default {
   title: 'HpTrialTable',
 };
 
-export const Default = (): React.ReactNode => {
-  return <HpTrialTable
+export const Default = (): React.ReactNode => (
+  <HpTrialTable
     experimentId={1}
     hyperparameters={{ xyz: { type: HyperparameterType.Categorical, vals: [ true, false ] } }}
     metric={{ name: 'metricA', type: MetricType.Training }}
@@ -22,5 +22,5 @@ export const Default = (): React.ReactNode => {
       { hparams: { xyz: false }, id: 2, metric: 1.23 },
     ]}
     trialIds={[ 1, 2 ]}
-  />;
-};
+  />
+);

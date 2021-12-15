@@ -20,6 +20,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -33,8 +34,7 @@ import { isEqual } from 'utils/data';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
-import { filterTasks } from 'utils/task';
-import { commandToTask, commandTypeToLabel, isTaskKillable } from 'utils/types';
+import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';
@@ -73,7 +73,7 @@ const TaskList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = useMemo(() => tasks?.map(commandToTask) || [], [ tasks ]);
+  const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [ tasks ]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks<CommandType, CommandTask>(
@@ -178,7 +178,8 @@ const TaskList: React.FC = () => {
       values={settings.type}
       width={180}
       onFilter={handleTypeFilterApply}
-      onReset={handleTypeFilterReset} />
+      onReset={handleTypeFilterReset}
+    />
   ), [ handleTypeFilterApply, handleTypeFilterReset, settings.type ]);
 
   const handleStateFilterApply = useCallback((states: string[]) => {
@@ -198,7 +199,8 @@ const TaskList: React.FC = () => {
       multiple
       values={settings.state}
       onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset} />
+      onReset={handleStateFilterReset}
+    />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
@@ -219,7 +221,8 @@ const TaskList: React.FC = () => {
       searchable
       values={settings.user}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const columns = useMemo(() => {
@@ -253,12 +256,14 @@ const TaskList: React.FC = () => {
         return numericSorter(a.id, b.id);
       });
 
-      return <div className={css.sourceName}>
-        {taskNameRenderer(_, record, index)}
-        <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
-          Show {info.sources.length} Source{info.plural}
-        </button>
-      </div>;
+      return (
+        <div className={css.sourceName}>
+          {taskNameRenderer(_, record, index)}
+          <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
+            Show {info.sources.length} Source{info.plural}
+          </button>
+        </div>
+      );
     };
 
     const actionRenderer: TaskRenderer = (_, record) => (
@@ -447,7 +452,7 @@ const TaskList: React.FC = () => {
   return (
     <Page
       id="tasks"
-      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} /> }
+      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
       title="Tasks">
       <div className={css.base}>
         <TableBatch
@@ -473,7 +478,8 @@ const TaskList: React.FC = () => {
           }}
           showSorterTooltip={false}
           size="small"
-          onChange={handleTableChange} />
+          onChange={handleTableChange}
+        />
       </div>
       <Modal
         footer={null}
@@ -486,9 +492,12 @@ const TaskList: React.FC = () => {
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.medium} minItemWidth={120}>
-            {sourcesModal?.sources.map(source => <Link
-              key={source.id}
-              path={source.path}>{source.type} {source.id}</Link>)}
+            {sourcesModal?.sources.map(source => (
+              <Link
+                key={source.id}
+                path={source.path}>{source.type} {source.id}
+              </Link>
+            ))}
           </Grid>
         </div>
       </Modal>

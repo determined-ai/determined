@@ -26,7 +26,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.4-dev0
+    default: 0.17.6-dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,11 +100,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-5e33300
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-825e8ee
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-5e33300
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-825e8ee
 
   login-docker:
     parameters:
@@ -641,7 +641,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
         type: string
     steps:
       - set-cluster-id:
@@ -848,6 +848,11 @@ commands:
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
+      - run:
+          command: |
+            if ! [ -x "$(command -v socat)" ]; then
+              apt update && apt install -y socat
+            fi
 
   start-devcluster:
     parameters:
@@ -1152,6 +1157,7 @@ jobs:
         default: false
     docker:
       - image: cimg/node:14.16
+    resource_class: large
     steps:
       - checkout
       - react-get-deps
@@ -1590,7 +1596,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.3-gke.2001"
+        default: "1.21.5-gke.1302"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1673,7 +1679,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.3-gke.2001"
+        default: "1.21.5-gke.1302"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1699,7 +1705,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
         type: string
     docker:
       - image: determinedai/cimg-base:stable
@@ -1792,7 +1798,7 @@ jobs:
       - slack/status:
           fail_only: True
           only_for_branches: master
-          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
           channel: "devops-ag"
 
 workflows:
@@ -2227,7 +2233,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2246,7 +2252,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2262,8 +2268,9 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2282,8 +2289,9 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2450,7 +2458,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2465,7 +2473,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2477,8 +2485,9 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2493,8 +2502,9 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.4
 
   weekly-vuln-scan:
     triggers:

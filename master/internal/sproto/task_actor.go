@@ -1,13 +1,11 @@
 package sproto
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/docker/docker/pkg/jsonmessage"
-
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -20,7 +18,7 @@ type (
 		Container cproto.Container
 		Timestamp time.Time
 
-		PullMessage *jsonmessage.JSONMessage
+		PullMessage *string
 		RunMessage  *aproto.RunMessage
 		AuxMessage  *string
 
@@ -32,6 +30,9 @@ type (
 	// TaskContainerStarted contains the information needed by tasks from container started.
 	TaskContainerStarted struct {
 		Addresses []cproto.Address
+
+		// NativeReservationID is the native Docker hex container ID of the Determined container.
+		NativeReservationID string
 	}
 	// TaskContainerStopped contains the information needed by tasks from container stopped.
 	TaskContainerStopped struct {
@@ -43,6 +44,16 @@ type (
 		Container        cproto.Container
 		ContainerStarted *TaskContainerStarted
 		ContainerStopped *TaskContainerStopped
+	}
+
+	// GetTaskContainerState requests cproto.Container state.
+	GetTaskContainerState struct {
+		ContainerID cproto.ID
+	}
+	// UpdatePodStatus notifies the resource manager of job state changes.
+	UpdatePodStatus struct {
+		ContainerID string
+		State       job.SchedulingState
 	}
 
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.
@@ -73,16 +84,7 @@ func (c ContainerLog) Message() string {
 	case c.RunMessage != nil:
 		return strings.TrimSuffix(c.RunMessage.Value, "\n")
 	case c.PullMessage != nil:
-		buf := new(bytes.Buffer)
-		if err := c.PullMessage.Display(buf, false); err != nil {
-			return err.Error()
-		}
-		msg := buf.String()
-		// Docker disables printing the progress bar in non-terminal mode.
-		if msg == "" && c.PullMessage.Progress != nil {
-			msg = c.PullMessage.Progress.String()
-		}
-		return strings.TrimSpace(msg)
+		return *c.PullMessage
 	default:
 		panic("unknown log message received")
 	}

@@ -74,9 +74,6 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         print("If a CPU or GPU image is specified, both should be.")
         sys.exit(1)
 
-    if args.no_filestore:
-        args.filestore_address = ""
-
     if args.master_config_template_path:
         if not args.master_config_template_path.exists():
             raise ValueError(
@@ -98,7 +95,6 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "no_preflight_checks",
         "no_wait_for_master",
         "no_prompt",
-        "no_filestore",
         "master_config_template_path",
         "func",
         "_command",
@@ -155,7 +151,7 @@ def handle_dump_master_config_template(args: argparse.Namespace) -> None:
 args_description = Cmd(
     "gcp",
     None,
-    "gcp_help",
+    "GCP help",
     [
         Cmd(
             "down",

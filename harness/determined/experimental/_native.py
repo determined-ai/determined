@@ -150,9 +150,10 @@ def test_one_batch(
         logging.info(f"Using hyperparameters: {env.hparams}.")
         logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
+        distributed_backend = det._DistributedBackend()
         controller_class = trial_class.trial_controller_class
         assert controller_class is not None
-        controller_class.pre_execute_hook(env, False)
+        controller_class.pre_execute_hook(env, distributed_backend)
 
         trial_context = trial_class.trial_context_class(generic_context, env)
         logging.info(f"Creating {trial_class.__name__}.")

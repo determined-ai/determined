@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+-  Decrease the volume of Docker image pull logs that are rendered into trial logs, and make the
+   overall image pull progress more understandable by combining all layers' progress into a single
+   progress bar.

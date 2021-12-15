@@ -181,9 +181,17 @@ export const linkPath = (aPath: string, external = false): string => {
   return path;
 };
 
+const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
+  acc[cur.id] = cur;
+  return acc;
+}, {} as Record<string, RouteConfig>);
+
 export const paths = {
   cluster: (): string => {
     return '/cluster';
+  },
+  clusterLogs: (): string => {
+    return '/logs';
   },
   dashboard: (): string => {
     return '/dashboard';
@@ -200,14 +208,24 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
+  jobs: (): string => {
+    return routeById.jobs.path;
+
+  },
   login: (): string => {
     return '/login';
   },
   logout: (): string => {
     return '/logout';
   },
-  masterLogs: (): string => {
-    return '/logs';
+  modelDetails: (modelId: number | string): string => {
+    return `/models/${modelId}`;
+  },
+  modelList: (): string => {
+    return '/models';
+  },
+  modelVersionDetails: (modelId: number | string, versionId: number | string): string => {
+    return `/models/${modelId}/versions/${versionId}`;
   },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;

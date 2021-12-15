@@ -776,6 +776,25 @@ For each bind mount, the following optional fields may also be specified:
    <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
    bind-mount. Defaults to ``rprivate``.
 
+For example, to mount ``/data`` on the host to the same path in the container, use:
+
+.. code:: yaml
+
+   bind_mounts:
+     - host_path: /data
+       container_path: /data
+
+It is also possible to mount multiple paths:
+
+.. code:: yaml
+
+   bind_mounts:
+     - host_path: /data
+       container_path: /data
+     - host_path: /shared/read-only-data
+       container_path: /shared/read-only-data
+       read_only: true
+
 .. _exp-environment:
 
 *************
@@ -796,9 +815,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for GPU vs. CPU agents by specifying a dict with two keys, ``cpu`` and ``gpu``. Default
    values:
 
-   -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2`` for agents
+   -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for agents
       with GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2`` for agents
+   -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for agents
       with only CPUs.
 
 ``force_pull_image``

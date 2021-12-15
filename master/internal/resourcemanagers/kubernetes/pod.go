@@ -155,7 +155,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
-	case podPreemption:
+	case PreemptTaskPod:
 		ctx.Log().Info("received preemption command")
 		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
 
@@ -248,7 +248,6 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-
 		// testLogStreamer is a testing flag only set in the pod_tests.
 		// This allows us to bypass the need for a log streamer or REST server.
 		if !p.testLogStreamer {
@@ -270,7 +269,16 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 				HostPort:      port,
 			})
 		}
-		p.informTaskContainerStarted(ctx, sproto.TaskContainerStarted{Addresses: addresses})
+		var taskContainerID string
+		for _, containerStatus := range p.pod.Status.ContainerStatuses {
+			if containerStatus.Name == model.DeterminedK8ContainerName {
+				taskContainerID = containerStatus.ContainerID
+				break
+			}
+		}
+
+		p.informTaskContainerStarted(ctx, sproto.TaskContainerStarted{Addresses: addresses,
+			NativeReservationID: taskContainerID})
 
 	case cproto.Terminated:
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod, p.containerNames)

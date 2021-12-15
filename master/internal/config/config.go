@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -21,18 +22,17 @@ var (
 	DefaultSegmentMasterKey = ""
 	DefaultSegmentWebUIKey  = ""
 )
+var once sync.Once
+var masterConfig *Config
 
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{
-		ConfigFile: "",
-		Log:        *logger.DefaultConfig(),
-		DB:         *db.DefaultConfig(),
-		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-			ShmSizeBytes: 4294967296,
-			NetworkMode:  "bridge",
-		},
-		TensorBoardTimeout: 5 * 60,
+		ConfigFile:            "",
+		Log:                   *logger.DefaultConfig(),
+		DB:                    *db.DefaultConfig(),
+		TaskContainerDefaults: *model.DefaultTaskContainerDefaults(),
+		TensorBoardTimeout:    5 * 60,
 		Security: SecurityConfig{
 			DefaultTask: model.AgentUserGroup{
 				UID:   0,
@@ -88,11 +88,31 @@ type Config struct {
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
-
+	Observability         ObservabilityConfig               `json:"observability"`
 	*resourcemanagers.ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
+}
+
+// GetMasterConfig returns reference to the master config singleton.
+func GetMasterConfig() *Config {
+	once.Do(func() {
+		masterConfig = DefaultConfig()
+	})
+	return masterConfig
+}
+
+// SetMasterConfig sets the master config singleton.
+func SetMasterConfig(aConfig *Config) {
+	if masterConfig != nil {
+		panic("master config is already set")
+	}
+	if aConfig == nil {
+		panic("passed in config is nil")
+	}
+	config := GetMasterConfig()
+	*config = *aConfig
 }
 
 // Printable returns a printable string.
@@ -208,6 +228,130 @@ type TelemetryConfig struct {
 
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
-	ExternalSessions  model.ExternalSessions `json:"external_sessions"`
-	PrometheusEnabled bool                   `json:"prometheus_enabled"`
+	ExternalSessions model.ExternalSessions `json:"external_sessions"`
+}
+
+// ObservabilityConfig is the configuration for observability metrics.
+type ObservabilityConfig struct {
+	EnablePrometheus bool `json:"enable_prometheus"`
+}
+
+func readPreemptionFromScheduler(conf *resourcemanagers.SchedulerConfig) *bool {
+	if conf == nil || conf.Priority == nil {
+		return nil
+	}
+	return &conf.Priority.Preemption
+}
+
+func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
+	if conf == nil || conf.Priority == nil {
+		return nil
+	}
+	return conf.Priority.DefaultPriority
+}
+
+// ReadPreemptionStatus resolves the desired preemption status for a job.
+func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
+	config := GetMasterConfig()
+	var jobPreemptible bool
+	switch jobConf.(type) {
+	case *expconf.ExperimentConfig:
+		jobPreemptible = true
+	case *model.CommandConfig:
+		jobPreemptible = false
+	default:
+		panic("unexpected jobConf type")
+	}
+
+	RMPremption := false // Whether the RM supports preemption
+
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.PoolName != rpName {
+			continue
+		}
+		if preemption := readPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
+			RMPremption = *preemption
+			return jobPreemptible && RMPremption
+		}
+		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
+			RMPremption = rpConfig.Provider.GCP.InstanceType.Preemptible
+			return jobPreemptible && RMPremption
+		}
+		break
+	}
+
+	// if not found, fall back to resource manager config
+	if config.ResourceManager.AgentRM != nil {
+		if preemption := readPreemptionFromScheduler(
+			config.ResourceManager.AgentRM.Scheduler,
+		); preemption != nil {
+			RMPremption = *preemption
+			return jobPreemptible && RMPremption
+		}
+	}
+
+	if config.ResourceManager.KubernetesRM != nil {
+		if config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption" {
+			RMPremption = true
+		}
+	}
+
+	return jobPreemptible && RMPremption
+}
+
+// ReadPriority resolves the priority value for a job.
+func ReadPriority(rpName string, jobConf interface{}) int {
+	config := GetMasterConfig()
+	var prio *int
+	// look at the idividual job config
+	switch conf := jobConf.(type) {
+	case *expconf.ExperimentConfig:
+		prio = conf.Resources().Priority()
+	case *model.CommandConfig:
+		prio = conf.Resources.Priority
+	}
+	if prio != nil {
+		return *prio
+	}
+
+	var schedulerConf *resourcemanagers.SchedulerConfig
+
+	// if not found, fall back to the resource pools config
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.PoolName != rpName {
+			continue
+		}
+		schedulerConf = rpConfig.Scheduler
+	}
+	prio = readPriorityFromScheduler(schedulerConf)
+	if prio != nil {
+		return *prio
+	}
+
+	// if not found, fall back to resource manager config
+	if config.ResourceManager.AgentRM != nil {
+		schedulerConf = config.ResourceManager.AgentRM.Scheduler
+		prio = readPriorityFromScheduler(schedulerConf)
+		if prio != nil {
+			return *prio
+		}
+	}
+
+	if config.ResourceManager.KubernetesRM != nil {
+		return resourcemanagers.KubernetesDefaultPriority
+	}
+
+	return resourcemanagers.DefaultSchedulingPriority
+}
+
+// ReadWeight resolves the weight value for a job.
+func ReadWeight(rpName string, jobConf interface{}) float64 {
+	var weight float64
+	switch conf := jobConf.(type) {
+	case *expconf.ExperimentConfig:
+		weight = conf.Resources().Weight()
+	case *model.CommandConfig:
+		weight = conf.Resources.Weight
+	}
+	return weight
 }

@@ -11,6 +11,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/job/v1/job.proto";
 import "determined/util/v1/util.proto";
 import "determined/experiment/v1/searcher.proto";
 
@@ -28,6 +29,8 @@ message GetExperimentResponse {
   determined.experiment.v1.Experiment experiment = 1;
   // The experiment config.
   google.protobuf.Struct config = 2;
+  // Associated job summary.
+  determined.job.v1.JobSummary job_summary = 3;
 }
 
 // Get a list of experiments.
@@ -271,6 +274,8 @@ message CreateExperimentRequest {
   bool validate_only = 3;
   // Parent experiment id.
   int32 parent_id = 4;
+  // Request to auto-activate the experiment.
+  bool activate = 5;
 }
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {

@@ -98,27 +98,29 @@ export const Ansi = (): React.ReactNode => {
   return <LogViewer pageProps={{ title: 'ANSI Characters' }} ref={logsRef} />;
 };
 
-export const DefaultDownload = (): React.ReactNode => {
-  return <button onClick={() => downloadText('default-logs.txt', [ messageWithTags ])}>
+export const DefaultDownload = (): React.ReactNode => (
+  <button onClick={() => downloadText('default-logs.txt', [ messageWithTags ])}>
     Download Default Logs
-  </button>;
-};
+  </button>
+);
 
-export const AnsiDownload = (): React.ReactNode => {
-  return <button onClick={() => downloadText('ansi-logs.txt', [ ansiText ])}>
+export const AnsiDownload = (): React.ReactNode => (
+  <button onClick={() => downloadText('ansi-logs.txt', [ ansiText ])}>
     Download Ansi Logs
-  </button>;
-};
+  </button>
+);
 
 export const SimulatedDownload = (): React.ReactNode => {
   const sizeRef = useRef<HTMLInputElement>(null);
-  return <div>
+  return (
     <div>
-      <label>Number of log characters to generate and download (rounded up): </label>
-      <input placeholder="Log size in characters" ref={sizeRef} type="number" />
+      <div>
+        <label>Number of log characters to generate and download (rounded up): </label>
+        <input placeholder="Log size in characters" ref={sizeRef} type="number" />
+      </div>
+      <button onClick={() => simulateLogsDownload(parseInt(sizeRef.current?.value || '100000'))}>
+        Download
+      </button>
     </div>
-    <button onClick={() => simulateLogsDownload(parseInt(sizeRef.current?.value || '100000'))}>
-      Download
-    </button>
-  </div>;
+  );
 };

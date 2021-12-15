@@ -11,7 +11,8 @@ const ProfilesNotEnabled: React.FC = () => {
       <Link
         external
         path={paths.docs('/training-apis/experiment-config.html#profiling')}
-        popout>how to enable profiling on trials</Link>.
+        popout>how to enable profiling on trials
+      </Link>.
     </>
   );
 

@@ -4,6 +4,7 @@ import { useParams } from 'react-router';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
+import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
@@ -15,7 +16,6 @@ import { isAborted } from 'services/utils';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';
-import { terminalRunStates } from 'utils/types';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';
@@ -100,25 +100,29 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       bodyNoPadding
-      headerComponent={<ExperimentDetailsHeader
-        curUser={user}
-        experiment={experiment}
-        fetchExperimentDetails={fetchExperimentDetails}
-        showContinueTrial={trial ? showContinueTrial : undefined}
-        showForkModal={showForkModal}
-        trial={trial}
-      />}
+      headerComponent={(
+        <ExperimentDetailsHeader
+          curUser={user}
+          experiment={experiment}
+          fetchExperimentDetails={fetchExperimentDetails}
+          showContinueTrial={trial ? showContinueTrial : undefined}
+          showForkModal={showForkModal}
+          trial={trial}
+        />
+      )}
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
         <ExperimentSingleTrialTabs
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
-          onTrialLoad={handleSingleTrialLoad} />
+          onTrialLoad={handleSingleTrialLoad}
+        />
       ) : (
         <ExperimentMultiTrialTabs
           experiment={experiment}
-          fetchExperimentDetails={fetchExperimentDetails} />
+          fetchExperimentDetails={fetchExperimentDetails}
+        />
       )}
     </Page>
   );

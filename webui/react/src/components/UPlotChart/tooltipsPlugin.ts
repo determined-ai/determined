@@ -74,7 +74,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
 
     const chartHeight = uPlot.root.querySelector('.u-over')?.getBoundingClientRect().height;
 
-    const vPos = (chartHeight && cursorTop > (chartHeight/2)) ? 'top' : 'bottom';
+    const vPos = (chartHeight && cursorTop > (chartHeight / 2)) ? 'top' : 'bottom';
 
     tooltipEl.style.bottom = vPos === 'bottom' ? '0px' : 'auto';
     tooltipEl.style.top = vPos === 'top' ? '0px' : 'auto';

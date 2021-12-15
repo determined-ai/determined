@@ -377,6 +377,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 // CreateExperimentParams defines a request to create an experiment.
 type CreateExperimentParams struct {
+	Activate      bool            `json:"activate"`
 	ConfigBytes   string          `json:"experiment_config"`
 	Template      *string         `json:"template"`
 	ModelDef      archive.Archive `json:"model_definition"`
@@ -423,8 +424,6 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
-
-	taskSpec.SSHRsaSize = m.config.Security.SSH.RsaKeySize
 
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(
@@ -492,11 +491,24 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	dbExp.OwnerID = &user.ID
+	dbExp.Username = user.Username
 	e, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
+
+	if params.Activate {
+		exp := actor.Addr("experiments", e.ID)
+		resp := m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+		if resp.Source() == nil {
+			return nil, echo.NewHTTPError(http.StatusNotFound,
+				fmt.Sprintf("experiment not found: %d", e.ID))
+		}
+		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
+			return nil, errors.Errorf("attempt to activate experiment timed out")
+		}
+	}
 
 	c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
 	response := model.ExperimentDescriptor{

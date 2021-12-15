@@ -1,3 +1,4 @@
+import enum
 from typing import Any, Callable, Dict, Optional
 
 from determined.common import check
@@ -132,3 +133,48 @@ class TrialReference:
 
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
+
+
+class TrialSortBy(enum.Enum):
+    """
+    Specifies the field to sort a list of trials on.
+
+    Attributes:
+        UNSPECIFIED
+        ID
+        START_TIME
+        END_TIME
+        STATE
+        BEST_VALIDATION_METRIC
+        LATEST_VALIDATION_METRIC
+        BATCHES_PROCESSED
+        DURATION
+    """
+
+    UNSPECIFIED = 0
+    ID = 1
+    START_TIME = 4
+    END_TIME = 5
+    STATE = 6
+    BEST_VALIDATION_METRIC = 7
+    LATEST_VALIDATION_METRIC = 8
+    BATCHES_PROCESSED = 9
+    DURATION = 10
+
+
+class TrialOrderBy(enum.Enum):
+    """
+    Specifies whether a sorted list of trials should be in ascending or
+    descending order.
+
+    Attributes:
+        ASCENDING
+        ASC
+        DESCENDING
+        DESC
+    """
+
+    ASCENDING = 1
+    ASC = 1
+    DESCENDING = 2
+    DESC = 2

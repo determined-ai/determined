@@ -206,6 +206,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
 		AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:       t.taskID,
+		JobID:        &t.jobID,
 		Name:         name,
 		TaskActor:    ctx.Self(),
 		Group:        ctx.Self().Parent(),
@@ -234,6 +235,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 
 	if !t.idSet {
 		modelTrial := model.NewTrial(
+			t.jobID,
 			t.taskID,
 			t.searcher.Create.RequestID,
 			t.experimentID,

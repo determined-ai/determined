@@ -43,18 +43,15 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
       title={title}
       visible={props.visible}
       onCancel={props.finally}
-      onOk={props.finally}
-    >
+      onOk={props.finally}>
       <Json json={mainSection} translateLabel={camelCaseToSentence} />
-      {Object.keys(details).map(key => {
-        const title = camelCaseToSentence(key);
-        return <Fragment key={key}>
+      {Object.keys(details).map(key => (
+        <Fragment key={key}>
           <Divider />
-          <div className={css.subTitle}>{title}</div>
+          <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
           <Json json={details[key]} translateLabel={camelCaseToSentence} />
-        </Fragment>;
-      })
-      }
+        </Fragment>
+      ))}
     </Modal>
   );
 

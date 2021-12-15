@@ -136,13 +136,13 @@ type S3ConfigV0 struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (t *S3ConfigV0) Validate() []error {
+func (c S3ConfigV0) Validate() []error {
 	var errs []error
-	if t.RawPrefix != nil {
-		rawPrefix := *t.RawPrefix
+	if c.RawPrefix != nil {
+		rawPrefix := *c.RawPrefix
 		if rawPrefix == ".." || strings.HasPrefix(rawPrefix, "../") ||
 			strings.HasSuffix(rawPrefix, "/..") || strings.Contains(rawPrefix, "/../") {
-			errs = append(errs, errors.New("prefix must not contain /../"))
+			errs = append(errs, errors.New("'prefix' must not contain /../"))
 		}
 	}
 	return errs
@@ -152,6 +152,15 @@ func (t *S3ConfigV0) Validate() []error {
 // GCSConfigV0 configures storing checkpoints on GCS.
 type GCSConfigV0 struct {
 	RawBucket *string `json:"bucket"`
+}
+
+// Validate implements the check.Validatable interface.
+func (c GCSConfigV0) Validate() []error {
+	var errs []error
+	if c.RawBucket == nil {
+		errs = append(errs, errors.New("'bucket' must be specified"))
+	}
+	return errs
 }
 
 //go:generate ../gen.sh
@@ -164,13 +173,13 @@ type AzureConfigV0 struct {
 }
 
 // Merge implements schemas.Mergeable.
-func (a AzureConfigV0) Merge(other interface{}) interface{} {
+func (c AzureConfigV0) Merge(other interface{}) interface{} {
 	out := AzureConfigV0{}
 	otherConfig := other.(AzureConfigV0)
-	out.RawContainer = schemas.Merge(a.RawContainer, otherConfig.RawContainer).(*string)
+	out.RawContainer = schemas.Merge(c.RawContainer, otherConfig.RawContainer).(*string)
 	var credSource AzureConfigV0
-	if a.RawConnectionString != nil || a.RawAccountURL != nil {
-		credSource = a
+	if c.RawConnectionString != nil || c.RawAccountURL != nil {
+		credSource = c
 	} else {
 		credSource = otherConfig
 	}
@@ -178,4 +187,21 @@ func (a AzureConfigV0) Merge(other interface{}) interface{} {
 	out.RawAccountURL = schemas.Copy(credSource.RawAccountURL).(*string)
 	out.RawCredential = schemas.Copy(credSource.RawCredential).(*string)
 	return out
+}
+
+// Validate implements the check.Validatable interface.
+func (c AzureConfigV0) Validate() []error {
+	var errs []error
+	if c.RawContainer == nil {
+		errs = append(errs, errors.New("'container' must not be empty"))
+	}
+	if c.RawConnectionString != nil && c.RawAccountURL != nil {
+		errs = append(errs, errors.New(
+			"exactly one of 'connection_string' or 'account_url' must be set"))
+	}
+	if c.RawConnectionString != nil && c.RawCredential != nil {
+		errs = append(errs, errors.New(
+			"'credential' and 'connection_string' must not both be set"))
+	}
+	return errs
 }

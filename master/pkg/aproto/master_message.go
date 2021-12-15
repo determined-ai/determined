@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -37,11 +36,23 @@ type MasterMessage struct {
 	ContainerLog          *ContainerLog
 }
 
+// ContainerReattach is a struct describing containers that can be reattached.
+type ContainerReattach struct {
+	Container cproto.Container
+}
+
+// ContainerReattachAck is a struct describing containers reattachment success.
+type ContainerReattachAck struct {
+	Container cproto.Container
+	Failure   *ContainerFailure
+}
+
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
-	Version string
-	Label   string
-	Devices []device.Device
+	Version              string
+	Label                string
+	Devices              []device.Device
+	ContainersReattached []ContainerReattachAck
 }
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.
@@ -143,7 +154,7 @@ type ContainerLog struct {
 	Container cproto.Container
 	Timestamp time.Time
 
-	PullMessage *jsonmessage.JSONMessage
+	PullMessage *string
 	RunMessage  *RunMessage
 	AuxMessage  *string
 }

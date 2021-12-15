@@ -63,14 +63,22 @@ const TableFilterDropdown: React.FC<Props> = ({
 
     setSelectedMap(prev => {
       if (multiple) {
-        const newMap = { ...prev };
-        if (newMap[value]) delete newMap[value];
-        else newMap[value] = true;
-        return newMap;
+        // Support for using CMD + Click to select every option EXCEPT the selected option.
+        if (e.metaKey && filters) {
+          return filters.reduce((acc, filter) => {
+            if (filter.value !== value) acc[filter.value as string] = true;
+            return acc;
+          }, {} as Record<string, boolean>);
+        } else {
+          const newMap = { ...prev };
+          if (newMap[value]) delete newMap[value];
+          else newMap[value] = true;
+          return newMap;
+        }
       }
       return prev[value] ? {} : { [value]: true };
     });
-  }, [ multiple ]);
+  }, [ filters, multiple ]);
 
   const handleReset = useCallback(() => {
     setSelectedMap({});
@@ -151,12 +159,16 @@ const TableFilterDropdown: React.FC<Props> = ({
           disabled={Object.keys(selectedMap).length === 0}
           size="small"
           type="link"
-          onClick={handleReset}>Reset</Button>
+          onClick={handleReset}>
+          Reset
+        </Button>
         <Button
           aria-label={ARIA_LABEL_APPLY}
           size="small"
           type="primary"
-          onClick={handleFilter}>Ok</Button>
+          onClick={handleFilter}>
+          Ok
+        </Button>
       </div>
     </div>
   );

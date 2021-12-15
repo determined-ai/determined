@@ -106,6 +106,17 @@ export enum Determinedcontainerv1State {
 }
 
 /**
+ * The type of the Device.   - TYPE_UNSPECIFIED: An unspecified device type.  - TYPE_CPU: A CPU device.  - TYPE_GPU: A GPU device.
+ * @export
+ * @enum {string}
+ */
+export enum Determineddevicev1Type {
+    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
+    CPU = <any> 'TYPE_CPU',
+    GPU = <any> 'TYPE_GPU'
+}
+
+/**
  * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
  * @export
  * @enum {string}
@@ -127,6 +138,32 @@ export enum Determinedexperimentv1State {
 }
 
 /**
+ * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+ * @export
+ * @enum {string}
+ */
+export enum Determinedjobv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    QUEUED = <any> 'STATE_QUEUED',
+    SCHEDULED = <any> 'STATE_SCHEDULED',
+    SCHEDULEDBACKFILLED = <any> 'STATE_SCHEDULED_BACKFILLED'
+}
+
+/**
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.
+ * @export
+ * @enum {string}
+ */
+export enum Determinedjobv1Type {
+    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
+    EXPERIMENT = <any> 'TYPE_EXPERIMENT',
+    NOTEBOOK = <any> 'TYPE_NOTEBOOK',
+    TENSORBOARD = <any> 'TYPE_TENSORBOARD',
+    SHELL = <any> 'TYPE_SHELL',
+    COMMAND = <any> 'TYPE_COMMAND'
+}
+
+/**
  * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.
  * @export
  * @enum {string}
@@ -140,17 +177,6 @@ export enum Determinedtaskv1State {
     RUNNING = <any> 'STATE_RUNNING',
     TERMINATED = <any> 'STATE_TERMINATED',
     TERMINATING = <any> 'STATE_TERMINATING'
-}
-
-/**
- * The type of the Device.   - TYPE_UNSPECIFIED: An unspecified device type.  - TYPE_CPU: A CPU device.  - TYPE_GPU: A GPU device.
- * @export
- * @enum {string}
- */
-export enum Devicev1Type {
-    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
-    CPU = <any> 'TYPE_CPU',
-    GPU = <any> 'TYPE_GPU'
 }
 
 /**
@@ -678,6 +704,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     runnerState?: string;
+    /**
+     * The wall clock time is all active time of the cluster for the trial, inclusive of everything (restarts, initiailization, etc), in seconds.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    wallClockTime?: number;
 }
 
 /**
@@ -1222,6 +1254,12 @@ export interface V1CreateExperimentRequest {
      * @memberof V1CreateExperimentRequest
      */
     parentId?: number;
+    /**
+     * Request to auto-activate the experiment.
+     * @type {boolean}
+     * @memberof V1CreateExperimentRequest
+     */
+    activate?: boolean;
 }
 
 /**
@@ -1316,10 +1354,10 @@ export interface V1Device {
     uuid?: string;
     /**
      * The type of the Device.
-     * @type {Devicev1Type}
+     * @type {Determineddevicev1Type}
      * @memberof V1Device
      */
-    type?: Devicev1Type;
+    type?: Determineddevicev1Type;
 }
 
 /**
@@ -1798,6 +1836,12 @@ export interface V1GetExperimentResponse {
      * @memberof V1GetExperimentResponse
      */
     config: any;
+    /**
+     * Associated job summary.
+     * @type {V1JobSummary}
+     * @memberof V1GetExperimentResponse
+     */
+    jobSummary?: V1JobSummary;
 }
 
 /**
@@ -1907,6 +1951,40 @@ export interface V1GetHPImportanceResponse {
      * @memberof V1GetHPImportanceResponse
      */
     validationMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
+}
+
+/**
+ * Response to GetJobQueueStatsRequest.
+ * @export
+ * @interface V1GetJobQueueStatsResponse
+ */
+export interface V1GetJobQueueStatsResponse {
+    /**
+     * List of queue stats per resource pool.
+     * @type {Array<V1RPQueueStat>}
+     * @memberof V1GetJobQueueStatsResponse
+     */
+    results: Array<V1RPQueueStat>;
+}
+
+/**
+ * Response to GetJobsRequest.
+ * @export
+ * @interface V1GetJobsResponse
+ */
+export interface V1GetJobsResponse {
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetJobsResponse
+     */
+    pagination: V1Pagination;
+    /**
+     * List of the request jobs.
+     * @type {Array<V1Job>}
+     * @memberof V1GetJobsResponse
+     */
+    jobs: Array<V1Job>;
 }
 
 /**
@@ -2520,6 +2598,138 @@ export interface V1IdleNotebookResponse {
 }
 
 /**
+ * Job represents a user submitted work that is not in a terminal state.
+ * @export
+ * @interface V1Job
+ */
+export interface V1Job {
+    /**
+     * Job summary.
+     * @type {V1JobSummary}
+     * @memberof V1Job
+     */
+    summary?: V1JobSummary;
+    /**
+     * Job type.
+     * @type {Determinedjobv1Type}
+     * @memberof V1Job
+     */
+    type: Determinedjobv1Type;
+    /**
+     * The time when the job was submitted by the user.
+     * @type {Date}
+     * @memberof V1Job
+     */
+    submissionTime: Date;
+    /**
+     * The username of the user who submitted the job.
+     * @type {string}
+     * @memberof V1Job
+     */
+    username: string;
+    /**
+     * Associated resource pool.
+     * @type {string}
+     * @memberof V1Job
+     */
+    resourcePool: string;
+    /**
+     * Whether the job is preemptible.
+     * @type {boolean}
+     * @memberof V1Job
+     */
+    isPreemptible: boolean;
+    /**
+     * The job priority in priority scheduler.
+     * @type {number}
+     * @memberof V1Job
+     */
+    priority?: number;
+    /**
+     * The job weight in fairshare scheduler.
+     * @type {number}
+     * @memberof V1Job
+     */
+    weight?: number;
+    /**
+     * Entity ID.
+     * @type {string}
+     * @memberof V1Job
+     */
+    entityId: string;
+    /**
+     * Job type.
+     * @type {string}
+     * @memberof V1Job
+     */
+    jobId: string;
+    /**
+     * Number of requested slots.
+     * @type {number}
+     * @memberof V1Job
+     */
+    requestedSlots: number;
+    /**
+     * Number of allocated slots.
+     * @type {number}
+     * @memberof V1Job
+     */
+    allocatedSlots: number;
+    /**
+     * Job name.
+     * @type {string}
+     * @memberof V1Job
+     */
+    name: string;
+    /**
+     * Job's progress from 0 to 1.
+     * @type {number}
+     * @memberof V1Job
+     */
+    progress?: number;
+}
+
+/**
+ * Job summary.
+ * @export
+ * @interface V1JobSummary
+ */
+export interface V1JobSummary {
+    /**
+     * The scheduling state of the job.
+     * @type {Determinedjobv1State}
+     * @memberof V1JobSummary
+     */
+    state: Determinedjobv1State;
+    /**
+     * The number of jobs ahead of this one in the queue.
+     * @type {number}
+     * @memberof V1JobSummary
+     */
+    jobsAhead: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1K8PriorityClass
+ */
+export interface V1K8PriorityClass {
+    /**
+     * Priority class name.
+     * @type {string}
+     * @memberof V1K8PriorityClass
+     */
+    priorityClass?: string;
+    /**
+     * Priority class value.
+     * @type {number}
+     * @memberof V1K8PriorityClass
+     */
+    priorityValue?: number;
+}
+
+/**
  * Response to KillCommandRequest.
  * @export
  * @interface V1KillCommandResponse
@@ -2634,7 +2844,7 @@ export interface V1LaunchCommandResponse {
      * @type {V1Command}
      * @memberof V1LaunchCommandResponse
      */
-    command?: V1Command;
+    command: V1Command;
     /**
      * 
      * @type {any}
@@ -2738,7 +2948,7 @@ export interface V1LaunchShellResponse {
      * @type {V1Shell}
      * @memberof V1LaunchShellResponse
      */
-    shell?: V1Shell;
+    shell: V1Shell;
     /**
      * 
      * @type {any}
@@ -3123,6 +3333,12 @@ export interface V1Model {
      * @memberof V1Model
      */
     archived?: boolean;
+    /**
+     * Notes associated with this model.
+     * @type {string}
+     * @memberof V1Model
+     */
+    notes?: string;
 }
 
 /**
@@ -3337,6 +3553,26 @@ export interface V1Pagination {
 }
 
 /**
+ * Request to paginate the resposne.
+ * @export
+ * @interface V1PaginationRequest
+ */
+export interface V1PaginationRequest {
+    /**
+     * The number of records to skip before returning results.
+     * @type {number}
+     * @memberof V1PaginationRequest
+     */
+    offset?: number;
+    /**
+     * The amount of records limited in the results.
+     * @type {number}
+     * @memberof V1PaginationRequest
+     */
+    limit?: number;
+}
+
+/**
  * Response to PatchExperimentRequest.
  * @export
  * @interface V1PatchExperimentResponse
@@ -3380,6 +3616,12 @@ export interface V1PatchModel {
      * @memberof V1PatchModel
      */
     labels?: Array<any>;
+    /**
+     * Updated notes associated with this model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    notes?: string;
 }
 
 /**
@@ -3572,6 +3814,12 @@ export interface V1PostModelRequest {
      * @memberof V1PostModelRequest
      */
     username?: string;
+    /**
+     * Notes associated with this model.
+     * @type {string}
+     * @memberof V1PostModelRequest
+     */
+    notes?: string;
 }
 
 /**
@@ -3762,6 +4010,90 @@ export interface V1PutTemplateResponse {
      * @memberof V1PutTemplateResponse
      */
     template?: V1Template;
+}
+
+/**
+ * Describes a message to control jobs in a queue.
+ * @export
+ * @interface V1QueueControl
+ */
+export interface V1QueueControl {
+    /**
+     * Job id.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    jobId: string;
+    /**
+     * The resource pool to perform an action on.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    sourceResourcePool?: string;
+    /**
+     * Name of the target resource_pool to move the job to.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    resourcePool?: string;
+    /**
+     * The desired job position in the queue.
+     * @type {number}
+     * @memberof V1QueueControl
+     */
+    queuePosition?: number;
+    /**
+     * The desired job priority in priority scheduler.
+     * @type {number}
+     * @memberof V1QueueControl
+     */
+    priority?: number;
+    /**
+     * The desired job weight in fairshare scheduler.
+     * @type {number}
+     * @memberof V1QueueControl
+     */
+    weight?: number;
+}
+
+/**
+ * Statistics for a queue.
+ * @export
+ * @interface V1QueueStats
+ */
+export interface V1QueueStats {
+    /**
+     * Number of queued jobs in the queue.
+     * @type {number}
+     * @memberof V1QueueStats
+     */
+    queuedCount: number;
+    /**
+     * Number of scheduled jobs in the queue.
+     * @type {number}
+     * @memberof V1QueueStats
+     */
+    scheduledCount: number;
+}
+
+/**
+ * Job stats for a resource pool.
+ * @export
+ * @interface V1RPQueueStat
+ */
+export interface V1RPQueueStat {
+    /**
+     * Job queue stats.
+     * @type {V1QueueStats}
+     * @memberof V1RPQueueStat
+     */
+    stats: V1QueueStats;
+    /**
+     * Resource pool.
+     * @type {string}
+     * @memberof V1RPQueueStat
+     */
+    resourcePool: string;
 }
 
 /**
@@ -4013,10 +4345,10 @@ export interface V1ResourcePool {
     slotsUsed: number;
     /**
      * Slot device type: cpu, gpu, ...
-     * @type {Devicev1Type}
+     * @type {Determineddevicev1Type}
      * @memberof V1ResourcePool
      */
-    slotType: Devicev1Type;
+    slotType: Determineddevicev1Type;
     /**
      * 
      * @type {number}
@@ -4439,6 +4771,12 @@ export interface V1ResourcePoolPrioritySchedulerDetail {
      * @memberof V1ResourcePoolPrioritySchedulerDetail
      */
     defaultPriority: number;
+    /**
+     * List of available priorities for K8 (if applicable).
+     * @type {Array<V1K8PriorityClass>}
+     * @memberof V1ResourcePoolPrioritySchedulerDetail
+     */
+    k8Priorities?: Array<V1K8PriorityClass>;
 }
 
 /**
@@ -5264,6 +5602,28 @@ export interface V1UnarchiveExperimentResponse {
  * @interface V1UnarchiveModelResponse
  */
 export interface V1UnarchiveModelResponse {
+}
+
+/**
+ * Request to update the job queue.
+ * @export
+ * @interface V1UpdateJobQueueRequest
+ */
+export interface V1UpdateJobQueueRequest {
+    /**
+     * List of job queue control requests.
+     * @type {Array<V1QueueControl>}
+     * @memberof V1UpdateJobQueueRequest
+     */
+    updates: Array<V1QueueControl>;
+}
+
+/**
+ * Response to UpdateJobQueueRequest.
+ * @export
+ * @interface V1UpdateJobQueueResponse
+ */
+export interface V1UpdateJobQueueResponse {
 }
 
 /**
@@ -9958,6 +10318,93 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get job queue stats for a resource pool.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/job-queues/stats`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (resourcePools) {
+                localVarQueryParameter['resourcePools'] = resourcePools;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [paginationOffset] The number of records to skip before returning results.
+         * @param {number} [paginationLimit] The amount of records limited in the results.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/job-queues`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (paginationOffset !== undefined) {
+                localVarQueryParameter['pagination.offset'] = paginationOffset;
+            }
+
+            if (paginationLimit !== undefined) {
+                localVarQueryParameter['pagination.limit'] = paginationLimit;
+            }
+
+            if (resourcePool !== undefined) {
+                localVarQueryParameter['resourcePool'] = resourcePool;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -10690,6 +11137,46 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
+            }
+            const localVarPath = `/api/v1/job-queues`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1UpdateJobQueueRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -10865,6 +11352,47 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         getHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance(experimentId, periodSeconds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get job queue stats for a resource pool.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [paginationOffset] The number of records to skip before returning results.
+         * @param {number} [paginationLimit] The amount of records limited in the results.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11185,6 +11713,25 @@ export const InternalApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateJobQueue(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -11288,6 +11835,29 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).getHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get job queue stats for a resource pool.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+            return InternalApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of jobs in queue.
+         * @param {number} [paginationOffset] The number of records to skip before returning results.
+         * @param {number} [paginationLimit] The amount of records limited in the results.
+         * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
+            return InternalApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(fetch, basePath);
         },
         /**
          * 
@@ -11464,6 +12034,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
         },
+        /**
+         * 
+         * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+            return InternalApiFp(configuration).updateJobQueue(body, options)(fetch, basePath);
+        },
     };
 };
 
@@ -11585,6 +12165,33 @@ export class InternalApi extends BaseAPI {
      */
     public getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).getHPImportance(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get job queue stats for a resource pool.
+     * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+        return InternalApiFp(this.configuration).getJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of jobs in queue.
+     * @param {number} [paginationOffset] The number of records to skip before returning results.
+     * @param {number} [paginationLimit] The amount of records limited in the results.
+     * @param {string} [resourcePool] The target resource-pool for agent resource manager.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getJobs(paginationOffset?: number, paginationLimit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
+        return InternalApiFp(this.configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11790,6 +12397,18 @@ export class InternalApi extends BaseAPI {
      */
     public trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Control the job queues.
+     * @param {V1UpdateJobQueueRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+        return InternalApiFp(this.configuration).updateJobQueue(body, options)(this.fetch, this.basePath);
     }
 
 }

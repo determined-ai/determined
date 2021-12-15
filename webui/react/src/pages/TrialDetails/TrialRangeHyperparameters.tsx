@@ -29,7 +29,8 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
       return {
         name: name,
         range: value.type === HyperparameterType.Log ?
-          [ (value.base || 10)**(value.minval || -5), (value.base || 10)**(value.maxval || 1) ] :
+          [ (value.base || 10) ** (value.minval || -5),
+            (value.base || 10) ** (value.maxval || 1) ] :
           [ value.minval || 0, value.maxval || 1 ],
         type: value.type,
         val: String(trial.hyperparameters[name] || 0),
@@ -43,9 +44,11 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
     <div className={css.base}>
       <Section bodyBorder bodyScroll>
         <div className={css.container}>
-          {hyperparameters.map(hp => <div key={hp.name}>
-            <HyperparameterRange hp={hp} />
-          </div>)}
+          {hyperparameters.map(hp => (
+            <div key={hp.name}>
+              <HyperparameterRange hp={hp} />
+            </div>
+          ))}
         </div>
       </Section>
     </div>
@@ -64,13 +67,13 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
       case HyperparameterType.Categorical:
       {
         const idx = hp.vals.indexOf(hp.val);
-        return ((idx === -1 ? 0 : idx)/(hp.vals.length-1));
+        return ((idx === -1 ? 0 : idx) / (hp.vals.length - 1));
       }
       case HyperparameterType.Log:
-        return clamp(1-Math.log(parseFloat(hp.val)/hp.range[0])/
-            (Math.log(hp.range[1]/hp.range[0])), 0, 1);
+        return clamp(1 - Math.log(parseFloat(hp.val) / hp.range[0]) /
+            (Math.log(hp.range[1] / hp.range[0])), 0, 1);
       default:
-        return clamp(1-(parseFloat(hp.val)-hp.range[0])/
+        return clamp(1 - (parseFloat(hp.val) - hp.range[0]) /
             (hp.range[1] - hp.range[0]), 0, 1);
     }
   }, [ hp ]);
@@ -83,8 +86,9 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
         <MainTrack hp={hp} />
         <div className={css.pointerTrack}>
           <Pointer
-            containerStyle={{ transform: `translateY(${270*pointerPosition}px)` }}
-            content={<ParsedHumanReadableValue hp={hp} />} />
+            containerStyle={{ transform: `translateY(${270 * pointerPosition}px)` }}
+            content={<ParsedHumanReadableValue hp={hp} />}
+          />
         </div>
       </div>
     </div>
@@ -100,25 +104,32 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
     case HyperparameterType.Constant:
       return <div className={css.valuesTrack} />;
     case HyperparameterType.Categorical:
-      return <div className={css.valuesTrack}>
-        {hp.vals.map(option =>
-          <p className={css.text} key={option.toString()}>{option}</p>)}
-      </div>;
+      return (
+        <div className={css.valuesTrack}>
+          {hp.vals.map(option =>
+            <p className={css.text} key={option.toString()}>{option}</p>)}
+        </div>
+      );
     case HyperparameterType.Log:
-      return <div className={css.valuesTrack}>
-        {(new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1))).fill(null)
-          .map((_, idx) =>
-            <p className={css.text} key={idx}>
-              {String((hp.range[1])/(10**idx)).length > 4 ?
-                ((hp.range[1])/(10**idx)).toExponential() :
-                (hp.range[1])/(10**idx)}
-            </p>)}
-      </div>;
+      return (
+        <div className={css.valuesTrack}>
+          {(new Array(Math.floor(Math.log10((hp.range[1]) / (hp.range[0])) + 1))).fill(null)
+            .map((_, idx) => (
+              <p className={css.text} key={idx}>
+                {String((hp.range[1]) / (10 ** idx)).length > 4 ?
+                  ((hp.range[1]) / (10 ** idx)).toExponential() :
+                  (hp.range[1]) / (10 ** idx)}
+              </p>
+            ))}
+        </div>
+      );
     default:
-      return <div className={css.valuesTrack}>
-        <p className={css.text}>{hp.range[1]}</p>
-        <p className={css.text}>{hp.range[0]}</p>
-      </div>;
+      return (
+        <div className={css.valuesTrack}>
+          <p className={css.text}>{hp.range[1]}</p>
+          <p className={css.text}>{hp.range[0]}</p>
+        </div>
+      );
   }
 };
 
@@ -128,37 +139,27 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
   switch(hp.type) {
     case HyperparameterType.Categorical:
       trackType = css.grayTrack;
-      content = hp.vals.map(option =>
-        <div
-          className={css.trackOption}
-          key={option.toString()}
-        />);
+      content = hp.vals.map(option => <div className={css.trackOption} key={option.toString()} />);
       break;
     case HyperparameterType.Constant:
       trackType = css.constantTrack;
-      content = <div
-        className={css.trackOption}
-      />;
+      content = <div className={css.trackOption} />;
       break;
     case HyperparameterType.Log:
       trackType = css.blueTrack;
-      content = (new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1)))
+      content = (new Array(Math.floor(Math.log10((hp.range[1]) / (hp.range[0])) + 1)))
         .fill(null)
-        .map((_, idx) =>
-          <div className={css.tick} key={idx} />);
+        .map((_, idx) => <div className={css.tick} key={idx} />);
       break;
     default:
       trackType = css.blueTrack;
-      content = hp.vals.map(option =>
-        <div
-          className={css.trackOption}
-          key={option.toString()}
-        />);
+      content = hp.vals.map(option => <div className={css.trackOption} key={option.toString()} />);
   }
   return (
     <div className={trackType}>
       {content}
-    </div>);
+    </div>
+  );
 };
 
 interface PHRVProps {
@@ -199,9 +200,7 @@ const Pointer: React.FC<PointerProps> = ({ containerStyle, content }: PointerPro
   return (
     <div className={css.pointerContainer} style={containerStyle}>
       <div className={css.pointerArrow} />
-      <div className={css.pointerText}>
-        {content}
-      </div>
+      <div className={css.pointerText}>{content}</div>
     </div>
   );
 };

@@ -162,10 +162,12 @@ class TFKerasTrialController(det.TrialController):
 
     @classmethod
     def pre_execute_hook(
-        cls: Type["TFKerasTrialController"], env: det.EnvContext, use_horovod: bool
+        cls: Type["TFKerasTrialController"],
+        env: det.EnvContext,
+        distributed_backend: det._DistributedBackend,
     ) -> None:
         # Initialize the correct horovod.
-        if use_horovod:
+        if distributed_backend.use_horovod():
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
             hvd.init()
 
@@ -177,7 +179,7 @@ class TFKerasTrialController(det.TrialController):
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
             session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            cls._configure_session(env, session_config, use_horovod)
+            cls._configure_session(env, session_config, distributed_backend.use_horovod())
 
     @classmethod
     def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:
@@ -879,8 +881,8 @@ class TFKerasTrialController(det.TrialController):
 
         if self.train_response_func is None:
             raise AssertionError(
-                "Callback should avoid calling model.predict(), "
-                "as this will affect Determined training behavior",
+                "train_response_func is not set.  This should not be possible; please file an "
+                "issue at github.com/determined-ai/determined so we can fix this bug."
             )
 
         if self.context.distributed.size > 1:
@@ -967,7 +969,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.4``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate
@@ -1091,9 +1093,6 @@ class TFKerasTrial(det.Trial):
         """
         Specifies a list of :class:`determined.keras.callbacks.Callback` objects to be used during
         training.
-
-        Callbacks should avoid calling ``model.predict()``, as this will affect Determined training
-        behavior.
 
         .. note:
            Note that :class:`determined.keras.callbacks.Callback` is a subclass of

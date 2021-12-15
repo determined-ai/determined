@@ -81,6 +81,9 @@ message Trial {
   CheckpointWorkload best_checkpoint = 10;
   // The last reported state of the trial runner (harness code).
   string runner_state = 11;
+  // The wall clock time is all active time of the cluster for the trial,
+  // inclusive of everything (restarts, initiailization, etc), in seconds.
+  double wall_clock_time = 12;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

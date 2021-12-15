@@ -17,17 +17,16 @@ export interface Props extends CommonProps {
 }
 
 const breadCrumbRender = (route: BreadCrumbRoute, params: unknown, routes: BreadCrumbRoute[]) => {
-
   const last = routes.indexOf(route) === routes.length - 1;
   return last ? (
     <span>{route.breadcrumbName}</span>
   ) : (
-    <Link path={route.path}>{
-      route.breadcrumbTooltip
-        ? <Tooltip title={route.breadcrumbTooltip}>
+    <Link path={route.path}>
+      {route.breadcrumbTooltip ? (
+        <Tooltip title={route.breadcrumbTooltip}>
           <span>{route.breadcrumbName}</span>
         </Tooltip>
-        : route.breadcrumbName}
+      ) : route.breadcrumbName}
     </Link>
   );
 };

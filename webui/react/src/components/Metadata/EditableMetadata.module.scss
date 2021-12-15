@@ -1,0 +1,19 @@
+.addRow {
+  font-size: var(--theme-sizes-font-small);
+  padding: var(--theme-sizes-layout-small) 0;
+}
+.titleRow {
+  background-color: var(--theme-colors-monochrome-15);
+  display: flex;
+
+  & > * {
+    border: 1px solid var(--theme-colors-monochrome-12);
+    border-bottom: 0;
+    flex-basis: 45%;
+    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
+  }
+  & *:last-child {
+    border-left: 0;
+    flex-grow: 1;
+  }
+}

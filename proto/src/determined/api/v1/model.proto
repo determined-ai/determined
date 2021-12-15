@@ -100,6 +100,8 @@ message PostModelRequest {
   repeated string labels = 4;
   // User who is creating this model.
   string username = 5;
+  // Notes associated with this model.
+  string notes = 6;
 }
 
 // Response to PostModelRequest.

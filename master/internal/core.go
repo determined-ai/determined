@@ -18,12 +18,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
@@ -426,7 +430,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	}
 	start("gRPC server", func() error {
 		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
-			m.config.InternalConfig.PrometheusEnabled,
+			m.config.Observability.EnablePrometheus,
 			&m.config.InternalConfig.ExternalSessions)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
@@ -572,6 +576,7 @@ func (m *Master) Run(ctx context.Context) error {
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            cert,
+		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 	}
@@ -712,6 +717,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// good still to avoid overwhelming us on restart after a crash.
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
+	m.system.ActorOf(job.JobsActorAddr, job.NewJobs(sproto.GetCurrentRM(m.system)))
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
@@ -825,10 +831,14 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
-	if m.config.InternalConfig.PrometheusEnabled {
+	if m.config.Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
 		p.Use(m.echo)
 		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))
+		m.echo.Any("/prom/det-state-metrics",
+			echo.WrapHandler(promhttp.HandlerFor(prom.DetStateMetrics, promhttp.HandlerOpts{})))
+		m.echo.Any("/prom/det-http-sd-config",
+			api.Route(m.getPrometheusTargets))
 	}
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})

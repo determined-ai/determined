@@ -82,8 +82,6 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
-        self._use_horovod = det._DistributedBackend.HOROVOD.value
-
         optimizations_config = self.env.experiment_config.get_optimizations_config()
         self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
         self._fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
@@ -209,7 +207,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "backward_passes_per_step for local gradient aggregation must be >= 1",
             )
 
-            if self.distributed.size > 1 and self._use_horovod:
+            if self.distributed.size > 1:
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
@@ -641,7 +639,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # before we apply gradient clipping and `step()`. In the case of APEX
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
-        if self.distributed.size > 1 and self._use_horovod and not self._use_apex:
+        if self.distributed.size > 1 and not self._use_apex:
             with self._record_timing("train_batch.sync_optimizers", accumulate=True):
                 optimizer.synchronize()  # type: ignore
 
@@ -671,7 +669,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         else:
             step_fn = optimizer.step  # type: ignore
 
-        if self.distributed.size > 1 and self._use_horovod:
+        if self.distributed.size > 1:
             with optimizer.skip_synchronize():  # type: ignore
                 step_fn()
         else:

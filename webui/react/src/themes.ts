@@ -1,4 +1,4 @@
-import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
+import { CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -77,6 +77,13 @@ export interface Theme {
       small: string;
       medium: string;
       large: string;
+      big: string;
+      great: string;
+      huge: string;
+      enormous: string;
+      giant: string;
+      jumbo: string;
+      mega: string;
     };
     /* eslint-enable @typescript-eslint/member-ordering */
     layout: {[size in ShirtSize]: string};
@@ -191,6 +198,13 @@ const lightDeterminedTheme: Theme = {
       small: '16px',
       medium: '20px',
       large: '24px',
+      big: '28px',
+      great: '32px',
+      huge: '36px',
+      enormous: '40px',
+      giant: '44px',
+      jumbo: '48px',
+      mega: '52px',
     },
     layout: {
       micro: '2px',
@@ -252,16 +266,20 @@ const stateColorMapping = {
   [SlotState.Free]: 'free',
   [SlotState.Pending]: 'pending',
   [SlotState.Running]: 'active',
+  [JobState.SCHEDULED]: 'active',
+  [JobState.SCHEDULEDBACKFILLED]: 'active',
+  [JobState.QUEUED]: 'suspended',
 };
 
-type States = RunState | CommandState | ResourceState | CheckpointState | SlotState
+export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
+SlotState | JobState
 
-export const getStateColorCssVar = (state: States | undefined): string => {
+export const getStateColorCssVar = (state: StateOfUnion | undefined): string => {
   const name = state ? stateColorMapping[state] : 'active';
   return `var(--theme-colors-states-${name})`;
 };
 
-export const getStateColor = (state: States | undefined): string => {
+export const getStateColor = (state: StateOfUnion | undefined): string => {
   const cssVar = getStateColorCssVar(state);
   return window.getComputedStyle(document.body).getPropertyValue(cssVar);
 };

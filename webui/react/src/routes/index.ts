@@ -1,10 +1,14 @@
 import { FC } from 'react';
 
 import Cluster from 'pages/Cluster';
+import ClusterLogs from 'pages/ClusterLogs';
 import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import ExperimentList from 'pages/ExperimentList';
-import MasterLogs from 'pages/MasterLogs';
+import JobQueue from 'pages/JobQueue/JobQueue';
+import ModelDetails from 'pages/ModelDetails';
+import ModelRegistry from 'pages/ModelRegistry';
+import ModelVersionDetails from 'pages/ModelVersionDetails';
 import Reload from 'pages/Reload';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
@@ -18,10 +22,14 @@ import { RouteConfig } from './types';
 
 const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
+  clusterLogs: ClusterLogs,
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
-  masterLogs: MasterLogs,
+  jobs: JobQueue,
+  modelDetails: ModelDetails,
+  models: ModelRegistry,
+  modelVersionDetails: ModelVersionDetails,
   reload: Reload,
   signIn: SignIn,
   signOut: SignOut,

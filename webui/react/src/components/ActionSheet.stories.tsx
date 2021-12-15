@@ -21,7 +21,7 @@ const ActionSheetContainer = () => {
     <ActionSheet
       actions={[
         { icon: 'jupyter-lab', label: 'Launch JupyterLab' },
-        { icon: 'logs', label: 'Master Logs', path: paths.masterLogs(), popout: true },
+        { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs(), popout: true },
         {
           external: true,
           icon: 'docs',
@@ -37,7 +37,8 @@ const ActionSheetContainer = () => {
           popout: true,
         },
       ]}
-      show={isShowing} />
+      show={isShowing}
+    />
   );
 };
 

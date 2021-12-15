@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from 'react';
 
-import awsLogo from 'assets/aws-logo.svg';
-import gcpLogo from 'assets/gcp-logo.svg';
-import k8sLogo from 'assets/k8s-logo.svg';
-import staticLogo from 'assets/on-prem-logo.svg';
+import awsLogo from 'assets/images/aws-logo.svg';
+import gcpLogo from 'assets/images/gcp-logo.svg';
+import k8sLogo from 'assets/images/k8s-logo.svg';
+import staticLogo from 'assets/images/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
+import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
-import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'utils/types';
 
 import Json from './Json';
 import Link from './Link';
@@ -46,7 +46,7 @@ export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
 const rpAttrs = [
   [ 'location', 'Location' ],
   [ 'instanceType', 'Instance Type' ],
-  [ 'preemptible', 'Spot/Preemptible' ],
+  [ 'preemptible', 'Spot/Preemptible' ], // FIXME do we want this spot or details.spot_enabled
   [ 'minAgents', 'Min Agents' ],
   [ 'maxAgents', 'Max Agents' ],
   [ 'slotsPerAgent', 'Slots Per Agent' ],
@@ -118,9 +118,7 @@ const ResourcePoolCard: React.FC<Props> = (
           backgroundColor: numAgents > 0 ?
             'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
         }}>
-        <p>
-          {agentStatusText(numAgents)}
-        </p>
+        <p>{agentStatusText(numAgents)}</p>
       </div>
       <div className={css.body}>
         <section className={descriptionClasses.join(' ')}>
@@ -132,8 +130,9 @@ const ResourcePoolCard: React.FC<Props> = (
         <section>
           <SlotAllocationBar
             resourceStates={computeContainerStates}
-            title={deviceTypes.has(resourceType) ? resourceType : undefined }
-            totalSlots={totalComputeSlots} />
+            title={deviceTypes.has(resourceType) ? resourceType : undefined}
+            totalSlots={totalComputeSlots}
+          />
           <div className={css.cpuContainers}>
             <span>Aux containers running:</span>
             <span>{rp.auxContainersRunning}</span>

@@ -1117,7 +1117,7 @@ FROM (
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
-func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
+func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
@@ -1125,6 +1125,7 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 		job := model.Job{
 			JobID:   experiment.JobID,
 			JobType: model.JobTypeExperiment,
+			OwnerID: experiment.OwnerID,
 		}
 		if err := addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)
@@ -1149,10 +1150,12 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
-FROM experiments
-WHERE id = $1`, &experiment, id); err != nil {
+SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+		 job_id, u.username as username
+FROM experiments e
+JOIN users u ON (e.owner_id = u.id)
+WHERE e.id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
 
@@ -1185,10 +1188,12 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
 	if err := db.query(`
-SELECT id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
-FROM experiments
-WHERE id = $1`, &experiment, id); err != nil {
+SELECT e.id, state, model_definition, start_time, end_time, archived,
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+			 job_id, u.username as username
+FROM experiments e
+JOIN users u ON e.owner_id = u.id
+WHERE e.id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
 
@@ -1220,9 +1225,11 @@ FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
-SELECT id, state, config, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
-FROM experiments
+SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
+			 u.username as username
+FROM experiments e
+JOIN users u ON e.owner_id = u.id
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
 	if err == sql.ErrNoRows {
 		return nil, errors.WithStack(ErrNotFound)
@@ -1381,14 +1388,25 @@ WHERE id = :id`
 // DeleteExperiment deletes an existing experiment.
 func (db *PgDB) DeleteExperiment(id int) error {
 	return db.withTransaction("delete experiment", func(tx *sqlx.Tx) error {
-		// This delete cascades to checkpoints and validations.
-		// TODO(DET-5210): If/When validations and checkpoints are no longer linked
-		// to steps, this delete will not work properly.
 		if _, err := tx.Exec(`
-DELETE FROM steps
+DELETE FROM raw_steps
 WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 `, id); err != nil {
 			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+		}
+
+		if _, err := tx.Exec(`
+DELETE FROM raw_validations
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
+`, id); err != nil {
+			return errors.Wrapf(err, "error deleting validations for experiment %v", id)
+		}
+
+		if _, err := tx.Exec(`
+DELETE FROM raw_checkpoints
+WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
+`, id); err != nil {
+			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
 		}
 
 		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {

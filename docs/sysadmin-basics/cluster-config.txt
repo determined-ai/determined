@@ -232,9 +232,9 @@ The master supports the following configuration settings:
       in the cluster. Users can use different container images for GPU vs. CPU agents differently by
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default values:
 
-      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2`` for CPU
+      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.4`` for CPU
          agents
-      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2`` for GPU
+      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4`` for GPU
          agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
@@ -520,13 +520,19 @@ The master supports the following configuration settings:
             -  ``subnet_id``: The ID of the subnet to run the Determined agents in. Defaults to the
                default subnet of the default VPC.
 
-         -  ``instance_type``: AWS instance type to use for dynamic agents. For GPU instances, this
-            must be one of the following: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
-            ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
-            ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or
-            ``p3dn.24xlarge``. For CPU instances, most general purpose instance types are allowed
-            (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants). Defaults to
-            ``p3.8xlarge``.
+         -  ``instance_type``: AWS instance type to use for dynamic agents. If ``instance_slots`` is
+            not specified, for GPU instances this must be one of the following: ``g4dn.xlarge``,
+            ``g4dn.2xlarge``, ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
+            ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
+            ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. For CPU
+            instances, most general purpose instance types are allowed (``t2``, ``t3``, ``c4``,
+            ``c5``, ``m4``, ``m5`` and variants). Defaults to ``p3.8xlarge``.
+
+         -  ``instance_slots``: The optional number of GPUs for the AWS instance type. This is used
+            in conjunction with the ``instance_type`` in order to specify types which are not listed
+            in the ``instance_type`` list above. Note that some GPUs may not be supported.
+            **WARNING**: *be sure to specify the correct number of GPUs to ensure that provisioner
+            launches the correct number of instances.*
 
          -  ``cpu_slots_allowed``: Whether to allow slots on the CPU instance types. When ``true``,
             and if the instance type doesn't have any GPUs, each instance will provide a single

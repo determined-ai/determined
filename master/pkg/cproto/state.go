@@ -1,6 +1,9 @@
 package cproto
 
 import (
+	"fmt"
+
+	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -27,6 +30,8 @@ const (
 	Running State = "RUNNING"
 	// Terminated state means that the container has exited or has been aborted.
 	Terminated State = "TERMINATED"
+	// Unknown state is a null value.
+	Unknown State = ""
 )
 
 var validTransitions = map[State]map[State]bool{
@@ -35,6 +40,7 @@ var validTransitions = map[State]map[State]bool{
 	Starting:   {Running: true, Terminated: true},
 	Running:    {Terminated: true},
 	Terminated: {},
+	Unknown:    {},
 }
 
 func (s State) checkTransition(new State) error {
@@ -52,7 +58,7 @@ func (s State) MarshalText() (text []byte, err error) {
 func (s *State) UnmarshalText(text []byte) error {
 	parsed := State(text)
 	if _, ok := validTransitions[parsed]; !ok {
-		return errors.Errorf("invalid container state: %s", parsed)
+		return errors.Errorf("invalid container state: %s", text)
 	}
 	*s = parsed
 	return nil
@@ -73,5 +79,19 @@ func (s State) Proto() containerv1.State {
 		return containerv1.State_STATE_TERMINATED
 	default:
 		return containerv1.State_STATE_UNSPECIFIED
+	}
+}
+
+// ParseStateFromDocker parses raw docker state into our state.
+func ParseStateFromDocker(cont types.Container) (State, error) {
+	switch cont.State {
+	case "created", "restarting":
+		return Starting, nil
+	case "paused", "exited":
+		return Terminated, nil
+	case "running":
+		return Running, nil
+	default:
+		return Unknown, errors.New(fmt.Sprintf("unknown container state: %s", cont.State))
 	}
 }
