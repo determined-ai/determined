@@ -1,7 +1,8 @@
-import { Alert, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
+import LoadingWrapper from 'components/LoadingWrapper';
 import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -17,8 +18,6 @@ import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparame
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
-
-import css from './ExperimentSingleTrialTabs.module.scss';
 
 const { TabPane } = Tabs;
 
@@ -49,12 +48,6 @@ export interface Props {
   onTrialLoad?: (trial: TrialDetails) => void;
 }
 
-const NoDataAlert = (
-  <div className={css.base}>
-    <Alert message="No data available." type="warning" />
-  </div>
-);
-
 const ExperimentSingleTrialTabs: React.FC<Props> = (
   { experiment, fetchExperimentDetails, onTrialLoad }: Props,
 ) => {
@@ -68,6 +61,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const basePath = paths.experimentDetails(experiment.id);
+  const loadingState = { isEmpty: wontHaveTrials, isLoading: !trialDetails };
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
@@ -184,14 +178,17 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       onViewLogs={handleViewLogs}>
       <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
-          {trialDetails
-            ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
-            : NoDataAlert}
+          <LoadingWrapper state={loadingState}>
+            <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
+          </LoadingWrapper>
         </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">
-          {trialDetails
-            ? <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
-            : NoDataAlert}
+          <LoadingWrapper state={loadingState}>
+            <TrialDetailsHyperparameters
+              experiment={experiment}
+              trial={trialDetails as TrialDetails}
+            />
+          </LoadingWrapper>
         </TabPane>
         <TabPane key="configuration" tab="Configuration">
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
@@ -206,14 +203,14 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           />
         </TabPane>
         <TabPane key="profiler" tab="Profiler">
-          {trialDetails
-            ? <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
-            : NoDataAlert}
+          <LoadingWrapper state={loadingState}>
+            <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
+          </LoadingWrapper>
         </TabPane>
         <TabPane key="logs" tab="Logs">
-          {trialDetails
-            ? <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
-            : NoDataAlert}
+          <LoadingWrapper state={loadingState}>
+            <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+          </LoadingWrapper>
         </TabPane>
       </Tabs>
     </TrialLogPreview>
