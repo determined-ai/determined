@@ -225,6 +225,15 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
+	// It is possible the trial state changed from active since we decided to launch this
+	// allocation but that, in quick succession, the resource manager provided the allocation with
+	// resources and we sent the cancel message. In this case, rather than let the allocation start,
+	// we send it a cancellation. If this is the first allocation, it will also prevent us from
+	// adding a trial when we are not active, which breaks some other invariants.
+	if t.state != model.ActiveState {
+		return tasks.TaskSpec{}, task.ErrAlreadyCancelled{}
+	}
+
 	if t.generatedKeys == nil {
 		generatedKeys, err := ssh.GenerateKey(t.taskSpec.SSHRsaSize, nil)
 		if err != nil {
@@ -242,6 +251,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 			model.JSONObj(t.searcher.Create.Hparams),
 			t.warmStartCheckpoint,
 			int64(t.searcher.Create.TrialSeed))
+
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial to database")
 		}

@@ -67,3 +67,11 @@ type ErrBehaviorDisabled struct {
 func (e ErrBehaviorDisabled) Error() string {
 	return fmt.Sprintf("%s not enabled for this allocation", e.Behavior)
 }
+
+// ErrAlreadyCancelled is returned to the allocation when it tries to take an action but has an
+// unread cancellation in its inbox.
+type ErrAlreadyCancelled struct{}
+
+func (e ErrAlreadyCancelled) Error() string {
+	return "the allocation was canceled while this message was waiting"
+}
