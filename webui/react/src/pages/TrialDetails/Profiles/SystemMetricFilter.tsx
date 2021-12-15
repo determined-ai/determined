@@ -29,8 +29,8 @@ const SystemMetricFilter: React.FC = () => {
   }, [ updateSettings ]);
 
   const uuidOptions = useMemo(() => {
-    return settings.name && settings.agentId &&
-      systemSeries[settings.name][settings.agentId].filter(uuid => uuid && uuid.length > 0) || [];
+    if (!settings.name || !settings.agentId) return [];
+    return systemSeries?.[settings.name]?.[settings.agentId]?.filter(uuid => !!uuid) || [];
   }, [ settings, systemSeries ]);
 
   return (
@@ -57,7 +57,7 @@ const SystemMetricFilter: React.FC = () => {
           <Option key={agentId} value={agentId}>{agentId}</Option>
         ))}
       </SelectFilter>
-      {uuidOptions.length > 0 && (
+      {uuidOptions.length !== 0 && (
         <SelectFilter
           allowClear={true}
           enableSearchFilter={false}
