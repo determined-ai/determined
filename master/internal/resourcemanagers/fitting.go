@@ -21,6 +21,7 @@ type SoftConstraint func(req *sproto.AllocateRequest, agent *agentState) float64
 // fittingState is the basis for assigning a task to one or more agents for execution.
 type fittingState struct {
 	Agent *agentState
+	// QUESTION is this the sofscore?
 	Score float64
 	// Use hash distances besides scores of fitting here in order to
 	// load balance across agents for tasks that would have no preference

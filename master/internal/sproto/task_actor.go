@@ -74,6 +74,12 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// SetGroupOrder sets the order of the group in the priority scheduler.
+	SetGroupOrder struct {
+		QPosition    float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
 )
 
 // Message returns the textual content of this log message.
