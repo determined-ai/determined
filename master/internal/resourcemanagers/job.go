@@ -2,12 +2,15 @@ package resourcemanagers
 
 import (
 	"github.com/determined-ai/determined/master/internal/job"
+
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
+
+func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
 	isAdded := make(map[model.JobID]*job.RMJobInfo)
 	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
@@ -39,22 +42,27 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 
 func jobStats(taskList *taskList) *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}
-	counted := make(map[model.JobID]bool)
+	reqs := make(AllocReqs, 0)
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		if req.JobID == nil || counted[*req.JobID] {
+		if req.JobID == nil {
 			continue
 		}
-		counted[*req.JobID] = true
-
-		if req.Preemptible {
-			stats.PreemptibleCount++
-		}
-		if req.State == job.SchedulingStateQueued {
+		reqs = append(reqs, req)
+	}
+	jobsMap, _ := reduceToJobQInfo(reqs)
+	for _, jobInfo := range jobsMap {
+		if jobInfo.State == job.SchedulingStateQueued {
 			stats.QueuedCount++
 		} else {
 			stats.ScheduledCount++
 		}
 	}
 	return stats
+}
+
+// assignmentIsScheduled determines if a resource allocation assignment is considered equivalent to
+// being scheduled.
+func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
+	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
 }

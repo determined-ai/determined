@@ -9,7 +9,8 @@ export type UnknownRecord = Record<RecordKey, unknown>;
 export type Primitive = boolean | number | string;
 export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
-export type Range<T = Primitive> = [T, T];
+export type Range<T = Primitive> = [ T, T ];
+export type Eventually<T> = T | Promise<T>;
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
@@ -367,11 +368,11 @@ export interface Checkpoint extends EndTimes {
   validationMetric?: number;
 }
 
-export interface Workload extends EndTimes {
+export interface BaseWorkload extends EndTimes {
   totalBatches: number;
 }
 
-export interface CheckpointWorkload extends Workload {
+export interface CheckpointWorkload extends BaseWorkload {
   resources?: Record<string, number>;
   state: CheckpointState;
   uuid?: string;
@@ -382,10 +383,10 @@ export interface CheckpointWorkloadExtended extends CheckpointWorkload {
   trialId: number;
 }
 
-export interface MetricsWorkload extends Workload {
+export interface MetricsWorkload extends BaseWorkload {
   metrics?: Record<string, number>;
 }
-export interface WorkloadWrapper {
+export interface WorkloadGroup {
   checkpoint?: CheckpointWorkload;
   training?: MetricsWorkload;
   validation?: MetricsWorkload;
@@ -393,7 +394,7 @@ export interface WorkloadWrapper {
 
 // This is to support the steps table in trial details and shouldn't be used
 // elsewhere so we can remove it with a redesign.
-export interface Step extends WorkloadWrapper, StartEndTimes {
+export interface Step extends WorkloadGroup, StartEndTimes {
   batchNum: number;
   training: MetricsWorkload;
 }
@@ -432,7 +433,7 @@ export interface TrialItem extends StartEndTimes {
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  workloads: WorkloadWrapper[];
+  workloads: WorkloadGroup[];
 }
 
 export interface ExperimentItem {

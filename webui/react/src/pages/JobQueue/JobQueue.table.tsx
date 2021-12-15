@@ -7,12 +7,12 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
-import { waitPageUrl } from 'wait';
+import { openCommand } from 'wait';
 
 import css from './JobQueue.module.scss';
 
@@ -36,8 +36,7 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
 
   const task = cmds.find(t => t.id === taskId);
   if (task) {
-    const url = waitPageUrl(task);
-    routeToReactUrl(url);
+    openCommand(task);
   } else {
     throw new Error(`${jobType} ${taskId} not found`);
   }
@@ -49,9 +48,12 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
       return <Link path={paths.experimentDetails(job.entityId)}>{label}</Link>;
     case JobType.NOTEBOOK:
     case JobType.TENSORBOARD:
-      return <Link onClick={() => {
-        routeToTask(job.entityId, job.type);
-      }}>{label}</Link>;
+      return (
+        <Link onClick={() => {
+          routeToTask(job.entityId, job.type);
+        }}>{label}
+        </Link>
+      );
     default:
       return label;
   }
@@ -73,11 +75,13 @@ export const columns: ColumnType<Job>[] = [
     key: 'type',
     render: (_: unknown, record: Job): ReactNode => {
       const title = jobTypeLabel(record.type);
-      const TypeCell = <Tooltip placement="topLeft" title={title}>
-        <div className={''}>
-          <Icon name={jobTypeIconName(record.type)} />
-        </div>
-      </Tooltip>;
+      const TypeCell = (
+        <Tooltip placement="topLeft" title={title}>
+          <div className={''}>
+            <Icon name={jobTypeIconName(record.type)} />
+          </div>
+        </Tooltip>
+      );
       return TypeCell;
     },
     title: 'Type',
@@ -88,11 +92,13 @@ export const columns: ColumnType<Job>[] = [
       let label: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
-          label = <div>{record.name}
-            <Tooltip title="Experiment ID">
-              {` (${record.entityId})`}
-            </Tooltip>
-          </div>;
+          label = (
+            <div>{record.name}
+              <Tooltip title="Experiment ID">
+                {` (${record.entityId})`}
+              </Tooltip>
+            </div>
+          );
           break;
         default:
           label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
@@ -118,11 +124,13 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'slots',
     render: (_: unknown, record: Job): ReactNode => {
-      const cell = <span>
-        <Tooltip title="Allocated (scheduled) slots">{record.allocatedSlots}</Tooltip>
-        {' / '}
-        <Tooltip title="Requested (queued) slots">{record.requestedSlots}</Tooltip>
-      </span>;
+      const cell = (
+        <span>
+          <Tooltip title="Allocated (scheduled) slots">{record.allocatedSlots}</Tooltip>
+          {' / '}
+          <Tooltip title="Requested (queued) slots">{record.requestedSlots}</Tooltip>
+        </span>
+      );
       return cell;
     },
     title: 'Slots',
@@ -130,10 +138,12 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'state',
     render: (_: unknown, record: Job): ReactNode => {
-      return <div className={css.state}>
-        <Badge state={record.summary.state} type={BadgeType.State} />
-        {(!!record?.progress) && <span> {floatToPercent(record.progress, 1)}</span>}
-      </div>;
+      return (
+        <div className={css.state}>
+          <Badge state={record.summary.state} type={BadgeType.State} />
+          {(!!record?.progress) && <span> {floatToPercent(record.progress, 1)}</span>}
+        </div>
+      );
     },
     title: 'Status',
   },

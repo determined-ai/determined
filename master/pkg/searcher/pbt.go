@@ -201,7 +201,9 @@ func (s *pbtSearch) exploreParams(ctx context, old HParamSample) HParamSample {
 	return params
 }
 
-func (s *pbtSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
+func (s *pbtSearch) progress(
+	trialProgress map[model.RequestID]model.PartialUnits,
+	trialsClosed map[model.RequestID]bool) float64 {
 	unitsCompleted := sumTrialLengths(trialProgress)
 	unitsExpected := s.LengthPerRound().MultInt(s.PopulationSize()).MultInt(s.NumRounds()).Units
 	return float64(unitsCompleted) / float64(unitsExpected)

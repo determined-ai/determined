@@ -61,13 +61,31 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	return ops, nil
 }
 
-func (s *gridSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
+func (s *gridSearch) progress(
+	trialProgress map[model.RequestID]model.PartialUnits,
+	trialsClosed map[model.RequestID]bool) float64 {
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
-	unitsCompleted := sumTrialLengths(trialProgress)
+	// Progress is calculated as follows:
+	//   - InvalidHP trials contribute max_length units since they represent one config within the grid
+	//     and are not replaced with a new config as with random search
+	//   - Other early-exit trials contribute max_length units
+	//   - In progress trials contribute units trained
+	unitsCompleted := 0.
+	// trialsClosed includes InvalidHP trials and other exited trials
+	for range trialsClosed {
+		unitsCompleted += float64(s.MaxLength().Units)
+	}
+	// trialProgress records units trained for all trials except for InvalidHP trials.
+	// This can overlap with trialsClosed so we need to be sure to not double count.
+	for k, v := range trialProgress {
+		if !trialsClosed[k] {
+			unitsCompleted += float64(v)
+		}
+	}
 	unitsExpected := s.MaxLength().Units * s.trials
-	return float64(unitsCompleted) / float64(unitsExpected)
+	return unitsCompleted / float64(unitsExpected)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on

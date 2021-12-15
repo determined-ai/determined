@@ -117,17 +117,14 @@ message QueueControl {
   }
 }
 
-// Statistics for (part of) a queue.
+
+// Statistics for a queue.
 message QueueStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "queued_count", "scheduled_count", "preemptible_count" ]
-    }
+    json_schema: { required: [ "queued_count", "scheduled_count" ] }
   };
   // Number of queued jobs in the queue.
   int32 queued_count = 1;
   // Number of scheduled jobs in the queue.
   int32 scheduled_count = 2;
-  // Number of preemptible jobs in the queue.
-  int32 preemptible_count = 3;
 }

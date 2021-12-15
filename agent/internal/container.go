@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -34,6 +33,7 @@ type containerActor struct {
 	containerInfo *types.ContainerJSON
 
 	baseTrialLog model.TrialLog
+	reattached   bool
 }
 
 type (
@@ -43,6 +43,10 @@ type (
 
 func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
 	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
+}
+
+func reattachContainerActor(container cproto.Container, client *client.Client) actor.Actor {
+	return &containerActor{Container: container, client: client, reattached: true}
 }
 
 // getExtraFluentValues computes the container-specific extra fields to be injected into each Fluent
@@ -73,18 +77,21 @@ func getBaseTrialLog(spec *cproto.Spec) model.TrialLog {
 func (c *containerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client, spec: c.spec})
-		c.transition(ctx, cproto.Pulling)
-		pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
-		ctx.Tell(c.docker, pull)
-		c.baseTrialLog = getBaseTrialLog(c.spec)
-
+		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
+		if !c.reattached {
+			c.transition(ctx, cproto.Pulling)
+			pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
+			ctx.Tell(c.docker, pull)
+			c.baseTrialLog = getBaseTrialLog(c.spec)
+		} else {
+			ctx.Tell(c.docker, reattachContainer{ID: c.Container.ID})
+		}
 	case getContainerSummary:
 		ctx.Respond(c.Container)
 
 	case imagePulled:
 		c.transition(ctx, cproto.Starting)
-		ctx.Tell(c.docker, c.spec.RunSpec)
+		ctx.Tell(c.docker, runContainer{c.spec.RunSpec})
 
 	case containerStarted:
 		c.containerInfo = &msg.containerInfo
@@ -107,7 +114,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		c.containerStarted(ctx, aproto.ContainerStarted{ContainerInfo: *c.containerInfo})
 
 	case containerTerminated:
-		c.containerStopped(ctx, aproto.ContainerExited(aproto.ExitCode(msg.ExitCode)))
+		c.containerStopped(ctx, aproto.ContainerExited(msg.ExitCode))
 		ctx.Self().Stop()
 
 	case aproto.SignalContainer:
@@ -178,18 +185,7 @@ func (c *containerActor) makeTrialLog(log aproto.ContainerLog) model.TrialLog {
 		source = "agent"
 		msg = *log.AuxMessage
 	case log.PullMessage != nil:
-		source = "pull"
-		buf := new(bytes.Buffer)
-		if err := log.PullMessage.Display(buf, false); err != nil {
-			msg = err.Error()
-		} else {
-			msg = buf.String()
-			// Docker disables printing the progress bar in non-terminal mode.
-			if msg == "" && log.PullMessage.Progress != nil {
-				msg = log.PullMessage.Progress.String()
-			}
-			msg = strings.TrimSpace(msg)
-		}
+		msg = *log.PullMessage
 	case log.RunMessage != nil:
 		panic(fmt.Sprintf("unexpected run message from container on Fluent logging: %v", log.RunMessage))
 	default:
@@ -219,20 +215,22 @@ func (c *containerActor) transition(ctx *actor.Context, newState cproto.State) {
 }
 
 func (c *containerActor) containerStarted(ctx *actor.Context, started aproto.ContainerStarted) {
-	ctx.Log().Infof("transitioning state from %s to %s", c.State, cproto.Running)
-	c.Container = c.Transition(cproto.Running)
+	newState := cproto.Running
+	ctx.Log().Infof("transitioning state from %s to %s", c.State, newState)
+	c.Container = c.Transition(newState)
 	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
 		Container: c.Container, ContainerStarted: &started})
 }
 
 func (c *containerActor) containerStopped(ctx *actor.Context, stopped aproto.ContainerStopped) {
-	if c.State == cproto.Terminated {
-		ctx.Log().Infof(
-			"attempted transition of state from %s to %s", cproto.Terminated, cproto.Terminated)
-	} else {
-		ctx.Log().Infof("transitioning state from %s to %s", c.State, cproto.Terminated)
-		c.Container = c.Transition(cproto.Terminated)
-		ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
-			Container: c.Container, ContainerStopped: &stopped})
+	newState := cproto.Terminated
+	if c.State == newState {
+		ctx.Log().Infof("attempted transition of state from %s to %s", newState, newState)
+		return
 	}
+
+	ctx.Log().Infof("transitioning state from %s to %s", c.State, newState)
+	c.Container = c.Transition(newState)
+	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
+		Container: c.Container, ContainerStopped: &stopped})
 }

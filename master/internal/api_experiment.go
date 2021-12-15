@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
@@ -373,7 +375,7 @@ func (a *apiServer) PreviewHPSearch(
 		case expconf.Records:
 			return []*experimentv1.RunnableOperation{
 				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
 						Unit:   experimentv1.TrainingLength_UNIT_RECORDS,
 						Length: int32(op.Length.Units),
@@ -584,6 +586,8 @@ func (a *apiServer) PatchExperiment(
 			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
+			prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
+				req.Experiment.Labels)
 		case path == "description":
 			exp.Description = req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
@@ -725,6 +729,13 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
 	a.m.system.ActorOf(experimentsAddr.Child(e.ID), e)
+
+	if req.Activate {
+		_, err = a.ActivateExperiment(ctx, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to activate experiment: %s", err)
+		}
+	}
 
 	protoExp, err := a.getExperiment(e.ID)
 	if err != nil {

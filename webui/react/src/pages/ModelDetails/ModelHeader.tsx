@@ -1,5 +1,5 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
@@ -12,7 +12,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 
 import css from './ModelHeader.module.scss';
 
@@ -35,28 +35,35 @@ const ModelHeader: React.FC<Props> = (
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
-      content:
-      (<Space>
-        <Avatar name={model.username} />
-        {model.username + ' on ' +
-      formatDatetime(model.creationTime, 'MMM D, YYYY', false)}
-      </Space>),
+      content: (
+        <Space>
+          <Avatar name={model.username} />
+          {`${model.username} on ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+        </Space>
+      ),
       label: 'Created by',
     },
     { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
     {
-      content: <InlineEditor
-        placeholder="Add description..."
-        value={model.description ?? ''}
-        onSave={onSaveDescription} />,
+      content: (
+        <InlineEditor
+          disabled={model.archived}
+          placeholder="Add description..."
+          value={model.description ?? ''}
+          onSave={onSaveDescription}
+        />
+      ),
       label: 'Description',
     },
     {
-      content: <TagList
-        ghost={false}
-        tags={model.labels ?? []}
-        onChange={onUpdateTags}
-      />,
+      content: (
+        <TagList
+          disabled={model.archived}
+          ghost={false}
+          tags={model.labels ?? []}
+          onChange={onUpdateTags}
+        />
+      ),
       label: 'Tags',
     } ] as InfoRow[];
   }, [ model, onSaveDescription, onUpdateTags ]);
@@ -95,15 +102,26 @@ const ModelHeader: React.FC<Props> = (
           <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
+      {model.archived && (
+        <Alert
+          message="This model has been archived and is now read-only."
+          showIcon
+          style={{ marginTop: 8 }}
+          type="warning"
+        />
+      )}
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <Space className={css.nameAndIcon}>
             <Icon name="model" size="big" />
             <h1 className={css.name}>
               <InlineEditor
+                allowClear={false}
+                disabled={model.archived}
                 placeholder="Add name..."
                 value={model.name}
-                onSave={onSaveName} />
+                onSave={onSaveName}
+              />
             </h1>
           </Space>
           <Space size="small">
@@ -118,7 +136,7 @@ const ModelHeader: React.FC<Props> = (
                     disabled={!isDeletable}
                     key="delete-model"
                     onClick={() => showConfirmDelete(model)}>
-                  Delete
+                    Delete
                   </Menu.Item>
                 </Menu>
               )}

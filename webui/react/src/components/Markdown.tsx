@@ -85,7 +85,8 @@ const Markdown: React.FC<Props> = ({
           />
         </div>
       )}
-    </div>);
+    </div>
+  );
 };
 
 export default Markdown;

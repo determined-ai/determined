@@ -68,7 +68,7 @@ module "ip" {
  *****************************************/
 
 module "filestore" {
-  count = var.filestore_address == "" ? 1 : 0
+  count = (!var.no_filestore && var.filestore_address == "") ? 1 : 0
 
   source = "./modules/filestore"
 
@@ -80,7 +80,13 @@ module "filestore" {
 }
 
 locals {
-  filestore_address = "${var.filestore_address=="" ? module.filestore[0].address : var.filestore_address}"
+  filestore_address = (
+    var.no_filestore ?
+    "" :
+    var.filestore_address==""
+      ? module.filestore[0].address
+      : var.filestore_address
+  )
 }
 
 

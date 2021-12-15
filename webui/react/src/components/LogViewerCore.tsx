@@ -16,7 +16,7 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { Log, LogLevel, RecordKey } from 'types';
 import { clone } from 'utils/data';
-import { formatDatetime } from 'utils/date';
+import { formatDatetime } from 'utils/datetime';
 import { copyToClipboard } from 'utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
@@ -70,7 +70,7 @@ const defaultLocal = {
 const formatClipboardHeader = (log: Log): string => {
   const format = `%${MAX_DATETIME_LENGTH - 1}s `;
   const level = `<${log.level || ''}>`;
-  const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+  const datetime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
   return sprintf(`%-9s ${format}`, level, datetime);
 };
 
@@ -139,7 +139,7 @@ const LogViewerCore: React.FC<Props> = ({
         return false;
       })
       .map(log => {
-        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+        const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
         return { ...log, formattedTime };
       })
       .sort(logSorter(sortKey));
@@ -403,20 +403,23 @@ const LogViewerCore: React.FC<Props> = ({
             aria-label="Copy to Clipboard"
             disabled={logs.length === 0}
             icon={<Icon name="clipboard" />}
-            onClick={handleCopyToClipboard} />
+            onClick={handleCopyToClipboard}
+          />
         </Tooltip>
         <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
           <Button
             aria-label="Toggle Fullscreen Mode"
             icon={<Icon name="fullscreen" />}
-            onClick={handleFullScreen} />
+            onClick={handleFullScreen}
+          />
         </Tooltip>
         {onDownload && (
           <Tooltip placement="bottomRight" title="Download Logs">
             <Button
               aria-label="Download Logs"
               icon={<Icon name="download" />}
-              onClick={handleDownload} />
+              onClick={handleDownload}
+            />
           </Tooltip>
         )}
       </Space>
@@ -463,7 +466,8 @@ const LogViewerCore: React.FC<Props> = ({
               aria-label="Scroll to Oldest"
               className={[ css.scrollToTop, css.show ].join(' ')}
               icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToOldest} />
+              onClick={handleScrollToOldest}
+            />
           </Tooltip>
           <Tooltip
             placement="left"
@@ -472,7 +476,8 @@ const LogViewerCore: React.FC<Props> = ({
               aria-label="Enable Tailing"
               className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing} />
+              onClick={handleEnableTailing}
+            />
           </Tooltip>
         </div>
       </div>

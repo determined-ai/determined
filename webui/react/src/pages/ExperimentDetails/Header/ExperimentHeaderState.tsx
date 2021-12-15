@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Icon from 'components/Icon';
 import StopExperimentModal, { ActionType } from 'components/StopExperimentModal';
+import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
 import { activateExperiment, pauseExperiment } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentBase, JobState, RunState } from 'types';
-import { stateToLabel } from 'utils/types';
+import { ExperimentBase, RunState } from 'types';
 
 import css from './ExperimentHeaderState.module.scss';
 
@@ -117,23 +117,15 @@ const ExperimentHeaderState: React.FC<Props> = ({ experiment }: Props) => {
   const backgroundColor = getStateColorCssVar(experiment.state);
   return (
     <div className={css.base} style={{ backgroundColor }}>
-
-      {experiment.state === RunState.Active && (
+      {pausableRunStates.has(experiment.state) && (
         <PauseButton experiment={experiment} />
       )}
-
       {experiment.state === RunState.Paused && (
         <PlayButton experiment={experiment} />
       )}
-
-      {[ RunState.Active,
-        RunState.Paused,
-        JobState.QUEUED,
-        JobState.SCHEDULED,
-        JobState.SCHEDULEDBACKFILLED ].includes(experiment.state) && (
+      {!terminalRunStates.has(experiment.state) && (
         <StopButton experiment={experiment} />
       )}
-
       <span className={css.state}>{stateToLabel(experiment.state)}</span>
 
     </div>

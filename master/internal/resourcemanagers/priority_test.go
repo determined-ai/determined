@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
@@ -649,9 +650,11 @@ func AddUnallocatedTasks(
 		ref, created := system.ActorOf(actor.Addr(mockTask.id), mockTask)
 		assert.Assert(t, created)
 
+		jobID := model.JobID(mockTask.jobID)
 		req := &sproto.AllocateRequest{
 			AllocationID: mockTask.id,
 			SlotsNeeded:  mockTask.slotsNeeded,
+			JobID:        &jobID,
 			Label:        mockTask.label,
 			TaskActor:    ref,
 			Preemptible:  !mockTask.nonPreemptible,

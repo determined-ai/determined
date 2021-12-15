@@ -26,7 +26,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.4-dev0
+    default: 0.17.6-dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -848,6 +848,11 @@ commands:
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
+      - run:
+          command: |
+            if ! [ -x "$(command -v socat)" ]; then
+              apt update && apt install -y socat
+            fi
 
   start-devcluster:
     parameters:
@@ -1152,6 +1157,7 @@ jobs:
         default: false
     docker:
       - image: cimg/node:14.16
+    resource_class: large
     steps:
       - checkout
       - react-get-deps
@@ -1169,10 +1175,16 @@ jobs:
   test-unit-react:
     docker:
       - image: cimg/node:14.16
+        environment:
+          CI: "true"
     steps:
       - checkout
       - react-get-deps
-      - run: make -C webui/react test
+      - run: make -C webui/react test-ci
+      - store_test_results:
+          path: webui/react/coverage
+      - store_artifacts:
+          path: webui/react/coverage/lcov-report
 
   build-storybook:
     docker:
@@ -1792,7 +1804,7 @@ jobs:
       - slack/status:
           fail_only: True
           only_for_branches: master
-          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
           channel: "devops-ag"
 
 workflows:

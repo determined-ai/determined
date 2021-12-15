@@ -9,21 +9,22 @@ import Section from 'components/Section';
 import {
   defaultRowClassName, getFullPaginationConfig,
 } from 'components/Table';
+import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
-import { cancelExperiment, getJobQ, killCommand, killExperiment,
+import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
+import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
-import { V1SchedulerTypeToLabel } from 'utils/types';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -45,7 +46,7 @@ const JobQueue: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const [ selectedRp, setSelectedRp ] = useState<ResourcePool>();
-  const [ ps, setPs ] = useState<{isLoading: boolean}>({ isLoading: true }); // house keeping states
+  const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
   const {
     settings,
     updateSettings,
@@ -54,38 +55,45 @@ const JobQueue: React.FC = () => {
 
   const fetchResourcePools = useFetchResourcePools(canceler);
 
-  const fetchJobs = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     if (!selectedRp?.name) return;
+
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      const tJobs = await getJobQ(
-        {
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-          orderBy,
-          resourcePool: selectedRp.name,
-        },
-        { signal: canceler.signal },
-      );
-      setJobs(tJobs.jobs);
-      tJobs.pagination.total && setTotal(tJobs.pagination.total);
-      return tJobs;
-    } catch (e) { } finally {
-      setPs(cur => ({ ...cur, isLoading: false }));
-    }
-  }, [ selectedRp?.name, canceler, settings ]);
-
-  const fetchAll = useCallback(async () => {
-    try {
       const promises = [
-        detApi.Internal.getJobQueueStats().then(stats => {
-          setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
-        }),
-        fetchJobs(),
-      ] as Promise<unknown>[];
-      await Promise.all(promises);
-    } catch (e) { }
-  }, [ fetchJobs ]);
+        getJobQ(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+            orderBy,
+            resourcePool: selectedRp.name,
+          },
+          { signal: canceler.signal },
+        ),
+        getJobQStats({}, { signal: canceler.signal }),
+      ] as [ Promise<GetJobsResponse>, Promise<Api.V1GetJobQueueStatsResponse> ];
+
+      const [ jobs, stats ] = await Promise.all(promises);
+
+      // Process jobs response.
+      setJobs(jobs.jobs);
+      if (jobs.pagination.total) setTotal(jobs.pagination.total);
+
+      // Process job stats response.
+      setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicSubject: 'Unable to fetch job queue and stats.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    } finally {
+      setPageState(cur => ({ ...cur, isLoading: false }));
+    }
+  }, [ canceler.signal, selectedRp?.name, settings ]);
 
   usePolling(fetchAll);
 
@@ -136,24 +144,26 @@ const JobQueue: React.FC = () => {
       switch (col.key) {
         case 'actions':
           col.render = (_, record) => {
-            return <div>
-              <ActionDropdown<JobAction>
-                actionOrder={[
-                  JobAction.ManageJob,
-                  JobAction.MoveToTop,
-                  JobAction.Cancel,
-                  JobAction.Kill,
-                ]}
-                confirmations={{
-                  [JobAction.Cancel]: { cancelText: 'Abort' },
-                  [JobAction.Kill]: {},
-                  [JobAction.MoveToTop]: {},
-                }}
-                id={record.name}
-                kind="job"
-                onTrigger={dropDownOnTrigger(record)}
-              />
-            </div>;
+            return (
+              <div>
+                <ActionDropdown<JobAction>
+                  actionOrder={[
+                    JobAction.ManageJob,
+                    JobAction.MoveToTop,
+                    JobAction.Cancel,
+                    JobAction.Kill,
+                  ]}
+                  confirmations={{
+                    [JobAction.Cancel]: { cancelText: 'Abort' },
+                    [JobAction.Kill]: {},
+                    [JobAction.MoveToTop]: {},
+                  }}
+                  id={record.name}
+                  kind="job"
+                  onTrigger={dropDownOnTrigger(record)}
+                />
+              </div>
+            );
           };
           break;
         case SCHEDULING_VAL_KEY:
@@ -171,10 +181,12 @@ const JobQueue: React.FC = () => {
           break;
         case 'jobsAhead':
           col.render = (_: unknown, record) => {
-            return <div className={css.centerVertically}>
-              {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
-              {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
-            </div>;
+            return (
+              <div className={css.centerVertically}>
+                {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
+                {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+              </div>
+            );
           };
           if (selectedRp && !orderdQTypes.includes(selectedRp.schedulerType)) {
             col.sorter = undefined;
@@ -204,16 +216,16 @@ const JobQueue: React.FC = () => {
       resetSettings([ 'selectedRp' ]);
     } else if (!selectedRp) {
       let pool: ResourcePool | undefined = undefined;
-      if (settings.selectedRp) {
-        pool = resourcePools.find(pool => pool.name === settings.selectedRp);
+      if (settings.selectedPool) {
+        pool = resourcePools.find(pool => pool.name === settings.selectedPool);
       }
       if (!pool) {
         pool = resourcePools[0];
       }
-      updateSettings({ selectedRp: pool.name });
+      updateSettings({ selectedPool: pool.name });
       setSelectedRp(pool);
     }
-  }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedRp ]);
+  }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedPool ]);
 
   useEffect(() => {
     fetchResourcePools();
@@ -221,11 +233,11 @@ const JobQueue: React.FC = () => {
   }, [ canceler, fetchResourcePools ]);
 
   useEffect(() => {
-    setPs(cur => ({ ...cur, isLoading: true }));
-    fetchJobs();
+    setPageState(cur => ({ ...cur, isLoading: true }));
+    fetchAll();
     return () => canceler.abort();
   }, [
-    fetchJobs,
+    fetchAll,
     canceler,
     settings.sortDesc,
     settings.sortKey,
@@ -245,9 +257,10 @@ const JobQueue: React.FC = () => {
 
   const rpSwitcher = useCallback((rpName: string) => {
     return () => {
-      const rp = resourcePools.find(rp => rp.name === rpName) as ResourcePool;
+      const rp = resourcePools.find(rp => rp.name === rpName);
+      if (!rp) return;
       setSelectedRp(rp);
-      updateSettings({ selectedRp: rp.name });
+      updateSettings({ selectedPool: rp.name });
     };
   }, [ resourcePools, updateSettings ]);
 
@@ -255,14 +268,16 @@ const JobQueue: React.FC = () => {
   const tableTitle = useMemo(() => {
     if (!selectedRp) return '';
     const schedulerType = V1SchedulerTypeToLabel[selectedRp.schedulerType];
-    return <div>
-      {`${capitalize(selectedRp.name)} (${schedulerType.toLowerCase()}) `}
-      <Icon name="info" title={`Job Queue for resource pool "${selectedRp.name}"`} />
-    </div>;
+    return (
+      <div>
+        {`${capitalize(selectedRp.name)} (${schedulerType.toLowerCase()}) `}
+        <Icon name="info" title={`Job Queue for resource pool "${selectedRp.name}"`} />
+      </div>
+    );
   }, [ selectedRp ]);
 
   return (
-    <Page className={css.base} id="jobs" title="Job Queues by Resource Pool">
+    <Page className={css.base} id="jobs" title="Job Queue by Resource Pool">
       <Section hideTitle title="Resource Pools">
         <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
           {rpStats.map((stats, idx) => {
@@ -271,12 +286,14 @@ const JobQueue: React.FC = () => {
             if (!isTargetRp) {
               onClick = rpSwitcher(stats.resourcePool);
             }
-            return <RPStatsOverview
-              focused={isTargetRp}
-              key={idx}
-              stats={stats}
-              onClick={onClick}
-            />;
+            return (
+              <RPStatsOverview
+                focused={isTargetRp}
+                key={idx}
+                stats={stats}
+                onClick={onClick}
+              />
+            );
           })}
         </Grid>
       </Section>
@@ -284,7 +301,7 @@ const JobQueue: React.FC = () => {
         <ResponsiveTable<Job>
           columns={columns}
           dataSource={jobs}
-          loading={ps.isLoading}
+          loading={pageState.isLoading}
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
@@ -297,13 +314,14 @@ const JobQueue: React.FC = () => {
           onChange={handleTableChange(columns, settings, updateSettings)}
         />
       </Section>
-      {!!managingJob && !!selectedRp &&
+      {!!managingJob && !!selectedRp && (
         <ManageJob
           job={managingJob}
           schedulerType={selectedRp.schedulerType}
           selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
-          onFinish={hideModal} />
-      }
+          onFinish={hideModal}
+        />
+      )}
 
     </Page>
   );

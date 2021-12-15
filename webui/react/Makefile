@@ -36,13 +36,13 @@ get-deps: node_modules/done.stamp
 .PHONY: build
 build: build/done.stamp
 
-build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json config-overrides.js
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js
 	npm run build
 	touch $@
 
 .PHONY: build-storybook
 build-storybook:
-	npm run build-storybook
+	npm run storybook:build
 
 .PHONY: clean
 clean:
@@ -79,3 +79,7 @@ fmt: fmt-js fmt-css
 .PHONY: test
 test:
 	npm run test -- --watchAll=false
+
+.PHONY: test-ci
+test-ci:
+	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --watchAll=false --reporters=jest-junit

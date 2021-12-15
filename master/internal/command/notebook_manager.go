@@ -37,7 +37,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		return createGenericCommandActor(
-			ctx, n.db, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg, n.mConfig,
+			ctx, n.db, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg,
 		)
 
 	default:

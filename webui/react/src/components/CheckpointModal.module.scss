@@ -1,6 +1,8 @@
 .base {
   display: flex;
   flex-direction: column;
+  max-height: 400px;
+  overflow: auto;
 
   .row {
     display: flex;

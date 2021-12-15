@@ -274,6 +274,8 @@ message CreateExperimentRequest {
   bool validate_only = 3;
   // Parent experiment id.
   int32 parent_id = 4;
+  // Request to auto-activate the experiment.
+  bool activate = 5;
 }
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {

@@ -1,9 +1,9 @@
 import { Tooltip } from 'antd';
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
+import { stateToLabel } from 'constants/states';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { RunState, SlotState } from 'types';
-import { stateToLabel } from 'utils/types';
 
 import css from './Badge.module.scss';
 
@@ -41,9 +41,11 @@ const Badge: React.FC<BadgeProps> = ({
     classes.push(css.header);
   }
 
-  const badge = <span className={classes.join(' ')} style={style}>
-    {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
-  </span>;
+  const badge = (
+    <span className={classes.join(' ')} style={style}>
+      {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
+    </span>
+  );
 
   return tooltip ? <Tooltip title={tooltip}>{badge}</Tooltip> : badge;
 };

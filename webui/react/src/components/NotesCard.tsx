@@ -10,20 +10,22 @@ import css from './NotesCard.module.scss';
 import Spinner from './Spinner';
 
 interface Props {
+  disabled?: boolean;
   notes: string;
   onSave?: (editedNotes: string) => Promise<void>;
   style?: React.CSSProperties;
 }
 
-const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
+const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: Props) => {
   const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
   const location = useLocation();
 
   const editNotes = useCallback(() => {
+    if (disabled) return;
     setIsEditing(true);
-  }, []);
+  }, [ disabled ]);
 
   const cancelEdit = useCallback(() => {
     setIsEditing(false);
@@ -60,9 +62,11 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
           <Button size="small" type="primary" onClick={saveNotes}>Save</Button>
         </Space>
       ) : (
-        <Tooltip title="Edit">
-          <EditOutlined onClick={editNotes} />
-        </Tooltip>
+        disabled || (
+          <Tooltip title="Edit">
+            <EditOutlined onClick={editNotes} />
+          </Tooltip>
+        )
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
@@ -83,7 +87,8 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
               'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
           );
         }}
-        when={editedNotes !== notes} />
+        when={editedNotes !== notes}
+      />
     </Card>
   );
 };

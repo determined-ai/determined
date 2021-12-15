@@ -111,16 +111,24 @@ func (s *tournamentSearch) trialExitedEarly(
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
-func (s *tournamentSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
+func (s *tournamentSearch) progress(
+	trialProgress map[model.RequestID]model.PartialUnits,
+	trialsClosed map[model.RequestID]bool) float64 {
 	sum := 0.0
-	for id, subSearch := range s.subSearches {
+	for subSearchID, subSearch := range s.subSearches {
 		subSearchTrialProgress := map[model.RequestID]model.PartialUnits{}
 		for rID, p := range trialProgress {
-			if id == s.TrialTable[rID] {
+			if subSearchID == s.TrialTable[rID] {
 				subSearchTrialProgress[rID] = p
 			}
 		}
-		sum += subSearch.progress(subSearchTrialProgress)
+		subSearchTrialsClosed := map[model.RequestID]bool{}
+		for rID, closed := range trialsClosed {
+			if subSearchID == s.TrialTable[rID] {
+				subSearchTrialsClosed[rID] = closed
+			}
+		}
+		sum += subSearch.progress(subSearchTrialProgress, subSearchTrialsClosed)
 	}
 	return sum / float64(len(s.subSearches))
 }

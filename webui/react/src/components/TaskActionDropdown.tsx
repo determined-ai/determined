@@ -6,6 +6,8 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Icon from 'components/Icon';
+import { cancellableRunStates, deletableRunStates, pausableRunStates,
+  terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
@@ -16,10 +18,7 @@ import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
 import { capitalize } from 'utils/string';
-import { isExperimentTask } from 'utils/task';
-import {
-  cancellableRunStates, deletableRunStates, isTaskKillable, terminalRunStates,
-} from 'utils/types';
+import { isExperimentTask, isTaskKillable } from 'utils/task';
 import { openCommand } from 'wait';
 
 import css from './ActionDropdown.module.scss';
@@ -41,11 +40,11 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
   const isUnarchivable = isExperiment && isExperimentTerminal && (task as ExperimentTask).archived;
   const isKillable = isTaskKillable(task);
   const isPausable = isExperiment
-    && task.state === RunState.Active;
+    && pausableRunStates.has(task.state as RunState);
   const isResumable = isExperiment
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
-    && cancellableRunStates.includes(task.state as RunState);
+    && cancellableRunStates.has(task.state as RunState);
   const isDeletable = (
     isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
   ) ? deletableRunStates.has(task.state) : false;
@@ -154,9 +153,11 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
   if (isExperiment) {
     menuItems.push(<Menu.Item key={Action.OpenTensorBoard}>View in TensorBoard</Menu.Item>);
   } else {
-    menuItems.push(<Menu.Item key="viewLogs">
-      <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
-    </Menu.Item>);
+    menuItems.push(
+      <Menu.Item key="viewLogs">
+        <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
+      </Menu.Item>,
+    );
   }
 
   if (menuItems.length === 0) {

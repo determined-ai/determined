@@ -1,5 +1,5 @@
 WITH mv AS (
-  SELECT version, checkpoint_uuid, model_versions.id, creation_time, name, comment, metadata, labels, notes, username
+  SELECT version, checkpoint_uuid, model_versions.id, creation_time, name, comment, metadata, labels, notes, username, last_updated_time
     FROM model_versions
     LEFT JOIN users ON users.id = model_versions.user_id
     WHERE model_id = $1 AND model_versions.id = $2
@@ -44,5 +44,5 @@ SELECT
     mv.version, mv.id,
     mv.creation_time, mv.notes,
     mv.name, mv.comment, mv.metadata,
-    mv.username
+    mv.username, mv.last_updated_time
     FROM c, m, mv;

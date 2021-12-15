@@ -60,6 +60,7 @@ git clone git@github.com:determined-ai/determined.git
 - Java (>= 7)
 - cURL (>= 7)
 - jq (>= 1.6)
+- socat (>= 1.7)
 
 ### Building Determined
 

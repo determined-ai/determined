@@ -37,7 +37,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		return createGenericCommandActor(
-			ctx, s.db, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg, s.mConfig,
+			ctx, s.db, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg,
 		)
 
 	default:

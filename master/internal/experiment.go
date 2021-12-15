@@ -86,7 +86,6 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		rmJobInfo             *job.RMJobInfo
-		mConfig               *config.Config
 	}
 )
 
@@ -152,7 +151,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
-		mConfig: master.config,
 	}, nil
 }
 
@@ -170,6 +168,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Tell(e.rm, sproto.SetGroupPriority{
 			Priority: e.Config.Resources().Priority(),
 			Handler:  ctx.Self(),
+		})
+
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
+			JobID:    e.JobID,
+			JobActor: ctx.Self(),
 		})
 
 		if e.restored {
@@ -301,6 +304,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().Error(err)
 		}
 
+		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
+			JobID: e.JobID,
+		})
+
 		state := model.StoppingToTerminalStates[e.State]
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
@@ -405,7 +412,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.clearJobInfo()
 
 	default:
-		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil
@@ -615,9 +622,9 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Name:           e.Config.Name().String(),
 	}
 
-	j.IsPreemptible = config.ReadPreemptionStatus(e.mConfig, j.ResourcePool, &e.Config)
-	j.Priority = int32(config.ReadPriority(e.mConfig, j.ResourcePool, &e.Config))
-	j.Weight = config.ReadWeight(e.mConfig, j.ResourcePool, &e.Config)
+	j.IsPreemptible = config.ReadPreemptionStatus(j.ResourcePool, &e.Config)
+	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
+	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
 	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	return &j

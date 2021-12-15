@@ -119,7 +119,7 @@ def validate_args(args: argparse.Namespace) -> None:
     if args.cpu_node_pool_name is None:
         args.cpu_node_pool_name = args.cluster_id + "-cpu-pool"
     if not Path(args.helm_dir).exists():
-        raise ValueError("Please specify valid --helm_dir")
+        raise ValueError("Please specify valid --helm-dir")
 
 
 def create_cluster(args: argparse.Namespace) -> None:

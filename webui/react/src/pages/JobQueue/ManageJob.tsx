@@ -62,8 +62,8 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable} </p>
       <RPStatsOverview stats={selectedRPStats} />
       <p>Jobs in queue:
-        {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount + ' '}
-        ({selectedRPStats.stats.preemptibleCount} preemptible) </p>
+        {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
+      </p>
       <p>Spot instance pool: {!!curRP?.details.aws?.spotEnabled + ''}</p>
     </div>
   );
@@ -77,10 +77,10 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       title={'Manage Job ' + truncate(job.jobId, 6, '')}
       visible={true}
       onCancel={onFinish}
-      onOk={onOk}
-    >
+      onOk={onOk}>
       <p>There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'No'} job
-        {isSingular ? '' : 's'} ahead of this job.</p>
+        {isSingular ? '' : 's'} ahead of this job.
+      </p>
       <Form
         // className={css.form}
         // hidden={state.isAdvancedMode}
@@ -92,13 +92,11 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         }}
         labelCol={{ span: 6 }}
         name="form basic"
-        ref={formRef}
-      >
+        ref={formRef}>
         <Form.Item
           extra={RPDetails}
           label="Resource Pool"
-          name="resourcePool"
-        >
+          name="resourcePool">
           <Select disabled>
             {resourcePools.map(rp => (
               <Option key={rp.name} value={rp.name}>{rp.name}</Option>
@@ -108,35 +106,29 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         <Form.Item
           extra="Change the resource request. Note: this can only be modified before a job is run."
           label="Slots"
-          name="slots"
-        >
+          name="slots">
           <Input disabled type="number" />
         </Form.Item>
         <Form.Item
           label="Q Position (DEV)"
-          name="queuePosition"
-        // rules={[ { message: 'Please provide a max length.', required: true } ]}
-        >
+          name="queuePosition">
           <Input disabled type="number" />
         </Form.Item>
-        {schedulerType === V1SchedulerType.PRIORITY &&
+        {schedulerType === V1SchedulerType.PRIORITY && (
           <Form.Item
             extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest priority."
             label="Priority"
-            name="priority"
-          >
+            name="priority">
             <Input addonAfter="out of 99" type="number" />
           </Form.Item>
-        }
-        {schedulerType === V1SchedulerType.FAIRSHARE &&
+        )}
+        {schedulerType === V1SchedulerType.FAIRSHARE && (
           <Form.Item
             label="Weight"
-            name="weight"
-          // rules={[ { message: 'Please provide a new experiment name.', required: true } ]}
-          >
+            name="weight">
             <Input disabled type="number" />
           </Form.Item>
-        }
+        )}
       </Form>
       <Json json={job} />
     </Modal>

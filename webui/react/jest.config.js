@@ -1,8 +1,7 @@
-/* This file is read through react-app-rewired into CRA */
+/* eslint-disable @typescript-eslint/no-var-requires */
+const { createJestConfig } = require('@craco/craco');
 
-module.exports = {
-  transformIgnorePatterns: [
-    'node_modules\/(?!(monaco-editor)\/)',
-  ],
-  verbose: false,
-};
+const cracoConfig = require('./craco.config');
+const jestConfig = createJestConfig(cracoConfig);
+
+module.exports = jestConfig;

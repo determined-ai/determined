@@ -5,23 +5,16 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { BrandingType } from 'types';
 
-const updateFavicon = (iconPath: string): void => {
-  const linkEl: HTMLLinkElement | null = document.querySelector("link[rel*='shortcut icon']");
-  if (!linkEl) return;
-  linkEl.type = 'image/png';
-  linkEl.href = iconPath;
-};
-
-export const updateFaviconType = (active: boolean, branding = BrandingType.Determined): void => {
-  const suffixDev = process.env.IS_DEV ? '-dev' : '';
-  const suffixActive = active ? '-active' : '';
-  updateFavicon(`${process.env.PUBLIC_URL}/${branding}/favicon${suffixDev}${suffixActive}.png`);
-};
-
-export const getCookie = (name: string): string | null => {
-  const regex = new RegExp(`(?:(?:^|.*;\\s*)${name}\\s*\\=\\s*([^;]*).*$)|^.*$`);
-  const value = document.cookie.replace(regex, '$1');
-  return value ? value : null;
+/*
+ * In mobile view the definition of viewport height varies between
+ * whether it should include the chrome's vertical space or not.
+ * This function dynamically calculates the available height on the
+ * browser view minus the chrome height.
+ * https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
+ */
+export const correctViewportHeight = (): void => {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
 };
 
 const downloadBlob = (filename: string, data: Blob): void => {
@@ -73,14 +66,10 @@ const generateLogStringBuffer = (count: number, avgLength: number): string => {
   return stringBuffer;
 };
 
-export const simulateLogsDownload = (numCharacters: number): number => {
-  const start = Date.now();
-  const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
-  const chunkCount = Math.ceil(numCharacters / MAX_PART_SIZE);
-  const parts = new Array(chunkCount).fill(0)
-    .map(() => generateLogStringBuffer(Math.pow(2, 20), 128));
-  downloadText('simulated-logs.txt', parts);
-  return (Date.now() - start);
+export const getCookie = (name: string): string | null => {
+  const regex = new RegExp(`(?:(?:^|.*;\\s*)${name}\\s*\\=\\s*([^;]*).*$)|^.*$`);
+  const value = document.cookie.replace(regex, '$1');
+  return value ? value : null;
 };
 
 /*
@@ -96,14 +85,25 @@ export const refreshPage = (): void => {
   routeToExternalUrl(url.toString());
 };
 
-/*
- * In mobile view the definition of viewport height varies between
- * whether it should include the chrome's vertical space or not.
- * This function dynamically calculates the available height on the
- * browser view minus the chrome height.
- * https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
- */
-export const correctViewportHeight = (): void => {
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
+export const simulateLogsDownload = (numCharacters: number): number => {
+  const start = Date.now();
+  const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
+  const chunkCount = Math.ceil(numCharacters / MAX_PART_SIZE);
+  const parts = new Array(chunkCount).fill(0)
+    .map(() => generateLogStringBuffer(Math.pow(2, 20), 128));
+  downloadText('simulated-logs.txt', parts);
+  return (Date.now() - start);
+};
+
+const updateFavicon = (iconPath: string): void => {
+  const linkEl: HTMLLinkElement | null = document.querySelector("link[rel*='shortcut icon']");
+  if (!linkEl) return;
+  linkEl.type = 'image/png';
+  linkEl.href = iconPath;
+};
+
+export const updateFaviconType = (active: boolean, branding = BrandingType.Determined): void => {
+  const suffixDev = process.env.IS_DEV ? '-dev' : '';
+  const suffixActive = active ? '-active' : '';
+  updateFavicon(`${process.env.PUBLIC_URL}/${branding}/favicon${suffixDev}${suffixActive}.png`);
 };

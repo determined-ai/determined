@@ -55,33 +55,26 @@ func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*ac
 }
 
 func (f *fairShare) createJobQInfo(
-	rp *ResourcePool,
+	taskList *taskList,
 ) (job.AQueue, map[model.JobID]*actor.Ref) {
-	for _, resAllocated := range rp.taskList.allocations {
-		req := rp.taskList.taskByID[resAllocated.ID]
-		if req.JobID == nil {
-			continue
-		}
-		req.State = job.SchedulingStateScheduled
-	}
 	reqs := make(AllocReqs, 0)
-	for _, req := range rp.taskList.taskByID {
+	for _, req := range taskList.taskByID {
 		reqs = append(reqs, req)
 	}
-	jobQ, jobActors := mergeToJobQInfo(reqs)
+	jobQ, jobActors := reduceToJobQInfo(reqs)
 	for _, j := range jobQ {
-		j.JobsAhead = -1 // we don't support job order for fairshare scheduler.
+		j.JobsAhead = -1 // unsupported.
 	}
 	return jobQ, jobActors
 }
 
 func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	jobQ, _ := f.createJobQInfo(rp)
+	jobQ, _ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
 
 func (f *fairShare) updateJobs(rp *ResourcePool) {
-	jobQ, jobActors := f.createJobQInfo(rp)
+	jobQ, jobActors := f.createJobQInfo(rp.taskList)
 	for jobID, jobActor := range jobActors {
 		jobActor.System().Tell(jobActor, jobQ[jobID])
 	}

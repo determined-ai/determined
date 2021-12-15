@@ -92,7 +92,7 @@ def model_by_name(args: Namespace) -> Model:
 def list_versions(args: Namespace) -> None:
     model = model_by_name(args)
     if args.json:
-        r = api.get(args.master, "models/{}/versions".format(model.model_id))
+        r = api.get(args.master, "api/v1/models/{}/versions".format(model.model_id))
         data = r.json()
         print(json.dumps(data, indent=2))
 

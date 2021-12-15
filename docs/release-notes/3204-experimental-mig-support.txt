@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Experimental MIG support: static agents and kubernetes clusters may be able to use MIG instances
-   for some workloads. Distributed training is not supported, and all MIG instances and nodes within
-   a resource pool must still be homogeneous.

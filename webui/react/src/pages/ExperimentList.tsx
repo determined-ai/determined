@@ -19,6 +19,8 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { cancellableRunStates, deletableRunStates, pausableRunStates,
+  terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -38,9 +40,7 @@ import {
 import { isBoolean, isEqual } from 'utils/data';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
-import {
-  cancellableRunStates, deletableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
-} from 'utils/types';
+import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { openCommand } from 'wait';
 
 import settingsConfig, { Settings } from './ExperimentList.settings';
@@ -93,12 +93,12 @@ const ExperimentList: React.FC = () => {
       const experiment = experimentMap[id];
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
-      const isCancelable = cancellableRunStates.includes(experiment.state);
+      const isCancelable = cancellableRunStates.has(experiment.state);
       const isDeletable = deletableRunStates.has(experiment.state) &&
         user && (user.isAdmin || user.username === experiment.username);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
-      const isPausable = experiment.state === RunState.Active;
+      const isPausable = pausableRunStates.has(experiment.state);
       if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
       if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
       if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
@@ -249,7 +249,8 @@ const ExperimentList: React.FC = () => {
       multiple
       values={settings.state}
       onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset} />
+      onReset={handleStateFilterReset}
+    />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
@@ -270,7 +271,8 @@ const ExperimentList: React.FC = () => {
       searchable
       values={settings.user}
       onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset} />
+      onReset={handleUserFilterReset}
+    />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const columns = useMemo(() => {
@@ -285,8 +287,9 @@ const ExperimentList: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
-        task={experimentToTask(record)}
-        onComplete={handleActionComplete} />
+        task={taskFromExperiment(record)}
+        onComplete={handleActionComplete}
+      />
     );
 
     const tableColumns: ColumnsType<ExperimentItem> = [

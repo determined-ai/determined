@@ -9,7 +9,7 @@
     padding-bottom: 8px,
   }
   .headerContent {
-    margin: 0 24px;
+    margin: 0 12px;
 
     .mainRow {
       align-items: center;
@@ -30,12 +30,20 @@
           width: min-content;
         }
         .versionName {
+          font-size: var(--theme-sizes-font-enormous);
           margin: 0;
         }
       }
       .buttons {
         display: flex;
         gap: 4px;
+
+        .buttonAction {
+          display: none;
+        }
+        .overflowAction {
+          display: block;
+        }
       }
     }
   }
@@ -55,5 +63,23 @@
     code {
       padding: 0;
     }
+  }
+}
+
+@media only screen and (min-width: $breakpoint-desktop-small) {
+  .buttonAction:nth-child(1) {
+    display: inline-block !important;
+  }
+  .overflowAction:nth-child(1) {
+    display: none;
+  }
+}
+
+@media only screen and (min-width: $breakpoint-desktop-medium) {
+  .buttonAction:nth-child(2) {
+    display: inline-block !important;
+  }
+  .overflowAction:nth-child(2) {
+    display: none;
   }
 }

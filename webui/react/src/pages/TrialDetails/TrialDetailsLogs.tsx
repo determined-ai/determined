@@ -75,13 +75,15 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const handleDownloadLogs = useCallback(() => {
     const modal = Modal.confirm({
-      content: <div>
-        We recommend using the Determined CLI to download trial logs:
-        <code className="block">
-          det -m {serverAddress()} trial logs {trial.id} &gt;
-          experiment_{experiment.id}_trial_{trial.id}_logs.txt
-        </code>
-      </div>,
+      content: (
+        <div>
+          We recommend using the Determined CLI to download trial logs:
+          <code className="block">
+            det -m {serverAddress()} trial logs {trial.id} &gt;
+            experiment_{experiment.id}_trial_{trial.id}_logs.txt
+          </code>
+        </div>
+      ),
       icon: <ExclamationCircleOutlined />,
       okText: 'Proceed to Download',
       onOk: handleDownloadConfirm,

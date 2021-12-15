@@ -3,9 +3,9 @@ import { RadioChangeEvent } from 'antd/lib/radio';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Icon, { IconSize } from 'components/Icon';
 import useResize from 'hooks/useResize';
-import { ConditionalWrapper } from 'utils/react';
 
 import css from './RadioGroup.module.scss';
 

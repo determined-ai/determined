@@ -1,11 +1,12 @@
 import inspect
 import logging
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union, cast
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, estimator, horovod, util
+import determined._generic
+from determined import _data_layer, estimator, util
 from determined.common import check
 from determined.horovod import hvd
 
@@ -39,14 +40,21 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         estimator._EstimatorReducerContext.__init__(self, self.distributed._zmq_allgather)
 
         self.experimental = EstimatorExperimentalContext(
-            env=self.env,
-            hvd_config=self.hvd_config,
-            parent=self,
+            env=self.env, parent=self, distributed_context=self.distributed
         )
+
+        if self.distributed.size > 1:
+            optimizations_config = self.env.experiment_config.get_optimizations_config()
+            self.aggregation_frequency = cast(
+                int, optimizations_config.get("aggregation_frequency")
+            )
+            self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
+            self.average_aggregated_gradients = cast(
+                bool, optimizations_config.get("average_aggregated_gradients")
+            )
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
-        logging.debug(f"Initialized EstimatorTrialContext with config: {self.hvd_config}.")
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
@@ -60,7 +68,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             return optimizer
 
         self.optimizer_initialized = True
-        if not self.hvd_config.use:
+        if self.distributed.size == 1:
             return optimizer
 
         check.check_false(
@@ -69,20 +77,19 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         )
 
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_optimizer was called.")
-        use_compression = self.hvd_config.fp16_compression
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
         hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
             "compression": hvd.compression.Compression.fp16
-            if use_compression
+            if self.fp16_compression
             else hvd.compression.Compression.none,
-            "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
+            "average_aggregated_gradients": self.average_aggregated_gradients,
         }
         if "aggregation_frequency" in hvd_sig.parameters:
-            horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
+            horovod_kwargs["aggregation_frequency"] = self.aggregation_frequency
         else:
-            horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency
+            horovod_kwargs["backward_passes_per_step"] = self.aggregation_frequency
 
         optimizer = hvd.DistributedOptimizer(optimizer, **horovod_kwargs)
         logging.debug("Initialized optimizer for distributed and optimized parallel training.")
@@ -113,8 +120,8 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.hvd_config.use or not shard_dataset:
-            if self.hvd_config and not shard_dataset:
+        if self.distributed.size == 1 or not shard_dataset:
+            if self.distributed.size > 1 and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset
 
@@ -133,9 +140,12 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
 
     def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext, parent: EstimatorTrialContext
+        self,
+        env: det.EnvContext,
+        parent: EstimatorTrialContext,
+        distributed_context: determined._generic.DistributedContext,
     ) -> None:
-        super().__init__(env=env, hvd_config=hvd_config)
+        super().__init__(env=env, distributed_context=distributed_context)
         self._parent = parent
 
     @util.deprecated(

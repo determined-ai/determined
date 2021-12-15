@@ -6,12 +6,12 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import Spinner from 'components/Spinner';
+import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { CommandState } from 'types';
 import { capitalize } from 'utils/string';
-import { terminalCommandStates } from 'utils/types';
 import { createWsUrl, WaitStatus } from 'wait';
 
 import css from './Wait.module.scss';

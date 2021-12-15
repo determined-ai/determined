@@ -36,7 +36,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		return createGenericCommandActor(
-			ctx, c.db, taskID, model.TaskTypeCommand, jobID, model.JobTypeCommand, msg, c.mConfig,
+			ctx, c.db, taskID, model.TaskTypeCommand, jobID, model.JobTypeCommand, msg,
 		)
 
 	default:

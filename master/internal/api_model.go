@@ -128,6 +128,10 @@ func (a *apiServer) PatchModel(
 		return nil, err
 	}
 
+	if getResp.Model.Archived {
+		return nil, errors.Errorf("model %d is archived and cannot have attributes updated.", req.ModelId)
+	}
+
 	currModel := getResp.Model
 	madeChanges := false
 
@@ -283,9 +287,13 @@ func (a *apiServer) GetModelVersions(
 func (a *apiServer) PostModelVersion(
 	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
-	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	modelResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
 	if err != nil {
 		return nil, err
+	}
+
+	if modelResp.Model.Archived {
+		return nil, errors.Errorf("model %d is archived and cannot register new versions.", req.ModelId)
 	}
 
 	// make sure the checkpoint exists
@@ -326,6 +334,8 @@ func (a *apiServer) PostModelVersion(
 		respModelVersion.ModelVersion,
 		req.ModelId,
 		c.Uuid,
+		req.Name,
+		req.Comment,
 		mdata,
 		reqLabels,
 		req.Notes,

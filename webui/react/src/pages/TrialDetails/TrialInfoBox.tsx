@@ -4,13 +4,13 @@ import CheckpointModal from 'components/CheckpointModal';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
+import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
 import {
   CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
 } from 'types';
 import { humanReadableBytes } from 'utils/string';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;
@@ -47,13 +47,13 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   return (
     <Section>
       <Grid gap={ShirtSize.medium} minItemWidth={180} mode={GridMode.AutoFill}>
-        {trial.runnerState &&
+        {trial.runnerState && (
           <OverviewStats title="Last Runner State">
             {trial.runnerState}
           </OverviewStats>
-        }
+        )}
         <OverviewStats title="Start Time">
-          {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+          <TimeAgo datetime={trial.startTime} />
         </OverviewStats>
         <OverviewStats title="Total Checkpoint Size">
           {totalCheckpointsSize}
@@ -64,14 +64,14 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
       </Grid>
-
       {bestCheckpoint && (
         <CheckpointModal
           checkpoint={bestCheckpoint}
           config={experiment.config}
           show={showBestCheckpoint}
           title={`Best Checkpoint for Trial ${trial.id}`}
-          onHide={handleHideBestCheckpoint} />
+          onHide={handleHideBestCheckpoint}
+        />
       )}
     </Section>
   );

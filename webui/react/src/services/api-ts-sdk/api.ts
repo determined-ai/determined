@@ -704,6 +704,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     runnerState?: string;
+    /**
+     * The wall clock time is all active time of the cluster for the trial, inclusive of everything (restarts, initiailization, etc), in seconds.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    wallClockTime?: number;
 }
 
 /**
@@ -1248,6 +1254,12 @@ export interface V1CreateExperimentRequest {
      * @memberof V1CreateExperimentRequest
      */
     parentId?: number;
+    /**
+     * Request to auto-activate the experiment.
+     * @type {boolean}
+     * @memberof V1CreateExperimentRequest
+     */
+    activate?: boolean;
 }
 
 /**
@@ -4045,7 +4057,7 @@ export interface V1QueueControl {
 }
 
 /**
- * Statistics for (part of) a queue.
+ * Statistics for a queue.
  * @export
  * @interface V1QueueStats
  */
@@ -4062,12 +4074,6 @@ export interface V1QueueStats {
      * @memberof V1QueueStats
      */
     scheduledCount: number;
-    /**
-     * Number of preemptible jobs in the queue.
-     * @type {number}
-     * @memberof V1QueueStats
-     */
-    preemptibleCount: number;
 }
 
 /**

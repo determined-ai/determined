@@ -35,33 +35,16 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-func (p *priorityScheduler) createJobQInfo(
-	pending map[int]AllocReqs,
-	scheduled map[int]AllocReqs,
-) (job.AQueue, map[model.JobID]*actor.Ref) {
-	reqs := make(AllocReqs, 0)
-	// FIXME there is gotta be a friendlier version of this.
-	// can we stick to slices together quickly in Go?
-	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
-		if out == nil {
-			panic("missing output array. (nil pointer)")
-		}
-		priorities := getOrderedPriorities(aMap)
-		for _, priority := range priorities {
-			*out = append(*out, aMap[priority]...)
-		}
-	}
 
-	readFromPrioToTask(scheduled, &reqs)
-	readFromPrioToTask(pending, &reqs)
-	jobQInfo, jobActors := mergeToJobQInfo(reqs)
-	return jobQInfo, jobActors
-}
-
-func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) {
-	jobQ, jobActors := p.createJobQInfo(pending, scheduled)
+func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
+	reqs := sortTasks(taskList, groups, false)
+	jobQInfo, jobActors := reduceToJobQInfo(reqs)
 	for jobID, jobActor := range jobActors {
-		jobActor.System().Tell(jobActor, jobQ[jobID])
+		rmJobInfo, ok := jobQInfo[jobID]
+		if jobActor == nil || !ok || rmJobInfo == nil {
+			continue
+		}
+		jobActor.System().Tell(jobActor, rmJobInfo)
 	}
 }
 
@@ -81,12 +64,8 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
 
-	//TODO: is sortTasksWithPosition no good?
-	//reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups, false)
-	pendingMap, scheduledMap := sortTasksByPriorityAndPositionAndTimestamp(rp.taskList, rp.groups, trueFilter)
-	reqs := orderTaskMapToSlice(scheduledMap)
-	reqs = append(reqs, orderTaskMapToSlice(pendingMap)...)
-	jobQInfo, _ := mergeToJobQInfo(reqs)
+	reqs, _ := sortTasksWithPosition(rp.taskList, rp.groups, false)
+	jobQInfo, _ := reduceToJobQInfo(reqs)
 	return jobQInfo
 }
 
@@ -171,13 +150,8 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
-	if len(agents) == 0 { // report queue state if no agents are available
-		for _, zeroSlots := range []bool{false, true} {
-			priorityToPendingTasksMap, priorityToScheduledTaskMap :=
-				sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, taskFilter("", zeroSlots))
-			p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
-		}
-	}
+
+	p.reportJobQInfo(taskList, groups)
 
 	return toAllocate, toRelease
 }
@@ -201,7 +175,6 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
 		sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, filter)
 
-	p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
@@ -364,12 +337,10 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 		}
 
 		assigned := taskList.GetAllocations(req.TaskActor)
-		if assigned == nil || len(assigned.Reservations) == 0 {
-			req.State = job.SchedulingStateQueued
-			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
-		} else {
-			req.State = job.SchedulingStateScheduled
+		if assignmentIsScheduled(assigned) {
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
+		} else {
+			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		}
 	}
 
@@ -387,7 +358,7 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 				case -1:
 					return false
 				default:
-					return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+					return compareByRegisteredTime(tasks, i, j)
 				}
 			})
 		}
@@ -534,6 +505,11 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 	}
 }
 
+// compareByRegisteredTime sorts tasks by their registration time.
+func compareByRegisteredTime(tasks []*sproto.AllocateRequest, i, j int) bool {
+	return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+}
+
 func sortTasks(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
@@ -564,7 +540,7 @@ func sortTasks(
 			}
 		}
 
-		return reqs[i].TaskActor.RegisteredTime().Before(reqs[j].TaskActor.RegisteredTime())
+		return compareByRegisteredTime(reqs, i, j)
 	})
 
 	return reqs

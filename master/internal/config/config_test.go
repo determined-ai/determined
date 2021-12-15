@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -83,6 +84,7 @@ resource_pools:
 						NetworkMode:            "bridge",
 						DtrainNetworkInterface: "if0",
 					},
+					AgentReconnectWait: model.Duration(aproto.AgentReconnectWait),
 				},
 			},
 		},
@@ -140,6 +142,7 @@ resource_pools:
 					},
 					MaxAuxContainersPerAgent: 10,
 					MaxCPUContainersPerAgent: 0,
+					AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
 				},
 				{
 					PoolName: "gpu-pool",
@@ -154,6 +157,7 @@ resource_pools:
 					},
 					MaxAuxContainersPerAgent: 0,
 					MaxCPUContainersPerAgent: 0,
+					AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
 				},
 			},
 		},

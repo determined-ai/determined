@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, Job, RecordKey } from 'types';
+import { CommandType, DetailedUser, Job, Metadata, RecordKey } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -163,7 +163,29 @@ export interface PatchModelVersionParams {
   versionId: number;
 }
 
+export interface PostModelParams {
+  description?: string;
+  labels?: string[];
+  metadata?: Metadata;
+  name: string;
+  username?: string;
+}
+
+export interface PostModelVersionParams {
+  body: {
+    checkpointUuid: string;
+    comment?: string;
+    labels?: string[];
+    metadata?: Metadata;
+    modelId: number;
+    name?: string;
+    notes?: string;
+  }
+  modelId: number;
+}
+
 export interface CreateExperimentParams {
+  activate?: boolean;
   experimentConfig: string;
   parentId: number;
 }
@@ -236,4 +258,7 @@ export interface GetJobQParams extends PaginationParams, FetchOptions {
 
 export interface GetJobsResponse extends Api.V1GetJobsResponse {
   jobs: Job[];
+}
+export interface GetJobQStatsParams extends FetchOptions {
+  resourcePools?: string[];
 }

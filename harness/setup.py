@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.17.4-dev0",
+    version="0.17.6-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -25,10 +25,8 @@ setup(
         "backoff",
         "certifi",
         "filelock",
-        # google-cloud-storage<=1.40 is required for the latest google-cloud-core.
-        "google-cloud-storage>=1.20.0,<=1.40.0",
-        # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
-        "google-cloud-core<1.4.2",
+        "google-cloud-storage",
+        "google-cloud-core",
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
@@ -40,6 +38,7 @@ setup(
         "gitpython>=3.1.3",
         "pyOpenSSL>= 19.1.0",
         "python-dateutil",
+        "pytz",
         "tabulate>=0.8.3",
         # det preview-search "pretty-dumps" a sub-yaml with an API added in 0.15.29
         "ruamel.yaml>=0.15.29",

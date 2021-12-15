@@ -13,10 +13,12 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	dcontainer "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -28,7 +30,6 @@ import (
 type dockerActor struct {
 	*client.Client
 	credentialStores map[string]*credentialStore
-	spec             *cproto.Spec
 }
 
 type (
@@ -40,13 +41,20 @@ type (
 		cproto.PullSpec
 		Name string
 	}
+	runContainer struct {
+		cproto.RunSpec
+	}
+	reattachContainer struct {
+		ID cproto.ID
+	}
+
 	imagePulled      struct{}
 	containerStarted struct {
 		dockerID      string
 		containerInfo types.ContainerJSON
 	}
 	containerTerminated struct {
-		ExitCode int64
+		ExitCode aproto.ExitCode
 	}
 	dockerErr struct{ Error error }
 )
@@ -74,8 +82,11 @@ func (d *dockerActor) Receive(ctx *actor.Context) error {
 	case pullImage:
 		go d.pullImage(ctx, msg)
 
-	case cproto.RunSpec:
-		go d.runContainer(ctx, msg)
+	case reattachContainer:
+		go d.reattachContainer(ctx, msg.ID)
+
+	case runContainer:
+		go d.runContainer(ctx, msg.RunSpec)
 
 	case signalContainer:
 		go d.signalContainer(ctx, msg)
@@ -95,21 +106,12 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 
 	_, _, err = d.ImageInspectWithRaw(context.Background(), ref.String())
 	switch {
-	case err == nil && msg.ForcePull:
-		d.sendAuxLog(ctx, fmt.Sprintf("attempting to remove cached image: %s", ref.String()))
-		opts := types.ImageRemoveOptions{Force: true, PruneChildren: false}
-		removed, rerr := d.ImageRemove(context.Background(), ref.String(), opts)
-		if rerr != nil {
-			sendErr(ctx, errors.Wrapf(rerr, "error removing image: %s", ref.String()))
-			return
-		}
-		for _, r := range removed {
-			switch {
-			case r.Untagged != "":
-				d.sendAuxLog(ctx, fmt.Sprintf("untagged image: %s", r.Untagged))
-			case r.Deleted != "":
-				d.sendAuxLog(ctx, fmt.Sprintf("deleted image: %s", r.Deleted))
-			}
+	case msg.ForcePull:
+		if err == nil {
+			d.sendAuxLog(ctx, fmt.Sprintf(
+				"image present, but force_pull_image is set; checking for updates: %s",
+				ref.String(),
+			))
 		}
 	case err == nil:
 		d.sendAuxLog(ctx, fmt.Sprintf("image already found, skipping pull phase: %s", ref.String()))
@@ -166,7 +168,8 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
-	if !d.spec.RunSpec.UseFluentLogging {
+	useFluentLogging := msg.UseFluentLogging
+	if !useFluentLogging {
 		msg.HostConfig.AutoRemove = false
 	}
 
@@ -181,7 +184,7 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 		d.sendAuxLog(ctx, fmt.Sprintf("warning when creating container: %s", w))
 	}
 
-	if !d.spec.RunSpec.UseFluentLogging {
+	if !useFluentLogging {
 		defer func() {
 			if err = d.Client.ContainerRemove(
 				context.Background(), containerID, types.ContainerRemoveOptions{},
@@ -232,7 +235,7 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 		containerStarted{dockerID: response.ID, containerInfo: containerInfo},
 	)
 
-	if !d.spec.RunSpec.UseFluentLogging {
+	if !useFluentLogging {
 		if lerr := trackLogs(ctx, d.Client, containerID, ctx.Sender()); lerr != nil {
 			sendErr(ctx, lerr)
 		}
@@ -241,7 +244,45 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	case err = <-eerr:
 		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))
 	case exit := <-exit:
-		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: exit.StatusCode})
+		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
+	}
+}
+
+func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
+	containers, err := d.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("label", dockerContainerIDLabel+"="+id.String()),
+		),
+	})
+	if err != nil {
+		sendErr(ctx, errors.Wrap(err, "error while reattaching container"))
+		return
+	}
+
+	for _, cont := range containers {
+		// Subscribe to termination notifications first.
+		exit, eerr := d.ContainerWait(context.Background(), cont.ID, dcontainer.WaitConditionNextExit)
+
+		// Restore containerInfo.
+		containerInfo, err := d.ContainerInspect(context.Background(), cont.ID)
+		if err != nil {
+			sendErr(ctx, errors.Wrap(err, "error inspecting reattached container"))
+			return
+		}
+
+		// Check if container has exited while we were trying to reattach it.
+		if !containerInfo.State.Running {
+			ctx.Tell(
+				ctx.Sender(),
+				containerTerminated{ExitCode: aproto.ExitCode(containerInfo.State.ExitCode)})
+		} else {
+			select {
+			case err = <-eerr:
+				sendErr(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))
+			case exit := <-exit:
+				ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
+			}
+		}
 	}
 }
 
@@ -264,18 +305,194 @@ func (d *dockerActor) sendAuxLog(ctx *actor.Context, msg string) {
 	})
 }
 
+type pullInfo struct {
+	DownloadStarted bool
+	ExtractStarted  bool
+	Total           int64
+	Downloaded      int64
+	Extracted       int64
+}
+
+type pullLogFormatter struct {
+	Order   []string
+	Known   map[string]*pullInfo
+	Backoff time.Time
+}
+
+// renderProgress generates human-readable and log-file-friendly progress messages.
+//
+// Every layer goes through the following stages:
+// - 1 Pulling fs layer (ID but no size)
+// - 1 Waiting (ID but no size)
+// - 1+ Downloading
+// - 1 Verifying Checksum
+// - 1 Download Complete
+// - 1+ Extracting
+// - 1 Pull Complete
+//
+// You can't really estimate global progress because the log stream doesn't tell you how big the
+// full download size is at any point, it only tells you how big each layer is, and only when that
+// layer starts downloading.  The downloads are staggered, so when many layers are present you
+// wouldn't know the full download size until you're basically done.
+//
+// Showing a per-layer status bar is practically impossible without an interactive terminal (as
+// docker run would have).
+//
+// So instead we create a weighted-average status bar, where every layer's download and extraction
+// count as equal parts.  The status bar ends up pretty jerky but it still gives a "sensation" of
+// progress; things don't look frozen, the user has a rough idea of how far along you are, and the
+// logs are still sane afterwards.
+func (f *pullLogFormatter) RenderProgress() string {
+	var downloaded int64
+	var extracted int64
+	progress := 0.0
+	for _, id := range f.Order {
+		info := f.Known[id]
+		downloaded += info.Downloaded
+		extracted += info.Extracted
+		switch {
+		case !info.DownloadStarted:
+			// no progress on this layer
+		case info.Extracted == info.Total:
+			// this layer is complete
+			progress += 1.0
+		case info.Downloaded == info.Total:
+			// download complete, extraction in progress
+			progress += 0.5 + 0.5*float64(info.Extracted)/float64(info.Total)
+		default:
+			progress += 0.5 * float64(info.Downloaded) / float64(info.Total)
+		}
+	}
+
+	// Normalize by layer count.
+	progress /= float64(len(f.Known))
+
+	// 40-character progress bar
+	prog := int(40.0 * progress)
+
+	bar := ""
+	for i := 0; i < 40; i++ {
+		if i <= prog {
+			if prog == 40 || i+1 <= prog {
+				// Download is full, or middle of bar.
+				bar += "="
+			} else {
+				// Boundary between bar and spaces.
+				bar += ">"
+			}
+		} else {
+			bar += " "
+		}
+	}
+
+	return fmt.Sprintf(
+		"[%v] Downloaded: %.1fMB, Extracted %.1fMB",
+		bar,
+		float64(downloaded)/1e6,
+		float64(extracted)/1e6,
+	)
+}
+
+func (f *pullLogFormatter) backoffOrRenderProgress() *string {
+	// log at most one line every 1 second
+	now := time.Now().UTC()
+	if now.Before(f.Backoff) {
+		return nil
+	}
+	f.Backoff = now.Add(1 * time.Second)
+
+	progress := f.RenderProgress()
+	return &progress
+}
+
+// Update returns nil or a rendered progress update for the end user.
+func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) *string {
+	if msg.Error != nil {
+		log.Errorf("%d: %v", msg.Error.Code, msg.Error.Message)
+		return nil
+	}
+
+	var info *pullInfo
+	var ok bool
+
+	switch msg.Status {
+	case "Pulling fs layer":
+		fallthrough
+	case "Waiting":
+		if _, ok = f.Known[msg.ID]; !ok {
+			// New layer!
+			f.Known[msg.ID] = &pullInfo{}
+			f.Order = append(f.Order, msg.ID)
+		}
+		return nil
+
+	case "Downloading":
+		if info, ok = f.Known[msg.ID]; !ok {
+			log.Error("message ID not found for downloading message!")
+			return nil
+		}
+		if info.ExtractStarted {
+			log.Error("got downloading message after extraction started!")
+			return nil
+		}
+		info.Downloaded = msg.Progress.Current
+		// The first "Downloading" msg is important, as it gives us the layer size.
+		if !info.DownloadStarted {
+			info.DownloadStarted = true
+			info.Total = msg.Progress.Total
+		}
+		return f.backoffOrRenderProgress()
+
+	case "Extracting":
+		if info, ok = f.Known[msg.ID]; !ok {
+			log.Error("message ID not found for extracting message!")
+			return nil
+		}
+		info.Extracted = msg.Progress.Current
+		if !info.ExtractStarted {
+			info.ExtractStarted = true
+			// Forcibly mark Downloaded as completed.
+			info.Downloaded = info.Total
+		}
+		return f.backoffOrRenderProgress()
+
+	case "Pull complete":
+		if info, ok = f.Known[msg.ID]; !ok {
+			log.Error("message ID not found for completed message!")
+			return nil
+		}
+		// Forcibly mark Extracted as completed.
+		info.Extracted = info.Total
+		return f.backoffOrRenderProgress()
+	}
+
+	return nil
+}
+
 func (d *dockerActor) sendPullLogs(ctx *actor.Context, r io.Reader) error {
+	plf := pullLogFormatter{Known: map[string]*pullInfo{}}
+
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		log := jsonmessage.JSONMessage{}
 		if err := json.Unmarshal(scanner.Bytes(), &log); err != nil {
 			return errors.Wrapf(err, "error parsing log message: %#v", log)
 		}
-		ctx.Tell(ctx.Sender(), aproto.ContainerLog{
-			Timestamp:   time.Now().UTC(),
-			PullMessage: &log,
-		})
+
+		logMsg := plf.Update(log)
+		if logMsg != nil {
+			ctx.Tell(ctx.Sender(), aproto.ContainerLog{
+				Timestamp:   time.Now().UTC(),
+				PullMessage: logMsg,
+			})
+		}
 	}
+	// Always print the complete progress bar, regardless of the backoff time.
+	finalLogMsg := plf.RenderProgress()
+	ctx.Tell(ctx.Sender(), aproto.ContainerLog{
+		Timestamp:   time.Now().UTC(),
+		PullMessage: &finalLogMsg,
+	})
 	return scanner.Err()
 }
 
