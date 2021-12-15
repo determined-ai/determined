@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -71,6 +69,8 @@ type (
 		ID      model.JobID
 		Anchor1 model.JobID
 		Anchor2 model.JobID
+		Anchor  model.JobID
+		AheadOf bool
 	}
 )
 
@@ -398,13 +398,21 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_AheadOf:
-				err := j.moveJob(ctx, jobID, model.JobID(action.AheadOf), true)
-				if err != nil {
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:      jobID,
+					Anchor:  model.JobID(action.AheadOf),
+					AheadOf: true,
+				})
+				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_BehindOf:
-				err := j.moveJob(ctx, jobID, model.JobID(action.BehindOf), false)
-				if err != nil {
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:      jobID,
+					Anchor:  model.JobID(action.BehindOf),
+					AheadOf: false,
+				})
+				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())
 				}
 			default:
