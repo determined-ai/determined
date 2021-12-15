@@ -4131,12 +4131,6 @@ export interface V1QueueControl {
      * @memberof V1QueueControl
      */
     weight?: number;
-    /**
-     * DEV: the desired job position in queue.
-     * @type {number}
-     * @memberof V1QueueControl
-     */
-    queuePosition?: number;
 }
 
 /**
