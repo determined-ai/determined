@@ -1,6 +1,3 @@
-import { commandTypeToLabel } from 'constants/states';
-import { commandTypeToLabel } from 'constants/states';
-
 import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -13,6 +10,7 @@ import { detApi } from 'services/apiConfig';
 import { jsonToTaskLog } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { CommandType } from 'types';
+import { commandTypeToLabel } from 'utils/types';
 
 import TaskLogFilters, { Filters } from './TaskLogFilters';
 import css from './TaskLogs.module.scss';
