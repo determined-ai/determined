@@ -1,9 +1,7 @@
 import importlib
-import logging
 import os
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
-import determined as det
 from determined import constants
 from determined.common import check
 
@@ -158,93 +156,3 @@ def create_run_command(
     horovod_process_cmd.extend(optional_args)
     horovod_process_cmd.append("--")
     return horovod_process_cmd
-
-
-class HorovodContext:
-    def __init__(
-        self,
-        use: bool,
-        aggregation_frequency: int,
-        fp16_compression: bool,
-        grad_updates_size_file: str,
-        average_aggregated_gradients: bool,
-        average_training_metrics: bool,
-    ) -> None:
-        self.use = use
-        self.aggregation_frequency = aggregation_frequency
-        self.fp16_compression = fp16_compression
-        self.grad_updates_size_file = grad_updates_size_file
-        self.average_aggregated_gradients = average_aggregated_gradients
-        self.average_training_metrics = average_training_metrics
-
-    @staticmethod
-    def from_configs(
-        experiment_config: det.ExperimentConfig,
-        hparams: Dict[str, Any],
-        multi_machine_trial: bool = False,
-    ) -> "HorovodContext":
-        """
-        Create the HorovodContext according to experiment config and rendezvous info for this trial.
-        """
-
-        # Horovod is always used for multi-machine distributed training. For
-        # single-machine multi-GPU training, Horovod is used when native_parallel is
-        # disabled.
-        multi_slot_trial = experiment_config["resources"]["slots_per_trial"] > 1
-        use_horovod = multi_machine_trial or (
-            multi_slot_trial and not experiment_config.native_parallel_enabled()
-        )
-
-        check.is_in("optimizations", experiment_config)
-        optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
-
-        check.is_in("aggregation_frequency", optimizations_config)
-        check.is_in("gradient_compression", optimizations_config)
-        check.is_in("average_training_metrics", optimizations_config)
-
-        # Help users migrate from the old locations for these settings, in hparams.
-        def error_message_removed_from_hparams(removed_hparam: str) -> str:
-            return (
-                f"Please move `{removed_hparam}` in the experiment config to "
-                f"`Optimizations` from `hyperparameters`."
-            )
-
-        check.not_in(
-            "aggregation_frequency",
-            hparams,
-            error_message_removed_from_hparams("aggregation_frequency"),
-        )
-        check.not_in(
-            "gradient_compression",
-            hparams,
-            error_message_removed_from_hparams("gradient_compression"),
-        )
-        check.not_in(
-            "grad_updates_size_file",
-            hparams,
-            error_message_removed_from_hparams("grad_updates_size_file"),
-        )
-
-        hvd_config = HorovodContext(
-            use=use_horovod,
-            aggregation_frequency=cast(int, optimizations_config.get("aggregation_frequency")),
-            fp16_compression=cast(bool, optimizations_config.get("gradient_compression")),
-            grad_updates_size_file=optimizations_config.get("grad_updates_size_file", None),
-            average_aggregated_gradients=cast(
-                bool, optimizations_config.get("average_aggregated_gradients")
-            ),
-            average_training_metrics=cast(
-                bool, optimizations_config.get("average_training_metrics")
-            ),
-        )
-
-        if hvd_config.use and hvd_config.aggregation_frequency > 1:
-            logging.info(
-                f"Setting `aggregation_frequency` to {hvd_config.aggregation_frequency} "
-                "to optimize training."
-            )
-
-        if hvd_config.use and hvd_config.fp16_compression:
-            logging.info("Enabling `gradient_compression` to optimize training.")
-
-        return hvd_config

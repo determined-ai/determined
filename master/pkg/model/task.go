@@ -19,6 +19,10 @@ func NewTaskID() TaskID {
 // TaskType is the type of a task.
 type TaskType string
 
+func (a TaskID) String() string {
+	return string(a)
+}
+
 const (
 	// TaskTypeTrial is the "TRIAL" job type for the enum public.job_type in Postgres.
 	TaskTypeTrial = "TRIAL"

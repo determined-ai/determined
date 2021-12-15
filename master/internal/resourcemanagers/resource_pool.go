@@ -414,6 +414,7 @@ func (c containerReservation) Summary() sproto.ContainerSummary {
 		AllocationID: c.req.AllocationID,
 		ID:           c.container.id,
 		Agent:        c.agent.handler.Address().Local(),
+		Devices:      c.devices,
 	}
 }
 

@@ -88,7 +88,7 @@ type Config struct {
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
-
+	Observability         ObservabilityConfig               `json:"observability"`
 	*resourcemanagers.ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
@@ -228,8 +228,12 @@ type TelemetryConfig struct {
 
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
-	ExternalSessions  model.ExternalSessions `json:"external_sessions"`
-	PrometheusEnabled bool                   `json:"prometheus_enabled"`
+	ExternalSessions model.ExternalSessions `json:"external_sessions"`
+}
+
+// ObservabilityConfig is the configuration for observability metrics.
+type ObservabilityConfig struct {
+	EnablePrometheus bool `json:"enable_prometheus"`
 }
 
 func readPreemptionFromScheduler(conf *resourcemanagers.SchedulerConfig) *bool {

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"github.com/determined-ai/determined/master/pkg/device"
 
 	"github.com/determined-ai/determined/master/internal/proxy"
@@ -416,6 +418,11 @@ func (a *Allocation) TaskContainerStateChanged(
 				ContainerStartedEvent: msg.ContainerStarted,
 			})
 		}
+		prom.AssociateAllocationTask(a.req.AllocationID,
+			a.req.TaskID,
+			a.req.TaskActor.Address())
+		prom.AddAllocationReservation(a.reservations[msg.Container.ID].Summary(), msg.ContainerStarted)
+
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
 		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
@@ -428,6 +435,13 @@ func (a *Allocation) TaskContainerStateChanged(
 			a.Error(ctx, *msg.ContainerStopped.Failure)
 		default:
 			a.Exit(ctx)
+		}
+
+		for cID := range a.reservations {
+			prom.DisassociateAllocationTask(a.req.AllocationID,
+				a.req.TaskID,
+				a.req.TaskActor.Address())
+			prom.RemoveAllocationReservation(a.reservations[cID].Summary())
 		}
 	}
 }

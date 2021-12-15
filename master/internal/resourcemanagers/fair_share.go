@@ -61,7 +61,7 @@ func (f *fairShare) createJobQInfo(
 	for _, req := range taskList.taskByID {
 		reqs = append(reqs, req)
 	}
-	jobQ, jobActors := mergeToJobQInfo(reqs)
+	jobQ, jobActors := reduceToJobQInfo(reqs)
 	for _, j := range jobQ {
 		j.JobsAhead = -1 // unsupported.
 	}
@@ -92,7 +92,6 @@ func fairshareSchedule(
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
 		allocations := taskList.GetAllocations(req.TaskActor)
-		updateAllocateReqState(req, taskList)
 		if req.SlotsNeeded == 0 && allocations == nil {
 			if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
 				continue

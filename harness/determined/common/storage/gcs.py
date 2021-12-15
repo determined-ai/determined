@@ -2,7 +2,7 @@ import contextlib
 import logging
 import os
 import tempfile
-from typing import Iterator, Optional
+from typing import Iterator, Optional, no_type_check
 
 import requests.exceptions
 import urllib3.exceptions
@@ -60,6 +60,7 @@ class GCSStorageManager(StorageManager):
         finally:
             self._remove_checkpoint_directory(storage_id)
 
+    @no_type_check
     @util.preserve_random_state
     def upload(self, storage_id: str, storage_dir: str) -> None:
         storage_prefix = storage_id

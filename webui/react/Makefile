@@ -79,3 +79,7 @@ fmt: fmt-js fmt-css
 .PHONY: test
 test:
 	npm run test -- --watchAll=false
+
+.PHONY: test-ci
+test-ci:
+	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --watchAll=false --reporters=jest-junit

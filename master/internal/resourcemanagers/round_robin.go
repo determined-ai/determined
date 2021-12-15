@@ -45,7 +45,7 @@ func roundRobinSchedule(
 		}
 		assigned := taskList.GetAllocations(req.TaskActor)
 		switch {
-		case assigned == nil || len(assigned.Reservations) == 0:
+		case !assignmentIsScheduled(assigned):
 			state.pendingReqs = append(state.pendingReqs, req)
 		default:
 			state.activeSlots += req.SlotsNeeded
