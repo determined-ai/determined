@@ -1,4 +1,4 @@
--e harness
+-e harness[deploy]
 -e common
 -e cli
 -e deploy
