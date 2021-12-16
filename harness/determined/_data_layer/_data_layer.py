@@ -10,7 +10,7 @@ import yogadl
 from yogadl import storage, tensorflow
 
 import determined as det
-from determined import _generic
+from determined import _core
 from determined.common import check
 
 
@@ -36,7 +36,7 @@ class _CacheableDecorator:
         env: det.EnvContext,
         training: bool,
         per_slot_batch_size: int,
-        distributed_context: _generic.DistributedContext,
+        distributed_context: _core.DistributedContext,
     ) -> None:
         self._env = env
         self._distributed_context = distributed_context

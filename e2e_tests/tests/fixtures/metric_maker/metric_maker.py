@@ -81,13 +81,13 @@ class MetricMaker(det.TrialController):
         self.wlsq = None
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._generic, self.env
+                self.context._core, self.env
             )
 
         self.latest_batch = self.env.latest_batch
 
         if self.env.latest_checkpoint is not None:
-            with self.context._generic.checkpointing.restore_path(
+            with self.context._core.checkpointing.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self.load(pathlib.Path(load_path))
@@ -109,7 +109,7 @@ class MetricMaker(det.TrialController):
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 metadata = {"latest_batch": self.latest_batch}
                 if self.is_chief:
-                    with self.context._generic.checkpointing.store_path(metadata) as (
+                    with self.context._core.checkpointing.store_path(metadata) as (
                         storage_id,
                         path,
                     ):
@@ -203,7 +203,7 @@ class NANMetricMaker(MetricMaker):
         self.wlsq = None
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._generic, self.env
+                self.context._core, self.env
             )
 
     @staticmethod
