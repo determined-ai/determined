@@ -53,7 +53,7 @@ setup(
             "docker-compose>=1.13.0",
             "tqdm",
             "appdirs",
-            "websocket-client",
+            "websocket-client<1",
         ]
     },
     zip_safe=False,
