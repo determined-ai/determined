@@ -130,6 +130,50 @@ func TestTrialRestarts(t *testing.T) {
 	require.True(t, model.TerminalStates[tr.state])
 }
 
+func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
+	system, db, rID, tr, self := setup(t)
+
+	// Pre-scheduled stage.
+	require.NoError(t, system.Ask(self, model.ActiveState).Error())
+	require.NoError(t, system.Ask(self, trialSearcherState{
+		Create: searcher.Create{RequestID: rID},
+		Op: searcher.ValidateAfter{
+			RequestID: rID,
+			Length:    expconf.NewLengthInBatches(10),
+		},
+		Complete: false,
+		Closed:   true,
+	}).Error())
+	require.NotNil(t, tr.allocation)
+
+	// Send the trial a termination, but don't setup our mock allocation to handle it, as if it
+	// is busy handling receiving resources.
+	require.NoError(t, system.Ask(self, model.StoppingCanceledState).Error())
+
+	// Now the allocation checks in to get what to launch while we're canceled.
+	require.Error(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
+		To:  self,
+		Msg: task.BuildTaskSpec{},
+	}).Error())
+	require.True(t, db.AssertNotCalled(t, "AddTrial", mock.Anything),
+		"trial should not save itself when canceled before ready")
+	require.True(t, db.AssertExpectations(t))
+
+	// After the allocation exits, we should error.
+	system.Tell(tr.allocation, actors.ForwardThroughMock{
+		To:  self,
+		Msg: &task.AllocationExited{},
+	})
+	require.NoError(t, tr.allocation.StopAndAwaitTermination())
+	require.NoError(t, self.AwaitTermination())
+	require.True(t, db.AssertNotCalled(t, "UpdateTrial", mock.Anything),
+		"trial was not saved so no update should happen")
+	require.True(t, db.AssertExpectations(t))
+
+	// But the actor itself should have the state recorded.
+	require.True(t, model.TerminalStates[tr.state])
+}
+
 func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *actor.Ref) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
