@@ -100,23 +100,23 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 	case
-			groupActorStopped,
-			sproto.SetGroupMaxSlots,
-			sproto.SetGroupWeight,
-			sproto.SetGroupPriority,
-			sproto.SetGroupOrder,
-			sproto.SetTaskName,
-			sproto.AllocateRequest,
-			sproto.ResourcesReleased,
-			sproto.UpdatePodStatus:
+		groupActorStopped,
+		sproto.SetGroupMaxSlots,
+		sproto.SetGroupWeight,
+		sproto.SetGroupPriority,
+		sproto.SetGroupOrder,
+		sproto.SetTaskName,
+		sproto.AllocateRequest,
+		sproto.ResourcesReleased,
+		sproto.UpdatePodStatus:
 		return k.receiveRequestMsg(ctx)
 
 	case
-			job.GetJobQ,
-			job.GetJobSummary,
-			job.GetJobQStats,
-			job.SetJobOrder,
-			*apiv1.GetJobQueueStatsRequest:
+		job.GetJobQ,
+		job.GetJobSummary,
+		job.GetJobQStats,
+		job.SetJobOrder,
+		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:

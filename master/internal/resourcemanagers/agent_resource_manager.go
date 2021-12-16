@@ -158,11 +158,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 		return nil
 
-	// case sproto.GetJobQInfo, sproto.GetJobQStats, sproto.SetJobOrder:
-	// could I look at ResourcePool here?
-	case job.GetJobQ:
-		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
-		ctx.Respond(resp)
 	case job.GetJobQStats:
 		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
 		ctx.Respond(resp)
