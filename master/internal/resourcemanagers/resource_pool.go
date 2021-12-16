@@ -226,29 +226,29 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return err
 
 	case
-			sproto.AddAgent,
-			sproto.AddDevice,
-			sproto.RemoveDevice,
-			sproto.RemoveAgent,
-			sproto.EnableAgent,
-			sproto.DisableAgent:
+		sproto.AddAgent,
+		sproto.AddDevice,
+		sproto.RemoveDevice,
+		sproto.RemoveAgent,
+		sproto.EnableAgent,
+		sproto.DisableAgent:
 		return rp.receiveAgentMsg(ctx)
 
 	case
-			groupActorStopped,
-			sproto.SetGroupMaxSlots,
-			sproto.SetGroupWeight,
-			sproto.SetGroupPriority,
-			sproto.SetGroupOrder,
-			sproto.SetTaskName,
-			sproto.AllocateRequest,
-			sproto.ResourcesReleased:
+		groupActorStopped,
+		sproto.SetGroupMaxSlots,
+		sproto.SetGroupWeight,
+		sproto.SetGroupPriority,
+		sproto.SetGroupOrder,
+		sproto.SetTaskName,
+		sproto.AllocateRequest,
+		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
 
 	case
-			job.GetJobQ,
-			job.SetJobOrder,
-			job.GetJobQStats:
+		job.GetJobQ,
+		job.SetJobOrder,
+		job.GetJobQStats:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
