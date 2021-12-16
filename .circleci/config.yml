@@ -1438,6 +1438,8 @@ jobs:
       - attach_workspace:
           at: .
 
+      - reinstall-go
+
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
