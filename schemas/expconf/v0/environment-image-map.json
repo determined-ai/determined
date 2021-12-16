@@ -18,13 +18,13 @@
             ],
             "default": null
         },
-		"cuda": {
-			"type": [
-				"string",
-				"null"
-			],
-			"default": null
-		},
+        "cuda": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "rocm": {
             "type": [
                 "string",
@@ -32,13 +32,12 @@
             ],
             "default": null
         },
-		"gpu": {
-			"type": [
-				"string",
-				"null"
-			],
-			"default": null,
-			"deprecated": true
-		}
+        "gpu": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
     }
 }
