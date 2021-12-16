@@ -123,7 +123,7 @@ type TerminateDecision struct {
 
 // String returns a representative string.
 func (t TerminateDecision) String() string {
-	item := make([]string, len(t.Reasons))
+	var item []string
 	for id, reason := range t.Reasons {
 		item = append(item, fmt.Sprintf("%s (reason: %s)", id, reason))
 	}
