@@ -1,6 +1,6 @@
 import enum
 import time
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, Dict, List, Optional, TypeVar, Union, no_type_check
 
 from determined.common import schemas
 
@@ -222,6 +222,7 @@ DataLayerConfigV0.finalize(DataLayerConfigV0_Type)
 
 
 class CudaCompatMixin:
+    @no_type_check
     def _ensure_cuda_compat(self) -> None:
         # Backwards compatibility.
         if self.cuda is None and self.gpu is not None:

@@ -126,7 +126,8 @@ var detectMIGEnabled = []string{
 var detectCudaDevices = []string{"nvidia-smi", "-L"} // Lists both GPUs and MIG instances
 var detectMIGRegExp = regexp.MustCompile(`(?P<dev>MIG \S+).+\(UUID.+(?P<uuid>MIG.+)\)`)
 
-var detectCudaGPUsArgs = []string{"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader"}
+var detectCudaGPUsArgs = []string{
+	"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader"}
 var detectCudaGPUsIDFlagTpl = "--id=%v"
 
 // detect if MIG is enabled and if there are instances configured.
