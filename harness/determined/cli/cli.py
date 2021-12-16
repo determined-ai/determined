@@ -3,13 +3,13 @@ import socket
 import ssl
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType, Namespace
-from typing import List, cast
+from typing import List, Sequence, Union, cast
 
 import argcomplete
 import argcomplete.completers
-import OpenSSL
 import requests
 import tabulate
+from OpenSSL import SSL, crypto
 from termcolor import colored
 
 import determined
@@ -206,16 +206,16 @@ def main(
                 check_not_none(addr.hostname)
                 check_not_none(addr.port)
                 try:
-                    ctx = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
-                    conn = OpenSSL.SSL.Connection(ctx, socket.socket())
+                    ctx = SSL.Context(SSL.TLSv1_2_METHOD)
+                    conn = SSL.Connection(ctx, socket.socket())
                     conn.set_tlsext_host_name(cast(str, addr.hostname).encode())
-                    conn.connect((addr.hostname, addr.port))
+                    conn.connect(cast(Sequence[Union[str, int]], (addr.hostname, addr.port)))
                     conn.do_handshake()
                     cert_pem_data = "".join(
-                        OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert).decode()
+                        crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode()
                         for cert in conn.get_peer_cert_chain()
                     )
-                except OpenSSL.SSL.Error:
+                except crypto.Error:
                     die(
                         "Tried to connect over HTTPS but couldn't get a certificate from the "
                         "master; consider using HTTP"

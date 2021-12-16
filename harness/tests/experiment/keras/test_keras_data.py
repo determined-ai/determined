@@ -1,3 +1,6 @@
+# type: ignore
+from typing import Tuple
+
 import numpy as np
 import pytest
 from tensorflow.keras.utils import Sequence
@@ -119,7 +122,7 @@ def test_adapt_short_sequence() -> None:
 @pytest.mark.parametrize("rank_size", [(0, 1), (0, 3), (1, 3), (2, 3)])
 @pytest.mark.parametrize("skip", [0, 50, 350])
 @pytest.mark.parametrize("shuffle", [False, True])
-def test_sampler(shuffle, skip, rank_size):
+def test_sampler(shuffle: bool, skip: int, rank_size: Tuple[int, int]) -> None:
     epoch_len = 100
     rank, size = rank_size
     seed = 777
@@ -159,7 +162,9 @@ def test_sampler(shuffle, skip, rank_size):
 @pytest.mark.parametrize("rank_size", [(0, 1), (0, 3), (1, 3), (2, 3)])
 @pytest.mark.parametrize("skip", [0, 50, 350])
 @pytest.mark.parametrize("shuffle", [False, True])
-def test_enqueuer(shuffle, skip, rank_size, workers, use_multiprocessing) -> None:
+def test_enqueuer(
+    shuffle: bool, skip: int, rank_size: Tuple[int, int], workers: int, use_multiprocessing: bool
+) -> None:
     epoch_len = 100
     rank, size = rank_size
 

@@ -1,3 +1,4 @@
+# type: ignore
 """
 A one-variable linear model with no bias. The datset emits only pairs of (data, label) = (1, 1),
 meaning that the one weight in the model should approach 1 as gradient descent continues.

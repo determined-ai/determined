@@ -1,3 +1,4 @@
+# type: ignore
 import os
 import pathlib
 import subprocess
@@ -315,7 +316,7 @@ class TestPyTorchTrial:
         latest_checkpoint = None
         latest_batch = 0
 
-        controller = None  # type: ignore
+        controller = None
 
         def make_workloads1() -> workload.Stream:
             nonlocal controller

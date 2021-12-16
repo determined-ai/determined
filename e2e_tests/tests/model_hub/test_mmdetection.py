@@ -9,8 +9,9 @@ from tests import experiment as exp
 
 
 def set_docker_image(config: Dict) -> Dict:
-    git_short_hash = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip()
-    git_short_hash = git_short_hash.decode("utf-8")
+    git_short_hash = (
+        subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip().decode("utf-8")
+    )
 
     config = conf.set_image(
         config, conf.TF1_CPU_IMAGE, f"determinedai/model-hub-mmdetection:{git_short_hash}"

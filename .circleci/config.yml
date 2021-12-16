@@ -27,6 +27,20 @@ parameters:
   det-version:
     type: string
     default: 0.17.6-dev0
+  docker-image:
+    type: string
+    default: cimg/base:2021.11
+  machine-image:
+    type: string
+    default: ubuntu-2004:202101-01
+  # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
+  # If the dependencies stay the same, but the circleci code that would produce them is changed,
+  # it may be necessary to invalidate the cache by incrementing this value.
+  # For example, if you change an env variable affecting a build of a python package with the same version,
+  # the old build may be cached, and you may need to invalidate it.
+  cache-buster:
+    type: string
+    default: v1dev10
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -150,12 +164,12 @@ commands:
       - install-protoc
       - restore_cache:
           keys:
-            - det-go-deps-v1dev7-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
-          key: det-go-deps-v1dev7-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
           paths:
             - "/home/circleci/go/pkg/mod/"
   react-get-deps:
@@ -164,7 +178,7 @@ commands:
           at: .
       - restore_cache:
           keys:
-            - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
+            - det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
       - run:
           name: Get React dependencies
           command: |
@@ -172,7 +186,7 @@ commands:
               make -C webui/react get-deps-npm
             fi
       - save_cache:
-          key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
+          key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
 
@@ -207,14 +221,51 @@ commands:
         default: ""
       executor:
         type: string
+      python-version:
+        type: string
+        default: "3.7.11"
     steps:
+      - run:
+          name: prepare conda PATH
+          command: |
+            echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
+
+      - run:
+          name: prepare conda install_python.sh
+          command: |
+            cat \<<'EOF' > /tmp/install_python.sh
+            #!/bin/bash
+            PYTHON_VERSION="${1}"
+
+            CONDA_DIR="/opt/conda"
+            CONDA_INSTALLER="Miniconda3-py39_4.10.3-Linux-x86_64.sh"
+            CONDA_MD5="8c69f65a4ae27fb41df0fe552b4a8a3b"
+            CONDA_URL="https://repo.anaconda.com/miniconda"
+
+            mkdir -p /etc/determined/conda.d
+            mkdir -p "${CONDA_DIR}"
+
+            cd /tmp
+            curl --retry 3 -fsSL -O "${CONDA_URL}/${CONDA_INSTALLER}"
+            echo "${CONDA_MD5}  ${CONDA_INSTALLER}" | md5sum -c -
+            bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
+            rm -f "./${CONDA_INSTALLER}"
+
+            ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
+            ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
+            ${CONDA_DIR}/bin/conda clean --all -y
+            EOF
+
+      - run:
+          name: run conda install_python.sh
+          command: |
+            sudo bash /tmp/install_python.sh <<parameters.python-version>>
+
       - run:
           name: Setup venv
           command: |
-            sudo apt-get update
-            sudo apt-get install -y python3-venv
-            /usr/bin/python3 -m venv /tmp/venv
-            echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
+            python3 -m venv /tmp/venv
+            echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
       - run:
@@ -235,7 +286,7 @@ commands:
 
       - restore_cache:
           keys:
-            - det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
+            - det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -247,7 +298,9 @@ commands:
           steps:
             - run:
                 name: Install mmdetection dependencies
-                command: sudo apt-get install -y ffmpeg libsm6 libxext6
+                command: |
+                  sudo apt-get update
+                  sudo apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
                 package-location: ~/project/model_hub
@@ -255,7 +308,7 @@ commands:
           name: Install <<parameters.extras-requires>>
           command: |
             if [ -n "<<parameters.extras-requires>>" ]; then
-              pip install <<parameters.extras-requires>>
+              pip install --progress-bar off <<parameters.extras-requires>>
             fi
       - run:
           name: Install <<parameters.extra-requirements-file>>
@@ -264,7 +317,7 @@ commands:
               pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
-          key: det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
+          key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
       - run: python --version
@@ -870,7 +923,7 @@ commands:
 jobs:
   build-helm:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - helm/install-helm-client
@@ -886,7 +939,7 @@ jobs:
 
   build-docs:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - helm/install-helm-client
@@ -895,7 +948,7 @@ jobs:
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
       - run: make -C helm build
       - attach_workspace:
@@ -1037,7 +1090,7 @@ jobs:
 
   publish-helm:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - attach_workspace:
@@ -1052,12 +1105,12 @@ jobs:
       path:
         type: string
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           extras-requires: "twine"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
@@ -1077,17 +1130,17 @@ jobs:
 
   upload-try-now-template:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           extras-requires: "awscli"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness upload-try-now-template
 
   test-debian-packaging:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
       - attach_workspace:
@@ -1097,7 +1150,7 @@ jobs:
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
       - start-devcluster:
           target-stage: db
@@ -1109,7 +1162,7 @@ jobs:
 
   test-e2e-webui:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: medium
     steps:
       - checkout
@@ -1120,7 +1173,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "webui/tests/requirements.txt"
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
 
       - run: make -C master get-deps
       - install-devcluster
@@ -1255,7 +1308,7 @@ jobs:
 
   test-intg-master:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
       - checkout
@@ -1263,13 +1316,13 @@ jobs:
           at: .
       - reinstall-go
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C master test-intg
 
   test-intg-agent:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
       - checkout
@@ -1277,23 +1330,23 @@ jobs:
           at: .
       - reinstall-go
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
 
   lint-docs:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           extra-requirements-file: "docs/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C docs check
 
   lint-secrets:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - run: git clone https://github.com/awslabs/git-secrets /tmp/git-secrets
       - run: cd /tmp/git-secrets && sudo make install
@@ -1305,7 +1358,7 @@ jobs:
 
   lint-python:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
@@ -1313,7 +1366,7 @@ jobs:
           extras-requires: "torch==1.9.0"
           model-hub: true
           extra-requirements-file: "requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
@@ -1326,43 +1379,43 @@ jobs:
 
   test-unit-harness:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness test
 
   test-unit-harness-tf2:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness test-tf2
 
   test-unit-storage:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
 
   test-unit-model-hub:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
@@ -1370,18 +1423,18 @@ jobs:
           model-hub: true
           extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: make -C model_hub test
 
   test-examples:
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - setup-python-venv:
           determined: true
           extra-requirements-file: "examples/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
           only_on_branch: master
@@ -1436,7 +1489,7 @@ jobs:
         type: boolean
         default: false
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1447,7 +1500,7 @@ jobs:
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
 
       - run:
           name: Get master dependencies
@@ -1491,7 +1544,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - queue/until_front_of_line:
           only-on-branch: master
@@ -1502,7 +1555,7 @@ jobs:
       - set-slack-user-id
       - setup-python-venv:
           determined: true
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - deploy-aws-cluster:
           cluster-id: <<parameters.cluster-id>>
           det-version: ${CIRCLE_SHA1}
@@ -1548,7 +1601,7 @@ jobs:
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
@@ -1556,7 +1609,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - when:
           condition: <<parameters.enable-tls>>
           steps:
@@ -1639,7 +1692,7 @@ jobs:
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
@@ -1647,7 +1700,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -1714,7 +1767,7 @@ jobs:
         default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.4
         type: string
     docker:
-      - image: determinedai/cimg-base:stable
+      - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
     environment:
       # Using the TF2-only image here is a hack to get more test coverage since TF1 is still the
@@ -1731,7 +1784,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
+          executor: <<pipeline.parameters.docker-image>>
       - setup-gke-cluster-cuda-11:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -1767,7 +1820,7 @@ jobs:
       det-version:
         type: string
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1780,7 +1833,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
 
       - pull-task-images:
           tf1: True
@@ -1791,12 +1844,12 @@ jobs:
 
   scan-docker-images:
     machine:
-      image: ubuntu-2004:202101-01
+      image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
-          executor: ubuntu-2004:202101-01
+          executor: <<pipeline.parameters.machine-image>>
           extras-requires: anchorecli
       - run: sudo snap install yq
       - run: sudo apt-get install -y jq

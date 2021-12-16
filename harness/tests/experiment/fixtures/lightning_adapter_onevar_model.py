@@ -1,3 +1,4 @@
+# type: ignore
 from abc import abstractmethod
 from typing import Any, Dict, Tuple
 
@@ -32,7 +33,7 @@ class OneVarLM(pl.LightningModule):
 
         self.loss_fn = torch.nn.MSELoss()
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Dict:
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
         sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=1e-8)
         return {

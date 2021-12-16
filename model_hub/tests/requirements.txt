@@ -1,6 +1,6 @@
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
-mypy==0.790
+mypy==0.910
 
 # install transformers and datasets
 transformers==4.8.2

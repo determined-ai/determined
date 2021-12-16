@@ -11,7 +11,7 @@ from determined import keras
 from tests.experiment.utils import make_xor_data_sequences, xor_data  # noqa: I202, I100
 
 
-class StopVeryEarlyCallback(keras.callbacks.Callback):  # type: ignore
+class StopVeryEarlyCallback(keras.callbacks.Callback):
     def on_train_workload_end(self, _: int, logs: Any = None) -> None:
         self.model.stop_training = True
 

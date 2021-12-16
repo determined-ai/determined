@@ -1,3 +1,4 @@
+# type: ignore
 from typing import Any, Dict, List, cast
 
 import numpy as np
