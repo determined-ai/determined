@@ -75,7 +75,7 @@ func detectCPUs() ([]device.Device, error) {
 			switch errno {
 			case syscall.ENOENT:
 				if runtime.GOARCH == "arm64" && runtime.GOOS == osDarwin {
-					return []device.Device{{ID: 0, Brand: "Apple", UUID: "AppleM1", Type: device.CPU}}, nil
+					return []device.Device{{ID: 0, Brand: "Apple", UUID: "AppleSilicon", Type: device.CPU}}, nil
 				}
 				return nil, errors.Wrap(err, "error while gathering CPU info on a non-AppleM1 system")
 			default:
