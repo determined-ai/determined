@@ -141,11 +141,8 @@ def wait_for_experiment_state(
             return
 
         if is_terminal_state(state):
-            # If we expected the experiment to terminate successfully
-            # but it failed instead, then dump trial logs to help assist
-            # debugging.
-            if state == "ERROR" and target_state == "COMPLETED":
-                report_failed_experiment(experiment_id, state)
+            if state != target_state:
+                report_failed_experiment(experiment_id)
 
             pytest.fail(
                 f"Experiment {experiment_id} terminated in {state} state, expected {target_state}"
@@ -162,7 +159,7 @@ def wait_for_experiment_state(
     else:
         if target_state == "COMPLETED":
             cancel_experiment(experiment_id)
-            report_failed_experiment(experiment_id, "CANCELED")
+        report_failed_experiment(experiment_id)
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
                 target_state, max_wait_secs
@@ -442,25 +439,27 @@ def run_list_cli_tests(experiment_id: int) -> None:
     )
 
 
-def report_failed_experiment(experiment_id: int, state: str) -> None:
-    print(
-        "Experiment {} terminated in {} state unexpectedly!".format(experiment_id, state),
-        file=sys.stderr,
-    )
-
+def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active_trials = [t for t in trials if t["state"] == "ACTIVE"]
-    error_trials = [t for t in trials if t["state"] == "ERROR"]
-    canceled_trials = [t for t in trials if t["state"] == "CANCELED"]
+    active = sum(1 for t in trials if t["state"] == "ACTIVE")
+    paused = sum(1 for t in trials if t["state"] == "PAUSED")
+    stopping_completed = sum(1 for t in trials if t["state"] == "STOPPING_COMPLETED")
+    stopping_canceled = sum(1 for t in trials if t["state"] == "STOPPING_CANCELED")
+    stopping_error = sum(1 for t in trials if t["state"] == "STOPPING_ERROR")
+    completed = sum(1 for t in trials if t["state"] == "COMPLETED")
+    canceled = sum(1 for t in trials if t["state"] == "CANCELED")
+    errored = sum(1 for t in trials if t["state"] == "ERROR")
+    stopping_killed = sum(1 for t in trials if t["state"] == "STOPPING_KILLED")
 
     print(
-        "Experiment {}: {} trials, {} active trials, {} failed trials, {} canceled trials".format(
-            experiment_id, len(trials), len(active_trials), len(error_trials), len(canceled_trials)
-        ),
+        f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
+        f"{active} active, {paused} paused, {stopping_completed} stopping-completed, "
+        f"{stopping_canceled} stopping-canceled, {stopping_error} stopping-error, "
+        f"{stopping_killed} stopping-killed, {canceled} canceled, {errored} errored",
         file=sys.stderr,
     )
 
-    for trial in error_trials + canceled_trials:
+    for trial in trials:
         print_trial_logs(trial["id"])
 
 
