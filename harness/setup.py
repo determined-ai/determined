@@ -42,17 +42,20 @@ setup(
         "tabulate>=0.8.3",
         # det preview-search "pretty-dumps" a sub-yaml with an API added in 0.15.29
         "ruamel.yaml>=0.15.29",
-        # Deploy
-        # "docker[ssh]>=3.7.3",
-        # "google-api-python-client>=1.12.1",
-        # "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
-        # "docker-compose>=1.13.0",
-        # "tqdm",
-        # "appdirs",
-        # "websocket-client",
         # Telemetry
         "analytics-python",
     ],
+    extras_require={
+        "deploy": [
+            "docker[ssh]>=3.7.3",
+            "google-api-python-client>=1.12.1",
+            "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
+            "docker-compose>=1.13.0",
+            "tqdm",
+            "appdirs",
+            "websocket-client",
+        ]
+    },
     zip_safe=False,
     entry_points={
         "console_scripts": [
