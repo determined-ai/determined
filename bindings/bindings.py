@@ -204,75 +204,16 @@ class Sequence(TypeAnno):
             return val
         return f"[{self.items.dump('x')} for x in {val}]"
 
-
-class Class(TypeDef):
-    def __init__(self, name: str, members: typing.Dict[str, TypeAnno]):
-        self.name = name
-        self.members = members
-
-    def load(self, val: Code) -> Code:
-        return f"{self.name}.from_json({val})"
-
-    def dump(self, val: Code) -> Code:
-        return f"{val}.to_json()"
-
-    def gen_def(self) -> Code:
-        out = [f"class {self.name}:"]
-        out += ["    def __init__("]
-        out += ["        self,"]
-        out += [f"        {k}: {v.annotation()}," for k, v in self.members.items()]
-        out += ["    ):"]
-        out += [f"        self.{k} = {k}" for k in self.members]
-        out += [""]
-        out += ["    @classmethod"]
-        out += ["    def from_json(cls, obj):"]
-        out += ["        return cls("]
-        for k, v in self.members.items():
-            if v.need_parse():
-                parsed = v.load(f'obj["{k}"]')
-            else:
-                parsed = f'obj["{k}"]'
-            out.append(f"""             {k}={parsed},""")
-        out += ["        )"]
-        out += [""]
-        out += ["    def to_json(self):"]
-        out += ["        return {"]
-        for k, v in self.members.items():
-            if v.need_parse():
-                parsed = v.dump(f"self.{k}")
-            else:
-                parsed = f"self.{k}"
-            out.append(f'             "{k}": {parsed},')
-        out += ["        }"]
-
-        return "\n".join(out)
-
-
-class Enum(TypeDef):
-    def __init__(self, name, members):
-        self.name = name
-        self.members = members
-
-    def load(self, val: Code) -> Code:
-        return f"{val}.value"
-
-    def dump(self, val: Code) -> Code:
-        return f"{self.name}({val})"
-
-    def gen_def(self) -> Code:
-        out = [f"class {self.name}(enum.Enum):"]
-        out += [f'    {v} = "{v}"' for v in self.members]
-        return "\n".join(out)
-
-
 class Parameter:
-    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str) -> None:
+    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str,
+                 serialized_name: str = None) -> None:
         self.name = name
+        self.serialized_name = serialized_name
         self.type = typ
         self.required = required
         self.where = where
         # validations
-        assert where in ("query", "body", "path"), (name, where)
+        assert where in ("query", "body", "path", "definitions"), (name, where)
         assert where != "path" or required, name
         if where == "path":
             if not isinstance(typ, (String, Int, Bool)):
@@ -294,6 +235,76 @@ class Parameter:
 
     def dump(self) -> Code:
         return self.type.dump(self.name)
+
+
+class Class(TypeDef):
+    def __init__(self, name: str, params: typing.Dict[str, Parameter]):
+        self.name = name
+        # self.members = members
+        self.params = params
+
+    def load(self, val: Code) -> Code:
+        return f"{self.name}.from_json({val})"
+
+    def dump(self, val: Code) -> Code:
+        return f"{val}.to_json()"
+
+    def gen_def(self) -> Code:
+        out = [f"class {self.name}:"]
+        out += ["    def __init__("]
+        out += ["        self,"]
+        required = sorted(p for p in self.params if self.params[p].required)
+        optional = sorted(p for p in self.params if not self.params[p].required)
+        for name in required + optional:
+            out += ["        " + self.params[name].gen_function_param()]
+        # out += [f"        {k}: {v.annotation()}," for k, v in self.members.items()]
+        out += ["    ):"]
+        out += [f"        self.{k} = {k}" for k in self.params]
+        out += [""]
+        out += ["    @classmethod"]
+        out += [f'    def from_json(cls, obj: Json) -> "{self.name}":']
+        out += ["        return cls("]
+        for k, v in self.params.items():
+            if v.type.need_parse():
+                parsed = v.type.load(f'obj["{k}"]')
+            else:
+                parsed = f'obj["{k}"]'
+            if not v.required:
+                parsed = parsed + f' if obj.get("{k}", None) is not None else None'
+            out.append(f"""             {k}={parsed},""")
+        out += ["        )"]
+        out += [""]
+        out += ["    def to_json(self) -> typing.Any:"]
+        out += ["        return {"]
+        for k, v in self.params.items():
+            if v.type.need_parse():
+                parsed = v.type.dump(f"self.{k}")
+            else:
+                parsed = f"self.{k}"
+            if not v.required:
+                parsed = parsed + f" if self.{k} is not None else None"
+            out.append(f'             "{k}": {parsed},')
+        out += ["        }"]
+
+        return "\n".join(out)
+
+
+class Enum(TypeDef):
+    def __init__(self, name, members):
+        self.name = name
+        self.members = members
+
+    def load(self, val: Code) -> Code:
+        return f"{val}"
+
+    def dump(self, val: Code) -> Code:
+        return f"{val}"
+
+    def gen_def(self) -> Code:
+        out = [f"class {self.name}(enum.Enum):"]
+        out += [f'    {v} = "{v}"' for v in self.members]
+        return "\n".join(out)
+
 
 
 class Function:
@@ -366,7 +377,7 @@ class Function:
         if query_params:
             out += ["    _params = {"]
             for p in query_params:
-                out += [f'        "{self.params[p].name}": {self.params[p].name},']
+                out += [f'        "{self.params[p].serialized_name}": {self.params[p].name},']
             out += ["    }"]
         else:
             out += ["    _params = None"]
@@ -455,9 +466,11 @@ def process_definitions(swagger_definitions: dict) -> TypeDefs:
             # top-level named objects should be classes, not typed dictionaries:
             assert "additionalProperties" not in schema, (name, schema)
             if "properties" in schema:
+                required = set(schema.get("required", []))
                 members = {
-                    k: classify_type(path, v) for k, v in schema["properties"].items()
+                    k: Parameter(k, classify_type(path, v), (k in required), "definitions") for k, v in schema["properties"].items()
                 }
+                # TODO create parameters
                 defs[name] = Class(name, members)
                 continue
             else:
@@ -492,6 +505,10 @@ def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Funct
             # Figure out parameters.
             params = {}
             for pspec in spec.get("parameters", []):
+                where = pspec["in"]
+                serialized_name = None
+                if where == "query": # preserve query parameter names
+                    serialized_name = pname = pspec["name"]
                 pname = pspec["name"].replace(".", "_")
                 required = pspec.get("required", False)
                 if "schema" in pspec:
@@ -501,8 +518,7 @@ def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Funct
                     inlined = ("type", "format", "items", "properties", "enum")
                     pschema = {k: pspec[k] for k in inlined if k in pspec}
                 ptype = classify_type(f"{name}.{pname}", pschema)
-                where = pspec["in"]
-                params[pname] = Parameter(pname, ptype, required, where)
+                params[pname] = Parameter(pname, ptype, required, where, serialized_name)
 
             # TODO: Validate before altering the whole path.
             path = path.replace(".", "_")
@@ -525,12 +541,15 @@ def pybindings(swagger: dict) -> str:
     out += ["if typing.TYPE_CHECKING:"]
     out += ["    from determined.experimental import client"]
     out += [""]
-    out += ["def dump_float(val):"]
+    out += ["# flake8: noqa"]
+    out += ["Json = typing.Any"]
+    out += [""]
+    out += ["def dump_float(val: typing.Any) -> typing.Any:"]
     out += ["    if math.isnan(val):"]
     out += ['        return "Nan"']
-    out += ["    if math.isinfinite(val):"]
+    out += ["    if math.isinf(val):"]
     out += ['        return "Infinity" if val > 0 else "-Infinity"']
-    out += ["    return float"]
+    out += ["    return val"]
     out += [""]
 
     defs = process_definitions(swagger["definitions"])
