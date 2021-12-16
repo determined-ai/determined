@@ -46,11 +46,11 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-slot_type="gpu"
-if [ $slot_type == "gpu" ]; then
-    echo "#### Starting agent with GPUs"
+slot_type="cuda"
+if [ $slot_type == "cuda" ] || [ $slot_type == "gpu" ]; then
+    echo "#### Starting agent with NVIDIA GPUs"
     docker_args+=(--gpus all)
-    docker_args+=(-e DET_SLOT_TYPE=gpu)
+    docker_args+=(-e DET_SLOT_TYPE=cuda)
 elif [ $slot_type == "cpu" ]; then
     echo "#### Starting agent with cpu slots"
     docker_args+=(-e DET_SLOT_TYPE=cpu)

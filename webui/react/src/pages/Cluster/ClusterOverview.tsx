@@ -71,7 +71,7 @@ const ClusterOverview: React.FC = () => {
   }, [ resourcePools ]);
 
   const gpuSlotStates = useMemo(() => {
-    return getSlotContainerStates(agents || [], ResourceType.GPU);
+    return getSlotContainerStates(agents || [], ResourceType.CUDA);
   }, [ agents ]);
 
   const cpuSlotStates = useMemo(() => {
@@ -168,9 +168,9 @@ const ClusterOverview: React.FC = () => {
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
-          {overview.GPU.total ? (
+          {overview.CUDA.total ? (
             <OverviewStats title="GPU Slots Allocated">
-              {overview.GPU.total - overview.GPU.available} <small>/ {overview.GPU.total}</small>
+              {overview.CUDA.total - overview.CUDA.available} <small>/ {overview.CUDA.total}</small>
             </OverviewStats>
           ) : null}
           {overview.CPU.total ? (
@@ -189,13 +189,13 @@ const ClusterOverview: React.FC = () => {
         {overview.ALL.total === 0 ? (
           <Message title="No connected agents." type={MessageType.Empty} />
         ) : null }
-        {overview.GPU.total > 0 && (
+        {overview.CUDA.total > 0 && (
           <SlotAllocationBar
             resourceStates={gpuSlotStates}
             showLegends
             size={ShirtSize.enormous}
-            title={`Compute (${ResourceType.GPU})`}
-            totalSlots={overview.GPU.total}
+            title={`Compute (${ResourceType.CUDA})`}
+            totalSlots={overview.CUDA.total}
           />
         )}
         {overview.CPU.total > 0 && (

@@ -221,13 +221,13 @@ DataLayerConfigV0_Type = Union[SharedFSDataLayerConfigV0, S3DataLayerConfigV0, G
 DataLayerConfigV0.finalize(DataLayerConfigV0_Type)
 
 
-class CudaCompatMixin():
-	def _ensure_cuda_compat(self) -> None:
-		# Backwards compatibility.
-		if self.cuda is None and self.gpu is not None:
-			self.cuda = self.gpu
-		# Equalize values.
-		self.gpu = self.cuda
+class CudaCompatMixin:
+    def _ensure_cuda_compat(self) -> None:
+        # Backwards compatibility.
+        if self.cuda is None and self.gpu is not None:
+            self.cuda = self.gpu
+        # Equalize values.
+        self.gpu = self.cuda
 
 
 class EnvironmentImageV0(schemas.SchemaBase, CudaCompatMixin):
@@ -264,7 +264,10 @@ class EnvironmentImageV0(schemas.SchemaBase, CudaCompatMixin):
         if self.rocm is None:
             self.rocm = "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-4537b95"
 
-        self.cuda = self.gpu or "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
+        self.cuda = (
+            self.gpu
+            or "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
+        )
         self.gpu = self.cuda
 
 

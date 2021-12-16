@@ -93,7 +93,7 @@ const initAuth = {
 export const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
-  [ResourceType.GPU]: clone(initResourceTally),
+  [ResourceType.CUDA]: clone(initResourceTally),
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };

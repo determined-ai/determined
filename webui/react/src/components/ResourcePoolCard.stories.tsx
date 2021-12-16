@@ -16,7 +16,7 @@ export const Default = (): React.ReactNode => (
   <ResourcePoolCard
     computeContainerStates={[]}
     resourcePool={rps.random()}
-    resourceType={ResourceType.GPU}
+    resourceType={ResourceType.CUDA}
     totalComputeSlots={3}
   />
 );
