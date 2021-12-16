@@ -173,7 +173,7 @@ const ClusterOverview: React.FC = () => {
             {agents ? agents.length : '?'}
           </OverviewStats>
           {overview.CUDA.total ? (
-            <OverviewStats title="GPU Slots Allocated">
+            <OverviewStats title="CUDA Slots Allocated">
               {overview.CUDA.total - overview.CUDA.available} <small>/ {overview.CUDA.total}</small>
             </OverviewStats>
           ) : null}
