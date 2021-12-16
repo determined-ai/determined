@@ -33,6 +33,11 @@ parameters:
   machine-image:
     type: string
     default: ubuntu-2004:202101-01
+  # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
+  # If the dependencies stay the same, but the circleci code that would produce them is changed,
+  # it may be necessary to invalidate the cache by incrementing this value.
+  # For example, if you change an env variable affecting a build of a python package with the same version,
+  # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
     default: v1dev10
