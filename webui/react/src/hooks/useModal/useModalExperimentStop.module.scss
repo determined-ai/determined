@@ -1,0 +1,8 @@
+.base {
+  display: flex;
+  flex-direction: column;
+
+  & > *:not(:first-child) {
+    margin-top: var(--theme-sizes-layout-medium);
+  }
+}

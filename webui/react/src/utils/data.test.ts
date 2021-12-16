@@ -14,6 +14,7 @@ enum Type {
   Number = 'number',
   Object = 'object',
   Primitive = 'primitive',
+  Promise = 'promise',
   Set = 'set',
   String = 'string',
   SyncFn = 'sync-function',
@@ -30,6 +31,7 @@ const testGroups = [
   { fn: utils.isNumber, type: Type.Number },
   { fn: utils.isObject, type: Type.Object },
   { fn: utils.isPrimitive, type: Type.Primitive },
+  { fn: utils.isPromise, type: Type.Promise },
   { fn: utils.isSet, type: Type.Set },
   { fn: utils.isString, type: Type.String },
   { fn: utils.isSyncFunction, type: Type.SyncFn },
@@ -89,6 +91,7 @@ describe('Data Utilities', () => {
       { type: Type.Object, value: {} },
       { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
       { type: [ Type.Primitive, Type.String ], value: 'hello world' },
+      { type: [ Type.Object, Type.Promise ], value: new Promise(resolve => resolve(undefined)) },
     ];
     testGroups.forEach(group => {
       describe(group.fn.name, () => {

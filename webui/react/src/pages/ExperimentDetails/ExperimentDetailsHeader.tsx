@@ -1,22 +1,28 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
-import { deletableRunStates, terminalRunStates } from 'constants/states';
+import { deletableRunStates, pausableRunStates, terminalRunStates } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
+import useModalExperimentCreate, {
+  CreateExperimentType,
+} from 'hooks/useModal/useModalExperimentCreate';
+import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
+import useModalExperimentStop from 'hooks/useModal/useModalExperimentStop';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
-import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
-import { handlePath, paths, routeToReactUrl } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import {
-  archiveExperiment, deleteExperiment, openOrCreateTensorBoard, patchExperiment,
+  activateExperiment,
+  archiveExperiment, openOrCreateTensorBoard, patchExperiment,
+  pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
@@ -30,8 +36,6 @@ interface Props {
   curUser?: DetailedUser;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  showContinueTrial?: () => void;
-  showForkModal?: () => void;
   trial?: TrialDetails;
 }
 
@@ -39,10 +43,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   curUser,
   experiment,
   fetchExperimentDetails,
-  showContinueTrial,
-  showForkModal,
   trial,
 }: Props) => {
+  const [ isChangingState, setIsChangingState ] = useState(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
@@ -51,21 +54,72 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   );
   const experimentTags = useExperimentTags(fetchExperimentDetails);
 
-  const deleteExperimentHandler = useCallback(() => {
-    Modal.confirm({
-      content: `
-      Are you sure you want to delete
-      this experiment?
-    `,
-      icon: <ExclamationCircleOutlined />,
-      okText: 'Delete',
-      onOk: async () => {
-        await deleteExperiment({ experimentId: experiment.id });
-        routeToReactUrl(paths.experimentList());
-      },
-      title: 'Confirm Experiment Deletion',
-    });
-  }, [ experiment.id ]);
+  const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
+
+  const { modalOpen: openModalStop } = useModalExperimentStop({
+    experimentId: experiment.id,
+    onClose: handleModalClose,
+  });
+
+  const { modalOpen: openModalDelete } = useModalExperimentDelete({ experimentId: experiment.id });
+
+  const { modalOpen: openModalCreate } = useModalExperimentCreate();
+
+  const backgroundColor = useMemo(() => {
+    return getStateColorCssVar(experiment.state);
+  }, [ experiment.state ]);
+
+  const handlePauseClick = useCallback(async () => {
+    setIsChangingState(true);
+    try {
+      await pauseExperiment({ experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to pause experiment.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    } finally {
+      setIsChangingState(false);
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
+  const handlePlayClick = useCallback(async () => {
+    setIsChangingState(true);
+    try {
+      await activateExperiment({ experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to activate experiment.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    } finally {
+      setIsChangingState(false);
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
+  const handleStopClick = useCallback(() => openModalStop(), [ openModalStop ]);
+
+  const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
+
+  const handleContinueTrialClick = useCallback(() => {
+    openModalCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+  }, [ experiment, openModalCreate, trial ]);
+
+  const handleForkClick = useCallback(() => {
+    openModalCreate({ experiment, type: CreateExperimentType.Fork });
+  }, [ experiment, openModalCreate ]);
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -129,14 +183,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       continueTrial: {
         key: 'continue-trial',
         label: 'Continue Trial',
-        onClick: showContinueTrial,
+        onClick: handleContinueTrialClick,
       },
       delete: {
         icon: <Icon name="fork" size="small" />,
         isLoading: isRunningDelete,
         key: 'delete',
         label: 'Delete',
-        onClick: deleteExperimentHandler,
+        onClick: handleDeleteClick,
       },
       downloadModel: {
         icon: <Icon name="download" size="small" />,
@@ -150,7 +204,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         icon: <Icon name="fork" size="small" />,
         key: 'fork',
         label: 'Fork',
-        onClick: showForkModal,
+        onClick: handleForkClick,
       },
       tensorboard: {
         icon: <Icon name="tensorboard" size="small" />,
@@ -184,8 +238,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
     return [
-      showForkModal && options.fork,
-      showContinueTrial && options.continueTrial,
+      options.fork,
+      trial?.id && options.continueTrial,
       options.tensorboard,
       options.downloadModel,
       terminalRunStates.has(experiment.state) && (
@@ -196,18 +250,19 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     ].filter(option => !!option) as Option[];
   }, [
     curUser,
-    deleteExperimentHandler,
     isRunningDelete,
     experiment.archived,
     experiment.id,
     experiment.state,
     experiment.username,
     fetchExperimentDetails,
+    handleContinueTrialClick,
+    handleDeleteClick,
+    handleForkClick,
     isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,
-    showContinueTrial,
-    showForkModal,
+    trial?.id,
   ]);
 
   return (
@@ -236,7 +291,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <TimeDuration duration={getDuration(experiment)} />
               </div>
             )}
-            {experiment.jobSummary && ! terminalRunStates.has(experiment.state) && (
+            {experiment.jobSummary && !terminalRunStates.has(experiment.state) && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Job Info:</span>
                 <Link path={paths.jobs()}>
@@ -255,7 +310,38 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         leftContent={(
           <div className={css.base}>
             <div className={css.experimentInfo}>
-              <ExperimentState experiment={experiment} />
+              <Spinner spinning={isChangingState}>
+                <div className={css.experimentState} style={{ backgroundColor }}>
+                  {pausableRunStates.has(experiment.state) && (
+                    <Button
+                      className={css.buttonPause}
+                      ghost={true}
+                      icon={<Icon name="pause" size="large" />}
+                      shape="circle"
+                      onClick={handlePauseClick}
+                    />
+                  )}
+                  {experiment.state === RunState.Paused && (
+                    <Button
+                      className={css.buttonPlay}
+                      ghost={true}
+                      icon={<Icon name="play" size="large" />}
+                      shape="circle"
+                      onClick={handlePlayClick}
+                    />
+                  )}
+                  {!terminalRunStates.has(experiment.state) && (
+                    <Button
+                      className={css.buttonStop}
+                      ghost={true}
+                      icon={<Icon name="stop" size="large" />}
+                      shape="circle"
+                      onClick={handleStopClick}
+                    />
+                  )}
+                  <span className={css.state}>{experiment.state}</span>
+                </div>
+              </Spinner>
               <div className={css.experimentId}>Experiment {experiment.id}</div>
             </div>
             <div className={css.experimentName}>

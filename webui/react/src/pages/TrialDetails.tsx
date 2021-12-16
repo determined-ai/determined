@@ -9,7 +9,6 @@ import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import handleError, { ErrorType } from 'ErrorHandler';
-import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -21,7 +20,7 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 const { TabPane } = Tabs;
@@ -59,8 +58,6 @@ const TrialDetailsComp: React.FC = () => {
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
   const trialId = parseInt(routeParams.trialId);
   const trial = trialDetails.data;
-
-  const { showModal } = useCreateExperimentModal();
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -104,18 +101,6 @@ const TrialDetailsComp: React.FC = () => {
       }
     }
   }, [ canceler, trialDetails.error, trialId ]);
-
-  const handleActionClick = useCallback((action: Action) => {
-    switch (action) {
-      case Action.ContinueTrial:
-        if (experiment && trial) showModal({
-          experiment,
-          trial,
-          type: CreateExperimentType.ContinueTrial,
-        });
-        break;
-    }
-  }, [ experiment, showModal, trial ]);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
@@ -174,7 +159,6 @@ const TrialDetailsComp: React.FC = () => {
         <TrialDetailsHeader
           experiment={experiment}
           fetchTrialDetails={fetchTrialDetails}
-          handleActionClick={handleActionClick}
           trial={trial}
         />
       )}
