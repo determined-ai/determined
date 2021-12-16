@@ -422,8 +422,10 @@ func TestExperiment(t *testing.T) {
 func TestMasterConfigImage(t *testing.T) {
 	masterDefault := &TaskContainerDefaultsConfig{
 		Image: &RuntimeItem{
-			CPU: "test/cpu",
-			GPU: "test/gpu",
+			CPU:  "test/cpu",
+			CUDA: "test/gpu",
+			GPU:  "test/gpu",
+			ROCM: "test/rocm",
 		},
 	}
 	actual := DefaultExperimentConfig(masterDefault)
@@ -431,7 +433,9 @@ func TestMasterConfigImage(t *testing.T) {
 
 	expected := DefaultExperimentConfig(nil)
 	expected.Environment.Image.CPU = "test/cpu"
-	expected.Environment.Image.GPU = "test/gpu"
+	expected.Environment.Image.CUDA = "test/gpu"
+	expected.Environment.Image.GPU = expected.Environment.Image.CUDA
+	expected.Environment.Image.ROCM = "test/rocm"
 	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
@@ -441,8 +445,10 @@ func TestMasterConfigImage(t *testing.T) {
 func TestOverrideMasterConfigImage(t *testing.T) {
 	masterDefault := &TaskContainerDefaultsConfig{
 		Image: &RuntimeItem{
-			CPU: "test/cpu",
-			GPU: "test/gpu",
+			CPU:  "test/cpu",
+			CUDA: "test/gpu",
+			GPU:  "test/gpu",
+			ROCM: "test/rocm",
 		},
 	}
 	actual := DefaultExperimentConfig(masterDefault)
