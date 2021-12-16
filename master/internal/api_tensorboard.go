@@ -259,8 +259,6 @@ func (a *apiServer) LaunchTensorboard(
 	}
 	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
-	refineArgs(spec.Config.TensorBoardArgs)
-
 	spec.Config.Entrypoint = append(
 		[]string{tensorboardEntrypointFile, strings.Join(logDirs, ",")},
 		spec.Config.TensorBoardArgs...)
@@ -364,16 +362,4 @@ func getTensorBoardConfigsFromReq(
 	}
 
 	return configs, nil
-}
-
-func refineArgs(s []string) {
-	trimmed := ""
-	for x := range s {
-		trimmed = strings.TrimLeft(s[x], "-")
-		if trimmed == "h" {
-			s[x] = "-h"
-		} else {
-			s[x] = "--" + trimmed
-		}
-	}
 }
