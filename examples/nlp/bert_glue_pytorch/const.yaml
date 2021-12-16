@@ -9,6 +9,8 @@ hyperparameters:
   num_warmup_steps: 0
   num_training_steps: 459
   max_seq_length: 128
+profiling:
+  enabled: true
 searcher:
   name: single
   metric: acc
