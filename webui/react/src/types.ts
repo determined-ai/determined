@@ -63,7 +63,6 @@ export interface Telemetry {
 export enum ResourceType {
   CPU = 'CPU',
   CUDA = 'CUDA',
-  ROCM = 'ROCM',
   ALL = 'ALL',
   UNSPECIFIED = 'UNSPECIFIED',
 }
