@@ -70,8 +70,12 @@ const ClusterOverview: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const gpuSlotStates = useMemo(() => {
+  const cudaSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.CUDA);
+  }, [ agents ]);
+
+  const rocmSlotStates = useMemo(() => {
+    return getSlotContainerStates(agents || [], ResourceType.ROCM);
   }, [ agents ]);
 
   const cpuSlotStates = useMemo(() => {
@@ -173,6 +177,11 @@ const ClusterOverview: React.FC = () => {
               {overview.CUDA.total - overview.CUDA.available} <small>/ {overview.CUDA.total}</small>
             </OverviewStats>
           ) : null}
+          {overview.ROCM.total ? (
+            <OverviewStats title="ROCm Slots Allocated">
+              {overview.ROCM.total - overview.ROCM.available} <small>/ {overview.ROCM.total}</small>
+            </OverviewStats>
+          ) : null}
           {overview.CPU.total ? (
             <OverviewStats title="CPU Slots Allocated">
               {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
@@ -191,11 +200,20 @@ const ClusterOverview: React.FC = () => {
         ) : null }
         {overview.CUDA.total > 0 && (
           <SlotAllocationBar
-            resourceStates={gpuSlotStates}
+            resourceStates={cudaSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.CUDA})`}
             totalSlots={overview.CUDA.total}
+          />
+        )}
+        {overview.ROCM.total > 0 && (
+          <SlotAllocationBar
+            resourceStates={rocmSlotStates}
+            showLegends
+            size={ShirtSize.enormous}
+            title={`Compute (${ResourceType.ROCM})`}
+            totalSlots={overview.ROCM.total}
           />
         )}
         {overview.CPU.total > 0 && (

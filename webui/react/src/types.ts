@@ -63,11 +63,12 @@ export interface Telemetry {
 export enum ResourceType {
   CPU = 'CPU',
   CUDA = 'CUDA',
+  ROCM = 'ROCM',
   ALL = 'ALL',
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
-export const deviceTypes = new Set([ ResourceType.CPU, ResourceType.CUDA ]);
+export const deviceTypes = new Set([ ResourceType.CPU, ResourceType.CUDA, ResourceType.ROCM ]);
 
 export enum ResourceState { // This is almost CommandState
   Unspecified = 'UNSPECIFIED',

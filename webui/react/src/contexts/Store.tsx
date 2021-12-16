@@ -94,6 +94,7 @@ export const initResourceTally: ClusterOverviewResource = { allocation: 0, avail
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.CUDA]: clone(initResourceTally),
+  [ResourceType.ROCM]: clone(initResourceTally),
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };

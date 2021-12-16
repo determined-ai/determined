@@ -173,6 +173,12 @@ const Dashboard: React.FC = () => {
               <small>/{overview[ResourceType.CUDA].total}</small>
             </OverviewStats>
           ) : null}
+          {overview[ResourceType.ROCM].total ? (
+            <OverviewStats title="Available ROCm GPUs">
+              {overview[ResourceType.ROCM].available}
+              <small>/{overview[ResourceType.ROCM].total}</small>
+            </OverviewStats>
+          ) : null}
           {overview[ResourceType.CPU].total ? (
             <OverviewStats title="Available CPUs">
               {overview[ResourceType.CPU].available}
