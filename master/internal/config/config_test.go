@@ -316,10 +316,11 @@ telemetry:
 
 func TestRMPreemptionStatus(t *testing.T) {
 	test := func(t *testing.T, configRaw string, rpName string, expected bool) {
-		unmarshaled := Config{}
-		err := yaml.Unmarshal([]byte(configRaw), &unmarshaled, yaml.DisallowUnknownFields)
+		unmarshaled := DefaultConfig()
+		err := yaml.Unmarshal([]byte(configRaw), unmarshaled, yaml.DisallowUnknownFields)
+		assert.NilError(t, unmarshaled.Resolve())
 		assert.NilError(t, err)
-		assert.DeepEqual(t, readRMPreemptionStatus(&unmarshaled, rpName), expected)
+		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled, rpName), expected)
 	}
 
 	testCases := []struct {
@@ -436,6 +437,25 @@ resource_pools:
   - pool_name: preemtible
 `,
 			rpName:            "preemtible",
+			preemptionEnabled: true,
+		},
+		{
+			name: "k8 default",
+			configRaw: `
+resource_manager:
+  type: kubernetes
+`,
+			rpName:            "",
+			preemptionEnabled: false,
+		},
+		{
+			name: "k8 with preemption plugin",
+			configRaw: `
+resource_manager:
+  type: kubernetes
+  default_scheduler: preemption
+`,
+			rpName:            "default",
 			preemptionEnabled: true,
 		},
 	}
