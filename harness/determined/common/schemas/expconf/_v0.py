@@ -1,6 +1,6 @@
 import enum
 import time
-from typing import Any, Dict, List, Optional, TypeVar, Union, no_type_check
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 from determined.common import schemas
 
