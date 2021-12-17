@@ -454,19 +454,8 @@ func reportResourcePoolCreated(system *actor.System, config *ResourcePoolConfig)
 	if config.Scheduler == nil {
 		panic("scheduler not configured in resource pool")
 	}
-
-	var preemptionEnabled bool
-	switch {
-	case config.Scheduler.FairShare != nil:
-		preemptionEnabled = true
-	case config.Scheduler.Priority != nil:
-		preemptionEnabled = config.Scheduler.Priority.Preemption
-	case config.Scheduler.RoundRobin != nil:
-		preemptionEnabled = false
-	}
-
 	telemetry.ReportResourcePoolCreated(
 		system, config.PoolName, config.Scheduler.GetType(),
-		config.Scheduler.FittingPolicy, preemptionEnabled,
+		config.Scheduler.FittingPolicy, config.Scheduler.GetPreemption(),
 	)
 }

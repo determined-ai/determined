@@ -29,9 +29,10 @@ import (
 )
 
 const (
-	fluentBaseDir       = "/run/determined/fluent/"
-	coscheduler         = "coscheduler"
-	preemptionScheduler = "preemption"
+	fluentBaseDir = "/run/determined/fluent/"
+	coscheduler   = "coscheduler"
+	// PreemptionScheduler is the name of the preemption scheduler for k8.
+	PreemptionScheduler = "preemption"
 	gcTask              = "gc"
 	cmdTask             = "cmd"
 
@@ -212,7 +213,7 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
-	} else if scheduler == coscheduler || scheduler == preemptionScheduler {
+	} else if scheduler == coscheduler || scheduler == PreemptionScheduler {
 		if newPod.Spec.SchedulerName == "" {
 			newPod.Spec.SchedulerName = scheduler
 		}
