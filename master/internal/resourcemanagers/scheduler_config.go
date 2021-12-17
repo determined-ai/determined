@@ -91,7 +91,7 @@ func (s *SchedulerConfig) GetType() string {
 	}
 }
 
-// GetType returns the type of scheduler that is configured.
+// GetPreemption returns whether the scheduler is set to preempt.
 func (s *SchedulerConfig) GetPreemption() bool {
 	var preemptionEnabled bool
 	switch {
