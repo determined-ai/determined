@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -25,8 +26,8 @@ func (rm *ResourceManagers) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case
 		sproto.AllocateRequest, sproto.ResourcesReleased,
-		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
-		sproto.SetGroupPriority, sproto.SetGroupOrder,
+		sproto.SetGroupMaxSlots, job.SetGroupWeight,
+		job.SetGroupPriority, job.SetGroupOrder,
 		sproto.GetTaskSummary, sproto.GetTaskSummaries,
 		sproto.SetTaskName, sproto.GetTaskHandler:
 		rm.forward(ctx, msg)

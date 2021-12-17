@@ -37,14 +37,26 @@ type GetJobQStats struct {
 	ResourcePool string
 }
 
-// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
-type SetJobOrder struct {
-	ResourcePool string
-	QPosition    float64
-	Weight       float64
-	Priority     *int
-	JobID        model.JobID
-}
+type (
+	// SetGroupWeight sets the weight of a group in the fair share scheduler.
+	SetGroupWeight struct {
+		Weight       float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+	// SetGroupPriority sets the priority of the group in the priority scheduler.
+	SetGroupPriority struct {
+		Priority     *int
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+	// SetGroupOrder sets the order of the group in the priority scheduler.
+	SetGroupOrder struct {
+		QPosition    float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+)
 
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
@@ -146,6 +158,36 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(jobsInRM)
 
+	case *apiv1.UpdateJobQueueRequest:
+		for _, update := range msg.Updates {
+			jobID := update.JobId
+			jobActor := j.jobsByID[model.JobID(jobID)]
+			if jobActor == nil {
+				ctx.Respond(fmt.Errorf("job %s not found", jobID))
+				return nil
+			}
+			// TODO compute based off of before and after
+			// if update.QPosition > 0 {
+			// 	ctx.Tell(jobActor, SetGroupOrder{
+			// 		QPosition: update.QPosition,
+			// 		Handler:   ctx.Self(),
+			// 	})
+			// }
+			priority := int(update.GetPriority())
+			if priority > 0 {
+				// TODO switch to Ask and check for errors
+				ctx.Tell(jobActor, SetGroupPriority{
+					Priority: &priority,
+					Handler:  ctx.Self(),
+				})
+			}
+			if update.GetWeight() > 0 {
+				ctx.Tell(jobActor, SetGroupWeight{
+					Weight:  float64(update.GetWeight()),
+					Handler: ctx.Self(),
+				})
+			}
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
