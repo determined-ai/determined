@@ -42,13 +42,21 @@ nfpms:
     contents:
       - src: "packaging/master.yaml"
         dst: "/etc/determined/master.yaml"
-        type: config
+        type: config|noreplace
       - src: "build/**/*"
         dst: "/usr/share/determined/master"
       - src: "static/**/*"
         dst: "/usr/share/determined/master/static"
       - src: "packaging/determined-master.service"
         dst: "/lib/systemd/system/determined-master.service"
+
+      - src: "packaging/LICENSE"
+        dst: "/usr/share/doc/determined-master/copyright"
+        packager: deb
+        
+      - src: "packaging/LICENSE"
+        dst: "/usr/share/licenses/determined-master/LICENSE"
+        packager: rpm
       
     overrides:
       deb:
@@ -56,13 +64,6 @@ nfpms:
           postinstall: packaging/debian/master.postinst
           preremove: packaging/debian/master.prerm
           postremove: packaging/debian/master.postrm
-        contents:
-          - src: "packaging/LICENSE"
-            dst: "/usr/share/doc/determined-master/copyright"
-      rpm:
-        contents:
-          - src: "packaging/LICENSE"
-            dst: "/usr/share/licenses/determined-master/LICENSE"
 
 release:
   github:
