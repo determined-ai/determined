@@ -1169,6 +1169,8 @@ jobs:
       - attach_workspace:
           at: .
 
+      - reinstall-go
+
       - install-webui-test-deps
       - setup-python-venv:
           determined: true
