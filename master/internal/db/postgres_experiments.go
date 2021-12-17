@@ -1116,13 +1116,6 @@ FROM (
 ) descs`, skipArchived, skipInactive, username)
 }
 
-// func deferConstraints(tx *sqlx.Tx) error {
-// 	if _, err := tx.Exec(`SET CONSTRAINTS ALL DEFERRED`); err != nil {
-// 		￼return errors.Wrap(err, "deferring constraints")
-// 	￼}
-// 	￼return nil
-// }
-
 // AddExperiment adds the experiment to the database and sets its ID.
 func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 	if experiment.ID != 0 {
