@@ -32,7 +32,7 @@ build-race:
 check:
 	go mod tidy
 	git diff --quiet go.mod go.sum
-	golangci-lint --build-tags integration run
+	golangci-lint --build-tags integration --timeout 10m run
 
 .PHONY: fmt
 fmt:
