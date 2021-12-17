@@ -257,9 +257,6 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 		if rpConfig.Scheduler != nil {
 			return rpConfig.Scheduler.GetPreemption()
 		}
-		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
-			return rpConfig.Provider.GCP.InstanceType.Preemptible
-		}
 		break
 	}
 
