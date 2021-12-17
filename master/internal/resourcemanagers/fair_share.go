@@ -11,13 +11,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type fairShare struct{}
+type fairShareScheduler struct{}
 
 // NewFairShareScheduler creates a new scheduler that schedules tasks according to the max-min
 // fairness of groups. For groups that are above their fair share, the scheduler requests
 // them to terminate their idle tasks until they have achieved their fair share.
 func NewFairShareScheduler() Scheduler {
-	return &fairShare{}
+	return &fairShareScheduler{}
 }
 
 type groupState struct {
@@ -49,12 +49,12 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (f *fairShareScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	defer f.updateJobs(rp)
-	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+	return f.fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-func (f *fairShare) createJobQInfo(
+func (f *fairShareScheduler) createJobQInfo(
 	taskList *taskList,
 ) (job.AQueue, map[model.JobID]*actor.Ref) {
 	reqs := make(AllocReqs, 0)
@@ -68,12 +68,12 @@ func (f *fairShare) createJobQInfo(
 	return jobQ, jobActors
 }
 
-func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+func (f *fairShareScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	jobQ, _ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
 
-func (f *fairShare) updateJobs(rp *ResourcePool) {
+func (f *fairShareScheduler) updateJobs(rp *ResourcePool) {
 	jobQ, jobActors := f.createJobQInfo(rp.taskList)
 	for jobID, jobActor := range jobActors {
 		jobActor.System().Tell(jobActor, jobQ[jobID])
@@ -86,101 +86,8 @@ func fairshareSchedule(
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	allToAllocate := make([]*sproto.AllocateRequest, 0)
-	allToRelease := make([]*actor.Ref, 0)
-
-	for it := taskList.iterator(); it.next(); {
-		req := it.value()
-		allocations := taskList.GetAllocations(req.TaskActor)
-		if req.SlotsNeeded == 0 && allocations == nil {
-			if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
-				continue
-			}
-			allToAllocate = append(allToAllocate, req)
-		}
-	}
-
-	// Fair share allocations are calculated in four parts:
-	// 1) Organize tasks into groups.
-	// 2) Calculate the slot demand of each group.
-	// 3) Allocate slot offers to each group.
-	// 4) Get scheduler decisions for each group based on its slot demand.
-
-	// TODO (sidneyw): temporarily we partition the cluster by agent label as a
-	// work around for DET-1997. Tasks are given slot offers but may fail to
-	// fit on any agent due to hard contraints. This may cause the scheduler to
-	// not schedule any tasks and therefore not make progress. Slot offers and
-	// reclaiming slots should be rethought in scheduler v2.
-	capacity := capacityByAgentLabel(agents)
-	states := calculateGroupStates(taskList, groups, capacity)
-
-	for label, groupStates := range states {
-		allocateSlotOffers(groupStates, capacity[label])
-		toAllocate, toRelease := assignTasks(agents, groupStates, fittingMethod)
-		allToAllocate = append(allToAllocate, toAllocate...)
-		allToRelease = append(allToRelease, toRelease...)
-	}
-	return allToAllocate, allToRelease
-}
-
-func capacityByAgentLabel(agents map[*actor.Ref]*agentState) map[string]int {
-	agentCap := map[string]int{}
-
-	for _, agent := range agents {
-		agentCap[agent.label] += agent.numSlots()
-	}
-
-	return agentCap
-}
-
-func calculateGroupStates(
-	taskList *taskList, groups map[*actor.Ref]*group, capacities map[string]int,
-) map[string][]*groupState {
-	// Group all tasks by their respective task group and calculate the slot demand of each group.
-	// Demand is calculated by summing the slots needed for each schedulable task.
-	states := make(map[string][]*groupState)
-	groupMapping := make(map[*group]*groupState)
-	for it := taskList.iterator(); it.next(); {
-		req := it.value()
-		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.Label] {
-			continue
-		}
-		group := groups[req.Group]
-		state, ok := groupMapping[group]
-		if !ok {
-			state = &groupState{
-				group:    group,
-				disabled: false,
-			}
-			states[req.Label] = append(states[req.Label], state)
-			groupMapping[group] = state
-		}
-		state.reqs = append(state.reqs, req)
-	}
-	for _, group := range states {
-		for _, state := range group {
-			check.Panic(check.True(state.group != nil, "the group of a task must not be nil"))
-			for _, req := range state.reqs {
-				allocated := taskList.GetAllocations(req.TaskActor)
-				state.slotDemand += req.SlotsNeeded
-				switch {
-				case allocated == nil || len(allocated.Reservations) == 0:
-					state.pendingReqs = append(state.pendingReqs, req)
-				case len(allocated.Reservations) > 0:
-					if !req.Preemptible {
-						state.presubscribedSlots += req.SlotsNeeded
-					}
-					state.allocatedReqs = append(state.allocatedReqs, req)
-					state.activeSlots += req.SlotsNeeded
-				}
-			}
-			if state.maxSlots != nil {
-				state.slotDemand = min(state.slotDemand, *state.maxSlots)
-			}
-		}
-	}
-
-	return states
+	f := fairShareScheduler{}
+	return f.fairshareSchedule(taskList, groups, agents, fittingMethod)
 }
 
 func getTotalWeight(states []*groupState) float64 {
@@ -344,9 +251,11 @@ func assignTasks(
 			state.offered -= state.activeSlots
 			for _, req := range state.pendingReqs {
 				if req.SlotsNeeded <= state.offered {
-					if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
+					fits := findFits(req, agents, fittingMethod)
+					if len(fits) == 0 {
 						continue
 					}
+					addTaskToAgents(fits)
 					toAllocate = append(toAllocate, req)
 					state.offered -= req.SlotsNeeded
 				}
@@ -354,4 +263,152 @@ func assignTasks(
 		}
 	}
 	return toAllocate, toRelease
+}
+
+func (f *fairShareScheduler) fairshareSchedule(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	toAllocate := make([]*sproto.AllocateRequest, 0)
+	toRelease := make([]*actor.Ref, 0)
+
+	for label, agentsWithLabels := range splitAgentsByLabel(agents) {
+		{
+			// Handle zero slots.
+			allocate, release := f.fairshareScheduleWithFilterZeroSlots(
+				taskList, groups, agentsWithLabels, fittingMethod,
+				taskFilter(label, true),
+			)
+
+			toAllocate = append(toAllocate, allocate...)
+			toRelease = append(toRelease, release...)
+		}
+
+		{
+			// Handle non-zero slots.
+			allocate, release := f.fairshareScheduleWithFilter(
+				taskList, groups, agentsWithLabels, fittingMethod,
+				taskFilter(label, false),
+			)
+
+			toAllocate = append(toAllocate, allocate...)
+			toRelease = append(toRelease, release...)
+		}
+	}
+
+	return toAllocate, toRelease
+}
+
+func totalCapacity(agents map[*actor.Ref]*agentState) int {
+	capacity := 0
+
+	for _, agent := range agents {
+		capacity += agent.numSlots()
+	}
+
+	return capacity
+}
+
+func calculateGroupStateWithFilter(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	capacity int,
+	filter func(*sproto.AllocateRequest) bool,
+) []*groupState {
+	states := make([]*groupState, 0)
+	groupMapping := make(map[*group]*groupState)
+
+	for it := taskList.iterator(); it.next(); {
+		req := it.value()
+		if !filter(req) {
+			continue
+		}
+
+		if req.SlotsNeeded > capacity {
+			continue
+		}
+		group := groups[req.Group]
+		state, ok := groupMapping[group]
+		if !ok {
+			state = &groupState{
+				group:    group,
+				disabled: false,
+			}
+			states = append(states, state)
+			groupMapping[group] = state
+		}
+		state.reqs = append(state.reqs, req)
+	}
+
+	for _, state := range states {
+		check.Panic(check.True(state.group != nil, "the group of a task must not be nil"))
+		for _, req := range state.reqs {
+			allocated := taskList.GetAllocations(req.TaskActor)
+			state.slotDemand += req.SlotsNeeded
+			switch {
+			case allocated == nil || len(allocated.Reservations) == 0:
+				state.pendingReqs = append(state.pendingReqs, req)
+			case len(allocated.Reservations) > 0:
+				if !req.Preemptible {
+					state.presubscribedSlots += req.SlotsNeeded
+				}
+				state.allocatedReqs = append(state.allocatedReqs, req)
+				state.activeSlots += req.SlotsNeeded
+			}
+		}
+		if state.maxSlots != nil {
+			state.slotDemand = min(state.slotDemand, *state.maxSlots)
+		}
+	}
+
+	return states
+}
+
+func (f *fairShareScheduler) fairshareScheduleWithFilter(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+	filter func(*sproto.AllocateRequest) bool,
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	localAgentsState := deepCopyAgents(agents)
+
+	capacity := totalCapacity(localAgentsState)
+	states := calculateGroupStateWithFilter(taskList, groups, capacity, filter)
+	allocateSlotOffers(states, capacity)
+	toAllocate, toRelease := assignTasks(localAgentsState, states, fittingMethod)
+
+	return toAllocate, toRelease
+}
+
+func (f *fairShareScheduler) fairshareScheduleWithFilterZeroSlots(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+	filter func(*sproto.AllocateRequest) bool,
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	toAllocate := make([]*sproto.AllocateRequest, 0)
+	localAgentsState := deepCopyAgents(agents)
+
+	for it := taskList.iterator(); it.next(); {
+		req := it.value()
+		if !filter(req) {
+			continue
+		}
+
+		allocations := taskList.GetAllocations(req.TaskActor)
+		if req.SlotsNeeded == 0 && allocations == nil {
+			fits := findFits(req, localAgentsState, fittingMethod)
+			if len(fits) == 0 {
+				continue
+			}
+			addTaskToAgents(fits)
+			toAllocate = append(toAllocate, req)
+		}
+	}
+
+	return toAllocate, []*actor.Ref{}
 }

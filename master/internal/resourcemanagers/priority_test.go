@@ -482,9 +482,11 @@ func TestPrioritySchedulingPreemption(t *testing.T) {
 		{id: "low-priority task cannot be backfilled because preemption exists",
 			slotsNeeded: 1, group: groups[0]},
 		{id: "medium-priority task should be preempted",
-			slotsNeeded: 4, group: groups[1], allocatedAgent: agents[0], containerStarted: true},
+			slotsNeeded: 4, group: groups[1],
+			allocatedAgents: []*mockAgent{agents[0]}, containerStarted: true},
 		{id: "high-priority task should not be preempted",
-			slotsNeeded: 4, group: groups[2], allocatedAgent: agents[1], containerStarted: true},
+			slotsNeeded: 4, group: groups[2],
+			allocatedAgents: []*mockAgent{agents[1]}, containerStarted: true},
 		{id: "high-priority task causes preemption but should not be scheduled",
 			slotsNeeded: 4, group: groups[2]},
 		{id: "high-priority oversized task triggers backfilling",
@@ -520,13 +522,15 @@ func TestPrioritySchedulingBackfilling(t *testing.T) {
 	}
 	tasks := []*mockTask{
 		{id: "low-priority task should be preempted",
-			slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0], containerStarted: true},
+			slotsNeeded: 1, group: groups[0],
+			allocatedAgents: []*mockAgent{agents[0]}, containerStarted: true},
 		{id: "lower-priority task causes preemption but should not be scheduled",
 			slotsNeeded: 1, group: groups[1]},
 		{id: "medium-priority task should be backfilled",
 			slotsNeeded: 1, group: groups[2]},
 		{id: "high-priority task should not be preempted",
-			slotsNeeded: 4, group: groups[3], allocatedAgent: agents[1], containerStarted: true},
+			slotsNeeded: 4, group: groups[3],
+			allocatedAgents: []*mockAgent{agents[1]}, containerStarted: true},
 		{id: "high-priority task should be scheduled",
 			slotsNeeded: 2, group: groups[3]},
 		{id: "high-priority oversized task triggers backfilling",
@@ -562,9 +566,11 @@ func TestPrioritySchedulingPreemptionZeroSlotTask(t *testing.T) {
 		{id: "low-priority task cannot be scheduled",
 			slotsNeeded: 0, group: groups[0]},
 		{id: "medium-priority task should be preempted",
-			slotsNeeded: 0, group: groups[1], allocatedAgent: agents[0], containerStarted: true},
+			slotsNeeded: 0, group: groups[1],
+			allocatedAgents: []*mockAgent{agents[0]}, containerStarted: true},
 		{id: "high-priority task should not be preempted",
-			slotsNeeded: 0, group: groups[2], allocatedAgent: agents[1], containerStarted: true},
+			slotsNeeded: 0, group: groups[2],
+			allocatedAgents: []*mockAgent{agents[1]}, containerStarted: true},
 		{id: "high-priority task causes preemption but should not be scheduled",
 			slotsNeeded: 0, group: groups[2]},
 	}
@@ -600,9 +606,11 @@ func TestPrioritySchedulingBackfillingZeroSlotTask(t *testing.T) {
 		{id: "low-priority task should be scheduled",
 			slotsNeeded: 0, group: groups[0]},
 		{id: "medium-priority task should not be preempted",
-			slotsNeeded: 0, group: groups[1], allocatedAgent: agents[0], containerStarted: true},
+			slotsNeeded: 0, group: groups[1],
+			allocatedAgents: []*mockAgent{agents[0]}, containerStarted: true},
 		{id: "high-priority task should not be preempted",
-			slotsNeeded: 0, group: groups[2], allocatedAgent: agents[1], containerStarted: true},
+			slotsNeeded: 0, group: groups[2],
+			allocatedAgents: []*mockAgent{agents[1]}, containerStarted: true},
 		{id: "high-priority task should be scheduled",
 			slotsNeeded: 0, group: groups[2]},
 	}
@@ -664,8 +672,12 @@ func AddUnallocatedTasks(
 			TaskActor:    ref,
 			Preemptible:  !mockTask.nonPreemptible,
 		}
-		groupRef, _ := system.ActorOf(actor.Addr(mockTask.group.id), mockTask.group)
-		req.Group = groupRef
+		if mockTask.group == nil {
+			req.Group = ref
+		} else {
+			groupRef, _ := system.ActorOf(actor.Addr(mockTask.group.id), mockTask.group)
+			req.Group = groupRef
+		}
 
 		taskList.AddTask(req)
 	}

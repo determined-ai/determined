@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -60,7 +61,7 @@ type mockTask struct {
 	nonPreemptible    bool
 	label             string
 	resourcePool      string
-	allocatedAgent    *mockAgent
+	allocatedAgents   []*mockAgent
 	containerStarted  bool
 	jobSubmissionTime *time.Time
 }
@@ -376,43 +377,48 @@ func setupSchedulerStates(
 		}
 		taskList.AddTask(req)
 
-		if mockTask.allocatedAgent != nil {
-			assert.Assert(t, mockTask.allocatedAgent.slots >= mockTask.slotsNeeded)
-			agentRef := system.Get(actor.Addr(mockTask.allocatedAgent.id))
-			agentState := agents[agentRef]
-			container := newContainer(req, req.SlotsNeeded)
+		if len(mockTask.allocatedAgents) > 0 {
+			slotsNeededPerAgent := mockTask.slotsNeeded / len(mockTask.allocatedAgents)
 
-			devices := make([]device.Device, 0)
-			if mockTask.containerStarted {
-				if mockTask.slotsNeeded == 0 {
-					agentState.zeroSlotContainers[container.id] = true
-				} else {
-					i := 0
-					for d, containerID := range agentState.devices {
-						if containerID != nil {
-							continue
+			reservations := make([]sproto.Reservation, 0, len(mockTask.allocatedAgents))
+
+			for _, allocatedAgent := range mockTask.allocatedAgents {
+				assert.Assert(t, allocatedAgent.slots >= slotsNeededPerAgent)
+				agentRef := system.Get(actor.Addr(allocatedAgent.id))
+				agentState := agents[agentRef]
+				container := newContainer(req, slotsNeededPerAgent)
+
+				devices := make([]device.Device, 0)
+				if mockTask.containerStarted {
+					if slotsNeededPerAgent == 0 {
+						agentState.zeroSlotContainers[container.id] = true
+					} else {
+						i := 0
+						for d, containerID := range agentState.devices {
+							if containerID != nil {
+								continue
+							}
+							if i < slotsNeededPerAgent {
+								agentState.devices[d] = &container.id
+								devices = append(devices, d)
+								i++
+							}
 						}
-						if i < mockTask.slotsNeeded {
-							agentState.devices[d] = &container.id
-							devices = append(devices, d)
-							i++
-						}
+						assert.Assert(t, i == slotsNeededPerAgent,
+							"over allocated to agent %s", allocatedAgent.id)
 					}
-					assert.Assert(t, i == mockTask.slotsNeeded,
-						"over allocated to agent %s", mockTask.allocatedAgent.id)
 				}
+				reservations = append(reservations, &containerReservation{
+					req:       req,
+					agent:     agentState,
+					container: container,
+					devices:   devices,
+				})
 			}
 
 			allocated := &sproto.ResourcesAllocated{
-				ID: req.AllocationID,
-				Reservations: []sproto.Reservation{
-					&containerReservation{
-						req:       req,
-						agent:     agentState,
-						container: container,
-						devices:   devices,
-					},
-				},
+				ID:           req.AllocationID,
+				Reservations: reservations,
 			}
 			taskList.SetAllocations(req.TaskActor, allocated)
 		}
@@ -432,8 +438,18 @@ func assertEqualToAllocate(
 	}
 	for _, task := range actual {
 		_, ok := expectedMap[task.AllocationID]
-		assert.Assert(t, ok)
+		assert.Assert(t, ok, fmt.Sprintf("task %s should not be allocated", task.AllocationID))
 	}
+
+	actualMap := map[model.AllocationID]bool{}
+	for _, req := range actual {
+		actualMap[req.AllocationID] = true
+	}
+	for expectedID := range expectedMap {
+		_, ok := actualMap[expectedID]
+		assert.Assert(t, ok, fmt.Sprintf("task %s should be allocated", expectedID))
+	}
+
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected tasks must have the same length")
 }
@@ -499,9 +515,10 @@ func TestJobStats(t *testing.T) {
 		t *testing.T,
 		actual *jobv1.QueueStats,
 		expected *jobv1.QueueStats,
+		msgAndArgs ...interface{},
 	) {
-		assert.Equal(t, actual.QueuedCount, expected.QueuedCount)
-		assert.Equal(t, actual.ScheduledCount, expected.ScheduledCount)
+		assert.Equal(t, actual.QueuedCount, expected.QueuedCount, msgAndArgs...)
+		assert.Equal(t, actual.ScheduledCount, expected.ScheduledCount, msgAndArgs...)
 	}
 
 	testPriority := func(
@@ -510,6 +527,7 @@ func TestJobStats(t *testing.T) {
 		groups []*mockGroup,
 		agents []*mockAgent,
 		expectedStats *jobv1.QueueStats,
+		caseName string,
 	) {
 		p := &priorityScheduler{}
 		system := actor.NewSystem(t.Name())
@@ -517,7 +535,7 @@ func TestJobStats(t *testing.T) {
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-		assertStatsEqual(t, jobStats(taskList), expectedStats)
+		assertStatsEqual(t, jobStats(taskList), expectedStats, "priority scheduler: %s", caseName)
 	}
 	testFairshare := func(
 		t *testing.T,
@@ -525,6 +543,7 @@ func TestJobStats(t *testing.T) {
 		groups []*mockGroup,
 		agents []*mockAgent,
 		expectedStats *jobv1.QueueStats,
+		caseName string,
 	) {
 		system := actor.NewSystem(t.Name())
 		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
@@ -532,40 +551,36 @@ func TestJobStats(t *testing.T) {
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit)
 
-		assertStatsEqual(t, jobStats(taskList), expectedStats)
+		assertStatsEqual(t, jobStats(taskList), expectedStats, "fairshare scheduler: %s", caseName)
 	}
 
 	tasks, groups, agents := prepMockData()
 	testPriority(t, tasks, groups, agents,
-		&jobv1.QueueStats{QueuedCount: int32(2), ScheduledCount: int32(2)})
+		&jobv1.QueueStats{QueuedCount: int32(2), ScheduledCount: int32(2)}, "case1")
 
 	tasks, groups, agents = prepMockData()
 	testFairshare(t, tasks, groups, agents,
-		&jobv1.QueueStats{QueuedCount: int32(2), ScheduledCount: int32(2)})
+		&jobv1.QueueStats{QueuedCount: int32(2), ScheduledCount: int32(2)}, "case1")
 
 	_, groups, agents = prepMockData()
-	tasks = []*mockTask{
-		{id: "task1.1", jobID: "job1", slotsNeeded: 2, group: groups[0]}, // same job
-		{id: "task1.2", jobID: "job1", slotsNeeded: 2, group: groups[0]},
-		{id: "task1.3", jobID: "job1", slotsNeeded: 2, group: groups[0]},
-		{id: "task2", jobID: "job2", slotsNeeded: 2, group: groups[1]},
-		{id: "task3", jobID: "job3", slotsNeeded: 2, group: groups[0]},
-		{id: "task4", jobID: "job4", slotsNeeded: 2, group: groups[0]},
+	prepMockTasks2 := func() []*mockTask {
+		return []*mockTask{
+			{id: "task1.1", jobID: "job1", slotsNeeded: 2, group: groups[0]}, // same job
+			{id: "task1.2", jobID: "job1", slotsNeeded: 2, group: groups[0]},
+			{id: "task1.3", jobID: "job1", slotsNeeded: 2, group: groups[0]},
+			{id: "task2", jobID: "job2", slotsNeeded: 2, group: groups[1]},
+			{id: "task3", jobID: "job3", slotsNeeded: 2, group: groups[0]},
+			{id: "task4", jobID: "job4", slotsNeeded: 2, group: groups[0]},
+		}
 	}
+	tasks = prepMockTasks2()
 	testPriority(t, tasks, groups, agents,
-		&jobv1.QueueStats{QueuedCount: int32(4), ScheduledCount: int32(0)})
+		&jobv1.QueueStats{QueuedCount: int32(4), ScheduledCount: int32(0)}, "case2")
 
 	_, groups, agents = prepMockData()
-	tasks = []*mockTask{
-		{id: "task1.1", jobID: "job1", slotsNeeded: 2, group: groups[0]}, // same job
-		{id: "task1.2", jobID: "job1", slotsNeeded: 2, group: groups[0]},
-		{id: "task1.3", jobID: "job1", slotsNeeded: 2, group: groups[0]},
-		{id: "task2", jobID: "job2", slotsNeeded: 2, group: groups[1]},
-		{id: "task3", jobID: "job3", slotsNeeded: 2, group: groups[0]},
-		{id: "task4", jobID: "job4", slotsNeeded: 2, group: groups[0]},
-	}
+	tasks = prepMockTasks2()
 	testFairshare(t, tasks, groups, agents,
-		&jobv1.QueueStats{QueuedCount: int32(4), ScheduledCount: int32(0)})
+		&jobv1.QueueStats{QueuedCount: int32(4), ScheduledCount: int32(0)}, "case2")
 }
 
 func TestJobOrder(t *testing.T) {
@@ -607,7 +622,7 @@ func TestJobOrder(t *testing.T) {
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit)
-		f := fairShare{}
+		f := fairShareScheduler{}
 		return f.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
 	}
 
