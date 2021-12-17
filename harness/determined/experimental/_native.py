@@ -182,7 +182,7 @@ def create(
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
-) -> Any:
+) -> int:
     # TODO: Add a reference to the local development tutorial.
     """
     Create an experiment.
@@ -235,6 +235,9 @@ def create(
             An optional string to use as the Determined master URL when
             ``local=False``. If not specified, will be inferred from the
             environment variable ``DET_MASTER``.
+
+    Returns:
+        int: the created experiment ID.
     """
 
     if local and not test:
@@ -257,7 +260,7 @@ def create(
 
     elif not load.in_runpy:
         # Cluster mode, but still running locally; submit the experiment.
-        _submit_experiment(
+        return _submit_experiment(
             config=config,
             test=test,
             context_dir=context_dir,
