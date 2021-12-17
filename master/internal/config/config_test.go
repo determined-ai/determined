@@ -465,5 +465,4 @@ resource_manager:
 			test(t, tc.configRaw, tc.rpName, tc.preemptionEnabled)
 		})
 	}
-
 }
