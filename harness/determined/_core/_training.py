@@ -8,7 +8,7 @@ from determined import tensorboard
 from determined.common.api import errors
 from determined.common.experimental.session import Session
 
-logger = logging.getLogger("determined.generic")
+logger = logging.getLogger("determined.core")
 
 
 class EarlyExitReason(enum.Enum):

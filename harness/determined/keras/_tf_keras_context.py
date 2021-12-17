@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, _generic, errors, keras
+from determined import _core, _data_layer, errors, keras
 from determined.common import check
 from determined.horovod import hvd
 
@@ -417,7 +417,5 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(
-        self, env: det.EnvContext, distributed_context: _generic.DistributedContext
-    ) -> None:
+    def __init__(self, env: det.EnvContext, distributed_context: _core.DistributedContext) -> None:
         super().__init__(env=env, distributed_context=distributed_context)

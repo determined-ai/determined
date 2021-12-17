@@ -6,7 +6,7 @@ import sys
 from typing import Iterator, Optional
 
 import determined as det
-from determined import _generic, horovod, load
+from determined import _core, horovod, load
 from determined.common.api import certs
 
 
@@ -78,7 +78,7 @@ def main(chief_ip: Optional[str]) -> int:
 
     with maybe_periodic_stacktraces(env.debug):
         # Step 1: Load user code.
-        # We can't build a generic.Context until we have a RankInfo, and we can't build a RankInfo
+        # We can't build a core.Context until we have a RankInfo, and we can't build a RankInfo
         # without horovod, and we can't load the right horovod until we know which Trial class the
         # user implemented.
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
@@ -91,7 +91,7 @@ def main(chief_ip: Optional[str]) -> int:
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
         if distributed_backend.use_horovod():
-            distributed = _generic.DistributedContext(
+            distributed = _core.DistributedContext(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),
                 local_rank=horovod.hvd.local_rank(),
@@ -102,11 +102,11 @@ def main(chief_ip: Optional[str]) -> int:
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
         else:
-            distributed = _generic.DummyDistributed()
+            distributed = _core.DummyDistributed()
 
-        # Step 4: Let generic.init() create the generic.Context.
-        with _generic.init(distributed=distributed) as generic_context:
-            trial_context = trial_class.trial_context_class(generic_context, env)
+        # Step 4: Let core.init() create the core.Context.
+        with _core.init(distributed=distributed) as core_context:
+            trial_context = trial_class.trial_context_class(core_context, env)
 
             # Step 5: Instantiate the user's Trial.
             trial_inst = trial_class(trial_context)

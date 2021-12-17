@@ -5,10 +5,10 @@ from typing import Any, Optional
 
 import requests
 
-from determined import _generic
+from determined import _core
 from determined.common.experimental.session import Session
 
-logger = logging.getLogger("determined.generic")
+logger = logging.getLogger("determined.core")
 
 
 class _PreemptionWatcher(threading.Thread):
@@ -129,7 +129,7 @@ class Preemption:
         self,
         session: Session,
         allocation_id: str,
-        dist: _generic.DistributedContext,
+        dist: _core.DistributedContext,
     ) -> None:
         self._session = session
         self._allocation_id = allocation_id

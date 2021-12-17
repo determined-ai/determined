@@ -6,7 +6,7 @@ from typing import Iterator, Optional
 import determined as det
 from determined.common.experimental.session import Session
 
-logger = logging.getLogger("determined.generic")
+logger = logging.getLogger("determined.core")
 
 
 class Unit(enum.Enum):

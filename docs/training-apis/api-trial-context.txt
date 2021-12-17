@@ -23,15 +23,14 @@ subclasses receive a ``TrialContext`` object as an argument to their ``__init__(
    :inherited-members:
    :member-order: bysource
 
-   TrialContext always has an instance of
-   :class:`~determined._generic._distributed.DistributedContext` accessible as the ``distributed``
-   attribute for information related to distributed training.
+   TrialContext always has an instance of :class:`~determined._core._distributed.DistributedContext`
+   accessible as the ``distributed`` attribute for information related to distributed training.
 
 *****************************************
  ``determined.TrialContext.distributed``
 *****************************************
 
-.. autoclass:: determined._generic._distributed.DistributedContext
+.. autoclass:: determined._core._distributed.DistributedContext
    :members:
    :inherited-members:
    :member-order: bysource
