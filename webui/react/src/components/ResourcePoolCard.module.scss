@@ -57,7 +57,7 @@ $line-height: 22px;
     }
   }
   .agentsStatus {
-    background: var(--theme-colors-state-active);
+    background: var(--theme-colors-state-inactive);
     color: white;
     display: flex;
     font-size: var(--theme-sizes-font-small);
@@ -68,6 +68,9 @@ $line-height: 22px;
     & > * {
       margin: auto;
     }
+  }
+  .agentsStatus.active {
+    background-color: var(--theme-colors-states-active);
   }
   .empty {
     color: var(--theme-colors-monochrome-7);

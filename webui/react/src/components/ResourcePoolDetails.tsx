@@ -6,7 +6,7 @@ import { ResourcePool } from 'types';
 import { clone } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
-import { rpLogo } from './ResourcePoolCard';
+import { poolLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
@@ -15,22 +15,22 @@ interface Props {
   visible: boolean;
 }
 
-const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Props) => {
+const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: Props) => {
 
-  const details = clone(rp.details);
+  const details = clone(pool.details);
   for (const key in details) {
     if (details[key] === null) {
       delete details[key];
     }
   }
 
-  const mainSection = clone(rp);
+  const mainSection = clone(pool);
   delete mainSection.details;
 
   const title = (
     <div>
-      {rpLogo(rp.type)}
-      {' ' + rp.name}
+      {poolLogo(pool.type)}
+      {' ' + pool.name}
     </div>
   );
 
