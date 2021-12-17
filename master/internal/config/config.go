@@ -247,7 +247,10 @@ func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 // ReadRMPreemptionStatus resolves the preemption status for a resource manager.
 func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
+	return readRMPreemptionStatus(config, rpName)
+}
 
+func readRMPreemptionStatus(config *Config, rpName string) bool {
 	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.PoolName != rpName {
 			continue

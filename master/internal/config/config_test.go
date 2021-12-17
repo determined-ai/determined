@@ -313,3 +313,137 @@ telemetry:
 	// Ensure that the original was unmodified.
 	assert.DeepEqual(t, unmarshaled, expected)
 }
+
+func TestRMPreemptionStatus(t *testing.T) {
+	test := func(t *testing.T, configRaw string, rpName string, expected bool) {
+		unmarshaled := Config{}
+		err := yaml.Unmarshal([]byte(configRaw), &unmarshaled, yaml.DisallowUnknownFields)
+		assert.NilError(t, err)
+		assert.DeepEqual(t, readRMPreemptionStatus(&unmarshaled, rpName), expected)
+	}
+
+	testCases := []struct {
+		name              string
+		configRaw         string
+		rpName            string
+		preemptionEnabled bool
+	}{
+		{
+			name: "agent with scheduler.type=fair_share",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+    type: fair_share
+`,
+			rpName:            "default",
+			preemptionEnabled: true,
+		},
+		{
+			name: "agent with scheduler.type=priority",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+     type: priority
+`,
+			rpName:            "default",
+			preemptionEnabled: false,
+		},
+		{
+			name: "agent with scheduler.type=priority and preemption=true",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+     type: priority
+     preemption: true
+`,
+			rpName:            "default",
+			preemptionEnabled: true,
+		},
+		{
+			name: "agent with overridden preemption status by RP",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+     preemption: true
+     type: priority
+
+resource_pools:
+  - pool_name: default
+    scheduler:
+      preemption: false
+      type: priority
+
+`,
+			rpName:            "default",
+			preemptionEnabled: false,
+		},
+		{
+			name: "agent with overridden preemption status by RP",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+     preemption: false
+     type: priority
+
+resource_pools:
+  - pool_name: default
+    scheduler:
+      preemption: true
+      type: priority
+
+`,
+			rpName:            "default",
+			preemptionEnabled: true,
+		},
+		{
+			name: "agent with overridden preemption status by RP",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+     preemption: true
+     type: priority
+
+resource_pools:
+  - pool_name: default
+    scheduler:
+      preemption: false
+      type: priority
+
+`,
+			rpName:            "non-existing",
+			preemptionEnabled: true,
+		},
+		{
+			name: "agent with overridden preemption status by RP",
+			configRaw: `
+resource_manager:
+  type: agent
+  scheduler:
+     preemption: true
+     type: priority
+
+resource_pools:
+  - pool_name: default
+    scheduler:
+      preemption: false
+      type: priority
+  - pool_name: preemtible
+`,
+			rpName:            "preemtible",
+			preemptionEnabled: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			test(t, tc.configRaw, tc.rpName, tc.preemptionEnabled)
+		})
+	}
+
+}
