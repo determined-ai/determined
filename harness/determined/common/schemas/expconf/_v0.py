@@ -221,21 +221,10 @@ DataLayerConfigV0_Type = Union[SharedFSDataLayerConfigV0, S3DataLayerConfigV0, G
 DataLayerConfigV0.finalize(DataLayerConfigV0_Type)
 
 
-class CudaCompatMixin:
-    @no_type_check
-    def _ensure_cuda_compat(self) -> None:
-        # Backwards compatibility.
-        if self.cuda is None and self.gpu is not None:
-            self.cuda = self.gpu
-        # Equalize values.
-        self.gpu = self.cuda
-
-
-class EnvironmentImageV0(schemas.SchemaBase, CudaCompatMixin):
+class EnvironmentImageV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment-image.json"
     cpu: Optional[str] = None
     cuda: Optional[str] = None
-    gpu: Optional[str] = None
     rocm: Optional[str] = None
 
     @schemas.auto_init
@@ -243,18 +232,20 @@ class EnvironmentImageV0(schemas.SchemaBase, CudaCompatMixin):
         self,
         cpu: Optional[str] = None,
         cuda: Optional[str] = None,
-        gpu: Optional[str] = None,
         rocm: Optional[str] = None,
     ) -> None:
-        self._ensure_cuda_compat()
+        pass
 
     @classmethod
     def from_dict(cls, d: Union[dict, str], prevalidated: bool = False) -> "EnvironmentImageV0":
         # Accept either a string or a map of strings to strings.
         if isinstance(d, str):
-            d = {"cpu": d, "cuda": d, "gpu": d, "rocm": d}
+            d = {"cpu": d, "cuda": d, "rocm": d}
+        if "cuda" not in d and "gpu" in d:
+            d["cuda"] = d["gpu"]
+            del d["gpu"]
+
         result = super().from_dict(d, prevalidated)
-        result._ensure_cuda_compat()
         return result
 
     def runtime_defaults(self) -> None:
@@ -265,18 +256,16 @@ class EnvironmentImageV0(schemas.SchemaBase, CudaCompatMixin):
         if self.rocm is None:
             self.rocm = "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-4537b95"
 
-        self.cuda = (
-            self.gpu
-            or "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
-        )
-        self.gpu = self.cuda
+        if self.cuda is None:
+            self.cuda = (
+                "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-825e8ee"
+            )
 
 
-class EnvironmentVariablesV0(schemas.SchemaBase, CudaCompatMixin):
+class EnvironmentVariablesV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment-variables.json"
     cpu: Optional[List[str]] = None
     cuda: Optional[List[str]] = None
-    gpu: Optional[List[str]] = None
     rocm: Optional[List[str]] = None
 
     @schemas.auto_init
@@ -284,10 +273,9 @@ class EnvironmentVariablesV0(schemas.SchemaBase, CudaCompatMixin):
         self,
         cpu: Optional[List[str]] = None,
         cuda: Optional[List[str]] = None,
-        gpu: Optional[List[str]] = None,
         rocm: Optional[List[str]] = None,
     ) -> None:
-        self._ensure_cuda_compat()
+        pass
 
     @classmethod
     def from_dict(
@@ -295,9 +283,11 @@ class EnvironmentVariablesV0(schemas.SchemaBase, CudaCompatMixin):
     ) -> "EnvironmentVariablesV0":
         # Accept either a list of strings or a map of strings to lists of strings.
         if isinstance(d, (list, tuple)):
-            d = {"cpu": d, "cuda": d, "gpu": d, "rocm": d}
+            d = {"cpu": d, "cuda": d, "rocm": d}
+        if "cuda" not in d and "gpu" in d:
+            d["cuda"] = d["gpu"]
+            del d["gpu"]
         result = super().from_dict(d, prevalidated)
-        result._ensure_cuda_compat()
         return result
 
 

@@ -24,14 +24,6 @@ func (e *EnvironmentVariablesMapV0) SetCUDA(val []string) {
 	e.RawCUDA = val
 }
 
-func (e EnvironmentVariablesMapV0) GPU() []string {
-	return e.RawGPU
-}
-
-func (e *EnvironmentVariablesMapV0) SetGPU(val []string) {
-	e.RawGPU = val
-}
-
 func (e EnvironmentVariablesMapV0) ROCM() []string {
 	return e.RawROCM
 }

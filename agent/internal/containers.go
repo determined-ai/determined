@@ -243,6 +243,12 @@ func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 }
 
 func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
+	// Docker args for "all rocm gpus":
+	//   --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video
+	// To confine it to individual cards, we've got to pass only `/dev/dri/card<ID1>` and
+	// `/dev/dri/renderD<ID2>`, e.g. `/dev/dri/{card0,renderD128}`.
+	// rocm-smi gives us UUIDs and PCIBus locations for the cards; we resolve symlinks
+	// in `/dev/dri/by-path/` to get the real device paths for docker.
 	uuids := cont.DeviceUUIDsByType(device.ROCM)
 
 	if len(uuids) == 0 {

@@ -75,7 +75,6 @@ func (r RuntimeItems) ToExpconf() expconf.EnvironmentVariablesMap {
 		RawCPU:  r.CPU,
 		RawCUDA: r.CUDA,
 		RawROCM: r.ROCM,
-		RawGPU:  r.GPU,
 	}).(expconf.EnvironmentVariablesMap)
 }
 
@@ -85,7 +84,6 @@ func (r RuntimeItem) ToExpconf() expconf.EnvironmentImageMap {
 		RawCPU:  ptrs.StringPtr(r.CPU),
 		RawCUDA: ptrs.StringPtr(r.CUDA),
 		RawROCM: ptrs.StringPtr(r.ROCM),
-		RawGPU:  ptrs.StringPtr(r.GPU),
 	}).(expconf.EnvironmentImageMap)
 }
 

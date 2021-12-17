@@ -779,7 +779,7 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/environment-image.json",
     "title": "EnvironmentImage",
     "union": {
-        "defaultMessage": "is neither a string nor a map of cpu/gpu to strings",
+        "defaultMessage": "is neither a string nor a map of cpu, cuda/gpu, or rocm to strings",
         "items": [
             {
                 "unionKey": "never",
@@ -848,7 +848,7 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/environment-variables.json",
     "title": "EnvironmentVariables",
     "union": {
-        "defaultMessage": "is neither a list of strings nor a map of cpu/gpu to lists of strings",
+        "defaultMessage": "is neither a list of strings nor a map of cpu, cuda/gpu, or rocm to lists of strings",
         "items": [
             {
                 "unionKey": "never",

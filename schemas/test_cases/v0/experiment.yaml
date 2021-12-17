@@ -160,13 +160,11 @@
       environment_variables:
         cpu: []
         cuda: []
-        gpu: []
         rocm: []
       force_pull_image: false
       image:
         cpu: '*'
         cuda: '*'
-        gpu: '*'
         rocm: '*'
       pod_spec:
       ports: {}

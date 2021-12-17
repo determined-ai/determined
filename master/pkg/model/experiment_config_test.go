@@ -389,7 +389,6 @@ func TestExperiment(t *testing.T) {
 		Environment: Environment{
 			Image: RuntimeItem{
 				CPU:  "my_image",
-				GPU:  "my_image",
 				CUDA: "my_image",
 				ROCM: "my_image",
 			},
@@ -424,7 +423,6 @@ func TestMasterConfigImage(t *testing.T) {
 		Image: &RuntimeItem{
 			CPU:  "test/cpu",
 			CUDA: "test/gpu",
-			GPU:  "test/gpu",
 			ROCM: "test/rocm",
 		},
 	}
@@ -434,7 +432,6 @@ func TestMasterConfigImage(t *testing.T) {
 	expected := DefaultExperimentConfig(nil)
 	expected.Environment.Image.CPU = "test/cpu"
 	expected.Environment.Image.CUDA = "test/gpu"
-	expected.Environment.Image.GPU = expected.Environment.Image.CUDA
 	expected.Environment.Image.ROCM = "test/rocm"
 	expected.Name = name
 
@@ -447,7 +444,6 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 		Image: &RuntimeItem{
 			CPU:  "test/cpu",
 			CUDA: "test/gpu",
-			GPU:  "test/gpu",
 			ROCM: "test/rocm",
 		},
 	}
@@ -462,7 +458,6 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 	expected.Environment.Image = RuntimeItem{
 		CPU:  myTestImage,
 		CUDA: myTestImage,
-		GPU:  myTestImage,
 		ROCM: myTestImage,
 	}
 	expected.Name = name

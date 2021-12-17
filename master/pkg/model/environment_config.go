@@ -41,8 +41,6 @@ type RuntimeItem struct {
 	CPU  string `json:"cpu,omitempty"`
 	CUDA string `json:"cuda,omitempty"`
 	ROCM string `json:"rocm,omitempty"`
-	// Deprecated: use CUDA instead.
-	GPU string `json:"gpu,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -52,9 +50,9 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 		r.CPU = plain
 		r.ROCM = plain
 		r.CUDA = plain
-		r.GPU = r.CUDA
 		return nil
 	}
+
 	type DefaultParser RuntimeItem
 	var jsonItem DefaultParser
 	if err := json.Unmarshal(data, &jsonItem); err != nil {
@@ -63,10 +61,18 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 	r.CPU = jsonItem.CPU
 	r.ROCM = jsonItem.ROCM
 	r.CUDA = jsonItem.CUDA
-	if r.CUDA == "" && jsonItem.GPU != "" {
-		r.CUDA = jsonItem.GPU
+
+	if r.CUDA == "" {
+		type RuntimeItemCompat struct {
+			GPU string `json:"gpu,omitempty"`
+		}
+		var compatItem RuntimeItemCompat
+		if err := json.Unmarshal(data, &compatItem); err != nil {
+			return errors.Wrapf(err, "failed to parse runtime item")
+		}
+		r.CUDA = compatItem.GPU
 	}
-	r.GPU = r.CUDA
+
 	return nil
 }
 
@@ -89,8 +95,6 @@ type RuntimeItems struct {
 	CPU  []string `json:"cpu,omitempty"`
 	CUDA []string `json:"cuda,omitempty"`
 	ROCM []string `json:"rocm,omitempty"`
-	// Deprecated: use CUDA instead
-	GPU []string `json:"gpu,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -100,9 +104,9 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 		r.CPU = append(r.CPU, plain...)
 		r.ROCM = append(r.ROCM, plain...)
 		r.CUDA = append(r.CUDA, plain...)
-		r.GPU = r.CUDA
 		return nil
 	}
+
 	type DefaultParser RuntimeItems
 	var jsonItems DefaultParser
 	if err := json.Unmarshal(data, &jsonItems); err != nil {
@@ -112,10 +116,17 @@ func (r *RuntimeItems) UnmarshalJSON(data []byte) error {
 	r.ROCM = append(r.ROCM, jsonItems.ROCM...)
 
 	r.CUDA = append(r.CUDA, jsonItems.CUDA...)
-	if len(r.CUDA) == 0 && len(jsonItems.GPU) > 0 {
-		r.CUDA = append(r.CUDA, jsonItems.GPU...)
+
+	if len(r.CUDA) == 0 {
+		type RuntimeItemsCompat struct {
+			GPU []string `json:"gpu,omitempty"`
+		}
+		var compatItems RuntimeItemsCompat
+		if err := json.Unmarshal(data, &compatItems); err != nil {
+			return errors.Wrapf(err, "failed to parse runtime items")
+		}
+		r.CUDA = append(r.CUDA, compatItems.GPU...)
 	}
-	r.GPU = r.CUDA
 	return nil
 }
 

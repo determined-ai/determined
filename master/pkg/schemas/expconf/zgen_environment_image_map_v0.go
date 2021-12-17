@@ -30,14 +30,6 @@ func (e *EnvironmentImageMapV0) SetCUDA(val string) {
 	e.RawCUDA = &val
 }
 
-func (e EnvironmentImageMapV0) GPU() *string {
-	return e.RawGPU
-}
-
-func (e *EnvironmentImageMapV0) SetGPU(val *string) {
-	e.RawGPU = val
-}
-
 func (e EnvironmentImageMapV0) ROCM() string {
 	if e.RawROCM == nil {
 		panic("You must call WithDefaults on EnvironmentImageMapV0 before .ROCM")

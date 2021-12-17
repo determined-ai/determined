@@ -43,7 +43,6 @@ func DefaultEnvConfig(taskContainerDefaults *TaskContainerDefaultsConfig) Enviro
 		Image: RuntimeItem{
 			CPU:  expconf.CPUImage,
 			CUDA: expconf.CUDAImage,
-			GPU:  expconf.CUDAImage,
 			ROCM: expconf.ROCMImage,
 		},
 	}

@@ -27,13 +27,10 @@
     image:
       cpu: '*'
       cuda: hellocuda
-      gpu: hellocuda
       rocm: '*'
     force_pull_image: false
     environment_variables:
       cuda:
-        - ASDF=asdf
-      gpu:
         - ASDF=asdf
       cpu:
         - CPU=cpu
@@ -79,13 +76,10 @@
     image:
       cpu: '*'
       cuda: hellocuda
-      gpu: hellocuda
       rocm: '*'
     force_pull_image: false
     environment_variables:
       cuda:
-        - ASDF=asdf
-      gpu:
         - ASDF=asdf
       cpu:
         - CPU=cpu
