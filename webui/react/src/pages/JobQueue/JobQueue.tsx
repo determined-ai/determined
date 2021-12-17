@@ -30,6 +30,7 @@ import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 import RPStatsOverview from './RPStats';
+import { moveJobToPosition } from './utils';
 
 const orderdQTypes = [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ];
 
@@ -124,7 +125,7 @@ const JobQueue: React.FC = () => {
     };
     const isFirst = job.summary.jobsAhead === 0;
     if (!isFirst) {
-      triggers[JobAction.MoveToTop] = () => window.alert('TODO move top');
+      triggers[JobAction.MoveToTop] = () => moveJobToPosition(job.jobId, 0);
     }
 
     // if job is an experiment type add action to kill it
