@@ -17,7 +17,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/goreleaser/goreleaser v1.1.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/labstack/echo/v4 v4.3.0
+	github.com/labstack/echo/v4 v4.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil v2.19.9+incompatible
 	github.com/sirupsen/logrus v1.7.0
@@ -94,7 +94,6 @@ require (
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e // indirect
 	github.com/dghubble/oauth1 v0.7.0 // indirect
 	github.com/dghubble/sling v1.3.0 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 // indirect

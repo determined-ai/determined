@@ -36,7 +36,7 @@ require (
 	github.com/jackc/pgx/v4 v4.12.0
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/labstack/echo-contrib v0.11.0
-	github.com/labstack/echo/v4 v4.3.0
+	github.com/labstack/echo/v4 v4.6.0
 	github.com/labstack/gommon v0.3.0
 	github.com/o1egl/paseto v1.0.0
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -136,7 +136,6 @@ require (
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e // indirect
 	github.com/dghubble/oauth1 v0.7.0 // indirect
 	github.com/dghubble/sling v1.3.0 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
