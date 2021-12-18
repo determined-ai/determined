@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"path"
@@ -268,17 +269,18 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 func (p *pod) createPriorityClass(name string, priority int32) error {
 	preemptionPolicy := k8sV1.PreemptNever
 
-	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(&schedulingV1.PriorityClass{
-		TypeMeta: metaV1.TypeMeta{},
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      name,
-			Namespace: "",
-		},
-		Value:            priority,
-		GlobalDefault:    false,
-		Description:      "temporary priorityClass for determined",
-		PreemptionPolicy: &preemptionPolicy,
-	})
+	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(context.TODO(),
+		&schedulingV1.PriorityClass{
+			TypeMeta: metaV1.TypeMeta{},
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:      name,
+				Namespace: "",
+			},
+			Value:            priority,
+			GlobalDefault:    false,
+			Description:      "temporary priorityClass for determined",
+			PreemptionPolicy: &preemptionPolicy,
+		}, metaV1.CreateOptions{})
 
 	return err
 }
