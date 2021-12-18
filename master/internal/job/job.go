@@ -179,8 +179,15 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					Weight:  float64(action.Weight),
 					Handler: ctx.Self(),
 				})
+			case *jobv1.QueueControl_ResourcePool:
+				// not supported yet
+				// send an error with unsupported action
+				ctx.Respond(fmt.Errorf("action not implemented: %v", action))
+				return nil
 			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
-				// TODO no supported yet
+				// TODO not supported yet
+				ctx.Respond(fmt.Errorf("action not implemented: %v", action))
+				return nil
 				// 	ctx.Tell(jobActor, SetGroupOrder{
 				// 		QPosition: update.QPosition,
 				// 		Handler:   ctx.Self(),
