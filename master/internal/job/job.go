@@ -166,26 +166,25 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				ctx.Respond(fmt.Errorf("job %s not found", jobID))
 				return nil
 			}
-			// TODO compute based off of before and after
-			// if update.QPosition > 0 {
-			// 	ctx.Tell(jobActor, SetGroupOrder{
-			// 		QPosition: update.QPosition,
-			// 		Handler:   ctx.Self(),
-			// 	})
-			// }
-			priority := int(update.GetPriority())
-			if priority > 0 {
+			switch action := update.GetAction().(type) {
+			case *jobv1.QueueControl_Priority:
+				priority := int(action.Priority)
 				// TODO switch to Ask and check for errors
 				ctx.Tell(jobActor, SetGroupPriority{
 					Priority: &priority,
 					Handler:  ctx.Self(),
 				})
-			}
-			if update.GetWeight() > 0 {
+			case *jobv1.QueueControl_Weight:
 				ctx.Tell(jobActor, SetGroupWeight{
-					Weight:  float64(update.GetWeight()),
+					Weight:  float64(action.Weight),
 					Handler: ctx.Self(),
 				})
+			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
+				// TODO no supported yet
+				// 	ctx.Tell(jobActor, SetGroupOrder{
+				// 		QPosition: update.QPosition,
+				// 		Handler:   ctx.Self(),
+				// 	})
 			}
 		}
 	default:
