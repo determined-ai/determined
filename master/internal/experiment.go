@@ -164,7 +164,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rm, job.SetGroupWeight{Weight: e.Config.Resources().Weight(), Handler: ctx.Self()})
+		e.setWeight(ctx, e.Config.Resources().Weight())
 		e.setPriority(ctx, e.Config.Resources().Priority())
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
