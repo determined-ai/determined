@@ -36,7 +36,6 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
               jobId: job.jobId,
               priority: parseInt(formValues.priority),
               // queuePosition: parseFloat(formValues.queuePosition),
-              sourceResourcePool: job.resourcePool,
               // weight: parseInt(formValues.weight),
             },
           ],
