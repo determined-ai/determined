@@ -1854,7 +1854,6 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
           extras-requires: anchorecli
       - run: sudo snap install yq
-      - run: sudo apt-get install -y jq
       - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
       - slack/status:
           fail_only: True
