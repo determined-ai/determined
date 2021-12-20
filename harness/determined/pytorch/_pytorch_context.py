@@ -81,7 +81,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self.experimental = pytorch.PyTorchExperimentalContext(self)
         self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
-
+        self._distributed_backend = det._DistributedBackend()
         optimizations_config = self.env.experiment_config.get_optimizations_config()
         self._aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
         self._fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
@@ -207,7 +207,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "backward_passes_per_step for local gradient aggregation must be >= 1",
             )
 
-            if self.distributed.size > 1:
+            if self.distributed.size > 1 and self._distributed_backend.use_horovod():
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),

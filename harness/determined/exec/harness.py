@@ -84,9 +84,6 @@ def main(chief_ip: Optional[str]) -> int:
         # user implemented.
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
-        use_horovod = det._DistributedBackend.HOROVOD.value
-        use_torch_distributed = det._DistributedBackend.TORCH.value
-
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
         distributed_backend = det._DistributedBackend()
         controller_class.pre_execute_hook(env, distributed_backend)
@@ -105,7 +102,7 @@ def main(chief_ip: Optional[str]) -> int:
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
-        elif use_torch_distributed:
+        elif distributed_backend.use_torch():
             distributed = _generic.DistributedContext(
                 rank=int(os.environ["RANK"]),
                 size=int(os.environ["WORLD_SIZE"]),

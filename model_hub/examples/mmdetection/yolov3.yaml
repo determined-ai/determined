@@ -1,4 +1,5 @@
 name: mmdet_yolov3_
+launch: ["python3", "-m", "determined.launch.torch_distributed"]
 data:
   file_client_args:
       backend: gcs

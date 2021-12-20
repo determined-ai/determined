@@ -323,7 +323,7 @@ class TFKerasTrialController(det.TrialController):
 
         keras._check_if_aggregation_frequency_will_work(
             model=self.model,
-            use_horovod=self.use_horovod,
+            use_horovod=self.distributed_backend.use_horovod(),
             aggregation_frequency=self.context._aggregation_frequency,
         )
 
@@ -344,7 +344,7 @@ class TFKerasTrialController(det.TrialController):
             self.validation_data = self.validation_data.sequence
 
         if self.context.distributed.size > 1:
-            assert self.use_horovod, (
+            assert self.distributed_backend.use_horovod(), (
                 "TF Keras trial must be launched with a horovod backend if "
                 "doing distributed training"
             )

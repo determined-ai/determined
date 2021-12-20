@@ -389,7 +389,7 @@ class EstimatorTrialController(det.TrialController):
             )
         if self.context.distributed.size > 1:
             assert (
-                self.use_horovod
+                self.distributed_backend.use_horovod()
             ), "Estimator trial must be run with a horovod backend if distributed training"
 
         self.estimator = estimator
@@ -557,7 +557,7 @@ class EstimatorTrialController(det.TrialController):
             self._set_default_tensorflow_session(
                 env=self.env,
                 session_config=config.session_config,
-                use_horovod=self.use_horovod,
+                use_horovod=self.distributed_backend.use_horovod(),
             )
 
             return f(features, **kwargs)
@@ -670,7 +670,7 @@ class EstimatorTrialController(det.TrialController):
 
         # The default session should already be defined, here we also set the session
         # for the estimator itself.
-        self._init_session_config(session_config, self.env, self.use_horovod)
+        self._init_session_config(session_config, self.env, self.distributed_backend.use_horovod())
 
         config = config.replace(
             model_dir=str(self.estimator_dir),

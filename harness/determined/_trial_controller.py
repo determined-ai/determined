@@ -15,9 +15,13 @@ class _DistributedBackend:
     """
 
     HOROVOD = "USE_HOROVOD"
+    TORCH = "USE_TORCH_DISTRIBUTED"
 
     def use_horovod(self) -> bool:
         return bool(os.environ.get(self.HOROVOD, None))
+
+    def use_torch(self) -> bool:
+        return bool(os.environ.get(self.TORCH, None))
 
 
 class TrialController(metaclass=abc.ABCMeta):
@@ -43,8 +47,7 @@ class TrialController(metaclass=abc.ABCMeta):
             context.distributed.rank,
         )
 
-        distributed_backend = _DistributedBackend()
-        self.use_horovod = distributed_backend.use_horovod()
+        self.distributed_backend = _DistributedBackend()
         self._check_if_trial_supports_configurations(env)
 
         self.batch_size = self.context.get_per_slot_batch_size()
