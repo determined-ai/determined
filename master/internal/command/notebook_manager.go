@@ -1,6 +1,12 @@
+// Package command provides utilities for commands.
+//nolint:dupl
 package command
 
 import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,9 +40,17 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
-		return createGenericCommandActor(
+		if err := createGenericCommandActor(
 			ctx, n.db, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg,
-		)
+		); err != nil {
+			ctx.Log().WithError(err).Error("failed to launch notebook")
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(taskID)
+		}
+
+	case echo.Context:
+		ctx.Respond(echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
