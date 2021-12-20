@@ -172,26 +172,25 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				// TODO switch to Ask and check for errors
 				ctx.Tell(jobActor, SetGroupPriority{
 					Priority: &priority,
-					Handler:  ctx.Self(),
 				})
 			case *jobv1.QueueControl_Weight:
 				ctx.Tell(jobActor, SetGroupWeight{
-					Weight:  float64(action.Weight),
-					Handler: ctx.Self(),
+					Weight: float64(action.Weight),
 				})
 			case *jobv1.QueueControl_ResourcePool:
 				// not supported yet
 				// send an error with unsupported action
 				ctx.Respond(fmt.Errorf("action not implemented: %v", action))
 				return nil
+			case *jobv1.QueueControl_QueuePosition:
+				// REMOVEME: keep this until ahead_of and behind_of are implemented
+				ctx.Tell(jobActor, SetGroupOrder{
+					QPosition: float64(update.GetQueuePosition()),
+				})
 			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
 				// TODO not supported yet
 				ctx.Respond(fmt.Errorf("action not implemented: %v", action))
 				return nil
-				// 	ctx.Tell(jobActor, SetGroupOrder{
-				// 		QPosition: update.QPosition,
-				// 		Handler:   ctx.Self(),
-				// 	})
 			default:
 				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
 				return nil
