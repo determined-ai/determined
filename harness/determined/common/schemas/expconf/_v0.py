@@ -245,8 +245,7 @@ class EnvironmentImageV0(schemas.SchemaBase):
             d["cuda"] = d["gpu"]
             del d["gpu"]
 
-        result = super().from_dict(d, prevalidated)
-        return result
+        return super().from_dict(d, prevalidated)
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
