@@ -10,10 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	unknownGPUDriverVersion = "Unknown"
-)
-
 func getNvidiaVersion() (string, error) {
 	// #nosec G204
 	cmd := exec.Command("nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader")
@@ -30,7 +26,8 @@ func getNvidiaVersion() (string, error) {
 	record, err := r.Read()
 	switch {
 	case err == io.EOF:
-		return unknownGPUDriverVersion, nil
+		log.Warn("empty nvidia-smi driver version")
+		return "", nil
 	case err != nil:
 		return "", errors.Wrap(err, "error parsing output of nvidia-smi as csv")
 	case len(record) != 1:

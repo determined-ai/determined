@@ -202,7 +202,7 @@ func overwriteSpec(
 
 	if len(cont.DeviceUUIDsByType(device.CUDA)) > 0 {
 		spec.RunSpec.HostConfig.DeviceRequests = append(
-			spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
+			spec.RunSpec.HostConfig.DeviceRequests, cudaDeviceRequests(cont)...)
 	}
 
 	if len(cont.DeviceUUIDsByType(device.ROCM)) > 0 {
@@ -228,16 +228,16 @@ func overwriteSpec(
 	return spec, nil
 }
 
-func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
-	gpuUUIDs := cont.GPUDeviceUUIDs()
-	if len(gpuUUIDs) == 0 {
+func cudaDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
+	cudaUUIDs := cont.DeviceUUIDsByType(device.CUDA)
+	if len(cudaUUIDs) == 0 {
 		return nil
 	}
 	return []dcontainer.DeviceRequest{
 		{
 			Driver:       "nvidia",
 			Capabilities: [][]string{{"gpu", "compute", "utility"}},
-			DeviceIDs:    gpuUUIDs,
+			DeviceIDs:    cudaUUIDs,
 		},
 	}
 }

@@ -40,7 +40,7 @@ func getRocmVersion() (string, error) {
 		record, err = r.Read()
 		switch {
 		case err == io.EOF:
-			return unknownGPUDriverVersion, nil
+			return "", errors.New("empty rocm-smi output")
 		case err != nil:
 			return "", errors.Wrap(err, "error parsing output of rocm-smi as csv")
 		case len(record) != 2:
@@ -135,8 +135,7 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 func getRocmDeviceByUUID(uuid string) *RocmDevice {
 	for _, d := range discoveredRocmDevices {
 		if d.UUID == uuid {
-			result := d
-			return &result
+			return &d
 		}
 	}
 
