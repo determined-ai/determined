@@ -314,7 +314,7 @@ def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> 
     for log_line in logs:
         if target_string in log_line:
             return True
-    print(f"{target_string} not found in trial {trial_id} logs: {logs}", file=sys.stderr)
+    print(f"{target_string} not found in trial {trial_id} logs: {''.join(logs)}", file=sys.stderr)
     return False
 
 
