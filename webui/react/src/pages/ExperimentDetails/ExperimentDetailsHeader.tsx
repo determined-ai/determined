@@ -13,7 +13,7 @@ import {
   deletableRunStates,
   pausableRunStates,
   stateToLabel,
-  terminalRunStates
+  terminalRunStates,
 } from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
