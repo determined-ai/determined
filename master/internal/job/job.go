@@ -192,6 +192,9 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				// 		QPosition: update.QPosition,
 				// 		Handler:   ctx.Self(),
 				// 	})
+			default:
+				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
+				return nil
 			}
 		}
 	default:
