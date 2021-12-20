@@ -236,13 +236,6 @@ type ObservabilityConfig struct {
 	EnablePrometheus bool `json:"enable_prometheus"`
 }
 
-func readPreemptionFromScheduler(conf *resourcemanagers.SchedulerConfig) *bool {
-	if conf == nil || conf.Priority == nil {
-		return nil
-	}
-	return &conf.Priority.Preemption
-}
-
 func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 	if conf == nil || conf.Priority == nil {
 		return nil
@@ -250,53 +243,35 @@ func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
 	return conf.Priority.DefaultPriority
 }
 
-// ReadPreemptionStatus resolves the desired preemption status for a job.
-func ReadPreemptionStatus(rpName string, jobConf interface{}) bool {
+// ReadRMPreemptionStatus resolves the preemption status for a resource manager.
+func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
-	var jobPreemptible bool
-	switch jobConf.(type) {
-	case *expconf.ExperimentConfig:
-		jobPreemptible = true
-	case *model.CommandConfig:
-		jobPreemptible = false
-	default:
-		panic("unexpected jobConf type")
-	}
+	return readRMPreemptionStatus(config, rpName)
+}
 
-	RMPremption := false // Whether the RM supports preemption
-
+func readRMPreemptionStatus(config *Config, rpName string) bool {
 	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.PoolName != rpName {
 			continue
 		}
-		if preemption := readPreemptionFromScheduler(rpConfig.Scheduler); preemption != nil {
-			RMPremption = *preemption
-			return jobPreemptible && RMPremption
-		}
-		if rpConfig.Provider != nil && rpConfig.Provider.GCP != nil {
-			RMPremption = rpConfig.Provider.GCP.InstanceType.Preemptible
-			return jobPreemptible && RMPremption
+		if rpConfig.Scheduler != nil {
+			return rpConfig.Scheduler.GetPreemption()
 		}
 		break
 	}
 
 	// if not found, fall back to resource manager config
-	if config.ResourceManager.AgentRM != nil {
-		if preemption := readPreemptionFromScheduler(
-			config.ResourceManager.AgentRM.Scheduler,
-		); preemption != nil {
-			RMPremption = *preemption
-			return jobPreemptible && RMPremption
+	switch {
+	case config.ResourceManager.AgentRM != nil:
+		if config.ResourceManager.AgentRM.Scheduler == nil {
+			panic("scheduler not configured")
 		}
+		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
+	case config.ResourceManager.KubernetesRM != nil:
+		return config.ResourceManager.KubernetesRM.GetPreemption()
+	default:
+		panic("unexpected resource configuration")
 	}
-
-	if config.ResourceManager.KubernetesRM != nil {
-		if config.ResourceManager.KubernetesRM.DefaultScheduler == "preemption" {
-			RMPremption = true
-		}
-	}
-
-	return jobPreemptible && RMPremption
 }
 
 // ReadPriority resolves the priority value for a job.

@@ -1,7 +1,8 @@
+import json
 import operator
 import tempfile
 import time
-from typing import Dict, Set
+from typing import Any, Dict, Set
 
 import pytest
 import yaml
@@ -79,21 +80,41 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     for i in range(max_checks):
         time.sleep(1)
         try:
+            storage_states = []
             for config, checkpoints in all_checkpoints:
                 checkpoint_config = config["checkpoint_storage"]
 
                 storage_manager = storage.build(checkpoint_config, container_path=None)
+                storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
                     storage_id = checkpoint["uuid"]
+                    storage_state[storage_id] = {}
                     if checkpoint["state"] == "COMPLETED":
-                        with storage_manager.restore_path(storage_id):
-                            pass
-                    elif checkpoint["state"] == "DELETED":
+                        storage_state[storage_id]["found"] = False
                         try:
                             with storage_manager.restore_path(storage_id):
-                                raise AssertionError("checkpoint not deleted")
+                                storage_state[storage_id]["found"] = True
                         except errors.CheckpointNotFound:
                             pass
+                    elif checkpoint["state"] == "DELETED":
+                        storage_state[storage_id] = {"deleted": False, "checkpoint": checkpoint}
+                        try:
+                            with storage_manager.restore_path(storage_id):
+                                pass
+                        except errors.CheckpointNotFound:
+                            storage_state[storage_id]["deleted"] = True
+                        storage_states.append(storage_state)
+
+            for storage_state in storage_states:
+                for state in storage_state.values():
+                    if state.get("deleted", None) is False:
+                        json_states = json.dumps(storage_states)
+                        raise AssertionError(
+                            f"Some checkpoints were not deleted: JSON:{json_states}"
+                        )
+                    if state.get("found", None) is False:
+                        json_states = json.dumps(storage_states)
+                        raise AssertionError(f"Some checkpoints were not found: JSON:{json_states}")
         except AssertionError:
             if i == max_checks - 1:
                 raise

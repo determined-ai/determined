@@ -64,11 +64,12 @@ func createGenericCommandActor(
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
-		ctx.Respond(errors.Wrap(err, "failed to create generic command"))
-		return nil
+		return errors.Wrap(err, "failed to create generic command")
 	}
-	summary := summaryFut.Get().(summary)
-	ctx.Respond(summary.ID)
+	// Sync with the actor, but we don't really need the summary. actor.Ping works too,
+	// but this makes sure it can form some sort of useful response (ping doesn't actually
+	// hit the receive block).
+	summaryFut.Get()
 	return nil
 }
 
@@ -424,7 +425,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		Name:           c.Config.Description,
 	}
 
-	j.IsPreemptible = config.ReadPreemptionStatus(j.ResourcePool, &c.Config)
+	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) && false
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
 

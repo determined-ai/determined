@@ -9,7 +9,12 @@ import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
-import { deletableRunStates, pausableRunStates, terminalRunStates } from 'constants/states';
+import {
+  deletableRunStates,
+  pausableRunStates,
+  stateToLabel,
+  terminalRunStates,
+} from 'constants/states';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
@@ -339,7 +344,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       onClick={handleStopClick}
                     />
                   )}
-                  <span className={css.state}>{experiment.state}</span>
+                  <span className={css.state}>{stateToLabel(experiment.state)}</span>
                 </div>
               </Spinner>
               <div className={css.experimentId}>Experiment {experiment.id}</div>

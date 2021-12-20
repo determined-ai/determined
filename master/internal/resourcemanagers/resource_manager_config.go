@@ -108,6 +108,11 @@ var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
 	SlotType: device.GPU, // default to CUDA-backed slots.
 }
 
+// GetPreemption returns whether the RM is set to preempt.
+func (k *KubernetesResourceManagerConfig) GetPreemption() bool {
+	return k.DefaultScheduler == kubernetes.PreemptionScheduler
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	*k = defaultKubernetesResourceManagerConfig

@@ -23,15 +23,13 @@ class Context:
         distributed: Optional[_core.DistributedContext] = None,
         preemption: Optional[_core.Preemption] = None,
         training: Optional[_core.Training] = None,
-        searcher: Optional[_core.AdvancedSearcher] = None,
+        searcher: Optional[_core.Searcher] = None,
     ) -> None:
         self.checkpointing = checkpointing
         self.distributed = distributed or _core.DummyDistributed()
         self.preemption = preemption or _core.DummyPreemption()
         self.training = training or _core.DummyTraining()
-        # TODO(DET-6083): Finalize BasicSearcher.  Figure out if calling this .searcher is going to
-        # create a name conflict between AdvancedSearcher and BasicSearcher
-        self.searcher = searcher or _core.DummyAdvancedSearcher()
+        self.searcher = searcher or _core.DummySearcher()
 
     def __enter__(self) -> "Context":
         self.preemption.start()
@@ -68,7 +66,7 @@ def _dummy_init(
     checkpointing = _core.DummyCheckpointing(distributed, storage_manager)
 
     training = _core.DummyTraining()
-    searcher = _core.DummyAdvancedSearcher()
+    searcher = _core.DummySearcher()
 
     return Context(
         distributed=distributed,
@@ -131,7 +129,7 @@ def init(
             tbd_mgr,
             tbd_writer,
         )
-        searcher = _core.AdvancedSearcher(
+        searcher = _core.Searcher(
             session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id
         )
 
