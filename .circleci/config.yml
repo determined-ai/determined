@@ -1853,7 +1853,7 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
           extras-requires: anchorecli
-      - run: sudo snap install yq jq
+      - run: sudo snap install yq && sudo snap install jq
       - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
       - slack/status:
           fail_only: True
