@@ -74,7 +74,7 @@ func Simulate(
 		random = rand.New(rand.NewSource(*seed))
 	}
 
-	lengthCompleted := make(map[model.RequestID]model.PartialUnits)
+	lengthCompleted := make(map[model.RequestID]PartialUnits)
 	pending := make(map[model.RequestID][]Operation)
 	trialIDs := make(map[model.RequestID]int)
 	var requestIDs []model.RequestID
@@ -120,7 +120,7 @@ func Simulate(
 			nextTrialID++
 		case ValidateAfter:
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
-			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
+			s.SetTrialProgress(requestID, PartialUnits(operation.Length.Units))
 
 			metric := valFunc(random, trialIDs[requestID], trialOpIdxs[requestID])
 			ops, err := s.ValidationCompleted(requestID, metric, operation)

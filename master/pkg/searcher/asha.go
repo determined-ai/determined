@@ -266,7 +266,7 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 }
 
 func (s *asyncHalvingSearch) progress(
-	map[model.RequestID]model.PartialUnits, map[model.RequestID]bool) float64 {
+	map[model.RequestID]PartialUnits, map[model.RequestID]bool) float64 {
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}

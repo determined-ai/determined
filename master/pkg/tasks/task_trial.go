@@ -136,8 +136,8 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	if c := s.ExperimentConfig.CheckpointStorage().RawSharedFSConfig; c != nil {
 		addMount(
 			c.HostPath(),
-			model.DefaultSharedFSContainerPath,
-			&mount.BindOptions{Propagation: model.DefaultSharedFSPropagation},
+			expconf.DefaultSharedFSContainerPath,
+			&mount.BindOptions{Propagation: expconf.DefaultSharedFSPropagation},
 		)
 	}
 	if c := s.ExperimentConfig.DataLayer().RawSharedFSConfig; c != nil {

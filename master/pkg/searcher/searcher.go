@@ -14,17 +14,20 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+// PartialUnits represent partial epochs, batches or records where the Unit is implied.
+type PartialUnits float64
+
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialsRequested     int                                    `json:"trials_requested"`
-		TrialsCreated       map[model.RequestID]bool               `json:"trials_created"`
-		TrialsClosed        map[model.RequestID]bool               `json:"trials_closed"`
-		Exits               map[model.RequestID]bool               `json:"exits"`
-		Failures            map[model.RequestID]bool               `json:"failures"`
-		TrialProgress       map[model.RequestID]model.PartialUnits `json:"trial_progress"`
-		Shutdown            bool                                   `json:"shutdown"`
-		CompletedOperations map[string]ValidateAfter               `json:"completed_operations"`
+		TrialsRequested     int                              `json:"trials_requested"`
+		TrialsCreated       map[model.RequestID]bool         `json:"trials_created"`
+		TrialsClosed        map[model.RequestID]bool         `json:"trials_closed"`
+		Exits               map[model.RequestID]bool         `json:"exits"`
+		Failures            map[model.RequestID]bool         `json:"failures"`
+		TrialProgress       map[model.RequestID]PartialUnits `json:"trial_progress"`
+		Shutdown            bool                             `json:"shutdown"`
+		CompletedOperations map[string]ValidateAfter         `json:"completed_operations"`
 
 		Rand *nprand.State `json:"rand"`
 
@@ -50,7 +53,7 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 			TrialsClosed:        map[model.RequestID]bool{},
 			Exits:               map[model.RequestID]bool{},
 			Failures:            map[model.RequestID]bool{},
-			TrialProgress:       map[model.RequestID]model.PartialUnits{},
+			TrialProgress:       map[model.RequestID]PartialUnits{},
 			CompletedOperations: map[string]ValidateAfter{},
 		},
 	}
@@ -111,7 +114,7 @@ func (s *Searcher) TrialExitedEarly(
 }
 
 // SetTrialProgress informs the searcher of the progress of a given trial.
-func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.PartialUnits) {
+func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialUnits) {
 	s.TrialProgress[requestID] = progress
 }
 

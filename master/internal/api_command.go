@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
@@ -191,7 +192,7 @@ func (a *apiServer) LaunchCommand(
 	if spec.Config.Description == "" {
 		spec.Config.Description = fmt.Sprintf(
 			"Command (%s)",
-			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+			petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 		)
 	}
 	if len(spec.Config.Entrypoint) == 1 {

@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
@@ -132,7 +133,7 @@ func (a *apiServer) LaunchNotebook(
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {
-		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
+		petName := petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep)
 		spec.Config.Description = fmt.Sprintf("JupyterLab (%s)", petName)
 	}
 

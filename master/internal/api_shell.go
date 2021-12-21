@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
@@ -80,7 +81,7 @@ func (a *apiServer) LaunchShell(
 	if spec.Config.Description == "" {
 		spec.Config.Description = fmt.Sprintf(
 			"Shell (%s)",
-			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+			petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 		)
 	}
 
