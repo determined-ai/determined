@@ -38,11 +38,9 @@ build: build/typescript-fetch build/python
 .PHONY: check
 check: check/python check/typescript-fetch
 	# Checking that the (committed) generated code is up-to-date by ensuring that
-	# git reports the files as unchanged after forcibly regenerating them:
-	# WARN this has a dependency on proto module being built recently
+	# git reports the files as unchanged after forcibly regenerating them.
+	# WARNING this has a dependency on proto module being built recently
 	# which isn't linked here.
-	ls -l $(SWAGGER_SPEC)
-	ls -l $(py_bindings_dest)
 
 .PHONY: check-python
 check/python: build/python
