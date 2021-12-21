@@ -44,6 +44,7 @@ JOB_SUFFIXES = [
     "tf25-gpu",
     "tf26-gpu",
     "tf27-gpu",
+    "pytorch19-tf25-rocm",
 ]
 
 EXPECT_JOBS = {
