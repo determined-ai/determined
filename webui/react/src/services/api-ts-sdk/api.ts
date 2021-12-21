@@ -5166,19 +5166,19 @@ export interface V1Slot {
  */
 export interface V1Task {
     /**
-     * 
+     * Unique ID of task.
      * @type {string}
      * @memberof V1Task
      */
     taskId?: string;
     /**
-     * 
+     * The current state of the task.
      * @type {Determinedtaskv1State}
      * @memberof V1Task
      */
     state?: Determinedtaskv1State;
     /**
-     * 
+     * Whether the TensorBoard or Notebook is ready to access.
      * @type {boolean}
      * @memberof V1Task
      */

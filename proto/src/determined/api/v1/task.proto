@@ -9,8 +9,6 @@ import "determined/api/v1/pagination.proto";
 import "determined/task/v1/task.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-
-
 // Get the requested task.
 message GetTaskRequest {
   // The requested task id.

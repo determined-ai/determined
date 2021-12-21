@@ -26,7 +26,10 @@ enum State {
 
 // A record of Jupyter or TensorBoard.
 message Task {
+  // Unique ID of task.
   string task_id = 1;
-  State state    = 2;
+  // The current state of the task.
+  State state = 2;
+  // Whether the TensorBoard or Notebook is ready to access.
   bool readiness = 3;
 }
