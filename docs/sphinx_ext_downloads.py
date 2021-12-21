@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 
 class DownloadExternalFileCollector(asset.DownloadFileCollector):
     def process_doc(
-        self: asset.DownloadFileCollector, app: application.Sphinx, doctree: nodes.document
+        self: asset.DownloadFileCollector,
+        app: application.Sphinx,
+        doctree: nodes.document,
     ) -> None:
         """
         This function is different from the original method only in doing some surgery on the paths
@@ -42,7 +44,9 @@ class DownloadExternalFileCollector(asset.DownloadFileCollector):
                 if not os.access(filename, os.R_OK):
                     logger.warning(__("download file not readable: %s") % filename)
                     continue
-                node["filename"] = app.env.dlfiles.add_file(app.env.docname, rel_filename)
+                node["filename"] = app.env.dlfiles.add_file(
+                    app.env.docname, rel_filename
+                )
 
 
 def setup(app: application.Sphinx) -> Dict[str, Any]:
@@ -51,10 +55,14 @@ def setup(app: application.Sphinx) -> Dict[str, Any]:
     # Disable the old instance of DownloadFileCollector and replace it with ours.
     for key in app.events.listeners:
         event = app.events.listeners[key]
-        app.events.listeners[key] = [listener for listener in event if not (
-                isinstance(listener.handler, types.MethodType) and
-                isinstance(listener.handler.__self__, asset.DownloadFileCollector)
-        )]
+        app.events.listeners[key] = [
+            listener
+            for listener in event
+            if not (
+                isinstance(listener.handler, types.MethodType)
+                and isinstance(listener.handler.__self__, asset.DownloadFileCollector)
+            )
+        ]
 
     app.add_env_collector(DownloadExternalFileCollector)
 

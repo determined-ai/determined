@@ -24,8 +24,15 @@ language = "en"
 source_suffix = {".rst": "restructuredtext", ".txt": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "examples", "requirements.txt", "site"]
-html_baseurl = "https://docs.determined.ai" # Base URL for sitemap.
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "examples",
+    "requirements.txt",
+    "site",
+]
+html_baseurl = "https://docs.determined.ai"  # Base URL for sitemap.
 highlight_language = "none"
 todo_include_todos = True
 
@@ -36,15 +43,17 @@ html_theme = "furo"
 html_favicon = "assets/images/favicon.ico"
 html_last_updated_fmt = None
 # See https://pradyunsg.me/furo/
-html_sidebars = {"**": [
-    "sidebar/brand.html",
-    "sidebar-version.html",
-    "sidebar/search.html",
-    "sidebar/scroll-start.html",
-    "sidebar/navigation.html",
-    "sidebar/ethical-ads.html",
-    "sidebar/scroll-end.html",
-]}
+html_sidebars = {
+    "**": [
+        "sidebar/brand.html",
+        "sidebar-version.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
+        "sidebar/navigation.html",
+        "sidebar/ethical-ads.html",
+        "sidebar/scroll-end.html",
+    ]
+}
 pygments_style = "sphinx"
 pygments_dark_style = "monokai"
 html_theme_options = {
@@ -85,7 +94,12 @@ dai_downloads_root = os.path.join("site", "downloads")
 autosummary_generate = True
 autoclass_content = "class"
 autodoc_mock_imports = [
-    "mmcv", "mmdet", "transformers", "pytorch_lightning", "datasets", "analytics",
+    "mmcv",
+    "mmdet",
+    "transformers",
+    "pytorch_lightning",
+    "datasets",
+    "analytics",
 ]
 
 # sphinx-sitemap configurations.
