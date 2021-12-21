@@ -52,7 +52,6 @@ message RPQueueStat {
   determined.job.v1.QueueStats stats = 1;
   // Resource pool.
   string resource_pool = 2;
-  string resource_pools = 3;
 }
 // Get job stats.
 message GetJobQueueStatsRequest {
