@@ -303,18 +303,18 @@ def num_error_trials(experiment_id: int) -> int:
     return sum(1 if t["state"] == "ERROR" else 0 for t in experiment_trials(experiment_id))
 
 
-def trial_logs(trial_id: int) -> List[str]:
+def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id)]
+    return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
 
 
 def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> bool:
-    logs = trial_logs(trial_id)
+    logs = trial_logs(trial_id, follow=True)
     for log_line in logs:
         if target_string in log_line:
             return True
-    print(f"{target_string} not found in trial {trial_id} logs: {''.join(logs)}", file=sys.stderr)
+    print(f"{target_string} not found in trial {trial_id} logs:\n{''.join(logs)}", file=sys.stderr)
     return False
 
 
