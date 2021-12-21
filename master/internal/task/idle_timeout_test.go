@@ -48,7 +48,17 @@ func TestIdleTimeoutWatcher(t *testing.T) {
 
 	system.Ask(mActor, actor.Ping{}).Get()
 	assert.Equal(t, actionDone, false)
-	time.Sleep(2 * tickInterval)
-	system.Ask(mActor, actor.Ping{}).Get()
+
+	// Go scheduling may sometimes be late to schedule the `IdleTimeoutWatcherTick`.
+	// The earliest it'd run is after `tickInterval`.
+	// To make the check more reliable, we wait between 2 and 10 `tickIntervals`.
+	for i := 0; i < 5; i++ {
+		time.Sleep(2 * tickInterval)
+		system.Ask(mActor, actor.Ping{}).Get()
+		if actionDone == true {
+			break
+		}
+	}
+
 	assert.Equal(t, actionDone, true)
 }
