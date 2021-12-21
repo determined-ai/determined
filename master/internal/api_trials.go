@@ -700,7 +700,7 @@ func (a *apiServer) ReportTrialProgress(
 
 	if err = a.ask(exp, trialReportProgress{
 		requestID: rID,
-		progress:  model.PartialUnits(req.Progress),
+		progress:  searcher.PartialUnits(req.Progress),
 	}, nil); err != nil {
 		return nil, err
 	}

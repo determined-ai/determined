@@ -5,7 +5,6 @@ import (
 	"math"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -135,11 +134,11 @@ func aggressiveMode(maxRungs int) []int {
 
 func parseAdaptiveMode(rawMode expconf.AdaptiveMode) adaptiveMode {
 	switch rawMode {
-	case model.ConservativeMode:
+	case expconf.ConservativeMode:
 		return conservativeMode
-	case model.StandardMode:
+	case expconf.StandardMode:
 		return standardMode
-	case model.AggressiveMode:
+	case expconf.AggressiveMode:
 		return aggressiveMode
 	default:
 		panic(fmt.Sprintf("unexpected adaptive mode: %s", rawMode))

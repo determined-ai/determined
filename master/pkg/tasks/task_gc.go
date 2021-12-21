@@ -97,9 +97,9 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 		res.Mounts = append(res.Mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: fs.HostPath(),
-			Target: model.DefaultSharedFSContainerPath,
+			Target: expconf.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
-				Propagation: model.DefaultSharedFSPropagation,
+				Propagation: expconf.DefaultSharedFSPropagation,
 			},
 		})
 	}

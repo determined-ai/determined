@@ -45,7 +45,7 @@ type (
 	}
 	trialReportProgress struct {
 		requestID model.RequestID
-		progress  model.PartialUnits
+		progress  searcher.PartialUnits
 	}
 	trialGetSearcherState struct {
 		requestID model.RequestID

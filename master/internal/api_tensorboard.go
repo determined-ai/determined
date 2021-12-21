@@ -133,7 +133,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	spec.Config.Description = fmt.Sprintf(
 		"TensorBoard (%s)",
-		petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+		petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 	)
 
 	// Selecting a random port mitigates the risk of multiple processes binding
@@ -169,9 +169,9 @@ func (a *apiServer) LaunchTensorboard(
 			// make the logs visible to TensorBoard. Bind mounts must be unique
 			// and therefore we use a map here to deduplicate mounts.
 			sharedFSMount := schemas.WithDefaults(expconf.BindMount{
-				RawContainerPath: model.DefaultSharedFSContainerPath,
+				RawContainerPath: expconf.DefaultSharedFSContainerPath,
 				RawHostPath:      c.HostPath(),
-				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
+				RawPropagation:   ptrs.StringPtr(expconf.DefaultSharedFSPropagation),
 			}).(expconf.BindMount)
 			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()
