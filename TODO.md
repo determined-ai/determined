@@ -1,10 +1,7 @@
 # TODO
 
-- enum for orderBy
-- build system:
-  - auto build
-  - ci
+- [ ] enum for orderBy
 
 ## Fixes
 
-- optional parameters generated as required positional ones (eg in post)
+- [x] optional parameters generated as required positional ones (eg in post)

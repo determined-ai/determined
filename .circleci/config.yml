@@ -1111,7 +1111,7 @@ jobs:
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
-  build-bindings:
+  check-ts-bindings:
     docker:
       - image: cimg/openjdk:14.0.1
     steps:
@@ -1119,11 +1119,18 @@ jobs:
       - attach_workspace:
           at: .
       - run: make -C bindings get-deps
-      - run: make -C bindings build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - bindings
+      - run: make -C bindings check/typescript-fetch
+
+  check-py-bindings:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - setup-python-venv:
+          executor: <<pipeline.parameters.docker-image>>
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C bindings check/python
 
   upload-try-now-template:
     docker:
@@ -1375,6 +1382,7 @@ jobs:
       - run: make -C examples check
       - run: make -C tools check
       - run: make -C schemas check
+
 
   test-unit-harness:
     docker:
@@ -1864,15 +1872,16 @@ workflows:
   lint:
     jobs:
       - build-proto
-      - build-bindings:
+      - check-py-bindings:
+          requires:
+            - build-proto
+      - check-ts-bindings:
           requires:
             - build-proto
       - lint-docs
       - lint-python
       - lint-go
-      - lint-react:
-          requires:
-            - build-bindings
+      - lint-react
       - lint-webui-tests
       - lint-secrets
 

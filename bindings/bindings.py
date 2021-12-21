@@ -52,7 +52,7 @@ class Any(NoParse, TypeAnno):
         return "Any"
 
     def annotation(self, prequoted=False) -> Code:
-        return "typing.Any"
+        return "t.Any"
 
 
 class String(NoParse, TypeAnno):
@@ -159,7 +159,7 @@ class Dict(TypeAnno):
         return f"Dict[str, {self.values}]"
 
     def annotation(self, prequoted=False) -> Code:
-        out = f"typing.Dict[str, {self.values.annotation(True)}]"
+        out = f"t.Dict[str, {self.values.annotation(True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
@@ -186,7 +186,7 @@ class Sequence(TypeAnno):
         return f"Sequence[{self.items}]"
 
     def annotation(self, prequoted=False) -> Code:
-        out = f"typing.Sequence[{self.items.annotation(True)}]"
+        out = f"t.Sequence[{self.items.annotation(True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
@@ -228,7 +228,7 @@ class Parameter:
             typestr = self.type.annotation()
             default = ""
         else:
-            typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
+            typestr = f'"t.Optional[{self.type.annotation(prequoted=True)}]"'
             default = " = None"
         default = "" if self.required else " = None"
         return f"    {self.name}: {typestr}{default},"
@@ -256,7 +256,7 @@ class Class(TypeDef):
         required = sorted(p for p in self.params if self.params[p].required)
         optional = sorted(p for p in self.params if not self.params[p].required)
         for name in required + optional:
-            out += ["        " + self.params[name].gen_function_param()]
+            out += ["    " + self.params[name].gen_function_param()]
         # out += [f"        {k}: {v.annotation()}," for k, v in self.members.items()]
         out += ["    ):"]
         out += [f"        self.{k} = {k}" for k in self.params]
@@ -271,10 +271,10 @@ class Class(TypeDef):
                 parsed = f'obj["{k}"]'
             if not v.required:
                 parsed = parsed + f' if obj.get("{k}", None) is not None else None'
-            out.append(f"""             {k}={parsed},""")
+            out.append(f"""            {k}={parsed},""")
         out += ["        )"]
         out += [""]
-        out += ["    def to_json(self) -> typing.Any:"]
+        out += ["    def to_json(self) -> t.Any:"]
         out += ["        return {"]
         for k, v in self.params.items():
             if v.type.need_parse():
@@ -283,7 +283,7 @@ class Class(TypeDef):
                 parsed = f"self.{k}"
             if not v.required:
                 parsed = parsed + f" if self.{k} is not None else None"
-            out.append(f'             "{k}": {parsed},')
+            out.append(f'            "{k}": {parsed},')
         out += ["        }"]
 
         return "\n".join(out)
@@ -339,7 +339,7 @@ class Function:
         out = [f"def {self.method}_{self.name}("]
 
         # Function parameters.
-        out += ['    session: "client.Session",']
+        out += ['    do_request: Request,']
         if self.params:
             out += ["    *,"]
 
@@ -386,15 +386,14 @@ class Function:
             bodystr = self.params["body"].dump()
         else:
             bodystr = "None"
-
-        out += ["    _req = session._do_request("]
-        out += [f"        method=\"{self.method.upper()}\","]
-        out += [f"        path={pathstr},"]
-        out += ["        params=_params,"]
-        out += [f"        json={bodystr},"]
-        out += ["        data=None,"]
-        out += ["        headers=None,"]
-        out += ["        timeout=None,"]
+        out += ["    _req = do_request("]
+        out += [f"        \"{self.method.upper()}\","]
+        out += [f"        {pathstr},"]
+        out += ["        _params,"]
+        out += [f"        {bodystr},"]
+        out += ["        None,"]
+        out += ["        None,"]
+        out += ["        None,"]
         out += ["    )"]
         for expect, returntype in responses.items():
             out += [f"    if _req.status_code == {expect}:"]
@@ -534,23 +533,40 @@ def link_all_refs(defs: TypeDefs) -> None:
 
 
 def pybindings(swagger: dict) -> str:
-    out = ["import math"]
-    out += ["import enum"]
-    out += ["import typing"]
-    out += [""]
-    out += ["if typing.TYPE_CHECKING:"]
-    out += ["    from determined.experimental import client"]
-    out += [""]
-    out += ["# flake8: noqa"]
-    out += ["Json = typing.Any"]
-    out += [""]
-    out += ["def dump_float(val: typing.Any) -> typing.Any:"]
-    out += ["    if math.isnan(val):"]
-    out += ['        return "Nan"']
-    out += ["    if math.isinf(val):"]
-    out += ['        return "Infinity" if val > 0 else "-Infinity"']
-    out += ["    return val"]
-    out += [""]
+    prefix = """
+import enum
+import math
+import typing as t
+
+import requests
+
+# flake8: noqa
+Json = t.Any
+
+
+def dump_float(val: t.Any) -> t.Any:
+    if math.isnan(val):
+        return "Nan"
+    if math.isinf(val):
+        return "Infinity" if val > 0 else "-Infinity"
+    return val
+
+
+Request = t.Callable[
+    [
+        str,  # method
+        str,  # path
+        t.Optional[t.Dict[str, t.Any]],  # params
+        t.Any,  # json
+        t.Optional[str],  # data
+        t.Optional[t.Dict[str, t.Any]],  # headers
+        t.Optional[int],  # timeout
+    ],
+    requests.Response,
+]
+
+"""
+    out = [prefix]
 
     defs = process_definitions(swagger["definitions"])
     ops = process_paths(swagger["paths"], defs)

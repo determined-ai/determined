@@ -4,13 +4,13 @@ from argparse import Namespace
 from typing import Any, List
 
 from requests import Response
-from determined.cli.session import setup_session
 
+from determined.cli.session import setup_session
 from determined.common import api, yaml
 from determined.common.api import authentication
+from determined.common.api.b import get_GetMaster
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.api.b import get_GetMaster
 
 
 @authentication.required
@@ -26,7 +26,7 @@ def config(args: Namespace) -> None:
 
 def get_master(args: Namespace) -> None:
     session = setup_session(args)
-    resp = get_GetMaster(session)
+    resp = get_GetMaster(session._do_request)
     if args.output == "json":
         print(json.dumps(resp.to_json(), indent=4))
     elif args.output == "yaml":

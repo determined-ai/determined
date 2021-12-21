@@ -11,12 +11,12 @@ publish:
 .PHONY: fmt
 fmt:
 	isort .
-	black .
+	black . --exclude determined/common/api/b.py 
 
 .PHONY: check
 check: check-gen
 	isort . --check-only
-	black . --check
+	black . --exclude determined/common/api/b.py --check
 	flake8
 	mypy .
 
