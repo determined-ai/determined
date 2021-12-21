@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 import subprocess
 from typing import List, NamedTuple
@@ -32,7 +33,7 @@ def float_or_default(fields: dict, key: str, default: float) -> float:
         return default
 
 
-def get_gpus() -> List[GPU]:
+def _get_nvidia_gpus() -> List[GPU]:
     try:
         proc = subprocess.Popen(
             ["nvidia-smi", "--query-gpu=" + ",".join(gpu_fields), "--format=csv,noheader,nounits"],
@@ -71,6 +72,49 @@ def get_gpus() -> List[GPU]:
 
     logging.info(f"detected {len(gpus)} gpus")
     return gpus
+
+
+def _get_rocm_gpus() -> List[GPU]:
+    try:
+        output_json = subprocess.run(
+            [
+                "rocm-smi",
+                "--showid",
+                "--showuniqueid",
+                "--showproductname",
+                "--json",
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout
+
+    except FileNotFoundError:
+        logging.info("rocm-smi not found")
+        return []
+    except Exception as e:
+        logging.warning(f"rocm-smi error: {e}")
+        return []
+
+    try:
+        output = json.loads(output_json)
+    except Exception as e:
+        logging.warning(f"failed to parse rocm-smi json output: {e}, content: {str(output_json)}")
+        return []
+
+    gpus = []
+    for k, v in output.items():
+        gpus.append(GPU(id=int(k[len("card") :]), uuid=v["Unique ID"], load=0, memoryUtil=0))
+
+    logging.info(f"detected {len(gpus)} rocm gpus")
+    return gpus
+
+
+def get_gpus() -> List[GPU]:
+    result = _get_nvidia_gpus()
+    if result:
+        return result
+    return _get_rocm_gpus()
 
 
 def get_gpu_uuids() -> List[str]:

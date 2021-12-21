@@ -38,6 +38,19 @@ variables.
 Proxy variables set in this way will take precedent over those set using the :ref:`agent
 configuration <agent-configuration>`.
 
+It is also possible to set these variables for each accelerator type separately:
+
+.. code:: yaml
+
+   environment:
+     environment_variables:
+       cpu:
+         - A=hello x86
+       gpu:
+         - A=hello nvidia
+       rocm:
+         - A=hello amd
+
 .. _startup-hooks:
 
 ***************
@@ -85,9 +98,9 @@ following:
 
 -  Ubuntu 18.04
 -  CUDA 11.1
--  Python 3.7
--  TensorFlow 2.4.2
--  PyTorch 1.9.0
+-  Python 3.8.x
+-  TensorFlow 2.4.x
+-  PyTorch 1.9.x
 
 Determined will automatically select GPU-specific versions of each library when running on agents
 with GPUs.

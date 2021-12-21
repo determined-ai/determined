@@ -58,21 +58,26 @@ type EnvironmentConfigV0 struct {
 //go:generate ../gen.sh
 // EnvironmentImageMapV0 configures the runtime image.
 type EnvironmentImageMapV0 struct {
-	RawCPU *string `json:"cpu"`
-	RawGPU *string `json:"gpu"`
+	RawCPU  *string `json:"cpu"`
+	RawCUDA *string `json:"cuda"`
+	RawROCM *string `json:"rocm"`
 }
 
 // WithDefaults implements the Defaultable interface.
 func (e EnvironmentImageMapV0) WithDefaults() interface{} {
 	cpu := CPUImage
-	gpu := GPUImage
+	cuda := CUDAImage
+	rocm := ROCMImage
 	if e.RawCPU != nil {
 		cpu = *e.RawCPU
 	}
-	if e.RawGPU != nil {
-		gpu = *e.RawGPU
+	if e.RawROCM != nil {
+		rocm = *e.RawROCM
 	}
-	return EnvironmentImageMapV0{RawCPU: &cpu, RawGPU: &gpu}
+	if e.RawCUDA != nil {
+		cuda = *e.RawCUDA
+	}
+	return EnvironmentImageMapV0{RawCPU: &cpu, RawCUDA: &cuda, RawROCM: &rocm}
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -80,16 +85,33 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 	var plain string
 	if err := json.Unmarshal(data, &plain); err == nil {
 		e.RawCPU = &plain
-		e.RawGPU = &plain
+		e.RawCUDA = &plain
+		e.RawROCM = &plain
 		return nil
 	}
+
 	type DefaultParser EnvironmentImageMapV0
 	var jsonItem DefaultParser
 	if err := json.Unmarshal(data, &jsonItem); err != nil {
 		return errors.Wrapf(err, "failed to parse runtime item")
 	}
+
 	e.RawCPU = jsonItem.RawCPU
-	e.RawGPU = jsonItem.RawGPU
+	e.RawROCM = jsonItem.RawROCM
+	e.RawCUDA = jsonItem.RawCUDA
+
+	if e.RawCUDA == nil {
+		type EnvironmentImageMapV0Compat struct {
+			// Parse legacy field for compatibility.
+			RawGPU *string `json:"gpu"`
+		}
+		var compatItem EnvironmentImageMapV0Compat
+		if err := json.Unmarshal(data, &compatItem); err != nil {
+			return errors.Wrapf(err, "failed to parse runtime item")
+		}
+		e.RawCUDA = compatItem.RawGPU
+	}
+
 	return nil
 }
 
@@ -98,8 +120,10 @@ func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 	switch deviceType {
 	case device.CPU:
 		return *e.RawCPU
-	case device.GPU:
-		return *e.RawGPU
+	case device.CUDA:
+		return *e.RawCUDA
+	case device.ROCM:
+		return *e.RawROCM
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
@@ -108,8 +132,9 @@ func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 //go:generate ../gen.sh
 // EnvironmentVariablesMapV0 configures the runtime environment variables.
 type EnvironmentVariablesMapV0 struct {
-	RawCPU []string `json:"cpu"`
-	RawGPU []string `json:"gpu"`
+	RawCPU  []string `json:"cpu"`
+	RawCUDA []string `json:"cuda"`
+	RawROCM []string `json:"rocm"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -117,23 +142,44 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	var plain []string
 	if err := json.Unmarshal(data, &plain); err == nil {
 		e.RawCPU = []string{}
-		e.RawGPU = []string{}
+		e.RawCUDA = []string{}
+		e.RawROCM = []string{}
+
 		e.RawCPU = append(e.RawCPU, plain...)
-		e.RawGPU = append(e.RawGPU, plain...)
+		e.RawROCM = append(e.RawROCM, plain...)
+		e.RawCUDA = append(e.RawCUDA, plain...)
 		return nil
 	}
+
 	type DefaultParser EnvironmentVariablesMapV0
 	var jsonItems DefaultParser
 	if err := json.Unmarshal(data, &jsonItems); err != nil {
 		return errors.Wrapf(err, "failed to parse runtime items")
 	}
 	e.RawCPU = []string{}
-	e.RawGPU = []string{}
+	e.RawCUDA = []string{}
+	e.RawROCM = []string{}
+
 	if jsonItems.RawCPU != nil {
 		e.RawCPU = append(e.RawCPU, jsonItems.RawCPU...)
 	}
-	if jsonItems.RawGPU != nil {
-		e.RawGPU = append(e.RawGPU, jsonItems.RawGPU...)
+	if jsonItems.RawROCM != nil {
+		e.RawROCM = append(e.RawROCM, jsonItems.RawROCM...)
+	}
+
+	if jsonItems.RawCUDA != nil {
+		e.RawCUDA = append(e.RawCUDA, jsonItems.RawCUDA...)
+	} else {
+		type EnvironmentVariablesMapV0Compat struct {
+			RawGPU []string `json:"gpu"`
+		}
+
+		var compatItems EnvironmentVariablesMapV0Compat
+		if err := json.Unmarshal(data, &compatItems); err != nil {
+			return errors.Wrapf(err, "failed to parse runtime items")
+		}
+
+		e.RawCUDA = append(e.RawCUDA, compatItems.RawGPU...)
 	}
 	return nil
 }
@@ -143,8 +189,10 @@ func (e EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
 	switch deviceType {
 	case device.CPU:
 		return e.RawCPU
-	case device.GPU:
-		return e.RawGPU
+	case device.CUDA:
+		return e.RawCUDA
+	case device.ROCM:
+		return e.RawROCM
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}

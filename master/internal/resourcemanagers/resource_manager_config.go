@@ -105,7 +105,7 @@ type KubernetesResourceManagerConfig struct {
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
-	SlotType: device.GPU, // default to CUDA-backed slots.
+	SlotType: device.CUDA, // default to CUDA-backed slots.
 }
 
 // GetPreemption returns whether the RM is set to preempt.
@@ -117,17 +117,23 @@ func (k *KubernetesResourceManagerConfig) GetPreemption() bool {
 func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	*k = defaultKubernetesResourceManagerConfig
 	type DefaultParser *KubernetesResourceManagerConfig
-	return json.Unmarshal(data, DefaultParser(k))
+	err := json.Unmarshal(data, DefaultParser(k))
+	if err == nil && k.SlotType == "gpu" {
+		k.SlotType = device.CUDA
+	}
+	return err
 }
 
 // Validate implements the check.Validatable interface.
 func (k KubernetesResourceManagerConfig) Validate() []error {
 	var checkSlotType error
 	switch k.SlotType {
-	case device.CPU, device.GPU:
+	case device.CPU, device.CUDA:
 		break
+	case device.ROCM:
+		checkSlotType = errors.Errorf("rocm slot_type is not supported yet on k8s")
 	default:
-		checkSlotType = errors.Errorf("slot_type must be either gpu or cpu")
+		checkSlotType = errors.Errorf("slot_type must be either cuda or cpu")
 	}
 
 	var checkCPUResource error

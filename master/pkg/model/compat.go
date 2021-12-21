@@ -72,16 +72,18 @@ func ToModelBindMount(b expconf.BindMount) BindMount {
 // ToExpconf translates old model objects into an expconf object.
 func (r RuntimeItems) ToExpconf() expconf.EnvironmentVariablesMap {
 	return schemas.WithDefaults(expconf.EnvironmentVariablesMap{
-		RawCPU: r.CPU,
-		RawGPU: r.GPU,
+		RawCPU:  r.CPU,
+		RawCUDA: r.CUDA,
+		RawROCM: r.ROCM,
 	}).(expconf.EnvironmentVariablesMap)
 }
 
 // ToExpconf translates old model objects into an expconf object.
 func (r RuntimeItem) ToExpconf() expconf.EnvironmentImageMap {
 	return schemas.WithDefaults(expconf.EnvironmentImageMap{
-		RawCPU: ptrs.StringPtr(r.CPU),
-		RawGPU: ptrs.StringPtr(r.GPU),
+		RawCPU:  ptrs.StringPtr(r.CPU),
+		RawCUDA: ptrs.StringPtr(r.CUDA),
+		RawROCM: ptrs.StringPtr(r.ROCM),
 	}).(expconf.EnvironmentImageMap)
 }
 

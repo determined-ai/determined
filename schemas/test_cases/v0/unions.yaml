@@ -122,7 +122,8 @@
     - http://determined.ai/schemas/expconf/v0/environment-image.json
   case:
     cpu: "alpine"
-    gpu: "alpine"
+    cuda: "alpine"
+    rocm: "alpine"
 
 - name: environment variables list of strings (valid)
   sane_as:
@@ -136,7 +137,9 @@
   case:
     cpu:
       - "ABCD=1234"
-    gpu:
+    cuda:
+      - "ABCD=1234"
+    rocm:
       - "ABCD=1234"
 
 - name: whole environment with no objects
@@ -153,9 +156,12 @@
   case:
     image:
       cpu: "alpine"
-      gpu: "alpine"
+      cuda: "alpine"
+      rocm: "alpine"
     environment_variables:
       cpu:
         - "ABCD=1234"
-      gpu:
+      cuda:
+        - "ABCD=1234"
+      rocm:
         - "ABCD=1234"

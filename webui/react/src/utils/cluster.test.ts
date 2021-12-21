@@ -34,7 +34,7 @@ const AGENTS = [
         enabled: true,
         id: '0',
         name: 'Tesla K80',
-        type: Type.ResourceType.GPU,
+        type: Type.ResourceType.CUDA,
         uuid: 'GPU-d3a502f5-2637-3e09-6a6c-b56efa07288e',
       },
     ],
@@ -52,7 +52,7 @@ const AGENTS = [
         enabled: false,
         id: '1',
         name: 'Tesla K80',
-        type: Type.ResourceType.GPU,
+        type: Type.ResourceType.CUDA,
         uuid: 'CPU-0b4ced76-51a0-11ec-bf63-0242ac130002',
       },
     ],
@@ -74,13 +74,13 @@ describe('Cluster Utilities', () => {
     });
 
     it('should convert enabled GPU agents into slot container states', () => {
-      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.GPU);
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CUDA);
       const expected = [ Type.ResourceState.Running ];
       expect(result).toStrictEqual(expected);
     });
 
     it('should convert specified resource pool agents into container states', () => {
-      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.GPU, 'compute-pool');
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CUDA, 'compute-pool');
       const expected = [ Type.ResourceState.Running ];
       expect(result).toStrictEqual(expected);
     });

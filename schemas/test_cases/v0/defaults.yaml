@@ -37,12 +37,15 @@
     environment_variables:
       cpu:
         - ASDF=asdf
-      gpu:
+      cuda:
+        - ASDF=asdf
+      rocm:
         - ASDF=asdf
     force_pull_image: false
     image:
       cpu: '*'
-      gpu: '*'
+      cuda: '*'
+      rocm: '*'
     # go will generate some non-empty struct here, but python will not
     pod_spec: '*'
     ports:

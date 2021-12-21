@@ -51,7 +51,9 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
 			},
 		}
-	case device.GPU: // default to CUDA-backed slots.
+	case device.ROCM:
+		panic("ROCm is not supported on k8s yet")
+	case device.CUDA: // default to CUDA-backed slots.
 		fallthrough
 	default:
 		return k8sV1.ResourceRequirements{
@@ -242,9 +244,7 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	resources := p.taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if p.slotType != device.GPU {
-		minAvailable = 0
-	} else {
+	if p.slotType == device.CUDA {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 

@@ -404,6 +404,13 @@ func (a *agent) setup(ctx *actor.Context) error {
 		ctx.Log().Infof("Nvidia driver version: %s", v)
 	}
 
+	v, err = getRocmVersion()
+	if err != nil {
+		return err
+	} else if v != "" {
+		ctx.Log().Infof("Rocm driver version: %s", v)
+	}
+
 	if a.MasterPort == 0 {
 		if a.Options.Security.TLS.Enabled {
 			a.MasterPort = 443

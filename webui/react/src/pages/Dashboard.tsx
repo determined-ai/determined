@@ -167,10 +167,16 @@ const Dashboard: React.FC = () => {
           <OverviewStats title="Cluster Allocation">
             {overview[ResourceType.ALL].allocation}<small>%</small>
           </OverviewStats>
-          {overview[ResourceType.GPU].total ? (
+          {overview[ResourceType.CUDA].total ? (
             <OverviewStats title="Available GPUs">
-              {overview[ResourceType.GPU].available}
-              <small>/{overview[ResourceType.GPU].total}</small>
+              {overview[ResourceType.CUDA].available}
+              <small>/{overview[ResourceType.CUDA].total}</small>
+            </OverviewStats>
+          ) : null}
+          {overview[ResourceType.ROCM].total ? (
+            <OverviewStats title="Available ROCm GPUs">
+              {overview[ResourceType.ROCM].available}
+              <small>/{overview[ResourceType.ROCM].total}</small>
             </OverviewStats>
           ) : null}
           {overview[ResourceType.CPU].total ? (

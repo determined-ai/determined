@@ -138,7 +138,7 @@ func AssociateExperimentIDLabels(eID string, labels []string) {
 // AssociateContainerGPU associates container ID with GPU device ID.
 //nolint: interfacer
 func AssociateContainerGPU(cID cproto.ID, d device.Device) {
-	if d.Type == device.GPU {
+	if d.Type == device.CUDA {
 		gpuUUIDToContainerID.
 			WithLabelValues(d.UUID, cID.String()).
 			Inc()
@@ -148,7 +148,7 @@ func AssociateContainerGPU(cID cproto.ID, d device.Device) {
 // DisassociateContainerGPU removes association between container ID and device ID.
 //nolint: interfacer
 func DisassociateContainerGPU(cID cproto.ID, d device.Device) {
-	if d.Type != device.GPU {
+	if d.Type != device.CUDA {
 		return
 	}
 

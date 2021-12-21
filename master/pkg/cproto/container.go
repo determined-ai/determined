@@ -29,14 +29,14 @@ func (c Container) Transition(new State) Container {
 		Parent: c.Parent, ID: c.ID, State: new, Devices: c.Devices}
 }
 
-// GPUDeviceUUIDs returns the UUIDs of the devices for this container that are GPUs.
-func (c Container) GPUDeviceUUIDs() []string {
-	var uuids []string
+// DeviceUUIDsByType returns the UUIDs of the devices with the given device type.
+func (c Container) DeviceUUIDsByType(deviceType device.Type) (uuids []string) {
 	for _, d := range c.Devices {
-		if d.Type == device.GPU {
+		if d.Type == deviceType {
 			uuids = append(uuids, d.UUID)
 		}
 	}
+
 	return uuids
 }
 

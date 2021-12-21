@@ -739,10 +739,25 @@ var (
     "required": [],
     "eventuallyRequired": [
         "cpu",
-        "gpu"
+        "cuda",
+        "rocm"
     ],
     "properties": {
         "cpu": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "cuda": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "rocm": {
             "type": [
                 "string",
                 "null"
@@ -764,7 +779,7 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/environment-image.json",
     "title": "EnvironmentImage",
     "union": {
-        "defaultMessage": "is neither a string nor a map of cpu/gpu to strings",
+        "defaultMessage": "is neither a string nor a map of cpu, cuda, or rocm to strings",
         "items": [
             {
                 "unionKey": "never",
@@ -795,6 +810,26 @@ var (
                 "type": "string"
             }
         },
+        "cuda": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "rocm": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
         "gpu": {
             "type": [
                 "array",
@@ -813,7 +848,7 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/environment-variables.json",
     "title": "EnvironmentVariables",
     "union": {
-        "defaultMessage": "is neither a list of strings nor a map of cpu/gpu to lists of strings",
+        "defaultMessage": "is neither a list of strings nor a map of cpu, cuda, or rocm to lists of strings",
         "items": [
             {
                 "unionKey": "never",

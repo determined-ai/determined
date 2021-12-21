@@ -35,11 +35,20 @@ func (a *agent) detect() error {
 		}
 	case a.SlotType == "none":
 		a.Devices = []device.Device{}
-	case a.SlotType == "gpu":
-		devices, err := detectGPUs(a.Options.VisibleGPUs)
+	case a.SlotType == "cuda" || a.SlotType == "gpu":
+		// Support "gpu" for backwards compatibility.
+		devices, err := detectCudaGPUs(a.Options.VisibleGPUs)
 		if err != nil {
 			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
 		}
+
+		a.Devices = devices
+	case a.SlotType == "rocm":
+		devices, err := detectRocmGPUs(a.Options.VisibleGPUs)
+		if err != nil {
+			return errors.Wrap(err, "error while gathering GPU info through rocm-smi command")
+		}
+
 		a.Devices = devices
 	case a.SlotType == "cpu":
 		devices, err := detectCPUs()
@@ -48,9 +57,15 @@ func (a *agent) detect() error {
 		}
 		a.Devices = devices
 	case a.SlotType == "auto":
-		devices, err := detectGPUs(a.Options.VisibleGPUs)
+		devices, err := detectCudaGPUs(a.Options.VisibleGPUs)
 		if err != nil {
 			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
+		}
+		if len(devices) == 0 {
+			devices, err = detectRocmGPUs(a.Options.VisibleGPUs)
+			if err != nil {
+				return errors.Wrap(err, "error while gathering GPU info through rocm-smi command")
+			}
 		}
 		if len(devices) == 0 {
 			devices, err = detectCPUs()
@@ -108,11 +123,12 @@ func detectCPUs() ([]device.Device, error) {
 
 var detectMIGEnabled = []string{
 							"nvidia-smi", "--query-gpu=mig.mode.current", "--format=csv,noheader"}
-var detectNvidiaDevices = []string{"nvidia-smi", "-L"} // Lists both GPUs and MIG instances
+var detectCudaDevices = []string{"nvidia-smi", "-L"} // Lists both GPUs and MIG instances
 var detectMIGRegExp = regexp.MustCompile(`(?P<dev>MIG \S+).+\(UUID.+(?P<uuid>MIG.+)\)`)
 
-var detectGPUsArgs = []string{"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader"}
-var detectGPUsIDFlagTpl = "--id=%v"
+var detectCudaGPUsArgs = []string{
+	"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader"}
+var detectCudaGPUsIDFlagTpl = "--id=%v"
 
 // detect if MIG is enabled and if there are instances configured.
 func detectMigInstances(visibleGPUs string) ([]device.Device, error) {
@@ -132,7 +148,7 @@ func detectMigInstances(visibleGPUs string) ([]device.Device, error) {
 	}
 
 	// #nosec G204
-	cmd = exec.Command(detectNvidiaDevices[0], detectNvidiaDevices[1:]...)
+	cmd = exec.Command(detectCudaDevices[0], detectCudaDevices[1:]...)
 	out, err = cmd.Output()
 	if err != nil {
 		log.WithError(err).WithField("output", string(out)).Warnf(
@@ -155,27 +171,27 @@ func detectMigInstances(visibleGPUs string) ([]device.Device, error) {
 			brand := matches[1]
 			uuid := matches[2]
 			devices = append(devices,
-				device.Device{ID: deviceIndex, Brand: brand, UUID: uuid, Type: device.GPU})
+				device.Device{ID: deviceIndex, Brand: brand, UUID: uuid, Type: device.CUDA})
 			deviceIndex++
 		}
 	}
 	return devices, nil
 }
 
-// detectGPUs returns the list of available Nvidia GPUs.
-func detectGPUs(visibleGPUs string) ([]device.Device, error) {
+// detectCudaGPUs returns the list of available Nvidia GPUs.
+func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 	devices, err := detectMigInstances(visibleGPUs)
 	if err == nil && devices != nil && len(devices) > 0 {
 		return devices, nil
 	}
 
-	flags := detectGPUsArgs[1:]
+	flags := detectCudaGPUsArgs[1:]
 	if visibleGPUs != "" {
-		flags = append(flags, fmt.Sprintf(detectGPUsIDFlagTpl, visibleGPUs))
+		flags = append(flags, fmt.Sprintf(detectCudaGPUsIDFlagTpl, visibleGPUs))
 	}
 
 	// #nosec G204
-	cmd := exec.Command(detectGPUsArgs[0], flags...)
+	cmd := exec.Command(detectCudaGPUsArgs[0], flags...)
 	out, err := cmd.Output()
 
 	if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
@@ -210,6 +226,6 @@ func detectGPUs(visibleGPUs string) ([]device.Device, error) {
 		brand := strings.TrimSpace(record[1])
 		uuid := strings.TrimSpace(record[2])
 
-		devices = append(devices, device.Device{ID: index, Brand: brand, UUID: uuid, Type: device.GPU})
+		devices = append(devices, device.Device{ID: index, Brand: brand, UUID: uuid, Type: device.CUDA})
 	}
 }

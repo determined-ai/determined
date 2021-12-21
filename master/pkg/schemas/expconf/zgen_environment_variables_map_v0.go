@@ -16,12 +16,20 @@ func (e *EnvironmentVariablesMapV0) SetCPU(val []string) {
 	e.RawCPU = val
 }
 
-func (e EnvironmentVariablesMapV0) GPU() []string {
-	return e.RawGPU
+func (e EnvironmentVariablesMapV0) CUDA() []string {
+	return e.RawCUDA
 }
 
-func (e *EnvironmentVariablesMapV0) SetGPU(val []string) {
-	e.RawGPU = val
+func (e *EnvironmentVariablesMapV0) SetCUDA(val []string) {
+	e.RawCUDA = val
+}
+
+func (e EnvironmentVariablesMapV0) ROCM() []string {
+	return e.RawROCM
+}
+
+func (e *EnvironmentVariablesMapV0) SetROCM(val []string) {
+	e.RawROCM = val
 }
 
 func (e EnvironmentVariablesMapV0) ParsedSchema() interface{} {
