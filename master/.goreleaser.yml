@@ -30,7 +30,7 @@ builds:
       - ppc64
 
 archives:
-  - wrap_in_directory: true
+  - wrap_in_directory: "true"
     files:
       - "share/determined/master/**/*"
 
@@ -39,23 +39,33 @@ nfpms:
     formats:
       - deb
       - rpm
-    config_files:
-      "packaging/master.yaml": "/etc/determined/master.yaml"
-    files:
-      "build/**/*": "/usr/share/determined/master"
-      "static/**/*": "/usr/share/determined/master/static"
-      "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
+    contents:
+      - src: "packaging/master.yaml"
+        dst: "/etc/determined/master.yaml"
+        type: config|noreplace
+      - src: "build/growforest"
+        dst: "/usr/share/determined/master/growforest"
+      - src: "build/**/*"
+        dst: "/usr/share/determined/master"
+      - src: "static/**/*"
+        dst: "/usr/share/determined/master/static"
+      - src: "packaging/determined-master.service"
+        dst: "/lib/systemd/system/determined-master.service"
+
+      - src: "packaging/LICENSE"
+        dst: "/usr/share/doc/determined-master/copyright"
+        packager: deb
+
+      - src: "packaging/LICENSE"
+        dst: "/usr/share/licenses/determined-master/LICENSE"
+        packager: rpm
+      
     overrides:
       deb:
         scripts:
           postinstall: packaging/debian/master.postinst
           preremove: packaging/debian/master.prerm
           postremove: packaging/debian/master.postrm
-        files:
-          "packaging/LICENSE": "/usr/share/doc/determined-master/copyright"
-      rpm:
-        files:
-          "packaging/LICENSE": "/usr/share/licenses/determined-master/LICENSE"
 
 release:
   github:
@@ -80,6 +90,6 @@ dockers:
       - "packaging/LICENSE"
       - "build"
       - "static"
-    binaries:
+    ids:
       - determined-master
       - determined-gotmpl
