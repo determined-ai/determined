@@ -1,0 +1,29 @@
+.base {
+  .header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+    .title { flex-basis: 25%; }
+    .filters {
+      display: inline-flex;
+      flex-basis: 33%;
+      gap: 16px;
+      justify-content: flex-end;
+
+      .filter { min-width: 40px; }
+    }
+  }
+  .content {
+    background-color: var(--theme-colors-monochrome-13);
+    min-height: 200px;
+    width: 100%;
+  }
+}
+.base.maxHeight {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .content { flex-grow: 1; }
+}

@@ -1,0 +1,14 @@
+.base {
+  align-items: center;
+  background-color: var(--theme-colors-monochrome-13);
+  display: flex;
+  height: 200px;
+  justify-content: center;
+  width: 100%;
+
+  :global(.ant-skeleton-image) {
+    background-color: inherit;
+  }
+}
+.base.small { height: 100px; }
+.base.large { height: 400px; }

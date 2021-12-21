@@ -21,12 +21,15 @@ type LoadingStateConditions = {
   isLoading?: boolean,
 };
 
-interface Props {
+interface StyleProps {
+  maxHeight?: boolean;
+  noPadding?: boolean;
+}
+
+interface Props extends StyleProps {
   empty?: LoadingMessageProps;
   error?: LoadingMessageProps;
   loaded?: () => React.ReactNode;
-  maxHeight?: boolean;
-  noPadding?: boolean;
   skeleton?: LoadingSkeletonProps;
   state: LoadingState | LoadingStateConditions;
 }
@@ -45,16 +48,22 @@ const renderMessage = (props: LoadingMessageProps, state: LoadingState) => {
   return <Message {...defaultProps} />;
 };
 
-const renderSkeleton = (props: LoadingSkeletonProps) => {
-  if (React.isValidElement(props)) return <>{props}</>;
-  return (
-    <div className={css.skeleton}>
-      <Skeleton {...props as SkeletonProps} />
-    </div>
-  );
+const renderSkeleton = (props: LoadingSkeletonProps, styleProps: StyleProps) => {
+  const classes = [ css.skeleton ];
+  const content = React.isValidElement(props) ? props : <Skeleton {...props as SkeletonProps} />;
+
+  if (styleProps.maxHeight) classes.push(css.maxHeight);
+  if (styleProps.noPadding) classes.push(css.noPadding);
+
+  return <div className={classes.join(' ')}>{content}</div>;
 };
 
 const LoadingWrapper: React.FC<Props> = (props: PropsWithChildren<Props>) => {
+  const styleProps = useMemo(() => ({
+    maxHeight: props.maxHeight,
+    noPadding: props.noPadding,
+  }), [ props.maxHeight, props.noPadding ]);
+
   const state = useMemo(() => {
     if (validateEnum(LoadingState, props.state)) return props.state as LoadingState;
     if (isLoadingStateConditions(props.state)) {
@@ -69,8 +78,8 @@ const LoadingWrapper: React.FC<Props> = (props: PropsWithChildren<Props>) => {
     if (state === LoadingState.Loaded) return <>{props.children}</>;
     if (state === LoadingState.Empty) return renderMessage(props.empty, state);
     if (state === LoadingState.Error) return renderMessage(props.error, state);
-    return renderSkeleton(props.skeleton);
-  }, [ props.children, props.empty, props.error, props.skeleton, state ]);
+    return renderSkeleton(props.skeleton, styleProps);
+  }, [ props.children, props.empty, props.error, props.skeleton, state, styleProps ]);
 
   return jsx;
 };
