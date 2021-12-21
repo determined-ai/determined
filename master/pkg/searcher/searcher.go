@@ -14,6 +14,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+// PartialUnits represent partial epochs, batches or records where the Unit is implied.
+type PartialUnits float64
+
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {

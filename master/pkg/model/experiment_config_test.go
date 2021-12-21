@@ -426,16 +426,13 @@ func TestMasterConfigImage(t *testing.T) {
 			ROCM: "test/rocm",
 		},
 	}
-	actual := DefaultExperimentConfig(masterDefault)
-	actual.Name = name
+	actual := DefaultEnvConfig(masterDefault)
 
-	expected := DefaultExperimentConfig(nil)
-	expected.Environment.Image.CPU = "test/cpu"
-	expected.Environment.Image.CUDA = "test/gpu"
-	expected.Environment.Image.ROCM = "test/rocm"
-	expected.Name = name
+	expected := DefaultEnvConfig(nil)
+	expected.Image.CPU = "test/cpu"
+	expected.Image.CUDA = "test/gpu"
+	expected.Image.ROCM = "test/rocm"
 
-	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -447,22 +444,19 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 			ROCM: "test/rocm",
 		},
 	}
-	actual := DefaultExperimentConfig(masterDefault)
+	actual := DefaultEnvConfig(masterDefault)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "name": "provided",
-  "environment": {"image":  "my-test-image"}
+  "image":  "my-test-image"
 }`), &actual))
 
-	expected := DefaultExperimentConfig(nil)
+	expected := DefaultEnvConfig(nil)
 	myTestImage := "my-test-image"
-	expected.Environment.Image = RuntimeItem{
+	expected.Image = RuntimeItem{
 		CPU:  myTestImage,
 		CUDA: myTestImage,
 		ROCM: myTestImage,
 	}
-	expected.Name = name
 
-	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -470,14 +464,11 @@ func TestMasterConfigPullPolicy(t *testing.T) {
 	masterDefault := &TaskContainerDefaultsConfig{
 		ForcePullImage: true,
 	}
-	actual := DefaultExperimentConfig(masterDefault)
-	actual.Name = name
+	actual := DefaultEnvConfig(masterDefault)
 
-	expected := DefaultExperimentConfig(nil)
-	expected.Environment.ForcePullImage = true
-	expected.Name = name
+	expected := DefaultEnvConfig(nil)
+	expected.ForcePullImage = true
 
-	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -485,16 +476,13 @@ func TestOverrideMasterConfigPullPolicy(t *testing.T) {
 	masterDefault := &TaskContainerDefaultsConfig{
 		ForcePullImage: true,
 	}
-	actual := DefaultExperimentConfig(masterDefault)
+	actual := DefaultEnvConfig(masterDefault)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "name": "provided",
-  "environment": {"force_pull_image": false}
+  "force_pull_image": false
 }`), &actual))
 
-	expected := DefaultExperimentConfig(nil)
-	expected.Name = name
+	expected := DefaultEnvConfig(nil)
 
-	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -505,17 +493,14 @@ func TestMasterConfigRegistryAuth(t *testing.T) {
 			Password: "secret-password",
 		},
 	}
-	actual := DefaultExperimentConfig(masterDefault)
-	actual.Name = name
+	actual := DefaultEnvConfig(masterDefault)
 
-	expected := DefaultExperimentConfig(nil)
-	expected.Environment.RegistryAuth = &types.AuthConfig{
+	expected := DefaultEnvConfig(nil)
+	expected.RegistryAuth = &types.AuthConfig{
 		Username: "best-user",
 		Password: "secret-password",
 	}
-	expected.Name = name
 
-	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -525,20 +510,16 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 			Username: "best-user",
 		},
 	}
-	actual := DefaultExperimentConfig(masterDefault)
+	actual := DefaultEnvConfig(masterDefault)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "name": "provided",
-  "environment": {"registry_auth": {"username": "worst-user"}}
+  "registry_auth": {"username": "worst-user"}
 }`), &actual))
 
-	expected := DefaultExperimentConfig(nil)
-	expected.Environment.RegistryAuth = &types.AuthConfig{
+	expected := DefaultEnvConfig(nil)
+	expected.RegistryAuth = &types.AuthConfig{
 		Username: "worst-user",
 	}
-	expected.Name = name
-
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
-	assert.DeepEqual(t, actual, expected)
 }
 
 func TestExperimentProfiling(t *testing.T) {
