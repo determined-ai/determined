@@ -23,3 +23,10 @@ enum State {
   // The task has begun to exit.
   STATE_TERMINATING = 7;
 }
+
+// A record of Jupyter or TensorBoard.
+message Task {
+  string task_id = 1;
+  State state    = 2;
+  bool readiness = 3;
+}

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+import "determined/api/v1/pagination.proto";
+import "determined/task/v1/task.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+
+
+// Get the requested task.
+message GetTaskRequest {
+  // The requested task id.
+  string task_id = 1;
+}
+
+// Response to GetTaskRequest.
+message GetTaskResponse {
+  // The requested task.
+  determined.task.v1.Task task = 1;
+}

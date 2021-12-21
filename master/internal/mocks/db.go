@@ -1985,6 +1985,20 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
+// UpdateAllocationState provides a mock function with given fields: allocationID, state, readiness
+func (_m *DB) UpdateAllocationState(allocationID model.AllocationID, state model.AllocationState, readiness bool) error {
+	ret := _m.Called(allocationID, state, readiness)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.AllocationID, model.AllocationState, bool) error); ok {
+		r0 = rf(allocationID, state, readiness)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateCheckpointMetadata provides a mock function with given fields: checkpoint
 func (_m *DB) UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error {
 	ret := _m.Called(checkpoint)

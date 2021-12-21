@@ -444,6 +444,8 @@ func (a *Allocation) TaskContainerStateChanged(
 			prom.RemoveAllocationReservation(a.reservations[cID].Summary())
 		}
 	}
+
+	_ = a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
 }
 
 // Exit attempts to exit an allocation while not killing or preempting it.
