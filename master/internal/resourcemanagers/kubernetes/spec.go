@@ -367,7 +367,17 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		p.ports = append(p.ports, port)
 	}
 
-	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
+	specEnvVars := spec.EnvVars()
+	podSpec := env.PodSpec()
+	for _, container := range podSpec.Spec.Containers {
+		if container.Name == "determined-container" {
+			for _, e := range container.Env {
+				specEnvVars[e.Name] = e.Value
+			}
+		}
+	}
+
+	envVars, err := p.configureEnvVars(specEnvVars, env, deviceType)
 	if err != nil {
 		return err
 	}
