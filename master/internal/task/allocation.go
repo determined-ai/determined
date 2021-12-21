@@ -194,6 +194,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 						IsReady:           a.logBasedReadinessPassed,
 						ServiceReadyEvent: &msg,
 					})
+					_ = a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
 				}
 			}
 		}
