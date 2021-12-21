@@ -403,12 +403,18 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		})
 	}
 
-	// Initialize listeners and multiplexing.
+	// This must be before grpcutil.RegisterHTTPProxy is called since it may use stuff set up by the
+	// gRPC server (logger initialization, maybe more). Found by --race.
+	gRPCServer := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
+		m.config.Observability.EnablePrometheus,
+		&m.config.InternalConfig.ExternalSessions)
+
 	err = grpcutil.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
 	if err != nil {
 		return errors.Wrap(err, "failed to register gRPC gateway")
 	}
 
+	// Initialize listeners and multiplexing.
 	mux := cmux.New(baseListener)
 
 	grpcListener := mux.MatchWithWriters(
@@ -429,14 +435,11 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		}()
 	}
 	start("gRPC server", func() error {
-		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
-			m.config.Observability.EnablePrometheus,
-			&m.config.InternalConfig.ExternalSessions)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.
 		// To be fixed by https://github.com/soheilhy/cmux/pull/69 which makes cmux an io.Closer.
-		return srv.Serve(grpcListener)
+		return gRPCServer.Serve(grpcListener)
 	})
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
