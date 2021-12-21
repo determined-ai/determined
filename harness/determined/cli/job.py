@@ -10,7 +10,7 @@ from determined.cli import render
 from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication
-from determined.common.api.b import get_GetJobs
+from determined.common.api.b import get_GetJobs, v1OrderBy
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -37,7 +37,7 @@ def ls(args: Namespace) -> None:
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy="ORDER_BY_ASC" if not args.reverse else "ORDER_BY_DESC",
+        orderBy=v1OrderBy.ORDER_BY_ASC.value if not args.reverse else v1OrderBy.ORDER_BY_DESC.value,
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
