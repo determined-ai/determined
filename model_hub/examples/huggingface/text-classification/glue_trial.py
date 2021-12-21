@@ -32,8 +32,7 @@ import determined.pytorch as det_torch
 import model_hub.huggingface as hf
 import model_hub.utils as utils
 
-from textattack.transformations import WordSwapRandomCharacterDeletion
-from textattack.transformations import CompositeTransformation
+import textattack.transformations as transformations
 from textattack.augmentation import Augmenter
 
 task_to_keys = {
@@ -314,19 +313,29 @@ class GLUEAugmentationTrial(GLUETrial):
             )
         max_seq_length = min(self.data_config.max_seq_length, self.tokenizer.model_max_length)
 
-        transformation = CompositeTransformation([
-            WordSwapRandomCharacterDeletion(),
-        ])
-        augmenter = Augmenter(transformation=transformation, transformations_per_example=1)
+        tforms = []
+        for aug in self.data_config.augmentations:
+            if aug in transformations.__dir__():
+                tform_module = getattr(transformations, aug)
+                tforms.append(tform_module())
+
+        augmenter = Augmenter(
+            transformation=transformations.CompositeTransformation(tforms),
+            transformations_per_example=1
+        )
 
         # We cannot use self.tokenizer as a non-local variable in the preprocess_function if we
         # want map to be able to cache the output of the tokenizer.  Hence, the preprocess_function
         # takes a tokenizer explicitly as an input and we create a closure using functools.partial.
-        def preprocess_function(tokenizer, padding, max_seq_length, examples):
+        def preprocess_function(tokenizer, padding, max_seq_length, examples, augment=False):
             # Tokenize the texts
-            for k in [sentence1_key, sentence2_key]:
-                if k is not None:
-                    examples[k] = augmenter.augment(examples[k])[0]
+            if augment:
+                for k in [sentence1_key, sentence2_key]:
+                    if k is not None:
+                        source_examples = []
+                        for it in examples[k]:
+                            source_examples.append(augmenter.augment(it)[0])
+                        examples[k] = source_examples # += to double examples
             args = (
                 (examples[sentence1_key],)
                 if sentence2_key is None
@@ -339,11 +348,18 @@ class GLUEAugmentationTrial(GLUETrial):
                 result["label"] = [label_to_id[label] for label in examples["label"]]
             return result
 
-        tokenized_datasets = self.raw_datasets.map(
-            functools.partial(preprocess_function, self.tokenizer, padding, max_seq_length),
-            batched=True,
-            load_from_cache_file=not self.data_config.overwrite_cache,
-        )
+        tokenized_datasets = {
+            "train": self.raw_datasets["train"].map(
+                functools.partial(preprocess_function, self.tokenizer, padding, max_seq_length, augment=True),
+                batched=True,
+                load_from_cache_file=not self.data_config.overwrite_cache,
+            ),
+            "validation": self.raw_datasets["validation"].map(
+                functools.partial(preprocess_function, self.tokenizer, padding, max_seq_length, augment=False),
+                batched=True,
+                load_from_cache_file=not self.data_config.overwrite_cache,
+            ),
+        }
         for _, data in tokenized_datasets.items():
             hf.remove_unused_columns(self.model, data)
 
