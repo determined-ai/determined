@@ -51,7 +51,7 @@ var (
 	masterLogsBatchMissWaitTime = time.Second
 
 	trialLogsBatchMissWaitTime = time.Second
-	trialLogsTerminationDelay  = 2 * time.Second
+	trialLogsTerminationDelay  = 5 * time.Second
 
 	distinctFieldBatchWaitTime = 5 * time.Second
 
