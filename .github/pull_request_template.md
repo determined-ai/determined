@@ -3,7 +3,7 @@
 <!---
 Lead with the intended commit body in this description field. For breaking changes,
 please include "BREAKING CHANGE:" at the beginning of your commit body.
-At minimum, this section should include a bracketed reference to the Jira ticket,
+At a minimum, this section should include a bracketed reference to the Jira ticket,
 e.g. "[DET-1234]". When squash-and-merging, copy this directly into the description field.
 -->
 
@@ -12,7 +12,7 @@ e.g. "[DET-1234]". When squash-and-merging, copy this directly into the descript
 
 <!---
 Describe the situations in which you've tested your change, and/or a screenshot as appropriate.
-Reviewers may ask questions of this test plan to ensure adequate manual coverage of changes.
+Reviewers may ask questions about this test plan to ensure adequate manual coverage of changes.
 -->
 
 
