@@ -1,3 +1,4 @@
+# The contents of this file are programatically generated.
 import enum
 import math
 import typing as t

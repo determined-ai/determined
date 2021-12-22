@@ -534,6 +534,7 @@ def link_all_refs(defs: TypeDefs) -> None:
 
 def pybindings(swagger: dict) -> str:
     prefix = """
+# The contents of this file are programatically generated.
 import enum
 import math
 import typing as t
