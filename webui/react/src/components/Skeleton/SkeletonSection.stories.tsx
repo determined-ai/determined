@@ -1,8 +1,8 @@
-import { boolean, number, withKnobs } from '@storybook/addon-knobs';
+import { boolean, number, select, withKnobs } from '@storybook/addon-knobs';
 import { Skeleton } from 'antd';
 import React from 'react';
 
-import SkeletonSection from './SkeletonSection';
+import SkeletonSection, { ContentType } from './SkeletonSection';
 
 export default {
   component: SkeletonSection,
@@ -38,10 +38,21 @@ export const WithCustomChildren = (): React.ReactNode => (
 
 export const Custom = (): React.ReactNode => {
   return (
-    <SkeletonSection
-      filters={number('number of filters', 2)}
-      maxHeight={boolean('max height', false)}
-      title={boolean('show title', true)}
-    />
+    <div style={{ height: '100vh' }}>
+      <SkeletonSection
+        contentType={select(
+          'content type',
+          {
+            Default: undefined,
+            [ContentType.Chart]: ContentType.Chart,
+            [ContentType.Logs]: ContentType.Logs,
+          },
+          undefined,
+        )}
+        filters={number('number of filters', 2)}
+        size={select('size', [ 'small', 'medium', 'large', 'max' ], 'medium')}
+        title={boolean('show title', true)}
+      />
+    </div>
   );
 };

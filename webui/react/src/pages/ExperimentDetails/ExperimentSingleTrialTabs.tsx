@@ -4,8 +4,7 @@ import { useHistory, useParams } from 'react-router';
 
 import LoadingWrapper from 'components/LoadingWrapper';
 import NotesCard from 'components/NotesCard';
-import SkeletonChart from 'components/Skeleton/SkeletonChart';
-import SkeletonSection from 'components/Skeleton/SkeletonSection';
+import SkeletonSection, { ContentType } from 'components/Skeleton/SkeletonSection';
 import SkeletonTable from 'components/Skeleton/SkeletonTable';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -188,7 +187,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           <LoadingWrapper
             skeleton={(
               <>
-                <SkeletonChart filters={2} size="large" title />
+                <SkeletonSection contentType={ContentType.Chart} filters={2} size="large" title />
                 <SkeletonTable filters={2} title />
               </>
             )}
@@ -235,9 +234,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           <LoadingWrapper
             skeleton={(
               <>
-                <SkeletonChart title />
-                <SkeletonChart title />
-                <SkeletonChart title />
+                <SkeletonSection contentType={ContentType.Chart} title />
+                <SkeletonSection contentType={ContentType.Chart} title />
+                <SkeletonSection contentType={ContentType.Chart} title />
               </>
             )}
             state={loadingState}>
@@ -247,7 +246,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         <TabPane key="logs" tab="Logs">
           <LoadingWrapper
             maxHeight
-            skeleton={<SkeletonSection filters={2} maxHeight title />}
+            skeleton={(
+              <SkeletonSection contentType={ContentType.Logs} filters={2} size="max" title />
+            )}
             state={loadingState}>
             <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
           </LoadingWrapper>

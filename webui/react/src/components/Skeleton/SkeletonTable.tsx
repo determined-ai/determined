@@ -21,8 +21,8 @@ const SkeletonTable: React.FC<Props> = ({
     return columns;
   }, [ columns ]);
   return (
-    <div className={css.base}>
-      <SkeletonSection {...props}>
+    <SkeletonSection {...props}>
+      <div className={css.base}>
         {new Array(rows).fill(null).map((_, rowIndex) => (
           <div className={css.row} key={rowIndex}>
             {columnProps.map((colProps, colIndex) => (
@@ -32,8 +32,8 @@ const SkeletonTable: React.FC<Props> = ({
             ))}
           </div>
         ))}
-      </SkeletonSection>
-    </div>
+      </div>
+    </SkeletonSection>
   );
 };
 

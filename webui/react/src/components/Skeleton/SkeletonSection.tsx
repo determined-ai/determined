@@ -2,14 +2,22 @@ import { Skeleton } from 'antd';
 import { SkeletonTitleProps } from 'antd/lib/skeleton/Title';
 import React, { PropsWithChildren, useMemo } from 'react';
 
+import iconChart from 'assets/images/icon-chart.svg';
+import iconLogs from 'assets/images/icon-logs.svg';
 import { isNumber } from 'utils/data';
 
 import css from './SkeletonSection.module.scss';
 
 export interface Props {
+  contentType?: ContentType;
   filters?: boolean | number | SkeletonTitleProps | SkeletonTitleProps[];
-  maxHeight?: boolean;
+  size?: 'small' | 'medium' | 'large' | 'max';
   title?: boolean | SkeletonTitleProps;
+}
+
+export enum ContentType {
+  Chart = 'Chart',
+  Logs = 'Logs',
 }
 
 const renderTitle = (title?: boolean | SkeletonTitleProps) => (
@@ -20,18 +28,15 @@ const renderFilter = (key: number, title?: SkeletonTitleProps) => (
   <Skeleton className={css.filter} key={key} paragraph={false} title={title} />
 );
 
-const DEFAULT_CONTENT = <div className={css.content} />;
-
 const SkeletonSection: React.FC<Props> = ({
-  children = DEFAULT_CONTENT,
+  children,
+  contentType,
   filters,
-  maxHeight,
+  size = 'medium',
   title,
 }: PropsWithChildren<Props>) => {
-  const classes = [ css.base ];
+  const classes = [ css.base, css[size] ];
   const showHeader = !!title || !!filters;
-
-  if (maxHeight) classes.push(css.maxHeight);
 
   const titleSkeleton = useMemo(() => {
     if (!title) return null;
@@ -51,6 +56,15 @@ const SkeletonSection: React.FC<Props> = ({
     return <div className={css.filters}>{content}</div>;
   }, [ filters ]);
 
+  const contentSkeleton = useMemo(() => {
+    if (React.isValidElement(children)) return children;
+
+    let content = null;
+    if (contentType === ContentType.Chart) content = <img src={iconChart} />;
+    if (contentType === ContentType.Logs) content = <img src={iconLogs} />;
+    return <div className={css.content}>{content}</div>;
+  }, [ children, contentType ]);
+
   return (
     <div className={classes.join(' ')}>
       {showHeader && (
@@ -59,7 +73,7 @@ const SkeletonSection: React.FC<Props> = ({
           {filterSkeleton}
         </div>
       )}
-      {children}
+      {contentSkeleton}
     </div>
   );
 };
