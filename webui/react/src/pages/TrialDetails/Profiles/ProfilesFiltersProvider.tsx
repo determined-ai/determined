@@ -1,4 +1,3 @@
-import { Alert } from 'antd';
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
 import useSettings from 'hooks/useSettings';
@@ -43,6 +42,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
   const systemSeries = useFetchAvailableSeries(trial.id)[MetricType.System];
   const systemMetrics = useFetchMetrics(
     trial.id,
+    trial.state,
     MetricType.System,
     settings.name,
     settings.agentId,
@@ -50,14 +50,17 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
   );
   const throughputMetrics = useFetchMetrics(
     trial.id,
+    trial.state,
     MetricType.Throughput,
     'samples_per_second',
     undefined,
     undefined,
   );
-  const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
-
-  const canRender = !!settings.agentId && !!settings.name && !!systemSeries;
+  const timingMetrics = useFetchMetrics(
+    trial.id,
+    trial.state,
+    MetricType.Timing,
+  );
 
   /*
    * Set default filter settings.
@@ -90,10 +93,6 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     systemSeries,
     updateSettings,
   }), [ settings, systemMetrics, systemSeries, throughputMetrics, timingMetrics, updateSettings ]);
-
-  if (!canRender) {
-    return <Alert message="No data available." type="warning" />;
-  }
 
   return (
     <ProfilesFiltersContext.Provider value={context}>

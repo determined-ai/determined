@@ -12,7 +12,7 @@ export enum MessageType {
   Warning = 'warning',
 }
 
-interface Props {
+export interface Props {
   message?: string;
   style?: React.CSSProperties;
   title: string;

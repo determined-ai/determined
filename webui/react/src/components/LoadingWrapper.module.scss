@@ -1,0 +1,5 @@
+.skeleton {
+  padding: var(--theme-sizes-layout-big);
+}
+.skeleton.maxHeight { height: 100%; }
+.skeleton.noPadding { padding: 0; }

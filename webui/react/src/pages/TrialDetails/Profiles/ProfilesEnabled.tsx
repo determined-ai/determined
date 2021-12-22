@@ -73,8 +73,8 @@ const ProfilesEnabled: React.FC = () => {
   const scrollTop = useRef(0);
 
   const isLoading = (
-    metrics[MetricType.System].isLoading &&
-    metrics[MetricType.Throughput].isLoading &&
+    metrics[MetricType.System].isLoading ||
+    metrics[MetricType.Throughput].isLoading ||
     metrics[MetricType.Timing].isLoading
   );
   const isEmpty = (
@@ -176,7 +176,7 @@ const ProfilesEnabled: React.FC = () => {
   }, [ scroll ]);
 
   if (isLoading) {
-    return <Spinner spinning tip="Fetching system metrics..." />;
+    return <Spinner spinning tip="Waiting for profiler data..." />;
   } else if (isEmpty) {
     return <Alert message="No data available." type="warning" />;
   }
