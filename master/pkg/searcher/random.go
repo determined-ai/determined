@@ -61,7 +61,7 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	for trial := 0; trial < initialTrials; trial++ {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))
 		s.CreatedTrials++
 		s.PendingTrials++
@@ -89,7 +89,7 @@ func (s *randomSearch) progress(
 			unitsCompleted += float64(v)
 		}
 	}
-	unitsExpected := s.MaxLength().Units * s.MaxTrials()
+	unitsExpected := s.MaxLength().Units * uint64(s.MaxTrials())
 	return unitsCompleted / float64(unitsExpected)
 }
 
@@ -104,7 +104,7 @@ func (s *randomSearch) trialExitedEarly(
 			var ops []Operation
 			create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 			ops = append(ops, create)
-			ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+			ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 			ops = append(ops, NewClose(create.RequestID))
 			// We don't increment CreatedTrials here because this trial is replacing the invalid trial.
 			s.PendingTrials++
@@ -120,7 +120,7 @@ func (s *randomSearch) trialClosed(ctx context, requestID model.RequestID) ([]Op
 	if s.CreatedTrials < s.MaxTrials() {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))
 		s.CreatedTrials++
 		s.PendingTrials++

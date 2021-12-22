@@ -374,50 +374,15 @@ func (a *apiServer) PreviewHPSearch(
 	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
 	indexes := make(map[string]int)
 	toProto := func(op searcher.ValidateAfter) ([]*experimentv1.RunnableOperation, error) {
-		switch op.Length.Unit {
-		case expconf.Records:
-			return []*experimentv1.RunnableOperation{
-				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{
-						Unit:   experimentv1.TrainingLength_UNIT_RECORDS,
-						Length: int32(op.Length.Units),
-					},
-				},
-				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-				},
-			}, nil
-		case expconf.Batches:
-			return []*experimentv1.RunnableOperation{
-				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{
-						Unit:   experimentv1.TrainingLength_UNIT_BATCHES,
-						Length: int32(op.Length.Units),
-					},
-				},
-				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-				},
-			}, nil
-		case expconf.Epochs:
-			return []*experimentv1.RunnableOperation{
-				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{
-						Unit:   experimentv1.TrainingLength_UNIT_EPOCHS,
-						Length: int32(op.Length.Units),
-					},
-				},
-				{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-				},
-			}, nil
-		default:
-			return []*experimentv1.RunnableOperation{},
-				fmt.Errorf("unrecognized unit %s", op.Length.Unit)
-		}
+		return []*experimentv1.RunnableOperation{
+			{
+				Type:   experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
+				Length: op.Length,
+			},
+			{
+				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+			},
+		}, nil
 	}
 	for _, result := range sim.Results {
 		var operations []*experimentv1.RunnableOperation

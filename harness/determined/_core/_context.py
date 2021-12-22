@@ -129,8 +129,9 @@ def init(
             tbd_mgr,
             tbd_writer,
         )
+        units = _core._parse_searcher_units(info.trial._config)
         searcher = _core.Searcher(
-            session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id
+            session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id, units
         )
 
         if storage_manager is None:

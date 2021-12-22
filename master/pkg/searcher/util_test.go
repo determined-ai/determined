@@ -90,17 +90,17 @@ func checkReproducibility(
 
 func toOps(types string) (ops []ValidateAfter) {
 	for _, unparsed := range strings.Fields(types) {
-		count, err := strconv.Atoi(unparsed[:len(unparsed)-1])
+		count, err := strconv.ParseUint(unparsed[:len(unparsed)-1], 10, 64)
 		if err != nil {
 			panic(err)
 		}
 		switch unit := string(unparsed[len(unparsed)-1]); unit {
 		case "R":
-			ops = append(ops, ValidateAfter{Length: expconf.NewLengthInRecords(count)})
+			ops = append(ops, ValidateAfter{Length: count})
 		case "B":
-			ops = append(ops, ValidateAfter{Length: expconf.NewLengthInBatches(count)})
+			ops = append(ops, ValidateAfter{Length: count})
 		case "E":
-			ops = append(ops, ValidateAfter{Length: expconf.NewLengthInEpochs(count)})
+			ops = append(ops, ValidateAfter{Length: count})
 		}
 	}
 	return ops
@@ -137,13 +137,13 @@ func newConstantPredefinedTrial(ops []ValidateAfter, valMetric float64) predefin
 	return newPredefinedTrial(ops, nil, valMetrics)
 }
 
-func (t *predefinedTrial) Train(length expconf.Length, opIndex int) error {
+func (t *predefinedTrial) Train(length uint64, opIndex int) error {
 	if opIndex >= len(t.Ops) {
 		return errors.Errorf("ran out of expected ops trying to train")
 	}
 	op := t.Ops[opIndex]
 	if op.Length != length {
-		return errors.Errorf("wanted %s got %s", op.Length, length)
+		return errors.Errorf("wanted %v got %v", op.Length, length)
 	}
 	return nil
 }

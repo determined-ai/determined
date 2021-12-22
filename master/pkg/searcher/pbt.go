@@ -66,7 +66,7 @@ func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialParams[create.RequestID] = create.Hparams
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.LengthPerRound()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.LengthPerRound().Units))
 	}
 	return ops, nil
 }
@@ -144,7 +144,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 
 			ops = append(ops,
 				create,
-				NewValidateAfter(create.RequestID, s.LengthPerRound()))
+				NewValidateAfter(create.RequestID, s.LengthPerRound().Units))
 		}
 	}
 
@@ -152,7 +152,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 	for _, requestID := range trialIDs[:len(trialIDs)-numTruncate] {
 		if !s.EarlyExitTrials[requestID] {
 			ops = append(ops, NewValidateAfter(
-				requestID, s.LengthPerRound().MultInt(s.TrialRoundsCompleted[requestID]+1)))
+				requestID, s.LengthPerRound().Units*uint64(s.TrialRoundsCompleted[requestID]+1)))
 		} else {
 			s.Metrics[requestID] = pbtExitedMetricValue
 		}
@@ -205,7 +205,7 @@ func (s *pbtSearch) progress(
 	trialProgress map[model.RequestID]PartialUnits,
 	trialsClosed map[model.RequestID]bool) float64 {
 	unitsCompleted := sumTrialLengths(trialProgress)
-	unitsExpected := s.LengthPerRound().MultInt(s.PopulationSize()).MultInt(s.NumRounds()).Units
+	unitsExpected := s.LengthPerRound().Units * uint64(s.PopulationSize()*s.NumRounds())
 	return float64(unitsCompleted) / float64(unitsExpected)
 }
 
