@@ -318,6 +318,7 @@ const JobQueue: React.FC = () => {
       {!!managingJob && !!selectedRp && (
         <ManageJob
           job={managingJob}
+          jobs={jobs}
           schedulerType={selectedRp.schedulerType}
           selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
           onFinish={hideModal}

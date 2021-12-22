@@ -15,12 +15,13 @@ const { Option } = Select;
 
 interface Props {
   job: Job;
+  jobs: Job[];
   onFinish?: () => void;
   schedulerType: V1SchedulerType;
   selectedRPStats: RPStats;
 }
 
-const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType }) => {
+const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType, jobs }) => {
   const formRef = useRef<FormInstance>(null);
   const { resourcePools } = useStore();
 
@@ -30,8 +31,9 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       const formValues = formRef.current.getFieldsValue();
       try {
         // TODO better detection?
-        if (parseInt(formValues.jobsAhead, 10) !== job.summary.jobsAhead) {
-          await moveJobToPosition(job.jobId, parseInt(formValues.jobsAhead, 10));
+        const jobsAhead = parseInt(formValues.position, 10) - 1;
+        if (jobsAhead !== job.summary.jobsAhead) {
+          await moveJobToPosition(job.jobId, jobsAhead);
         } else {
           await detApi.Internal.updateJobQueue({
             updates: [
@@ -90,7 +92,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       </h6>
       <Form
         initialValues={{
-          jobsAhead: job.summary.jobsAhead,
+          position: job.summary.jobsAhead + 1,
           priority: job.priority,
           resourcePool: selectedRPStats.resourcePool,
           weight: job.weight,
@@ -98,18 +100,21 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         labelCol={{ span: 6 }}
         name="form basic"
         ref={formRef}>
-        <Form.Item
-          label="Position in Queue"
-          name="jobsAhead">
-          <Input type="number" />
-        </Form.Item>
         {schedulerType === V1SchedulerType.PRIORITY && (
-          <Form.Item
-            // extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest."
-            label="Priority"
-            name="priority">
-            <Input addonAfter="out of 99" type="number" />
-          </Form.Item>
+          <>
+            <Form.Item
+              label="Position in Queue"
+              name="position">
+              <Input addonAfter={`out of ${jobs.length}`} max={jobs.length} min={1} type="number" />
+            </Form.Item>
+            <Form.Item
+              // extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest."
+              label="Priority"
+              name="priority">
+              <Input addonAfter="out of 99" type="number" />
+              {/* FIXME What about K8? */}
+            </Form.Item>
+          </>
         )}
         {schedulerType === V1SchedulerType.FAIRSHARE && (
           <Form.Item
