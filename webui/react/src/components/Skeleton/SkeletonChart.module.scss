@@ -6,8 +6,9 @@
   justify-content: center;
   width: 100%;
 
-  :global(.ant-skeleton-image) {
-    background-color: inherit;
+  img {
+    height: 100px;
+    width: 100px;
   }
 }
 .base.small { height: 100px; }

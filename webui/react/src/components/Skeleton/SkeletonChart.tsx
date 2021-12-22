@@ -1,5 +1,6 @@
-import { Skeleton } from 'antd';
 import React from 'react';
+
+import iconChart from 'assets/images/icon-chart.svg';
 
 import css from './SkeletonChart.module.scss';
 import SkeletonSection, { Props as SkeletonSectionProps } from './SkeletonSection';
@@ -15,7 +16,9 @@ const SkeletonChart: React.FC<Props> = ({ size = 'medium', ...props }: Props) =>
 
   return (
     <SkeletonSection {...props}>
-      <Skeleton.Image className={classes.join(' ')} />
+      <div className={classes.join(' ')}>
+        <img src={iconChart} />
+      </div>
     </SkeletonSection>
   );
 };
