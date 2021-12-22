@@ -386,7 +386,7 @@ class Function:
             bodystr = self.params["body"].dump()
         else:
             bodystr = "None"
-        out += ["    _req = do_request("]
+        out += ["    _resp = do_request("]
         out += [f"        \"{self.method.upper()}\","]
         out += [f"        {pathstr},"]
         out += ["        _params,"]
@@ -396,13 +396,12 @@ class Function:
         out += ["        None,"]
         out += ["    )"]
         for expect, returntype in responses.items():
-            out += [f"    if _req.status_code == {expect}:"]
+            out += [f"    if _resp.status_code == {expect}:"]
             if returntype.isnone():
                 out += ['        return']
             else:
-                out += [f'        return {returntype.load("_req.json()")}']
-        # XXX: raise something else here
-        out += ["    raise ValueError(_req.status_code)"]
+                out += [f'        return {returntype.load("_resp.json()")}']
+        out += [f'    raise APIHttpError("{self.method}_{self.name}", _resp)']
 
         return "\n".join(out)
 
@@ -545,14 +544,6 @@ import requests
 Json = t.Any
 
 
-def dump_float(val: t.Any) -> t.Any:
-    if math.isnan(val):
-        return "Nan"
-    if math.isinf(val):
-        return "Infinity" if val > 0 else "-Infinity"
-    return val
-
-
 Request = t.Callable[
     [
         str,  # method
@@ -565,6 +556,27 @@ Request = t.Callable[
     ],
     requests.Response,
 ]
+
+
+def dump_float(val: t.Any) -> t.Any:
+    if math.isnan(val):
+        return "Nan"
+    if math.isinf(val):
+        return "Infinity" if val > 0 else "-Infinity"
+    return val
+
+
+class APIHttpError(Exception):
+    # APIHttpError is used if an HTTP(s) API request fails.
+    def __init__(self, operation_name: str, response: requests.Response) -> None:
+        self.response = response
+        self.operation_name = operation_name
+        self.message = (
+            f"API Error: {operation_name} failed."
+        )
+
+    def __str__(self) -> str:
+        return self.message
 
 """
     out = [prefix]

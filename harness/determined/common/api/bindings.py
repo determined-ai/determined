@@ -9,14 +9,6 @@ import requests
 Json = t.Any
 
 
-def dump_float(val: t.Any) -> t.Any:
-    if math.isnan(val):
-        return "Nan"
-    if math.isinf(val):
-        return "Infinity" if val > 0 else "-Infinity"
-    return val
-
-
 Request = t.Callable[
     [
         str,  # method
@@ -29,6 +21,27 @@ Request = t.Callable[
     ],
     requests.Response,
 ]
+
+
+def dump_float(val: t.Any) -> t.Any:
+    if math.isnan(val):
+        return "Nan"
+    if math.isinf(val):
+        return "Infinity" if val > 0 else "-Infinity"
+    return val
+
+
+class APIHttpError(Exception):
+    # APIHttpError is used if an HTTP(s) API request fails.
+    def __init__(self, operation_name: str, response: requests.Response) -> None:
+        self.response = response
+        self.operation_name = operation_name
+        self.message = (
+            f"API Error: {operation_name} failed."
+        )
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class GetHPImportanceResponseMetricHPImportance:
@@ -4920,7 +4933,7 @@ def post_AckAllocationPreemptionSignal(
     body: "v1AckAllocationPreemptionSignalRequest",
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/allocations/{allocationId}/signals/ack_preemption",
         _params,
@@ -4929,9 +4942,9 @@ def post_AckAllocationPreemptionSignal(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_AckAllocationPreemptionSignal", _resp)
 
 def post_ActivateExperiment(
     do_request: Request,
@@ -4939,7 +4952,7 @@ def post_ActivateExperiment(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{id}/activate",
         _params,
@@ -4948,9 +4961,9 @@ def post_ActivateExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ActivateExperiment", _resp)
 
 def get_AllocationPreemptionSignal(
     do_request: Request,
@@ -4961,7 +4974,7 @@ def get_AllocationPreemptionSignal(
     _params = {
         "timeoutSeconds": timeoutSeconds,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/allocations/{allocationId}/signals/preemption",
         _params,
@@ -4970,9 +4983,9 @@ def get_AllocationPreemptionSignal(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1AllocationPreemptionSignalResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1AllocationPreemptionSignalResponse.from_json(_resp.json())
+    raise APIHttpError("get_AllocationPreemptionSignal", _resp)
 
 def get_AllocationRendezvousInfo(
     do_request: Request,
@@ -4981,7 +4994,7 @@ def get_AllocationRendezvousInfo(
     containerId: str,
 ) -> "v1AllocationRendezvousInfoResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
         _params,
@@ -4990,9 +5003,9 @@ def get_AllocationRendezvousInfo(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1AllocationRendezvousInfoResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1AllocationRendezvousInfoResponse.from_json(_resp.json())
+    raise APIHttpError("get_AllocationRendezvousInfo", _resp)
 
 def post_ArchiveExperiment(
     do_request: Request,
@@ -5000,7 +5013,7 @@ def post_ArchiveExperiment(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{id}/archive",
         _params,
@@ -5009,9 +5022,9 @@ def post_ArchiveExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ArchiveExperiment", _resp)
 
 def post_ArchiveModel(
     do_request: Request,
@@ -5019,7 +5032,7 @@ def post_ArchiveModel(
     modelId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/models/{modelId}/archive",
         _params,
@@ -5028,9 +5041,9 @@ def post_ArchiveModel(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ArchiveModel", _resp)
 
 def post_CancelExperiment(
     do_request: Request,
@@ -5038,7 +5051,7 @@ def post_CancelExperiment(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{id}/cancel",
         _params,
@@ -5047,9 +5060,9 @@ def post_CancelExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_CancelExperiment", _resp)
 
 def post_CompleteTrialSearcherValidation(
     do_request: Request,
@@ -5058,7 +5071,7 @@ def post_CompleteTrialSearcherValidation(
     trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{trialId}/searcher/completed_operation",
         _params,
@@ -5067,9 +5080,9 @@ def post_CompleteTrialSearcherValidation(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
 
 def post_ComputeHPImportance(
     do_request: Request,
@@ -5077,7 +5090,7 @@ def post_ComputeHPImportance(
     experimentId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
         _params,
@@ -5086,9 +5099,9 @@ def post_ComputeHPImportance(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ComputeHPImportance", _resp)
 
 def post_CreateExperiment(
     do_request: Request,
@@ -5096,7 +5109,7 @@ def post_CreateExperiment(
     body: "v1CreateExperimentRequest",
 ) -> "v1CreateExperimentResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/experiments",
         _params,
@@ -5105,15 +5118,15 @@ def post_CreateExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1CreateExperimentResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1CreateExperimentResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateExperiment", _resp)
 
 def get_CurrentUser(
     do_request: Request,
 ) -> "v1CurrentUserResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/auth/user",
         _params,
@@ -5122,9 +5135,9 @@ def get_CurrentUser(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1CurrentUserResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1CurrentUserResponse.from_json(_resp.json())
+    raise APIHttpError("get_CurrentUser", _resp)
 
 def delete_DeleteExperiment(
     do_request: Request,
@@ -5132,7 +5145,7 @@ def delete_DeleteExperiment(
     experimentId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "DELETE",
         f"/api/v1/experiments/{experimentId}",
         _params,
@@ -5141,9 +5154,9 @@ def delete_DeleteExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("delete_DeleteExperiment", _resp)
 
 def delete_DeleteModel(
     do_request: Request,
@@ -5151,7 +5164,7 @@ def delete_DeleteModel(
     modelId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "DELETE",
         f"/api/v1/models/{modelId}",
         _params,
@@ -5160,9 +5173,9 @@ def delete_DeleteModel(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("delete_DeleteModel", _resp)
 
 def delete_DeleteModelVersion(
     do_request: Request,
@@ -5171,7 +5184,7 @@ def delete_DeleteModelVersion(
     modelVersionId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "DELETE",
         f"/api/v1/models/{modelId}/versions/{modelVersionId}",
         _params,
@@ -5180,9 +5193,9 @@ def delete_DeleteModelVersion(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("delete_DeleteModelVersion", _resp)
 
 def delete_DeleteTemplate(
     do_request: Request,
@@ -5190,7 +5203,7 @@ def delete_DeleteTemplate(
     templateName: str,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "DELETE",
         f"/api/v1/templates/{templateName}",
         _params,
@@ -5199,9 +5212,9 @@ def delete_DeleteTemplate(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("delete_DeleteTemplate", _resp)
 
 def post_DisableAgent(
     do_request: Request,
@@ -5210,7 +5223,7 @@ def post_DisableAgent(
     body: "v1DisableAgentRequest",
 ) -> "v1DisableAgentResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/agents/{agentId}/disable",
         _params,
@@ -5219,9 +5232,9 @@ def post_DisableAgent(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1DisableAgentResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1DisableAgentResponse.from_json(_resp.json())
+    raise APIHttpError("post_DisableAgent", _resp)
 
 def post_DisableSlot(
     do_request: Request,
@@ -5230,7 +5243,7 @@ def post_DisableSlot(
     slotId: str,
 ) -> "v1DisableSlotResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
         _params,
@@ -5239,9 +5252,9 @@ def post_DisableSlot(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1DisableSlotResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1DisableSlotResponse.from_json(_resp.json())
+    raise APIHttpError("post_DisableSlot", _resp)
 
 def post_EnableAgent(
     do_request: Request,
@@ -5249,7 +5262,7 @@ def post_EnableAgent(
     agentId: str,
 ) -> "v1EnableAgentResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/agents/{agentId}/enable",
         _params,
@@ -5258,9 +5271,9 @@ def post_EnableAgent(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1EnableAgentResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1EnableAgentResponse.from_json(_resp.json())
+    raise APIHttpError("post_EnableAgent", _resp)
 
 def post_EnableSlot(
     do_request: Request,
@@ -5269,7 +5282,7 @@ def post_EnableSlot(
     slotId: str,
 ) -> "v1EnableSlotResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/agents/{agentId}/slots/{slotId}/enable",
         _params,
@@ -5278,9 +5291,9 @@ def post_EnableSlot(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1EnableSlotResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1EnableSlotResponse.from_json(_resp.json())
+    raise APIHttpError("post_EnableSlot", _resp)
 
 def get_GetAgent(
     do_request: Request,
@@ -5288,7 +5301,7 @@ def get_GetAgent(
     agentId: str,
 ) -> "v1GetAgentResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/agents/{agentId}",
         _params,
@@ -5297,9 +5310,9 @@ def get_GetAgent(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetAgentResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetAgentResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAgent", _resp)
 
 def get_GetAgents(
     do_request: Request,
@@ -5317,7 +5330,7 @@ def get_GetAgents(
         "orderBy": orderBy,
         "sortBy": sortBy,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/agents",
         _params,
@@ -5326,9 +5339,9 @@ def get_GetAgents(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetAgentsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetAgentsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAgents", _resp)
 
 def get_GetBestSearcherValidationMetric(
     do_request: Request,
@@ -5336,7 +5349,7 @@ def get_GetBestSearcherValidationMetric(
     experimentId: int,
 ) -> "v1GetBestSearcherValidationMetricResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric",
         _params,
@@ -5345,9 +5358,9 @@ def get_GetBestSearcherValidationMetric(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetBestSearcherValidationMetricResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetBestSearcherValidationMetricResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetBestSearcherValidationMetric", _resp)
 
 def get_GetCheckpoint(
     do_request: Request,
@@ -5355,7 +5368,7 @@ def get_GetCheckpoint(
     checkpointUuid: str,
 ) -> "v1GetCheckpointResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/checkpoints/{checkpointUuid}",
         _params,
@@ -5364,9 +5377,9 @@ def get_GetCheckpoint(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetCheckpointResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetCheckpointResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetCheckpoint", _resp)
 
 def get_GetCommand(
     do_request: Request,
@@ -5374,7 +5387,7 @@ def get_GetCommand(
     commandId: str,
 ) -> "v1GetCommandResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/commands/{commandId}",
         _params,
@@ -5383,9 +5396,9 @@ def get_GetCommand(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetCommandResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetCommandResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetCommand", _resp)
 
 def get_GetCommands(
     do_request: Request,
@@ -5403,7 +5416,7 @@ def get_GetCommands(
         "sortBy": sortBy,
         "users": users,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/commands",
         _params,
@@ -5412,9 +5425,9 @@ def get_GetCommands(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetCommandsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetCommandsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetCommands", _resp)
 
 def get_GetCurrentTrialSearcherOperation(
     do_request: Request,
@@ -5422,7 +5435,7 @@ def get_GetCurrentTrialSearcherOperation(
     trialId: int,
 ) -> "v1GetCurrentTrialSearcherOperationResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/trials/{trialId}/searcher/operation",
         _params,
@@ -5431,9 +5444,9 @@ def get_GetCurrentTrialSearcherOperation(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetCurrentTrialSearcherOperationResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetCurrentTrialSearcherOperationResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetCurrentTrialSearcherOperation", _resp)
 
 def get_GetExperiment(
     do_request: Request,
@@ -5441,7 +5454,7 @@ def get_GetExperiment(
     experimentId: int,
 ) -> "v1GetExperimentResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/experiments/{experimentId}",
         _params,
@@ -5450,9 +5463,9 @@ def get_GetExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetExperimentResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetExperimentResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperiment", _resp)
 
 def get_GetExperimentCheckpoints(
     do_request: Request,
@@ -5473,7 +5486,7 @@ def get_GetExperimentCheckpoints(
         "states": states,
         "validationStates": validationStates,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/experiments/{id}/checkpoints",
         _params,
@@ -5482,15 +5495,15 @@ def get_GetExperimentCheckpoints(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetExperimentCheckpointsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetExperimentCheckpointsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperimentCheckpoints", _resp)
 
 def get_GetExperimentLabels(
     do_request: Request,
 ) -> "v1GetExperimentLabelsResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/experiment/labels",
         _params,
@@ -5499,9 +5512,9 @@ def get_GetExperimentLabels(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetExperimentLabelsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetExperimentLabelsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperimentLabels", _resp)
 
 def get_GetExperimentTrials(
     do_request: Request,
@@ -5520,7 +5533,7 @@ def get_GetExperimentTrials(
         "sortBy": sortBy,
         "states": states,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/experiments/{experimentId}/trials",
         _params,
@@ -5529,9 +5542,9 @@ def get_GetExperimentTrials(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetExperimentTrialsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetExperimentTrialsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperimentTrials", _resp)
 
 def get_GetExperimentValidationHistory(
     do_request: Request,
@@ -5539,7 +5552,7 @@ def get_GetExperimentValidationHistory(
     experimentId: int,
 ) -> "v1GetExperimentValidationHistoryResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/experiments/{experimentId}/validation-history",
         _params,
@@ -5548,9 +5561,9 @@ def get_GetExperimentValidationHistory(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetExperimentValidationHistoryResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetExperimentValidationHistoryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperimentValidationHistory", _resp)
 
 def get_GetExperiments(
     do_request: Request,
@@ -5578,7 +5591,7 @@ def get_GetExperiments(
         "states": states,
         "users": users,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/experiments",
         _params,
@@ -5587,9 +5600,9 @@ def get_GetExperiments(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetExperimentsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetExperiments", _resp)
 
 def get_GetJobQueueStats(
     do_request: Request,
@@ -5599,7 +5612,7 @@ def get_GetJobQueueStats(
     _params = {
         "resourcePools": resourcePools,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/job-queues/stats",
         _params,
@@ -5608,9 +5621,9 @@ def get_GetJobQueueStats(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetJobQueueStatsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetJobQueueStatsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetJobQueueStats", _resp)
 
 def get_GetJobs(
     do_request: Request,
@@ -5626,7 +5639,7 @@ def get_GetJobs(
         "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/job-queues",
         _params,
@@ -5635,15 +5648,15 @@ def get_GetJobs(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetJobsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetJobsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetJobs", _resp)
 
 def get_GetMaster(
     do_request: Request,
 ) -> "v1GetMasterResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/master",
         _params,
@@ -5652,15 +5665,15 @@ def get_GetMaster(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetMasterResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetMasterResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMaster", _resp)
 
 def get_GetMasterConfig(
     do_request: Request,
 ) -> "v1GetMasterConfigResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/master/config",
         _params,
@@ -5669,9 +5682,9 @@ def get_GetMasterConfig(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetMasterConfigResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetMasterConfigResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMasterConfig", _resp)
 
 def get_GetModel(
     do_request: Request,
@@ -5679,7 +5692,7 @@ def get_GetModel(
     modelId: int,
 ) -> "v1GetModelResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/models/{modelId}",
         _params,
@@ -5688,9 +5701,9 @@ def get_GetModel(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetModelResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetModelResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModel", _resp)
 
 def get_GetModelDef(
     do_request: Request,
@@ -5698,7 +5711,7 @@ def get_GetModelDef(
     experimentId: int,
 ) -> "v1GetModelDefResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/experiments/{experimentId}/model_def",
         _params,
@@ -5707,15 +5720,15 @@ def get_GetModelDef(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetModelDefResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetModelDefResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModelDef", _resp)
 
 def get_GetModelLabels(
     do_request: Request,
 ) -> "v1GetModelLabelsResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/model/labels",
         _params,
@@ -5724,9 +5737,9 @@ def get_GetModelLabels(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetModelLabelsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetModelLabelsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModelLabels", _resp)
 
 def get_GetModelVersion(
     do_request: Request,
@@ -5735,7 +5748,7 @@ def get_GetModelVersion(
     modelVersion: int,
 ) -> "v1GetModelVersionResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/models/{modelId}/versions/{modelVersion}",
         _params,
@@ -5744,9 +5757,9 @@ def get_GetModelVersion(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetModelVersionResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetModelVersionResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModelVersion", _resp)
 
 def get_GetModelVersions(
     do_request: Request,
@@ -5763,7 +5776,7 @@ def get_GetModelVersions(
         "orderBy": orderBy,
         "sortBy": sortBy,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/models/{modelId}/versions",
         _params,
@@ -5772,9 +5785,9 @@ def get_GetModelVersions(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetModelVersionsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetModelVersionsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModelVersions", _resp)
 
 def get_GetModels(
     do_request: Request,
@@ -5800,7 +5813,7 @@ def get_GetModels(
         "sortBy": sortBy,
         "users": users,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/models",
         _params,
@@ -5809,9 +5822,9 @@ def get_GetModels(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetModelsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetModelsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModels", _resp)
 
 def get_GetNotebook(
     do_request: Request,
@@ -5819,7 +5832,7 @@ def get_GetNotebook(
     notebookId: str,
 ) -> "v1GetNotebookResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/notebooks/{notebookId}",
         _params,
@@ -5828,9 +5841,9 @@ def get_GetNotebook(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetNotebookResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetNotebookResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetNotebook", _resp)
 
 def get_GetNotebooks(
     do_request: Request,
@@ -5848,7 +5861,7 @@ def get_GetNotebooks(
         "sortBy": sortBy,
         "users": users,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/notebooks",
         _params,
@@ -5857,9 +5870,9 @@ def get_GetNotebooks(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetNotebooksResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetNotebooksResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetNotebooks", _resp)
 
 def get_GetResourcePools(
     do_request: Request,
@@ -5871,7 +5884,7 @@ def get_GetResourcePools(
         "limit": limit,
         "offset": offset,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/resource-pools",
         _params,
@@ -5880,9 +5893,9 @@ def get_GetResourcePools(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetResourcePoolsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetResourcePoolsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetResourcePools", _resp)
 
 def get_GetShell(
     do_request: Request,
@@ -5890,7 +5903,7 @@ def get_GetShell(
     shellId: str,
 ) -> "v1GetShellResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/shells/{shellId}",
         _params,
@@ -5899,9 +5912,9 @@ def get_GetShell(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetShellResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetShellResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetShell", _resp)
 
 def get_GetShells(
     do_request: Request,
@@ -5919,7 +5932,7 @@ def get_GetShells(
         "sortBy": sortBy,
         "users": users,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/shells",
         _params,
@@ -5928,9 +5941,9 @@ def get_GetShells(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetShellsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetShellsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetShells", _resp)
 
 def get_GetSlot(
     do_request: Request,
@@ -5939,7 +5952,7 @@ def get_GetSlot(
     slotId: str,
 ) -> "v1GetSlotResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/agents/{agentId}/slots/{slotId}",
         _params,
@@ -5948,9 +5961,9 @@ def get_GetSlot(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetSlotResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetSlotResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetSlot", _resp)
 
 def get_GetSlots(
     do_request: Request,
@@ -5958,7 +5971,7 @@ def get_GetSlots(
     agentId: str,
 ) -> "v1GetSlotsResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/agents/{agentId}/slots",
         _params,
@@ -5967,15 +5980,15 @@ def get_GetSlots(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetSlotsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetSlotsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetSlots", _resp)
 
 def get_GetTelemetry(
     do_request: Request,
 ) -> "v1GetTelemetryResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/master/telemetry",
         _params,
@@ -5984,9 +5997,9 @@ def get_GetTelemetry(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTelemetryResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTelemetryResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTelemetry", _resp)
 
 def get_GetTemplate(
     do_request: Request,
@@ -5994,7 +6007,7 @@ def get_GetTemplate(
     templateName: str,
 ) -> "v1GetTemplateResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/templates/{templateName}",
         _params,
@@ -6003,9 +6016,9 @@ def get_GetTemplate(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTemplateResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTemplateResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTemplate", _resp)
 
 def get_GetTemplates(
     do_request: Request,
@@ -6023,7 +6036,7 @@ def get_GetTemplates(
         "orderBy": orderBy,
         "sortBy": sortBy,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/templates",
         _params,
@@ -6032,9 +6045,9 @@ def get_GetTemplates(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTemplatesResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTemplatesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTemplates", _resp)
 
 def get_GetTensorboard(
     do_request: Request,
@@ -6042,7 +6055,7 @@ def get_GetTensorboard(
     tensorboardId: str,
 ) -> "v1GetTensorboardResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/tensorboards/{tensorboardId}",
         _params,
@@ -6051,9 +6064,9 @@ def get_GetTensorboard(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTensorboardResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTensorboardResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTensorboard", _resp)
 
 def get_GetTensorboards(
     do_request: Request,
@@ -6071,7 +6084,7 @@ def get_GetTensorboards(
         "sortBy": sortBy,
         "users": users,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/tensorboards",
         _params,
@@ -6080,9 +6093,9 @@ def get_GetTensorboards(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTensorboardsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTensorboardsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTensorboards", _resp)
 
 def get_GetTrial(
     do_request: Request,
@@ -6090,7 +6103,7 @@ def get_GetTrial(
     trialId: int,
 ) -> "v1GetTrialResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/trials/{trialId}",
         _params,
@@ -6099,9 +6112,9 @@ def get_GetTrial(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTrialResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTrialResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrial", _resp)
 
 def get_GetTrialCheckpoints(
     do_request: Request,
@@ -6122,7 +6135,7 @@ def get_GetTrialCheckpoints(
         "states": states,
         "validationStates": validationStates,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/trials/{id}/checkpoints",
         _params,
@@ -6131,9 +6144,9 @@ def get_GetTrialCheckpoints(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetTrialCheckpointsResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetTrialCheckpointsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
 def get_GetUser(
     do_request: Request,
@@ -6141,7 +6154,7 @@ def get_GetUser(
     username: str,
 ) -> "v1GetUserResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         f"/api/v1/users/{username}",
         _params,
@@ -6150,15 +6163,15 @@ def get_GetUser(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetUserResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetUserResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUser", _resp)
 
 def get_GetUsers(
     do_request: Request,
 ) -> "v1GetUsersResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/users",
         _params,
@@ -6167,9 +6180,9 @@ def get_GetUsers(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1GetUsersResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1GetUsersResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUsers", _resp)
 
 def put_IdleNotebook(
     do_request: Request,
@@ -6178,7 +6191,7 @@ def put_IdleNotebook(
     notebookId: str,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "PUT",
         f"/api/v1/notebooks/{notebookId}/report_idle",
         _params,
@@ -6187,9 +6200,9 @@ def put_IdleNotebook(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("put_IdleNotebook", _resp)
 
 def post_KillCommand(
     do_request: Request,
@@ -6197,7 +6210,7 @@ def post_KillCommand(
     commandId: str,
 ) -> "v1KillCommandResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/commands/{commandId}/kill",
         _params,
@@ -6206,9 +6219,9 @@ def post_KillCommand(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1KillCommandResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1KillCommandResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillCommand", _resp)
 
 def post_KillExperiment(
     do_request: Request,
@@ -6216,7 +6229,7 @@ def post_KillExperiment(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{id}/kill",
         _params,
@@ -6225,9 +6238,9 @@ def post_KillExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_KillExperiment", _resp)
 
 def post_KillNotebook(
     do_request: Request,
@@ -6235,7 +6248,7 @@ def post_KillNotebook(
     notebookId: str,
 ) -> "v1KillNotebookResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/notebooks/{notebookId}/kill",
         _params,
@@ -6244,9 +6257,9 @@ def post_KillNotebook(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1KillNotebookResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1KillNotebookResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillNotebook", _resp)
 
 def post_KillShell(
     do_request: Request,
@@ -6254,7 +6267,7 @@ def post_KillShell(
     shellId: str,
 ) -> "v1KillShellResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/shells/{shellId}/kill",
         _params,
@@ -6263,9 +6276,9 @@ def post_KillShell(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1KillShellResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1KillShellResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillShell", _resp)
 
 def post_KillTensorboard(
     do_request: Request,
@@ -6273,7 +6286,7 @@ def post_KillTensorboard(
     tensorboardId: str,
 ) -> "v1KillTensorboardResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/tensorboards/{tensorboardId}/kill",
         _params,
@@ -6282,9 +6295,9 @@ def post_KillTensorboard(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1KillTensorboardResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1KillTensorboardResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillTensorboard", _resp)
 
 def post_KillTrial(
     do_request: Request,
@@ -6292,7 +6305,7 @@ def post_KillTrial(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{id}/kill",
         _params,
@@ -6301,9 +6314,9 @@ def post_KillTrial(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_KillTrial", _resp)
 
 def post_LaunchCommand(
     do_request: Request,
@@ -6311,7 +6324,7 @@ def post_LaunchCommand(
     body: "v1LaunchCommandRequest",
 ) -> "v1LaunchCommandResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/commands",
         _params,
@@ -6320,9 +6333,9 @@ def post_LaunchCommand(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1LaunchCommandResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1LaunchCommandResponse.from_json(_resp.json())
+    raise APIHttpError("post_LaunchCommand", _resp)
 
 def post_LaunchNotebook(
     do_request: Request,
@@ -6330,7 +6343,7 @@ def post_LaunchNotebook(
     body: "v1LaunchNotebookRequest",
 ) -> "v1LaunchNotebookResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/notebooks",
         _params,
@@ -6339,9 +6352,9 @@ def post_LaunchNotebook(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1LaunchNotebookResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1LaunchNotebookResponse.from_json(_resp.json())
+    raise APIHttpError("post_LaunchNotebook", _resp)
 
 def post_LaunchShell(
     do_request: Request,
@@ -6349,7 +6362,7 @@ def post_LaunchShell(
     body: "v1LaunchShellRequest",
 ) -> "v1LaunchShellResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/shells",
         _params,
@@ -6358,9 +6371,9 @@ def post_LaunchShell(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1LaunchShellResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1LaunchShellResponse.from_json(_resp.json())
+    raise APIHttpError("post_LaunchShell", _resp)
 
 def post_LaunchTensorboard(
     do_request: Request,
@@ -6368,7 +6381,7 @@ def post_LaunchTensorboard(
     body: "v1LaunchTensorboardRequest",
 ) -> "v1LaunchTensorboardResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/tensorboards",
         _params,
@@ -6377,9 +6390,9 @@ def post_LaunchTensorboard(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1LaunchTensorboardResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1LaunchTensorboardResponse.from_json(_resp.json())
+    raise APIHttpError("post_LaunchTensorboard", _resp)
 
 def post_Login(
     do_request: Request,
@@ -6387,7 +6400,7 @@ def post_Login(
     body: "v1LoginRequest",
 ) -> "v1LoginResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/auth/login",
         _params,
@@ -6396,15 +6409,15 @@ def post_Login(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1LoginResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1LoginResponse.from_json(_resp.json())
+    raise APIHttpError("post_Login", _resp)
 
 def post_Logout(
     do_request: Request,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/auth/logout",
         _params,
@@ -6413,9 +6426,9 @@ def post_Logout(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_Logout", _resp)
 
 def post_MarkAllocationReservationDaemon(
     do_request: Request,
@@ -6425,7 +6438,7 @@ def post_MarkAllocationReservationDaemon(
     containerId: str,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
         _params,
@@ -6434,9 +6447,9 @@ def post_MarkAllocationReservationDaemon(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_MarkAllocationReservationDaemon", _resp)
 
 def patch_PatchExperiment(
     do_request: Request,
@@ -6445,7 +6458,7 @@ def patch_PatchExperiment(
     experiment_id: int,
 ) -> "v1PatchExperimentResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "PATCH",
         f"/api/v1/experiments/{experiment_id}",
         _params,
@@ -6454,9 +6467,9 @@ def patch_PatchExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PatchExperimentResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PatchExperimentResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchExperiment", _resp)
 
 def patch_PatchModel(
     do_request: Request,
@@ -6465,7 +6478,7 @@ def patch_PatchModel(
     modelId: int,
 ) -> "v1PatchModelResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "PATCH",
         f"/api/v1/models/{modelId}",
         _params,
@@ -6474,9 +6487,9 @@ def patch_PatchModel(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PatchModelResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PatchModelResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchModel", _resp)
 
 def patch_PatchModelVersion(
     do_request: Request,
@@ -6486,7 +6499,7 @@ def patch_PatchModelVersion(
     modelVersionId: int,
 ) -> "v1PatchModelVersionResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "PATCH",
         f"/api/v1/models/{modelId}/versions/{modelVersionId}",
         _params,
@@ -6495,9 +6508,9 @@ def patch_PatchModelVersion(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PatchModelVersionResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PatchModelVersionResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchModelVersion", _resp)
 
 def post_PauseExperiment(
     do_request: Request,
@@ -6505,7 +6518,7 @@ def post_PauseExperiment(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{id}/pause",
         _params,
@@ -6514,9 +6527,9 @@ def post_PauseExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_PauseExperiment", _resp)
 
 def post_PostCheckpointMetadata(
     do_request: Request,
@@ -6525,7 +6538,7 @@ def post_PostCheckpointMetadata(
     checkpoint_uuid: str,
 ) -> "v1PostCheckpointMetadataResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/checkpoints/{checkpoint_uuid}/metadata",
         _params,
@@ -6534,9 +6547,9 @@ def post_PostCheckpointMetadata(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PostCheckpointMetadataResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PostCheckpointMetadataResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
 def post_PostModel(
     do_request: Request,
@@ -6544,7 +6557,7 @@ def post_PostModel(
     body: "v1PostModelRequest",
 ) -> "v1PostModelResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/models",
         _params,
@@ -6553,9 +6566,9 @@ def post_PostModel(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PostModelResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PostModelResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostModel", _resp)
 
 def post_PostModelVersion(
     do_request: Request,
@@ -6564,7 +6577,7 @@ def post_PostModelVersion(
     modelId: int,
 ) -> "v1PostModelVersionResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/models/{modelId}/versions",
         _params,
@@ -6573,9 +6586,9 @@ def post_PostModelVersion(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PostModelVersionResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PostModelVersionResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostModelVersion", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
     do_request: Request,
@@ -6583,7 +6596,7 @@ def post_PostTrialProfilerMetricsBatch(
     body: "v1PostTrialProfilerMetricsBatchRequest",
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/trials/profiler/metrics",
         _params,
@@ -6592,9 +6605,9 @@ def post_PostTrialProfilerMetricsBatch(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_PostTrialProfilerMetricsBatch", _resp)
 
 def post_PostTrialRunnerMetadata(
     do_request: Request,
@@ -6603,7 +6616,7 @@ def post_PostTrialRunnerMetadata(
     trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{trialId}/runner/metadata",
         _params,
@@ -6612,9 +6625,9 @@ def post_PostTrialRunnerMetadata(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_PostTrialRunnerMetadata", _resp)
 
 def post_PostUser(
     do_request: Request,
@@ -6622,7 +6635,7 @@ def post_PostUser(
     body: "v1PostUserRequest",
 ) -> "v1PostUserResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/users",
         _params,
@@ -6631,9 +6644,9 @@ def post_PostUser(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PostUserResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PostUserResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostUser", _resp)
 
 def post_PreviewHPSearch(
     do_request: Request,
@@ -6641,7 +6654,7 @@ def post_PreviewHPSearch(
     body: "v1PreviewHPSearchRequest",
 ) -> "v1PreviewHPSearchResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/preview-hp-search",
         _params,
@@ -6650,9 +6663,9 @@ def post_PreviewHPSearch(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PreviewHPSearchResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PreviewHPSearchResponse.from_json(_resp.json())
+    raise APIHttpError("post_PreviewHPSearch", _resp)
 
 def put_PutTemplate(
     do_request: Request,
@@ -6661,7 +6674,7 @@ def put_PutTemplate(
     template_name: str,
 ) -> "v1PutTemplateResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "PUT",
         f"/api/v1/templates/{template_name}",
         _params,
@@ -6670,9 +6683,9 @@ def put_PutTemplate(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1PutTemplateResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1PutTemplateResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutTemplate", _resp)
 
 def post_ReportTrialCheckpointMetadata(
     do_request: Request,
@@ -6681,7 +6694,7 @@ def post_ReportTrialCheckpointMetadata(
     checkpointMetadata_trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{checkpointMetadata_trialId}/checkpoint_metadata",
         _params,
@@ -6690,9 +6703,9 @@ def post_ReportTrialCheckpointMetadata(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ReportTrialCheckpointMetadata", _resp)
 
 def post_ReportTrialProgress(
     do_request: Request,
@@ -6701,7 +6714,7 @@ def post_ReportTrialProgress(
     trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{trialId}/progress",
         _params,
@@ -6710,9 +6723,9 @@ def post_ReportTrialProgress(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ReportTrialProgress", _resp)
 
 def post_ReportTrialSearcherEarlyExit(
     do_request: Request,
@@ -6721,7 +6734,7 @@ def post_ReportTrialSearcherEarlyExit(
     trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{trialId}/early_exit",
         _params,
@@ -6730,9 +6743,9 @@ def post_ReportTrialSearcherEarlyExit(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ReportTrialSearcherEarlyExit", _resp)
 
 def post_ReportTrialTrainingMetrics(
     do_request: Request,
@@ -6741,7 +6754,7 @@ def post_ReportTrialTrainingMetrics(
     trainingMetrics_trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{trainingMetrics_trialId}/training_metrics",
         _params,
@@ -6750,9 +6763,9 @@ def post_ReportTrialTrainingMetrics(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ReportTrialTrainingMetrics", _resp)
 
 def post_ReportTrialValidationMetrics(
     do_request: Request,
@@ -6761,7 +6774,7 @@ def post_ReportTrialValidationMetrics(
     validationMetrics_trialId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/trials/{validationMetrics_trialId}/validation_metrics",
         _params,
@@ -6770,9 +6783,9 @@ def post_ReportTrialValidationMetrics(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
 
 def get_ResourceAllocationAggregated(
     do_request: Request,
@@ -6786,7 +6799,7 @@ def get_ResourceAllocationAggregated(
         "period": period,
         "startDate": startDate,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/resources/allocation/aggregated",
         _params,
@@ -6795,9 +6808,9 @@ def get_ResourceAllocationAggregated(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1ResourceAllocationAggregatedResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1ResourceAllocationAggregatedResponse.from_json(_resp.json())
+    raise APIHttpError("get_ResourceAllocationAggregated", _resp)
 
 def get_ResourceAllocationRaw(
     do_request: Request,
@@ -6809,7 +6822,7 @@ def get_ResourceAllocationRaw(
         "timestampAfter": timestampAfter,
         "timestampBefore": timestampBefore,
     }
-    _req = do_request(
+    _resp = do_request(
         "GET",
         "/api/v1/resources/allocation/raw",
         _params,
@@ -6818,9 +6831,9 @@ def get_ResourceAllocationRaw(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1ResourceAllocationRawResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1ResourceAllocationRawResponse.from_json(_resp.json())
+    raise APIHttpError("get_ResourceAllocationRaw", _resp)
 
 def post_SetCommandPriority(
     do_request: Request,
@@ -6829,7 +6842,7 @@ def post_SetCommandPriority(
     commandId: str,
 ) -> "v1SetCommandPriorityResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/commands/{commandId}/set_priority",
         _params,
@@ -6838,9 +6851,9 @@ def post_SetCommandPriority(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1SetCommandPriorityResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1SetCommandPriorityResponse.from_json(_resp.json())
+    raise APIHttpError("post_SetCommandPriority", _resp)
 
 def post_SetNotebookPriority(
     do_request: Request,
@@ -6849,7 +6862,7 @@ def post_SetNotebookPriority(
     notebookId: str,
 ) -> "v1SetNotebookPriorityResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/notebooks/{notebookId}/set_priority",
         _params,
@@ -6858,9 +6871,9 @@ def post_SetNotebookPriority(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1SetNotebookPriorityResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1SetNotebookPriorityResponse.from_json(_resp.json())
+    raise APIHttpError("post_SetNotebookPriority", _resp)
 
 def post_SetShellPriority(
     do_request: Request,
@@ -6869,7 +6882,7 @@ def post_SetShellPriority(
     shellId: str,
 ) -> "v1SetShellPriorityResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/shells/{shellId}/set_priority",
         _params,
@@ -6878,9 +6891,9 @@ def post_SetShellPriority(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1SetShellPriorityResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1SetShellPriorityResponse.from_json(_resp.json())
+    raise APIHttpError("post_SetShellPriority", _resp)
 
 def post_SetTensorboardPriority(
     do_request: Request,
@@ -6889,7 +6902,7 @@ def post_SetTensorboardPriority(
     tensorboardId: str,
 ) -> "v1SetTensorboardPriorityResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/tensorboards/{tensorboardId}/set_priority",
         _params,
@@ -6898,9 +6911,9 @@ def post_SetTensorboardPriority(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1SetTensorboardPriorityResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1SetTensorboardPriorityResponse.from_json(_resp.json())
+    raise APIHttpError("post_SetTensorboardPriority", _resp)
 
 def post_SetUserPassword(
     do_request: Request,
@@ -6909,7 +6922,7 @@ def post_SetUserPassword(
     username: str,
 ) -> "v1SetUserPasswordResponse":
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/users/{username}/password",
         _params,
@@ -6918,9 +6931,9 @@ def post_SetUserPassword(
         None,
         None,
     )
-    if _req.status_code == 200:
-        return v1SetUserPasswordResponse.from_json(_req.json())
-    raise ValueError(_req.status_code)
+    if _resp.status_code == 200:
+        return v1SetUserPasswordResponse.from_json(_resp.json())
+    raise APIHttpError("post_SetUserPassword", _resp)
 
 def post_UnarchiveExperiment(
     do_request: Request,
@@ -6928,7 +6941,7 @@ def post_UnarchiveExperiment(
     id: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/experiments/{id}/unarchive",
         _params,
@@ -6937,9 +6950,9 @@ def post_UnarchiveExperiment(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_UnarchiveExperiment", _resp)
 
 def post_UnarchiveModel(
     do_request: Request,
@@ -6947,7 +6960,7 @@ def post_UnarchiveModel(
     modelId: int,
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         f"/api/v1/models/{modelId}/unarchive",
         _params,
@@ -6956,9 +6969,9 @@ def post_UnarchiveModel(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_UnarchiveModel", _resp)
 
 def post_UpdateJobQueue(
     do_request: Request,
@@ -6966,7 +6979,7 @@ def post_UpdateJobQueue(
     body: "v1UpdateJobQueueRequest",
 ) -> None:
     _params = None
-    _req = do_request(
+    _resp = do_request(
         "POST",
         "/api/v1/job-queues",
         _params,
@@ -6975,6 +6988,6 @@ def post_UpdateJobQueue(
         None,
         None,
     )
-    if _req.status_code == 200:
+    if _resp.status_code == 200:
         return
-    raise ValueError(_req.status_code)
+    raise APIHttpError("post_UpdateJobQueue", _resp)
