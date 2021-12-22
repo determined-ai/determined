@@ -47,6 +47,8 @@ import functools
 import pathlib
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import requests
+
 from determined.common.experimental.checkpoint import Checkpoint
 from determined.common.experimental.determined import Determined
 from determined.common.experimental.experiment import (  # noqa: F401
@@ -252,3 +254,28 @@ def get_model_labels() -> List[str]:
     """
     assert _determined is not None
     return _determined.get_model_labels()
+
+
+@_require_singleton
+def http_request(
+    method: str,
+    path: str,
+    params: Optional[Dict[str, Any]],
+    json: Any,
+    data: Optional[str],
+    headers: Optional[Dict[str, Any]],
+    timeout: Optional[int],
+) -> requests.Response:
+    """
+    Make a request to the Determined master.
+    """
+    assert _determined is not None
+    return _determined._session._do_request(
+        method,
+        path,
+        params=params,
+        json=json,
+        data=data,
+        headers=headers,
+        timeout=timeout,
+    )

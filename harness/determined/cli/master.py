@@ -5,12 +5,12 @@ from typing import Any, List
 
 from requests import Response
 
-from determined.cli.session import setup_session
 from determined.common import api, yaml
 from determined.common.api import authentication
 from determined.common.api.bindings import get_GetMaster
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
+from determined.experimental.client import http_request
 
 
 @authentication.required
@@ -25,8 +25,7 @@ def config(args: Namespace) -> None:
 
 
 def get_master(args: Namespace) -> None:
-    session = setup_session(args)
-    resp = get_GetMaster(session._do_request)
+    resp = get_GetMaster(http_request)
     if args.output == "json":
         print(json.dumps(resp.to_json(), indent=4))
     elif args.output == "yaml":
