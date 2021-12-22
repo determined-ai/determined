@@ -1139,12 +1139,11 @@ schemas = {
         "entrypoint": {
             "type": [
                 "string",
+                "array",
                 "null"
             ],
-            "checks": {
-                "entrypoint must be of the form \"module.submodule:ClassName\"": {
-                    "pattern": "^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$"
-                }
+            "items": {
+                "type": "string"
             },
             "default": null
         },

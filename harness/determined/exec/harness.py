@@ -2,6 +2,7 @@ import argparse
 import contextlib
 import faulthandler
 import logging
+import os
 import sys
 from typing import Iterator, Optional
 
@@ -30,7 +31,7 @@ def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
             faulthandler.cancel_dump_traceback_later()
 
 
-def main(chief_ip: Optional[str]) -> int:
+def main(train_entrypoint: Optional[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
@@ -81,7 +82,9 @@ def main(chief_ip: Optional[str]) -> int:
         # We can't build a core.Context until we have a RankInfo, and we can't build a RankInfo
         # without horovod, and we can't load the right horovod until we know which Trial class the
         # user implemented.
-        trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
+        trial_class, controller_class = load.get_trial_and_controller_class(
+            env.experiment_config, train_entrypoint
+        )
         if info.container_rank == 0:
             try:
                 analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
@@ -95,6 +98,7 @@ def main(chief_ip: Optional[str]) -> int:
         # Step 3: Now that horovod is initialized, we can build a RankInfo object.
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
+        chief_ip = os.environ.get("DET_CHIEF_IP", "")
         if distributed_backend.use_horovod():
             distributed = _core.DistributedContext(
                 rank=horovod.hvd.rank(),
@@ -131,6 +135,6 @@ def main(chief_ip: Optional[str]) -> int:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--chief-ip")
+    parser.add_argument("--train-entrypoint")
     args = parser.parse_args()
-    sys.exit(main(args.chief_ip))
+    sys.exit(main(args.train_entrypoint))

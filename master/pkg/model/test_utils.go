@@ -37,7 +37,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 				RawMaxLength: &maxLength,
 			},
 		},
-		RawEntrypoint: ptrs.StringPtr("model_def:SomeTrialClass"),
+		RawEntrypoint: &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
 		RawHyperparameters: expconf.Hyperparameters{
 			expconf.GlobalBatchSize: expconf.Hyperparameter{
 				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 64},

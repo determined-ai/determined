@@ -912,7 +912,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     data: Optional[Dict[str, Any]] = None
     debug: Optional[bool] = None
     description: Optional[str] = None
-    entrypoint: Optional[str] = None
+    entrypoint: Optional[Union[str, List[str]]] = None
     environment: Optional[EnvironmentConfigV0] = None
     # internal: Optional[InternalConfigV0] = None
     labels: Optional[str] = None
@@ -942,7 +942,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         data: Optional[Dict[str, Any]] = None,
         debug: Optional[bool] = None,
         description: Optional[str] = None,
-        entrypoint: Optional[str] = None,
+        entrypoint: Optional[Union[str, List[str]]] = None,
         environment: Optional[EnvironmentConfigV0] = None,
         # internal: Optional[InternalConfigV0] = None,
         labels: Optional[str] = None,

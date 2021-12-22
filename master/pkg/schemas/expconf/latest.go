@@ -14,6 +14,7 @@ type DataLayerConfig = DataLayerConfigV0
 type DevicesConfig = DevicesConfigV0
 type Device = DeviceV0
 type DoubleHyperparameter = DoubleHyperparameterV0
+type Entrypoint = EntrypointV0
 type EnvironmentConfig = EnvironmentConfigV0
 type EnvironmentImageMap = EnvironmentImageMapV0
 type EnvironmentVariablesMap = EnvironmentVariablesMapV0

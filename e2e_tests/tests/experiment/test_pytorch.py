@@ -138,6 +138,30 @@ def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None])
 
 
 @pytest.mark.parallel
+def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> None:
+    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_profiling_enabled(config)
+    config = conf.set_entrypoint(
+        config, "python3 -m determined.launch.autohorovod model_def:CIFARTrial"
+    )
+
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.cv_examples_path("cifar10_pytorch"), 1
+    )
+    trials = exp.experiment_trials(experiment_id)
+    (
+        Determined(conf.make_master_url())
+        .get_trial(trials[0]["id"])
+        .select_checkpoint(latest=True)
+        .load(map_location="cpu")
+    )
+
+    collect_trial_profiles(trials[0]["id"])
+
+
+@pytest.mark.parallel
 def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

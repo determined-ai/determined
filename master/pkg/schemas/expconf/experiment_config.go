@@ -23,7 +23,7 @@ type ExperimentConfigV0 struct {
 	RawData                     map[string]interface{}      `json:"data"`
 	RawDebug                    *bool                       `json:"debug"`
 	RawDescription              *string                     `json:"description"`
-	RawEntrypoint               *string                     `json:"entrypoint"`
+	RawEntrypoint               *EntrypointV0               `json:"entrypoint"`
 	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
 	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
 	RawInternal                 *InternalConfigV0           `json:"internal,omitempty"`
@@ -240,6 +240,21 @@ func (b BindMountsConfigV0) Merge(other interface{}) interface{} {
 		}
 	}
 	return out
+}
+
+// EntrypointV0 configures the entrypoint script for the experiment.
+type EntrypointV0 struct {
+	RawEntrypoint interface{}
+}
+
+// MarshalJSON marshals makes the EntrypointV0 container transparent to marshaling.
+func (e EntrypointV0) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.RawEntrypoint)
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (e *EntrypointV0) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &e.RawEntrypoint)
 }
 
 //go:generate ../gen.sh

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 
 class ExperimentConfig(dict):
@@ -65,3 +65,9 @@ class ExperimentConfig(dict):
         Return the optimizations configuration.
         """
         return self.get("optimizations", {})
+
+    def get_checkpoint_storage(self) -> Dict[str, Any]:
+        return self.get("checkpoint_storage", {})
+
+    def get_entrypoint(self) -> Optional[Union[str, List[str]]]:
+        return self.get("entrypoint", None)

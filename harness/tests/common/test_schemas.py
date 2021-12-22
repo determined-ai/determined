@@ -128,7 +128,10 @@ class Case:
                 errors = expconf.sanity_validation_errors(self.case, url)
             else:
                 errors = expconf.completeness_validation_errors(self.case, url)
-            assert errors, f"'{self.name}' {test_type} validated against {url} unexpectedly"
+            assert errors, (
+                f"'{self.name}' {test_type} validated against {url} unexpectedly, "
+                f"expected {expected}"
+            )
             for exp in expected:
                 for err in errors:
                     if re.search(exp, err):

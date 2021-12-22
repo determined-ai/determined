@@ -1,0 +1,41 @@
+- name: check entrypoint conditional (valid, native in use)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/experiment.json
+  case:
+    hyperparameters:
+      global_batch_size: 32
+    searcher:
+      name: single
+      metric: loss
+      max_length:
+        batches: 1000
+    internal:
+      native:
+        command: ["script.py"]
+
+- name: check entrypoint conditional (invalid)
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/experiment.json:
+      - must specify an entrypoint that references the trial class
+  case:
+    hyperparameters:
+      global_batch_size: 32
+    searcher:
+      name: single
+      metric: loss
+      max_length:
+        batches: 1000
+    internal:
+      native: null
+
+- name: entrypoint check (command string, valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/experiment.json
+  case:
+    entrypoint: python3 train.py
+
+- name: entrypoint check (array, valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/experiment.json
+  case:
+    entrypoint: ["python3", "-m", "determined.launch.autohorovod", "model_def:Trial"]
