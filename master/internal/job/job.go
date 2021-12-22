@@ -37,14 +37,26 @@ type GetJobQStats struct {
 	ResourcePool string
 }
 
-// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
-type SetJobOrder struct {
-	ResourcePool string
-	QPosition    float64
-	Weight       float64
-	Priority     *int
-	JobID        model.JobID
-}
+type (
+	// SetGroupWeight sets the weight of a group in the fair share scheduler.
+	SetGroupWeight struct {
+		Weight       float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+	// SetGroupPriority sets the priority of the group in the priority scheduler.
+	SetGroupPriority struct {
+		Priority     *int
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+	// SetGroupOrder sets the order of the group in the priority scheduler.
+	SetGroupOrder struct {
+		QPosition    float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+)
 
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
@@ -146,6 +158,44 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(jobsInRM)
 
+	case *apiv1.UpdateJobQueueRequest:
+		for _, update := range msg.Updates {
+			jobID := update.JobId
+			jobActor := j.jobsByID[model.JobID(jobID)]
+			if jobActor == nil {
+				ctx.Respond(fmt.Errorf("job %s not found", jobID))
+				return nil
+			}
+			switch action := update.GetAction().(type) {
+			case *jobv1.QueueControl_Priority:
+				priority := int(action.Priority)
+				// TODO switch to Ask and check for errors
+				ctx.Tell(jobActor, SetGroupPriority{
+					Priority: &priority,
+				})
+			case *jobv1.QueueControl_Weight:
+				ctx.Tell(jobActor, SetGroupWeight{
+					Weight: float64(action.Weight),
+				})
+			case *jobv1.QueueControl_ResourcePool:
+				// not supported yet
+				// send an error with unsupported action
+				ctx.Respond(fmt.Errorf("action not implemented: %v", action))
+				return nil
+			case *jobv1.QueueControl_QueuePosition:
+				// REMOVEME: keep this until ahead_of and behind_of are implemented
+				ctx.Tell(jobActor, SetGroupOrder{
+					QPosition: float64(update.GetQueuePosition()),
+				})
+			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
+				// TODO not supported yet
+				ctx.Respond(fmt.Errorf("action not implemented: %v", action))
+				return nil
+			default:
+				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
+				return nil
+			}
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

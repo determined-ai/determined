@@ -164,11 +164,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources().Weight(), Handler: ctx.Self()})
-		ctx.Tell(e.rm, sproto.SetGroupPriority{
-			Priority: e.Config.Resources().Priority(),
-			Handler:  ctx.Self(),
-		})
+		e.setWeight(ctx, e.Config.Resources().Weight())
+		e.setPriority(ctx, e.Config.Resources().Priority())
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
 			JobID:    e.JobID,
@@ -252,37 +249,15 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources.SetMaxSlots(msg.MaxSlots)
 		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
+		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
-	case sproto.SetGroupWeight:
-		resources := e.Config.Resources()
-		resources.SetWeight(msg.Weight)
-		e.Config.SetResources(resources)
-		if !e.isRP(msg.Handler) {
-			msg.Handler = ctx.Self()
-			ctx.Tell(e.rm, msg)
-		}
-	case sproto.SetGroupPriority:
-		resources := e.Config.Resources()
-		resources.SetPriority(msg.Priority)
-		e.Config.SetResources(resources)
-		if !e.isRP(msg.Handler) {
-			msg.Handler = ctx.Self()
-			ctx.Tell(e.rm, msg)
-		}
-	case sproto.SetGroupOrder:
-		job := model.Job{
-			JobID: e.JobID,
-			QPos:  msg.QPosition,
-		}
-		err := e.db.UpdateJob(&job)
-		if err != nil {
-			return err
-		}
-		if !e.isRP(msg.Handler) {
-			msg.Handler = ctx.Self()
-			ctx.Tell(e.rm, msg)
-		}
-		// TODO persist in memory as well (on new and on restore)
+	case job.SetGroupWeight:
+		e.setWeight(ctx, msg.Weight)
+	case job.SetGroupPriority:
+		e.setPriority(ctx, msg.Priority)
+	case job.SetGroupOrder:
+		err := e.setOrder(ctx, msg.QPosition)
+		ctx.Respond(err)
 
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
@@ -557,20 +532,6 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 	return nil
 }
 
-// isRP determines whether or not the message originated from an RP; if so we will NOT forward the
-// message to a resource manager.
-func (e *experiment) isRP(handler *actor.Ref) bool {
-	if handler == nil {
-		return false
-	}
-	for _, child := range e.rm.Children() {
-		if child.Address() == handler.Address() {
-			return true
-		}
-	}
-	return false
-}
-
 func checkpointFromTrialIDOrUUID(
 	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
 ) (*model.Checkpoint, error) {
@@ -600,6 +561,43 @@ func checkpointFromTrialIDOrUUID(
 		}
 	}
 	return checkpoint, nil
+}
+
+func (e *experiment) setPriority(ctx *actor.Context, priority *int) {
+	resources := e.Config.Resources()
+	resources.SetPriority(priority)
+	e.Config.SetResources(resources)
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+		Priority: priority,
+		Handler:  ctx.Self(),
+	})
+}
+
+func (e *experiment) setWeight(ctx *actor.Context, weight float64) {
+	resources := e.Config.Resources()
+	resources.SetWeight(weight)
+	e.Config.SetResources(resources)
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+		Weight:  weight,
+		Handler: ctx.Self(),
+	})
+}
+
+func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
+	// TODO persist similar to the other set* methods?
+	jobModel := model.Job{
+		JobID: e.JobID,
+		QPos:  queuePosition,
+	}
+	err := e.db.UpdateJob(&jobModel)
+	if err != nil {
+		return err
+	}
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
+		QPosition: queuePosition,
+		Handler:   ctx.Self(),
+	})
+	return nil
 }
 
 func (e *experiment) toV1Job() *jobv1.Job {

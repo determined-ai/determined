@@ -62,24 +62,6 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
-	// SetGroupWeight sets the weight of a group in the fair share scheduler.
-	SetGroupWeight struct {
-		Weight       float64
-		ResourcePool string
-		Handler      *actor.Ref
-	}
-	// SetGroupPriority sets the priority of the group in the priority scheduler.
-	SetGroupPriority struct {
-		Priority     *int
-		ResourcePool string
-		Handler      *actor.Ref
-	}
-	// SetGroupOrder sets the order of the group in the priority scheduler.
-	SetGroupOrder struct {
-		QPosition    float64
-		ResourcePool string
-		Handler      *actor.Ref
-	}
 )
 
 // Message returns the textual content of this log message.
