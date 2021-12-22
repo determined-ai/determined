@@ -27,7 +27,7 @@ type DispatchFunction = Dispatch<{
 
 function reducer(
   state: JupyterLabConfig,
-  action: {key: keyof JupyterLabConfig, value: string | number | undefined},
+  action: { key: keyof JupyterLabConfig, value: string | number | undefined },
 ): JupyterLabConfig {
   return { ...state, [action.key]: action.value };
 }
@@ -222,10 +222,14 @@ const JupyterLabForm: React.FC<FormProps> = (
     const selectedPool = resourcePools.find(pool => pool.name === fields.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
+    /*
+     * For static resource pools, the slots-per-agent comes through as -1,
+     * meaning it is unknown how many we may have.
+     */
     const hasAuxCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
     const hasSlots = selectedPool.slotsAvailable > 0;
     const maxSlots = selectedPool.slotsPerAgent ?? 0;
-    const hasSlotsPerAgent = maxSlots > 0;
+    const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
     if (hasAuxCapacity && !hasComputeCapacity) onChange?.({ key: 'slots', value: 0 });
 
@@ -266,8 +270,9 @@ const JupyterLabForm: React.FC<FormProps> = (
               placeholder="No template (optional)"
               value={fields.template}
               onChange={value => onChange?.({ key: 'template', value: value?.toString() })}>
-              {templates.map(temp =>
-                <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+              {templates.map(temp => (
+                <Option key={temp.name} value={temp.name}>{temp.name}</Option>
+              ))}
             </Select>
           ),
           label: 'Template',
@@ -289,8 +294,9 @@ const JupyterLabForm: React.FC<FormProps> = (
               placeholder="Pick the best option"
               value={fields.pool}
               onChange={value => onChange?.({ key: 'pool', value: value })}>
-              {resourcePools.map(pool =>
-                <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+              {resourcePools.map(pool => (
+                <Option key={pool.name} value={pool.name}>{pool.name}</Option>
+              ))}
             </Select>
           ),
           label: 'Resource Pool',
@@ -300,7 +306,7 @@ const JupyterLabForm: React.FC<FormProps> = (
           content: (
             <InputNumber
               defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
-              max={resourceInfo.maxSlots}
+              max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
               onChange={(value) => onChange?.({ key: 'slots', value: value })}

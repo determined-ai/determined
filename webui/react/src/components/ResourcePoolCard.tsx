@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import awsLogo from 'assets/images/aws-logo.svg';
 import gcpLogo from 'assets/images/gcp-logo.svg';
@@ -9,6 +9,7 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
+import { clone } from 'utils/data';
 
 import Json from './Json';
 import Link from './Link';
@@ -22,7 +23,7 @@ interface Props {
   totalComputeSlots: number;
 }
 
-export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
+export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
   let iconSrc = '';
   switch (type) {
     case V1ResourcePoolType.AWS:
@@ -43,68 +44,62 @@ export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
   return <img src={iconSrc} />;
 };
 
-const rpAttrs = [
-  [ 'location', 'Location' ],
-  [ 'instanceType', 'Instance Type' ],
-  [ 'preemptible', 'Spot/Preemptible' ], // FIXME do we want this spot or details.spot_enabled
-  [ 'minAgents', 'Min Agents' ],
-  [ 'maxAgents', 'Max Agents' ],
-  [ 'slotsPerAgent', 'Slots Per Agent' ],
-  [ 'auxContainerCapacityPerAgent', 'Max Aux Containers Per Agent' ],
-  [ 'schedulerType', 'Scheduler Type' ],
+const poolAttributes = [
+  { key: 'location', label: 'Location' },
+  { key: 'instanceType', label: 'Instance Type' },
+  { key: 'preemptible', label: 'Spot/Preemptible' },
+  { key: 'minAgents', label: 'Min Agents' },
+  { key: 'maxAgents', label: 'Max Agents' },
+  { key: 'slotsPerAgent', label: 'Slots Per Agent' },
+  { key: 'auxContainerCapacityPerAgent', label: 'Max Aux Containers Per Agent' },
+  { key: 'schedulerType', label: 'Scheduler Type' },
 ];
 
 type SafeRawJson = Record<string, unknown>;
 
-const agentStatusText = (numAgents: number): string => {
-  let prefix = '';
-  if (numAgents === 0) {
-    prefix = 'No';
-  } else {
-    prefix = numAgents + '';
-  }
-  return prefix + ' Connected Agent' + (numAgents > 1 ? 's' : '');
-};
-
-const ResourcePoolCard: React.FC<Props> = (
-  { computeContainerStates, resourcePool: rp, totalComputeSlots, resourceType }: Props,
-) => {
+const ResourcePoolCard: React.FC<Props> = ({
+  computeContainerStates,
+  resourcePool: pool,
+  totalComputeSlots,
+  resourceType,
+}: Props) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
-
-  const shortDetails = rpAttrs.reduce((acc, cur) => {
-    acc[cur[1]] = (rp as unknown as SafeRawJson)[cur[0]];
-    return acc;
-  }, {} as SafeRawJson);
-  shortDetails['Scheduler Type'] =
-    V1SchedulerTypeToLabel[shortDetails['Scheduler Type'] as V1SchedulerType];
-
-  const {
-    name,
-    description,
-    type,
-    numAgents,
-  } = rp;
-
+  const statusClasses = [ css.agentsStatus ];
   const descriptionClasses = [ css.description ];
-  if (!description) descriptionClasses.push(css.empty);
 
-  const tags: string[] = [ V1ResourcePoolTypeToLabel[type] ];
-  if (rp.defaultComputePool) tags.push('default compute pool');
-  if (rp.defaultAuxPool) tags.push('default aux pool');
+  if (pool.numAgents !== 0) statusClasses.push(css.active);
+  if (!pool.description) descriptionClasses.push(css.empty);
 
-  const toggleModal = useCallback(
-    () => {
-      setDetailVisible((cur: boolean) => !cur);
-    },
-    [],
-  );
+  const processedPool = useMemo(() => {
+    const newPool = clone(pool);
+    Object.keys(newPool).forEach(key => {
+      const value = pool[key as keyof ResourcePool];
+      if (key === 'slotsPerAgent' && value === -1) newPool[key] = 'Unknown';
+      if (key === 'schedulerType') newPool[key] = V1SchedulerTypeToLabel[value as V1SchedulerType];
+    });
+    return newPool;
+  }, [ pool ]);
+
+  const shortDetails = useMemo(() => {
+    return poolAttributes.reduce((acc, attribute) => {
+      const value = processedPool[attribute.key as keyof ResourcePool];
+      acc[attribute.label] = value;
+      return acc;
+    }, {} as SafeRawJson);
+  }, [ processedPool ]);
+
+  const tags: string[] = [ V1ResourcePoolTypeToLabel[pool.type] ];
+  if (pool.defaultComputePool) tags.push('default compute pool');
+  if (pool.defaultAuxPool) tags.push('default aux pool');
+
+  const toggleModal = useCallback(() => setDetailVisible((cur: boolean) => !cur), []);
 
   return (
     <div className={css.base}>
       <div className={css.header}>
-        <div className={css.icon}>{rpLogo(rp.type)}</div>
+        <div className={css.icon}>{poolLogo(pool.type)}</div>
         <div className={css.info}>
-          <div className={css.name}>{name}</div>
+          <div className={css.name}>{pool.name}</div>
           <div className={css.tags}>
             {tags.map(tag => (
               <Badge key={tag} type={BadgeType.Header}>{tag.toUpperCase()}</Badge>
@@ -112,19 +107,12 @@ const ResourcePoolCard: React.FC<Props> = (
           </div>
         </div>
       </div>
-      <div
-        className={css.agentsStatus}
-        style={{
-          backgroundColor: numAgents > 0 ?
-            'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
-        }}>
-        <p>{agentStatusText(numAgents)}</p>
+      <div className={statusClasses.join(' ')}>
+        <p>{`${pool.numAgents || 'No'} Connect Agent${pool.numAgents > 1 ? 's' : ''}`}</p>
       </div>
       <div className={css.body}>
         <section className={descriptionClasses.join(' ')}>
-          <p className={css.fade}>
-            {description || 'No description provided.'}
-          </p>
+          <p className={css.fade}>{pool.description || 'No description.'}</p>
         </section>
         <hr />
         <section>
@@ -135,7 +123,7 @@ const ResourcePoolCard: React.FC<Props> = (
           />
           <div className={css.cpuContainers}>
             <span>Aux containers running:</span>
-            <span>{rp.auxContainersRunning}</span>
+            <span>{pool.auxContainersRunning}</span>
           </div>
         </section>
         <hr />
@@ -143,7 +131,11 @@ const ResourcePoolCard: React.FC<Props> = (
           <Json json={shortDetails} />
           <div>
             <Link onClick={toggleModal}>View more info</Link>
-            <ResourcePoolDetails finally={toggleModal} resourcePool={rp} visible={detailVisible} />
+            <ResourcePoolDetails
+              finally={toggleModal}
+              resourcePool={processedPool}
+              visible={detailVisible}
+            />
           </div>
         </section>
         <div />
