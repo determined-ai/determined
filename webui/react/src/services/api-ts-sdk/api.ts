@@ -106,15 +106,14 @@ export enum Determinedcontainerv1State {
 }
 
 /**
- * The type of the Device.   - TYPE_UNSPECIFIED: An unspecified device type.  - TYPE_CPU: A CPU device.  - TYPE_CUDA: CUDA device.  - TYPE_ROCM: ROCM.
+ * The type of the Device.   - TYPE_UNSPECIFIED: An unspecified device type.  - TYPE_CPU: A CPU device.  - TYPE_GPU: A GPU device.
  * @export
  * @enum {string}
  */
 export enum Determineddevicev1Type {
     UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
     CPU = <any> 'TYPE_CPU',
-    CUDA = <any> 'TYPE_CUDA',
-    ROCM = <any> 'TYPE_ROCM'
+    GPU = <any> 'TYPE_GPU'
 }
 
 /**

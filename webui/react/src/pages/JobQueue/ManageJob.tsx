@@ -1,14 +1,16 @@
-import { Form, FormInstance, Input, Modal, Select } from 'antd';
-import React, { useCallback, useRef } from 'react';
+import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd';
+import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 
-import Json from 'components/Json';
+import Badge, { BadgeType } from 'components/Badge';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import { columns } from 'pages/JobQueue/JobQueue.table';
 import { V1SchedulerType } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { Job, RPStats } from 'types';
-import { truncate } from 'utils/string';
+import { floatToPercent, truncate } from 'utils/string';
 
+import css from './ManageJob.module.scss';
 import { moveJobToPosition } from './utils';
 
 const { Option } = Select;
@@ -24,6 +26,49 @@ interface Props {
 const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType, jobs }) => {
   const formRef = useRef<FormInstance>(null);
   const { resourcePools } = useStore();
+
+  const details = useMemo(() => {
+    interface Item {
+      label: ReactNode;
+      value: ReactNode;
+    }
+    const tableKeys = [
+      'user',
+      'slots',
+      'submitted',
+      'type',
+      'name',
+    ];
+    const tableDetails: Record<string, Item> = {};
+
+    tableKeys.forEach(td => {
+      const col = columns.find(col => col.key === td);
+      if (!col || !col.render) return;
+      tableDetails[td] = { label: col.title, value: col.render(undefined, job, 0) };
+    });
+
+    const items = [
+      tableDetails.type,
+      tableDetails.name,
+      { label: 'UUID', value: job.jobId },
+      tableDetails.submitted,
+      {
+        label: 'State',
+        value: <Badge state={job.summary.state} type={BadgeType.State} />,
+      },
+      { label: 'Progress', value: job.progress && floatToPercent(job.progress, 1) },
+      tableDetails.slots,
+      { label: 'Is Preemtible', value: job.isPreemptible ? 'Yes' : 'No' },
+      {
+        label: 'Jobs Ahead',
+        value: job.summary.jobsAhead >= 0 ? job.summary.jobsAhead : undefined,
+      },
+      tableDetails.user,
+    ];
+
+    return items.filter(item => !!item && item.value !== undefined) as Item[];
+
+  }, [ job ]);
 
   const onOk = useCallback(
     async () => {
@@ -143,7 +188,17 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       <h6>
         Job Details
       </h6>
-      <Json json={job} />
+      <List
+        dataSource={details}
+        renderItem={item => (
+          <List.Item className={css.item}>
+            <Typography.Text>{item.label}</Typography.Text>
+            <div className={css.value}>
+              {item.value}
+            </div>
+          </List.Item>
+        )}
+      />
     </Modal>
   );
 };
