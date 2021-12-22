@@ -386,6 +386,20 @@ export const getTrialDetails: Service.DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
+/* Task GRPC */
+
+export const getTask: Service.DetApi<
+  Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
+> = {
+  name: 'getTask',
+  postProcess: (response) => {
+    return response.task ? decoder.mapV1Task(response.task) : undefined;
+  },
+  request: (params: Service.GetTaskParams) => detApi.Notebooks.getTask(
+    params.taskId,
+  ),
+};
+
 /* Models */
 
 export const getModels: Service.DetApi<

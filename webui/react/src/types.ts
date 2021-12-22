@@ -472,6 +472,12 @@ export enum ExperimentVisualizationType {
   LearningCurve = 'learning-curve',
 }
 
+export interface TaskItem {
+  readiness: boolean;
+  state: CommandState;
+  taskId: string;
+}
+
 export interface ModelItem {
   archived?: boolean;
   creationTime: string;

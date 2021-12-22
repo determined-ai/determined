@@ -12,7 +12,8 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { CommandState } from 'types';
 import { capitalize } from 'utils/string';
-import { createWsUrl, WaitStatus } from 'wait';
+import { WaitStatus } from 'wait';
+import { getTask } from 'services/api';
 
 import css from './Wait.module.scss';
 
@@ -58,29 +59,20 @@ const Wait: React.FC = () => {
 
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
-
-    const url = createWsUrl(eventUrl);
-    const client = new W3CWebSocket(url);
-
-    client.onmessage = (messageEvent) => {
-      if (typeof messageEvent.data !== 'string') return;
-      const msg = JSON.parse(messageEvent.data);
-      if (msg.state) {
-        const state = msg.state;
-        if (state === CommandState.Running && msg.is_ready) {
-          setWaitStatus({ isReady: true, state: CommandState.Running });
-          client.close();
-          window.location.assign(serverAddress(serviceAddr));
-        } else if (terminalCommandStates.has(state)) {
-          setWaitStatus({ isReady: false, state });
-          client.close();
-        }
-        setWaitStatus({ isReady: false, state });
+    const taskId = (serviceAddr.match(/[0-f\-]+/) || ' ')[0];
+    const ival = setInterval(async () => {
+      const response = await getTask({ taskId });
+      if (!response) {
+        return;
       }
-    };
-
-    // client.onclose = handleWsError;
-    client.onerror = handleWsError;
+      if ([CommandState.Terminated].includes(response.state)) {
+        clearInterval(ival);
+      } else if (response.readiness) {
+        clearInterval(ival);
+        window.location.assign(serverAddress(serviceAddr));
+      }
+      setWaitStatus({ isReady: response.readiness, state: response.state });
+    }, 1000);
   }, [ eventUrl, serviceAddr ]);
 
   return (
