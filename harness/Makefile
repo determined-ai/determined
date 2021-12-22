@@ -1,4 +1,4 @@
-py_bindings_dest=determined/common/api/b.py
+py_bindings_dest=determined/common/api/bindings.py
 
 .PHONY: build
 build: gen $(py_bindings_dest)

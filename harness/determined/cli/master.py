@@ -8,7 +8,7 @@ from requests import Response
 from determined.cli.session import setup_session
 from determined.common import api, yaml
 from determined.common.api import authentication
-from determined.common.api.b import get_GetMaster
+from determined.common.api.bindings import get_GetMaster
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
 

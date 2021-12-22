@@ -10,7 +10,7 @@ from determined.cli import render
 from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication
-from determined.common.api.b import get_GetJobs, v1OrderBy
+from determined.common.api.bindings import get_GetJobs, v1OrderBy
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 

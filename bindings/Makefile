@@ -1,6 +1,6 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
-py_bindings_dest := ../harness/determined/common/api/b.py
+py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
 
 .PHONY: all
@@ -22,7 +22,7 @@ bindings-copy-over:
 
 .PHONY: build/python
 build/python: $(SWAGGER_SPEC)
-	python bindings.py > $(py_bindings_dest)
+	python generate_bindings.py > $(py_bindings_dest)
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
