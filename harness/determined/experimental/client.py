@@ -261,10 +261,10 @@ def http_request(
     method: str,
     path: str,
     params: Optional[Dict[str, Any]],
-    json: Any,
-    data: Optional[str],
-    headers: Optional[Dict[str, Any]],
-    timeout: Optional[int],
+    json: Any = None,
+    data: Optional[str] = None,
+    headers: Optional[Dict[str, Any]] = None,
+    timeout: Optional[int] = None,
 ) -> requests.Response:
     """
     Make a request to the Determined master.

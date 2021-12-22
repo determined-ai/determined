@@ -391,9 +391,6 @@ class Function:
         out += [f"        {pathstr},"]
         out += ["        _params,"]
         out += [f"        {bodystr},"]
-        out += ["        None,"]
-        out += ["        None,"]
-        out += ["        None,"]
         out += ["    )"]
         for expect, returntype in responses.items():
             out += [f"    if _resp.status_code == {expect}:"]
@@ -549,10 +546,7 @@ Request = t.Callable[
         str,  # method
         str,  # path
         t.Optional[t.Dict[str, t.Any]],  # params
-        t.Any,  # json
-        t.Optional[str],  # data
-        t.Optional[t.Dict[str, t.Any]],  # headers
-        t.Optional[int],  # timeout
+        t.Any,  # json body
     ],
     requests.Response,
 ]

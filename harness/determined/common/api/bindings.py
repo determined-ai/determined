@@ -14,10 +14,7 @@ Request = t.Callable[
         str,  # method
         str,  # path
         t.Optional[t.Dict[str, t.Any]],  # params
-        t.Any,  # json
-        t.Optional[str],  # data
-        t.Optional[t.Dict[str, t.Any]],  # headers
-        t.Optional[int],  # timeout
+        t.Any,  # json body
     ],
     requests.Response,
 ]
@@ -4938,9 +4935,6 @@ def post_AckAllocationPreemptionSignal(
         f"/api/v1/allocations/{allocationId}/signals/ack_preemption",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -4956,9 +4950,6 @@ def post_ActivateExperiment(
         "POST",
         f"/api/v1/experiments/{id}/activate",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -4979,9 +4970,6 @@ def get_AllocationPreemptionSignal(
         f"/api/v1/allocations/{allocationId}/signals/preemption",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1AllocationPreemptionSignalResponse.from_json(_resp.json())
@@ -4999,9 +4987,6 @@ def get_AllocationRendezvousInfo(
         f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1AllocationRendezvousInfoResponse.from_json(_resp.json())
@@ -5017,9 +5002,6 @@ def post_ArchiveExperiment(
         "POST",
         f"/api/v1/experiments/{id}/archive",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5037,9 +5019,6 @@ def post_ArchiveModel(
         f"/api/v1/models/{modelId}/archive",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -5055,9 +5034,6 @@ def post_CancelExperiment(
         "POST",
         f"/api/v1/experiments/{id}/cancel",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5076,9 +5052,6 @@ def post_CompleteTrialSearcherValidation(
         f"/api/v1/trials/{trialId}/searcher/completed_operation",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -5094,9 +5067,6 @@ def post_ComputeHPImportance(
         "POST",
         f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5114,9 +5084,6 @@ def post_CreateExperiment(
         "/api/v1/experiments",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1CreateExperimentResponse.from_json(_resp.json())
@@ -5130,9 +5097,6 @@ def get_CurrentUser(
         "GET",
         "/api/v1/auth/user",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5150,9 +5114,6 @@ def delete_DeleteExperiment(
         f"/api/v1/experiments/{experimentId}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -5168,9 +5129,6 @@ def delete_DeleteModel(
         "DELETE",
         f"/api/v1/models/{modelId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5189,9 +5147,6 @@ def delete_DeleteModelVersion(
         f"/api/v1/models/{modelId}/versions/{modelVersionId}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -5207,9 +5162,6 @@ def delete_DeleteTemplate(
         "DELETE",
         f"/api/v1/templates/{templateName}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5228,9 +5180,6 @@ def post_DisableAgent(
         f"/api/v1/agents/{agentId}/disable",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1DisableAgentResponse.from_json(_resp.json())
@@ -5248,9 +5197,6 @@ def post_DisableSlot(
         f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1DisableSlotResponse.from_json(_resp.json())
@@ -5266,9 +5212,6 @@ def post_EnableAgent(
         "POST",
         f"/api/v1/agents/{agentId}/enable",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5287,9 +5230,6 @@ def post_EnableSlot(
         f"/api/v1/agents/{agentId}/slots/{slotId}/enable",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1EnableSlotResponse.from_json(_resp.json())
@@ -5305,9 +5245,6 @@ def get_GetAgent(
         "GET",
         f"/api/v1/agents/{agentId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5335,9 +5272,6 @@ def get_GetAgents(
         "/api/v1/agents",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetAgentsResponse.from_json(_resp.json())
@@ -5353,9 +5287,6 @@ def get_GetBestSearcherValidationMetric(
         "GET",
         f"/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5373,9 +5304,6 @@ def get_GetCheckpoint(
         f"/api/v1/checkpoints/{checkpointUuid}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetCheckpointResponse.from_json(_resp.json())
@@ -5391,9 +5319,6 @@ def get_GetCommand(
         "GET",
         f"/api/v1/commands/{commandId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5421,9 +5346,6 @@ def get_GetCommands(
         "/api/v1/commands",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetCommandsResponse.from_json(_resp.json())
@@ -5440,9 +5362,6 @@ def get_GetCurrentTrialSearcherOperation(
         f"/api/v1/trials/{trialId}/searcher/operation",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetCurrentTrialSearcherOperationResponse.from_json(_resp.json())
@@ -5458,9 +5377,6 @@ def get_GetExperiment(
         "GET",
         f"/api/v1/experiments/{experimentId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5491,9 +5407,6 @@ def get_GetExperimentCheckpoints(
         f"/api/v1/experiments/{id}/checkpoints",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentCheckpointsResponse.from_json(_resp.json())
@@ -5507,9 +5420,6 @@ def get_GetExperimentLabels(
         "GET",
         "/api/v1/experiment/labels",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5538,9 +5448,6 @@ def get_GetExperimentTrials(
         f"/api/v1/experiments/{experimentId}/trials",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentTrialsResponse.from_json(_resp.json())
@@ -5556,9 +5463,6 @@ def get_GetExperimentValidationHistory(
         "GET",
         f"/api/v1/experiments/{experimentId}/validation-history",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5596,9 +5500,6 @@ def get_GetExperiments(
         "/api/v1/experiments",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentsResponse.from_json(_resp.json())
@@ -5616,9 +5517,6 @@ def get_GetJobQueueStats(
         "GET",
         "/api/v1/job-queues/stats",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5644,9 +5542,6 @@ def get_GetJobs(
         "/api/v1/job-queues",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetJobsResponse.from_json(_resp.json())
@@ -5661,9 +5556,6 @@ def get_GetMaster(
         "/api/v1/master",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetMasterResponse.from_json(_resp.json())
@@ -5677,9 +5569,6 @@ def get_GetMasterConfig(
         "GET",
         "/api/v1/master/config",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5697,9 +5586,6 @@ def get_GetModel(
         f"/api/v1/models/{modelId}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetModelResponse.from_json(_resp.json())
@@ -5716,9 +5602,6 @@ def get_GetModelDef(
         f"/api/v1/experiments/{experimentId}/model_def",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetModelDefResponse.from_json(_resp.json())
@@ -5732,9 +5615,6 @@ def get_GetModelLabels(
         "GET",
         "/api/v1/model/labels",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5752,9 +5632,6 @@ def get_GetModelVersion(
         "GET",
         f"/api/v1/models/{modelId}/versions/{modelVersion}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5780,9 +5657,6 @@ def get_GetModelVersions(
         "GET",
         f"/api/v1/models/{modelId}/versions",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5818,9 +5692,6 @@ def get_GetModels(
         "/api/v1/models",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetModelsResponse.from_json(_resp.json())
@@ -5836,9 +5707,6 @@ def get_GetNotebook(
         "GET",
         f"/api/v1/notebooks/{notebookId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5866,9 +5734,6 @@ def get_GetNotebooks(
         "/api/v1/notebooks",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetNotebooksResponse.from_json(_resp.json())
@@ -5889,9 +5754,6 @@ def get_GetResourcePools(
         "/api/v1/resource-pools",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetResourcePoolsResponse.from_json(_resp.json())
@@ -5907,9 +5769,6 @@ def get_GetShell(
         "GET",
         f"/api/v1/shells/{shellId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -5937,9 +5796,6 @@ def get_GetShells(
         "/api/v1/shells",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetShellsResponse.from_json(_resp.json())
@@ -5957,9 +5813,6 @@ def get_GetSlot(
         f"/api/v1/agents/{agentId}/slots/{slotId}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetSlotResponse.from_json(_resp.json())
@@ -5976,9 +5829,6 @@ def get_GetSlots(
         f"/api/v1/agents/{agentId}/slots",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetSlotsResponse.from_json(_resp.json())
@@ -5992,9 +5842,6 @@ def get_GetTelemetry(
         "GET",
         "/api/v1/master/telemetry",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6011,9 +5858,6 @@ def get_GetTemplate(
         "GET",
         f"/api/v1/templates/{templateName}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6041,9 +5885,6 @@ def get_GetTemplates(
         "/api/v1/templates",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetTemplatesResponse.from_json(_resp.json())
@@ -6059,9 +5900,6 @@ def get_GetTensorboard(
         "GET",
         f"/api/v1/tensorboards/{tensorboardId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6089,9 +5927,6 @@ def get_GetTensorboards(
         "/api/v1/tensorboards",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetTensorboardsResponse.from_json(_resp.json())
@@ -6107,9 +5942,6 @@ def get_GetTrial(
         "GET",
         f"/api/v1/trials/{trialId}",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6140,9 +5972,6 @@ def get_GetTrialCheckpoints(
         f"/api/v1/trials/{id}/checkpoints",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
@@ -6159,9 +5988,6 @@ def get_GetUser(
         f"/api/v1/users/{username}",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1GetUserResponse.from_json(_resp.json())
@@ -6175,9 +6001,6 @@ def get_GetUsers(
         "GET",
         "/api/v1/users",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6196,9 +6019,6 @@ def put_IdleNotebook(
         f"/api/v1/notebooks/{notebookId}/report_idle",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6214,9 +6034,6 @@ def post_KillCommand(
         "POST",
         f"/api/v1/commands/{commandId}/kill",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6234,9 +6051,6 @@ def post_KillExperiment(
         f"/api/v1/experiments/{id}/kill",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6252,9 +6066,6 @@ def post_KillNotebook(
         "POST",
         f"/api/v1/notebooks/{notebookId}/kill",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6272,9 +6083,6 @@ def post_KillShell(
         f"/api/v1/shells/{shellId}/kill",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1KillShellResponse.from_json(_resp.json())
@@ -6290,9 +6098,6 @@ def post_KillTensorboard(
         "POST",
         f"/api/v1/tensorboards/{tensorboardId}/kill",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6310,9 +6115,6 @@ def post_KillTrial(
         f"/api/v1/trials/{id}/kill",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6329,9 +6131,6 @@ def post_LaunchCommand(
         "/api/v1/commands",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1LaunchCommandResponse.from_json(_resp.json())
@@ -6348,9 +6147,6 @@ def post_LaunchNotebook(
         "/api/v1/notebooks",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1LaunchNotebookResponse.from_json(_resp.json())
@@ -6367,9 +6163,6 @@ def post_LaunchShell(
         "/api/v1/shells",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1LaunchShellResponse.from_json(_resp.json())
@@ -6386,9 +6179,6 @@ def post_LaunchTensorboard(
         "/api/v1/tensorboards",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1LaunchTensorboardResponse.from_json(_resp.json())
@@ -6405,9 +6195,6 @@ def post_Login(
         "/api/v1/auth/login",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1LoginResponse.from_json(_resp.json())
@@ -6421,9 +6208,6 @@ def post_Logout(
         "POST",
         "/api/v1/auth/logout",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6443,9 +6227,6 @@ def post_MarkAllocationReservationDaemon(
         f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6463,9 +6244,6 @@ def patch_PatchExperiment(
         f"/api/v1/experiments/{experiment_id}",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PatchExperimentResponse.from_json(_resp.json())
@@ -6483,9 +6261,6 @@ def patch_PatchModel(
         f"/api/v1/models/{modelId}",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PatchModelResponse.from_json(_resp.json())
@@ -6504,9 +6279,6 @@ def patch_PatchModelVersion(
         f"/api/v1/models/{modelId}/versions/{modelVersionId}",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PatchModelVersionResponse.from_json(_resp.json())
@@ -6522,9 +6294,6 @@ def post_PauseExperiment(
         "POST",
         f"/api/v1/experiments/{id}/pause",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6543,9 +6312,6 @@ def post_PostCheckpointMetadata(
         f"/api/v1/checkpoints/{checkpoint_uuid}/metadata",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
@@ -6562,9 +6328,6 @@ def post_PostModel(
         "/api/v1/models",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PostModelResponse.from_json(_resp.json())
@@ -6582,9 +6345,6 @@ def post_PostModelVersion(
         f"/api/v1/models/{modelId}/versions",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PostModelVersionResponse.from_json(_resp.json())
@@ -6601,9 +6361,6 @@ def post_PostTrialProfilerMetricsBatch(
         "/api/v1/trials/profiler/metrics",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6621,9 +6378,6 @@ def post_PostTrialRunnerMetadata(
         f"/api/v1/trials/{trialId}/runner/metadata",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6640,9 +6394,6 @@ def post_PostUser(
         "/api/v1/users",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
@@ -6659,9 +6410,6 @@ def post_PreviewHPSearch(
         "/api/v1/preview-hp-search",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PreviewHPSearchResponse.from_json(_resp.json())
@@ -6679,9 +6427,6 @@ def put_PutTemplate(
         f"/api/v1/templates/{template_name}",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1PutTemplateResponse.from_json(_resp.json())
@@ -6699,9 +6444,6 @@ def post_ReportTrialCheckpointMetadata(
         f"/api/v1/trials/{checkpointMetadata_trialId}/checkpoint_metadata",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6719,9 +6461,6 @@ def post_ReportTrialProgress(
         f"/api/v1/trials/{trialId}/progress",
         _params,
         dump_float(body),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6739,9 +6478,6 @@ def post_ReportTrialSearcherEarlyExit(
         f"/api/v1/trials/{trialId}/early_exit",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6759,9 +6495,6 @@ def post_ReportTrialTrainingMetrics(
         f"/api/v1/trials/{trainingMetrics_trialId}/training_metrics",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6779,9 +6512,6 @@ def post_ReportTrialValidationMetrics(
         f"/api/v1/trials/{validationMetrics_trialId}/validation_metrics",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6804,9 +6534,6 @@ def get_ResourceAllocationAggregated(
         "/api/v1/resources/allocation/aggregated",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1ResourceAllocationAggregatedResponse.from_json(_resp.json())
@@ -6827,9 +6554,6 @@ def get_ResourceAllocationRaw(
         "/api/v1/resources/allocation/raw",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
@@ -6847,9 +6571,6 @@ def post_SetCommandPriority(
         f"/api/v1/commands/{commandId}/set_priority",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1SetCommandPriorityResponse.from_json(_resp.json())
@@ -6867,9 +6588,6 @@ def post_SetNotebookPriority(
         f"/api/v1/notebooks/{notebookId}/set_priority",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1SetNotebookPriorityResponse.from_json(_resp.json())
@@ -6887,9 +6605,6 @@ def post_SetShellPriority(
         f"/api/v1/shells/{shellId}/set_priority",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1SetShellPriorityResponse.from_json(_resp.json())
@@ -6907,9 +6622,6 @@ def post_SetTensorboardPriority(
         f"/api/v1/tensorboards/{tensorboardId}/set_priority",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1SetTensorboardPriorityResponse.from_json(_resp.json())
@@ -6927,9 +6639,6 @@ def post_SetUserPassword(
         f"/api/v1/users/{username}/password",
         _params,
         body,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
@@ -6945,9 +6654,6 @@ def post_UnarchiveExperiment(
         "POST",
         f"/api/v1/experiments/{id}/unarchive",
         _params,
-        None,
-        None,
-        None,
         None,
     )
     if _resp.status_code == 200:
@@ -6965,9 +6671,6 @@ def post_UnarchiveModel(
         f"/api/v1/models/{modelId}/unarchive",
         _params,
         None,
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
@@ -6984,9 +6687,6 @@ def post_UpdateJobQueue(
         "/api/v1/job-queues",
         _params,
         body.to_json(),
-        None,
-        None,
-        None,
     )
     if _resp.status_code == 200:
         return
