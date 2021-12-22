@@ -28,6 +28,7 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   StreamingProfiler: Api.ProfilerApiFetchParamCreator(ApiConfig),
+  Tasks: new Api.TasksApi(ApiConfig),
   Templates: new Api.TemplatesApi(ApiConfig),
   TensorBoards: new Api.TensorboardsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
@@ -57,6 +58,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
   detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
   detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
+  detApi.Tasks = new Api.TasksApi(config);
   detApi.TensorBoards = new Api.TensorboardsApi(config);
   detApi.Users = new Api.UsersApi(config);
   detApi.Templates = new Api.TemplatesApi(config);
@@ -386,7 +388,7 @@ export const getTrialDetails: Service.DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
-/* Task GRPC */
+/* Tasks */
 
 export const getTask: Service.DetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
@@ -395,7 +397,7 @@ export const getTask: Service.DetApi<
   postProcess: (response) => {
     return response.task ? decoder.mapV1Task(response.task) : undefined;
   },
-  request: (params: Service.GetTaskParams) => detApi.Notebooks.getTask(
+  request: (params: Service.GetTaskParams) => detApi.Tasks.getTask(
     params.taskId,
   ),
 };

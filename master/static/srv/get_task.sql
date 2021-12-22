@@ -1,4 +1,4 @@
-SELECT tasks.task_id, state, readiness
+SELECT tasks.task_id, state, isReady
 FROM tasks
   LEFT JOIN allocations
   ON allocations.task_id = tasks.task_id

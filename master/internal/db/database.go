@@ -156,7 +156,7 @@ type DB interface {
 	AllocationSessionByToken(token string) (*model.AllocationSession, error)
 	DeleteAllocationSession(allocationID model.AllocationID) error
 	UpdateAllocationState(allocationID model.AllocationID, state model.AllocationState,
-		readiness bool) error
+		isReady bool) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,

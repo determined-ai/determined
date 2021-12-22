@@ -145,7 +145,7 @@ export const getExperimentLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
-/* GRPC Tasks interface */
+/* Tasks */
 
 export const getTask = generateDetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined

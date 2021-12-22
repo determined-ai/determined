@@ -959,7 +959,7 @@ service Determined {
       get: "/api/v1/tasks/{task_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Notebooks"
+      tags: "Tasks"
     };
   }
 

@@ -31,5 +31,5 @@ message Task {
   // The current state of the task.
   State state = 2;
   // Whether the TensorBoard or Notebook is ready to access.
-  bool readiness = 3;
+  bool is_ready = 3;
 }

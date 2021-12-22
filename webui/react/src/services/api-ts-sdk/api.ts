@@ -5182,7 +5182,7 @@ export interface V1Task {
      * @type {boolean}
      * @memberof V1Task
      */
-    readiness?: boolean;
+    is_ready?: boolean;
 }
 
 /**
@@ -13657,6 +13657,52 @@ export class ModelsApi extends BaseAPI {
 }
 
 /**
+ * TasksApi - fetch parameter creator
+ * @export
+ */
+export const TasksApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+      /**
+       *
+       * @summary Check the status of a requested task.
+       * @param {string} taskId The requested task id.
+       * @param {*} [options] Override http request option.
+       * @throws {RequiredError}
+       */
+      getTask(taskId: string, options: any = {}): FetchArgs {
+          // verify required parameter 'taskId' is not null or undefined
+          if (taskId === null || taskId === undefined) {
+              throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
+          }
+          const localVarPath = `/api/v1/tasks/{taskId}`
+              .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+          const localVarUrlObj = url.parse(localVarPath, true);
+          const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+          const localVarHeaderParameter = {} as any;
+          const localVarQueryParameter = {} as any;
+
+          // authentication BearerToken required
+          if (configuration && configuration.apiKey) {
+              const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+        ? configuration.apiKey("Authorization")
+        : configuration.apiKey;
+              localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+          }
+
+          localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+          // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+          delete localVarUrlObj.search;
+          localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+          return {
+              url: url.format(localVarUrlObj),
+              options: localVarRequestOptions,
+          };
+      }
+    }
+}
+
+/**
  * NotebooksApi - fetch parameter creator
  * @export
  */
@@ -13756,44 +13802,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         * 
-         * @summary Check the status of a requested task.
-         * @param {string} taskId The requested task id.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTask(taskId: string, options: any = {}): FetchArgs {
-            // verify required parameter 'taskId' is not null or undefined
-            if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
-            }
-            const localVarPath = `/api/v1/tasks/{taskId}`
-                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
+         *
          * @summary Kill the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -13971,6 +13980,34 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
 };
 
 /**
+ * TasksApi - functional programming interface
+ * @export
+ */
+export const TasksApiFp = function(configuration?: Configuration) {
+    return {
+      /**
+       *
+       * @summary Check the status of a requested task.
+       * @param {string} taskId The requested task id.
+       * @param {*} [options] Override http request option.
+       * @throws {RequiredError}
+       */
+      getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
+          const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
+          return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+              return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                  if (response.status >= 200 && response.status < 300) {
+                      return response.json();
+                  } else {
+                      throw response;
+                  }
+              });
+          };
+      }
+    };
+};
+
+/**
  * NotebooksApi - functional programming interface
  * @export
  */
@@ -14019,26 +14056,7 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * 
-         * @summary Check the status of a requested task.
-         * @param {string} taskId The requested task id.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getTask(taskId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
+         *
          * @summary Kill the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -14121,6 +14139,25 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
 };
 
 /**
+ * TasksApi - factory interface
+ * @export
+ */
+export const TasksApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+      /**
+       *
+       * @summary Check the status of a requested task.
+       * @param {string} taskId The requested task id.
+       * @param {*} [options] Override http request option.
+       * @throws {RequiredError}
+       */
+      getTask(taskId: string, options?: any) {
+          return TasksApiFp(configuration).getTask(taskId, options)(fetch, basePath);
+      }
+    };
+};
+
+/**
  * NotebooksApi - factory interface
  * @export
  */
@@ -14151,17 +14188,7 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
             return NotebooksApiFp(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, options)(fetch, basePath);
         },
         /**
-         * 
-         * @summary Check the status of a requested task.
-         * @param {string} taskId The requested task id.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTask(taskId: string, options?: any) {
-            return NotebooksApiFp(configuration).getTask(taskId, options)(fetch, basePath);
-        },
-        /**
-         * 
+         *
          * @summary Kill the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -14208,6 +14235,26 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
 };
 
 /**
+ * TasksApi - object-oriented interface
+ * @export
+ * @class TasksApi
+ * @extends {BaseAPI}
+ */
+export class TasksApi extends BaseAPI {
+  /**
+   *
+   * @summary Check the status of a requested task.
+   * @param {string} taskId The requested task id.
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof NotebooksApi
+   */
+  public getTask(taskId: string, options?: any) {
+      return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
+  }
+};
+
+/**
  * NotebooksApi - object-oriented interface
  * @export
  * @class NotebooksApi
@@ -14243,19 +14290,7 @@ export class NotebooksApi extends BaseAPI {
     }
 
     /**
-     * 
-     * @summary Check the status of a requested task.
-     * @param {string} taskId The requested task id.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof NotebooksApi
-     */
-    public getTask(taskId: string, options?: any) {
-        return NotebooksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
+     *
      * @summary Kill the requested notebook.
      * @param {string} notebookId The id of the notebook.
      * @param {*} [options] Override http request option.

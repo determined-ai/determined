@@ -1,19 +1,18 @@
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import Spinner from 'components/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import handleError, { ErrorType } from 'ErrorHandler';
+// import { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
+import { getTask } from 'services/api';
 import { CommandState } from 'types';
 import { capitalize } from 'utils/string';
 import { WaitStatus } from 'wait';
-import { getTask } from 'services/api';
 
 import css from './Wait.module.scss';
 
@@ -48,30 +47,30 @@ const Wait: React.FC = () => {
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-  const handleWsError = (err: Error) => {
-    handleError({
-      error: err,
-      message: 'failed while waiting for command to be ready',
-      silent: false,
-      type: ErrorType.Server,
-    });
-  };
+  // const handleWsError = (err: Error) => {
+  //   handleError({
+  //     error: err,
+  //     message: 'failed while waiting for command to be ready',
+  //     silent: false,
+  //     type: ErrorType.Server,
+  //   });
+  // };
 
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
-    const taskId = (serviceAddr.match(/[0-f\-]+/) || ' ')[0];
+    const taskId = (serviceAddr.match(/[0-f-]+/) || ' ')[0];
     const ival = setInterval(async () => {
       const response = await getTask({ taskId });
       if (!response) {
         return;
       }
-      if ([CommandState.Terminated].includes(response.state)) {
+      if ([ CommandState.Terminated ].includes(response.state)) {
         clearInterval(ival);
-      } else if (response.readiness) {
+      } else if (response.isReady) {
         clearInterval(ival);
         window.location.assign(serverAddress(serviceAddr));
       }
-      setWaitStatus({ isReady: response.readiness, state: response.state });
+      setWaitStatus(response);
     }, 1000);
   }, [ eventUrl, serviceAddr ]);
 

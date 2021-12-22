@@ -473,7 +473,7 @@ export enum ExperimentVisualizationType {
 }
 
 export interface TaskItem {
-  readiness: boolean;
+  isReady: boolean;
   state: CommandState;
   taskId: string;
 }

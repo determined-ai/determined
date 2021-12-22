@@ -168,16 +168,16 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
 
 export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
   const setState = {
-    'STATE_PENDING': types.CommandState.Pending,
-    'STATE_ASSIGNED': types.CommandState.Assigned,
-    'STATE_PULLING': types.CommandState.Pulling,
-    'STATE_STARTING': types.CommandState.Starting,
-    'STATE_RUNNING': types.CommandState.Running,
-    'STATE_TERMINATING': types.CommandState.Terminating,
-    'STATE_TERMINATED': types.CommandState.Terminated,
+    STATE_ASSIGNED: types.CommandState.Assigned,
+    STATE_PENDING: types.CommandState.Pending,
+    STATE_PULLING: types.CommandState.Pulling,
+    STATE_RUNNING: types.CommandState.Running,
+    STATE_STARTING: types.CommandState.Starting,
+    STATE_TERMINATED: types.CommandState.Terminated,
+    STATE_TERMINATING: types.CommandState.Terminating,
   }[String(task?.state) || 'STATE_PENDING'] || types.CommandState.Pending;
   return {
-    readiness: task.readiness || false,
+    isReady: task.is_ready || false,
     state: setState,
     taskId: task.taskId || '',
   };
