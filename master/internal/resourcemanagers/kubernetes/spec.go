@@ -368,11 +368,15 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	}
 
 	specEnvVars := spec.EnvVars()
+	var specEnvFrom []k8sV1.EnvFromSource
 	podSpec := env.PodSpec()
-	for _, container := range podSpec.Spec.Containers {
-		if container.Name == "determined-container" {
-			for _, e := range container.Env {
-				specEnvVars[e.Name] = e.Value
+	if podSpec != nil {
+		for _, container := range podSpec.Spec.Containers {
+			if container.Name == "determined-container" {
+				for _, e := range container.Env {
+					specEnvVars[e.Name] = e.Value
+				}
+				specEnvFrom = container.EnvFrom
 			}
 		}
 	}
@@ -476,6 +480,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         spec.Entrypoint,
+		EnvFrom: 		 specEnvFrom,
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
