@@ -47,7 +47,6 @@ export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
 const poolAttributes = [
   { key: 'location', label: 'Location' },
   { key: 'instanceType', label: 'Instance Type' },
-  // FIXME for preemptible, do we want this spot or details.spot_enabled?
   { key: 'preemptible', label: 'Spot/Preemptible' },
   { key: 'minAgents', label: 'Min Agents' },
   { key: 'maxAgents', label: 'Max Agents' },
