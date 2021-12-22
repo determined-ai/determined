@@ -242,3 +242,21 @@
     smaller_is_better: true
     source_checkpoint_uuid: null
     source_trial_id: 15
+
+- name: single searcher (unitless)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-single.json
+  case:
+    name: single
+    max_length: 10
+    metric: loss
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
+  defaulted:
+    name: single
+    max_length: 10
+    metric: loss
+    smaller_is_better: true
+    source_trial_id: null
+    source_checkpoint_uuid: null

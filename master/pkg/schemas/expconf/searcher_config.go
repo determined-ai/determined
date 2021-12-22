@@ -214,6 +214,7 @@ type AdaptiveConfigV0 struct {
 	RawTrainStragglers *bool         `json:"train_stragglers"`
 	RawMode            *AdaptiveMode `json:"mode"`
 	RawMaxRungs        *int          `json:"max_rungs"`
+
 }
 
 //go:generate ../gen.sh

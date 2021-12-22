@@ -17,6 +17,7 @@ const (
 	Records     Unit = "records"
 	Batches     Unit = "batches"
 	Epochs      Unit = "epoches"
+	Unitless    Unit = "_unitless"
 	Unspecified Unit = "unspecified"
 )
 
@@ -41,6 +42,8 @@ func (l LengthV0) MarshalJSON() ([]byte, error) {
 		return json.Marshal(map[string]uint64{
 			"epochs": l.Units,
 		})
+	case Unitless:
+		return json.Marshal(l.Units)
 	default:
 		return json.Marshal(map[string]uint64{
 			"batches": 0,
@@ -50,6 +53,13 @@ func (l LengthV0) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (l *LengthV0) UnmarshalJSON(b []byte) error {
+	var n uint64
+	if err := json.Unmarshal(b, &n); err == nil {
+		// Just a plain integer means a Unitless Length.
+		*l = NewLengthUnitless(n)
+		return nil
+	}
+
 	var v map[string]uint64
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
@@ -91,6 +101,11 @@ func NewLengthInBatches(batches uint64) LengthV0 {
 // NewLengthInEpochs returns a new LengthV0 in terms of epochs.
 func NewLengthInEpochs(epochs uint64) LengthV0 {
 	return LengthV0{Unit: Epochs, Units: epochs}
+}
+
+// NewLengthUnitless returns a new LengthV0 with no assigned units.
+func NewLengthUnitless(n uint64) LengthV0 {
+	return LengthV0{Unit: Unitless, Units: n}
 }
 
 func (l LengthV0) String() string {

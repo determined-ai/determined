@@ -2382,10 +2382,11 @@ schemas = {
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "stop_once": {
             "type": [
@@ -2431,7 +2432,7 @@ schemas = {
         r"""
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$comment": "this is EOL searcher, not to be used in new experiments",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
     "title": "AdaptiveSimpleConfig",
     "type": "object",
@@ -2766,10 +2767,11 @@ schemas = {
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [
@@ -2801,6 +2803,31 @@ schemas = {
         }
     }
 }
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/searcher-length.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-length.json",
+    "title": "SearcherLength",
+    "$comment": "SearcherLength is either a positive Length or a positive integer",
+    "union": {
+        "items": [
+            {
+                "unionKey": "not:type:object",
+                "type": "integer",
+                "minimum": 0
+            },
+            {
+                "unionKey": "always",
+                "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            }
+        ]
+    }
+}
+
 
 """
     ),
@@ -2838,10 +2865,11 @@ schemas = {
         "length_per_round": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "num_rounds": {
             "type": [
@@ -2989,10 +3017,11 @@ schemas = {
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [
@@ -3049,10 +3078,11 @@ schemas = {
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [
