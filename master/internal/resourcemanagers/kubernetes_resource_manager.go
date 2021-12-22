@@ -102,9 +102,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
-		sproto.SetGroupWeight,
-		sproto.SetGroupPriority,
-		sproto.SetGroupOrder,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
+		job.SetGroupOrder,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased,
@@ -115,7 +115,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobSummary,
 		job.GetJobQStats,
-		job.SetJobOrder,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -212,10 +211,10 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight:
+	case job.SetGroupWeight:
 		// setting weights in kubernetes is not supported
 
-	case sproto.SetGroupPriority:
+	case job.SetGroupPriority:
 		group := k.getOrCreateGroup(ctx, msg.Handler)
 		if msg.Priority != nil {
 			group.priority = msg.Priority
@@ -231,7 +230,7 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			}
 		}
 
-	case sproto.SetGroupOrder:
+	case job.SetGroupOrder:
 		group := k.getOrCreateGroup(ctx, msg.Handler)
 		if msg.QPosition > 0 {
 			group.qPosition = msg.QPosition
@@ -296,30 +295,9 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 }
 
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
+	switch ctx.Message().(type) {
 	case job.GetJobQ:
 		ctx.Respond(k.jobQInfo())
-
-	case job.SetJobOrder:
-		for it := k.reqList.iterator(); it.next(); {
-			req := it.value()
-			if req.JobID != nil && *req.JobID == msg.JobID {
-				group := k.getOrCreateGroup(ctx, req.Group)
-				if msg.QPosition > 0 {
-					group.qPosition = msg.QPosition
-					ctx.Tell(req.Group, sproto.SetGroupOrder{
-						QPosition: msg.QPosition,
-					})
-				}
-				if *msg.Priority > 0 {
-					group.priority = msg.Priority
-					ctx.Tell(req.Group, sproto.SetGroupPriority{
-						Priority: msg.Priority,
-					})
-				}
-				// do nothing if message is setting the weight
-			}
-		}
 
 	case *apiv1.GetJobQueueStatsRequest:
 		resp := &apiv1.GetJobQueueStatsResponse{
