@@ -96,6 +96,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
+	// Copy discovered (default) resource pool name and slot count.
+	config.Resources.ResourcePool = poolName
+	config.Resources.Slots = resources.Slots
+
 	workDirInDefaults := config.WorkDir
 	if req.TemplateName != "" {
 		template, err := a.m.db.TemplateByName(req.TemplateName)
@@ -118,7 +122,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 					"unable to decode the merged config: %s", string(configBytes)).Error())
 		}
 	}
-	config.Resources.ResourcePool = poolName
 	if req.MustZeroSlot {
 		config.Resources.Slots = 0
 	}
