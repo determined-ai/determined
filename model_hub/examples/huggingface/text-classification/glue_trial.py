@@ -329,13 +329,15 @@ class GLUEAugmentationTrial(GLUETrial):
         # takes a tokenizer explicitly as an input and we create a closure using functools.partial.
         def preprocess_function(tokenizer, padding, max_seq_length, examples, augment=False):
             # Tokenize the texts
+            aug_examples = {}
+            del examples['idx']
             if augment:
                 for k in [sentence1_key, sentence2_key]:
                     if k is not None:
-                        source_examples = []
-                        for it in examples[k]:
-                            source_examples.append(augmenter.augment(it)[0])
-                        examples[k] = source_examples # += to double examples
+                        example_count = len(examples)
+                        for ind in range(0, len(examples[k])):
+                            examples[k].append(augmenter.augment(examples[k][ind])[0])
+                            examples['label'].append(examples['label'][ind])
             args = (
                 (examples[sentence1_key],)
                 if sentence2_key is None
