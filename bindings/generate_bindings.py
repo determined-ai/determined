@@ -478,8 +478,11 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
     """
     enums = {}
     for name, schema in swagger_definitions.items():
-        if "enum" in schema and schema["type"] == "string":
+        if "enum" in schema:
             members = schema["enum"]
+            # we lose the order of enum members by calculating the hash this way but
+            # it's fine since all our enums are string based
+            assert schema["type"] == "string", (name, schema)
             enums[hash(frozenset(members))] = name
     return enums
 
