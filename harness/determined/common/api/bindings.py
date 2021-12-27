@@ -162,8 +162,7 @@ class determinedcontainerv1State(enum.Enum):
 class determineddevicev1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_CPU = "TYPE_CPU"
-    TYPE_CUDA = "TYPE_CUDA"
-    TYPE_ROCM = "TYPE_ROCM"
+    TYPE_GPU = "TYPE_GPU"
 
 class determinedexperimentv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -363,7 +362,7 @@ class trialv1Trial:
             "experimentId": self.experimentId,
             "startTime": self.startTime,
             "endTime": self.endTime if self.endTime is not None else None,
-            "state": self.state,
+            "state": self.state.value,
             "hparams": self.hparams,
             "totalBatchesProcessed": self.totalBatchesProcessed,
             "bestValidation": self.bestValidation.to_json() if self.bestValidation is not None else None,
@@ -594,8 +593,8 @@ class v1Checkpoint:
             "format": self.format if self.format is not None else None,
             "determinedVersion": self.determinedVersion if self.determinedVersion is not None else None,
             "metrics": self.metrics.to_json() if self.metrics is not None else None,
-            "validationState": self.validationState if self.validationState is not None else None,
-            "state": self.state,
+            "validationState": self.validationState.value if self.validationState is not None else None,
+            "state": self.state.value,
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
         }
 
@@ -674,7 +673,7 @@ class v1CheckpointWorkload:
         return {
             "uuid": self.uuid if self.uuid is not None else None,
             "endTime": self.endTime if self.endTime is not None else None,
-            "state": self.state,
+            "state": self.state.value,
             "resources": self.resources if self.resources is not None else None,
             "totalBatches": self.totalBatches,
         }
@@ -720,7 +719,7 @@ class v1Command:
         return {
             "id": self.id,
             "description": self.description,
-            "state": self.state,
+            "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
             "username": self.username,
@@ -777,7 +776,7 @@ class v1Container:
         return {
             "parent": self.parent if self.parent is not None else None,
             "id": self.id,
-            "state": self.state,
+            "state": self.state.value,
             "devices": [x.to_json() for x in self.devices] if self.devices is not None else None,
         }
 
@@ -882,7 +881,7 @@ class v1Device:
             "id": self.id if self.id is not None else None,
             "brand": self.brand if self.brand is not None else None,
             "uuid": self.uuid if self.uuid is not None else None,
-            "type": self.type if self.type is not None else None,
+            "type": self.type.value if self.type is not None else None,
         }
 
 class v1DisableAgentRequest:
@@ -1041,7 +1040,7 @@ class v1Experiment:
             "labels": self.labels if self.labels is not None else None,
             "startTime": self.startTime,
             "endTime": self.endTime if self.endTime is not None else None,
-            "state": self.state,
+            "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
             "progress": dump_float(self.progress) if self.progress is not None else None,
@@ -2181,7 +2180,7 @@ class v1Job:
     def to_json(self) -> t.Any:
         return {
             "summary": self.summary.to_json() if self.summary is not None else None,
-            "type": self.type,
+            "type": self.type.value,
             "submissionTime": self.submissionTime,
             "username": self.username,
             "resourcePool": self.resourcePool,
@@ -2214,7 +2213,7 @@ class v1JobSummary:
 
     def to_json(self) -> t.Any:
         return {
-            "state": self.state,
+            "state": self.state.value,
             "jobsAhead": self.jobsAhead,
         }
 
@@ -2551,7 +2550,7 @@ class v1LogEntry:
             "id": self.id,
             "message": self.message if self.message is not None else None,
             "timestamp": self.timestamp if self.timestamp is not None else None,
-            "level": self.level if self.level is not None else None,
+            "level": self.level.value if self.level is not None else None,
         }
 
 class v1LogLevel(enum.Enum):
@@ -2750,7 +2749,7 @@ class v1MetricsWorkload:
     def to_json(self) -> t.Any:
         return {
             "endTime": self.endTime if self.endTime is not None else None,
-            "state": self.state,
+            "state": self.state.value,
             "metrics": self.metrics if self.metrics is not None else None,
             "numInputs": self.numInputs,
             "totalBatches": self.totalBatches,
@@ -2920,7 +2919,7 @@ class v1Notebook:
         return {
             "id": self.id,
             "description": self.description,
-            "state": self.state,
+            "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
             "username": self.username,
@@ -3589,7 +3588,7 @@ class v1ResourceAllocationAggregatedEntry:
     def to_json(self) -> t.Any:
         return {
             "periodStart": self.periodStart,
-            "period": self.period,
+            "period": self.period.value,
             "seconds": dump_float(self.seconds),
             "byUsername": {k: dump_float(v) for k, v in self.byUsername.items()},
             "byExperimentLabel": {k: dump_float(v) for k, v in self.byExperimentLabel.items()},
@@ -3794,11 +3793,11 @@ class v1ResourcePool:
         return {
             "name": self.name,
             "description": self.description,
-            "type": self.type,
+            "type": self.type.value,
             "numAgents": self.numAgents,
             "slotsAvailable": self.slotsAvailable,
             "slotsUsed": self.slotsUsed,
-            "slotType": self.slotType,
+            "slotType": self.slotType.value,
             "auxContainerCapacity": self.auxContainerCapacity,
             "auxContainersRunning": self.auxContainersRunning,
             "defaultComputePool": self.defaultComputePool,
@@ -3808,8 +3807,8 @@ class v1ResourcePool:
             "maxAgents": self.maxAgents,
             "slotsPerAgent": self.slotsPerAgent if self.slotsPerAgent is not None else None,
             "auxContainerCapacityPerAgent": self.auxContainerCapacityPerAgent,
-            "schedulerType": self.schedulerType,
-            "schedulerFittingPolicy": self.schedulerFittingPolicy,
+            "schedulerType": self.schedulerType.value,
+            "schedulerFittingPolicy": self.schedulerFittingPolicy.value,
             "location": self.location,
             "imageId": self.imageId,
             "instanceType": self.instanceType,
@@ -4071,7 +4070,7 @@ class v1RunnableOperation:
 
     def to_json(self) -> t.Any:
         return {
-            "type": self.type if self.type is not None else None,
+            "type": self.type.value if self.type is not None else None,
             "length": self.length.to_json() if self.length is not None else None,
         }
 
@@ -4358,7 +4357,7 @@ class v1Shell:
         return {
             "id": self.id,
             "description": self.description,
-            "state": self.state,
+            "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
             "privateKey": self.privateKey if self.privateKey is not None else None,
@@ -4477,7 +4476,7 @@ class v1Tensorboard:
         return {
             "id": self.id,
             "description": self.description,
-            "state": self.state,
+            "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
@@ -4507,7 +4506,7 @@ class v1TrainingLength:
 
     def to_json(self) -> t.Any:
         return {
-            "unit": self.unit,
+            "unit": self.unit.value,
             "length": self.length,
         }
 
@@ -4526,7 +4525,7 @@ class v1TrialEarlyExit:
 
     def to_json(self) -> t.Any:
         return {
-            "reason": self.reason,
+            "reason": self.reason.value,
         }
 
 class v1TrialLogsFieldsResponse:
@@ -4590,7 +4589,7 @@ class v1TrialLogsResponse:
             "id": self.id,
             "timestamp": self.timestamp,
             "message": self.message,
-            "level": self.level,
+            "level": self.level.value,
         }
 
 class v1TrialMetrics:
@@ -4658,7 +4657,7 @@ class v1TrialProfilerMetricLabels:
             "name": self.name,
             "agentId": self.agentId if self.agentId is not None else None,
             "gpuUuid": self.gpuUuid if self.gpuUuid is not None else None,
-            "metricType": self.metricType if self.metricType is not None else None,
+            "metricType": self.metricType.value if self.metricType is not None else None,
         }
 
 class v1TrialProfilerMetricsBatch:
@@ -5321,15 +5320,15 @@ def get_GetAgents(
     label: "t.Optional[str]" = None,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetAgentsRequestSortBy]" = None,
 ) -> "v1GetAgentsResponse":
     _params = {
         "label": label,
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5406,15 +5405,15 @@ def get_GetCommands(
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
     users: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
         "users": users,
     }
     _resp = session._do_request(
@@ -5474,18 +5473,18 @@ def get_GetExperimentCheckpoints(
     id: int,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
-    states: "t.Optional[t.Sequence[str]]" = None,
-    validationStates: "t.Optional[t.Sequence[str]]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
+    states: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
+    validationStates: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
-        "states": states,
-        "validationStates": validationStates,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
+        "states": [x.value for x in states] if states else None,
+        "validationStates": [x.value for x in validationStates] if validationStates else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5523,16 +5522,16 @@ def get_GetExperimentTrials(
     experimentId: int,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
-    states: "t.Optional[t.Sequence[str]]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetExperimentTrialsRequestSortBy]" = None,
+    states: "t.Optional[t.Sequence[determinedexperimentv1State]]" = None,
 ) -> "v1GetExperimentTrialsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
-        "states": states,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
+        "states": [x.value for x in states] if states else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5575,9 +5574,9 @@ def get_GetExperiments(
     limit: "t.Optional[int]" = None,
     name: "t.Optional[str]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
-    states: "t.Optional[t.Sequence[str]]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetExperimentsRequestSortBy]" = None,
+    states: "t.Optional[t.Sequence[determinedexperimentv1State]]" = None,
     users: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
     _params = {
@@ -5587,9 +5586,9 @@ def get_GetExperiments(
         "limit": limit,
         "name": name,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
-        "states": states,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
+        "states": [x.value for x in states] if states else None,
         "users": users,
     }
     _resp = session._do_request(
@@ -5629,13 +5628,13 @@ def get_GetJobQueueStats(
 def get_GetJobs(
     session: "client.Session",
     *,
-    orderBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
     pagination_limit: "t.Optional[int]" = None,
     pagination_offset: "t.Optional[int]" = None,
     resourcePool: "t.Optional[str]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
-        "orderBy": orderBy,
+        "orderBy": orderBy.value if orderBy else None,
         "pagination.limit": pagination_limit,
         "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
@@ -5768,14 +5767,14 @@ def get_GetModelVersions(
     modelId: int,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetModelVersionsRequestSortBy]" = None,
 ) -> "v1GetModelVersionsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5799,8 +5798,8 @@ def get_GetModels(
     limit: "t.Optional[int]" = None,
     name: "t.Optional[str]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetModelsRequestSortBy]" = None,
     users: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
@@ -5810,8 +5809,8 @@ def get_GetModels(
         "limit": limit,
         "name": name,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
         "users": users,
     }
     _resp = session._do_request(
@@ -5851,15 +5850,15 @@ def get_GetNotebooks(
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
     users: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
         "users": users,
     }
     _resp = session._do_request(
@@ -5922,15 +5921,15 @@ def get_GetShells(
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
     users: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
         "users": users,
     }
     _resp = session._do_request(
@@ -6027,15 +6026,15 @@ def get_GetTemplates(
     limit: "t.Optional[int]" = None,
     name: "t.Optional[str]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetTemplatesRequestSortBy]" = None,
 ) -> "v1GetTemplatesResponse":
     _params = {
         "limit": limit,
         "name": name,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6074,15 +6073,15 @@ def get_GetTensorboards(
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
     users: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
         "users": users,
     }
     _resp = session._do_request(
@@ -6123,18 +6122,18 @@ def get_GetTrialCheckpoints(
     id: int,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[str]" = None,
-    sortBy: "t.Optional[str]" = None,
-    states: "t.Optional[t.Sequence[str]]" = None,
-    validationStates: "t.Optional[t.Sequence[str]]" = None,
+    orderBy: "t.Optional[v1OrderBy]" = None,
+    sortBy: "t.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
+    states: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
+    validationStates: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy,
-        "sortBy": sortBy,
-        "states": states,
-        "validationStates": validationStates,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
+        "states": [x.value for x in states] if states else None,
+        "validationStates": [x.value for x in validationStates] if validationStates else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6792,12 +6791,12 @@ def get_ResourceAllocationAggregated(
     session: "client.Session",
     *,
     endDate: "t.Optional[str]" = None,
-    period: "t.Optional[str]" = None,
+    period: "t.Optional[v1ResourceAllocationAggregationPeriod]" = None,
     startDate: "t.Optional[str]" = None,
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
         "endDate": endDate,
-        "period": period,
+        "period": period.value if period else None,
         "startDate": startDate,
     }
     _resp = session._do_request(

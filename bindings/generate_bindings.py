@@ -218,10 +218,6 @@ class Parameter:
         if where == "path":
             if not isinstance(typ, (String, Int, Bool)):
                 raise AssertionError(f"bad type in path parameter {name}: {typ}")
-        if where == "query":
-            if not isinstance(typ, (String, Int, Bool)):
-                if not isinstance(typ, Sequence) or not isinstance(typ.items, (String, Int, Bool)):
-                    raise AssertionError(f"bad type in query parameter {name}: {typ}")
 
     def gen_function_param(self) -> Code:
         if self.required:
@@ -298,7 +294,7 @@ class Enum(TypeDef):
         return f"{val}"
 
     def dump(self, val: Code) -> Code:
-        return f"{val}"
+        return f"{val}.value"
 
     def gen_def(self) -> Code:
         out = [f"class {self.name}(enum.Enum):"]
@@ -377,7 +373,13 @@ class Function:
         if query_params:
             out += ["    _params = {"]
             for p in query_params:
-                out += [f'        "{self.params[p].serialized_name}": {self.params[p].name},']
+                param = self.params[p]
+                value = ''
+                if param.type.need_parse():
+                    value = f"{param.type.dump(str(param.name))} if {param.name} else None"
+                else:
+                    value = f"{param.name}"
+                out += [f'        "{self.params[p].serialized_name}": {value},']
             out += ["    }"]
         else:
             out += ["    _params = None"]
@@ -405,12 +407,13 @@ class Function:
 
         return "\n".join(out)
 
-
-def classify_type(path: str, schema: dict) -> TypeAnno:
+def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
     # enforce valid jsonschema:
     assert isinstance(schema, dict), (path, schema)
-    # XXX: how to handle inlined enums?
-    # assert "enum" not in schema, (path, schema)
+    if "enum" in schema:
+        name = enums[hash(frozenset(schema["enum"]))]
+        assert name, (name, schema)
+        return Ref(name)
 
     if "$ref" in schema:
         ref = schema["$ref"]
@@ -437,19 +440,26 @@ def classify_type(path: str, schema: dict) -> TypeAnno:
         adlProps = schema.get("additionalProperties")
         if adlProps is None:
             return Dict(Any())
-        return Dict(classify_type(path + ".additionalProperties", adlProps))
+        return Dict(classify_type(enums, path + ".additionalProperties", adlProps))
 
     if schema["type"] == "array":
         items = schema.get("items")
         if items is None:
             raise ValueError(path, schema)
             return Sequence(Any())
-        return Sequence(classify_type(path + ".items", items))
+        return Sequence(classify_type(enums, path + ".items", items))
 
     raise ValueError(f"unhandled schema: {schema} @ {path}")
 
+def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
+    enums = {}
+    for name, schema in swagger_definitions.items():
+        if "enum" in schema and schema["type"] == "string":
+            members = schema["enum"]
+            enums[hash(frozenset(members))] = name
+    return enums
 
-def process_definitions(swagger_definitions: dict) -> TypeDefs:
+def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
     defs = {}  # type: TypeDefs
     for name, schema in swagger_definitions.items():
         path = name
@@ -466,7 +476,7 @@ def process_definitions(swagger_definitions: dict) -> TypeDefs:
             if "properties" in schema:
                 required = set(schema.get("required", []))
                 members = {
-                    k: Parameter(k, classify_type(path, v), (k in required), "definitions") for k, v in schema["properties"].items()
+                    k: Parameter(k, classify_type(enums, path, v), (k in required), "definitions") for k, v in schema["properties"].items()
                 }
                 # TODO create parameters
                 defs[name] = Class(name, members)
@@ -479,7 +489,7 @@ def process_definitions(swagger_definitions: dict) -> TypeDefs:
     return defs
 
 
-def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Function]:
+def process_paths(swagger_paths: dict, defs: TypeDefs, enums: dict) -> typing.Dict[str, Function]:
     ops = {}
     for path, methods in swagger_paths.items():
         for method, spec in methods.items():
@@ -496,7 +506,7 @@ def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Funct
                     # not a valid response schema, skipping
                     bad_op = True
                     break
-                responses[code] = classify_type(f"{name}.responses.{code}", rspec["schema"])
+                responses[code] = classify_type(enums, f"{name}.responses.{code}", rspec["schema"])
             if bad_op:
                 continue
 
@@ -515,7 +525,7 @@ def process_paths(swagger_paths: dict, defs: TypeDefs) -> typing.Dict[str, Funct
                     # swagger has some weird inlining going on here...
                     inlined = ("type", "format", "items", "properties", "enum")
                     pschema = {k: pspec[k] for k in inlined if k in pspec}
-                ptype = classify_type(f"{name}.{pname}", pschema)
+                ptype = classify_type(enums, f"{name}.{pname}", pschema)
                 params[pname] = Parameter(pname, ptype, required, where, serialized_name)
 
             # TODO: Validate before altering the whole path.
@@ -581,8 +591,9 @@ class APIHttpError(Exception):
 """
     out = [prefix]
 
-    defs = process_definitions(swagger["definitions"])
-    ops = process_paths(swagger["paths"], defs)
+    enums = process_enums(swagger["definitions"])
+    defs = process_definitions(swagger["definitions"], enums)
+    ops = process_paths(swagger["paths"], defs, enums)
     link_all_refs(defs)
 
     for k in sorted(defs):

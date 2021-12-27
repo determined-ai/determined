@@ -37,7 +37,7 @@ def ls(args: Namespace) -> None:
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy=v1OrderBy.ORDER_BY_ASC.value if not args.reverse else v1OrderBy.ORDER_BY_DESC.value,
+        orderBy=v1OrderBy.ORDER_BY_ASC if not args.reverse else v1OrderBy.ORDER_BY_DESC,
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
