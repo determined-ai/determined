@@ -7,11 +7,11 @@ import pytz
 import yaml
 
 from determined.cli import render
+from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.api.bindings import get_GetJobs, v1OrderBy
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.experimental.client import http_request
 
 
 @authentication.required
@@ -33,7 +33,7 @@ def ls(args: Namespace) -> None:
             pass
 
     response = get_GetJobs(
-        http_request,
+        setup_session(args)._do_request,
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
