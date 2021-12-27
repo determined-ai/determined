@@ -452,6 +452,11 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
     raise ValueError(f"unhandled schema: {schema} @ {path}")
 
 def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
+    """
+    Process enums from swagger definitions. In OpenAPI spec v2 generated
+    by  protoc-gen-openapi enums are not linked to a definition and are inlined.
+    Here we preprocess them so that they can  be linked to a definition.
+    """
     enums = {}
     for name, schema in swagger_definitions.items():
         if "enum" in schema and schema["type"] == "string":
@@ -478,7 +483,6 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
                 members = {
                     k: Parameter(k, classify_type(enums, path, v), (k in required), "definitions") for k, v in schema["properties"].items()
                 }
-                # TODO create parameters
                 defs[name] = Class(name, members)
                 continue
             else:
@@ -489,7 +493,7 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
     return defs
 
 
-def process_paths(swagger_paths: dict, defs: TypeDefs, enums: dict) -> typing.Dict[str, Function]:
+def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function]:
     ops = {}
     for path, methods in swagger_paths.items():
         for method, spec in methods.items():
@@ -593,7 +597,7 @@ class APIHttpError(Exception):
 
     enums = process_enums(swagger["definitions"])
     defs = process_definitions(swagger["definitions"], enums)
-    ops = process_paths(swagger["paths"], defs, enums)
+    ops = process_paths(swagger["paths"], enums)
     link_all_refs(defs)
 
     for k in sorted(defs):
