@@ -141,13 +141,19 @@ class Ref(TypeAnno):
     def load(self, val: Code) -> Code:
         assert self.linked, "link step must be completed before generating code!"
         assert self.defn, "it doesn't make sense to load an empty class"
-        assert isinstance(self.defn, (Enum, Class)), (self.name, type(self.defn).__name__)
+        assert isinstance(self.defn, (Enum, Class)), (
+            self.name,
+            type(self.defn).__name__,
+        )
         return self.defn.load(val)
 
     def dump(self, val: Code) -> Code:
         assert self.linked, "link step must be completed before generating code!"
         assert self.defn, "it doesn't make sense to dump an empty class"
-        assert isinstance(self.defn, (Enum, Class)), (self.name, type(self.defn).__name__)
+        assert isinstance(self.defn, (Enum, Class)), (
+            self.name,
+            type(self.defn).__name__,
+        )
         return self.defn.dump(val)
 
 
@@ -204,9 +210,16 @@ class Sequence(TypeAnno):
             return val
         return f"[{self.items.dump('x')} for x in {val}]"
 
+
 class Parameter:
-    def __init__(self, name: str, typ: TypeAnno, required: bool, where: str,
-                 serialized_name: str = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        typ: TypeAnno,
+        required: bool,
+        where: str,
+        serialized_name: str = None,
+    ) -> None:
         self.name = name
         self.serialized_name = serialized_name
         self.type = typ
@@ -302,7 +315,6 @@ class Enum(TypeDef):
         return "\n".join(out)
 
 
-
 class Function:
     def __init__(
         self,
@@ -348,7 +360,10 @@ class Function:
         # (simplifying assumptions; if broken we need more logic)
         responses = {**self.responses}
         default = responses.pop("default")
-        assert isinstance(default, Ref) and default.name == "runtimeError", (self.name, default)
+        assert isinstance(default, Ref) and default.name == "runtimeError", (
+            self.name,
+            default,
+        )
 
         if len(responses) == 1:
             returntype = next(iter(responses.values()))
@@ -358,7 +373,7 @@ class Function:
             returntypestr = '"Union[' + ", ".join(sorted(returntypes)) + ']"'
         assert len(responses) == 1, (self.name, responses)
 
-        out += [f') -> {returntypestr}:']
+        out += [f") -> {returntypestr}:"]
 
         # Function body.
         path_params = sorted(p for p in self.params if self.params[p].where == "path")
@@ -374,9 +389,11 @@ class Function:
             out += ["    _params = {"]
             for p in query_params:
                 param = self.params[p]
-                value = ''
+                value = ""
                 if param.type.need_parse():
-                    value = f"{param.type.dump(str(param.name))} if {param.name} else None"
+                    value = (
+                        f"{param.type.dump(str(param.name))} if {param.name} else None"
+                    )
                 else:
                     value = f"{param.name}"
                 out += [f'        "{self.params[p].serialized_name}": {value},']
@@ -389,7 +406,7 @@ class Function:
         else:
             bodystr = "None"
         out += ["    _resp = session._do_request("]
-        out += [f"        method=\"{self.method.upper()}\","]
+        out += [f'        method="{self.method.upper()}",']
         out += [f"        path={pathstr},"]
         out += ["        params=_params,"]
         out += [f"        json={bodystr},"]
@@ -400,12 +417,13 @@ class Function:
         for expect, returntype in responses.items():
             out += [f"    if _resp.status_code == {expect}:"]
             if returntype.isnone():
-                out += ['        return']
+                out += ["        return"]
             else:
                 out += [f'        return {returntype.load("_resp.json()")}']
         out += [f'    raise APIHttpError("{self.method}_{self.name}", _resp)']
 
         return "\n".join(out)
+
 
 def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
     # enforce valid jsonschema:
@@ -451,6 +469,7 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
 
     raise ValueError(f"unhandled schema: {schema} @ {path}")
 
+
 def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
     """
     Process enums from swagger definitions. In OpenAPI spec v2 generated
@@ -463,6 +482,7 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
             members = schema["enum"]
             enums[hash(frozenset(members))] = name
     return enums
+
 
 def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
     defs = {}  # type: TypeDefs
@@ -481,7 +501,10 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
             if "properties" in schema:
                 required = set(schema.get("required", []))
                 members = {
-                    k: Parameter(k, classify_type(enums, path, v), (k in required), "definitions") for k, v in schema["properties"].items()
+                    k: Parameter(
+                        k, classify_type(enums, path, v), (k in required), "definitions"
+                    )
+                    for k, v in schema["properties"].items()
                 }
                 defs[name] = Class(name, members)
                 continue
@@ -510,7 +533,9 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                     # not a valid response schema, skipping
                     bad_op = True
                     break
-                responses[code] = classify_type(enums, f"{name}.responses.{code}", rspec["schema"])
+                responses[code] = classify_type(
+                    enums, f"{name}.responses.{code}", rspec["schema"]
+                )
             if bad_op:
                 continue
 
@@ -519,7 +544,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
             for pspec in spec.get("parameters", []):
                 where = pspec["in"]
                 serialized_name = None
-                if where == "query": # preserve query parameter names
+                if where == "query":  # preserve query parameter names
                     serialized_name = pname = pspec["name"]
                 pname = pspec["name"].replace(".", "_")
                 required = pspec.get("required", False)
@@ -530,7 +555,9 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                     inlined = ("type", "format", "items", "properties", "enum")
                     pschema = {k: pspec[k] for k in inlined if k in pspec}
                 ptype = classify_type(enums, f"{name}.{pname}", pschema)
-                params[pname] = Parameter(pname, ptype, required, where, serialized_name)
+                params[pname] = Parameter(
+                    pname, ptype, required, where, serialized_name
+                )
 
             # TODO: Validate before altering the whole path.
             path = path.replace(".", "_")
