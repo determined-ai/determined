@@ -16,6 +16,11 @@ deps/$(CODEGEN_BIN):
 	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
+.PHONY: force-gen
+force-gen:
+	touch $(SWAGGER_SPEC)
+
+
 .PHONY: bindings-copy-over
 bindings-copy-over:
 	rm -rf $(ts_bindings_dest)

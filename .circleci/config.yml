@@ -1130,6 +1130,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - run: make -C bindings force-gen
       - run: make -C bindings check/python
 
   upload-try-now-template:
