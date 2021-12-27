@@ -26,7 +26,6 @@ message Notebook {
   };
   // The id of the notebook.
   string id = 1;
-  string idsss = 133;
   // The description of the notebook.
   string description = 2;
   // The state of the notebook.
