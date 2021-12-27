@@ -22,7 +22,7 @@ bindings-copy-over:
 
 .PHONY: build/python
 build/python: $(SWAGGER_SPEC)
-	python generate_bindings.py > $(py_bindings_dest)
+	python generate_bindings.py --output $(py_bindings_dest)
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*

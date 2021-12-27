@@ -642,7 +642,12 @@ class APIHttpError(Exception):
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", "-o", action="store", required=True, help="output file")
+    args = parser.parse_args()
+
     with open(SWAGGER) as f:
         swagger = json.load(f)
-
-    print(pybindings(swagger))
+    with open(args.output, "w") as f:
+        print(pybindings(swagger), file=f)
