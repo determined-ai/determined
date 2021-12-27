@@ -2,6 +2,7 @@ SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
+py_generator = generate_bindings.py
 
 .PHONY: all
 all: get-deps
@@ -20,19 +21,21 @@ bindings-copy-over:
 	rm -rf $(ts_bindings_dest)
 	cp -r  build/typescript-fetch $(ts_bindings_dest)
 
+$(py_bindings_dest): $(SWAGGER_SPEC) $(py_generator)
+	python $(py_generator) --output $(py_bindings_dest)
+
 .PHONY: build/python
-build/python: $(SWAGGER_SPEC)
-	python generate_bindings.py --output $(py_bindings_dest)
+build/python: $(py_bindings_dest)
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l typescript-fetch -o build/typescript-fetch
-	touch build/typescript-fetch
 	$(MAKE) bindings-copy-over
+	touch build/typescript-fetch
 
 .PHONY: build
-build: build/typescript-fetch build/python
+build: build/typescript-fetch $(py_bindings_dest)
 
 .PHONY: check
 check: check/python check/typescript-fetch
