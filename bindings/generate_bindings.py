@@ -429,7 +429,7 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
     # enforce valid jsonschema:
     assert isinstance(schema, dict), (path, schema)
     if "enum" in schema:
-        name = enums[hash(frozenset(schema["enum"]))]
+        name = enums[hash(json.dumps(schema["enum"]))]
         assert name, (name, schema)
         return Ref(name)
 
@@ -480,10 +480,7 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
     for name, schema in swagger_definitions.items():
         if "enum" in schema:
             members = schema["enum"]
-            # we lose the order of enum members by calculating the hash this way but
-            # it's fine since all our enums are string based
-            assert schema["type"] == "string", (name, schema)
-            enums[hash(frozenset(members))] = name
+            enums[hash(json.dumps(members))] = name
     return enums
 
 
