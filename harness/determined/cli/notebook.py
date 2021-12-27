@@ -20,7 +20,7 @@ def start_notebook(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)
 
     body = v1LaunchNotebookRequest(config, preview=False)
-    resp = post_LaunchNotebook(setup_session(args)._do_request, body=body)
+    resp = post_LaunchNotebook(setup_session(args), body=body)
 
     if args.preview:
         print(render.format_object_as_yaml(resp.config))

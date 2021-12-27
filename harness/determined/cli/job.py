@@ -33,7 +33,7 @@ def ls(args: Namespace) -> None:
             pass
 
     response = get_GetJobs(
-        setup_session(args)._do_request,
+        setup_session(args),
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,

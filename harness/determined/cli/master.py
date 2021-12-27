@@ -25,8 +25,7 @@ def config(args: Namespace) -> None:
 
 
 def get_master(args: Namespace) -> None:
-    session = setup_session(args)
-    resp = get_GetMaster(session._do_request)
+    resp = get_GetMaster(setup_session(args))
     if args.output == "json":
         print(json.dumps(resp.to_json(), indent=4))
     elif args.output == "yaml":

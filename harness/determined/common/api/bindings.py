@@ -5,6 +5,9 @@ import typing as t
 
 import requests
 
+if t.TYPE_CHECKING:
+    from determined.experimental import client
+
 # flake8: noqa
 Json = t.Any
 
@@ -159,7 +162,8 @@ class determinedcontainerv1State(enum.Enum):
 class determineddevicev1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_CPU = "TYPE_CPU"
-    TYPE_GPU = "TYPE_GPU"
+    TYPE_CUDA = "TYPE_CUDA"
+    TYPE_ROCM = "TYPE_ROCM"
 
 class determinedexperimentv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -4924,40 +4928,46 @@ class v1ValidationHistoryEntry:
         }
 
 def post_AckAllocationPreemptionSignal(
-    do_request: Request,
+    session: "client.Session",
     *,
     allocationId: str,
     body: "v1AckAllocationPreemptionSignalRequest",
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/allocations/{allocationId}/signals/ack_preemption",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/signals/ack_preemption",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_AckAllocationPreemptionSignal", _resp)
 
 def post_ActivateExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{id}/activate",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{id}/activate",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
 
 def get_AllocationPreemptionSignal(
-    do_request: Request,
+    session: "client.Session",
     *,
     allocationId: str,
     timeoutSeconds: "t.Optional[int]" = None,
@@ -4965,294 +4975,348 @@ def get_AllocationPreemptionSignal(
     _params = {
         "timeoutSeconds": timeoutSeconds,
     }
-    _resp = do_request(
-        "GET",
-        f"/api/v1/allocations/{allocationId}/signals/preemption",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/allocations/{allocationId}/signals/preemption",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1AllocationPreemptionSignalResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationPreemptionSignal", _resp)
 
 def get_AllocationRendezvousInfo(
-    do_request: Request,
+    session: "client.Session",
     *,
     allocationId: str,
     containerId: str,
 ) -> "v1AllocationRendezvousInfoResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1AllocationRendezvousInfoResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationRendezvousInfo", _resp)
 
 def post_ArchiveExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{id}/archive",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{id}/archive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveExperiment", _resp)
 
 def post_ArchiveModel(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/models/{modelId}/archive",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/models/{modelId}/archive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveModel", _resp)
 
 def post_CancelExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{id}/cancel",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{id}/cancel",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CancelExperiment", _resp)
 
 def post_CompleteTrialSearcherValidation(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1CompleteValidateAfterOperation",
     trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{trialId}/searcher/completed_operation",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{trialId}/searcher/completed_operation",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
 
 def post_ComputeHPImportance(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/hyperparameter-importance",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ComputeHPImportance", _resp)
 
 def post_CreateExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1CreateExperimentRequest",
 ) -> "v1CreateExperimentResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/experiments",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/experiments",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1CreateExperimentResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateExperiment", _resp)
 
 def get_CurrentUser(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1CurrentUserResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/auth/user",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/auth/user",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1CurrentUserResponse.from_json(_resp.json())
     raise APIHttpError("get_CurrentUser", _resp)
 
 def delete_DeleteExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "DELETE",
-        f"/api/v1/experiments/{experimentId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/experiments/{experimentId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
 def delete_DeleteModel(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "DELETE",
-        f"/api/v1/models/{modelId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/models/{modelId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteModel", _resp)
 
 def delete_DeleteModelVersion(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
     modelVersionId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "DELETE",
-        f"/api/v1/models/{modelId}/versions/{modelVersionId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/models/{modelId}/versions/{modelVersionId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteModelVersion", _resp)
 
 def delete_DeleteTemplate(
-    do_request: Request,
+    session: "client.Session",
     *,
     templateName: str,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "DELETE",
-        f"/api/v1/templates/{templateName}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/templates/{templateName}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
 
 def post_DisableAgent(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
     body: "v1DisableAgentRequest",
 ) -> "v1DisableAgentResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/agents/{agentId}/disable",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/agents/{agentId}/disable",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1DisableAgentResponse.from_json(_resp.json())
     raise APIHttpError("post_DisableAgent", _resp)
 
 def post_DisableSlot(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
     slotId: str,
 ) -> "v1DisableSlotResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/agents/{agentId}/slots/{slotId}/disable",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1DisableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_DisableSlot", _resp)
 
 def post_EnableAgent(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
 ) -> "v1EnableAgentResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/agents/{agentId}/enable",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/agents/{agentId}/enable",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1EnableAgentResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableAgent", _resp)
 
 def post_EnableSlot(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
     slotId: str,
 ) -> "v1EnableSlotResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/agents/{agentId}/slots/{slotId}/enable",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/agents/{agentId}/slots/{slotId}/enable",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
 
 def get_GetAgent(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
 ) -> "v1GetAgentResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/agents/{agentId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/agents/{agentId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetAgentResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgent", _resp)
 
 def get_GetAgents(
-    do_request: Request,
+    session: "client.Session",
     *,
     label: "t.Optional[str]" = None,
     limit: "t.Optional[int]" = None,
@@ -5267,66 +5331,78 @@ def get_GetAgents(
         "orderBy": orderBy,
         "sortBy": sortBy,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/agents",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/agents",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
 
 def get_GetBestSearcherValidationMetric(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
 ) -> "v1GetBestSearcherValidationMetricResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetBestSearcherValidationMetricResponse.from_json(_resp.json())
     raise APIHttpError("get_GetBestSearcherValidationMetric", _resp)
 
 def get_GetCheckpoint(
-    do_request: Request,
+    session: "client.Session",
     *,
     checkpointUuid: str,
 ) -> "v1GetCheckpointResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/checkpoints/{checkpointUuid}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/checkpoints/{checkpointUuid}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetCheckpointResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCheckpoint", _resp)
 
 def get_GetCommand(
-    do_request: Request,
+    session: "client.Session",
     *,
     commandId: str,
 ) -> "v1GetCommandResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/commands/{commandId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/commands/{commandId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetCommandResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommand", _resp)
 
 def get_GetCommands(
-    do_request: Request,
+    session: "client.Session",
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
@@ -5341,50 +5417,59 @@ def get_GetCommands(
         "sortBy": sortBy,
         "users": users,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/commands",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/commands",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetCommandsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommands", _resp)
 
 def get_GetCurrentTrialSearcherOperation(
-    do_request: Request,
+    session: "client.Session",
     *,
     trialId: int,
 ) -> "v1GetCurrentTrialSearcherOperationResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/trials/{trialId}/searcher/operation",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/searcher/operation",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetCurrentTrialSearcherOperationResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCurrentTrialSearcherOperation", _resp)
 
 def get_GetExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
 ) -> "v1GetExperimentResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/experiments/{experimentId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiment", _resp)
 
 def get_GetExperimentCheckpoints(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
     limit: "t.Optional[int]" = None,
@@ -5402,32 +5487,38 @@ def get_GetExperimentCheckpoints(
         "states": states,
         "validationStates": validationStates,
     }
-    _resp = do_request(
-        "GET",
-        f"/api/v1/experiments/{id}/checkpoints",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{id}/checkpoints",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentCheckpoints", _resp)
 
 def get_GetExperimentLabels(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1GetExperimentLabelsResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/experiment/labels",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiment/labels",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentLabelsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentLabels", _resp)
 
 def get_GetExperimentTrials(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
     limit: "t.Optional[int]" = None,
@@ -5443,34 +5534,40 @@ def get_GetExperimentTrials(
         "sortBy": sortBy,
         "states": states,
     }
-    _resp = do_request(
-        "GET",
-        f"/api/v1/experiments/{experimentId}/trials",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/trials",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentTrialsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentTrials", _resp)
 
 def get_GetExperimentValidationHistory(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
 ) -> "v1GetExperimentValidationHistoryResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/experiments/{experimentId}/validation-history",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/validation-history",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentValidationHistoryResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperimentValidationHistory", _resp)
 
 def get_GetExperiments(
-    do_request: Request,
+    session: "client.Session",
     *,
     archived: "t.Optional[bool]" = None,
     description: "t.Optional[str]" = None,
@@ -5495,36 +5592,42 @@ def get_GetExperiments(
         "states": states,
         "users": users,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/experiments",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/experiments",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiments", _resp)
 
 def get_GetJobQueueStats(
-    do_request: Request,
+    session: "client.Session",
     *,
     resourcePools: "t.Optional[t.Sequence[str]]" = None,
 ) -> "v1GetJobQueueStatsResponse":
     _params = {
         "resourcePools": resourcePools,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/job-queues/stats",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/job-queues/stats",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetJobQueueStatsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetJobQueueStats", _resp)
 
 def get_GetJobs(
-    do_request: Request,
+    session: "client.Session",
     *,
     orderBy: "t.Optional[str]" = None,
     pagination_limit: "t.Optional[int]" = None,
@@ -5537,109 +5640,130 @@ def get_GetJobs(
         "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/job-queues",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/job-queues",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetJobsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetJobs", _resp)
 
 def get_GetMaster(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1GetMasterResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/master",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/master",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetMasterResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMaster", _resp)
 
 def get_GetMasterConfig(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1GetMasterConfigResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/master/config",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/master/config",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetMasterConfigResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMasterConfig", _resp)
 
 def get_GetModel(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
 ) -> "v1GetModelResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/models/{modelId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/models/{modelId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetModelResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModel", _resp)
 
 def get_GetModelDef(
-    do_request: Request,
+    session: "client.Session",
     *,
     experimentId: int,
 ) -> "v1GetModelDefResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/experiments/{experimentId}/model_def",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/model_def",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetModelDefResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelDef", _resp)
 
 def get_GetModelLabels(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1GetModelLabelsResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/model/labels",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/model/labels",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetModelLabelsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelLabels", _resp)
 
 def get_GetModelVersion(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
     modelVersion: int,
 ) -> "v1GetModelVersionResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/models/{modelId}/versions/{modelVersion}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/models/{modelId}/versions/{modelVersion}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelVersion", _resp)
 
 def get_GetModelVersions(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
     limit: "t.Optional[int]" = None,
@@ -5653,18 +5777,21 @@ def get_GetModelVersions(
         "orderBy": orderBy,
         "sortBy": sortBy,
     }
-    _resp = do_request(
-        "GET",
-        f"/api/v1/models/{modelId}/versions",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/models/{modelId}/versions",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetModelVersionsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelVersions", _resp)
 
 def get_GetModels(
-    do_request: Request,
+    session: "client.Session",
     *,
     archived: "t.Optional[bool]" = None,
     description: "t.Optional[str]" = None,
@@ -5687,34 +5814,40 @@ def get_GetModels(
         "sortBy": sortBy,
         "users": users,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/models",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/models",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetModelsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModels", _resp)
 
 def get_GetNotebook(
-    do_request: Request,
+    session: "client.Session",
     *,
     notebookId: str,
 ) -> "v1GetNotebookResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/notebooks/{notebookId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/notebooks/{notebookId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetNotebookResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebook", _resp)
 
 def get_GetNotebooks(
-    do_request: Request,
+    session: "client.Session",
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
@@ -5729,18 +5862,21 @@ def get_GetNotebooks(
         "sortBy": sortBy,
         "users": users,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/notebooks",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/notebooks",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
 
 def get_GetResourcePools(
-    do_request: Request,
+    session: "client.Session",
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
@@ -5749,34 +5885,40 @@ def get_GetResourcePools(
         "limit": limit,
         "offset": offset,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/resource-pools",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resource-pools",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetResourcePoolsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetResourcePools", _resp)
 
 def get_GetShell(
-    do_request: Request,
+    session: "client.Session",
     *,
     shellId: str,
 ) -> "v1GetShellResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/shells/{shellId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/shells/{shellId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetShellResponse.from_json(_resp.json())
     raise APIHttpError("get_GetShell", _resp)
 
 def get_GetShells(
-    do_request: Request,
+    session: "client.Session",
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
@@ -5791,81 +5933,96 @@ def get_GetShells(
         "sortBy": sortBy,
         "users": users,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/shells",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/shells",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetShellsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetShells", _resp)
 
 def get_GetSlot(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
     slotId: str,
 ) -> "v1GetSlotResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/agents/{agentId}/slots/{slotId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/agents/{agentId}/slots/{slotId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetSlotResponse.from_json(_resp.json())
     raise APIHttpError("get_GetSlot", _resp)
 
 def get_GetSlots(
-    do_request: Request,
+    session: "client.Session",
     *,
     agentId: str,
 ) -> "v1GetSlotsResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/agents/{agentId}/slots",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/agents/{agentId}/slots",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetSlotsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetSlots", _resp)
 
 def get_GetTelemetry(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1GetTelemetryResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/master/telemetry",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/master/telemetry",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTelemetryResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTelemetry", _resp)
 
 def get_GetTemplate(
-    do_request: Request,
+    session: "client.Session",
     *,
     templateName: str,
 ) -> "v1GetTemplateResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/templates/{templateName}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/templates/{templateName}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTemplateResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTemplate", _resp)
 
 def get_GetTemplates(
-    do_request: Request,
+    session: "client.Session",
     *,
     limit: "t.Optional[int]" = None,
     name: "t.Optional[str]" = None,
@@ -5880,34 +6037,40 @@ def get_GetTemplates(
         "orderBy": orderBy,
         "sortBy": sortBy,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/templates",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/templates",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTemplatesResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTemplates", _resp)
 
 def get_GetTensorboard(
-    do_request: Request,
+    session: "client.Session",
     *,
     tensorboardId: str,
 ) -> "v1GetTensorboardResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/tensorboards/{tensorboardId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tensorboards/{tensorboardId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTensorboard", _resp)
 
 def get_GetTensorboards(
-    do_request: Request,
+    session: "client.Session",
     *,
     limit: "t.Optional[int]" = None,
     offset: "t.Optional[int]" = None,
@@ -5922,34 +6085,40 @@ def get_GetTensorboards(
         "sortBy": sortBy,
         "users": users,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/tensorboards",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/tensorboards",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTensorboardsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTensorboards", _resp)
 
 def get_GetTrial(
-    do_request: Request,
+    session: "client.Session",
     *,
     trialId: int,
 ) -> "v1GetTrialResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/trials/{trialId}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrial", _resp)
 
 def get_GetTrialCheckpoints(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
     limit: "t.Optional[int]" = None,
@@ -5967,558 +6136,660 @@ def get_GetTrialCheckpoints(
         "states": states,
         "validationStates": validationStates,
     }
-    _resp = do_request(
-        "GET",
-        f"/api/v1/trials/{id}/checkpoints",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{id}/checkpoints",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
 def get_GetUser(
-    do_request: Request,
+    session: "client.Session",
     *,
     username: str,
 ) -> "v1GetUserResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        f"/api/v1/users/{username}",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{username}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
 
 def get_GetUsers(
-    do_request: Request,
+    session: "client.Session",
 ) -> "v1GetUsersResponse":
     _params = None
-    _resp = do_request(
-        "GET",
-        "/api/v1/users",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
 
 def put_IdleNotebook(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1IdleNotebookRequest",
     notebookId: str,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "PUT",
-        f"/api/v1/notebooks/{notebookId}/report_idle",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/notebooks/{notebookId}/report_idle",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("put_IdleNotebook", _resp)
 
 def post_KillCommand(
-    do_request: Request,
+    session: "client.Session",
     *,
     commandId: str,
 ) -> "v1KillCommandResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/commands/{commandId}/kill",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/commands/{commandId}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1KillCommandResponse.from_json(_resp.json())
     raise APIHttpError("post_KillCommand", _resp)
 
 def post_KillExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{id}/kill",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{id}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_KillExperiment", _resp)
 
 def post_KillNotebook(
-    do_request: Request,
+    session: "client.Session",
     *,
     notebookId: str,
 ) -> "v1KillNotebookResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/notebooks/{notebookId}/kill",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/notebooks/{notebookId}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1KillNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_KillNotebook", _resp)
 
 def post_KillShell(
-    do_request: Request,
+    session: "client.Session",
     *,
     shellId: str,
 ) -> "v1KillShellResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/shells/{shellId}/kill",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/shells/{shellId}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1KillShellResponse.from_json(_resp.json())
     raise APIHttpError("post_KillShell", _resp)
 
 def post_KillTensorboard(
-    do_request: Request,
+    session: "client.Session",
     *,
     tensorboardId: str,
 ) -> "v1KillTensorboardResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/tensorboards/{tensorboardId}/kill",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tensorboards/{tensorboardId}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1KillTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_KillTensorboard", _resp)
 
 def post_KillTrial(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{id}/kill",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{id}/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_KillTrial", _resp)
 
 def post_LaunchCommand(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1LaunchCommandRequest",
 ) -> "v1LaunchCommandResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/commands",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/commands",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1LaunchCommandResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchCommand", _resp)
 
 def post_LaunchNotebook(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1LaunchNotebookRequest",
 ) -> "v1LaunchNotebookResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/notebooks",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/notebooks",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1LaunchNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchNotebook", _resp)
 
 def post_LaunchShell(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1LaunchShellRequest",
 ) -> "v1LaunchShellResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/shells",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/shells",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1LaunchShellResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchShell", _resp)
 
 def post_LaunchTensorboard(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1LaunchTensorboardRequest",
 ) -> "v1LaunchTensorboardResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/tensorboards",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/tensorboards",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1LaunchTensorboardResponse.from_json(_resp.json())
     raise APIHttpError("post_LaunchTensorboard", _resp)
 
 def post_Login(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1LoginRequest",
 ) -> "v1LoginResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/auth/login",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/auth/login",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1LoginResponse.from_json(_resp.json())
     raise APIHttpError("post_Login", _resp)
 
 def post_Logout(
-    do_request: Request,
+    session: "client.Session",
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/auth/logout",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/auth/logout",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_Logout", _resp)
 
 def post_MarkAllocationReservationDaemon(
-    do_request: Request,
+    session: "client.Session",
     *,
     allocationId: str,
     body: "v1MarkAllocationReservationDaemonRequest",
     containerId: str,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MarkAllocationReservationDaemon", _resp)
 
 def patch_PatchExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1Experiment",
     experiment_id: int,
 ) -> "v1PatchExperimentResponse":
     _params = None
-    _resp = do_request(
-        "PATCH",
-        f"/api/v1/experiments/{experiment_id}",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/experiments/{experiment_id}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PatchExperimentResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchExperiment", _resp)
 
 def patch_PatchModel(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PatchModelRequest",
     modelId: int,
 ) -> "v1PatchModelResponse":
     _params = None
-    _resp = do_request(
-        "PATCH",
-        f"/api/v1/models/{modelId}",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/models/{modelId}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PatchModelResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModel", _resp)
 
 def patch_PatchModelVersion(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PatchModelVersionRequest",
     modelId: int,
     modelVersionId: int,
 ) -> "v1PatchModelVersionResponse":
     _params = None
-    _resp = do_request(
-        "PATCH",
-        f"/api/v1/models/{modelId}/versions/{modelVersionId}",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/models/{modelId}/versions/{modelVersionId}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PatchModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModelVersion", _resp)
 
 def post_PauseExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{id}/pause",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{id}/pause",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
 
 def post_PostCheckpointMetadata(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PostCheckpointMetadataRequest",
     checkpoint_uuid: str,
 ) -> "v1PostCheckpointMetadataResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/checkpoints/{checkpoint_uuid}/metadata",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/checkpoints/{checkpoint_uuid}/metadata",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
 def post_PostModel(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PostModelRequest",
 ) -> "v1PostModelResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/models",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/models",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PostModelResponse.from_json(_resp.json())
     raise APIHttpError("post_PostModel", _resp)
 
 def post_PostModelVersion(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PostModelVersionRequest",
     modelId: int,
 ) -> "v1PostModelVersionResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/models/{modelId}/versions",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/models/{modelId}/versions",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PostModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("post_PostModelVersion", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PostTrialProfilerMetricsBatchRequest",
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/trials/profiler/metrics",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/profiler/metrics",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostTrialProfilerMetricsBatch", _resp)
 
 def post_PostTrialRunnerMetadata(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1TrialRunnerMetadata",
     trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{trialId}/runner/metadata",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{trialId}/runner/metadata",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostTrialRunnerMetadata", _resp)
 
 def post_PostUser(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PostUserRequest",
 ) -> "v1PostUserResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/users",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
 
 def post_PreviewHPSearch(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1PreviewHPSearchRequest",
 ) -> "v1PreviewHPSearchResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/preview-hp-search",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/preview-hp-search",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PreviewHPSearchResponse.from_json(_resp.json())
     raise APIHttpError("post_PreviewHPSearch", _resp)
 
 def put_PutTemplate(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1Template",
     template_name: str,
 ) -> "v1PutTemplateResponse":
     _params = None
-    _resp = do_request(
-        "PUT",
-        f"/api/v1/templates/{template_name}",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/templates/{template_name}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
 
 def post_ReportTrialCheckpointMetadata(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1CheckpointMetadata",
     checkpointMetadata_trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{checkpointMetadata_trialId}/checkpoint_metadata",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{checkpointMetadata_trialId}/checkpoint_metadata",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialCheckpointMetadata", _resp)
 
 def post_ReportTrialProgress(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: float,
     trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{trialId}/progress",
-        _params,
-        dump_float(body),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{trialId}/progress",
+        params=_params,
+        json=dump_float(body),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialProgress", _resp)
 
 def post_ReportTrialSearcherEarlyExit(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1TrialEarlyExit",
     trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{trialId}/early_exit",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{trialId}/early_exit",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialSearcherEarlyExit", _resp)
 
 def post_ReportTrialTrainingMetrics(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1TrialMetrics",
     trainingMetrics_trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{trainingMetrics_trialId}/training_metrics",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{trainingMetrics_trialId}/training_metrics",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialTrainingMetrics", _resp)
 
 def post_ReportTrialValidationMetrics(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1TrialMetrics",
     validationMetrics_trialId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/trials/{validationMetrics_trialId}/validation_metrics",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/trials/{validationMetrics_trialId}/validation_metrics",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
 
 def get_ResourceAllocationAggregated(
-    do_request: Request,
+    session: "client.Session",
     *,
     endDate: "t.Optional[str]" = None,
     period: "t.Optional[str]" = None,
@@ -6529,18 +6800,21 @@ def get_ResourceAllocationAggregated(
         "period": period,
         "startDate": startDate,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/resources/allocation/aggregated",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resources/allocation/aggregated",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1ResourceAllocationAggregatedResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationAggregated", _resp)
 
 def get_ResourceAllocationRaw(
-    do_request: Request,
+    session: "client.Session",
     *,
     timestampAfter: "t.Optional[str]" = None,
     timestampBefore: "t.Optional[str]" = None,
@@ -6549,144 +6823,171 @@ def get_ResourceAllocationRaw(
         "timestampAfter": timestampAfter,
         "timestampBefore": timestampBefore,
     }
-    _resp = do_request(
-        "GET",
-        "/api/v1/resources/allocation/raw",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/resources/allocation/raw",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
 
 def post_SetCommandPriority(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1SetCommandPriorityRequest",
     commandId: str,
 ) -> "v1SetCommandPriorityResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/commands/{commandId}/set_priority",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/commands/{commandId}/set_priority",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1SetCommandPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetCommandPriority", _resp)
 
 def post_SetNotebookPriority(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1SetNotebookPriorityRequest",
     notebookId: str,
 ) -> "v1SetNotebookPriorityResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/notebooks/{notebookId}/set_priority",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/notebooks/{notebookId}/set_priority",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1SetNotebookPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetNotebookPriority", _resp)
 
 def post_SetShellPriority(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1SetShellPriorityRequest",
     shellId: str,
 ) -> "v1SetShellPriorityResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/shells/{shellId}/set_priority",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/shells/{shellId}/set_priority",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1SetShellPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetShellPriority", _resp)
 
 def post_SetTensorboardPriority(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1SetTensorboardPriorityRequest",
     tensorboardId: str,
 ) -> "v1SetTensorboardPriorityResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/tensorboards/{tensorboardId}/set_priority",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tensorboards/{tensorboardId}/set_priority",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1SetTensorboardPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetTensorboardPriority", _resp)
 
 def post_SetUserPassword(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: str,
     username: str,
 ) -> "v1SetUserPasswordResponse":
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/users/{username}/password",
-        _params,
-        body,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/users/{username}/password",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
 
 def post_UnarchiveExperiment(
-    do_request: Request,
+    session: "client.Session",
     *,
     id: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/experiments/{id}/unarchive",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{id}/unarchive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveExperiment", _resp)
 
 def post_UnarchiveModel(
-    do_request: Request,
+    session: "client.Session",
     *,
     modelId: int,
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        f"/api/v1/models/{modelId}/unarchive",
-        _params,
-        None,
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/models/{modelId}/unarchive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveModel", _resp)
 
 def post_UpdateJobQueue(
-    do_request: Request,
+    session: "client.Session",
     *,
     body: "v1UpdateJobQueueRequest",
 ) -> None:
     _params = None
-    _resp = do_request(
-        "POST",
-        "/api/v1/job-queues",
-        _params,
-        body.to_json(),
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/job-queues",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
     )
     if _resp.status_code == 200:
         return

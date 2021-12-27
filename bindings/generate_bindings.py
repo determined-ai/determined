@@ -339,7 +339,7 @@ class Function:
         out = [f"def {self.method}_{self.name}("]
 
         # Function parameters.
-        out += ['    do_request: Request,']
+        out += ['    session: "client.Session",']
         if self.params:
             out += ["    *,"]
 
@@ -386,11 +386,14 @@ class Function:
             bodystr = self.params["body"].dump()
         else:
             bodystr = "None"
-        out += ["    _resp = do_request("]
-        out += [f"        \"{self.method.upper()}\","]
-        out += [f"        {pathstr},"]
-        out += ["        _params,"]
-        out += [f"        {bodystr},"]
+        out += ["    _resp = session._do_request("]
+        out += [f"        method=\"{self.method.upper()}\","]
+        out += [f"        path={pathstr},"]
+        out += ["        params=_params,"]
+        out += [f"        json={bodystr},"]
+        out += ["        data=None,"]
+        out += ["        headers=None,"]
+        out += ["        timeout=None,"]
         out += ["    )"]
         for expect, returntype in responses.items():
             out += [f"    if _resp.status_code == {expect}:"]
@@ -536,6 +539,9 @@ import math
 import typing as t
 
 import requests
+
+if t.TYPE_CHECKING:
+    from determined.experimental import client
 
 # flake8: noqa
 Json = t.Any
