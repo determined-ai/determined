@@ -7,6 +7,7 @@ import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import {
+  archivedRenderer,
   defaultRowClassName, getFullPaginationConfig,
 } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
@@ -192,10 +193,25 @@ const JobQueue: React.FC = () => {
           if (selectedRp && !orderdQTypes.includes(selectedRp.schedulerType)) {
             col.sorter = undefined;
             col.title = 'Preemptible';
+            col.render = (_: unknown, record) => {
+              return (
+                <div className={css.centerVertically}>
+                  {archivedRenderer(record.isPreemptible)}
+                </div>
+              );
+            };
           } else {
             col.sorter = (a: Job, b: Job): number =>
               numericSorter(a.summary.jobsAhead, b.summary.jobsAhead);
             col.title = '#';
+            col.render = (_: unknown, record) => {
+              return (
+                <div className={css.centerVertically}>
+                  {record.summary.jobsAhead}
+                  {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+                </div>
+              );
+            };
           }
           break;
       }
