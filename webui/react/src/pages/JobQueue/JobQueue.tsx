@@ -182,14 +182,6 @@ const JobQueue: React.FC = () => {
           }
           break;
         case 'jobsAhead':
-          col.render = (_: unknown, record) => {
-            return (
-              <div className={css.centerVertically}>
-                {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
-                {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
-              </div>
-            );
-          };
           if (selectedRp && !orderdQTypes.includes(selectedRp.schedulerType)) {
             col.sorter = undefined;
             col.title = 'Preemptible';
