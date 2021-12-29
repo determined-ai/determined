@@ -26,6 +26,7 @@ interface Props {
 const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType, jobs }) => {
   const formRef = useRef<FormInstance>(null);
   const { resourcePools } = useStore();
+  const isOrderedQ = job.summary.jobsAhead >= 0;
 
   const details = useMemo(() => {
     interface Item {
@@ -61,7 +62,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       { label: 'Is Preemtible', value: job.isPreemptible ? 'Yes' : 'No' },
       {
         label: 'Jobs Ahead',
-        value: job.summary.jobsAhead >= 0 ? job.summary.jobsAhead : undefined,
+        value: isOrderedQ ? job.summary.jobsAhead : undefined,
       },
       tableDetails.user,
     ];
@@ -129,9 +130,11 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       visible={true}
       onCancel={onFinish}
       onOk={onOk}>
-      <p>There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
-        {isSingular ? '' : 's'} ahead of this job.
-      </p>
+      {isOrderedQ && (
+        <p>There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
+          {isSingular ? '' : 's'} ahead of this job.
+        </p>
+      )}
       <h6>
         Queue Settings
       </h6>
