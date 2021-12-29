@@ -59,7 +59,7 @@ export const defaultPaginationConfig = {
 
 /* Table Column Renderers */
 
-export const archivedRenderer = (yesNo: boolean): React.ReactNode => {
+export const checkmarkRenderer = (yesNo: boolean): React.ReactNode => {
   return yesNo ? <Icon name="checkmark" /> : null;
 };
 

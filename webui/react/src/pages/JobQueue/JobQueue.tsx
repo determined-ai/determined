@@ -7,7 +7,7 @@ import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import {
-  archivedRenderer,
+  checkmarkRenderer,
   defaultRowClassName, getFullPaginationConfig,
 } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
@@ -196,7 +196,7 @@ const JobQueue: React.FC = () => {
             col.render = (_: unknown, record) => {
               return (
                 <div className={css.centerVertically}>
-                  {archivedRenderer(record.isPreemptible)}
+                  {checkmarkRenderer(record.isPreemptible)}
                 </div>
               );
             };
