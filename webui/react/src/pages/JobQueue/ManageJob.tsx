@@ -5,13 +5,13 @@ import Badge, { BadgeType } from 'components/Badge';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { columns } from 'pages/JobQueue/JobQueue.table';
-import { V1SchedulerType } from 'services/api-ts-sdk';
+import * as api from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { Job, RPStats } from 'types';
 import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
-import { moveJobToPosition } from './utils';
+import { moveJobToPositionUpdate } from './utils';
 
 const { Option } = Select;
 
@@ -19,12 +19,19 @@ interface Props {
   job: Job;
   jobs: Job[];
   onFinish?: () => void;
-  schedulerType: V1SchedulerType;
+  schedulerType: api.V1SchedulerType;
   selectedRPStats: RPStats;
 }
 
+interface FormValues {
+  position?: string;
+  priority?: string;
+  resourcePool?: string;
+  weight?: string;
+}
+
 const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType, jobs }) => {
-  const formRef = useRef<FormInstance>(null);
+  const formRef = useRef <FormInstance<FormValues>>(null);
   const { resourcePools } = useStore();
   const isOrderedQ = job.summary.jobsAhead >= 0;
 
@@ -69,30 +76,29 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
 
     return items.filter(item => !!item && item.value !== undefined) as Item[];
 
+  }, [ job, isOrderedQ ]);
+
+  const formValuesToQUpdate = useCallback((
+    formRef: React.RefObject<FormInstance<FormValues>>,
+  ): api.V1QueueControl | undefined => {
+    if (!formRef.current) return;
+    const formValues = formRef.current.getFieldsValue();
+    if (formValues.position !== undefined
+      && parseInt(formValues.position, 10) - 1 !== job.summary.jobsAhead) {
+      return moveJobToPositionUpdate(job.jobId, parseInt(formValues.position, 10) - 1);
+    } else if (formValues.priority !== undefined
+      && parseInt(formValues.priority) !== job.priority) {
+      return { jobId: job.jobId, priority: parseInt(formValues.priority) };
+    } else if (formValues.weight !== undefined && parseFloat(formValues.weight) !== job.weight) {
+      return { jobId: job.jobId, weight: parseFloat(formValues.weight) };
+    }
   }, [ job ]);
 
   const onOk = useCallback(
     async () => {
-      if (!formRef.current) return;
-      const formValues = formRef.current.getFieldsValue();
-      try {
-        // TODO better detection?
-        const jobsAhead = parseInt(formValues.position, 10) - 1;
-        if (jobsAhead !== job.summary.jobsAhead) {
-          await moveJobToPosition(job.jobId, jobsAhead);
-        } else {
-          await detApi.Internal.updateJobQueue({
-            updates: [
-            // TODO validate & avoid including all 3
-              {
-                jobId: job.jobId,
-                priority: parseInt(formValues.priority),
-                weight: parseFloat(formValues.weight),
-              },
-            ],
-          });
-        }
-
+      try{
+        const update = formValuesToQUpdate(formRef);
+        if (update) await detApi.Internal.updateJobQueue({ updates: [ update ] });
       } catch (e) {
         handleError({
           error: e as Error,
@@ -104,7 +110,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       }
       onFinish?.();
     },
-    [ formRef, onFinish, job.jobId, job.summary.jobsAhead ],
+    [ formRef, onFinish, formValuesToQUpdate, job.jobId ],
   );
 
   const curRP = resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
@@ -148,7 +154,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         labelCol={{ span: 6 }}
         name="form basic"
         ref={formRef}>
-        {schedulerType === V1SchedulerType.PRIORITY && (
+        {schedulerType === api.V1SchedulerType.PRIORITY && (
           <>
             <Form.Item
               label="Position in Queue"
@@ -164,7 +170,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
             </Form.Item>
           </>
         )}
-        {schedulerType === V1SchedulerType.FAIRSHARE && (
+        {schedulerType === api.V1SchedulerType.FAIRSHARE && (
           <Form.Item
             label="Weight"
             name="weight">
