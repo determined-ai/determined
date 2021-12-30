@@ -20,11 +20,9 @@ distributed training, by allowing users to define custom reducers. Custom reduce
 function or an implementation of the :class:`determined.pytorch.MetricReducer` interface. See
 :meth:`determined.pytorch.PyTorchTrialContext.wrap_reducer` for more details.
 
-.. _reproducible-dataset:
-
-***********************
- Reproducible Datasets
-***********************
+************************************
+ Customizing A Reproducible Dataset
+************************************
 
 .. note::
 
@@ -145,3 +143,5 @@ you find that the built-in context.DataLoader() does not support your use case.
            )
 
            return torch.utils.data.DataLoader(my_dataset, batch_sampler=batch_sampler)
+
+See the :mod:`determined.pytorch.samplers` for details.

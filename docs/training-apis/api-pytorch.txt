@@ -6,14 +6,13 @@
  Overview
 **********
 
-This document lists how you should implement the PyTorch API. You need to implement a trial class
-that inherits :class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint in the
-:doc:`experiment configuration </training-apis/experiment-config>`.
+This document guides you through training a PyTorch model in Determined. You need to implement a
+trial class that inherits :class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint
+in the :doc:`experiment configuration </training-apis/experiment-config>`.
 
-Once we inherit this class, we will be required to override specific functions that represent the
-components that are used in the training procedure. When starting a new port, it is helpful to work
-off of a skeleton to keep track of what is still required. A good starting template can be found
-below:
+To implement :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions that
+represent the components that are used in the training procedure. It is helpful to work off of a
+skeleton to keep track of what is still required. A good starting template can be found below:
 
 .. code:: python
 
@@ -135,7 +134,7 @@ See the following code as an example:
        return train_loader
 
 In the function :meth:`~determined.pytorch.PyTorchTrial.train_batch` returns a batch of data in one
-of the following format:
+of the following formats:
 
 -  ``np.ndarray``
 

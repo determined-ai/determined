@@ -207,7 +207,7 @@ redirects = {
     "features/yaml": "../concepts/yaml.html",
     "prepare-data/data-layer": "../training-apis/data-layer.html",
     "training-apis/api-determined": "index.html",
-    "training-apis/api-pytorch-samplers": "api-pytorch.html#reproducible-dataset",
+    "training-apis/api-pytorch-samplers": "api-pytorch.html",
     "training-apis/api-trial_context": "index.html",
     "training-apis/best-practices-for-model-definitions": "index.html",
     "training-apis/examples": "examples.html",

@@ -6,9 +6,9 @@
  Overview
 **********
 
-This document lists how you should implement the Estimator API. You need to implement a trial class
-that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the entrypoint in the
-:doc:`experiment configuration </training-apis/experiment-config>`.
+This document guides you through training a Estimator model in Determined. You need to implement a
+trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
+entrypoint in the :doc:`experiment configuration </training-apis/experiment-config>`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 
