@@ -1,3 +1,4 @@
+import * as Api from 'services/api-ts-sdk';
 import { AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, Job, JobState, JobType,
   RunState } from 'types';
 
@@ -51,3 +52,7 @@ export const jobStateToLabel: {[key in JobState]: string} = {
   [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
 };
+
+export const orderedSchedulers = new Set(
+  [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
+);

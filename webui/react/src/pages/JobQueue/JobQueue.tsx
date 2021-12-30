@@ -24,6 +24,7 @@ import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
+import { orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -32,8 +33,6 @@ import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 import RPStatsOverview from './RPStats';
 import { moveJobToPosition } from './utils';
-
-const orderdQTypes = [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ];
 
 const JobQueue: React.FC = () => {
   const { resourcePools } = useStore();
@@ -182,7 +181,7 @@ const JobQueue: React.FC = () => {
           }
           break;
         case 'jobsAhead':
-          if (selectedRp && !orderdQTypes.includes(selectedRp.schedulerType)) {
+          if (selectedRp && !orderedSchedulers.has(selectedRp.schedulerType)) {
             col.sorter = undefined;
             col.title = 'Preemptible';
             col.render = (_: unknown, record) => {
