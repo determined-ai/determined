@@ -64,7 +64,11 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         label: 'State',
         value: <Badge state={job.summary.state} type={BadgeType.State} />,
       },
-      { label: 'Progress', value: job.progress && floatToPercent(job.progress, 1) },
+      {
+        label: 'Progress',
+        value: job.progress ?
+          floatToPercent(job.progress, 1) + '%' : undefined,
+      },
       tableDetails.slots,
       { label: 'Is Preemtible', value: job.isPreemptible ? 'Yes' : 'No' },
       {
@@ -187,12 +191,12 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
             ))}
           </Select>
         </Form.Item>
-        <Form.Item
+        {/* <Form.Item
           extra="Change the resource request. Note: this can only be modified before a job is run."
           label="Slots"
           name="slots">
           <Input disabled type="number" />
-        </Form.Item>
+        </Form.Item> */}
       </Form>
       <h6>
         Job Details
@@ -207,6 +211,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
             </div>
           </List.Item>
         )}
+        size="small"
       />
     </Modal>
   );
