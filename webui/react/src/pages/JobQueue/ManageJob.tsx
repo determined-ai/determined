@@ -159,7 +159,8 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         labelCol={{ span: 6 }}
         name="form basic"
         ref={formRef}>
-        {schedulerType === api.V1SchedulerType.PRIORITY && (
+        {[ api.V1SchedulerType.KUBERNETES, api.V1SchedulerType.PRIORITY ]
+          .includes(schedulerType) && (
           <>
             <Form.Item
               label="Position in Queue"
