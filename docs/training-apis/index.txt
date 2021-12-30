@@ -6,102 +6,31 @@
  Overview
 **********
 
-The training APIs allows users to configure the training procedure and what objects to use in the
-training procedure, including the model architecture, data loader, optimizer, learning rate
-scheduler, callbacks, and etc,.
+Determined leverages specific APIs for each Deep Learning framework. In general, users convert their
+existing training code by subclassing a Trial class and implementing methods that advertise
+components of the user's model - e.g. model architecture, data loader, optimizer, learning rate
+scheduler, callbacks, etc. This is called the Trial definition and by structuring their code in this
+way, Determined is able to run the training loop and provide advanced training and model management
+capabilities.
 
-The training APIs is composed of two parts, the **trial definition** and the **experiment
-configuration**.
+Once users' model code are ported to Determined's APIs, they can use an :doc:`experiment
+configuration </training-apis/experiment-config>` to configure how Determined should train the model
+- e.g. multi-GPU, hyperparameter search, etc.
 
-The trial definition contains the definition of all the objects that might be used in the training
-procedure. You need to choose one of the following APIs:
+If you have existing model code that you'd like to run on Determined, continue to one of the API
+docs below depending on your ML Framework.
 
 -  :doc:`/training-apis/api-pytorch`
+-  :doc:`/training-apis/api-pytorch-lightning`
 -  :doc:`/training-apis/api-keras`
 -  :doc:`/training-apis/api-estimator`
 
-In addition to the trial definition, we also require an :doc:`experiment configuration
-</training-apis/experiment-config>` in the format of :doc:`YAML </concepts/yaml>`.
+.. note::
 
-We also provide a rich list of :doc:`examples </examples>` for users to refer to.
-
-****************
- Best Practices
-****************
-
-General Tips for the Trial Definition
-=====================================
-
-Do:
-
--  Use framework abstractions to implement learning rate scheduling instead of directly changing the
-   learning rate. See `tf.keras.optimizers.schedules.LearningRateSchedule
-   <https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/LearningRateSchedule>`__
-   and :class:`determined.pytorch.LRScheduler` as examples.
-
--  For code that needs to download artifacts (e.g., data, configurations, pretrained weights),
-   download to a `tempfile.TemporaryDirectory <https://docs.python.org/3/library/tempfile.html>`__
-   unique to the Python process. This will avoid race conditions when using :ref:`distributed
-   training <multi-gpu-training>`, in which Determined executes multiple Python processes in the
-   same task container.
-
-Do not:
-
--  Use instance attributes on a trial class to save any state over time (e.g., storing metric
-   history in a ``self`` attribute). The ``Trial`` instance will only save and restore model weights
-   and optimizer state over time; ``self`` attributes may be reset to their initial state at any
-   time if the Determined cluster reschedules the trial to another task container.
-
-Separate Configuration from Code
-================================
-
-We encourage a clean separation of code from configuration via the :ref:`experiment configuration
-<experiment-configuration>`. Specifically, you are encouraged to use the pre-defined fields in the
-experiment configuration, such as the ``searcher``, ``hyperparameters``, ``optimizations``, and
-``resources``. This not only allows you to reuse the trial definition when you tune different
-configuration fields but also improve the visualibility because those fields can be browsed in our
-WebUI.
-
-Do:
-
--  Move any hardcoded scalar values to the :ref:`hyperparameters
-   <experiment-configuration_hyperparameters>` or :ref:`data <experiment-config-data>` fields in the
-   experiment configuration. Use :func:`context.get_hparam() <determined.TrialContext.get_hparam>`
-   or :func:`context.get_data_config() <determined.TrialContext.get_data_config>` to reference them
-   in code.
-
--  Move any hardcoded filesystem paths (e.g., ``/data/train.csv``) to the ``data`` field of the
-   experiment configuration. Use ``context.get_data_config()`` to reference them in code.
-
-Do not:
-
--  Use global variables in your model definition; consider moving them to the experiment
-   configuration.
-
-Understand Dependencies
-=======================
-
-We encourage tracking the dependencies associated with every workflow via the :ref:`environment
-<experiment-configuration>` field. Understanding and standardizing the environment you use to
-execute Python in your development environment will pay off dividends in **portability**, allowing
-you to flexibly move between local, cloud, and on-premise cluster environments.
-
-Do:
-
--  Ramp up quickly by using our :ref:`default environment Docker image <default-environment>`,
-   optionally specifying additional PyPI dependencies by using ``pip install`` in
-   ``startup-hook.sh``.
-
--  As your dependencies increase in complexity, invest in :ref:`building and using a custom Docker
-   image <custom-env>` that meets your needs.
-
--  Pin Python package dependencies to specific versions (e.g., ``<package>==<version>``) in build
-   tools.
-
-Do not:
-
--  Modify the ``PYTHONPATH`` or ``PATH`` environment variables to import libraries by circumventing
-   the Python packaging system.
+   If you'd like a review of implementing the Determined APIs on example models, please take a look
+   at our :doc:`Tutorials </tutorials/index>`. Or, if you'd like to build off of an existing model
+   that already runs on Determined, take a look at our :doc:`examples </examples>` to see if the
+   model you'd like to run is already available.
 
 *********
  Support
@@ -146,16 +75,13 @@ To change the container image used for an experiment, specify :ref:`environment.
 for more details about configuring training environments and a more complete list of prebuilt Docker
 images.
 
-ROCm
-====
+AMD ROCm
+========
 
 .. _rocm-support:
 
-Can I use AMD GPUs or ROCm with Determined?
-===========================================
-
-Determined has experimental support for ROCm. It is . Determined provides a prebuilt Docker image
-that includes ROCm 4.2, Pytorch 1.9 and Tensorflow 2.5:
+Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
+includes ROCm 4.2, Pytorch 1.9 and Tensorflow 2.5:
 
 -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.6``
 
@@ -180,3 +106,4 @@ See the full list of documents.
    api-estimator
    data-layer
    experiment-config
+   best-practices

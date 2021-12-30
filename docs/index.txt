@@ -4,15 +4,9 @@
    :glob:
 
    getting-started
+   tutorials/index
    examples
    model-hub/index
-   tutorials/index
-
-.. toctree::
-   :caption: Overview
-   :hidden:
-   :glob:
-
    concepts/index
    interact/index
 
@@ -56,8 +50,8 @@
    :caption: Further
    :hidden:
 
-   join-community
    ecosystem-integration
+   join-community
    attributions
    release-notes
 
@@ -65,12 +59,18 @@
  Determined AI
 ###############
 
-**********
- Overview
-**********
+************************
+ What is Determined AI?
+************************
 
 Determined is an open-source deep learning training platform that makes building models fast and
-easy. Determined enables you to:
+easy.
+
+********************
+ Why Determined AI?
+********************
+
+Determined enables you to:
 
 -  **Train models faster** using state-of-the-art :ref:`distributed training <multi-gpu-training>`,
    without changing your model code
@@ -87,16 +87,3 @@ continue using popular Deep Learning libraries, such as :doc:`TensorFlow Keras
 </training-apis/api-keras>`, :doc:`TensorFlow Estimator </training-apis/api-estimator>` and
 :doc:`PyTorch </training-apis/api-pytorch>`; you just need to update your model code to integrate
 with the Determined API.
-
-*******************************
- Getting Started with Examples
-*******************************
-
-Read :doc:`this document </getting-started>` to walk through the steps to run examples in Determined
-from zero.
-
-************
- Learn More
-************
-
-Choose the topics on the left side to start learning more about Determined's capabilities.

@@ -1,6 +1,6 @@
-###############################
- Getting Started with Examples
-###############################
+#################
+ Getting Started
+#################
 
 This section walks through the steps to run examples in Determined from zero. You should be able to:
 
@@ -15,14 +15,14 @@ This section walks through the steps to run examples in Determined from zero. Yo
  System Requirements
 *********************
 
-You need to go through :doc:`this document </sysadmin-deploy-on-prem/requirements>` to see if you
-meet the requirements and how to install the Docker.
+Please review :doc:`this document </sysadmin-deploy-on-prem/requirements>` to see if your system
+meets the requirements to run Determined, including instructions on how to install the Docker.
 
 ****************************
  Install Determined Locally
 ****************************
 
-Use the following code to install the Determined library and the Determined cluster locally.
+Use the following code to install Determined and start a cluster locally.
 
 .. code:: bash
 
@@ -32,7 +32,8 @@ Use the following code to install the Determined library and the Determined clus
    # Start a cluster.
    det deploy local cluster-up
 
-For detailed instructions, see :doc:`/sysadmin-basics/index`, :doc:`/sysadmin-deploy-on-prem/index`,
+For detailed instructions on installing Determined in different environments, see
+:doc:`/sysadmin-basics/index`, :doc:`/sysadmin-deploy-on-prem/index`,
 :doc:`/sysadmin-deploy-on-aws/index`, :doc:`/sysadmin-deploy-on-gcp/index`,
 :doc:`/sysadmin-deploy-on-k8s/index`.
 
@@ -40,25 +41,28 @@ For detailed instructions, see :doc:`/sysadmin-basics/index`, :doc:`/sysadmin-de
  Explore the WebUI
 *******************
 
-Then you should be able to access the WebUI at ``localhost:8080``. On the left side, there are links
-to the experiment page, the interactive job page, the cluster page, and etc,. You can click on each
-page to see what is running, track the logs, watch the resource allocation and usage, and etc,.
+Once Determined is installed and the cluster started, you should be able to access the Determined
+WebUI at ``localhost:8080``. On the left side, there are links to the experiment page, the
+interactive job page, the cluster page, and etc,. You can click on each page to see what is running,
+track the logs, watch the resource allocation and usage, and etc,.
 
 *************
  Use the CLI
 *************
 
-you can run the following code to use the :doc:`CLI </interact/cli>`.
+you can use the :doc:`Determined CLI </interact/cli>` that is installed as part of the `determined`
+package to interact with the Determined cluster.
 
 .. code:: bash
 
-   # Set the master address
+   # Set the master address - for local installs it defaults to localhost:8080
    export DET_MASTER=<master address>
 
-   # Print all the slots
+   # Print all the slots (hardware resources) available to the cluster
    det slot
 
-The cluster creates a "determined" user with a blank password for you to get started.
+By default the cluster creates an "admin" and "determined" user with blank passwords for you to get
+started.
 
 ******************
  Train an Example
@@ -145,12 +149,11 @@ Clicking on the experiment takes you to the experiment page similar to below.
 
 |
 
-An :ref:`experiment <concept-experiment>` is a collection of one or more trials. A :ref:`trial
-<concept-trial>` is a training task that consists of a dataset, a deep learning model, and values
-for all of the model's hyperparameters. An experiment can either train a single model (with a single
-trial) or perform a search over a user-defined hyperparameter space. For this experiment, we have
-one trial because we provide all the hyperparameter values. We can drill down into a trial to view
-more information by clicking on it.
+An :ref:`experiment <concept-experiment>` is a training job that consists of one or more variations
+(:ref:`trial <concept-trial>`) of the same model. Since this experiment trains a single model with a
+fixed set of hyperparameters, there is only one trial, and clicking on the experiment goes directly
+to the trial page. For hyperparameter searches (which we'll see later), there will be multiple
+trials (model variations) per experiment.
 
 A trial page contains detailed information about the model, the configuration, output logs and the
 training metrics. Typically, you have to code the metric frequency output, plots, and checkpointing

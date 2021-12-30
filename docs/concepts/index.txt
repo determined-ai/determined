@@ -108,7 +108,8 @@ For each experiment, you can configure a **searcher** or a **searching algorithm
 algorithm determines how many trials will be run for a particular experiment and how the
 hyperparameters will be set. More information can be found at :doc:`/training-hyperparameter/index`.
 
-See the full list of documents:
+Below are additional concepts that may be useful to understand but not required for general use of
+Determined:
 
 .. toctree::
    :maxdepth: 1
