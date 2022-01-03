@@ -10,9 +10,6 @@ orbs:
   queue: eddiewebb/queue@volatile
 
 executors:
-  python-36:
-    docker:
-      - image: python:3.6-slim-buster
   python-37:
     docker:
       - image: python:3.7-slim-buster
@@ -1886,7 +1883,6 @@ workflows:
             parameters:
               executor-name:
                 [
-                  "python-36",
                   "python-37",
                   "python-38",
                   "python-39",

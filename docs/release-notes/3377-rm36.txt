@@ -1,0 +1,5 @@
+:orphan:
+
+**Removed Features**
+
+-  No longer support Python 3.6, which has reached end-of-life.
