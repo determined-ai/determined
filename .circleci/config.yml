@@ -1195,6 +1195,7 @@ jobs:
     steps:
       - checkout
       - react-get-deps
+      - run: make -C webui check
       - run: make -C webui/react check
 
   lint-webui-tests:
