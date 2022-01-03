@@ -60,7 +60,7 @@ var (
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
 
-	// Common errors
+	// Common errors.
 	trialNotFound = status.Error(codes.NotFound, "trial not found")
 )
 

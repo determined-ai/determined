@@ -93,7 +93,7 @@ const (
 	AllocationStateRunning AllocationState = 4
 	// AllocationStateTerminating state denotes that the command is terminating.
 	AllocationStateTerminating AllocationState = 5
-	// AllocationStateTerminated state denotes that the command has exited or has been aborted
+	// AllocationStateTerminated state denotes that the command has exited or has been aborted.
 	AllocationStateTerminated AllocationState = 6
 )
 

@@ -143,7 +143,7 @@ func (r *rwCoordinator) processWriteLockRequests(
 			ctx.Log().WithError(err).Errorf("cannot write to socket")
 		}
 
-		//Can only grant one write lock at a time.
+		// Can only grant one write lock at a time.
 		break
 	}
 

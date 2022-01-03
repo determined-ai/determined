@@ -63,7 +63,7 @@ func (a *apiServer) GetModels(
 	switch _, ok := sortColMap[req.SortBy]; {
 	case !ok:
 		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case sortColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
+	case sortColMap[req.SortBy] != "id":
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
 			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],

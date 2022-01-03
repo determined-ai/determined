@@ -48,9 +48,9 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 	if err != nil {
 		return 0, err
 	}
+	//nolint:gosec // Close check doesn't matter even though file is writable because it was synced.
 	defer func() {
-		err = f.Close()
-		if err != nil {
+		if err = f.Close(); err != nil {
 			log.WithError(err).Error("failed to close arff file")
 		}
 	}()
@@ -136,6 +136,9 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 	if err != nil {
 		return 0, err
 	}
+	if err := f.Sync(); err != nil {
+		return 0, errors.Wrap(err, "failed to sync arff file to disk")
+	}
 	return totalNumTrials, nil
 }
 
@@ -149,9 +152,9 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open HP importance file: %w", err)
 	}
+	//nolint:gosec // Good thought but file is not written, only read.
 	defer func() {
-		err := file.Close()
-		if err != nil {
+		if err := file.Close(); err != nil {
 			log.WithError(err).Error("failed to close HP importance file")
 		}
 	}()

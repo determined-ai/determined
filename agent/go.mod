@@ -3,7 +3,7 @@ module github.com/determined-ai/determined/agent
 go 1.17
 
 require (
-	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/determined-ai/determined/master v0.0.0
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
 	github.com/docker/distribution v2.7.1+incompatible
@@ -11,7 +11,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.4
 	github.com/docker/go-connections v0.4.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
@@ -61,7 +61,7 @@ require (
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect

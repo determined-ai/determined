@@ -85,3 +85,39 @@ linters:
     - testpackage
     - unparam
     - wsl
+
+    # Below here are new linters from upgrading to 1.43.0. Since we enable all and disable
+    # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
+    # golangci-lint can tell you which linters are enabled:
+    #   golangci-lint linters | sed -n '/Enabled/,/Disabled/p'
+    # Only in the new list were disabled with this change:
+    #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
+    - bidichk
+    - contextcheck
+    - cyclop
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustivestruct
+    - forbidigo
+    - forcetypeassert
+    - gci
+    - gomoddirectives
+    - ifshort
+    - importas
+    - ireturn
+    - makezero
+    - nilerr
+    - nilnil
+    - nlreturn
+    - paralleltest
+    - predeclared
+    - promlinter
+    - revive
+    - tagliatelle
+    - tenv
+    - thelper
+    - tparallel
+    - varnamelen
+    - wastedassign
+    - wrapcheck
