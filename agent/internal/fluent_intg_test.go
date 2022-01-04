@@ -51,6 +51,7 @@ func TestFluentPostgresLogging(t *testing.T) {
 	sys.MustActorOf(actor.Addr("fluent"), f)
 
 	// WHEN a container prints some predefined logs
+	//nolint:gosec // Weak RNG is fine in tests.
 	trialID := math.MaxInt16 + rand.Int31n(math.MaxInt16)
 	expected, actual := makeLogTestCase(int(trialID), aConf.AgentID)
 	runContainerWithLogs(t, actual, int(trialID), f.port)
@@ -91,6 +92,7 @@ func TestFluentLoggingElastic(t *testing.T) {
 	sys.MustActorOf(actor.Addr("fluent"), f)
 
 	// WHEN a container prints some predefined logs
+	//nolint:gosec // Weak RNG is fine in tests.
 	trialID := math.MaxInt16 + rand.Int31n(math.MaxInt16)
 	expected, actual := makeLogTestCase(int(trialID), aConf.AgentID)
 	runContainerWithLogs(t, actual, int(trialID), f.port)

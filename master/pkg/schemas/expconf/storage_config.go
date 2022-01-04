@@ -174,19 +174,20 @@ type AzureConfigV0 struct {
 
 // Merge implements schemas.Mergeable.
 func (c AzureConfigV0) Merge(other interface{}) interface{} {
-	out := AzureConfigV0{}
 	otherConfig := other.(AzureConfigV0)
-	out.RawContainer = schemas.Merge(c.RawContainer, otherConfig.RawContainer).(*string)
 	var credSource AzureConfigV0
 	if c.RawConnectionString != nil || c.RawAccountURL != nil {
 		credSource = c
 	} else {
 		credSource = otherConfig
 	}
-	out.RawConnectionString = schemas.Copy(credSource.RawConnectionString).(*string)
-	out.RawAccountURL = schemas.Copy(credSource.RawAccountURL).(*string)
-	out.RawCredential = schemas.Copy(credSource.RawCredential).(*string)
-	return out
+
+	return AzureConfigV0{
+		RawContainer:        schemas.Merge(c.RawContainer, otherConfig.RawContainer).(*string),
+		RawConnectionString: schemas.Copy(credSource.RawConnectionString).(*string),
+		RawAccountURL:       schemas.Copy(credSource.RawAccountURL).(*string),
+		RawCredential:       schemas.Copy(credSource.RawCredential).(*string),
+	}
 }
 
 // Validate implements the check.Validatable interface.

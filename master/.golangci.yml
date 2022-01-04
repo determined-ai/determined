@@ -65,6 +65,9 @@ linters-settings:
     line-length: 100
   misspell:
     locale: US
+  exhaustivestruct:
+    struct-patterns:
+      - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
 
 linters:
   enable-all: true
@@ -98,7 +101,6 @@ linters:
     - durationcheck
     - errname
     - errorlint
-    - exhaustivestruct
     - forbidigo
     - forcetypeassert
     - gci
