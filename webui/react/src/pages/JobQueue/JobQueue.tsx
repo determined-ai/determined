@@ -123,8 +123,9 @@ const JobQueue: React.FC = () => {
       },
       [JobAction.ManageJob]: () => setManagingJob(job),
     };
-    const isFirst = job.summary.jobsAhead === 0;
-    if (!isFirst) {
+    const canMoveToTop = selectedRp && orderedSchedulers.has(selectedRp.schedulerType) &&
+      job.summary.jobsAhead > 0;
+    if (canMoveToTop) {
       triggers[JobAction.MoveToTop] = () => moveJobToPosition(job.jobId, 0);
     }
 
@@ -136,7 +137,7 @@ const JobQueue: React.FC = () => {
     }
 
     return triggers;
-  }, []);
+  }, [ selectedRp ]);
 
   const hideModal = useCallback(() => setManagingJob(undefined), []);
 
