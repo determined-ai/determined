@@ -21,7 +21,7 @@ import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
-import { orderedSchedulers } from 'utils/job';
+import { moveJobToPosition, orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -29,7 +29,6 @@ import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 import RPStatsOverview from './RPStats';
-import { moveJobToPosition } from './utils';
 
 const JobQueue: React.FC = () => {
   const { resourcePools } = useStore();

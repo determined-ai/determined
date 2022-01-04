@@ -1,4 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
 import { CommandType, JobState, JobType } from 'types';
 
 import { capitalize } from './string';
@@ -40,3 +41,14 @@ export const jobStateToLabel: {[key in JobState]: string} = {
 export const orderedSchedulers = new Set(
   [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
 );
+
+export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1QueueControl => {
+  return {
+    jobId,
+    queuePosition: position - 1,
+  };
+};
+
+export const moveJobToPosition = async (jobId: string, position: number): Promise<void> => {
+  await detApi.Internal.updateJobQueue({ updates: [ moveJobToPositionUpdate(jobId, position) ] });
+};

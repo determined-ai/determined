@@ -8,11 +8,10 @@ import { columns } from 'pages/JobQueue/JobQueue.table';
 import * as api from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { Job, RPStats } from 'types';
-import { orderedSchedulers } from 'utils/job';
+import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
-import { moveJobToPositionUpdate } from './utils';
 
 const { Option } = Select;
 

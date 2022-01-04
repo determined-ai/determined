@@ -9,12 +9,24 @@ describe('Job Utilities', () => {
       expect(utils.jobTypeIconName(JobType.NOTEBOOK)).toEqual(CommandType.JupyterLab);
     });
   });
+
   describe('jobTypeToCommandType', () => {
     it('should convert notebook to jupyterlab', () => {
       expect(utils.jobTypeToCommandType(JobType.NOTEBOOK)).toEqual(CommandType.JupyterLab);
     });
     it('should return undefined for non command types', () => {
       expect(utils.jobTypeToCommandType(JobType.EXPERIMENT)).toBeUndefined();
+    });
+  });
+
+  describe('moveJobToPositionUpdate', () => {
+    it('should return the correct update', () => {
+      const jobId = 'jobId';
+      const position = 1;
+      expect(utils.moveJobToPositionUpdate(jobId, position)).toEqual({
+        jobId,
+        queuePosition: position - 1,
+      });
     });
   });
 });
