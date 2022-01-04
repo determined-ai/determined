@@ -331,3 +331,33 @@ def test_data_layer_mnist_tf_keras_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
+
+
+@pytest.mark.nightly
+def test_deit_pytorch_accuracy() -> None:
+    config = conf.load_config(conf.cv_examples_path("deit/const.yaml"))
+    config = conf.set_random_seed(config, 1590497309)
+    print(config)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.cv_examples_path("deit"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
+
+    validation_iou = [
+        step["validation"]["metrics"]["validation_metrics"]["val_avg_iou"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    target_iou = 0.42
+    assert max(validation_iou) > target_iou, (
+        "deit did not reach minimum target accuracy {} in {} steps."
+        " full validation avg_iou history: {}".format(
+            target_iou, len(trial_metrics["steps"]), validation_iou
+        )
+    )
+
+if __name__ == "__main__":
+    test_deit_pytorch_accuracy()
