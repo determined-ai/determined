@@ -543,7 +543,10 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
             for code, rspec in spec["responses"].items():
                 if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
                     # TODO: support streaming endpoints.
-                    print(f"Skipped generating streaming operation: \"{name}\"", file=sys.stderr)
+                    print(
+                        f'skipped generating streaming operation: "{name}"',
+                        file=sys.stderr,
+                    )
                     bad_op = True
                     break
                 if rspec["schema"].get("type") == "":
@@ -660,8 +663,11 @@ class APIHttpError(Exception):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", "-o", action="store", required=True, help="output file")
+    parser.add_argument(
+        "--output", "-o", action="store", required=True, help="output file"
+    )
     args = parser.parse_args()
 
     with open(SWAGGER) as f:
