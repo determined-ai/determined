@@ -542,7 +542,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
             bad_op = False
             for code, rspec in spec["responses"].items():
                 if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
-                    # TODO: support streaming endpoints.
+                    # TODO(gh-3382): support streaming endpoints.
                     print(
                         f'skipped generating streaming operation: "{name}"',
                         file=sys.stderr,
