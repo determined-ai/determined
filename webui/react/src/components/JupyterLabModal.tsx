@@ -107,7 +107,7 @@ const JupyterLabModal: React.FC<JupyterLabModalProps> = (
 
   const handleCreateEnvironment = useCallback(() => {
     if (showFullConfig) {
-      launchJupyterLab(yaml.load(config || '') as RawJson);
+      launchJupyterLab({ config: yaml.load(config || '') as RawJson });
     } else {
       launchJupyterLab({
         name: fields.name,
