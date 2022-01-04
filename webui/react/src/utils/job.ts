@@ -1,6 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
-import { AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, Job, JobState, JobType,
-  RunState } from 'types';
+import { CommandType, JobState, JobType } from 'types';
 
 import { capitalize } from './string';
 
@@ -30,21 +29,6 @@ export const jobTypeToCommandType = (
     default:
       return undefined;
   }
-};
-
-export const taskFromJob = (job: Job): AnyTask => {
-  const baseTask = { id: job.entityId, name: job.name };
-  let rv: AnyTask;
-  if (job.type === JobType.EXPERIMENT) {
-    rv = { ...baseTask, archived: false, state: RunState.Active } as ExperimentTask;
-  } else {
-    rv = {
-      ...baseTask,
-      state: CommandState.Running,
-      type: jobTypeToCommandType(job.type),
-    } as CommandTask;
-  }
-  return rv;
 };
 
 export const jobStateToLabel: {[key in JobState]: string} = {
