@@ -639,7 +639,8 @@ class APIHttpError(Exception):
     def __str__(self) -> str:
         return self.message
 
-"""
+""".lstrip()
+
     out = [prefix]
 
     enums = process_enums(swagger["definitions"])
@@ -672,5 +673,6 @@ if __name__ == "__main__":
 
     with open(SWAGGER) as f:
         swagger = json.load(f)
+    bindings = pybindings(swagger)
     with open(args.output, "w") as f:
-        print(pybindings(swagger), file=f)
+        print(bindings, file=f)
