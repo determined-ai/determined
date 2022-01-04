@@ -1253,6 +1253,7 @@ jobs:
       - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
+    resource_class: large
     steps:
       - checkout
       - go-get-deps
