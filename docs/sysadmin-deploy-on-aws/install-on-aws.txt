@@ -694,6 +694,3 @@ Running Determined
         -p 8080:8080 \
         -v master.yaml:/etc/determined/master.yaml \
         determinedai/determined-master:${Version}
-
-Once you have your Determined cluster running on AWS, try out some of our :ref:`tutorials
-<tutorials>`.

@@ -7,7 +7,7 @@
 | HP Search Benchmarks |  <p>[darts_cifar10_pytorch](hp_search_benchmarks/darts_cifar10_pytorch)<br>[darts_penntreebank_pytorch](hp_search_benchmarks/darts_penntreebank_pytorch)</p> |  <p>CIFAR-10<br>Penn Treebank Dataset</p> |  <p>PyTorch<br>PyTorch</p> |
 | Neural Architecture Search (NAS)  | [gaea_pytorch](nas/gaea_pytorch) | DARTS | PyTorch |
 | Meta Learning | [protonet_omniglot_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch |
-| Generative Adversarial Networks (GAN) | <p>[dc_gan_tf_keras](gan/dcgan_tf_keras)<br>[gan_mnist_pytorch](gan/gan_mnist_pytorch)</p> | <p>MNIST<br>MNIST</p> | <p>Tensorflow (tf.keras)<br>PyTorch</p> |
+| Generative Adversarial Networks (GAN) | <p>[dc_gan_tf_keras](gan/dcgan_tf_keras)<br>[gan_mnist_pytorch](gan/gan_mnist_pytorch)</p> | <p>MNIST<br>MNIST</p> | <p>TensorFlow (tf.keras)<br>PyTorch</p> |
 | Decision Trees  | [gbt_titanic_estimator](decision_trees/gbt_titanic_estimator) | Titanic | TensorFlow (Estimator API) |
 | Data Layer | <p>[data_layer_mnist_estimator](features/data_layer_mnist_estimator)<br>[data_layer_mnist_tf_keras](features/data_layer_mnist_tf_keras)</p> | <p>MNIST<br>MNIST</p> | <p>TensorFlow (Estimator API)<br>TensorFlow (tf.keras)</p> |
 | Custom Reducers | <p>[custom_reducers_mnist_pytorch](features/custom_reducers_mnist_pytorch)</p> | <p>MNIST</p> | <p>PyTorch</p> |

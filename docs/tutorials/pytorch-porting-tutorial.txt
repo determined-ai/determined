@@ -1,8 +1,6 @@
-.. _porting-tutorial:
-
-##################
- Porting Tutorial
-##################
+##########################
+ PyTorch Porting Tutorial
+##########################
 
 Determined provides a high-level framework APIs for PyTorch, Keras, and Estimators that let users
 describe their model without boilerplate code. Determined reduces boilerplate by providing a

@@ -131,7 +131,7 @@ def build_fp16_loss_scaler(loss_scale: mmcv.Config) -> Any:
                     the specified scale. If loss_scale is a string, it must be
                     'dynamic', then dynamic loss scaling will be used.
                     It can also be a dict containing arguments of GradScalar.
-                    Defaults to 512. For Pytorch >= 1.6, mmcv uses official
+                    Defaults to 512. For PyTorch >= 1.6, mmcv uses official
                     implementation of GradScaler. If you use a dict version of
                     loss_scale to create GradScaler, please refer to:
                     https://pytorch.org/docs/stable/amp.html#torch.cuda.amp.GradScaler

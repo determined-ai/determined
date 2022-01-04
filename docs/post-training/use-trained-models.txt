@@ -139,7 +139,7 @@ trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2
 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`__ for details).
 
 PyTorch checkpoints are saved using `pickle <https://docs.python.org/3/library/pickle.html>`__ and
-loaded as :ref:`pytorch-trial` objects (see `the PyTorch documentation
+loaded as :doc:`/training-apis/api-pytorch` objects (see `the PyTorch documentation
 <https://pytorch.org/docs/stable/notes/serialization.html>`__ for details).
 
 .. _store-checkpoint-metadata:
@@ -190,11 +190,36 @@ deleted.
  Download Checkpoints via the CLI
 **********************************
 
+The Determined CLI can be used to view all the checkpoints associated with an experiment:
+
+.. code:: bash
+
+   $ det experiment list-checkpoints <experiment-id>
+
+Checkpoints are saved to external storage, according to the :ref:`checkpoint_storage
+<checkpoint-storage>` section in the experiment configuration. Each checkpoint has a UUID, which is
+used as the name of the checkpoint directory on the external storage system. For example, if the
+experiment is configured to save checkpoints to a shared file system:
+
+.. code:: yaml
+
+   checkpoint_storage:
+     type: shared_fs
+     host_path: /mnt/nfs-volume-1
+
+A checkpoint with UUID ``b3ed462c-a6c9-41e9-9202-5cb8ff00e109`` can be found in the directory
+``/mnt/nfs-volume-1/b3ed462c-a6c9-41e9-9202-5cb8ff00e109``.
+
 Determined offers the following CLI commands for downloading checkpoints locally:
 
 #. ``det checkpoint download``
 #. ``det trial download``
 #. ``det experiment download``
+
+.. warning::
+
+   When downloading checkpoints in a shared file system, we assume the same shared file system is
+   mounted locally.
 
 The ``det checkpoint download`` command downloads a checkpoint for the given UUID as shown below:
 
@@ -346,5 +371,4 @@ The checkpoint can then be loaded in Python with this code:
 ************
 
 -  :ref:`client`: The reference documentation for this API.
--  :ref:`exporting-checkpoints`
 -  :ref:`organizing-models`

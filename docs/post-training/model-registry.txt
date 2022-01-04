@@ -278,4 +278,3 @@ The CLI equivalent is as follows:
 
 -  :ref:`client`: The reference documentation for this API.
 -  :ref:`use-trained-models`
--  :ref:`exporting-checkpoints`

@@ -2,7 +2,7 @@
 
 This example shows how to build an unets image segmentation model on the 
 Oxford-IIIT Pet dataset using Determined's tf.keras API. This example is adapted 
-from this [Tensorflow Image Segmentation example](https://www.tensorflow.org/tutorials/images/segmentation).
+from this [TensorFlow Image Segmentation example](https://www.tensorflow.org/tutorials/images/segmentation).
 
 ## Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
@@ -13,7 +13,7 @@ from this [Tensorflow Image Segmentation example](https://www.tensorflow.org/tut
 * **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
 
 ## Data
-The data used for this script was fetched via Tensorflow Datasets as done by the tutorial itself. 
+The data used for this script was fetched via TensorFlow Datasets as done by the tutorial itself. 
 The original Oxford-IIIT Pet dataset is linked [here](https://www.robots.ox.ac.uk/~vgg/data/pets/). 
 
 ## To Run

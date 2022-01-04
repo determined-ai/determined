@@ -5,12 +5,14 @@
 ####################
 
 Determined launches workloads using Docker containers. By default, workloads execute inside a
-Determined-provided container that includes common deep learning libraries and frameworks. So you do
-not need to do anything if you do not need to use custom environments.
+Determined-provided container that includes common deep learning libraries and frameworks.
 
 If your model code has additional dependencies, the easiest way to install them is to specify a
 :ref:`startup-hook.sh <startup-hooks>`. For more complex dependencies, you can also use a
 :ref:`custom Docker image <custom-docker-images>`.
+
+If you're using Determined on Kubernetes, review the supplementary :ref:`Custom Pod Specs
+<custom-pod-specs>` guide.
 
 .. _environment-variables:
 

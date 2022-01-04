@@ -1,5 +1,3 @@
-.. _pytorch-mnist-tutorial:
-
 ########################
  PyTorch MNIST Tutorial
 ########################
@@ -314,11 +312,3 @@ in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment using the experiment's ID
 (``xxx`` in the example above) or description.
-
-************
- Next Steps
-************
-
--  :ref:`model-definitions_best-practices`
--  :ref:`experiment-configuration`
--  :ref:`features`

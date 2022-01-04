@@ -1,5 +1,5 @@
 """
-This example is to show how to use an existing Tensorflow Image Segmentation model with Determined.
+This example is to show how to use an existing TensorFlow Image Segmentation model with Determined.
 The flags and configurations can be found under const.yaml. For more information
 regarding the optional flags view the original script linked below.
 This implementation is based on:

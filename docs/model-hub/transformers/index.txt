@@ -53,7 +53,7 @@ your own Trial by checking out the :ref:`Model Hub Transformers Tutorial
 While we strive to offer as many of the features supported in HuggingFace **transformers**, the
 following features are not currently supported:
 
--  Tensorflow version of transformers
+-  TensorFlow version of transformers
 -  Support for deepspeed and fairscale
 -  Running on TPUs
 

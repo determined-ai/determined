@@ -25,8 +25,7 @@ The easiest way to get started with **transformers** in Determined is to use one
 the `question answering example`_ to get a better understanding of how to use **model-hub** for
 transformers.
 
-The `question answering example`_ includes two :ref:`Determined PyTorchTrial <pytorch-trial>`
-definitions:
+The `question answering example`_ includes two implementations of :doc:`/training-apis/api-pytorch`:
 
 -  qa_trial.py_ uses the :py:class:`model_hub.huggingface.BaseTransformerTrial` parent ``__init__``
    function to build **transformers** config, tokenizer, and model objects; and optimizer and
@@ -41,9 +40,9 @@ line but will highlight the parts that make use of **model-hub**.
 
 .. note::
 
-   If you are new to Determined, we recommend going through the :ref:`PyTorch MNIST tutorial
-   <pytorch-mnist-tutorial>` first to get a better understanding of how to use PyTorch in Determined
-   via :py:class:`determined.harness.pytorch.PyTorchTrial`.
+   If you are new to Determined, we recommend going through the :doc:`/index` first to get a better
+   understanding of how to use PyTorch in Determined via
+   :py:class:`determined.harness.pytorch.PyTorchTrial`.
 
 After this tutorial, if you want to further customize a trial for your own use, you can look at
 qa_beam_search_trial.py_ for an example.
@@ -54,8 +53,8 @@ qa_beam_search_trial.py_ for an example.
 
 The ``__init__`` for ``QATrial`` is responsible for creating and processing the dataset; building
 the **transformers** config, tokenizer, and model; and tokenizing the dataset. The specifications
-for how we should perform these steps is passed from :ref:`the context <pytorch-context>` via the
-hyperparameters and data configuration fields. These fields are set to ``hparams`` and
+for how we should perform these steps is passed from :class:`~determined.pytorch.PyTorchContext` via
+the hyperparameters and data configuration fields. These fields are set to ``hparams`` and
 ``data_config`` class attributes in :py:meth:`model_hub.huggingface.BaseTransformerTrial.__init__`.
 You can also get them by calling ``context.get_hparams()`` and ``context.get_data_config()``
 respectively.

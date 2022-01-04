@@ -4,38 +4,36 @@
 
 To interact with a Determined cluster, there are many ways to do that.
 
-*******
- WebUI
-*******
+********
+ Basics
+********
+
+Typically, you need to use the WebUI and the CLI.
 
 The WebUI allows users to create and monitor the progress of experiments. It is accessible by
 visiting ``http://master-addr:8080``, where ``master-addr`` is the hostname or IP address where the
 Determined master is running.
 
-*****
- CLI
-*****
-
 The :ref:`command-line interface (CLI) <cli>` is distributed as a Python wheel package; once the
 wheel has been installed, the CLI can be used via the ``det`` command.
 
-***********
- REST APIs
-***********
+************
+ Automation
+************
 
-The :ref:`REST APIs <rest-api>` provide a way for users and external tools to interact with a
-Determined cluster programmatically.
+In order to automate some operations, you can use the Python APIs and the REST APIs. The
+:ref:`Python APIs <client>` define a Pythonic way to access the cluster. The :ref:`REST APIs
+<rest-api>` provide a way for users and external tools to interact with a Determined cluster
+programmatically.
 
-*************
- Python APIs
-*************
-
-The :ref:`Python APIs <client>` defines a Pythonic way to access the cluster.
-
-See the full list of documents:
+************
+ Learn More
+************
 
 .. toctree::
    :maxdepth: 1
    :glob:
 
-   *
+   cli
+   api-experimental-client
+   rest-apis

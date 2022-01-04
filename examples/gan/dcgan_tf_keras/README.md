@@ -1,12 +1,12 @@
-# DCGAN Tensorflow Keras GAN Example
+# DCGAN TensorFlow Keras GAN Example
 
-This example demonstrates how to build a simple GAN on the MNIST dataset using Determined's Tensorflow Keras API. This example is adapted from this [Tensorflow Tutorial](https://www.tensorflow.org/tutorials/generative/dcgan).
-The DCGAN Keras model featured in this example subclasses `tf.keras.Model` and defines a custom `train_step()` and `test_step()`. This functionality was first added in Tensorflow 2.2.
+This example demonstrates how to build a simple GAN on the MNIST dataset using Determined's TensorFlow Keras API. This example is adapted from this [TensorFlow Tutorial](https://www.tensorflow.org/tutorials/generative/dcgan).
+The DCGAN Keras model featured in this example subclasses `tf.keras.Model` and defines a custom `train_step()` and `test_step()`. This functionality was first added in TensorFlow 2.2.
 
 ## Files
 * **dc_gan.py**: The code code defining the model.
 * **data.py**: The data loading and preparation code for the model.
-* **model_def.py**: Organizes the model into Determined's Tensorflow Keras API.
+* **model_def.py**: Organizes the model into Determined's TensorFlow Keras API.
 * **export.py**: Exports a trained checkpoint and uses it to generate images.
 
 

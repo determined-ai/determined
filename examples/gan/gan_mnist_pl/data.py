@@ -1,5 +1,5 @@
-# The class MNISTDataModule is modified from the Pytorch Lightning example:
-# https://colab.research.google.com/github/PytorchLightning/pytorch-lightning/
+# The class MNISTDataModule is modified from the PyTorch Lightning example:
+# https://colab.research.google.com/github/PyTorchLightning/pytorch-lightning/
 # blob/master/notebooks/01-mnist-hello-world.ipynb#scrollTo=4DNItffri95Q
 #
 # Copyright The PyTorch Lightning team.
