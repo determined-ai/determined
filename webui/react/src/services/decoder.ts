@@ -177,7 +177,7 @@ export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
     STATE_TERMINATING: types.CommandState.Terminating,
   }[String(task?.state) || 'STATE_PENDING'] || types.CommandState.Pending;
   return {
-    isReady: task.is_ready || false,
+    isReady: task.is_ready || task.isReady || false,
     state: setState,
     taskId: task.taskId || '',
   };
