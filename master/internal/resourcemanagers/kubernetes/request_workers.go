@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"context"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,7 +41,8 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	ctx *actor.Context,
 	msg createKubernetesResources,
 ) {
-	configMap, err := r.configMapInterface.Create(msg.configMapSpec)
+	configMap, err := r.configMapInterface.Create(
+		context.TODO(), msg.configMapSpec, metaV1.CreateOptions{})
 	if err != nil {
 		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 			"error creating configMap %s", msg.configMapSpec.Name)
@@ -50,7 +53,7 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 		"created configMap %s", configMap.Name)
 
 	ctx.Log().Debugf("launching pod with spec %v", msg.podSpec)
-	pod, err := r.podInterface.Create(msg.podSpec)
+	pod, err := r.podInterface.Create(context.TODO(), msg.podSpec, metaV1.CreateOptions{})
 	if err != nil {
 		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 			"error creating pod %s", msg.podSpec.Name)
@@ -70,7 +73,8 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	// If resource creation failed, we will still try to delete those resources which
 	// will also result in a failure.
 	if len(msg.podName) > 0 {
-		err = r.podInterface.Delete(msg.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+		err = r.podInterface.Delete(
+			context.TODO(), msg.podName, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if err != nil {
 			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 				"failed to delete pod %s", msg.podName)
@@ -81,8 +85,9 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	}
 
 	if len(msg.configMapName) > 0 {
-		errDeletingConfigMap := r.configMapInterface.Delete(msg.configMapName, &metaV1.DeleteOptions{
-			GracePeriodSeconds: &gracePeriod})
+		errDeletingConfigMap := r.configMapInterface.Delete(
+			context.TODO(), msg.configMapName,
+			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if errDeletingConfigMap != nil {
 			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 				"failed to delete configMap %s", msg.configMapName)
