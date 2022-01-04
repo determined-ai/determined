@@ -516,6 +516,22 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
     return defs
 
 
+def is_expected_path(text: str) -> bool:
+    """
+    check if there are any dots appearing outside of curly braces if any.
+    assuming there are no nested curly braces.
+    """
+    in_braces = False
+    for c in text:
+        if c == "{":
+            in_braces = True
+        elif c == "}":
+            in_braces = False
+        elif c == "." and not in_braces:
+            return False
+    return True
+
+
 def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function]:
     ops = {}
     for path, methods in swagger_paths.items():
@@ -560,7 +576,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                     pname, ptype, required, where, serialized_name
                 )
 
-            # TODO: Validate before altering the whole path.
+            assert is_expected_path(path), (path, name)
             path = path.replace(".", "_")
             op = Function(name, method, path, params, responses)
             ops[name] = op
