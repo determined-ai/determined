@@ -317,6 +317,13 @@ func (p *pod) configurePodSpec(
 			continue
 		}
 
+		for _, e := range container.Env {
+			determinedContainer.Env = append(determinedContainer.Env, e)
+		}
+		for _, e := range container.EnvFrom {
+			determinedContainer.EnvFrom = append(determinedContainer.EnvFrom, e)
+		}
+
 		for k, v := range podSpec.Spec.Containers[idx].Resources.Limits {
 			if _, present := determinedContainer.Resources.Limits[k]; !present {
 				determinedContainer.Resources.Limits[k] = v
@@ -367,21 +374,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		p.ports = append(p.ports, port)
 	}
 
-	specEnvVars := spec.EnvVars()
-	var specEnvFrom []k8sV1.EnvFromSource
-	podSpec := env.PodSpec()
-	if podSpec != nil {
-		for _, container := range podSpec.Spec.Containers {
-			if container.Name == "determined-container" {
-				for _, e := range container.Env {
-					specEnvVars[e.Name] = e.Value
-				}
-				specEnvFrom = container.EnvFrom
-			}
-		}
-	}
-
-	envVars, err := p.configureEnvVars(specEnvVars, env, deviceType)
+	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
 	if err != nil {
 		return err
 	}
@@ -480,7 +473,6 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         spec.Entrypoint,
-		EnvFrom:         specEnvFrom,
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
