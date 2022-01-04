@@ -151,12 +151,20 @@ class WorkloadSequencer(workload.Source):
             return batches
         if records is not None:
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
-            return max(records // self.global_batch_size, 1)
+            # todo: make this compatible for determined.pytorch.DataLoader with drop_last=True (the last imcomplete batch)
+            # usually we set the drop_last to False, but some user would define it to True
+            # that meas we should pass this parameter setting to this class
+            # we're finding a more elegent way to implement it
+            return max(math.ceil(records // self.global_batch_size), 1)
         if epochs is not None:
             check.is_instance(self.records_per_epoch, int, "length must be an integer")
             assert self.records_per_epoch is not None
             check.gt(self.global_batch_size, 0, "global_batch_size must be positive")
-            return max((epochs * self.records_per_epoch) // self.global_batch_size, 1)
+            # todo: make this compatible for determined.pytorch.DataLoader with drop_last=True (the last imcomplete batch)
+            # usually we set the drop_last to False, but some user would define it to True
+            # that meas we should pass this parameter setting to this class
+            # we're finding a more elegent way to implement it
+            return max(epochs * math.ceil(self.records_per_epoch // self.global_batch_size) , 1)
         # Make mypy happy.
         raise ValueError("invalid length")
 
