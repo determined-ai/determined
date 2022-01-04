@@ -1,3 +1,4 @@
+import { DaError, ErrorType } from 'ErrorHandler';
 import * as Api from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { CommandType, JobState, JobType } from 'types';
@@ -43,6 +44,13 @@ export const orderedSchedulers = new Set(
 );
 
 export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1QueueControl => {
+  if (position < 1 || position % 1 !== 0) {
+    const err: DaError = {
+      message: `Invalid queue position: ${position}`,
+      type: ErrorType.Input,
+    };
+    throw err;
+  }
   return {
     jobId,
     queuePosition: position - 1,

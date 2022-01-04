@@ -20,13 +20,20 @@ describe('Job Utilities', () => {
   });
 
   describe('moveJobToPositionUpdate', () => {
+    const jobId = 'jobId';
     it('should return the correct update', () => {
-      const jobId = 'jobId';
       const position = 1;
       expect(utils.moveJobToPositionUpdate(jobId, position)).toEqual({
         jobId,
         queuePosition: position - 1,
       });
+    });
+    it('should throw given invalid position input', () => {
+      expect(() => utils.moveJobToPositionUpdate(jobId, -1))
+        .toThrow('Invalid queue position: -1');
+      expect(() => utils.moveJobToPositionUpdate(jobId, 0.3))
+        .toThrow('Invalid queue position: 0.3');
+
     });
   });
 });
