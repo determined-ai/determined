@@ -6,10 +6,7 @@ import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
-import {
-  checkmarkRenderer,
-  defaultRowClassName, getFullPaginationConfig,
-} from 'components/Table';
+import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -55,6 +52,7 @@ const JobQueue: React.FC = () => {
   } = useSettings<Settings>(settingsConfig);
 
   const fetchResourcePools = useFetchResourcePools(canceler);
+  const isJobOrderAvailable = !!selectedRp && orderedSchedulers.has(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
     if (!selectedRp?.name) return;
@@ -123,9 +121,7 @@ const JobQueue: React.FC = () => {
       },
       [JobAction.ManageJob]: () => setManagingJob(job),
     };
-    const canMoveToTop = selectedRp && orderedSchedulers.has(selectedRp.schedulerType) &&
-      job.summary.jobsAhead > 0;
-    if (canMoveToTop) {
+    if (isJobOrderAvailable && job.summary.jobsAhead > 0) {
       triggers[JobAction.MoveToTop] = () => moveJobToPosition(job.jobId, 0);
     }
 
@@ -137,7 +133,7 @@ const JobQueue: React.FC = () => {
     }
 
     return triggers;
-  }, [ selectedRp ]);
+  }, [ isJobOrderAvailable ]);
 
   const hideModal = useCallback(() => setManagingJob(undefined), []);
 
@@ -182,7 +178,7 @@ const JobQueue: React.FC = () => {
           }
           break;
         case 'jobsAhead':
-          if (selectedRp && !orderedSchedulers.has(selectedRp.schedulerType)) {
+          if (isJobOrderAvailable) {
             col.sorter = undefined;
             col.title = 'Preemptible';
             col.render = (_: unknown, record) => {
