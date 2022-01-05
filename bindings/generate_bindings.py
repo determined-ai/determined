@@ -52,7 +52,7 @@ class Any(NoParse, TypeAnno):
         return "Any"
 
     def annotation(self, prequoted=False) -> Code:
-        return "t.Any"
+        return "typing.Any"
 
 
 class String(NoParse, TypeAnno):
@@ -166,7 +166,7 @@ class Dict(TypeAnno):
         return f"Dict[str, {self.values}]"
 
     def annotation(self, prequoted=False) -> Code:
-        out = f"t.Dict[str, {self.values.annotation(True)}]"
+        out = f"typing.Dict[str, {self.values.annotation(True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
@@ -193,7 +193,7 @@ class Sequence(TypeAnno):
         return f"Sequence[{self.items}]"
 
     def annotation(self, prequoted=False) -> Code:
-        out = f"t.Sequence[{self.items.annotation(True)}]"
+        out = f"typing.Sequence[{self.items.annotation(True)}]"
         if not prequoted:
             return f'"{out}"'
         return out
@@ -243,7 +243,7 @@ class Parameter:
             typestr = self.type.annotation()
             default = ""
         else:
-            typestr = f'"t.Optional[{self.type.annotation(prequoted=True)}]"'
+            typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
             default = " = None"
         default = "" if self.required else " = None"
         return f"    {self.name}: {typestr}{default},"
@@ -289,7 +289,7 @@ class Class(TypeDef):
             out.append(f"""            {k}={parsed},""")
         out += ["        )"]
         out += [""]
-        out += ["    def to_json(self) -> t.Any:"]
+        out += ["    def to_json(self) -> typing.Any:"]
         out += ["        return {"]
         for k, v in self.params.items():
             if v.type.need_parse():
@@ -603,29 +603,29 @@ def pybindings(swagger: dict) -> str:
 # The contents of this file are programatically generated.
 import enum
 import math
-import typing as t
+import typing
 
 import requests
 
-if t.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from determined.experimental import client
 
 # flake8: noqa
-Json = t.Any
+Json = typing.Any
 
 
-Request = t.Callable[
+Request = typing.Callable[
     [
         str,  # method
         str,  # path
-        t.Optional[t.Dict[str, t.Any]],  # params
-        t.Any,  # json body
+        typing.Optional[typing.Dict[str, typing.Any]],  # params
+        typing.Any,  # json body
     ],
     requests.Response,
 ]
 
 
-def dump_float(val: t.Any) -> t.Any:
+def dump_float(val: typing.Any) -> typing.Any:
     if math.isnan(val):
         return "Nan"
     if math.isinf(val):

@@ -1,29 +1,29 @@
 # The contents of this file are programatically generated.
 import enum
 import math
-import typing as t
+import typing
 
 import requests
 
-if t.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from determined.experimental import client
 
 # flake8: noqa
-Json = t.Any
+Json = typing.Any
 
 
-Request = t.Callable[
+Request = typing.Callable[
     [
         str,  # method
         str,  # path
-        t.Optional[t.Dict[str, t.Any]],  # params
-        t.Any,  # json body
+        typing.Optional[typing.Dict[str, typing.Any]],  # params
+        typing.Any,  # json body
     ],
     requests.Response,
 ]
 
 
-def dump_float(val: t.Any) -> t.Any:
+def dump_float(val: typing.Any) -> typing.Any:
     if math.isnan(val):
         return "Nan"
     if math.isinf(val):
@@ -47,11 +47,11 @@ class APIHttpError(Exception):
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
-        error: "t.Optional[str]" = None,
-        experimentProgress: "t.Optional[float]" = None,
-        hpImportance: "t.Optional[t.Dict[str, float]]" = None,
-        inProgress: "t.Optional[bool]" = None,
-        pending: "t.Optional[bool]" = None,
+        error: "typing.Optional[str]" = None,
+        experimentProgress: "typing.Optional[float]" = None,
+        hpImportance: "typing.Optional[typing.Dict[str, float]]" = None,
+        inProgress: "typing.Optional[bool]" = None,
+        pending: "typing.Optional[bool]" = None,
     ):
         self.hpImportance = hpImportance
         self.experimentProgress = experimentProgress
@@ -69,7 +69,7 @@ class GetHPImportanceResponseMetricHPImportance:
             inProgress=obj["inProgress"] if obj.get("inProgress", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "hpImportance": {k: dump_float(v) for k, v in self.hpImportance.items()} if self.hpImportance is not None else None,
             "experimentProgress": dump_float(self.experimentProgress) if self.experimentProgress is not None else None,
@@ -81,9 +81,9 @@ class GetHPImportanceResponseMetricHPImportance:
 class GetTrialResponseWorkloadContainer:
     def __init__(
         self,
-        checkpoint: "t.Optional[v1CheckpointWorkload]" = None,
-        training: "t.Optional[v1MetricsWorkload]" = None,
-        validation: "t.Optional[v1MetricsWorkload]" = None,
+        checkpoint: "typing.Optional[v1CheckpointWorkload]" = None,
+        training: "typing.Optional[v1MetricsWorkload]" = None,
+        validation: "typing.Optional[v1MetricsWorkload]" = None,
     ):
         self.training = training
         self.validation = validation
@@ -97,7 +97,7 @@ class GetTrialResponseWorkloadContainer:
             checkpoint=v1CheckpointWorkload.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "training": self.training.to_json() if self.training is not None else None,
             "validation": self.validation.to_json() if self.validation is not None else None,
@@ -138,7 +138,7 @@ class TrialsSampleResponseDataPoint:
             value=float(obj["value"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "batches": self.batches,
             "value": dump_float(self.value),
@@ -206,8 +206,8 @@ class determinedtaskv1State(enum.Enum):
 class protobufAny:
     def __init__(
         self,
-        typeUrl: "t.Optional[str]" = None,
-        value: "t.Optional[str]" = None,
+        typeUrl: "typing.Optional[str]" = None,
+        value: "typing.Optional[str]" = None,
     ):
         self.typeUrl = typeUrl
         self.value = value
@@ -219,7 +219,7 @@ class protobufAny:
             value=obj["value"] if obj.get("value", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "typeUrl": self.typeUrl if self.typeUrl is not None else None,
             "value": self.value if self.value is not None else None,
@@ -228,7 +228,7 @@ class protobufAny:
 class protobufFieldMask:
     def __init__(
         self,
-        paths: "t.Optional[t.Sequence[str]]" = None,
+        paths: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.paths = paths
 
@@ -238,7 +238,7 @@ class protobufFieldMask:
             paths=obj["paths"] if obj.get("paths", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "paths": self.paths if self.paths is not None else None,
         }
@@ -249,10 +249,10 @@ class protobufNullValue(enum.Enum):
 class runtimeError:
     def __init__(
         self,
-        code: "t.Optional[int]" = None,
-        details: "t.Optional[t.Sequence[protobufAny]]" = None,
-        error: "t.Optional[str]" = None,
-        message: "t.Optional[str]" = None,
+        code: "typing.Optional[int]" = None,
+        details: "typing.Optional[typing.Sequence[protobufAny]]" = None,
+        error: "typing.Optional[str]" = None,
+        message: "typing.Optional[str]" = None,
     ):
         self.error = error
         self.code = code
@@ -268,7 +268,7 @@ class runtimeError:
             details=[protobufAny.from_json(x) for x in obj["details"]] if obj.get("details", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "error": self.error if self.error is not None else None,
             "code": self.code if self.code is not None else None,
@@ -279,11 +279,11 @@ class runtimeError:
 class runtimeStreamError:
     def __init__(
         self,
-        details: "t.Optional[t.Sequence[protobufAny]]" = None,
-        grpcCode: "t.Optional[int]" = None,
-        httpCode: "t.Optional[int]" = None,
-        httpStatus: "t.Optional[str]" = None,
-        message: "t.Optional[str]" = None,
+        details: "typing.Optional[typing.Sequence[protobufAny]]" = None,
+        grpcCode: "typing.Optional[int]" = None,
+        httpCode: "typing.Optional[int]" = None,
+        httpStatus: "typing.Optional[str]" = None,
+        message: "typing.Optional[str]" = None,
     ):
         self.grpcCode = grpcCode
         self.httpCode = httpCode
@@ -301,7 +301,7 @@ class runtimeStreamError:
             details=[protobufAny.from_json(x) for x in obj["details"]] if obj.get("details", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "grpcCode": self.grpcCode if self.grpcCode is not None else None,
             "httpCode": self.httpCode if self.httpCode is not None else None,
@@ -314,17 +314,17 @@ class trialv1Trial:
     def __init__(
         self,
         experimentId: int,
-        hparams: "t.Dict[str, t.Any]",
+        hparams: "typing.Dict[str, typing.Any]",
         id: int,
         startTime: str,
         state: "determinedexperimentv1State",
         totalBatchesProcessed: int,
-        bestCheckpoint: "t.Optional[v1CheckpointWorkload]" = None,
-        bestValidation: "t.Optional[v1MetricsWorkload]" = None,
-        endTime: "t.Optional[str]" = None,
-        latestValidation: "t.Optional[v1MetricsWorkload]" = None,
-        runnerState: "t.Optional[str]" = None,
-        wallClockTime: "t.Optional[float]" = None,
+        bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None,
+        bestValidation: "typing.Optional[v1MetricsWorkload]" = None,
+        endTime: "typing.Optional[str]" = None,
+        latestValidation: "typing.Optional[v1MetricsWorkload]" = None,
+        runnerState: "typing.Optional[str]" = None,
+        wallClockTime: "typing.Optional[float]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -356,7 +356,7 @@ class trialv1Trial:
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "experimentId": self.experimentId,
@@ -385,7 +385,7 @@ class v1AckAllocationPreemptionSignalRequest:
             allocationId=obj["allocationId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "allocationId": self.allocationId,
         }
@@ -393,15 +393,15 @@ class v1AckAllocationPreemptionSignalRequest:
 class v1Agent:
     def __init__(
         self,
-        addresses: "t.Optional[t.Sequence[str]]" = None,
-        containers: "t.Optional[t.Dict[str, v1Container]]" = None,
-        draining: "t.Optional[bool]" = None,
-        enabled: "t.Optional[bool]" = None,
-        id: "t.Optional[str]" = None,
-        label: "t.Optional[str]" = None,
-        registeredTime: "t.Optional[str]" = None,
-        resourcePool: "t.Optional[str]" = None,
-        slots: "t.Optional[t.Dict[str, v1Slot]]" = None,
+        addresses: "typing.Optional[typing.Sequence[str]]" = None,
+        containers: "typing.Optional[typing.Dict[str, v1Container]]" = None,
+        draining: "typing.Optional[bool]" = None,
+        enabled: "typing.Optional[bool]" = None,
+        id: "typing.Optional[str]" = None,
+        label: "typing.Optional[str]" = None,
+        registeredTime: "typing.Optional[str]" = None,
+        resourcePool: "typing.Optional[str]" = None,
+        slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None,
     ):
         self.id = id
         self.registeredTime = registeredTime
@@ -427,7 +427,7 @@ class v1Agent:
             draining=obj["draining"] if obj.get("draining", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id if self.id is not None else None,
             "registeredTime": self.registeredTime if self.registeredTime is not None else None,
@@ -443,8 +443,8 @@ class v1Agent:
 class v1AgentUserGroup:
     def __init__(
         self,
-        agentGid: "t.Optional[int]" = None,
-        agentUid: "t.Optional[int]" = None,
+        agentGid: "typing.Optional[int]" = None,
+        agentUid: "typing.Optional[int]" = None,
     ):
         self.agentUid = agentUid
         self.agentGid = agentGid
@@ -456,7 +456,7 @@ class v1AgentUserGroup:
             agentGid=obj["agentGid"] if obj.get("agentGid", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agentUid": self.agentUid if self.agentUid is not None else None,
             "agentGid": self.agentGid if self.agentGid is not None else None,
@@ -465,7 +465,7 @@ class v1AgentUserGroup:
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
-        preempt: "t.Optional[bool]" = None,
+        preempt: "typing.Optional[bool]" = None,
     ):
         self.preempt = preempt
 
@@ -475,7 +475,7 @@ class v1AllocationPreemptionSignalResponse:
             preempt=obj["preempt"] if obj.get("preempt", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "preempt": self.preempt if self.preempt is not None else None,
         }
@@ -493,7 +493,7 @@ class v1AllocationRendezvousInfoResponse:
             rendezvousInfo=v1RendezvousInfo.from_json(obj["rendezvousInfo"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "rendezvousInfo": self.rendezvousInfo.to_json(),
         }
@@ -514,7 +514,7 @@ class v1AwsCustomTag:
             value=obj["value"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "key": self.key,
             "value": self.value,
@@ -527,18 +527,18 @@ class v1Checkpoint:
         experimentId: int,
         state: "determinedcheckpointv1State",
         trialId: int,
-        determinedVersion: "t.Optional[str]" = None,
-        endTime: "t.Optional[str]" = None,
-        experimentConfig: "t.Optional[t.Dict[str, t.Any]]" = None,
-        format: "t.Optional[str]" = None,
-        framework: "t.Optional[str]" = None,
-        hparams: "t.Optional[t.Dict[str, t.Any]]" = None,
-        metadata: "t.Optional[t.Dict[str, t.Any]]" = None,
-        metrics: "t.Optional[v1Metrics]" = None,
-        resources: "t.Optional[t.Dict[str, str]]" = None,
-        searcherMetric: "t.Optional[float]" = None,
-        uuid: "t.Optional[str]" = None,
-        validationState: "t.Optional[determinedcheckpointv1State]" = None,
+        determinedVersion: "typing.Optional[str]" = None,
+        endTime: "typing.Optional[str]" = None,
+        experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        format: "typing.Optional[str]" = None,
+        framework: "typing.Optional[str]" = None,
+        hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        metrics: "typing.Optional[v1Metrics]" = None,
+        resources: "typing.Optional[typing.Dict[str, str]]" = None,
+        searcherMetric: "typing.Optional[float]" = None,
+        uuid: "typing.Optional[str]" = None,
+        validationState: "typing.Optional[determinedcheckpointv1State]" = None,
     ):
         self.uuid = uuid
         self.experimentConfig = experimentConfig
@@ -578,7 +578,7 @@ class v1Checkpoint:
             searcherMetric=float(obj["searcherMetric"]) if obj.get("searcherMetric", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "uuid": self.uuid if self.uuid is not None else None,
             "experimentConfig": self.experimentConfig if self.experimentConfig is not None else None,
@@ -604,11 +604,11 @@ class v1CheckpointMetadata:
         determinedVersion: str,
         format: str,
         framework: str,
-        resources: "t.Dict[str, str]",
+        resources: "typing.Dict[str, str]",
         trialId: int,
         trialRunId: int,
         uuid: str,
-        latestBatch: "t.Optional[int]" = None,
+        latestBatch: "typing.Optional[int]" = None,
     ):
         self.trialId = trialId
         self.trialRunId = trialRunId
@@ -632,7 +632,7 @@ class v1CheckpointMetadata:
             latestBatch=obj["latestBatch"] if obj.get("latestBatch", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
@@ -649,9 +649,9 @@ class v1CheckpointWorkload:
         self,
         state: "determinedcheckpointv1State",
         totalBatches: int,
-        endTime: "t.Optional[str]" = None,
-        resources: "t.Optional[t.Dict[str, str]]" = None,
-        uuid: "t.Optional[str]" = None,
+        endTime: "typing.Optional[str]" = None,
+        resources: "typing.Optional[typing.Dict[str, str]]" = None,
+        uuid: "typing.Optional[str]" = None,
     ):
         self.uuid = uuid
         self.endTime = endTime
@@ -669,7 +669,7 @@ class v1CheckpointWorkload:
             totalBatches=obj["totalBatches"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "uuid": self.uuid if self.uuid is not None else None,
             "endTime": self.endTime if self.endTime is not None else None,
@@ -688,8 +688,8 @@ class v1Command:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
-        container: "t.Optional[v1Container]" = None,
-        exitStatus: "t.Optional[str]" = None,
+        container: "typing.Optional[v1Container]" = None,
+        exitStatus: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.description = description
@@ -715,7 +715,7 @@ class v1Command:
             jobId=obj["jobId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "description": self.description,
@@ -731,8 +731,8 @@ class v1Command:
 class v1CompleteValidateAfterOperation:
     def __init__(
         self,
-        op: "t.Optional[v1ValidateAfterOperation]" = None,
-        searcherMetric: "t.Optional[float]" = None,
+        op: "typing.Optional[v1ValidateAfterOperation]" = None,
+        searcherMetric: "typing.Optional[float]" = None,
     ):
         self.op = op
         self.searcherMetric = searcherMetric
@@ -744,7 +744,7 @@ class v1CompleteValidateAfterOperation:
             searcherMetric=float(obj["searcherMetric"]) if obj.get("searcherMetric", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "op": self.op.to_json() if self.op is not None else None,
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
@@ -755,8 +755,8 @@ class v1Container:
         self,
         id: str,
         state: "determinedcontainerv1State",
-        devices: "t.Optional[t.Sequence[v1Device]]" = None,
-        parent: "t.Optional[str]" = None,
+        devices: "typing.Optional[typing.Sequence[v1Device]]" = None,
+        parent: "typing.Optional[str]" = None,
     ):
         self.parent = parent
         self.id = id
@@ -772,7 +772,7 @@ class v1Container:
             devices=[v1Device.from_json(x) for x in obj["devices"]] if obj.get("devices", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "parent": self.parent if self.parent is not None else None,
             "id": self.id,
@@ -783,11 +783,11 @@ class v1Container:
 class v1CreateExperimentRequest:
     def __init__(
         self,
-        activate: "t.Optional[bool]" = None,
-        config: "t.Optional[str]" = None,
-        modelDefinition: "t.Optional[t.Sequence[v1File]]" = None,
-        parentId: "t.Optional[int]" = None,
-        validateOnly: "t.Optional[bool]" = None,
+        activate: "typing.Optional[bool]" = None,
+        config: "typing.Optional[str]" = None,
+        modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None,
+        parentId: "typing.Optional[int]" = None,
+        validateOnly: "typing.Optional[bool]" = None,
     ):
         self.modelDefinition = modelDefinition
         self.config = config
@@ -805,7 +805,7 @@ class v1CreateExperimentRequest:
             activate=obj["activate"] if obj.get("activate", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "modelDefinition": [x.to_json() for x in self.modelDefinition] if self.modelDefinition is not None else None,
             "config": self.config if self.config is not None else None,
@@ -817,7 +817,7 @@ class v1CreateExperimentRequest:
 class v1CreateExperimentResponse:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
     ):
         self.experiment = experiment
@@ -830,7 +830,7 @@ class v1CreateExperimentResponse:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "experiment": self.experiment.to_json(),
             "config": self.config,
@@ -849,7 +849,7 @@ class v1CurrentUserResponse:
             user=v1User.from_json(obj["user"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
         }
@@ -857,10 +857,10 @@ class v1CurrentUserResponse:
 class v1Device:
     def __init__(
         self,
-        brand: "t.Optional[str]" = None,
-        id: "t.Optional[int]" = None,
-        type: "t.Optional[determineddevicev1Type]" = None,
-        uuid: "t.Optional[str]" = None,
+        brand: "typing.Optional[str]" = None,
+        id: "typing.Optional[int]" = None,
+        type: "typing.Optional[determineddevicev1Type]" = None,
+        uuid: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.brand = brand
@@ -876,7 +876,7 @@ class v1Device:
             type=obj["type"] if obj.get("type", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id if self.id is not None else None,
             "brand": self.brand if self.brand is not None else None,
@@ -887,8 +887,8 @@ class v1Device:
 class v1DisableAgentRequest:
     def __init__(
         self,
-        agentId: "t.Optional[str]" = None,
-        drain: "t.Optional[bool]" = None,
+        agentId: "typing.Optional[str]" = None,
+        drain: "typing.Optional[bool]" = None,
     ):
         self.agentId = agentId
         self.drain = drain
@@ -900,7 +900,7 @@ class v1DisableAgentRequest:
             drain=obj["drain"] if obj.get("drain", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agentId": self.agentId if self.agentId is not None else None,
             "drain": self.drain if self.drain is not None else None,
@@ -909,7 +909,7 @@ class v1DisableAgentRequest:
 class v1DisableAgentResponse:
     def __init__(
         self,
-        agent: "t.Optional[v1Agent]" = None,
+        agent: "typing.Optional[v1Agent]" = None,
     ):
         self.agent = agent
 
@@ -919,7 +919,7 @@ class v1DisableAgentResponse:
             agent=v1Agent.from_json(obj["agent"]) if obj.get("agent", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agent": self.agent.to_json() if self.agent is not None else None,
         }
@@ -927,7 +927,7 @@ class v1DisableAgentResponse:
 class v1DisableSlotResponse:
     def __init__(
         self,
-        slot: "t.Optional[v1Slot]" = None,
+        slot: "typing.Optional[v1Slot]" = None,
     ):
         self.slot = slot
 
@@ -937,7 +937,7 @@ class v1DisableSlotResponse:
             slot=v1Slot.from_json(obj["slot"]) if obj.get("slot", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "slot": self.slot.to_json() if self.slot is not None else None,
         }
@@ -945,7 +945,7 @@ class v1DisableSlotResponse:
 class v1EnableAgentResponse:
     def __init__(
         self,
-        agent: "t.Optional[v1Agent]" = None,
+        agent: "typing.Optional[v1Agent]" = None,
     ):
         self.agent = agent
 
@@ -955,7 +955,7 @@ class v1EnableAgentResponse:
             agent=v1Agent.from_json(obj["agent"]) if obj.get("agent", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agent": self.agent.to_json() if self.agent is not None else None,
         }
@@ -963,7 +963,7 @@ class v1EnableAgentResponse:
 class v1EnableSlotResponse:
     def __init__(
         self,
-        slot: "t.Optional[v1Slot]" = None,
+        slot: "typing.Optional[v1Slot]" = None,
     ):
         self.slot = slot
 
@@ -973,7 +973,7 @@ class v1EnableSlotResponse:
             slot=v1Slot.from_json(obj["slot"]) if obj.get("slot", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "slot": self.slot.to_json() if self.slot is not None else None,
         }
@@ -990,12 +990,12 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
-        description: "t.Optional[str]" = None,
-        endTime: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[str]]" = None,
-        notes: "t.Optional[str]" = None,
-        progress: "t.Optional[float]" = None,
-        resourcePool: "t.Optional[str]" = None,
+        description: "typing.Optional[str]" = None,
+        endTime: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        notes: "typing.Optional[str]" = None,
+        progress: "typing.Optional[float]" = None,
+        resourcePool: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.description = description
@@ -1033,7 +1033,7 @@ class v1Experiment:
             jobId=obj["jobId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "description": self.description if self.description is not None else None,
@@ -1055,9 +1055,9 @@ class v1Experiment:
 class v1ExperimentSimulation:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        seed: "t.Optional[int]" = None,
-        trials: "t.Optional[t.Sequence[v1TrialSimulation]]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        seed: "typing.Optional[int]" = None,
+        trials: "typing.Optional[typing.Sequence[v1TrialSimulation]]" = None,
     ):
         self.config = config
         self.seed = seed
@@ -1071,7 +1071,7 @@ class v1ExperimentSimulation:
             trials=[v1TrialSimulation.from_json(x) for x in obj["trials"]] if obj.get("trials", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "config": self.config if self.config is not None else None,
             "seed": self.seed if self.seed is not None else None,
@@ -1109,7 +1109,7 @@ class v1File:
             gid=obj["gid"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "path": self.path,
             "type": self.type,
@@ -1129,7 +1129,7 @@ class v1FittingPolicy(enum.Enum):
 class v1GetAgentResponse:
     def __init__(
         self,
-        agent: "t.Optional[v1Agent]" = None,
+        agent: "typing.Optional[v1Agent]" = None,
     ):
         self.agent = agent
 
@@ -1139,7 +1139,7 @@ class v1GetAgentResponse:
             agent=v1Agent.from_json(obj["agent"]) if obj.get("agent", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agent": self.agent.to_json() if self.agent is not None else None,
         }
@@ -1152,8 +1152,8 @@ class v1GetAgentsRequestSortBy(enum.Enum):
 class v1GetAgentsResponse:
     def __init__(
         self,
-        agents: "t.Optional[t.Sequence[v1Agent]]" = None,
-        pagination: "t.Optional[v1Pagination]" = None,
+        agents: "typing.Optional[typing.Sequence[v1Agent]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.agents = agents
         self.pagination = pagination
@@ -1165,7 +1165,7 @@ class v1GetAgentsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agents": [x.to_json() for x in self.agents] if self.agents is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1174,7 +1174,7 @@ class v1GetAgentsResponse:
 class v1GetBestSearcherValidationMetricResponse:
     def __init__(
         self,
-        metric: "t.Optional[float]" = None,
+        metric: "typing.Optional[float]" = None,
     ):
         self.metric = metric
 
@@ -1184,7 +1184,7 @@ class v1GetBestSearcherValidationMetricResponse:
             metric=float(obj["metric"]) if obj.get("metric", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "metric": dump_float(self.metric) if self.metric is not None else None,
         }
@@ -1192,7 +1192,7 @@ class v1GetBestSearcherValidationMetricResponse:
 class v1GetCheckpointResponse:
     def __init__(
         self,
-        checkpoint: "t.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1Checkpoint]" = None,
     ):
         self.checkpoint = checkpoint
 
@@ -1202,7 +1202,7 @@ class v1GetCheckpointResponse:
             checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
         }
@@ -1210,8 +1210,8 @@ class v1GetCheckpointResponse:
 class v1GetCommandResponse:
     def __init__(
         self,
-        command: "t.Optional[v1Command]" = None,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
+        command: "typing.Optional[v1Command]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.command = command
         self.config = config
@@ -1223,7 +1223,7 @@ class v1GetCommandResponse:
             config=obj["config"] if obj.get("config", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "command": self.command.to_json() if self.command is not None else None,
             "config": self.config if self.config is not None else None,
@@ -1238,8 +1238,8 @@ class v1GetCommandsRequestSortBy(enum.Enum):
 class v1GetCommandsResponse:
     def __init__(
         self,
-        commands: "t.Optional[t.Sequence[v1Command]]" = None,
-        pagination: "t.Optional[v1Pagination]" = None,
+        commands: "typing.Optional[typing.Sequence[v1Command]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.commands = commands
         self.pagination = pagination
@@ -1251,7 +1251,7 @@ class v1GetCommandsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "commands": [x.to_json() for x in self.commands] if self.commands is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1260,8 +1260,8 @@ class v1GetCommandsResponse:
 class v1GetCurrentTrialSearcherOperationResponse:
     def __init__(
         self,
-        completed: "t.Optional[bool]" = None,
-        op: "t.Optional[v1SearcherOperation]" = None,
+        completed: "typing.Optional[bool]" = None,
+        op: "typing.Optional[v1SearcherOperation]" = None,
     ):
         self.op = op
         self.completed = completed
@@ -1273,7 +1273,7 @@ class v1GetCurrentTrialSearcherOperationResponse:
             completed=obj["completed"] if obj.get("completed", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "op": self.op.to_json() if self.op is not None else None,
             "completed": self.completed if self.completed is not None else None,
@@ -1293,8 +1293,8 @@ class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
 class v1GetExperimentCheckpointsResponse:
     def __init__(
         self,
-        checkpoints: "t.Optional[t.Sequence[v1Checkpoint]]" = None,
-        pagination: "t.Optional[v1Pagination]" = None,
+        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.checkpoints = checkpoints
         self.pagination = pagination
@@ -1306,7 +1306,7 @@ class v1GetExperimentCheckpointsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "checkpoints": [x.to_json() for x in self.checkpoints] if self.checkpoints is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1315,7 +1315,7 @@ class v1GetExperimentCheckpointsResponse:
 class v1GetExperimentLabelsResponse:
     def __init__(
         self,
-        labels: "t.Optional[t.Sequence[str]]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.labels = labels
 
@@ -1325,7 +1325,7 @@ class v1GetExperimentLabelsResponse:
             labels=obj["labels"] if obj.get("labels", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "labels": self.labels if self.labels is not None else None,
         }
@@ -1333,9 +1333,9 @@ class v1GetExperimentLabelsResponse:
 class v1GetExperimentResponse:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
-        jobSummary: "t.Optional[v1JobSummary]" = None,
+        jobSummary: "typing.Optional[v1JobSummary]" = None,
     ):
         self.experiment = experiment
         self.config = config
@@ -1349,7 +1349,7 @@ class v1GetExperimentResponse:
             jobSummary=v1JobSummary.from_json(obj["jobSummary"]) if obj.get("jobSummary", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "experiment": self.experiment.to_json(),
             "config": self.config,
@@ -1371,7 +1371,7 @@ class v1GetExperimentTrialsResponse:
     def __init__(
         self,
         pagination: "v1Pagination",
-        trials: "t.Sequence[trialv1Trial]",
+        trials: "typing.Sequence[trialv1Trial]",
     ):
         self.trials = trials
         self.pagination = pagination
@@ -1383,7 +1383,7 @@ class v1GetExperimentTrialsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trials": [x.to_json() for x in self.trials],
             "pagination": self.pagination.to_json(),
@@ -1392,7 +1392,7 @@ class v1GetExperimentTrialsResponse:
 class v1GetExperimentValidationHistoryResponse:
     def __init__(
         self,
-        validationHistory: "t.Optional[t.Sequence[v1ValidationHistoryEntry]]" = None,
+        validationHistory: "typing.Optional[typing.Sequence[v1ValidationHistoryEntry]]" = None,
     ):
         self.validationHistory = validationHistory
 
@@ -1402,7 +1402,7 @@ class v1GetExperimentValidationHistoryResponse:
             validationHistory=[v1ValidationHistoryEntry.from_json(x) for x in obj["validationHistory"]] if obj.get("validationHistory", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "validationHistory": [x.to_json() for x in self.validationHistory] if self.validationHistory is not None else None,
         }
@@ -1422,7 +1422,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
 class v1GetExperimentsResponse:
     def __init__(
         self,
-        experiments: "t.Sequence[v1Experiment]",
+        experiments: "typing.Sequence[v1Experiment]",
         pagination: "v1Pagination",
     ):
         self.experiments = experiments
@@ -1435,7 +1435,7 @@ class v1GetExperimentsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "experiments": [x.to_json() for x in self.experiments],
             "pagination": self.pagination.to_json(),
@@ -1444,8 +1444,8 @@ class v1GetExperimentsResponse:
 class v1GetHPImportanceResponse:
     def __init__(
         self,
-        trainingMetrics: "t.Dict[str, GetHPImportanceResponseMetricHPImportance]",
-        validationMetrics: "t.Dict[str, GetHPImportanceResponseMetricHPImportance]",
+        trainingMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
+        validationMetrics: "typing.Dict[str, GetHPImportanceResponseMetricHPImportance]",
     ):
         self.trainingMetrics = trainingMetrics
         self.validationMetrics = validationMetrics
@@ -1457,7 +1457,7 @@ class v1GetHPImportanceResponse:
             validationMetrics={k: GetHPImportanceResponseMetricHPImportance.from_json(v) for k, v in obj["validationMetrics"].items()},
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trainingMetrics": {k: v.to_json() for k, v in self.trainingMetrics.items()},
             "validationMetrics": {k: v.to_json() for k, v in self.validationMetrics.items()},
@@ -1466,7 +1466,7 @@ class v1GetHPImportanceResponse:
 class v1GetJobQueueStatsResponse:
     def __init__(
         self,
-        results: "t.Sequence[v1RPQueueStat]",
+        results: "typing.Sequence[v1RPQueueStat]",
     ):
         self.results = results
 
@@ -1476,7 +1476,7 @@ class v1GetJobQueueStatsResponse:
             results=[v1RPQueueStat.from_json(x) for x in obj["results"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "results": [x.to_json() for x in self.results],
         }
@@ -1484,7 +1484,7 @@ class v1GetJobQueueStatsResponse:
 class v1GetJobsResponse:
     def __init__(
         self,
-        jobs: "t.Sequence[v1Job]",
+        jobs: "typing.Sequence[v1Job]",
         pagination: "v1Pagination",
     ):
         self.pagination = pagination
@@ -1497,7 +1497,7 @@ class v1GetJobsResponse:
             jobs=[v1Job.from_json(x) for x in obj["jobs"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "pagination": self.pagination.to_json(),
             "jobs": [x.to_json() for x in self.jobs],
@@ -1506,7 +1506,7 @@ class v1GetJobsResponse:
 class v1GetMasterConfigResponse:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
     ):
         self.config = config
 
@@ -1516,7 +1516,7 @@ class v1GetMasterConfigResponse:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "config": self.config,
         }
@@ -1528,11 +1528,11 @@ class v1GetMasterResponse:
         clusterName: str,
         masterId: str,
         version: str,
-        branding: "t.Optional[str]" = None,
-        externalLoginUri: "t.Optional[str]" = None,
-        externalLogoutUri: "t.Optional[str]" = None,
-        ssoProviders: "t.Optional[t.Sequence[v1SSOProvider]]" = None,
-        telemetryEnabled: "t.Optional[bool]" = None,
+        branding: "typing.Optional[str]" = None,
+        externalLoginUri: "typing.Optional[str]" = None,
+        externalLogoutUri: "typing.Optional[str]" = None,
+        ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None,
+        telemetryEnabled: "typing.Optional[bool]" = None,
     ):
         self.version = version
         self.masterId = masterId
@@ -1558,7 +1558,7 @@ class v1GetMasterResponse:
             branding=obj["branding"] if obj.get("branding", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "version": self.version,
             "masterId": self.masterId,
@@ -1584,7 +1584,7 @@ class v1GetModelDefResponse:
             b64Tgz=obj["b64Tgz"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "b64Tgz": self.b64Tgz,
         }
@@ -1592,7 +1592,7 @@ class v1GetModelDefResponse:
 class v1GetModelLabelsResponse:
     def __init__(
         self,
-        labels: "t.Optional[t.Sequence[str]]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.labels = labels
 
@@ -1602,7 +1602,7 @@ class v1GetModelLabelsResponse:
             labels=obj["labels"] if obj.get("labels", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "labels": self.labels if self.labels is not None else None,
         }
@@ -1610,7 +1610,7 @@ class v1GetModelLabelsResponse:
 class v1GetModelResponse:
     def __init__(
         self,
-        model: "t.Optional[v1Model]" = None,
+        model: "typing.Optional[v1Model]" = None,
     ):
         self.model = model
 
@@ -1620,7 +1620,7 @@ class v1GetModelResponse:
             model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json() if self.model is not None else None,
         }
@@ -1628,7 +1628,7 @@ class v1GetModelResponse:
 class v1GetModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "t.Optional[v1ModelVersion]" = None,
+        modelVersion: "typing.Optional[v1ModelVersion]" = None,
     ):
         self.modelVersion = modelVersion
 
@@ -1638,7 +1638,7 @@ class v1GetModelVersionResponse:
             modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
         }
@@ -1651,9 +1651,9 @@ class v1GetModelVersionsRequestSortBy(enum.Enum):
 class v1GetModelVersionsResponse:
     def __init__(
         self,
-        model: "t.Optional[v1Model]" = None,
-        modelVersions: "t.Optional[t.Sequence[v1ModelVersion]]" = None,
-        pagination: "t.Optional[v1Pagination]" = None,
+        model: "typing.Optional[v1Model]" = None,
+        modelVersions: "typing.Optional[typing.Sequence[v1ModelVersion]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.model = model
         self.modelVersions = modelVersions
@@ -1667,7 +1667,7 @@ class v1GetModelVersionsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json() if self.model is not None else None,
             "modelVersions": [x.to_json() for x in self.modelVersions] if self.modelVersions is not None else None,
@@ -1685,7 +1685,7 @@ class v1GetModelsRequestSortBy(enum.Enum):
 class v1GetModelsResponse:
     def __init__(
         self,
-        models: "t.Sequence[v1Model]",
+        models: "typing.Sequence[v1Model]",
         pagination: "v1Pagination",
     ):
         self.models = models
@@ -1698,7 +1698,7 @@ class v1GetModelsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "models": [x.to_json() for x in self.models],
             "pagination": self.pagination.to_json(),
@@ -1707,8 +1707,8 @@ class v1GetModelsResponse:
 class v1GetNotebookResponse:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        notebook: "t.Optional[v1Notebook]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        notebook: "typing.Optional[v1Notebook]" = None,
     ):
         self.notebook = notebook
         self.config = config
@@ -1720,7 +1720,7 @@ class v1GetNotebookResponse:
             config=obj["config"] if obj.get("config", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebook": self.notebook.to_json() if self.notebook is not None else None,
             "config": self.config if self.config is not None else None,
@@ -1735,8 +1735,8 @@ class v1GetNotebooksRequestSortBy(enum.Enum):
 class v1GetNotebooksResponse:
     def __init__(
         self,
-        notebooks: "t.Optional[t.Sequence[v1Notebook]]" = None,
-        pagination: "t.Optional[v1Pagination]" = None,
+        notebooks: "typing.Optional[typing.Sequence[v1Notebook]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.notebooks = notebooks
         self.pagination = pagination
@@ -1748,7 +1748,7 @@ class v1GetNotebooksResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebooks": [x.to_json() for x in self.notebooks] if self.notebooks is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1757,8 +1757,8 @@ class v1GetNotebooksResponse:
 class v1GetResourcePoolsResponse:
     def __init__(
         self,
-        pagination: "t.Optional[v1Pagination]" = None,
-        resourcePools: "t.Optional[t.Sequence[v1ResourcePool]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
+        resourcePools: "typing.Optional[typing.Sequence[v1ResourcePool]]" = None,
     ):
         self.resourcePools = resourcePools
         self.pagination = pagination
@@ -1770,7 +1770,7 @@ class v1GetResourcePoolsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "resourcePools": [x.to_json() for x in self.resourcePools] if self.resourcePools is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1779,8 +1779,8 @@ class v1GetResourcePoolsResponse:
 class v1GetShellResponse:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        shell: "t.Optional[v1Shell]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        shell: "typing.Optional[v1Shell]" = None,
     ):
         self.shell = shell
         self.config = config
@@ -1792,7 +1792,7 @@ class v1GetShellResponse:
             config=obj["config"] if obj.get("config", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "shell": self.shell.to_json() if self.shell is not None else None,
             "config": self.config if self.config is not None else None,
@@ -1807,8 +1807,8 @@ class v1GetShellsRequestSortBy(enum.Enum):
 class v1GetShellsResponse:
     def __init__(
         self,
-        pagination: "t.Optional[v1Pagination]" = None,
-        shells: "t.Optional[t.Sequence[v1Shell]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
+        shells: "typing.Optional[typing.Sequence[v1Shell]]" = None,
     ):
         self.shells = shells
         self.pagination = pagination
@@ -1820,7 +1820,7 @@ class v1GetShellsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "shells": [x.to_json() for x in self.shells] if self.shells is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1829,7 +1829,7 @@ class v1GetShellsResponse:
 class v1GetSlotResponse:
     def __init__(
         self,
-        slot: "t.Optional[v1Slot]" = None,
+        slot: "typing.Optional[v1Slot]" = None,
     ):
         self.slot = slot
 
@@ -1839,7 +1839,7 @@ class v1GetSlotResponse:
             slot=v1Slot.from_json(obj["slot"]) if obj.get("slot", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "slot": self.slot.to_json() if self.slot is not None else None,
         }
@@ -1847,7 +1847,7 @@ class v1GetSlotResponse:
 class v1GetSlotsResponse:
     def __init__(
         self,
-        slots: "t.Optional[t.Sequence[v1Slot]]" = None,
+        slots: "typing.Optional[typing.Sequence[v1Slot]]" = None,
     ):
         self.slots = slots
 
@@ -1857,7 +1857,7 @@ class v1GetSlotsResponse:
             slots=[v1Slot.from_json(x) for x in obj["slots"]] if obj.get("slots", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "slots": [x.to_json() for x in self.slots] if self.slots is not None else None,
         }
@@ -1866,7 +1866,7 @@ class v1GetTelemetryResponse:
     def __init__(
         self,
         enabled: bool,
-        segmentKey: "t.Optional[str]" = None,
+        segmentKey: "typing.Optional[str]" = None,
     ):
         self.enabled = enabled
         self.segmentKey = segmentKey
@@ -1878,7 +1878,7 @@ class v1GetTelemetryResponse:
             segmentKey=obj["segmentKey"] if obj.get("segmentKey", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "enabled": self.enabled,
             "segmentKey": self.segmentKey if self.segmentKey is not None else None,
@@ -1887,7 +1887,7 @@ class v1GetTelemetryResponse:
 class v1GetTemplateResponse:
     def __init__(
         self,
-        template: "t.Optional[v1Template]" = None,
+        template: "typing.Optional[v1Template]" = None,
     ):
         self.template = template
 
@@ -1897,7 +1897,7 @@ class v1GetTemplateResponse:
             template=v1Template.from_json(obj["template"]) if obj.get("template", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "template": self.template.to_json() if self.template is not None else None,
         }
@@ -1909,8 +1909,8 @@ class v1GetTemplatesRequestSortBy(enum.Enum):
 class v1GetTemplatesResponse:
     def __init__(
         self,
-        pagination: "t.Optional[v1Pagination]" = None,
-        templates: "t.Optional[t.Sequence[v1Template]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
+        templates: "typing.Optional[typing.Sequence[v1Template]]" = None,
     ):
         self.templates = templates
         self.pagination = pagination
@@ -1922,7 +1922,7 @@ class v1GetTemplatesResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "templates": [x.to_json() for x in self.templates] if self.templates is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1931,8 +1931,8 @@ class v1GetTemplatesResponse:
 class v1GetTensorboardResponse:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        tensorboard: "t.Optional[v1Tensorboard]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
         self.tensorboard = tensorboard
         self.config = config
@@ -1944,7 +1944,7 @@ class v1GetTensorboardResponse:
             config=obj["config"] if obj.get("config", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "tensorboard": self.tensorboard.to_json() if self.tensorboard is not None else None,
             "config": self.config if self.config is not None else None,
@@ -1959,8 +1959,8 @@ class v1GetTensorboardsRequestSortBy(enum.Enum):
 class v1GetTensorboardsResponse:
     def __init__(
         self,
-        pagination: "t.Optional[v1Pagination]" = None,
-        tensorboards: "t.Optional[t.Sequence[v1Tensorboard]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
+        tensorboards: "typing.Optional[typing.Sequence[v1Tensorboard]]" = None,
     ):
         self.tensorboards = tensorboards
         self.pagination = pagination
@@ -1972,7 +1972,7 @@ class v1GetTensorboardsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "tensorboards": [x.to_json() for x in self.tensorboards] if self.tensorboards is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -1990,8 +1990,8 @@ class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
 class v1GetTrialCheckpointsResponse:
     def __init__(
         self,
-        checkpoints: "t.Optional[t.Sequence[v1Checkpoint]]" = None,
-        pagination: "t.Optional[v1Pagination]" = None,
+        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.checkpoints = checkpoints
         self.pagination = pagination
@@ -2003,7 +2003,7 @@ class v1GetTrialCheckpointsResponse:
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "checkpoints": [x.to_json() for x in self.checkpoints] if self.checkpoints is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
@@ -2012,7 +2012,7 @@ class v1GetTrialCheckpointsResponse:
 class v1GetTrialProfilerAvailableSeriesResponse:
     def __init__(
         self,
-        labels: "t.Sequence[v1TrialProfilerMetricLabels]",
+        labels: "typing.Sequence[v1TrialProfilerMetricLabels]",
     ):
         self.labels = labels
 
@@ -2022,7 +2022,7 @@ class v1GetTrialProfilerAvailableSeriesResponse:
             labels=[v1TrialProfilerMetricLabels.from_json(x) for x in obj["labels"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "labels": [x.to_json() for x in self.labels],
         }
@@ -2040,7 +2040,7 @@ class v1GetTrialProfilerMetricsResponse:
             batch=v1TrialProfilerMetricsBatch.from_json(obj["batch"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "batch": self.batch.to_json(),
         }
@@ -2049,7 +2049,7 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "t.Optional[t.Sequence[GetTrialResponseWorkloadContainer]]" = None,
+        workloads: "typing.Optional[typing.Sequence[GetTrialResponseWorkloadContainer]]" = None,
     ):
         self.trial = trial
         self.workloads = workloads
@@ -2061,7 +2061,7 @@ class v1GetTrialResponse:
             workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]] if obj.get("workloads", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
             "workloads": [x.to_json() for x in self.workloads] if self.workloads is not None else None,
@@ -2070,7 +2070,7 @@ class v1GetTrialResponse:
 class v1GetUserResponse:
     def __init__(
         self,
-        user: "t.Optional[v1User]" = None,
+        user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
 
@@ -2080,7 +2080,7 @@ class v1GetUserResponse:
             user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
         }
@@ -2088,7 +2088,7 @@ class v1GetUserResponse:
 class v1GetUsersResponse:
     def __init__(
         self,
-        users: "t.Optional[t.Sequence[v1User]]" = None,
+        users: "typing.Optional[typing.Sequence[v1User]]" = None,
     ):
         self.users = users
 
@@ -2098,7 +2098,7 @@ class v1GetUsersResponse:
             users=[v1User.from_json(x) for x in obj["users"]] if obj.get("users", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
         }
@@ -2106,8 +2106,8 @@ class v1GetUsersResponse:
 class v1IdleNotebookRequest:
     def __init__(
         self,
-        idle: "t.Optional[bool]" = None,
-        notebookId: "t.Optional[str]" = None,
+        idle: "typing.Optional[bool]" = None,
+        notebookId: "typing.Optional[str]" = None,
     ):
         self.notebookId = notebookId
         self.idle = idle
@@ -2119,7 +2119,7 @@ class v1IdleNotebookRequest:
             idle=obj["idle"] if obj.get("idle", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebookId": self.notebookId if self.notebookId is not None else None,
             "idle": self.idle if self.idle is not None else None,
@@ -2138,10 +2138,10 @@ class v1Job:
         submissionTime: str,
         type: "determinedjobv1Type",
         username: str,
-        priority: "t.Optional[int]" = None,
-        progress: "t.Optional[float]" = None,
-        summary: "t.Optional[v1JobSummary]" = None,
-        weight: "t.Optional[float]" = None,
+        priority: "typing.Optional[int]" = None,
+        progress: "typing.Optional[float]" = None,
+        summary: "typing.Optional[v1JobSummary]" = None,
+        weight: "typing.Optional[float]" = None,
     ):
         self.summary = summary
         self.type = type
@@ -2177,7 +2177,7 @@ class v1Job:
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "summary": self.summary.to_json() if self.summary is not None else None,
             "type": self.type.value,
@@ -2211,7 +2211,7 @@ class v1JobSummary:
             jobsAhead=obj["jobsAhead"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "state": self.state.value,
             "jobsAhead": self.jobsAhead,
@@ -2220,8 +2220,8 @@ class v1JobSummary:
 class v1K8PriorityClass:
     def __init__(
         self,
-        priorityClass: "t.Optional[str]" = None,
-        priorityValue: "t.Optional[int]" = None,
+        priorityClass: "typing.Optional[str]" = None,
+        priorityValue: "typing.Optional[int]" = None,
     ):
         self.priorityClass = priorityClass
         self.priorityValue = priorityValue
@@ -2233,7 +2233,7 @@ class v1K8PriorityClass:
             priorityValue=obj["priorityValue"] if obj.get("priorityValue", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "priorityClass": self.priorityClass if self.priorityClass is not None else None,
             "priorityValue": self.priorityValue if self.priorityValue is not None else None,
@@ -2242,7 +2242,7 @@ class v1K8PriorityClass:
 class v1KillCommandResponse:
     def __init__(
         self,
-        command: "t.Optional[v1Command]" = None,
+        command: "typing.Optional[v1Command]" = None,
     ):
         self.command = command
 
@@ -2252,7 +2252,7 @@ class v1KillCommandResponse:
             command=v1Command.from_json(obj["command"]) if obj.get("command", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "command": self.command.to_json() if self.command is not None else None,
         }
@@ -2260,7 +2260,7 @@ class v1KillCommandResponse:
 class v1KillNotebookResponse:
     def __init__(
         self,
-        notebook: "t.Optional[v1Notebook]" = None,
+        notebook: "typing.Optional[v1Notebook]" = None,
     ):
         self.notebook = notebook
 
@@ -2270,7 +2270,7 @@ class v1KillNotebookResponse:
             notebook=v1Notebook.from_json(obj["notebook"]) if obj.get("notebook", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebook": self.notebook.to_json() if self.notebook is not None else None,
         }
@@ -2278,7 +2278,7 @@ class v1KillNotebookResponse:
 class v1KillShellResponse:
     def __init__(
         self,
-        shell: "t.Optional[v1Shell]" = None,
+        shell: "typing.Optional[v1Shell]" = None,
     ):
         self.shell = shell
 
@@ -2288,7 +2288,7 @@ class v1KillShellResponse:
             shell=v1Shell.from_json(obj["shell"]) if obj.get("shell", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "shell": self.shell.to_json() if self.shell is not None else None,
         }
@@ -2296,7 +2296,7 @@ class v1KillShellResponse:
 class v1KillTensorboardResponse:
     def __init__(
         self,
-        tensorboard: "t.Optional[v1Tensorboard]" = None,
+        tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
         self.tensorboard = tensorboard
 
@@ -2306,7 +2306,7 @@ class v1KillTensorboardResponse:
             tensorboard=v1Tensorboard.from_json(obj["tensorboard"]) if obj.get("tensorboard", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "tensorboard": self.tensorboard.to_json() if self.tensorboard is not None else None,
         }
@@ -2314,10 +2314,10 @@ class v1KillTensorboardResponse:
 class v1LaunchCommandRequest:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        data: "t.Optional[str]" = None,
-        files: "t.Optional[t.Sequence[v1File]]" = None,
-        templateName: "t.Optional[str]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        data: "typing.Optional[str]" = None,
+        files: "typing.Optional[typing.Sequence[v1File]]" = None,
+        templateName: "typing.Optional[str]" = None,
     ):
         self.config = config
         self.templateName = templateName
@@ -2333,7 +2333,7 @@ class v1LaunchCommandRequest:
             data=obj["data"] if obj.get("data", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "config": self.config if self.config is not None else None,
             "templateName": self.templateName if self.templateName is not None else None,
@@ -2345,7 +2345,7 @@ class v1LaunchCommandResponse:
     def __init__(
         self,
         command: "v1Command",
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
     ):
         self.command = command
         self.config = config
@@ -2357,7 +2357,7 @@ class v1LaunchCommandResponse:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "command": self.command.to_json(),
             "config": self.config,
@@ -2366,10 +2366,10 @@ class v1LaunchCommandResponse:
 class v1LaunchNotebookRequest:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        files: "t.Optional[t.Sequence[v1File]]" = None,
-        preview: "t.Optional[bool]" = None,
-        templateName: "t.Optional[str]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        files: "typing.Optional[typing.Sequence[v1File]]" = None,
+        preview: "typing.Optional[bool]" = None,
+        templateName: "typing.Optional[str]" = None,
     ):
         self.config = config
         self.templateName = templateName
@@ -2385,7 +2385,7 @@ class v1LaunchNotebookRequest:
             preview=obj["preview"] if obj.get("preview", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "config": self.config if self.config is not None else None,
             "templateName": self.templateName if self.templateName is not None else None,
@@ -2396,7 +2396,7 @@ class v1LaunchNotebookRequest:
 class v1LaunchNotebookResponse:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
         notebook: "v1Notebook",
     ):
         self.notebook = notebook
@@ -2409,7 +2409,7 @@ class v1LaunchNotebookResponse:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebook": self.notebook.to_json(),
             "config": self.config,
@@ -2418,10 +2418,10 @@ class v1LaunchNotebookResponse:
 class v1LaunchShellRequest:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        data: "t.Optional[str]" = None,
-        files: "t.Optional[t.Sequence[v1File]]" = None,
-        templateName: "t.Optional[str]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        data: "typing.Optional[str]" = None,
+        files: "typing.Optional[typing.Sequence[v1File]]" = None,
+        templateName: "typing.Optional[str]" = None,
     ):
         self.config = config
         self.templateName = templateName
@@ -2437,7 +2437,7 @@ class v1LaunchShellRequest:
             data=obj["data"] if obj.get("data", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "config": self.config if self.config is not None else None,
             "templateName": self.templateName if self.templateName is not None else None,
@@ -2448,7 +2448,7 @@ class v1LaunchShellRequest:
 class v1LaunchShellResponse:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
         shell: "v1Shell",
     ):
         self.shell = shell
@@ -2461,7 +2461,7 @@ class v1LaunchShellResponse:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "shell": self.shell.to_json(),
             "config": self.config,
@@ -2470,11 +2470,11 @@ class v1LaunchShellResponse:
 class v1LaunchTensorboardRequest:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        experimentIds: "t.Optional[t.Sequence[int]]" = None,
-        files: "t.Optional[t.Sequence[v1File]]" = None,
-        templateName: "t.Optional[str]" = None,
-        trialIds: "t.Optional[t.Sequence[int]]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+        files: "typing.Optional[typing.Sequence[v1File]]" = None,
+        templateName: "typing.Optional[str]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.experimentIds = experimentIds
         self.trialIds = trialIds
@@ -2492,7 +2492,7 @@ class v1LaunchTensorboardRequest:
             files=[v1File.from_json(x) for x in obj["files"]] if obj.get("files", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "trialIds": self.trialIds if self.trialIds is not None else None,
@@ -2504,7 +2504,7 @@ class v1LaunchTensorboardRequest:
 class v1LaunchTensorboardResponse:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
         tensorboard: "v1Tensorboard",
     ):
         self.tensorboard = tensorboard
@@ -2517,7 +2517,7 @@ class v1LaunchTensorboardResponse:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "tensorboard": self.tensorboard.to_json(),
             "config": self.config,
@@ -2527,9 +2527,9 @@ class v1LogEntry:
     def __init__(
         self,
         id: int,
-        level: "t.Optional[v1LogLevel]" = None,
-        message: "t.Optional[str]" = None,
-        timestamp: "t.Optional[str]" = None,
+        level: "typing.Optional[v1LogLevel]" = None,
+        message: "typing.Optional[str]" = None,
+        timestamp: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.message = message
@@ -2545,7 +2545,7 @@ class v1LogEntry:
             level=obj["level"] if obj.get("level", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "message": self.message if self.message is not None else None,
@@ -2567,7 +2567,7 @@ class v1LoginRequest:
         self,
         password: str,
         username: str,
-        isHashed: "t.Optional[bool]" = None,
+        isHashed: "typing.Optional[bool]" = None,
     ):
         self.username = username
         self.password = password
@@ -2581,7 +2581,7 @@ class v1LoginRequest:
             isHashed=obj["isHashed"] if obj.get("isHashed", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "username": self.username,
             "password": self.password,
@@ -2604,7 +2604,7 @@ class v1LoginResponse:
             user=v1User.from_json(obj["user"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "token": self.token,
             "user": self.user.to_json(),
@@ -2626,7 +2626,7 @@ class v1MarkAllocationReservationDaemonRequest:
             containerId=obj["containerId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "allocationId": self.allocationId,
             "containerId": self.containerId,
@@ -2635,7 +2635,7 @@ class v1MarkAllocationReservationDaemonRequest:
 class v1MasterLogsResponse:
     def __init__(
         self,
-        logEntry: "t.Optional[v1LogEntry]" = None,
+        logEntry: "typing.Optional[v1LogEntry]" = None,
     ):
         self.logEntry = logEntry
 
@@ -2645,7 +2645,7 @@ class v1MasterLogsResponse:
             logEntry=v1LogEntry.from_json(obj["logEntry"]) if obj.get("logEntry", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "logEntry": self.logEntry.to_json() if self.logEntry is not None else None,
         }
@@ -2653,7 +2653,7 @@ class v1MasterLogsResponse:
 class v1MetricBatchesResponse:
     def __init__(
         self,
-        batches: "t.Optional[t.Sequence[int]]" = None,
+        batches: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.batches = batches
 
@@ -2663,7 +2663,7 @@ class v1MetricBatchesResponse:
             batches=obj["batches"] if obj.get("batches", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "batches": self.batches if self.batches is not None else None,
         }
@@ -2671,9 +2671,9 @@ class v1MetricBatchesResponse:
 class v1MetricNamesResponse:
     def __init__(
         self,
-        searcherMetric: "t.Optional[str]" = None,
-        trainingMetrics: "t.Optional[t.Sequence[str]]" = None,
-        validationMetrics: "t.Optional[t.Sequence[str]]" = None,
+        searcherMetric: "typing.Optional[str]" = None,
+        trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+        validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.searcherMetric = searcherMetric
         self.trainingMetrics = trainingMetrics
@@ -2687,7 +2687,7 @@ class v1MetricNamesResponse:
             validationMetrics=obj["validationMetrics"] if obj.get("validationMetrics", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "searcherMetric": self.searcherMetric if self.searcherMetric is not None else None,
             "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
@@ -2702,8 +2702,8 @@ class v1MetricType(enum.Enum):
 class v1Metrics:
     def __init__(
         self,
-        numInputs: "t.Optional[int]" = None,
-        validationMetrics: "t.Optional[t.Dict[str, t.Any]]" = None,
+        numInputs: "typing.Optional[int]" = None,
+        validationMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.numInputs = numInputs
         self.validationMetrics = validationMetrics
@@ -2715,7 +2715,7 @@ class v1Metrics:
             validationMetrics=obj["validationMetrics"] if obj.get("validationMetrics", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "numInputs": self.numInputs if self.numInputs is not None else None,
             "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
@@ -2727,8 +2727,8 @@ class v1MetricsWorkload:
         numInputs: int,
         state: "determinedexperimentv1State",
         totalBatches: int,
-        endTime: "t.Optional[str]" = None,
-        metrics: "t.Optional[t.Dict[str, t.Any]]" = None,
+        endTime: "typing.Optional[str]" = None,
+        metrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.endTime = endTime
         self.state = state
@@ -2746,7 +2746,7 @@ class v1MetricsWorkload:
             totalBatches=obj["totalBatches"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "endTime": self.endTime if self.endTime is not None else None,
             "state": self.state.value,
@@ -2761,14 +2761,14 @@ class v1Model:
         creationTime: str,
         id: int,
         lastUpdatedTime: str,
-        metadata: "t.Dict[str, t.Any]",
+        metadata: "typing.Dict[str, typing.Any]",
         name: str,
         numVersions: int,
         username: str,
-        archived: "t.Optional[bool]" = None,
-        description: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[str]]" = None,
-        notes: "t.Optional[str]" = None,
+        archived: "typing.Optional[bool]" = None,
+        description: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        notes: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
@@ -2798,7 +2798,7 @@ class v1Model:
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "name": self.name,
             "description": self.description if self.description is not None else None,
@@ -2822,12 +2822,12 @@ class v1ModelVersion:
         model: "v1Model",
         username: str,
         version: int,
-        comment: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[str]]" = None,
-        lastUpdatedTime: "t.Optional[str]" = None,
-        metadata: "t.Optional[t.Dict[str, t.Any]]" = None,
-        name: "t.Optional[str]" = None,
-        notes: "t.Optional[str]" = None,
+        comment: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        lastUpdatedTime: "typing.Optional[str]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        name: "typing.Optional[str]" = None,
+        notes: "typing.Optional[str]" = None,
     ):
         self.model = model
         self.checkpoint = checkpoint
@@ -2859,7 +2859,7 @@ class v1ModelVersion:
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json(),
             "checkpoint": self.checkpoint.to_json(),
@@ -2885,9 +2885,9 @@ class v1Notebook:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
-        container: "t.Optional[v1Container]" = None,
-        exitStatus: "t.Optional[str]" = None,
-        serviceAddress: "t.Optional[str]" = None,
+        container: "typing.Optional[v1Container]" = None,
+        exitStatus: "typing.Optional[str]" = None,
+        serviceAddress: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.description = description
@@ -2915,7 +2915,7 @@ class v1Notebook:
             jobId=obj["jobId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "description": self.description,
@@ -2932,7 +2932,7 @@ class v1Notebook:
 class v1NotebookLogsResponse:
     def __init__(
         self,
-        logEntry: "t.Optional[v1LogEntry]" = None,
+        logEntry: "typing.Optional[v1LogEntry]" = None,
     ):
         self.logEntry = logEntry
 
@@ -2942,7 +2942,7 @@ class v1NotebookLogsResponse:
             logEntry=v1LogEntry.from_json(obj["logEntry"]) if obj.get("logEntry", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "logEntry": self.logEntry.to_json() if self.logEntry is not None else None,
         }
@@ -2955,11 +2955,11 @@ class v1OrderBy(enum.Enum):
 class v1Pagination:
     def __init__(
         self,
-        endIndex: "t.Optional[int]" = None,
-        limit: "t.Optional[int]" = None,
-        offset: "t.Optional[int]" = None,
-        startIndex: "t.Optional[int]" = None,
-        total: "t.Optional[int]" = None,
+        endIndex: "typing.Optional[int]" = None,
+        limit: "typing.Optional[int]" = None,
+        offset: "typing.Optional[int]" = None,
+        startIndex: "typing.Optional[int]" = None,
+        total: "typing.Optional[int]" = None,
     ):
         self.offset = offset
         self.limit = limit
@@ -2977,7 +2977,7 @@ class v1Pagination:
             total=obj["total"] if obj.get("total", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "offset": self.offset if self.offset is not None else None,
             "limit": self.limit if self.limit is not None else None,
@@ -2989,8 +2989,8 @@ class v1Pagination:
 class v1PaginationRequest:
     def __init__(
         self,
-        limit: "t.Optional[int]" = None,
-        offset: "t.Optional[int]" = None,
+        limit: "typing.Optional[int]" = None,
+        offset: "typing.Optional[int]" = None,
     ):
         self.offset = offset
         self.limit = limit
@@ -3002,7 +3002,7 @@ class v1PaginationRequest:
             limit=obj["limit"] if obj.get("limit", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "offset": self.offset if self.offset is not None else None,
             "limit": self.limit if self.limit is not None else None,
@@ -3011,7 +3011,7 @@ class v1PaginationRequest:
 class v1PatchExperimentResponse:
     def __init__(
         self,
-        experiment: "t.Optional[v1Experiment]" = None,
+        experiment: "typing.Optional[v1Experiment]" = None,
     ):
         self.experiment = experiment
 
@@ -3021,7 +3021,7 @@ class v1PatchExperimentResponse:
             experiment=v1Experiment.from_json(obj["experiment"]) if obj.get("experiment", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "experiment": self.experiment.to_json() if self.experiment is not None else None,
         }
@@ -3029,11 +3029,11 @@ class v1PatchExperimentResponse:
 class v1PatchModel:
     def __init__(
         self,
-        description: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[t.Dict[str, t.Any]]]" = None,
-        metadata: "t.Optional[t.Dict[str, t.Any]]" = None,
-        name: "t.Optional[str]" = None,
-        notes: "t.Optional[str]" = None,
+        description: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        name: "typing.Optional[str]" = None,
+        notes: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
@@ -3051,7 +3051,7 @@ class v1PatchModel:
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "name": self.name if self.name is not None else None,
             "description": self.description if self.description is not None else None,
@@ -3063,8 +3063,8 @@ class v1PatchModel:
 class v1PatchModelRequest:
     def __init__(
         self,
-        model: "t.Optional[v1PatchModel]" = None,
-        modelId: "t.Optional[int]" = None,
+        model: "typing.Optional[v1PatchModel]" = None,
+        modelId: "typing.Optional[int]" = None,
     ):
         self.model = model
         self.modelId = modelId
@@ -3076,7 +3076,7 @@ class v1PatchModelRequest:
             modelId=obj["modelId"] if obj.get("modelId", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json() if self.model is not None else None,
             "modelId": self.modelId if self.modelId is not None else None,
@@ -3085,7 +3085,7 @@ class v1PatchModelRequest:
 class v1PatchModelResponse:
     def __init__(
         self,
-        model: "t.Optional[v1Model]" = None,
+        model: "typing.Optional[v1Model]" = None,
     ):
         self.model = model
 
@@ -3095,7 +3095,7 @@ class v1PatchModelResponse:
             model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json() if self.model is not None else None,
         }
@@ -3103,12 +3103,12 @@ class v1PatchModelResponse:
 class v1PatchModelVersion:
     def __init__(
         self,
-        checkpoint: "t.Optional[v1Checkpoint]" = None,
-        comment: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[t.Dict[str, t.Any]]]" = None,
-        metadata: "t.Optional[t.Dict[str, t.Any]]" = None,
-        name: "t.Optional[str]" = None,
-        notes: "t.Optional[str]" = None,
+        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        comment: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        name: "typing.Optional[str]" = None,
+        notes: "typing.Optional[str]" = None,
     ):
         self.checkpoint = checkpoint
         self.name = name
@@ -3128,7 +3128,7 @@ class v1PatchModelVersion:
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
             "name": self.name if self.name is not None else None,
@@ -3141,9 +3141,9 @@ class v1PatchModelVersion:
 class v1PatchModelVersionRequest:
     def __init__(
         self,
-        modelId: "t.Optional[int]" = None,
-        modelVersion: "t.Optional[v1PatchModelVersion]" = None,
-        modelVersionId: "t.Optional[int]" = None,
+        modelId: "typing.Optional[int]" = None,
+        modelVersion: "typing.Optional[v1PatchModelVersion]" = None,
+        modelVersionId: "typing.Optional[int]" = None,
     ):
         self.modelId = modelId
         self.modelVersion = modelVersion
@@ -3157,7 +3157,7 @@ class v1PatchModelVersionRequest:
             modelVersionId=obj["modelVersionId"] if obj.get("modelVersionId", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "modelId": self.modelId if self.modelId is not None else None,
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
@@ -3167,7 +3167,7 @@ class v1PatchModelVersionRequest:
 class v1PatchModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "t.Optional[v1ModelVersion]" = None,
+        modelVersion: "typing.Optional[v1ModelVersion]" = None,
     ):
         self.modelVersion = modelVersion
 
@@ -3177,7 +3177,7 @@ class v1PatchModelVersionResponse:
             modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
         }
@@ -3185,7 +3185,7 @@ class v1PatchModelVersionResponse:
 class v1PostCheckpointMetadataRequest:
     def __init__(
         self,
-        checkpoint: "t.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1Checkpoint]" = None,
     ):
         self.checkpoint = checkpoint
 
@@ -3195,7 +3195,7 @@ class v1PostCheckpointMetadataRequest:
             checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
         }
@@ -3203,7 +3203,7 @@ class v1PostCheckpointMetadataRequest:
 class v1PostCheckpointMetadataResponse:
     def __init__(
         self,
-        checkpoint: "t.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1Checkpoint]" = None,
     ):
         self.checkpoint = checkpoint
 
@@ -3213,7 +3213,7 @@ class v1PostCheckpointMetadataResponse:
             checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
         }
@@ -3222,11 +3222,11 @@ class v1PostModelRequest:
     def __init__(
         self,
         name: str,
-        description: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[str]]" = None,
-        metadata: "t.Optional[t.Dict[str, t.Any]]" = None,
-        notes: "t.Optional[str]" = None,
-        username: "t.Optional[str]" = None,
+        description: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        notes: "typing.Optional[str]" = None,
+        username: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
@@ -3246,7 +3246,7 @@ class v1PostModelRequest:
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "name": self.name,
             "description": self.description if self.description is not None else None,
@@ -3259,7 +3259,7 @@ class v1PostModelRequest:
 class v1PostModelResponse:
     def __init__(
         self,
-        model: "t.Optional[v1Model]" = None,
+        model: "typing.Optional[v1Model]" = None,
     ):
         self.model = model
 
@@ -3269,7 +3269,7 @@ class v1PostModelResponse:
             model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json() if self.model is not None else None,
         }
@@ -3279,11 +3279,11 @@ class v1PostModelVersionRequest:
         self,
         checkpointUuid: str,
         modelId: int,
-        comment: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[str]]" = None,
-        metadata: "t.Optional[t.Dict[str, t.Any]]" = None,
-        name: "t.Optional[str]" = None,
-        notes: "t.Optional[str]" = None,
+        comment: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        name: "typing.Optional[str]" = None,
+        notes: "typing.Optional[str]" = None,
     ):
         self.modelId = modelId
         self.checkpointUuid = checkpointUuid
@@ -3305,7 +3305,7 @@ class v1PostModelVersionRequest:
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "modelId": self.modelId,
             "checkpointUuid": self.checkpointUuid,
@@ -3319,7 +3319,7 @@ class v1PostModelVersionRequest:
 class v1PostModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "t.Optional[v1ModelVersion]" = None,
+        modelVersion: "typing.Optional[v1ModelVersion]" = None,
     ):
         self.modelVersion = modelVersion
 
@@ -3329,7 +3329,7 @@ class v1PostModelVersionResponse:
             modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
         }
@@ -3337,7 +3337,7 @@ class v1PostModelVersionResponse:
 class v1PostTrialProfilerMetricsBatchRequest:
     def __init__(
         self,
-        batches: "t.Optional[t.Sequence[v1TrialProfilerMetricsBatch]]" = None,
+        batches: "typing.Optional[typing.Sequence[v1TrialProfilerMetricsBatch]]" = None,
     ):
         self.batches = batches
 
@@ -3347,7 +3347,7 @@ class v1PostTrialProfilerMetricsBatchRequest:
             batches=[v1TrialProfilerMetricsBatch.from_json(x) for x in obj["batches"]] if obj.get("batches", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "batches": [x.to_json() for x in self.batches] if self.batches is not None else None,
         }
@@ -3355,8 +3355,8 @@ class v1PostTrialProfilerMetricsBatchRequest:
 class v1PostUserRequest:
     def __init__(
         self,
-        password: "t.Optional[str]" = None,
-        user: "t.Optional[v1User]" = None,
+        password: "typing.Optional[str]" = None,
+        user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
         self.password = password
@@ -3368,7 +3368,7 @@ class v1PostUserRequest:
             password=obj["password"] if obj.get("password", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
             "password": self.password if self.password is not None else None,
@@ -3377,7 +3377,7 @@ class v1PostUserRequest:
 class v1PostUserResponse:
     def __init__(
         self,
-        user: "t.Optional[v1User]" = None,
+        user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
 
@@ -3387,7 +3387,7 @@ class v1PostUserResponse:
             user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
         }
@@ -3395,8 +3395,8 @@ class v1PostUserResponse:
 class v1PreviewHPSearchRequest:
     def __init__(
         self,
-        config: "t.Optional[t.Dict[str, t.Any]]" = None,
-        seed: "t.Optional[int]" = None,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        seed: "typing.Optional[int]" = None,
     ):
         self.config = config
         self.seed = seed
@@ -3408,7 +3408,7 @@ class v1PreviewHPSearchRequest:
             seed=obj["seed"] if obj.get("seed", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "config": self.config if self.config is not None else None,
             "seed": self.seed if self.seed is not None else None,
@@ -3417,7 +3417,7 @@ class v1PreviewHPSearchRequest:
 class v1PreviewHPSearchResponse:
     def __init__(
         self,
-        simulation: "t.Optional[v1ExperimentSimulation]" = None,
+        simulation: "typing.Optional[v1ExperimentSimulation]" = None,
     ):
         self.simulation = simulation
 
@@ -3427,7 +3427,7 @@ class v1PreviewHPSearchResponse:
             simulation=v1ExperimentSimulation.from_json(obj["simulation"]) if obj.get("simulation", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "simulation": self.simulation.to_json() if self.simulation is not None else None,
         }
@@ -3435,7 +3435,7 @@ class v1PreviewHPSearchResponse:
 class v1PutTemplateResponse:
     def __init__(
         self,
-        template: "t.Optional[v1Template]" = None,
+        template: "typing.Optional[v1Template]" = None,
     ):
         self.template = template
 
@@ -3445,7 +3445,7 @@ class v1PutTemplateResponse:
             template=v1Template.from_json(obj["template"]) if obj.get("template", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "template": self.template.to_json() if self.template is not None else None,
         }
@@ -3454,11 +3454,11 @@ class v1QueueControl:
     def __init__(
         self,
         jobId: str,
-        priority: "t.Optional[int]" = None,
-        queuePosition: "t.Optional[float]" = None,
-        resourcePool: "t.Optional[str]" = None,
-        sourceResourcePool: "t.Optional[str]" = None,
-        weight: "t.Optional[float]" = None,
+        priority: "typing.Optional[int]" = None,
+        queuePosition: "typing.Optional[float]" = None,
+        resourcePool: "typing.Optional[str]" = None,
+        sourceResourcePool: "typing.Optional[str]" = None,
+        weight: "typing.Optional[float]" = None,
     ):
         self.jobId = jobId
         self.sourceResourcePool = sourceResourcePool
@@ -3478,7 +3478,7 @@ class v1QueueControl:
             weight=float(obj["weight"]) if obj.get("weight", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "jobId": self.jobId,
             "sourceResourcePool": self.sourceResourcePool if self.sourceResourcePool is not None else None,
@@ -3504,7 +3504,7 @@ class v1QueueStats:
             scheduledCount=obj["scheduledCount"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "queuedCount": self.queuedCount,
             "scheduledCount": self.scheduledCount,
@@ -3526,7 +3526,7 @@ class v1RPQueueStat:
             resourcePool=obj["resourcePool"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "stats": self.stats.to_json(),
             "resourcePool": self.resourcePool,
@@ -3535,7 +3535,7 @@ class v1RPQueueStat:
 class v1RendezvousInfo:
     def __init__(
         self,
-        addresses: "t.Sequence[str]",
+        addresses: "typing.Sequence[str]",
         rank: int,
     ):
         self.addresses = addresses
@@ -3548,7 +3548,7 @@ class v1RendezvousInfo:
             rank=obj["rank"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "addresses": self.addresses,
             "rank": self.rank,
@@ -3557,10 +3557,10 @@ class v1RendezvousInfo:
 class v1ResourceAllocationAggregatedEntry:
     def __init__(
         self,
-        byAgentLabel: "t.Dict[str, float]",
-        byExperimentLabel: "t.Dict[str, float]",
-        byResourcePool: "t.Dict[str, float]",
-        byUsername: "t.Dict[str, float]",
+        byAgentLabel: "typing.Dict[str, float]",
+        byExperimentLabel: "typing.Dict[str, float]",
+        byResourcePool: "typing.Dict[str, float]",
+        byUsername: "typing.Dict[str, float]",
         period: "v1ResourceAllocationAggregationPeriod",
         periodStart: str,
         seconds: float,
@@ -3585,7 +3585,7 @@ class v1ResourceAllocationAggregatedEntry:
             byAgentLabel={k: float(v) for k, v in obj["byAgentLabel"].items()},
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "periodStart": self.periodStart,
             "period": self.period.value,
@@ -3599,7 +3599,7 @@ class v1ResourceAllocationAggregatedEntry:
 class v1ResourceAllocationAggregatedResponse:
     def __init__(
         self,
-        resourceEntries: "t.Sequence[v1ResourceAllocationAggregatedEntry]",
+        resourceEntries: "typing.Sequence[v1ResourceAllocationAggregatedEntry]",
     ):
         self.resourceEntries = resourceEntries
 
@@ -3609,7 +3609,7 @@ class v1ResourceAllocationAggregatedResponse:
             resourceEntries=[v1ResourceAllocationAggregatedEntry.from_json(x) for x in obj["resourceEntries"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "resourceEntries": [x.to_json() for x in self.resourceEntries],
         }
@@ -3622,14 +3622,14 @@ class v1ResourceAllocationAggregationPeriod(enum.Enum):
 class v1ResourceAllocationRawEntry:
     def __init__(
         self,
-        endTime: "t.Optional[str]" = None,
-        experimentId: "t.Optional[int]" = None,
-        kind: "t.Optional[str]" = None,
-        labels: "t.Optional[t.Sequence[str]]" = None,
-        seconds: "t.Optional[float]" = None,
-        slots: "t.Optional[int]" = None,
-        startTime: "t.Optional[str]" = None,
-        username: "t.Optional[str]" = None,
+        endTime: "typing.Optional[str]" = None,
+        experimentId: "typing.Optional[int]" = None,
+        kind: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        seconds: "typing.Optional[float]" = None,
+        slots: "typing.Optional[int]" = None,
+        startTime: "typing.Optional[str]" = None,
+        username: "typing.Optional[str]" = None,
     ):
         self.kind = kind
         self.startTime = startTime
@@ -3653,7 +3653,7 @@ class v1ResourceAllocationRawEntry:
             slots=obj["slots"] if obj.get("slots", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "kind": self.kind if self.kind is not None else None,
             "startTime": self.startTime if self.startTime is not None else None,
@@ -3668,7 +3668,7 @@ class v1ResourceAllocationRawEntry:
 class v1ResourceAllocationRawResponse:
     def __init__(
         self,
-        resourceEntries: "t.Optional[t.Sequence[v1ResourceAllocationRawEntry]]" = None,
+        resourceEntries: "typing.Optional[typing.Sequence[v1ResourceAllocationRawEntry]]" = None,
     ):
         self.resourceEntries = resourceEntries
 
@@ -3678,7 +3678,7 @@ class v1ResourceAllocationRawResponse:
             resourceEntries=[v1ResourceAllocationRawEntry.from_json(x) for x in obj["resourceEntries"]] if obj.get("resourceEntries", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "resourceEntries": [x.to_json() for x in self.resourceEntries] if self.resourceEntries is not None else None,
         }
@@ -3717,7 +3717,7 @@ class v1ResourcePool:
         slotsUsed: int,
         startupScript: str,
         type: "v1ResourcePoolType",
-        slotsPerAgent: "t.Optional[int]" = None,
+        slotsPerAgent: "typing.Optional[int]" = None,
     ):
         self.name = name
         self.description = description
@@ -3789,7 +3789,7 @@ class v1ResourcePool:
             details=v1ResourcePoolDetail.from_json(obj["details"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "name": self.name,
             "description": self.description,
@@ -3839,12 +3839,12 @@ class v1ResourcePoolAwsDetail:
         sshKeyName: str,
         tagKey: str,
         tagValue: str,
-        customTags: "t.Optional[t.Sequence[v1AwsCustomTag]]" = None,
-        instanceType: "t.Optional[str]" = None,
-        logGroup: "t.Optional[str]" = None,
-        logStream: "t.Optional[str]" = None,
-        spotMaxPrice: "t.Optional[str]" = None,
-        subnetId: "t.Optional[str]" = None,
+        customTags: "typing.Optional[typing.Sequence[v1AwsCustomTag]]" = None,
+        instanceType: "typing.Optional[str]" = None,
+        logGroup: "typing.Optional[str]" = None,
+        logStream: "typing.Optional[str]" = None,
+        spotMaxPrice: "typing.Optional[str]" = None,
+        subnetId: "typing.Optional[str]" = None,
     ):
         self.region = region
         self.rootVolumeSize = rootVolumeSize
@@ -3886,7 +3886,7 @@ class v1ResourcePoolAwsDetail:
             customTags=[v1AwsCustomTag.from_json(x) for x in obj["customTags"]] if obj.get("customTags", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "region": self.region,
             "rootVolumeSize": self.rootVolumeSize,
@@ -3910,9 +3910,9 @@ class v1ResourcePoolAwsDetail:
 class v1ResourcePoolDetail:
     def __init__(
         self,
-        aws: "t.Optional[v1ResourcePoolAwsDetail]" = None,
-        gcp: "t.Optional[v1ResourcePoolGcpDetail]" = None,
-        priorityScheduler: "t.Optional[v1ResourcePoolPrioritySchedulerDetail]" = None,
+        aws: "typing.Optional[v1ResourcePoolAwsDetail]" = None,
+        gcp: "typing.Optional[v1ResourcePoolGcpDetail]" = None,
+        priorityScheduler: "typing.Optional[v1ResourcePoolPrioritySchedulerDetail]" = None,
     ):
         self.aws = aws
         self.gcp = gcp
@@ -3926,7 +3926,7 @@ class v1ResourcePoolDetail:
             priorityScheduler=v1ResourcePoolPrioritySchedulerDetail.from_json(obj["priorityScheduler"]) if obj.get("priorityScheduler", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "aws": self.aws.to_json() if self.aws is not None else None,
             "gcp": self.gcp.to_json() if self.gcp is not None else None,
@@ -3950,10 +3950,10 @@ class v1ResourcePoolGcpDetail:
         preemptible: bool,
         project: str,
         serviceAccountEmail: str,
-        serviceAccountScopes: "t.Sequence[str]",
+        serviceAccountScopes: "typing.Sequence[str]",
         zone: str,
-        networkTags: "t.Optional[t.Sequence[str]]" = None,
-        subnetwork: "t.Optional[str]" = None,
+        networkTags: "typing.Optional[typing.Sequence[str]]" = None,
+        subnetwork: "typing.Optional[str]" = None,
     ):
         self.project = project
         self.zone = zone
@@ -3997,7 +3997,7 @@ class v1ResourcePoolGcpDetail:
             operationTimeoutPeriod=float(obj["operationTimeoutPeriod"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "project": self.project,
             "zone": self.zone,
@@ -4024,7 +4024,7 @@ class v1ResourcePoolPrioritySchedulerDetail:
         self,
         defaultPriority: int,
         preemption: bool,
-        k8Priorities: "t.Optional[t.Sequence[v1K8PriorityClass]]" = None,
+        k8Priorities: "typing.Optional[typing.Sequence[v1K8PriorityClass]]" = None,
     ):
         self.preemption = preemption
         self.defaultPriority = defaultPriority
@@ -4038,7 +4038,7 @@ class v1ResourcePoolPrioritySchedulerDetail:
             k8Priorities=[v1K8PriorityClass.from_json(x) for x in obj["k8Priorities"]] if obj.get("k8Priorities", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "preemption": self.preemption,
             "defaultPriority": self.defaultPriority,
@@ -4055,8 +4055,8 @@ class v1ResourcePoolType(enum.Enum):
 class v1RunnableOperation:
     def __init__(
         self,
-        length: "t.Optional[v1TrainingLength]" = None,
-        type: "t.Optional[v1RunnableType]" = None,
+        length: "typing.Optional[v1TrainingLength]" = None,
+        type: "typing.Optional[v1RunnableType]" = None,
     ):
         self.type = type
         self.length = length
@@ -4068,7 +4068,7 @@ class v1RunnableOperation:
             length=v1TrainingLength.from_json(obj["length"]) if obj.get("length", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "type": self.type.value if self.type is not None else None,
             "length": self.length.to_json() if self.length is not None else None,
@@ -4095,7 +4095,7 @@ class v1SSOProvider:
             ssoUrl=obj["ssoUrl"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "name": self.name,
             "ssoUrl": self.ssoUrl,
@@ -4111,7 +4111,7 @@ class v1SchedulerType(enum.Enum):
 class v1SearcherOperation:
     def __init__(
         self,
-        validateAfter: "t.Optional[v1ValidateAfterOperation]" = None,
+        validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
     ):
         self.validateAfter = validateAfter
 
@@ -4121,7 +4121,7 @@ class v1SearcherOperation:
             validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
         }
@@ -4129,8 +4129,8 @@ class v1SearcherOperation:
 class v1SetCommandPriorityRequest:
     def __init__(
         self,
-        commandId: "t.Optional[str]" = None,
-        priority: "t.Optional[int]" = None,
+        commandId: "typing.Optional[str]" = None,
+        priority: "typing.Optional[int]" = None,
     ):
         self.commandId = commandId
         self.priority = priority
@@ -4142,7 +4142,7 @@ class v1SetCommandPriorityRequest:
             priority=obj["priority"] if obj.get("priority", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "commandId": self.commandId if self.commandId is not None else None,
             "priority": self.priority if self.priority is not None else None,
@@ -4151,7 +4151,7 @@ class v1SetCommandPriorityRequest:
 class v1SetCommandPriorityResponse:
     def __init__(
         self,
-        command: "t.Optional[v1Command]" = None,
+        command: "typing.Optional[v1Command]" = None,
     ):
         self.command = command
 
@@ -4161,7 +4161,7 @@ class v1SetCommandPriorityResponse:
             command=v1Command.from_json(obj["command"]) if obj.get("command", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "command": self.command.to_json() if self.command is not None else None,
         }
@@ -4169,8 +4169,8 @@ class v1SetCommandPriorityResponse:
 class v1SetNotebookPriorityRequest:
     def __init__(
         self,
-        notebookId: "t.Optional[str]" = None,
-        priority: "t.Optional[int]" = None,
+        notebookId: "typing.Optional[str]" = None,
+        priority: "typing.Optional[int]" = None,
     ):
         self.notebookId = notebookId
         self.priority = priority
@@ -4182,7 +4182,7 @@ class v1SetNotebookPriorityRequest:
             priority=obj["priority"] if obj.get("priority", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebookId": self.notebookId if self.notebookId is not None else None,
             "priority": self.priority if self.priority is not None else None,
@@ -4191,7 +4191,7 @@ class v1SetNotebookPriorityRequest:
 class v1SetNotebookPriorityResponse:
     def __init__(
         self,
-        notebook: "t.Optional[v1Notebook]" = None,
+        notebook: "typing.Optional[v1Notebook]" = None,
     ):
         self.notebook = notebook
 
@@ -4201,7 +4201,7 @@ class v1SetNotebookPriorityResponse:
             notebook=v1Notebook.from_json(obj["notebook"]) if obj.get("notebook", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "notebook": self.notebook.to_json() if self.notebook is not None else None,
         }
@@ -4209,8 +4209,8 @@ class v1SetNotebookPriorityResponse:
 class v1SetShellPriorityRequest:
     def __init__(
         self,
-        priority: "t.Optional[int]" = None,
-        shellId: "t.Optional[str]" = None,
+        priority: "typing.Optional[int]" = None,
+        shellId: "typing.Optional[str]" = None,
     ):
         self.shellId = shellId
         self.priority = priority
@@ -4222,7 +4222,7 @@ class v1SetShellPriorityRequest:
             priority=obj["priority"] if obj.get("priority", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "shellId": self.shellId if self.shellId is not None else None,
             "priority": self.priority if self.priority is not None else None,
@@ -4231,7 +4231,7 @@ class v1SetShellPriorityRequest:
 class v1SetShellPriorityResponse:
     def __init__(
         self,
-        shell: "t.Optional[v1Shell]" = None,
+        shell: "typing.Optional[v1Shell]" = None,
     ):
         self.shell = shell
 
@@ -4241,7 +4241,7 @@ class v1SetShellPriorityResponse:
             shell=v1Shell.from_json(obj["shell"]) if obj.get("shell", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "shell": self.shell.to_json() if self.shell is not None else None,
         }
@@ -4249,8 +4249,8 @@ class v1SetShellPriorityResponse:
 class v1SetTensorboardPriorityRequest:
     def __init__(
         self,
-        priority: "t.Optional[int]" = None,
-        tensorboardId: "t.Optional[str]" = None,
+        priority: "typing.Optional[int]" = None,
+        tensorboardId: "typing.Optional[str]" = None,
     ):
         self.tensorboardId = tensorboardId
         self.priority = priority
@@ -4262,7 +4262,7 @@ class v1SetTensorboardPriorityRequest:
             priority=obj["priority"] if obj.get("priority", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "tensorboardId": self.tensorboardId if self.tensorboardId is not None else None,
             "priority": self.priority if self.priority is not None else None,
@@ -4271,7 +4271,7 @@ class v1SetTensorboardPriorityRequest:
 class v1SetTensorboardPriorityResponse:
     def __init__(
         self,
-        tensorboard: "t.Optional[v1Tensorboard]" = None,
+        tensorboard: "typing.Optional[v1Tensorboard]" = None,
     ):
         self.tensorboard = tensorboard
 
@@ -4281,7 +4281,7 @@ class v1SetTensorboardPriorityResponse:
             tensorboard=v1Tensorboard.from_json(obj["tensorboard"]) if obj.get("tensorboard", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "tensorboard": self.tensorboard.to_json() if self.tensorboard is not None else None,
         }
@@ -4289,7 +4289,7 @@ class v1SetTensorboardPriorityResponse:
 class v1SetUserPasswordResponse:
     def __init__(
         self,
-        user: "t.Optional[v1User]" = None,
+        user: "typing.Optional[v1User]" = None,
     ):
         self.user = user
 
@@ -4299,7 +4299,7 @@ class v1SetUserPasswordResponse:
             user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
         }
@@ -4314,12 +4314,12 @@ class v1Shell:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
-        addresses: "t.Optional[t.Sequence[t.Dict[str, t.Any]]]" = None,
-        agentUserGroup: "t.Optional[t.Dict[str, t.Any]]" = None,
-        container: "t.Optional[v1Container]" = None,
-        exitStatus: "t.Optional[str]" = None,
-        privateKey: "t.Optional[str]" = None,
-        publicKey: "t.Optional[str]" = None,
+        addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+        agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        container: "typing.Optional[v1Container]" = None,
+        exitStatus: "typing.Optional[str]" = None,
+        privateKey: "typing.Optional[str]" = None,
+        publicKey: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.description = description
@@ -4353,7 +4353,7 @@ class v1Shell:
             jobId=obj["jobId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "description": self.description,
@@ -4373,11 +4373,11 @@ class v1Shell:
 class v1Slot:
     def __init__(
         self,
-        container: "t.Optional[v1Container]" = None,
-        device: "t.Optional[v1Device]" = None,
-        draining: "t.Optional[bool]" = None,
-        enabled: "t.Optional[bool]" = None,
-        id: "t.Optional[str]" = None,
+        container: "typing.Optional[v1Container]" = None,
+        device: "typing.Optional[v1Device]" = None,
+        draining: "typing.Optional[bool]" = None,
+        enabled: "typing.Optional[bool]" = None,
+        id: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.device = device
@@ -4395,7 +4395,7 @@ class v1Slot:
             draining=obj["draining"] if obj.get("draining", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id if self.id is not None else None,
             "device": self.device.to_json() if self.device is not None else None,
@@ -4407,7 +4407,7 @@ class v1Slot:
 class v1Template:
     def __init__(
         self,
-        config: "t.Dict[str, t.Any]",
+        config: "typing.Dict[str, typing.Any]",
         name: str,
     ):
         self.name = name
@@ -4420,7 +4420,7 @@ class v1Template:
             config=obj["config"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "name": self.name,
             "config": self.config,
@@ -4436,11 +4436,11 @@ class v1Tensorboard:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
-        container: "t.Optional[v1Container]" = None,
-        exitStatus: "t.Optional[str]" = None,
-        experimentIds: "t.Optional[t.Sequence[int]]" = None,
-        serviceAddress: "t.Optional[str]" = None,
-        trialIds: "t.Optional[t.Sequence[int]]" = None,
+        container: "typing.Optional[v1Container]" = None,
+        exitStatus: "typing.Optional[str]" = None,
+        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+        serviceAddress: "typing.Optional[str]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.id = id
         self.description = description
@@ -4472,7 +4472,7 @@ class v1Tensorboard:
             jobId=obj["jobId"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "description": self.description,
@@ -4504,7 +4504,7 @@ class v1TrainingLength:
             length=obj["length"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "unit": self.unit.value,
             "length": self.length,
@@ -4523,7 +4523,7 @@ class v1TrialEarlyExit:
             reason=obj["reason"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "reason": self.reason.value,
         }
@@ -4531,11 +4531,11 @@ class v1TrialEarlyExit:
 class v1TrialLogsFieldsResponse:
     def __init__(
         self,
-        agentIds: "t.Optional[t.Sequence[str]]" = None,
-        containerIds: "t.Optional[t.Sequence[str]]" = None,
-        rankIds: "t.Optional[t.Sequence[int]]" = None,
-        sources: "t.Optional[t.Sequence[str]]" = None,
-        stdtypes: "t.Optional[t.Sequence[str]]" = None,
+        agentIds: "typing.Optional[typing.Sequence[str]]" = None,
+        containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+        rankIds: "typing.Optional[typing.Sequence[int]]" = None,
+        sources: "typing.Optional[typing.Sequence[str]]" = None,
+        stdtypes: "typing.Optional[typing.Sequence[str]]" = None,
     ):
         self.agentIds = agentIds
         self.containerIds = containerIds
@@ -4553,7 +4553,7 @@ class v1TrialLogsFieldsResponse:
             sources=obj["sources"] if obj.get("sources", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "agentIds": self.agentIds if self.agentIds is not None else None,
             "containerIds": self.containerIds if self.containerIds is not None else None,
@@ -4584,7 +4584,7 @@ class v1TrialLogsResponse:
             level=obj["level"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "timestamp": self.timestamp,
@@ -4596,10 +4596,10 @@ class v1TrialMetrics:
     def __init__(
         self,
         latestBatch: int,
-        metrics: "t.Dict[str, t.Any]",
+        metrics: "typing.Dict[str, typing.Any]",
         trialId: int,
         trialRunId: int,
-        batchMetrics: "t.Optional[t.Sequence[t.Dict[str, t.Any]]]" = None,
+        batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
     ):
         self.trialId = trialId
         self.trialRunId = trialRunId
@@ -4617,7 +4617,7 @@ class v1TrialMetrics:
             batchMetrics=obj["batchMetrics"] if obj.get("batchMetrics", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
@@ -4631,9 +4631,9 @@ class v1TrialProfilerMetricLabels:
         self,
         name: str,
         trialId: int,
-        agentId: "t.Optional[str]" = None,
-        gpuUuid: "t.Optional[str]" = None,
-        metricType: "t.Optional[TrialProfilerMetricLabelsProfilerMetricType]" = None,
+        agentId: "typing.Optional[str]" = None,
+        gpuUuid: "typing.Optional[str]" = None,
+        metricType: "typing.Optional[TrialProfilerMetricLabelsProfilerMetricType]" = None,
     ):
         self.trialId = trialId
         self.name = name
@@ -4651,7 +4651,7 @@ class v1TrialProfilerMetricLabels:
             metricType=obj["metricType"] if obj.get("metricType", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trialId": self.trialId,
             "name": self.name,
@@ -4663,10 +4663,10 @@ class v1TrialProfilerMetricLabels:
 class v1TrialProfilerMetricsBatch:
     def __init__(
         self,
-        batches: "t.Sequence[int]",
+        batches: "typing.Sequence[int]",
         labels: "v1TrialProfilerMetricLabels",
-        timestamps: "t.Sequence[str]",
-        values: "t.Sequence[float]",
+        timestamps: "typing.Sequence[str]",
+        values: "typing.Sequence[float]",
     ):
         self.values = values
         self.batches = batches
@@ -4682,7 +4682,7 @@ class v1TrialProfilerMetricsBatch:
             labels=v1TrialProfilerMetricLabels.from_json(obj["labels"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "values": [dump_float(x) for x in self.values],
             "batches": self.batches,
@@ -4703,7 +4703,7 @@ class v1TrialRunnerMetadata:
             state=obj["state"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "state": self.state,
         }
@@ -4711,8 +4711,8 @@ class v1TrialRunnerMetadata:
 class v1TrialSimulation:
     def __init__(
         self,
-        occurrences: "t.Optional[int]" = None,
-        operations: "t.Optional[t.Sequence[v1RunnableOperation]]" = None,
+        occurrences: "typing.Optional[int]" = None,
+        operations: "typing.Optional[typing.Sequence[v1RunnableOperation]]" = None,
     ):
         self.operations = operations
         self.occurrences = occurrences
@@ -4724,7 +4724,7 @@ class v1TrialSimulation:
             occurrences=obj["occurrences"] if obj.get("occurrences", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "operations": [x.to_json() for x in self.operations] if self.operations is not None else None,
             "occurrences": self.occurrences if self.occurrences is not None else None,
@@ -4733,9 +4733,9 @@ class v1TrialSimulation:
 class v1TrialsSampleResponse:
     def __init__(
         self,
-        demotedTrials: "t.Sequence[int]",
-        promotedTrials: "t.Sequence[int]",
-        trials: "t.Sequence[v1TrialsSampleResponseTrial]",
+        demotedTrials: "typing.Sequence[int]",
+        promotedTrials: "typing.Sequence[int]",
+        trials: "typing.Sequence[v1TrialsSampleResponseTrial]",
     ):
         self.trials = trials
         self.promotedTrials = promotedTrials
@@ -4749,7 +4749,7 @@ class v1TrialsSampleResponse:
             demotedTrials=obj["demotedTrials"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trials": [x.to_json() for x in self.trials],
             "promotedTrials": self.promotedTrials,
@@ -4759,8 +4759,8 @@ class v1TrialsSampleResponse:
 class v1TrialsSampleResponseTrial:
     def __init__(
         self,
-        data: "t.Sequence[TrialsSampleResponseDataPoint]",
-        hparams: "t.Dict[str, t.Any]",
+        data: "typing.Sequence[TrialsSampleResponseDataPoint]",
+        hparams: "typing.Dict[str, typing.Any]",
         trialId: int,
     ):
         self.trialId = trialId
@@ -4775,7 +4775,7 @@ class v1TrialsSampleResponseTrial:
             data=[TrialsSampleResponseDataPoint.from_json(x) for x in obj["data"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trialId": self.trialId,
             "hparams": self.hparams,
@@ -4785,7 +4785,7 @@ class v1TrialsSampleResponseTrial:
 class v1TrialsSnapshotResponse:
     def __init__(
         self,
-        trials: "t.Sequence[v1TrialsSnapshotResponseTrial]",
+        trials: "typing.Sequence[v1TrialsSnapshotResponseTrial]",
     ):
         self.trials = trials
 
@@ -4795,7 +4795,7 @@ class v1TrialsSnapshotResponse:
             trials=[v1TrialsSnapshotResponseTrial.from_json(x) for x in obj["trials"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trials": [x.to_json() for x in self.trials],
         }
@@ -4804,7 +4804,7 @@ class v1TrialsSnapshotResponseTrial:
     def __init__(
         self,
         batchesProcessed: int,
-        hparams: "t.Dict[str, t.Any]",
+        hparams: "typing.Dict[str, typing.Any]",
         metric: float,
         trialId: int,
     ):
@@ -4822,7 +4822,7 @@ class v1TrialsSnapshotResponseTrial:
             batchesProcessed=obj["batchesProcessed"],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trialId": self.trialId,
             "hparams": self.hparams,
@@ -4833,7 +4833,7 @@ class v1TrialsSnapshotResponseTrial:
 class v1UpdateJobQueueRequest:
     def __init__(
         self,
-        updates: "t.Sequence[v1QueueControl]",
+        updates: "typing.Sequence[v1QueueControl]",
     ):
         self.updates = updates
 
@@ -4843,7 +4843,7 @@ class v1UpdateJobQueueRequest:
             updates=[v1QueueControl.from_json(x) for x in obj["updates"]],
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "updates": [x.to_json() for x in self.updates],
         }
@@ -4855,7 +4855,7 @@ class v1User:
         admin: bool,
         id: int,
         username: str,
-        agentUserGroup: "t.Optional[v1AgentUserGroup]" = None,
+        agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
     ):
         self.id = id
         self.username = username
@@ -4873,7 +4873,7 @@ class v1User:
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "id": self.id,
             "username": self.username,
@@ -4885,7 +4885,7 @@ class v1User:
 class v1ValidateAfterOperation:
     def __init__(
         self,
-        length: "t.Optional[v1TrainingLength]" = None,
+        length: "typing.Optional[v1TrainingLength]" = None,
     ):
         self.length = length
 
@@ -4895,7 +4895,7 @@ class v1ValidateAfterOperation:
             length=v1TrainingLength.from_json(obj["length"]) if obj.get("length", None) is not None else None,
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "length": self.length.to_json() if self.length is not None else None,
         }
@@ -4919,7 +4919,7 @@ class v1ValidationHistoryEntry:
             searcherMetric=float(obj["searcherMetric"]),
         )
 
-    def to_json(self) -> t.Any:
+    def to_json(self) -> typing.Any:
         return {
             "trialId": self.trialId,
             "endTime": self.endTime,
@@ -4969,7 +4969,7 @@ def get_AllocationPreemptionSignal(
     session: "client.Session",
     *,
     allocationId: str,
-    timeoutSeconds: "t.Optional[int]" = None,
+    timeoutSeconds: "typing.Optional[int]" = None,
 ) -> "v1AllocationPreemptionSignalResponse":
     _params = {
         "timeoutSeconds": timeoutSeconds,
@@ -5317,11 +5317,11 @@ def get_GetAgent(
 def get_GetAgents(
     session: "client.Session",
     *,
-    label: "t.Optional[str]" = None,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetAgentsRequestSortBy]" = None,
+    label: "typing.Optional[str]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetAgentsRequestSortBy]" = None,
 ) -> "v1GetAgentsResponse":
     _params = {
         "label": label,
@@ -5403,11 +5403,11 @@ def get_GetCommand(
 def get_GetCommands(
     session: "client.Session",
     *,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "t.Optional[t.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
         "limit": limit,
@@ -5471,12 +5471,12 @@ def get_GetExperimentCheckpoints(
     session: "client.Session",
     *,
     id: int,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
-    states: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
-    validationStates: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
+    states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
+    validationStates: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -5520,11 +5520,11 @@ def get_GetExperimentTrials(
     session: "client.Session",
     *,
     experimentId: int,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetExperimentTrialsRequestSortBy]" = None,
-    states: "t.Optional[t.Sequence[determinedexperimentv1State]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetExperimentTrialsRequestSortBy]" = None,
+    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
 ) -> "v1GetExperimentTrialsResponse":
     _params = {
         "limit": limit,
@@ -5568,16 +5568,16 @@ def get_GetExperimentValidationHistory(
 def get_GetExperiments(
     session: "client.Session",
     *,
-    archived: "t.Optional[bool]" = None,
-    description: "t.Optional[str]" = None,
-    labels: "t.Optional[t.Sequence[str]]" = None,
-    limit: "t.Optional[int]" = None,
-    name: "t.Optional[str]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetExperimentsRequestSortBy]" = None,
-    states: "t.Optional[t.Sequence[determinedexperimentv1State]]" = None,
-    users: "t.Optional[t.Sequence[str]]" = None,
+    archived: "typing.Optional[bool]" = None,
+    description: "typing.Optional[str]" = None,
+    labels: "typing.Optional[typing.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
+    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
     _params = {
         "archived": archived,
@@ -5607,7 +5607,7 @@ def get_GetExperiments(
 def get_GetJobQueueStats(
     session: "client.Session",
     *,
-    resourcePools: "t.Optional[t.Sequence[str]]" = None,
+    resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetJobQueueStatsResponse":
     _params = {
         "resourcePools": resourcePools,
@@ -5628,10 +5628,10 @@ def get_GetJobQueueStats(
 def get_GetJobs(
     session: "client.Session",
     *,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    pagination_limit: "t.Optional[int]" = None,
-    pagination_offset: "t.Optional[int]" = None,
-    resourcePool: "t.Optional[str]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    pagination_limit: "typing.Optional[int]" = None,
+    pagination_offset: "typing.Optional[int]" = None,
+    resourcePool: "typing.Optional[str]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
         "orderBy": orderBy.value if orderBy else None,
@@ -5765,10 +5765,10 @@ def get_GetModelVersions(
     session: "client.Session",
     *,
     modelId: int,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetModelVersionsRequestSortBy]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetModelVersionsRequestSortBy]" = None,
 ) -> "v1GetModelVersionsResponse":
     _params = {
         "limit": limit,
@@ -5792,15 +5792,15 @@ def get_GetModelVersions(
 def get_GetModels(
     session: "client.Session",
     *,
-    archived: "t.Optional[bool]" = None,
-    description: "t.Optional[str]" = None,
-    labels: "t.Optional[t.Sequence[str]]" = None,
-    limit: "t.Optional[int]" = None,
-    name: "t.Optional[str]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetModelsRequestSortBy]" = None,
-    users: "t.Optional[t.Sequence[str]]" = None,
+    archived: "typing.Optional[bool]" = None,
+    description: "typing.Optional[str]" = None,
+    labels: "typing.Optional[typing.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": archived,
@@ -5848,11 +5848,11 @@ def get_GetNotebook(
 def get_GetNotebooks(
     session: "client.Session",
     *,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "t.Optional[t.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
         "limit": limit,
@@ -5877,8 +5877,8 @@ def get_GetNotebooks(
 def get_GetResourcePools(
     session: "client.Session",
     *,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
 ) -> "v1GetResourcePoolsResponse":
     _params = {
         "limit": limit,
@@ -5919,11 +5919,11 @@ def get_GetShell(
 def get_GetShells(
     session: "client.Session",
     *,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "t.Optional[t.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
         "limit": limit,
@@ -6023,11 +6023,11 @@ def get_GetTemplate(
 def get_GetTemplates(
     session: "client.Session",
     *,
-    limit: "t.Optional[int]" = None,
-    name: "t.Optional[str]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetTemplatesRequestSortBy]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
 ) -> "v1GetTemplatesResponse":
     _params = {
         "limit": limit,
@@ -6071,11 +6071,11 @@ def get_GetTensorboard(
 def get_GetTensorboards(
     session: "client.Session",
     *,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "t.Optional[t.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
         "limit": limit,
@@ -6120,12 +6120,12 @@ def get_GetTrialCheckpoints(
     session: "client.Session",
     *,
     id: int,
-    limit: "t.Optional[int]" = None,
-    offset: "t.Optional[int]" = None,
-    orderBy: "t.Optional[v1OrderBy]" = None,
-    sortBy: "t.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
-    states: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
-    validationStates: "t.Optional[t.Sequence[determinedcheckpointv1State]]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
+    states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
+    validationStates: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -6790,9 +6790,9 @@ def post_ReportTrialValidationMetrics(
 def get_ResourceAllocationAggregated(
     session: "client.Session",
     *,
-    endDate: "t.Optional[str]" = None,
-    period: "t.Optional[v1ResourceAllocationAggregationPeriod]" = None,
-    startDate: "t.Optional[str]" = None,
+    endDate: "typing.Optional[str]" = None,
+    period: "typing.Optional[v1ResourceAllocationAggregationPeriod]" = None,
+    startDate: "typing.Optional[str]" = None,
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
         "endDate": endDate,
@@ -6815,8 +6815,8 @@ def get_ResourceAllocationAggregated(
 def get_ResourceAllocationRaw(
     session: "client.Session",
     *,
-    timestampAfter: "t.Optional[str]" = None,
-    timestampBefore: "t.Optional[str]" = None,
+    timestampAfter: "typing.Optional[str]" = None,
+    timestampBefore: "typing.Optional[str]" = None,
 ) -> "v1ResourceAllocationRawResponse":
     _params = {
         "timestampAfter": timestampAfter,
