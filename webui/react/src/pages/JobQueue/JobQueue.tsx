@@ -212,7 +212,7 @@ const JobQueue: React.FC = () => {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ dropDownOnTrigger, selectedRp, jobs ]);
+  }, [ dropDownOnTrigger, selectedRp, jobs, isJobOrderAvailable ]);
 
   useEffect(() => {
     if (resourcePools.length === 0) {
