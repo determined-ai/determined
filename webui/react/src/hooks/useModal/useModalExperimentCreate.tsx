@@ -1,6 +1,6 @@
 import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
@@ -8,7 +8,7 @@ import usePrevious from 'hooks/usePrevious';
 import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
-import { clone } from 'utils/data';
+import { clone, isEqual } from 'utils/data';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
@@ -64,8 +64,9 @@ const trialContinueConfig = (
   trialHparams: TrialHyperparameters,
   trialId: number,
 ): RawJson => {
+  const newConfig = clone(experimentConfig);
   return {
-    ...experimentConfig,
+    ...newConfig,
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
     searcher: {
       max_length: experimentConfig.searcher.max_length,
@@ -120,56 +121,6 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     });
   }, []);
 
-  const modalContent = useMemo(() => {
-    const { config, configError, configString, error, isAdvancedMode, type } = modalState;
-    const isFork = type === CreateExperimentType.Fork;
-
-    // We always render the form regardless of mode to provide a reference to it.
-    return (
-      <>
-        {error && <Alert className={css.error} message={error} type="error" />}
-        {configError && isAdvancedMode && (
-          <Alert className={css.error} message={configError} type="error" />
-        )}
-        {isAdvancedMode && (
-          <React.Suspense
-            fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
-            <MonacoEditor
-              height="40vh"
-              value={configString}
-              onChange={handleEditorChange}
-            />
-          </React.Suspense>
-        )}
-        <Form
-          className={css.form}
-          hidden={isAdvancedMode}
-          initialValues={{
-            maxLength: !isFork ? getMaxLengthValue(config) : undefined,
-            name: getExperimentName(config),
-          }}
-          labelCol={{ span: 8 }}
-          name="basic"
-          ref={formRef}>
-          <Form.Item
-            label="Experiment name"
-            name="name"
-            rules={[ { message: 'Please provide a new experiment name.', required: true } ]}>
-            <Input />
-          </Form.Item>
-          {!isFork && (
-            <Form.Item
-              label={`Max ${getMaxLengthType(config)}`}
-              name="maxLength"
-              rules={[ { message: 'Please provide a max length.', required: true } ]}>
-              <Input type="number" />
-            </Form.Item>
-          )}
-        </Form>
-      </>
-    );
-  }, [ handleEditorChange, modalState ]);
-
   const handleCancel = useCallback((close) => {
     if (close?.triggerCancel) {
       modalClose(ModalCloseReason.Cancel);
@@ -196,7 +147,8 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
 
         return {
           ...prev,
-          configError: !prev.isAdvancedMode ? undefined : prev.configError,
+          configError: undefined,
+          error: undefined,
           isAdvancedMode: !prev.isAdvancedMode,
         };
       });
@@ -246,26 +198,78 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       }
 
       setModalState(prev => ({ ...prev, error: errorMessage }));
+
+      // We throw an error to prevent the modal from closing.
+      throw new Error(errorMessage);
     }
   }, [ modalState ]);
 
   const handleOk = useCallback(async () => {
-    if (!!modalState.error || !!modalState.configError) return;
+    const error = modalState.error || modalState.configError;
+    if (error) throw new Error(error);
 
-    try {
-      let configString;
-      if (!modalState.isAdvancedMode) {
-        await formRef.current?.validateFields();
-        configString = getConfigFromForm(modalState.config);
-      } else {
-        configString = modalState.configString;
-      }
-      await submitExperiment(configString);
-    } catch (e) {}
+    let configString;
+    if (!modalState.isAdvancedMode) {
+      await formRef.current?.validateFields();
+      configString = getConfigFromForm(modalState.config);
+    } else {
+      configString = modalState.configString;
+    }
+    await submitExperiment(configString);
   }, [ getConfigFromForm, modalState, submitExperiment ]);
 
-  const modalProps: ModalFuncProps | undefined = useMemo(() => {
-    const { experiment, isAdvancedMode, trial, type } = modalState;
+  const getModalContent = useCallback((state: ModalState) => {
+    const { config, configError, configString, error, isAdvancedMode, type } = state;
+    const isFork = type === CreateExperimentType.Fork;
+
+    // We always render the form regardless of mode to provide a reference to it.
+    return (
+      <>
+        {error && <Alert className={css.error} message={error} type="error" />}
+        {configError && isAdvancedMode && (
+          <Alert className={css.error} message={configError} type="error" />
+        )}
+        {isAdvancedMode && (
+          <React.Suspense
+            fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
+            <MonacoEditor
+              height="40vh"
+              value={configString}
+              onChange={handleEditorChange}
+            />
+          </React.Suspense>
+        )}
+        <Form
+          className={css.form}
+          hidden={isAdvancedMode}
+          initialValues={{
+            maxLength: !isFork ? getMaxLengthValue(config) : undefined,
+            name: getExperimentName(config),
+          }}
+          labelCol={{ span: 8 }}
+          name="basic"
+          ref={formRef}>
+          <Form.Item
+            label="Experiment name"
+            name="name"
+            rules={[ { message: 'Please provide a new experiment name.', required: true } ]}>
+            <Input />
+          </Form.Item>
+          {!isFork && (
+            <Form.Item
+              label={`Max ${getMaxLengthType(config)}`}
+              name="maxLength"
+              rules={[ { message: 'Please provide a max length.', required: true } ]}>
+              <Input type="number" />
+            </Form.Item>
+          )}
+        </Form>
+      </>
+    );
+  }, [ handleEditorChange ]);
+
+  const getModalProps = useCallback((state: ModalState): ModalFuncProps | undefined => {
+    const { experiment, isAdvancedMode, trial, type, visible } = state;
     const isFork = type === CreateExperimentType.Fork;
     if (!experiment || (!isFork && !trial)) return;
 
@@ -275,7 +279,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       cancelText: isAdvancedMode ? 'Show Simple Config' : 'Show Full Config',
       className: css.base,
       closable: true,
-      content: modalContent,
+      content: getModalContent(state),
       icon: null,
       maskClosable: true,
       okText: type,
@@ -287,13 +291,11 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
           <Icon name="fork" /> {titleLabel}
         </div>
       ),
-      visible: modalState.visible,
+      visible,
     };
 
     return props;
-  }, [ modalContent, modalState, handleCancel, handleOk ]);
-
-  const prevModalProps = usePrevious(modalProps, undefined);
+  }, [ getModalContent, handleCancel, handleOk ]);
 
   const modalOpen = useCallback(({ experiment, trial, type }: OpenProps) => {
     const isFork = type === CreateExperimentType.Fork;
@@ -307,14 +309,17 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       if (config.description) config.description = `Fork of ${config.description}`;
     }
 
-    setModalState({
-      config,
-      configString: yaml.dump(config),
-      experiment,
-      isAdvancedMode: false,
-      trial,
-      type,
-      visible: true,
+    setModalState(prev => {
+      const newModalState = {
+        config,
+        configString: yaml.dump(config),
+        experiment,
+        isAdvancedMode: false,
+        trial,
+        type,
+        visible: true,
+      };
+      return isEqual(prev, newModalState) ? prev : newModalState;
     });
   }, []);
 
@@ -330,10 +335,11 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
    * title, and buttons, update the modal
    */
   useEffect(() => {
-    if (modalRef.current || (!prevModalProps?.visible && modalProps?.visible)) {
-      openOrUpdate(modalProps);
-    }
-  }, [ modalProps, modalRef, openOrUpdate, prevModalProps ]);
+    if (modalState === prevModalState || !modalState.visible) return;
+
+    const modalProps = getModalProps(modalState);
+    openOrUpdate(modalProps);
+  }, [ getModalProps, modalRef, modalState, openOrUpdate, prevModalState ]);
 
   return { modalClose, modalOpen, modalRef };
 };
