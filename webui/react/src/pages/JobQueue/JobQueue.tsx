@@ -212,19 +212,23 @@ const JobQueue: React.FC = () => {
 
   useEffect(() => {
     if (resourcePools.length === 0) {
-      setSelectedRp(undefined);
-      resetSettings([ 'selectedRp' ]);
-    } else if (!selectedRp) {
-      let pool: ResourcePool | undefined = undefined;
-      if (settings.selectedPool) {
-        pool = resourcePools.find(pool => pool.name === settings.selectedPool);
+      if (selectedRp) {
+        resetSettings([ 'selectedRp' ]);
+        setSelectedRp(undefined);
       }
-      if (!pool) {
-        pool = resourcePools[0];
-      }
-      updateSettings({ selectedPool: pool.name });
-      setSelectedRp(pool);
+      return;
+    } else if (selectedRp) return;
+
+    let pool: ResourcePool | undefined = undefined;
+    if (settings.selectedPool) {
+      pool = resourcePools.find(pool => pool.name === settings.selectedPool);
     }
+    if (!pool) {
+      pool = resourcePools[0];
+    }
+    updateSettings({ selectedPool: pool.name });
+    setSelectedRp(pool);
+
   }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedPool ]);
 
   useEffect(() => {
