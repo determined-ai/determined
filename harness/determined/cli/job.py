@@ -45,7 +45,7 @@ def ls(args: Namespace) -> None:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
     elif args.json:
         print(json.dumps(response.to_json(), indent=4, default=str))
-    elif args.table or args.csv:
+    else:
         headers = [
             "#",
             "ID",
@@ -76,8 +76,6 @@ def ls(args: Namespace) -> None:
             for j in response.jobs
         ]
         render.tabulate_or_csv(headers, values, as_csv=args.csv)
-    else:
-        raise ValueError(f"Bad output format: {args.output}")
 
 
 args_description = [
