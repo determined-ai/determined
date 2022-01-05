@@ -16,12 +16,10 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 @authentication.required
 def config(args: Namespace) -> None:
     response = api.get(args.master, "config")
-    if args.output == "json":
+    if args.json:
         print(json.dumps(response.json(), indent=4))
-    elif args.output == "yaml":
-        print(yaml.safe_dump(response.json(), default_flow_style=False))
     else:
-        raise ValueError(f"Bad output format: {args.output}")
+        print(yaml.safe_dump(response.json(), default_flow_style=False))
 
 
 def get_master(args: Namespace) -> None:
@@ -72,8 +70,7 @@ def logs(args: Namespace) -> None:
 args_description = [
     Cmd("m|aster", None, "manage master", [
         Cmd("config", config, "fetch master config", [
-            Arg("-o", "--output", type=str, default="yaml",
-                help="Output format, one of json|yaml")
+            Group(format_args["json"], format_args["yaml"])
         ]),
         Cmd("info", get_master, "fetch master info", [
             Group(format_args["json"], format_args["yaml"])
