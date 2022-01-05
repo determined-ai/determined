@@ -466,6 +466,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	return dbExp, params.ValidateOnly, &taskSpec, err
 }
 
+// Deprecated in favor of CreateExperiment.
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
