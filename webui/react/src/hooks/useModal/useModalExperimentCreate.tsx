@@ -200,7 +200,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       setModalState(prev => ({ ...prev, error: errorMessage }));
 
       // We throw an error to prevent the modal from closing.
-      throw new Error();
+      throw new Error(errorMessage);
     }
   }, [ modalState ]);
 
