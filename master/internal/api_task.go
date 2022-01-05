@@ -16,8 +16,8 @@ import (
 func (a *apiServer) GetTask(
 	_ context.Context, req *apiv1.GetTaskRequest) (resp *apiv1.GetTaskResponse, err error) {
 	t := &taskv1.Task{}
-	switch err := a.m.db.QueryProto("get_task", t, req.TaskId); err {
-	case db.ErrNotFound:
+	switch err := a.m.db.QueryProto("get_task", t, req.TaskId); {
+	case errors.Is(err, db.ErrNotFound):
 		return nil, status.Errorf(
 			codes.NotFound, "task %s not found", req.TaskId)
 	default:
