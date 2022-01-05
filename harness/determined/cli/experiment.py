@@ -18,8 +18,14 @@ import determined.load
 from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
-from determined.common import api, constants, context, set_logger, util, yaml
-from determined.common.api import authentication
+from determined.cli.session import setup_session
+from determined.common import api, constants, set_logger, util, yaml
+from determined.common.api import authentication, bindings
+from determined.common.api import util as api_util
+from determined.common.api.experiment import (
+    create_experiment_and_follow_logs,
+    create_test_experiment_and_follow_logs,
+)
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -130,7 +136,6 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
-    model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
 
     additional_body_fields = {}
     if args.git:
@@ -141,24 +146,20 @@ def submit_experiment(args: Namespace) -> None:
             additional_body_fields["git_commit_date"],
         ) = read_git_metadata(args.model_def)
 
+    req = bindings.v1CreateExperimentRequest(
+        config=json.dumps(experiment_config),
+        modelDefinition=api_util.path_to_files(args.model_def),
+        # template=args.template, # TODO(api) missing arg
+        validateOnly=args.test_mode,
+        # archived=archived, # TODO(api) missing arg
+        activate=not (args.paused or args.test_mode),
+        # additional_body_fields=additional_body_fields, # TODO(api) missing api params
+    )
+    session = setup_session(args)
     if args.test_mode:
-        api.experiment.create_test_experiment_and_follow_logs(
-            args.master,
-            experiment_config,
-            model_context,
-            template=args.template if args.template else None,
-            additional_body_fields=additional_body_fields,
-        )
+        create_test_experiment_and_follow_logs(args.master, session, req)
     else:
-        api.experiment.create_experiment_and_follow_logs(
-            master_url=args.master,
-            config=experiment_config,
-            model_context=model_context,
-            template=args.template if args.template else None,
-            additional_body_fields=additional_body_fields,
-            activate=not args.paused,
-            follow_first_trial_logs=args.follow_first_trial,
-        )
+        create_experiment_and_follow_logs(args.master, session, req)
 
 
 def local_experiment(args: Namespace) -> None:
