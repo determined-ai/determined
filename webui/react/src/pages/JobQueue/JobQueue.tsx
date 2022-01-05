@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { V1SchedulerTypeToLabel } from 'constants/states';
 
 import ActionDropdown, { Triggers } from 'components/ActionDropdown';
 import Grid, { GridMode } from 'components/Grid';
@@ -7,13 +7,13 @@ import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig } from 'components/Table';
-import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
@@ -177,7 +177,7 @@ const JobQueue: React.FC = () => {
           }
           break;
         case 'jobsAhead':
-          if (isJobOrderAvailable) {
+          if (!isJobOrderAvailable) {
             col.sorter = undefined;
             col.title = 'Preemptible';
             col.render = (_: unknown, record) => {
