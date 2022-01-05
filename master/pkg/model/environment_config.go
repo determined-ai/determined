@@ -174,8 +174,6 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 						"container WorkingDir is not configurable"),
 					check.Equal(len(container.Ports), 0,
 						"container Ports are not configurable"),
-					check.Equal(len(container.EnvFrom), 0,
-						"container EnvFrom is not configurable"),
 					check.True(container.LivenessProbe == nil,
 						"container LivenessProbe is not configurable"),
 					check.True(container.ReadinessProbe == nil,
