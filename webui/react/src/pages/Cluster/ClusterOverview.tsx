@@ -260,7 +260,7 @@ const ClusterOverview: React.FC = () => {
                 key={idx}
                 resourcePool={rp}
                 resourceType={rp.slotType}
-                totalComputeSlots={getSlotTypeOverview(rp.name, rp.slotType).total}
+                totalComputeSlots={rp.maxAgents * (rp.slotsPerAgent ?? 0)}
               />
             ))}
           </Grid>
