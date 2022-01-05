@@ -194,7 +194,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 						IsReady:           a.logBasedReadinessPassed,
 						ServiceReadyEvent: &msg,
 					})
-					_ = a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
+					err := a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
+					if err != nil {
+						a.Error(ctx, err)
+					}
 				}
 			}
 		}
@@ -446,7 +449,10 @@ func (a *Allocation) TaskContainerStateChanged(
 		}
 	}
 
-	_ = a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
+	err := a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
+	if err != nil {
+		a.Error(ctx, err)
+	}
 }
 
 // Exit attempts to exit an allocation while not killing or preempting it.
