@@ -347,7 +347,7 @@ class trialv1Trial:
             experimentId=obj["experimentId"],
             startTime=obj["startTime"],
             endTime=obj["endTime"] if obj.get("endTime", None) is not None else None,
-            state=obj["state"],
+            state=determinedexperimentv1State(obj["state"]),
             hparams=obj["hparams"],
             totalBatchesProcessed=obj["totalBatchesProcessed"],
             bestValidation=v1MetricsWorkload.from_json(obj["bestValidation"]) if obj.get("bestValidation", None) is not None else None,
@@ -574,8 +574,8 @@ class v1Checkpoint:
             format=obj["format"] if obj.get("format", None) is not None else None,
             determinedVersion=obj["determinedVersion"] if obj.get("determinedVersion", None) is not None else None,
             metrics=v1Metrics.from_json(obj["metrics"]) if obj.get("metrics", None) is not None else None,
-            validationState=obj["validationState"] if obj.get("validationState", None) is not None else None,
-            state=obj["state"],
+            validationState=determinedcheckpointv1State(obj["validationState"]) if obj.get("validationState", None) is not None else None,
+            state=determinedcheckpointv1State(obj["state"]),
             searcherMetric=float(obj["searcherMetric"]) if obj.get("searcherMetric", None) is not None else None,
         )
 
@@ -665,7 +665,7 @@ class v1CheckpointWorkload:
         return cls(
             uuid=obj["uuid"] if obj.get("uuid", None) is not None else None,
             endTime=obj["endTime"] if obj.get("endTime", None) is not None else None,
-            state=obj["state"],
+            state=determinedcheckpointv1State(obj["state"]),
             resources=obj["resources"] if obj.get("resources", None) is not None else None,
             totalBatches=obj["totalBatches"],
         )
@@ -707,7 +707,7 @@ class v1Command:
         return cls(
             id=obj["id"],
             description=obj["description"],
-            state=obj["state"],
+            state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             username=obj["username"],
@@ -769,7 +769,7 @@ class v1Container:
         return cls(
             parent=obj["parent"] if obj.get("parent", None) is not None else None,
             id=obj["id"],
-            state=obj["state"],
+            state=determinedcontainerv1State(obj["state"]),
             devices=[v1Device.from_json(x) for x in obj["devices"]] if obj.get("devices", None) is not None else None,
         )
 
@@ -874,7 +874,7 @@ class v1Device:
             id=obj["id"] if obj.get("id", None) is not None else None,
             brand=obj["brand"] if obj.get("brand", None) is not None else None,
             uuid=obj["uuid"] if obj.get("uuid", None) is not None else None,
-            type=obj["type"] if obj.get("type", None) is not None else None,
+            type=determineddevicev1Type(obj["type"]) if obj.get("type", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -1022,7 +1022,7 @@ class v1Experiment:
             labels=obj["labels"] if obj.get("labels", None) is not None else None,
             startTime=obj["startTime"],
             endTime=obj["endTime"] if obj.get("endTime", None) is not None else None,
-            state=obj["state"],
+            state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
@@ -2163,7 +2163,7 @@ class v1Job:
     def from_json(cls, obj: Json) -> "v1Job":
         return cls(
             summary=v1JobSummary.from_json(obj["summary"]) if obj.get("summary", None) is not None else None,
-            type=obj["type"],
+            type=determinedjobv1Type(obj["type"]),
             submissionTime=obj["submissionTime"],
             username=obj["username"],
             resourcePool=obj["resourcePool"],
@@ -2208,7 +2208,7 @@ class v1JobSummary:
     @classmethod
     def from_json(cls, obj: Json) -> "v1JobSummary":
         return cls(
-            state=obj["state"],
+            state=determinedjobv1State(obj["state"]),
             jobsAhead=obj["jobsAhead"],
         )
 
@@ -2543,7 +2543,7 @@ class v1LogEntry:
             id=obj["id"],
             message=obj["message"] if obj.get("message", None) is not None else None,
             timestamp=obj["timestamp"] if obj.get("timestamp", None) is not None else None,
-            level=obj["level"] if obj.get("level", None) is not None else None,
+            level=v1LogLevel(obj["level"]) if obj.get("level", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -2741,7 +2741,7 @@ class v1MetricsWorkload:
     def from_json(cls, obj: Json) -> "v1MetricsWorkload":
         return cls(
             endTime=obj["endTime"] if obj.get("endTime", None) is not None else None,
-            state=obj["state"],
+            state=determinedexperimentv1State(obj["state"]),
             metrics=obj["metrics"] if obj.get("metrics", None) is not None else None,
             numInputs=obj["numInputs"],
             totalBatches=obj["totalBatches"],
@@ -2906,7 +2906,7 @@ class v1Notebook:
         return cls(
             id=obj["id"],
             description=obj["description"],
-            state=obj["state"],
+            state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             username=obj["username"],
@@ -3578,7 +3578,7 @@ class v1ResourceAllocationAggregatedEntry:
     def from_json(cls, obj: Json) -> "v1ResourceAllocationAggregatedEntry":
         return cls(
             periodStart=obj["periodStart"],
-            period=obj["period"],
+            period=v1ResourceAllocationAggregationPeriod(obj["period"]),
             seconds=float(obj["seconds"]),
             byUsername={k: float(v) for k, v in obj["byUsername"].items()},
             byExperimentLabel={k: float(v) for k, v in obj["byExperimentLabel"].items()},
@@ -3758,11 +3758,11 @@ class v1ResourcePool:
         return cls(
             name=obj["name"],
             description=obj["description"],
-            type=obj["type"],
+            type=v1ResourcePoolType(obj["type"]),
             numAgents=obj["numAgents"],
             slotsAvailable=obj["slotsAvailable"],
             slotsUsed=obj["slotsUsed"],
-            slotType=obj["slotType"],
+            slotType=determineddevicev1Type(obj["slotType"]),
             auxContainerCapacity=obj["auxContainerCapacity"],
             auxContainersRunning=obj["auxContainersRunning"],
             defaultComputePool=obj["defaultComputePool"],
@@ -3772,8 +3772,8 @@ class v1ResourcePool:
             maxAgents=obj["maxAgents"],
             slotsPerAgent=obj["slotsPerAgent"] if obj.get("slotsPerAgent", None) is not None else None,
             auxContainerCapacityPerAgent=obj["auxContainerCapacityPerAgent"],
-            schedulerType=obj["schedulerType"],
-            schedulerFittingPolicy=obj["schedulerFittingPolicy"],
+            schedulerType=v1SchedulerType(obj["schedulerType"]),
+            schedulerFittingPolicy=v1FittingPolicy(obj["schedulerFittingPolicy"]),
             location=obj["location"],
             imageId=obj["imageId"],
             instanceType=obj["instanceType"],
@@ -4065,7 +4065,7 @@ class v1RunnableOperation:
     @classmethod
     def from_json(cls, obj: Json) -> "v1RunnableOperation":
         return cls(
-            type=obj["type"] if obj.get("type", None) is not None else None,
+            type=v1RunnableType(obj["type"]) if obj.get("type", None) is not None else None,
             length=v1TrainingLength.from_json(obj["length"]) if obj.get("length", None) is not None else None,
         )
 
@@ -4341,7 +4341,7 @@ class v1Shell:
         return cls(
             id=obj["id"],
             description=obj["description"],
-            state=obj["state"],
+            state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             privateKey=obj["privateKey"] if obj.get("privateKey", None) is not None else None,
@@ -4461,7 +4461,7 @@ class v1Tensorboard:
         return cls(
             id=obj["id"],
             description=obj["description"],
-            state=obj["state"],
+            state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             experimentIds=obj["experimentIds"] if obj.get("experimentIds", None) is not None else None,
@@ -4501,7 +4501,7 @@ class v1TrainingLength:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrainingLength":
         return cls(
-            unit=obj["unit"],
+            unit=TrainingLengthUnit(obj["unit"]),
             length=obj["length"],
         )
 
@@ -4521,7 +4521,7 @@ class v1TrialEarlyExit:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialEarlyExit":
         return cls(
-            reason=obj["reason"],
+            reason=TrialEarlyExitExitedReason(obj["reason"]),
         )
 
     def to_json(self) -> typing.Any:
@@ -4582,7 +4582,7 @@ class v1TrialLogsResponse:
             id=obj["id"],
             timestamp=obj["timestamp"],
             message=obj["message"],
-            level=obj["level"],
+            level=v1LogLevel(obj["level"]),
         )
 
     def to_json(self) -> typing.Any:
@@ -4649,7 +4649,7 @@ class v1TrialProfilerMetricLabels:
             name=obj["name"],
             agentId=obj["agentId"] if obj.get("agentId", None) is not None else None,
             gpuUuid=obj["gpuUuid"] if obj.get("gpuUuid", None) is not None else None,
-            metricType=obj["metricType"] if obj.get("metricType", None) is not None else None,
+            metricType=TrialProfilerMetricLabelsProfilerMetricType(obj["metricType"]) if obj.get("metricType", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
