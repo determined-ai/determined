@@ -193,19 +193,19 @@ const ClusterOverview: React.FC = () => {
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
-          {overview.CUDA.total ? (
+          {cudaTotalSlots ? (
             <OverviewStats title="CUDA Slots Allocated">
-              {overview.CUDA.total - overview.CUDA.available} <small>/ {overview.CUDA.total}</small>
+              {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
             </OverviewStats>
           ) : null}
-          {overview.ROCM.total ? (
+          {rocmTotalSlots ? (
             <OverviewStats title="ROCm Slots Allocated">
-              {overview.ROCM.total - overview.ROCM.available} <small>/ {overview.ROCM.total}</small>
+              {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
             </OverviewStats>
           ) : null}
-          {overview.CPU.total ? (
+          {cpuTotalSlots ? (
             <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
+              {overview.CPU.total - overview.CPU.available} <small>/ {cpuTotalSlots}</small>
             </OverviewStats>
           ) : null}
           {auxContainers.total ? (
