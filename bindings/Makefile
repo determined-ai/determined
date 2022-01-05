@@ -20,7 +20,6 @@ deps/$(CODEGEN_BIN):
 force-gen:
 	touch $(SWAGGER_SPEC)
 
-
 .PHONY: bindings-copy-over
 bindings-copy-over:
 	rm -rf $(ts_bindings_dest)
@@ -43,7 +42,7 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 build: build/typescript-fetch $(py_bindings_dest)
 
 .PHONY: check
-check: check/python check/typescript-fetch
+check: force-gen check/python check/typescript-fetch
 	# Checking that the (committed) generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating them.
 	# WARNING this has a dependency on proto module being built recently

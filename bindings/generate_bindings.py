@@ -272,7 +272,6 @@ class Class(TypeDef):
         optional = sorted(p for p in self.params if not self.params[p].required)
         for name in required + optional:
             out += ["    " + self.params[name].gen_function_param()]
-        # out += [f"        {k}: {v.annotation()}," for k, v in self.members.items()]
         out += ["    ):"]
         out += [f"        self.{k} = {k}" for k in self.params]
         out += [""]
@@ -524,8 +523,8 @@ def process_definitions(swagger_definitions: dict, enums: dict) -> TypeDefs:
 
 def is_expected_path(text: str) -> bool:
     """
-    check if there are any dots appearing outside of curly braces if any.
-    assuming there are no nested curly braces.
+    Check if any dots appear outside of curly braces, if any.
+    This is assuming there are no nested curly braces.
     """
     in_braces = False
     for c in text:

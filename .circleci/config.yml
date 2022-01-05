@@ -1384,7 +1384,6 @@ jobs:
       - run: make -C tools check
       - run: make -C schemas check
 
-
   test-unit-harness:
     docker:
       - image: <<pipeline.parameters.docker-image>>
