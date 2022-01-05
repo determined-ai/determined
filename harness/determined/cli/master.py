@@ -5,10 +5,12 @@ from typing import Any, List
 
 from requests import Response
 
+from determined.cli.session import setup_session
+from determined.cli.util import format_args
 from determined.common import api, yaml
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.check import check_gt
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 @authentication.required
@@ -18,6 +20,16 @@ def config(args: Namespace) -> None:
         print(json.dumps(response.json(), indent=4))
     elif args.output == "yaml":
         print(yaml.safe_dump(response.json(), default_flow_style=False))
+    else:
+        raise ValueError(f"Bad output format: {args.output}")
+
+
+def get_master(args: Namespace) -> None:
+    resp = bindings.get_GetMaster(setup_session(args))
+    if args.json:
+        print(json.dumps(resp.to_json(), indent=4))
+    elif args.yaml:
+        print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
     else:
         raise ValueError(f"Bad output format: {args.output}")
 
@@ -64,6 +76,9 @@ args_description = [
         Cmd("config", config, "fetch master config", [
             Arg("-o", "--output", type=str, default="yaml",
                 help="Output format, one of json|yaml")
+        ]),
+        Cmd("info", get_master, "fetch master info", [
+            Group(format_args["json"], format_args["yaml"])
         ]),
         Cmd("logs", logs, "fetch master logs", [
             Arg("-f", "--follow", action="store_true",

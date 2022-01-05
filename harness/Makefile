@@ -1,5 +1,7 @@
+py_bindings_dest=determined/common/api/bindings.py
+
 .PHONY: build
-build: gen
+build: gen $(py_bindings_dest)
 	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
 
 .PHONY: publish
@@ -9,12 +11,12 @@ publish:
 .PHONY: fmt
 fmt:
 	isort .
-	black .
+	black . --exclude $(py_bindings_dest)
 
 .PHONY: check
 check: check-gen
 	isort . --check-only
-	black . --check
+	black . --exclude $(py_bindings_dest) --check
 	flake8
 	mypy .
 
@@ -41,6 +43,7 @@ clean: ungen
 	rm -rf pip-wheel-metadata/
 	rm -rf dist/
 	rm -rf build/
+	rm $(py_bindings_dest)
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
 AWS_TEMPLATES_PATH := determined/deploy/aws/templates

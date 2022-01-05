@@ -8,9 +8,9 @@ import yaml
 
 from determined.cli import render
 from determined.cli.session import setup_session
+from determined.cli.util import format_args, pagination_args
 from determined.common import api
-from determined.common.api import authentication
-from determined.common.api.b import get_GetJobs
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -32,12 +32,14 @@ def ls(args: Namespace) -> None:
         except KeyError:
             pass
 
-    response = get_GetJobs(
+    response = bindings.get_GetJobs(
         setup_session(args),
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy="ORDER_BY_ASC" if not args.reverse else "ORDER_BY_DESC",
+        orderBy=bindings.v1OrderBy.ORDER_BY_ASC
+        if not args.reverse
+        else bindings.v1OrderBy.ORDER_BY_DESC,
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
@@ -78,35 +80,6 @@ def ls(args: Namespace) -> None:
         raise ValueError(f"Bad output format: {args.output}")
 
 
-pagination_args = [
-    Arg(
-        "--offset",
-        type=int,
-        default=0,
-        help="Offset the returned set.",
-    ),
-    Arg(
-        "--limit",
-        type=int,
-        default=50,
-        help="Limit the returned set.",
-    ),
-    Arg(
-        "--reverse",
-        default=False,
-        action="store_true",
-        help="Reverse the requested order of results.",
-    ),
-]
-
-
-output_format = Group(
-    Arg("--csv", action="store_true", help="Print as CSV format."),
-    Arg("--json", action="store_true", help="Print as JSON format."),
-    Arg("--yaml", action="store_true", help="Print in YAML fromat."),
-    Arg("--table", action="store_true", default=True, help="Print in a tabular format."),
-)
-
 args_description = [
     Cmd(
         "j|ob",
@@ -122,7 +95,12 @@ args_description = [
                         "-rp", "--resource-pool", type=str, help="The target resource pool, if any."
                     ),
                     *pagination_args,
-                    output_format,
+                    Group(
+                        format_args["json"],
+                        format_args["yaml"],
+                        format_args["table"],
+                        format_args["csv"],
+                    ),
                 ],
             ),
         ],
