@@ -162,7 +162,8 @@ class determinedcontainerv1State(enum.Enum):
 class determineddevicev1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_CPU = "TYPE_CPU"
-    TYPE_GPU = "TYPE_GPU"
+    TYPE_CUDA = "TYPE_CUDA"
+    TYPE_ROCM = "TYPE_ROCM"
 
 class determinedexperimentv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
