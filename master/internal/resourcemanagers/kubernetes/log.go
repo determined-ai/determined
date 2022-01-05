@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"io"
 	"time"
 
@@ -39,7 +40,7 @@ func newPodLogStreamer(
 		Container:  model.DeterminedK8ContainerName,
 	})
 
-	logReader, err := logs.Stream()
+	logReader, err := logs.Stream(context.TODO())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
 	}

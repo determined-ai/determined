@@ -177,12 +177,3 @@ Examples:
 
 -  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
    be overridden using the ``-m`` flag.
-
-**************
- Full Listing
-**************
-
-.. argparse::
-   :module: determined.cli.cli
-   :func: make_parser
-   :prog: det

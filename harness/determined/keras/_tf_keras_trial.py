@@ -978,9 +978,6 @@ class TFKerasTrial(det.Trial):
     ``tf.compat.v1.disable_eager_execution`` after your import statements.
     If you are using TensorFlow 1.x in eager mode, please add
     ``experimental_run_tf_function=False`` to your model compile function.
-
-    For more information on writing ``tf.keras`` trial classes, refer to the
-    :ref:`tutorial <tf-mnist-tutorial>`.
     """
 
     trial_controller_class = TFKerasTrialController

@@ -1,8 +1,8 @@
 .. _topic-guides_yaml:
 
-######
- YAML
-######
+####################
+ YAML Configuration
+####################
 
 `YAML <https://yaml.org/>`__ is a markup language often used for configuration. Determined uses YAML
 for configuring tasks such as :ref:`experiments <experiment-configuration>` and :ref:`notebooks

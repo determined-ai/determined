@@ -540,7 +540,7 @@ class EstimatorTrialController(det.TrialController):
 
         @functools.wraps(f)
         def wrapper(features: Any, labels: Any, mode: Any, params: Any, config: Any) -> Any:
-            # Tensorflow inspects the arguments of `model_fn()`. We provide all the possible
+            # TensorFlow inspects the arguments of `model_fn()`. We provide all the possible
             # arguments and then inspect the ones that are used by the `model_fn()`.
             model_fn_args = function_utils.fn_args(f)
 
@@ -832,7 +832,7 @@ class EstimatorTrial(det.Trial):
         <https://www.tensorflow.org/api_docs/python/tf/estimator/TrainSpec>`__
         to be used for training steps. This training specification will contain
         a TensorFlow ``input_fn`` which constructs the input data for a
-        training step. Unlike the standard Tensorflow ``input_fn`` interface,
+        training step. Unlike the standard TensorFlow ``input_fn`` interface,
         ``EstimatorTrial`` only supports an ``input_fn`` that returns a
         ``tf.data.Dataset`` object. A function that returns a tuple of features
         and labels is currently not supported by ``EstimatorTrial``.

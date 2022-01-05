@@ -1,8 +1,8 @@
 .. _hyperparameter-tuning:
 
-#################################
- Training: Hyperparameter Tuning
-#################################
+#######################
+ Hyperparameter Tuning
+#######################
 
 Hyperparameter tuning is a common machine learning workflow that involves appropriately configuring
 the data, model architecture, and learning algorithm to yield an effective model. Hyperparameter
@@ -129,8 +129,8 @@ runtime, Determined injects a value for the hyperparameter. For example, to inje
 
    nn.Dropout(p=self.context.get_hparam("dropout_probability"))
 
-To see hyperparameter injection throughout a complete Trial implementation, refer to the
-:ref:`pytorch-mnist-tutorial`.
+To see hyperparameter injection throughout a complete trial implementation, refer to the
+:doc:`/training-apis/index`.
 
 ***************************************************
  Handling Trial Errors and Early Stopping Requests

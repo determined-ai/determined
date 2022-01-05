@@ -1,8 +1,13 @@
 .. _data-layer:
 
-############
- Data Layer
-############
+########################################
+ Data Layer API for Keras and Estimator
+########################################
+
+.. note::
+
+   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   different sources of data.
 
 The data layer in Determined enables high-performance data loading for deep learning training.
 Modern deep learning data-loading APIs do not always provide both a random-access layer and a
@@ -26,8 +31,8 @@ dataset versioning. This how-to guide covers:
 .. note::
 
    The data layer is an experimental feature and its API is not considered stable. Currently it
-   supports only ``tf.data.Dataset`` inputs, which can be used in :ref:`Keras <tf-keras-trial>` and
-   :ref:`Estimators <estimator-trial>`.
+   supports only ``tf.data.Dataset`` inputs, which can be used in :doc:`/training-apis/api-keras`
+   and :doc:`/training-apis/api-estimator`.
 
 **************************
  How the Data Layer Works
@@ -77,8 +82,8 @@ delete a cached dataset, they should do so manually. Dataset caches are located 
 **************************
 
 The data layer API requires users to place their dataset creation code within a function and to
-decorate that function with Determined-provided decorators that can be accessed via the
-:ref:`context object <trial-context>`:
+decorate that function with Determined-provided decorators that can be accessed via the the context
+object:
 
 -  ``self.context.experimental.cache_train_dataset(dataset_id: str, dataset_version: str, shuffle:
    bool = False, skip_shuffle_end_of_epoch: bool = False)`` for training data.

@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: fix an issue where the Jupyterlab modal didn't pass the full config.

@@ -1,5 +1,5 @@
 """
-This example demonstrates how to run Tensorflow's Boosted Trees Estimator. Due to the nature of the
+This example demonstrates how to run TensorFlow's Boosted Trees Estimator. Due to the nature of the
 model, this example is meant to run as a single-GPU model or a hyperparameter search; it does NOT
 support distributed training.
 

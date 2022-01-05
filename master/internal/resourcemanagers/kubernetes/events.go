@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
@@ -63,7 +65,8 @@ func (e *eventListener) Receive(ctx *actor.Context) error {
 }
 
 func (e *eventListener) startEventListener(ctx *actor.Context) {
-	events, err := e.clientSet.CoreV1().Events(e.namespace).List(metaV1.ListOptions{})
+	events, err := e.clientSet.CoreV1().Events(e.namespace).List(
+		context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startEventListener{})
@@ -72,7 +75,8 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(events.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return e.clientSet.CoreV1().Events(e.namespace).Watch(metaV1.ListOptions{})
+			return e.clientSet.CoreV1().Events(e.namespace).Watch(
+				context.TODO(), metaV1.ListOptions{})
 		},
 	})
 	if err != nil {

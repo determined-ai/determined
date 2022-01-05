@@ -23,4 +23,4 @@ data:
   output_mode: "classification"
   path_to_mrpc: ''
   download_data: True
-entrypoint: model_def:BertPytorch
+entrypoint: model_def:BertPyTorch

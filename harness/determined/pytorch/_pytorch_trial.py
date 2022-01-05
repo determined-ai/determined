@@ -879,11 +879,21 @@ class PyTorchTrial(det.Trial):
         """
         Initializes a trial using the provided ``context``. The general steps are:
 
-        1. Initialize model(s) and wrap them with ``context.wrap_model``.
-        2. Initialize optimizer(s) and wrap them with ``context.wrap_optimizer``.
-        3. Initialize learning rate schedulers and wrap them with ``context.wrap_lr_scheduler``.
-        4. If desired, wrap models and optimizer with ``context.configure_apex_amp``
+        #. Initialize model(s) and wrap them with ``context.wrap_model``.
+        #. Initialize optimizer(s) and wrap them with ``context.wrap_optimizer``.
+        #. Initialize learning rate schedulers and wrap them with ``context.wrap_lr_scheduler``.
+        #. If desired, wrap models and optimizer with ``context.configure_apex_amp``
            to use ``apex.amp`` for automatic mixed precision.
+        #. Define custom loss function and metric functions.
+
+        .. warning::
+
+           You might see significantly different metrics for trials which are paused and later
+           continued than trials which are not paused if some of your models, optimizers, and
+           learning rate schedulers are not wrapped. The reason is that the model's state might
+           not be restored accurately or completely from the checkpoint, which is saved to a
+           checkpoint and then later loaded into the trial during resuming training. When using
+           PyTorch, this can sometimes happen if the PyTorch API is not used correctly.
 
         Here is a code example.
 

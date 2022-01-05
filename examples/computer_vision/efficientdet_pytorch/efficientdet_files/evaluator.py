@@ -89,7 +89,7 @@ class CocoEvaluator(Evaluator):
 
 
 class TfmEvaluator(Evaluator):
-    """ Tensorflow Models Evaluator Wrapper """
+    """ TensorFlow Models Evaluator Wrapper """
     def __init__(
             self, dataset, distributed=False, pred_yxyx=False, evaluator_cls=tfm_eval.ObjectDetectionEvaluator):
         super().__init__(pred_yxyx=pred_yxyx)

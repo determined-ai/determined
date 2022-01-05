@@ -2,9 +2,9 @@
 
 .. _multi-gpu-training:
 
-################################
- Training: Distributed Training
-################################
+######################
+ Distributed Training
+######################
 
 Determined provides three main methods to take advantage of multiple GPUs:
 
@@ -18,6 +18,11 @@ Determined provides three main methods to take advantage of multiple GPUs:
 #. **Parallelism within a trial.** Use multiple GPUs to speed up the training of a single trial
    (*distributed training*). Determined can coordinate across multiple GPUs on a single machine or
    across multiple GPUs on multiple machines to improve the performance of training a single trial.
+
+.. note::
+
+   In Determined, we call all of the above three methods distributed training. This might differ
+   from the terminology used in other systems.
 
 This document focuses on the third approach, demonstrating how to perform optimized distributed
 training with Determined to speed up the training of a single trial.
@@ -201,7 +206,7 @@ distributed training:
  Distributed Inference
 ***********************
 
-PyTorch users can also use the existing distributed training workflow with PytorchTrial to
+PyTorch users can also use the existing distributed training workflow with PyTorchTrial to
 accelerate their inference workloads. This workflow is not yet officially supported, so users must
 specify certain training-specific artifacts that are not used for inference. To run a distributed
 batch inference job, create a new PyTorchTrial and follow these steps:

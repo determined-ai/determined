@@ -25,11 +25,10 @@ Determined Notebooks have the following benefits:
    directories into the container and save files in the persistent directories in the container.**
    See :ref:`notebook-state` for more information.
 
-..
-   warning:
+.. warning::
 
-   If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not
-   be shut down automatically so you need to manually terminate the kernels.
+   If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
+   shut down automatically so you need to manually terminate the kernels.
 
 ************************
  Working with Notebooks

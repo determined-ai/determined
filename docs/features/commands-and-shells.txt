@@ -6,6 +6,10 @@
 
 In addition to structured model training workloads, which are handled using :ref:`experiments
 <experiments>`, Determined also supports more free-form tasks using *commands* and *shells*.
+
+Commands execute a user-specified program on the cluster. Shells start SSH servers that allow using
+cluster resources interactively.
+
 Commands and shells enable developers to use a Determined cluster and its GPUs without having to
 write code conforming to the trial APIs. Commands are useful for running existing code in a batch
 manner; shells provide access to the cluster in the form of interactive `SSH

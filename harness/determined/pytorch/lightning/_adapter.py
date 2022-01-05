@@ -119,8 +119,8 @@ class _LightningAdapterState:
 
 class LightningAdapter(PyTorchTrial):
     """
-    Pytorch Lightning Adapter provides a quick way
-    to train your Pytorch Lightning models with all the Determined features,
+    PyTorch Lightning Adapter provides a quick way
+    to train your PyTorch Lightning models with all the Determined features,
     such as mid-epoch preemption, simple distributed training interface,
     simple job submission to the Determined cluster, and so on.
     """
@@ -137,12 +137,12 @@ class LightningAdapter(PyTorchTrial):
         This performs the necessary initialization steps to:
 
         1. check the compatibility of the provided ``LightningModule`` with ``LightningAdapter``.
-        2. define a ``PytorchTrial`` with models, optimizers, and LR schedulers that are provided
+        2. define a ``PyTorchTrial`` with models, optimizers, and LR schedulers that are provided
            by ``LightningModule``.
         3. patch the ``LightningModule`` methods that depend on a ``Trainer``.
 
         After inheriting this class, you need to override this function to initialize the adapted
-        ``PytorchTrial``.
+        ``PyTorchTrial``.
         Within your ``__init__`` , you should instantiate the ``LightningModule`` and call
         ``super().__init__``.
 

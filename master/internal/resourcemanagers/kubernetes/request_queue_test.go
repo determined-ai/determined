@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -59,7 +60,7 @@ func (m *mockPodActor) Receive(ctx *actor.Context) error {
 }
 
 func getNumberOfActivePods(podInterface typedV1.PodInterface) int {
-	podList, err := podInterface.List(metaV1.ListOptions{})
+	podList, err := podInterface.List(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		panic(err)
 	}

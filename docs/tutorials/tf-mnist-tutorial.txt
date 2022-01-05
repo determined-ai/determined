@@ -1,5 +1,3 @@
-.. _tf-mnist-tutorial:
-
 #########################################
  TensorFlow Keras Fashion MNIST Tutorial
 #########################################
@@ -251,11 +249,3 @@ in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment either via the experiment
 ID (xxx) or via its description.
-
-************
- Next Steps
-************
-
--  :ref:`model-definitions_best-practices`
--  :ref:`experiment-configuration`
--  :ref:`features`

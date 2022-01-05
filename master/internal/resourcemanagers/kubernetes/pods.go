@@ -3,6 +3,7 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -228,7 +229,7 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 
 func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	masterService, err := p.clientSet.CoreV1().Services(p.namespace).Get(
-		p.masterServiceName, metaV1.GetOptions{})
+		context.TODO(), p.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, "failed to get master service")
 	}
@@ -241,7 +242,7 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 
 func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
 	systemPods, err := p.podInterface.List(
-		metaV1.ListOptions{LabelSelector: determinedSystemLabel})
+		context.TODO(), metaV1.ListOptions{LabelSelector: determinedSystemLabel})
 	if err != nil {
 		return errors.Wrap(err, "failed to get system pods")
 	}
@@ -258,7 +259,7 @@ func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
 func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
 
-	configMaps, err := p.configMapInterface.List(listOptions)
+	configMaps, err := p.configMapInterface.List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing config maps")
 	}
@@ -271,7 +272,7 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 			handler: ctx.Self(), configMapName: configMap.Name})
 	}
 
-	pods, err := p.podInterface.List(listOptions)
+	pods, err := p.podInterface.List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing pod")
 	}
@@ -431,9 +432,11 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	}
 
 	name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
-	_, exists := p.clientSet.SchedulingV1().PriorityClasses().Get(name, metaV1.GetOptions{})
+	_, exists := p.clientSet.SchedulingV1().PriorityClasses().Get(
+		context.TODO(), name, metaV1.GetOptions{})
 	if exists == nil {
-		err := p.clientSet.SchedulingV1().PriorityClasses().Delete(name, &metaV1.DeleteOptions{})
+		err := p.clientSet.SchedulingV1().PriorityClasses().Delete(
+			context.TODO(), name, metaV1.DeleteOptions{})
 		if err != nil {
 			ctx.Log().Warnf("Deletion of PriorityClass %s failed.", name)
 		}

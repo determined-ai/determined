@@ -1,7 +1,7 @@
 description: noop-pytorch
 data:
   model_type: single_output
-entrypoint: model_def:NoopPytorchTrial
+entrypoint: model_def:NoopPyTorchTrial
 hyperparameters:
   global_batch_size: 32
 scheduling_unit: 1

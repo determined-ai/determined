@@ -73,7 +73,7 @@ const useModal = (
             resolve(thenArgs);
             modalClose(reason);
           })
-          .catch(reject);
+          .catch((e: unknown) => reject(e));
       }) as unknown as AntModalPromise;
     } else {
       return async (...args: any[]) => {

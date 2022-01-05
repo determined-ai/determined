@@ -56,7 +56,7 @@ See [our installation guide](https://docs.determined.ai/latest/how-to/install-ma
 ## Next Steps
 
 For a brief introduction to using Determined, check out our
-[Quick Start Guide](https://docs.determined.ai/latest/tutorials/quick-start.html).
+[Quick Start Guide](https://docs.determined.ai/latest/getting-started.html).
 
 To use an existing deep learning model with Determined, follow the
 tutorial for your preferred deep learning framework:
