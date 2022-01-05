@@ -1,4 +1,3 @@
-import json
 import logging
 import pathlib
 import sys
@@ -9,10 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 import determined as det
 import determined.common
 from determined import constants, errors, load, workload
-from determined.common import api, check, util
-from determined.common.api import authentication, bindings
-from determined.common.api import util as api_util
-from determined.experimental import client
+from determined.common import api, check, context, util
+from determined.common.api import authentication
 
 
 def _in_ipython() -> bool:
@@ -75,6 +72,8 @@ def _submit_experiment(
     if master_url is None:
         master_url = util.get_default_master_address()
 
+    exp_context = context.Context.from_local(context_path)
+
     # When a requested_user isn't specified to initialize_session(), the
     # authentication module will attempt to use the token store to grab the
     # current logged-in user. If there is no logged in user found, it will
@@ -84,21 +83,10 @@ def _submit_experiment(
         master_url, requested_user=None, try_reauth=True
     )
 
-    req = bindings.v1CreateExperimentRequest(
-        config=json.dumps(config),
-        modelDefinition=api_util.path_to_files(context_path),
-        # template=args.template, # TODO(api) missing arg
-        validateOnly=test,
-        # archived=archived, # TODO(api) missing arg
-        activate=not test,
-        # additional_body_fields=additional_body_fields, # TODO(api) missing api params
-    )
-    session = client.Session(master_url, None, None, None)
-
     if test:
-        return api.create_test_experiment_and_follow_logs(master_url, session, req)
+        return api.create_test_experiment_and_follow_logs(master_url, config, exp_context)
     else:
-        return api.create_experiment_and_follow_logs(master_url, session, req)
+        return api.create_experiment_and_follow_logs(master_url, config, exp_context)
 
 
 def _make_test_workloads(config: det.ExperimentConfig) -> workload.Stream:

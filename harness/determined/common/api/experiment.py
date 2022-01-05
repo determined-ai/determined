@@ -10,8 +10,7 @@ from urllib.parse import urlencode
 
 from termcolor import colored
 
-from determined.common import api, constants
-from determined.common.api import bindings
+from determined.common import api, constants, context, yaml
 from determined.common.api import request as req
 
 
@@ -206,6 +205,45 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
             time.sleep(0.2)
 
 
+def create_experiment(
+    master_url: str,
+    config: Dict[str, Any],
+    model_context: context.Context,
+    template: Optional[str] = None,
+    validate_only: bool = False,
+    archived: bool = False,
+    activate: bool = True,
+    additional_body_fields: Optional[Dict[str, Any]] = None,
+) -> int:
+    body = {
+        "activate": False,
+        "experiment_config": yaml.safe_dump(config),
+        "model_definition": [e.dict() for e in model_context.entries],
+        "validate_only": validate_only,
+    }
+    if template:
+        body["template"] = template
+    if archived:
+        body["archived"] = archived
+    if additional_body_fields:
+        body.update(additional_body_fields)
+
+    r = req.post(master_url, "experiments", json=body)
+    if not hasattr(r, "headers"):
+        raise Exception(r)
+
+    if validate_only:
+        return 0
+
+    new_resource = r.headers["Location"]
+    experiment_id = int(new_resource.split("/")[-1])
+
+    if activate:
+        activate_experiment(master_url, experiment_id)
+
+    return experiment_id
+
+
 def generate_random_hparam_values(hparam_def: Dict[str, Any]) -> Dict[str, Any]:
     def generate_random_value(hparam: Any) -> Any:
         if isinstance(hparam, Dict):
@@ -278,20 +316,56 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def create_experiment_and_follow_logs(
-    master_url: str, session: Any, req: bindings.v1CreateExperimentRequest
+    master_url: str,
+    config: Dict[str, Any],
+    model_context: context.Context,
+    template: Optional[str] = None,
+    additional_body_fields: Optional[Dict[str, Any]] = None,
+    activate: bool = True,
+    follow_first_trial_logs: bool = True,
 ) -> int:
-    resp = bindings.post_CreateExperiment(session, body=req)
-    print("Created experiment {}".format(resp.experiment.id))
-    api.follow_experiment_logs(master_url, resp.experiment.id)
-    return resp.experiment.id
+    exp_id = api.experiment.create_experiment(
+        master_url,
+        config,
+        model_context,
+        template=template,
+        additional_body_fields=additional_body_fields,
+        activate=activate,
+    )
+    print("Created experiment {}".format(exp_id))
+    if activate and follow_first_trial_logs:
+        api.follow_experiment_logs(master_url, exp_id)
+    return exp_id
 
 
 def create_test_experiment_and_follow_logs(
-    master_url: str, session: Any, req: bindings.v1CreateExperimentRequest
+    master_url: str,
+    config: Dict[str, Any],
+    model_context: context.Context,
+    template: Optional[str] = None,
+    additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:
     print(colored("Validating experiment configuration...", "yellow"), end="\r")
-    resp = bindings.post_CreateExperiment(session, body=req)
+    api.experiment.create_experiment(
+        master_url,
+        config,
+        model_context,
+        template=template,
+        validate_only=True,
+        additional_body_fields=additional_body_fields,
+    )
     print(colored("Experiment configuration validation succeeded! 🎉", "green"))
-    print(colored("Created test experiment {}".format(resp.experiment.id), "green"))
-    # TODO api.experiment.follow_test_experiment_logs(master_url, exp_id)
-    return resp.experiment.id
+
+    print(colored("Creating test experiment...", "yellow"), end="\r")
+    exp_id = api.experiment.create_experiment(
+        master_url,
+        make_test_experiment_config(config),
+        model_context,
+        template=template,
+        additional_body_fields=additional_body_fields,
+        archived=True,
+        activate=True,
+    )
+    print(colored("Created test experiment {}".format(exp_id), "green"))
+    api.experiment.follow_test_experiment_logs(master_url, exp_id)
+    return exp_id
