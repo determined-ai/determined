@@ -82,6 +82,27 @@ const ClusterOverview: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.CPU);
   }, [ agents ]);
 
+  const cudaTotalSlots = useMemo(() => {
+    return resourcePools.filter(pool => pool.slotType === ResourceType.CUDA)
+      .reduce((totalSlots, currentPool) => {
+        return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
+      }, 0);
+  }, [ resourcePools ]);
+
+  const rocmTotalSlots = useMemo(() => {
+    return resourcePools.filter(pool => pool.slotType === ResourceType.ROCM)
+      .reduce((totalSlots, currentPool) => {
+        return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
+      }, 0);
+  }, [ resourcePools ]);
+
+  const cpuTotalSlots = useMemo(() => {
+    return resourcePools.filter(pool => pool.slotType === ResourceType.CPU)
+      .reduce((totalSlots, currentPool) => {
+        return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
+      }, 0);
+  }, [ resourcePools ]);
+
   const getSlotTypeOverview = useCallback((
     resPoolName: string,
     resType: ResourceType,
@@ -195,34 +216,34 @@ const ClusterOverview: React.FC = () => {
         </Grid>
       </Section>
       <Section hideTitle title="Overall Allocation">
-        {overview.ALL.total === 0 ? (
+        {cudaTotalSlots + rocmTotalSlots + cpuTotalSlots === 0 ? (
           <Message title="No connected agents." type={MessageType.Empty} />
         ) : null }
-        {overview.CUDA.total > 0 && (
+        {cudaTotalSlots > 0 && (
           <SlotAllocationBar
             resourceStates={cudaSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.CUDA})`}
-            totalSlots={overview.CUDA.total}
+            totalSlots={cudaTotalSlots}
           />
         )}
-        {overview.ROCM.total > 0 && (
+        {rocmTotalSlots > 0 && (
           <SlotAllocationBar
             resourceStates={rocmSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.ROCM})`}
-            totalSlots={overview.ROCM.total}
+            totalSlots={rocmTotalSlots}
           />
         )}
-        {overview.CPU.total > 0 && (
+        {cpuTotalSlots > 0 && (
           <SlotAllocationBar
             resourceStates={cpuSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.CPU})`}
-            totalSlots={overview.CPU.total}
+            totalSlots={cpuTotalSlots}
           />
         )}
       </Section>
