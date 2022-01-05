@@ -9,8 +9,7 @@ import yaml
 from determined.cli import render
 from determined.cli.session import setup_session
 from determined.common import api
-from determined.common.api import authentication
-from determined.common.api.bindings import get_GetJobs, v1OrderBy
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -32,12 +31,14 @@ def ls(args: Namespace) -> None:
         except KeyError:
             pass
 
-    response = get_GetJobs(
+    response = bindings.get_GetJobs(
         setup_session(args),
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
-        orderBy=v1OrderBy.ORDER_BY_ASC if not args.reverse else v1OrderBy.ORDER_BY_DESC,
+        orderBy=bindings.v1OrderBy.ORDER_BY_ASC
+        if not args.reverse
+        else bindings.v1OrderBy.ORDER_BY_DESC,
     )
     if args.yaml:
         print(yaml.safe_dump(response.to_json(), default_flow_style=False))
