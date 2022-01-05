@@ -112,10 +112,11 @@ class Ref(TypeAnno):
     # Collect refs as we instantiate them, for the linking step.
     all_refs = []
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, url_encodable=False):
         self.name = name
         self.linked = False
         self.defn = None
+        self.url_encodable = url_encodable
         Ref.all_refs.append(self)
 
     def __repr__(self):
@@ -231,6 +232,11 @@ class Parameter:
         if where == "path":
             if not isinstance(typ, (String, Int, Bool)):
                 raise AssertionError(f"bad type in path parameter {name}: {typ}")
+        if where == "query":
+            underlying_typ = typ.items if isinstance(typ, Sequence) else typ
+            if not isinstance(underlying_typ, (String, Int, Bool)):
+                if not (isinstance(underlying_typ, Ref) and underlying_typ.url_encodable):
+                    raise AssertionError(f"bad type in query parameter {name}: {typ}")
 
     def gen_function_param(self) -> Code:
         if self.required:
@@ -431,7 +437,7 @@ def classify_type(enums: dict, path: str, schema: dict) -> TypeAnno:
     if "enum" in schema:
         name = enums[hash(json.dumps(schema["enum"]))]
         assert name, (name, schema)
-        return Ref(name)
+        return Ref(name, url_encodable=True)
 
     if "$ref" in schema:
         ref = schema["$ref"]
