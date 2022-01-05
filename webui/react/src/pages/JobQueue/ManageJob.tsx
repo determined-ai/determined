@@ -89,7 +89,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
     const formValues = formRef.current.getFieldsValue();
     if (formValues.position !== undefined
       && parseInt(formValues.position, 10) - 1 !== job.summary.jobsAhead) {
-      return moveJobToPositionUpdate(job.jobId, parseInt(formValues.position, 10) - 1);
+      return moveJobToPositionUpdate(job.jobId, parseInt(formValues.position, 10));
     } else if (formValues.priority !== undefined
       && parseInt(formValues.priority) !== job.priority) {
       return { jobId: job.jobId, priority: parseInt(formValues.priority) };
