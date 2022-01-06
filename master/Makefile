@@ -73,7 +73,7 @@ build-race: gen
 check: check-gen
 	go mod tidy
 	git diff --quiet go.mod go.sum
-	golangci-lint run --timeout 10m
+	golangci-lint run -v --timeout 10m
 
 .PHONY: fmt
 fmt:
