@@ -5,7 +5,7 @@ import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import UPlotChart, { Options } from 'components/UPlotChart';
+import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import useScroll from 'hooks/useScroll';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';

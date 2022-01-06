@@ -1,5 +1,6 @@
 import { Alert } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import uPlot from 'uplot';
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
@@ -7,6 +8,8 @@ import Message, { MessageType } from 'components/Message';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import { FacetedData } from 'components/UPlot/types';
+import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
@@ -15,7 +18,7 @@ import { consumeStream } from 'services/utils';
 import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Primitive,
 } from 'types';
-import { flattenObject, isBoolean } from 'utils/data';
+import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
@@ -31,8 +34,9 @@ interface Props {
 }
 
 interface HpMetricData {
+  hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
-  hpValues: Record<string, (number | string)[]>;
+  hpValues: Record<string, number[]>;
   metricValues: Record<string, number[]>;
   trialIds: number[];
 }
@@ -55,6 +59,45 @@ const ScatterPlots: React.FC<Props> = ({
 
   const resize = useResize(baseRef);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
+
+  const chartProps = useMemo(() => {
+    if (!chartData) return undefined;
+
+    return selectedHParams.map(hParam => {
+      const xLabel = hParam;
+      const yLabel = metricNameToStr(selectedMetric);
+      const title = `${yLabel} (y) vs ${xLabel} (x)`;
+      const xScale = chartData?.hpLogScales[hParam] ? 'xLog' : 'x';
+      const hpLabels = chartData?.hpLabels[hParam];
+      const xLabelValues = hpLabels?.length !== 0 ? hpLabels : undefined;
+      const xSplits = xLabelValues
+        ? new Array(xLabelValues.length).fill(0).map((x, i) => i) : undefined;
+      return {
+        data: [
+          null,
+          [
+            chartData?.hpValues[hParam] || [],
+            chartData?.metricValues[hParam] || [],
+            null,
+            null,
+            chartData?.trialIds || [],
+          ],
+        ] as FacetedData,
+        key: hParam,
+        options: {
+          axes: [
+            {
+              scale: xScale,
+              splits: xSplits,
+              values: xLabelValues,
+            },
+            { scale: 'y' },
+          ],
+          title,
+        },
+      };
+    });
+  }, [ chartData, selectedHParams, selectedMetric ]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
 
@@ -101,7 +144,8 @@ const ScatterPlots: React.FC<Props> = ({
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const hpMetricMap: Record<string, number[]> = {};
-        const hpValueMap: Record<string, (number | string)[]> = {};
+        const hpValueMap: Record<string, number[]> = {};
+        const hpLabelMap: Record<string, string[]> = {};
         const hpLogScaleMap: Record<string, boolean> = {};
 
         event.trials.forEach(trial => {
@@ -125,14 +169,29 @@ const ScatterPlots: React.FC<Props> = ({
 
           hpMetricMap[hParam] = [];
           hpValueMap[hParam] = [];
+          hpLabelMap[hParam] = [];
           trialIds.forEach(trialId => {
             const map = (hpTrialMap[hParam] || {})[trialId] || {};
+            const hpValue = isBoolean(map.hp) ? map.hp.toString() : map.hp;
+
+            if (isString(hpValue)) {
+              // Handle categorical hp.
+              let hpLabelIndex = hpLabelMap[hParam].indexOf(hpValue);
+              if (hpLabelIndex === -1) {
+                hpLabelIndex = hpLabelMap[hParam].length;
+                hpLabelMap[hParam].push(hpValue);
+              }
+              hpValueMap[hParam].push(hpLabelIndex);
+            } else {
+              hpValueMap[hParam].push(hpValue);
+            }
+
             hpMetricMap[hParam].push(map.metric);
-            hpValueMap[hParam].push(isBoolean(map.hp) ? map.hp.toString() : map.hp);
           });
         });
 
         setChartData({
+          hpLabels: hpLabelMap,
           hpLogScales: hpLogScaleMap,
           hpValues: hpValueMap,
           metricValues: hpMetricMap,
@@ -168,28 +227,26 @@ const ScatterPlots: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
+      <Section
+        bodyBorder
+        bodyNoPadding
+        bodyScroll
+        filters={filters}
+        loading={!hasLoaded || !chartData}>
         <div className={css.container}>
-          {chartData?.trialIds.length === 0 ? (
-            <Message title="No data to plot." type={MessageType.Empty} />
-          ) : (
+          {chartProps ? (
             <Grid
               border={true}
               minItemWidth={resize.width > 320 ? 350 : 270}
               mode={GridMode.AutoFill}>
-              {selectedHParams.map(hParam => (
-                <div key={hParam} onClick={() => handleChartClick(hParam)}>
-                  <ScatterPlot
-                    disableZoom
-                    x={chartData?.hpValues[hParam] || []}
-                    xLabel={hParam}
-                    xLogScale={chartData?.hpLogScales[hParam]}
-                    y={chartData?.metricValues[hParam] || []}
-                    yLabel={metricNameToStr(selectedMetric)}
-                  />
+              {chartProps.map(({ data, key, options }) => (
+                <div key={key} onClick={() => handleChartClick(key)}>
+                  <UPlotScatter data={data} options={options} />
                 </div>
               ))}
             </Grid>
+          ) : (
+            <Message title="No data to plot." type={MessageType.Empty} />
           )}
         </div>
       </Section>

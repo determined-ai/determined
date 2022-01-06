@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
-import UPlotChart, { Options } from 'components/UPlotChart';
-import { closestPointPlugin } from 'components/UPlotChart/closestPointPlugin';
+import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { MetricName } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { metricNameToStr } from 'utils/metric';

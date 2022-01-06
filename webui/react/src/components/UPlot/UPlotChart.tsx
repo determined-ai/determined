@@ -7,7 +7,7 @@ import useResize from 'hooks/useResize';
 import { RecordKey } from 'types';
 import { distance } from 'utils/chart';
 
-import { FacetedData, UPlotData } from './UPlot/utils';
+import { FacetedData, UPlotData } from './types';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
