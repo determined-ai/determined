@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { useFetchAgents } from 'hooks/useFetch';
+import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 
 import css from './Navigation.module.scss';
@@ -19,6 +19,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
+  const fetchResourcePools = useFetchResourcePools(canceler);
 
   const fetchAuthOnly = useCallback(() => {
     if (auth.isAuthenticated) fetchAgents();
@@ -27,8 +28,10 @@ const Navigation: React.FC<Props> = ({ children }) => {
   usePolling(fetchAuthOnly);
 
   useEffect(() => {
+    fetchResourcePools();
+
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [ canceler, fetchResourcePools ]);
 
   return (
     <Spinner spinning={ui.showSpinner}>
