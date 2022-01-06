@@ -1,3 +1,3 @@
 ALTER TABLE public.allocations
     DROP COLUMN state,
-    DROP COLUMN isReady;
+    DROP COLUMN is_ready;

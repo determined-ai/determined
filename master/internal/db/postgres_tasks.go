@@ -125,7 +125,7 @@ func (db *PgDB) UpdateAllocationState(allocationID model.AllocationID,
 	state model.AllocationState, isReady bool) error {
 	_, err := db.sql.Exec(`
 		UPDATE allocations
-		SET state=$2, isReady=$3
+		SET state=$2, is_ready=$3
 		WHERE allocation_id=$1
 	`, allocationID, state, isReady)
 	return err
