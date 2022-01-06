@@ -393,7 +393,10 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 
 			payloadBytes, _ := json.Marshal(payload)
 
-			_, err := p.clientSet.CoreV1().Pods("default").Patch(podName, types.JSONPatchType, payloadBytes)
+			// TODO(eric) check
+			_, err := p.clientSet.CoreV1().Pods("default").Patch(
+				context.TODO(), podName, types.JSONPatchType, payloadBytes, metaV1.PatchOptions{},
+			)
 			if err != nil {
 				ctx.Log().Infof("Failed to set the order of pod %s: ", podName)
 			}
