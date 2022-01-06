@@ -237,20 +237,34 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
 
 
 class TestPIDServer:
+    @staticmethod
+    def _worker_proc(
+        addr: int,
+        keep_alive: bool = False,
+        sleep_time: float = 10,
+        repeat: int = 1,
+        crash: bool = False,
+    ) -> None:
+        with ipc.PIDClient(addr) as pid_client:
+            for _ in range(repeat):
+                if keep_alive:
+                    pid_client.keep_alive()
+                time.sleep(sleep_time)
+            if crash:
+                raise ValueError("Crashing...")
+
     def test_normal_execution(self) -> None:
         with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
             assert pid_server.listener
             _, port = pid_server.listener.getsockname()
 
-            def worker_proc() -> None:
-                with ipc.PIDClient(port) as pid_client:
-                    for _ in range(5):
-                        pid_client.keep_alive()
-                        time.sleep(0.1)
-
             procs = [
-                multiprocessing.Process(target=worker_proc),
-                multiprocessing.Process(target=worker_proc),
+                multiprocessing.Process(
+                    target=TestPIDServer._worker_proc, args=(port, True, 0.1, 5)
+                ),
+                multiprocessing.Process(
+                    target=TestPIDServer._worker_proc, args=(port, True, 0.1, 5)
+                ),
             ]
 
             for p in procs:
@@ -271,19 +285,11 @@ class TestPIDServer:
             # Enforce that the crashed worker causes the exit before the other worker exits.
             deadline = time.time() + 20
 
-            def worker_proc() -> None:
-                with ipc.PIDClient(port):
-                    # Wait for the crashing process to cause us to die.
-                    time.sleep(30)
-
-            def crashing_worker_proc() -> None:
-                with ipc.PIDClient(port):
-                    time.sleep(0.5)
-                    raise ValueError("Crashing...")
-
             procs = [
-                multiprocessing.Process(target=worker_proc),
-                multiprocessing.Process(target=crashing_worker_proc),
+                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False, 30)),
+                multiprocessing.Process(
+                    target=TestPIDServer._worker_proc, args=(port, False, 0.5, 1, True)
+                ),
             ]
 
             for p in procs:
@@ -307,16 +313,12 @@ class TestPIDServer:
 
             fail_time = time.time() + 0.2
 
-            def worker_proc() -> None:
-                with ipc.PIDClient(port):
-                    time.sleep(10)
-
             def health_check() -> None:
                 assert time.time() < fail_time
 
             # Only one worker to guarantee a failed healthcheck before all workers have connected.
             procs = [
-                multiprocessing.Process(target=worker_proc),
+                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False)),
             ]
 
             for p in procs:
@@ -337,16 +339,12 @@ class TestPIDServer:
 
             fail_time = time.time() + 0.2
 
-            def worker_proc() -> None:
-                with ipc.PIDClient(port):
-                    time.sleep(10)
-
             def health_check() -> None:
                 assert time.time() < fail_time
 
             procs = [
-                multiprocessing.Process(target=worker_proc),
-                multiprocessing.Process(target=worker_proc),
+                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False)),
+                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False)),
             ]
 
             for p in procs:
