@@ -9,13 +9,13 @@
 # | qnli | accuracy             |
 # | rte  | accuracy             |
 # | wnli | accuracy             |
-name: huggingface_glue_trial
+name: huggingface_glue_text_aug_trial
 hyperparameters:
   pretrained_model_name_or_path: bert-base-cased
   model_mode: sequence-classification
   finetuning_task: cola
   use_pretrained_weights: true
-  use_apex_amp: false
+  use_apex_amp: true
   # Training Args
   global_batch_size: 32
   learning_rate: 3.0e-5
@@ -47,11 +47,9 @@ searcher:
   max_length:
     epochs: 3
   smaller_is_better: false
-#profiling:
-#  enabled: true
-#environment:
-#  image:
-#    gpu: determinedai/model-hub-transformers:0.17.6-dev0
+environment:
+ image:
+   gpu: determinedai/model-hub-transformers:0.17.6-dev0
 resources:
   slots_per_trial: 1
 # We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
