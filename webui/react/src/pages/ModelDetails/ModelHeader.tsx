@@ -41,9 +41,9 @@ const ModelHeader: React.FC<Props> = (
           {`${model.username} on ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),
-      label: 'Created by',
+      tag: 'Created by',
     },
-    { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
+    { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), tag: 'Updated' },
     {
       content: (
         <InlineEditor
@@ -53,7 +53,7 @@ const ModelHeader: React.FC<Props> = (
           onSave={onSaveDescription}
         />
       ),
-      label: 'Description',
+      tag: 'Description',
     },
     {
       content: (
@@ -64,7 +64,7 @@ const ModelHeader: React.FC<Props> = (
           onChange={onUpdateTags}
         />
       ),
-      label: 'Tags',
+      tag: 'Tags',
     } ] as InfoRow[];
   }, [ model, onSaveDescription, onUpdateTags ]);
 

@@ -202,9 +202,9 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
             <p onClick={() => launchNewModelModal(state)}>New Model</p>
           </div>
           <Select
-            optionFilterProp="label"
+            optionFilterProp="tag"
             options={modelOptions.map(option => (
-              { label: option.name, value: option.id }))}
+              { tag: option.name, value: option.id }))}
             placeholder="Select a model..."
             showSearch
             style={{ width: '100%' }}

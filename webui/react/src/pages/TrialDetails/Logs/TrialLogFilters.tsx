@@ -38,7 +38,7 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }
       ...options,
       levels: Object.entries(LogLevelFromApi)
         .filter(entry => entry[1] !== LogLevelFromApi.Unspecified)
-        .map(([ key, value ]) => ({ label: key, value })),
+        .map(([ key, value ]) => ({ tag: key, value })),
     };
   }, [ options ]);
 
@@ -87,7 +87,7 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }
           value={values.levels}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
-            <Option key={level.value} value={level.value}>{level.label}</Option>
+            <Option key={level.value} value={level.value}>{level.tag}</Option>
           ))}
         </MultiSelect>
         <Button onClick={handleReset}>Reset</Button>

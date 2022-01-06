@@ -197,16 +197,16 @@ const ModelVersionDetails: React.FC = () => {
             <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
           </Breadcrumb>
         ),
-        label: 'Source',
+        tag: 'Source',
       },
-      { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
+      { content: modelVersion.checkpoint.uuid, tag: 'Checkpoint UUID' },
       {
         content: humanReadableBytes(checkpointSize(modelVersion.checkpoint)),
-        label: 'Total Size',
+        tag: 'Total Size',
       },
       {
         content: resources.map(resource => renderResource(resource.name, resource.size)),
-        label: 'Code',
+        tag: 'Code',
       } ];
   }, [ modelVersion?.checkpoint ]);
 
@@ -215,7 +215,7 @@ const ModelVersionDetails: React.FC = () => {
     const metrics = Object.entries(modelVersion?.checkpoint.metrics?.validationMetrics || {});
     return metrics.map(metric => ({
       content: metric[1],
-      label: metric[0],
+      tag: metric[0],
     }));
   }, [ modelVersion?.checkpoint ]);
 

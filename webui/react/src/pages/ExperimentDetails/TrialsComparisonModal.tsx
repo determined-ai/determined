@@ -231,7 +231,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               Metrics
               <MetricSelectFilter
                 defaultMetricNames={metricNames}
-                label=""
+                tag=""
                 metricNames={metricNames}
                 multiple
                 value={selectedMetrics}
@@ -261,7 +261,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               <SelectFilter
                 disableTags
                 dropdownMatchSelectWidth={200}
-                label=""
+                tag=""
                 mode="multiple"
                 showArrow
                 value={selectedHyperparameters}

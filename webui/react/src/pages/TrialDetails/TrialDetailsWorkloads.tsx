@@ -162,7 +162,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
       <SelectFilter
         dropdownMatchSelectWidth={300}
-        label="Show"
+        tag="Show"
         value={settings.filter}
         onSelect={handleHasCheckpointOrValidationSelect}>
         {Object.values(TrialWorkloadFilter).map(key => (

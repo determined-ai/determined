@@ -39,8 +39,8 @@ const StateSelectFilter: React.FC<Props> = ({
     if (showExperimentStates && showCommandStates) {
       return (
         <>
-          <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>
-          <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>
+          <OptGroup key="experimentGroup" tag="Experiment States">{experimentOptions}</OptGroup>
+          <OptGroup key="commandGroup" tag="Command States">{commandOptions}</OptGroup>
         </>
       );
     } else if (showExperimentStates) {
@@ -59,7 +59,7 @@ const StateSelectFilter: React.FC<Props> = ({
   return (
     <SelectFilter
       dropdownMatchSelectWidth={150}
-      label="State"
+      tag="State"
       value={value}
       onSelect={handleSelect}>
       <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>

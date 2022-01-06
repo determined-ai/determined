@@ -26,13 +26,13 @@ type TaskFilterFC = <
 const limitOptions: number[] = [ 10, 25, 50 ];
 
 export const commandConfig = [
-  { id: CommandType.JupyterLab, label: 'JupyterLab' },
-  { id: CommandType.TensorBoard, label: 'TensorBoard' },
-  { id: CommandType.Shell, label: 'Shell' },
-  { id: CommandType.Command, label: 'Command' },
+  { id: CommandType.JupyterLab, tag: 'JupyterLab' },
+  { id: CommandType.TensorBoard, tag: 'TensorBoard' },
+  { id: CommandType.Shell, tag: 'Shell' },
+  { id: CommandType.Command, tag: 'Command' },
 ];
 export const experimentConfig = [
-  { id: TaskType.Experiment, label: 'Experiment' },
+  { id: TaskType.Experiment, tag: 'Experiment' },
 ];
 
 const TaskFilter: TaskFilterFC = <T extends CommandType | TaskType = TaskType>({
@@ -72,7 +72,7 @@ const TaskFilter: TaskFilterFC = <T extends CommandType | TaskType = TaskType>({
       active: Array.isArray(filters.types) && filters.types.includes(config.id as T),
       icon: config.id.toLocaleLowerCase(),
       id: config.id,
-      label: config.label,
+      tag: config.tag,
     }));
   }, [ filters.types, showExperiments ]);
 
@@ -88,7 +88,7 @@ const TaskFilter: TaskFilterFC = <T extends CommandType | TaskType = TaskType>({
       <UserSelectFilter value={filters.users} onChange={handleUserChange} />
       {showLimit && (
         <SelectFilter
-          label="Limit"
+          tag="Limit"
           showSearch={false}
           value={filters.limit}
           onSelect={handleLimitSelect}>

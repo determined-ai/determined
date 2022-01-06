@@ -35,15 +35,15 @@ const Legend: React.FC<LegendProps> = ({
   showPercentage, children,
 }: LegendProps) => {
 
-  let label = `0 (${floatToPercent(0, 0)})`;
+  let tag = `0 (${floatToPercent(0, 0)})`;
   if (totalSlots !== 0) {
-    label = count.toString();
-    if (showPercentage) label += ` (${floatToPercent(count / totalSlots, 0)})`;
+    tag = count.toString();
+    if (showPercentage) tag += ` (${floatToPercent(count / totalSlots, 0)})`;
   }
   return (
     <li className={css.legend}>
       <span className={css.count}>
-        {label}
+        {tag}
       </span>
       <span>
         {children}

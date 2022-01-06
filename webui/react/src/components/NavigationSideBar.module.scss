@@ -94,7 +94,7 @@
       position: absolute;
       top: var(--theme-sizes-layout-large);
     }
-    .label {
+    .tag {
       font-size: var(--theme-sizes-font-small);
       height: var(--theme-sizes-layout-enormous);
       left: 56px;
@@ -162,7 +162,7 @@
   .navItem {
     width: var(--theme-sizes-navigation-maxWidth);
 
-    .label { opacity: 1; }
+    .tag { opacity: 1; }
     .status {
       right: var(--theme-sizes-layout-big);
       transform: translateX(0);
@@ -236,7 +236,7 @@
     transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-minWidth);
 
-    .label {
+    .tag {
       opacity: 0;
       transition: opacity var(--theme-animationCurve);
     }
@@ -299,7 +299,7 @@
   .navItem {
     width: var(--theme-sizes-navigation-minWidth);
 
-    .label { opacity: 0; }
+    .tag { opacity: 0; }
     .status {
       right: 50%;
       transform: translateX(50%);
@@ -318,12 +318,12 @@
 }
 .collapsedExit {
   .navItem {
-    .label { display: block; }
+    .tag { display: block; }
   }
 }
 .collapsedEnterDone {
   .navItem {
-    .label { display: none; }
+    .tag { display: none; }
   }
 }
 .collapsedExitActive {
@@ -383,7 +383,7 @@
     transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-maxWidth);
 
-    .label {
+    .tag {
       opacity: 1;
       transition: opacity var(--theme-animationCurve);
     }

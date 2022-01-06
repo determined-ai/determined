@@ -9,12 +9,12 @@ export default {
 };
 
 const DEFAULT_OPTIONS = [
-  { icon: 'learning', id: 'learning-curve', label: 'Learning Curve' },
-  { icon: 'parcoords', id: 'parcoords', label: 'Parallel Coordinates' },
-  { icon: 'scatter-plot', id: 'scatter-plots', label: 'Scatter Plots' },
-  { icon: 'heat', id: 'heatmap', label: 'Heat Map' },
+  { icon: 'learning', id: 'learning-curve', tag: 'Learning Curve' },
+  { icon: 'parcoords', id: 'parcoords', tag: 'Parallel Coordinates' },
+  { icon: 'scatter-plot', id: 'scatter-plots', tag: 'Scatter Plots' },
+  { icon: 'heat', id: 'heatmap', tag: 'Heat Map' },
 ];
-const ICON_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, label: undefined }));
+const ICON_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, tag: undefined }));
 const LABELS_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, icon: undefined }));
 
 export const Default = (): React.ReactNode => {

@@ -8,7 +8,7 @@ import css from './Bar.module.scss';
 
 export interface BarPart {
   color: string; // css color
-  label?: string;
+  tag?: string;
   percent: number; // between 0-1
 }
 
@@ -38,7 +38,7 @@ const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {
         <div className={css.parts}>
           {parts.filter(part => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => {
             return (
-              <Tooltip key={idx} title={part.label}>
+              <Tooltip key={idx} title={part.tag}>
                 <li style={partStyle(part)} />
               </Tooltip>
             );

@@ -93,7 +93,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isAfterDateDisabled}
-          label="From"
+          tag="From"
           style={{ width: 130 }}
           value={value.afterDate}
           onChange={handleAfterDateSelect}
@@ -101,7 +101,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
-          label="To"
+          tag="To"
           style={{ width: 130 }}
           value={value.beforeDate}
           onChange={handleBeforeDateSelect}
@@ -115,7 +115,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isAfterDateDisabled}
-          label="From"
+          tag="From"
           picker="month"
           style={{ width: 130 }}
           value={value.afterDate}
@@ -124,7 +124,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
-          label="To"
+          tag="To"
           picker="month"
           style={{ width: 130 }}
           value={value.beforeDate}
@@ -139,7 +139,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
       {periodFilters}
       <SelectFilter
         enableSearchFilter={false}
-        label="Group by"
+        tag="Group by"
         showSearch={false}
         style={{ width: 130 }}
         value={value.groupBy}

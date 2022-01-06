@@ -275,7 +275,7 @@ const JupyterLabForm: React.FC<FormProps> = (
               ))}
             </Select>
           ),
-          label: 'Template',
+          tag: 'Template',
         },
         {
           content: (
@@ -285,7 +285,7 @@ const JupyterLabForm: React.FC<FormProps> = (
               onChange={(e) => onChange?.({ key: 'name', value: e.target.value })}
             />
           ),
-          label: 'Name',
+          tag: 'Name',
         },
         {
           content: (
@@ -299,7 +299,7 @@ const JupyterLabForm: React.FC<FormProps> = (
               ))}
             </Select>
           ),
-          label: 'Resource Pool',
+          tag: 'Resource Pool',
         },
         {
           condition: resourceInfo.hasCompute,
@@ -312,11 +312,11 @@ const JupyterLabForm: React.FC<FormProps> = (
               onChange={(value) => onChange?.({ key: 'slots', value: value })}
             />
           ),
-          label: 'Slots',
+          tag: 'Slots',
         },
       ].map(row => {
         if (row.condition === false) return null;
-        return <div className={css.line} key={row.label}><p>{row.label}</p>{row.content}</div>;
+        return <div className={css.line} key={row.tag}><p>{row.tag}</p>{row.content}</div>;
       })}
     </div>
   );

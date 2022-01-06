@@ -75,7 +75,7 @@ const GalleryModal: React.FC<PropsWithChildren<Props>> = ({
           className={css.prev}
           icon="arrow-left"
           iconSize="small"
-          label="Previous"
+          tag="Previous"
           tooltipPlacement="right"
           onClick={handlePrevious}
         />
@@ -83,7 +83,7 @@ const GalleryModal: React.FC<PropsWithChildren<Props>> = ({
           className={css.next}
           icon="arrow-right"
           iconSize="small"
-          label="Next"
+          tag="Next"
           tooltipPlacement="left"
           onClick={handleNext}
         />

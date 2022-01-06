@@ -50,7 +50,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
         icon: <Icon name="tensorboard" size="small" />,
         isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
-        label: 'TensorBoard',
+        tag: 'TensorBoard',
         onClick: async () => {
           setIsRunningTensorBoard(true);
           const tensorboard = await openOrCreateTensorBoard({ trialIds: [ trial.id ] });
@@ -65,14 +65,14 @@ const TrialDetailsHeader: React.FC<Props> = ({
       options.push({
         icon: <Icon name="fork" size="small" />,
         key: Action.ContinueTrial,
-        label: 'Continue Trial',
+        tag: 'Continue Trial',
         onClick: handleContinueTrial,
       });
     } else {
       options.push({
         icon: <Icon name="fork" size="small" />,
         key: Action.ContinueTrial,
-        label: 'Continue Trial',
+        tag: 'Continue Trial',
         tooltip: 'No checkpoints found. Cannot continue trial',
       });
     }

@@ -16,7 +16,7 @@ const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
       barOnly={barOnly}
       parts={[ {
         color: getStateColorCssVar(state),
-        label: floatToPercent(percent / 100, 0),
+        tag: floatToPercent(percent / 100, 0),
         percent: percent / 100,
       } ]}
     />

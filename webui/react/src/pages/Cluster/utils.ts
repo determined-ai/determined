@@ -30,30 +30,30 @@ export const mapResourceAllocationApiToChartSeries = (
 };
 
 const mapToChartSeries = (labelByPeriod: Record<string, number>[]): Record<string, number[]> => {
-  // 1. convert [periodIndex: {label: seconds}, ...] to {label: {periodIndex: hours}, ...}
+  // 1. convert [periodIndex: {tag: seconds}, ...] to {tag: {periodIndex: hours}, ...}
   const periodByLabelIndexed: Record<string, Record<number, number>> = {};
   labelByPeriod.forEach((period, periodIndex) => {
-    Object.keys(period).forEach(label => {
-      periodByLabelIndexed[label] = {
-        ...(periodByLabelIndexed[label] || {}),
-        [periodIndex]: secondToHour(period[label]),
+    Object.keys(period).forEach(tag => {
+      periodByLabelIndexed[tag] = {
+        ...(periodByLabelIndexed[tag] || {}),
+        [periodIndex]: secondToHour(period[tag]),
       };
     });
   });
 
-  // 2. convert {label: {periodIndex: hours}, ...} to {label: [hours, ...], ...}
+  // 2. convert {tag: {periodIndex: hours}, ...} to {tag: [hours, ...], ...}
   const periodByLabelIndexedFlat: Record<string, number[]> = {};
-  Object.keys(periodByLabelIndexed).forEach(label => {
-    periodByLabelIndexedFlat[label] = [];
+  Object.keys(periodByLabelIndexed).forEach(tag => {
+    periodByLabelIndexedFlat[tag] = [];
     for (let i = 0; i < labelByPeriod.length; i++) {
-      periodByLabelIndexedFlat[label].push(periodByLabelIndexed[label][i] || 0);
+      periodByLabelIndexedFlat[tag].push(periodByLabelIndexed[tag][i] || 0);
     }
   });
 
   // 3. find top 5 labels
-  const topLabels = Object.keys(periodByLabelIndexedFlat).map(label => {
-    const hours = periodByLabelIndexedFlat[label].reduce((acc, val) => acc + val, 0);
-    return [ label, hours ];
+  const topLabels = Object.keys(periodByLabelIndexedFlat).map(tag => {
+    const hours = periodByLabelIndexedFlat[tag].reduce((acc, val) => acc + val, 0);
+    return [ tag, hours ];
   })
     .sort((a, b) => ((b[1] as number) - (a[1] as number)))
     .slice(0, 5)
@@ -62,11 +62,11 @@ const mapToChartSeries = (labelByPeriod: Record<string, number>[]): Record<strin
   // 4. sum non-top labels hours into "other labels"
   let ret = {};
   let otherLabels: number[] = [];
-  Object.keys(periodByLabelIndexedFlat).forEach(label => {
-    if (topLabels.includes(label)) {
-      ret = { ...ret, [label]: periodByLabelIndexedFlat[label] };
+  Object.keys(periodByLabelIndexedFlat).forEach(tag => {
+    if (topLabels.includes(tag)) {
+      ret = { ...ret, [tag]: periodByLabelIndexedFlat[tag] };
     } else {
-      otherLabels = sumArrays(otherLabels, periodByLabelIndexedFlat[label]);
+      otherLabels = sumArrays(otherLabels, periodByLabelIndexedFlat[tag]);
     }
   });
   if (otherLabels.length > 0) {

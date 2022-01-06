@@ -20,19 +20,19 @@ const ActionSheetContainer = () => {
   return (
     <ActionSheet
       actions={[
-        { icon: 'jupyter-lab', label: 'Launch JupyterLab' },
-        { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs(), popout: true },
+        { icon: 'jupyter-lab', tag: 'Launch JupyterLab' },
+        { icon: 'logs', tag: 'Cluster Logs', path: paths.clusterLogs(), popout: true },
         {
           external: true,
           icon: 'docs',
-          label: 'Docs',
+          tag: 'Docs',
           path: paths.docs(),
           popout: true,
         },
         {
           external: true,
           icon: 'cloud',
-          label: 'API (Beta)',
+          tag: 'API (Beta)',
           path: paths.docs('/rest-api/'),
           popout: true,
         },

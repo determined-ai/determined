@@ -19,7 +19,7 @@ import css from './NavigationSideBar.module.scss';
 interface ItemProps extends LinkProps {
   badge?: number;
   icon: string;
-  label: string;
+  tag: string;
   status?: string;
   tooltip?: boolean;
 }
@@ -43,23 +43,23 @@ const settingsConfig: SettingsConfig = {
 
 const menuConfig = {
   bottom: [
-    { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
+    { external: true, icon: 'docs', tag: 'Docs', path: paths.docs(), popout: true },
     {
       external: true,
       icon: 'cloud',
-      label: 'API (Beta)',
+      tag: 'API (Beta)',
       path: paths.docs('/rest-api/'),
       popout: true,
     },
   ],
   top: [
-    { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
-    { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
-    { icon: 'model', label: 'Model Registry', path: paths.modelList() },
-    { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-    { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-    { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-    { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
+    { icon: 'dashboard', tag: 'Dashboard', path: paths.dashboard() },
+    { icon: 'experiment', tag: 'Experiments', path: paths.experimentList() },
+    { icon: 'model', tag: 'Model Registry', path: paths.modelList() },
+    { icon: 'tasks', tag: 'Tasks', path: paths.taskList() },
+    { icon: 'cluster', tag: 'Cluster', path: paths.cluster() },
+    { icon: 'queue', tag: 'Job Queue', path: paths.jobs() },
+    { icon: 'logs', tag: 'Cluster Logs', path: paths.clusterLogs() },
   ],
 };
 
@@ -76,13 +76,13 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
   const link = (
     <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
       <Icon name={props.icon} size="large" />
-      <div className={css.label}>{props.label}</div>
+      <div className={css.tag}>{props.tag}</div>
       {status && <div className={css.status}>{status}</div>}
     </Link>
   );
 
   return props.tooltip ? (
-    <Tooltip placement="right" title={props.label}><div>{link}</div></Tooltip>
+    <Tooltip placement="right" title={props.tag}><div>{link}</div></Tooltip>
   ) : link;
 };
 
@@ -192,7 +192,7 @@ const NavigationSideBar: React.FC = () => {
             ))}
             <NavigationItem
               icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
-              label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
+              tag={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
               tooltip={settings.navbarCollapsed}
               onClick={handleCollapse}
             />

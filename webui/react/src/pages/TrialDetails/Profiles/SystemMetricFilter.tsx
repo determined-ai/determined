@@ -37,7 +37,7 @@ const SystemMetricFilter: React.FC = () => {
     <>
       <SelectFilter
         enableSearchFilter={false}
-        label="Metric Name"
+        tag="Metric Name"
         showSearch={false}
         style={{ width: 220 }}
         value={settings.name}
@@ -48,7 +48,7 @@ const SystemMetricFilter: React.FC = () => {
       </SelectFilter>
       <SelectFilter
         enableSearchFilter={false}
-        label="Agent Name"
+        tag="Agent Name"
         showSearch={false}
         style={{ width: 220 }}
         value={settings.agentId}
@@ -61,7 +61,7 @@ const SystemMetricFilter: React.FC = () => {
         <SelectFilter
           allowClear={true}
           enableSearchFilter={false}
-          label="GPU"
+          tag="GPU"
           placeholder="All"
           showSearch={false}
           style={{ width: 220 }}

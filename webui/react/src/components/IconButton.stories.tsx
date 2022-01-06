@@ -9,7 +9,7 @@ export default {
   title: 'IconButton',
 };
 
-export const Default = (): React.ReactNode => <IconButton icon="checkmark" label="Okay" />;
+export const Default = (): React.ReactNode => <IconButton icon="checkmark" tag="Okay" />;
 export const Custom = (): React.ReactNode => (
-  <IconButton icon={text('Icon Name', 'experiment')} label={text('Label', 'Experiment)')} />
+  <IconButton icon={text('Icon Name', 'experiment')} tag={text('Label', 'Experiment)')} />
 );

@@ -15,7 +15,7 @@ import css from './NavigationTabbar.module.scss';
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
   icon: string;
-  label: string;
+  tag: string;
   status?: string;
 }
 
@@ -70,36 +70,36 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
-        <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
-        <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
-        <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
-        <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
-        <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
+        <ToolbarItem icon="dashboard" tag="Dashboard" path={paths.dashboard()} />
+        <ToolbarItem icon="experiment" tag="Experiments" path={paths.experimentList()} />
+        <ToolbarItem icon="model" tag="Model Registry" path={paths.modelList()} />
+        <ToolbarItem icon="tasks" tag="Tasks" path={paths.taskList()} />
+        <ToolbarItem icon="cluster" tag="Cluster" path={paths.cluster()} status={cluster} />
+        <ToolbarItem icon="overflow-vertical" tag="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
       <ActionSheet
         actions={[
           {
             icon: 'jupyter-lab',
-            label: 'Launch JupyterLab',
+            tag: 'Launch JupyterLab',
             onClick: () => handleLaunchJupyterLab(),
           },
           {
             icon: 'logs',
-            label: 'Cluster Logs',
+            tag: 'Cluster Logs',
             onClick: e => handlePathUpdate(e, paths.clusterLogs()),
           },
           {
             external: true,
             icon: 'docs',
-            label: 'Docs',
+            tag: 'Docs',
             path: paths.docs(),
             popout: true,
           },
           {
             external: true,
             icon: 'cloud',
-            label: 'API (Beta)',
+            tag: 'API (Beta)',
             path: paths.docs('/rest-api/'),
             popout: true,
           },

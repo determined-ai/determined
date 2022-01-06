@@ -15,7 +15,7 @@ interface Props {
 const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetadata }: Props) => {
   const [ metadataRows, metadataList ] = useMemo(() => {
     const { rows, list } = Object.entries(metadata).reduce((acc, [ key, value ]) => {
-      acc.rows.push({ content: value, label: key });
+      acc.rows.push({ content: value, tag: key });
       acc.list.push({ key, value });
       return acc;
     }, { list: [] as {key: string, value: string}[], rows: [] as InfoRow[] });

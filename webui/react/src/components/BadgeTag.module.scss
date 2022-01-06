@@ -2,13 +2,13 @@
   align-items: center;
   display: flex;
 
-  .label,
-  .preLabel {
+  .tag,
+  .preTag {
     font-size: var(--theme-sizes-font-medium);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .label { margin-left: var(--theme-sizes-layout-tiny); }
-  .preLabel { margin-right: var(--theme-sizes-layout-tiny); }
+  .tag { margin-left: var(--theme-sizes-layout-tiny); }
+  .preTag { margin-right: var(--theme-sizes-layout-tiny); }
 }

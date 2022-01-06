@@ -10,7 +10,7 @@ interface Props {
 
 const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {
   return (
-    <BadgeTag label={metric.name} tooltip={metric.type}>
+    <BadgeTag tag={metric.name} tooltip={metric.type}>
       {metric.type.substr(0, 1).toUpperCase()}
     </BadgeTag>
   );

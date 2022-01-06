@@ -42,20 +42,20 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
   }
 };
 
-const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
+const linkToEntityPage = (job: Job, tag: ReactNode): ReactNode => {
   switch (job.type) {
     case JobType.EXPERIMENT:
-      return <Link path={paths.experimentDetails(job.entityId)}>{label}</Link>;
+      return <Link path={paths.experimentDetails(job.entityId)}>{tag}</Link>;
     case JobType.NOTEBOOK:
     case JobType.TENSORBOARD:
       return (
         <Link onClick={() => {
           routeToTask(job.entityId, job.type);
-        }}>{label}
+        }}>{tag}
         </Link>
       );
     default:
-      return label;
+      return tag;
   }
 };
 
@@ -65,8 +65,8 @@ export const columns: ColumnType<Job>[] = [
   //   dataIndex: 'jobId',
   //   key: 'jobId',
   //   render: (_: unknown, record: Job): ReactNode => {
-  //     const label = truncate(record.jobId, 6, '');
-  //     return linkToEntityPage(record, label);
+  //     const tag = truncate(record.jobId, 6, '');
+  //     return linkToEntityPage(record, tag);
   //   },
   //   title: 'ID',
   // },
@@ -89,10 +89,10 @@ export const columns: ColumnType<Job>[] = [
   {
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
-      let label: ReactNode = null;
+      let tag: ReactNode = null;
       switch (record.type) {
         case JobType.EXPERIMENT:
-          label = (
+          tag = (
             <div>{record.name}
               <Tooltip title="Experiment ID">
                 {` (${record.entityId})`}
@@ -101,11 +101,11 @@ export const columns: ColumnType<Job>[] = [
           );
           break;
         default:
-          label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+          tag = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
           break;
       }
 
-      return linkToEntityPage(record, label);
+      return linkToEntityPage(record, tag);
     },
     title: 'Job Name',
   },

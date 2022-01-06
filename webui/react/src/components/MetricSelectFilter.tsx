@@ -20,7 +20,7 @@ type MultipleHandler = (value: MetricName[]) => void;
 interface Props {
   defaultMetricNames: MetricName[];
   dropdownMatchSelectWidth?: number | boolean;
-  label?: string;
+  tag?: string;
   metricNames: MetricName[];
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
@@ -36,7 +36,7 @@ const filterFn = (search: string, metricName: string) => {
 const MetricSelectFilter: React.FC<Props> = ({
   defaultMetricNames,
   dropdownMatchSelectWidth = 400,
-  label = 'Metrics',
+  tag = 'Metrics',
   metricNames,
   multiple,
   value,
@@ -137,7 +137,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     }
     return (
       <Option key={allOptionId} value={allOptionId}>
-        <BadgeTag label={allOptionLabel} />
+        <BadgeTag tag={allOptionLabel} />
       </Option>
     );
 
@@ -165,7 +165,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       disableTags
       dropdownMatchSelectWidth={dropdownMatchSelectWidth}
       filterOption={handleFiltering}
-      label={label}
+      tag={tag}
       maxTagCount={maxTagCount}
       maxTagPlaceholder={selectorPlaceholder}
       mode={multiple ? 'multiple' : undefined}
@@ -180,12 +180,12 @@ const MetricSelectFilter: React.FC<Props> = ({
       onSelect={handleMetricSelect}>
       {multiple && visibleMetrics.length > 0 && (
         <Option key={resetOptionId} value={resetOptionId}>
-          <BadgeTag label="Reset to Default" />
+          <BadgeTag tag="Reset to Default" />
         </Option>
       )}
       {multiple && visibleMetrics.length > 1 && allOption}
       {validationMetricNames.length > 0 && (
-        <OptGroup label="Validation Metrics">
+        <OptGroup tag="Validation Metrics">
           {validationMetricNames.map(key => {
             const value = metricNameToValue(key);
             return (
@@ -197,7 +197,7 @@ const MetricSelectFilter: React.FC<Props> = ({
         </OptGroup>
       )}
       {trainingMetricNames.length > 0 && (
-        <OptGroup label="Training Metrics">
+        <OptGroup tag="Training Metrics">
           {trainingMetricNames.map(key => {
             const value = metricNameToValue(key);
             return (

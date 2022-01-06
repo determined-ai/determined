@@ -91,7 +91,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     const newDimensions = selectedHParams.map(key => {
       const hp = hyperparameters[key] || {};
       const dimension: Dimension = {
-        label: key,
+        tag: key,
         type: hp.type ? dimensionTypeMap[hp.type] : DimensionType.Scalar,
       };
 
@@ -108,7 +108,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       newDimensions.push({
-        label: metricNameToStr(selectedMetric),
+        tag: metricNameToStr(selectedMetric),
         range: chartData.metricRange,
         type: DimensionType.Scalar,
       });
@@ -293,8 +293,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
           <div>
             <TableBatch
               actions={[
-                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-                { label: Action.CompareTrials, value: Action.CompareTrials },
+                { tag: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                { tag: Action.CompareTrials, value: Action.CompareTrials },
               ]}
               selectedRowCount={selectedRowKeys.length}
               onAction={action => submitBatchAction(action as Action)}

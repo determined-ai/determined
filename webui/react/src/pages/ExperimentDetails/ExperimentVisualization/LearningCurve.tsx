@@ -230,8 +230,8 @@ const LearningCurve: React.FC<Props> = ({
           </div>
           <TableBatch
             actions={[
-              { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-              { label: Action.CompareTrials, value: Action.CompareTrials },
+              { tag: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+              { tag: Action.CompareTrials, value: Action.CompareTrials },
             ]}
             selectedRowCount={selectedRowKeys.length}
             onAction={action => submitBatchAction(action as Action)}

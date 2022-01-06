@@ -11,9 +11,9 @@ export default {
 };
 
 const batchOptions = [
-  { label: 'Batch Operation 1', value: 'Action1' },
-  { label: 'Batch Operation 2', value: 'Action2' },
-  { label: 'Batch Operation 3', value: 'Action3' },
+  { tag: 'Batch Operation 1', value: 'Action1' },
+  { tag: 'Batch Operation 2', value: 'Action2' },
+  { tag: 'Batch Operation 3', value: 'Action3' },
 ];
 
 export const Default = (): React.ReactNode => (

@@ -8,7 +8,7 @@ interface FilterButton {
   active: boolean;
   icon: string;
   id: string;
-  label: string;
+  tag: string;
 }
 
 interface Props {
@@ -30,9 +30,9 @@ const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
           const buttonClasses = [ css.button ];
           if (button.active) buttonClasses.push(css.active);
           return (
-            <Tooltip key={button.id} placement="top" title={button.label}>
+            <Tooltip key={button.id} placement="top" title={button.tag}>
               <button
-                aria-label={button.label}
+                aria-label={button.tag}
                 className={buttonClasses.join(' ')}
                 tabIndex={0}
                 onClick={handleClick(button.id)}>

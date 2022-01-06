@@ -14,12 +14,12 @@ export default {
 
 const knobTypeOptions = enumToOptions<BadgeType>(BadgeType);
 
-export const Default = (): React.ReactNode => <BadgeTag label="Special ID">a4fdb98</BadgeTag>;
+export const Default = (): React.ReactNode => <BadgeTag tag="Special ID">a4fdb98</BadgeTag>;
 
 export const Custom = (): React.ReactNode => (
   <BadgeTag
-    label={text('Label', 'Label')}
-    preLabel={text('Pre Label', '')}
+    tag={text('Tag', 'Tag')}
+    preTag={text('Pre Tag', '')}
     state={select('State', CommandState, CommandState.Assigned)}
     type={select<BadgeType>('Type', knobTypeOptions, BadgeType.Default)}>
     {text('Content', 'a4fdb98')}

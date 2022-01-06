@@ -7,29 +7,29 @@ import css from './BadgeTag.module.scss';
 export { BadgeType } from './Badge';
 
 interface Props extends BadgeProps {
-  label?: React.ReactNode;
-  preLabel?: React.ReactNode;
+  tag?: React.ReactNode;
+  preTag?: React.ReactNode;
 }
 
 const TOOLTIP_DELAY = 1.0;
 
 const BadgeTag: React.FC<Props> = ({
   children,
-  label,
-  preLabel,
+  tag,
+  preTag,
   ...props
 }: PropsWithChildren<Props>) => {
   return (
     <span className={css.base}>
-      {preLabel && (
-        <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
-          <span className={css.preLabel}>{preLabel}</span>
+      {preTag && (
+        <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={tag}>
+          <span className={css.preTag}>{preTag}</span>
         </Tooltip>
       )}
       <Badge {...props}>{children}</Badge>
-      {label && (
-        <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
-          <span className={css.label}>{label}</span>
+      {tag && (
+        <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={tag}>
+          <span className={css.tag}>{tag}</span>
         </Tooltip>
       )}
     </span>

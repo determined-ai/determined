@@ -7,13 +7,13 @@ import Label from './Label';
 import css from './SelectFilter.module.scss';
 
 type Props = PickerProps<Dayjs> & {
-  label: string;
+  tag: string;
 }
 
-const DatePickerFilter: React.FC<Props> = ({ label, ...props }: Props) => {
+const DatePickerFilter: React.FC<Props> = ({ tag, ...props }: Props) => {
   return (
     <div className={css.base}>
-      <Label>{label}</Label>
+      <Label>{tag}</Label>
       <DatePicker {...props} />
     </div>
   );

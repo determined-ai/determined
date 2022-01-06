@@ -22,7 +22,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
 
   const metadataArray = useMemo(() => {
     return Object.entries(metadata ?? {}).map(([ key, value ]) => {
-      return ({ content: value, label: key });
+      return ({ content: value, tag: key });
     });
   }, [ metadata ]);
 
