@@ -451,7 +451,7 @@ func (a *Allocation) TaskContainerStateChanged(
 
 	err := a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
 	if err != nil {
-		a.Error(ctx, err)
+		ctx.Log().Error(err)
 	}
 }
 
