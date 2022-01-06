@@ -63,14 +63,14 @@ def ls(args: Namespace) -> None:
                 if j.summary is not None and j.summary.jobsAhead > -1
                 else "N/A",
                 j.jobId,
-                j.type,
+                j.type.value,
                 j.name,
                 j.priority if is_priority else j.weight,
                 pytz.utc.localize(
                     datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
                 ),
                 f"{j.allocatedSlots}/{j.requestedSlots}",
-                j.summary.state if j.summary is not None else "N/A",
+                j.summary.state.value if j.summary is not None else "N/A",
                 j.username,
             ]
             for j in response.jobs
