@@ -593,7 +593,7 @@ def set_gc_policy(args: Namespace) -> None:
                 c["uuid"],
                 render.format_resources(c["resources"]),
             ]
-            for c in sorted(checkpoints, key=lambda c: (c["trial_id"], c["step_id"]))
+            for c in sorted(checkpoints, key=lambda c: (c["trial_id"], c["step"]["id"]))
             if "step" in c and c["step"].get("validation") is not None
         ]
 
