@@ -7,7 +7,7 @@ import PageMessage from 'components/PageMessage';
 import Spinner from 'components/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-// import { ErrorType } from 'ErrorHandler';
+import { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import { CommandState } from 'types';
@@ -47,30 +47,34 @@ const Wait: React.FC = () => {
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-  // const handleWsError = (err: Error) => {
-  //   handleError({
-  //     error: err,
-  //     message: 'failed while waiting for command to be ready',
-  //     silent: false,
-  //     type: ErrorType.Server,
-  //   });
-  // };
+  const handleTaskError = (err: Error) => {
+    handleError({
+      error: err,
+      message: 'failed while waiting for command to be ready',
+      silent: false,
+      type: ErrorType.Server,
+    });
+  };
 
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
     const taskId = (serviceAddr.match(/[0-f-]+/) || ' ')[0];
     const ival = setInterval(async () => {
-      const response = await getTask({ taskId });
-      if (!response) {
-        return;
+      try {
+        const response = await getTask({ taskId });
+        if (!response) {
+          return;
+        }
+        if ([ CommandState.Terminated ].includes(response.state)) {
+          clearInterval(ival);
+        } else if (response.isReady) {
+          clearInterval(ival);
+          window.location.assign(serverAddress(serviceAddr));
+        }
+        setWaitStatus(response);
+      } catch (e) {
+        handleTaskError(e);
       }
-      if ([ CommandState.Terminated ].includes(response.state)) {
-        clearInterval(ival);
-      } else if (response.isReady) {
-        clearInterval(ival);
-        window.location.assign(serverAddress(serviceAddr));
-      }
-      setWaitStatus(response);
     }, 1000);
   }, [ eventUrl, serviceAddr ]);
 
