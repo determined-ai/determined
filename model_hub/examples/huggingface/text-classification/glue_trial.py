@@ -26,14 +26,13 @@ from typing import Dict, Union
 import attrdict
 import datasets
 import numpy as np
+import textattack.transformations as transformations
 import transformers
+from textattack.augmentation import Augmenter
 
 import determined.pytorch as det_torch
 import model_hub.huggingface as hf
 import model_hub.utils as utils
-
-import textattack.transformations as transformations
-from textattack.augmentation import Augmenter
 
 task_to_keys = {
     "cola": ("sentence", None),
@@ -256,6 +255,7 @@ class GLUETrial(hf.BaseTransformerTrial):
         # We will return just the metrics outputed by the reducer.
         return {}
 
+
 class GLUEAugmentationTrial(GLUETrial):
     def build_datasets(self) -> Union[datasets.Dataset, datasets.DatasetDict]:
         # Preprocessing the datasets
@@ -321,7 +321,7 @@ class GLUEAugmentationTrial(GLUETrial):
 
         augmenter = Augmenter(
             transformation=transformations.CompositeTransformation(tforms),
-            transformations_per_example=1
+            transformations_per_example=1,
         )
 
         # We cannot use self.tokenizer as a non-local variable in the preprocess_function if we
@@ -330,14 +330,14 @@ class GLUEAugmentationTrial(GLUETrial):
         def preprocess_function(tokenizer, padding, max_seq_length, examples, augment=False):
             # Tokenize the texts
             aug_examples = {}
-            del examples['idx']
+            del examples["idx"]
             if augment:
                 for k in [sentence1_key, sentence2_key]:
                     if k is not None:
                         example_count = len(examples)
                         for ind in range(0, len(examples[k])):
                             examples[k].append(augmenter.augment(examples[k][ind])[0])
-                            examples['label'].append(examples['label'][ind])
+                            examples["label"].append(examples["label"][ind])
             args = (
                 (examples[sentence1_key],)
                 if sentence2_key is None
@@ -352,12 +352,16 @@ class GLUEAugmentationTrial(GLUETrial):
 
         tokenized_datasets = {
             "train": self.raw_datasets["train"].map(
-                functools.partial(preprocess_function, self.tokenizer, padding, max_seq_length, augment=True),
+                functools.partial(
+                    preprocess_function, self.tokenizer, padding, max_seq_length, augment=True
+                ),
                 batched=True,
                 load_from_cache_file=not self.data_config.overwrite_cache,
             ),
             "validation": self.raw_datasets["validation"].map(
-                functools.partial(preprocess_function, self.tokenizer, padding, max_seq_length, augment=False),
+                functools.partial(
+                    preprocess_function, self.tokenizer, padding, max_seq_length, augment=False
+                ),
                 batched=True,
                 load_from_cache_file=not self.data_config.overwrite_cache,
             ),
