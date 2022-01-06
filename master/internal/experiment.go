@@ -92,10 +92,15 @@ type (
 // Create a new experiment object from the given model experiment object, along with its searcher
 // and log. If the input object has no ID set, also create a new experiment in the database and set
 // the returned object's ID appropriately.
-func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.TaskSpec) (
-	*experiment, error,
-) {
+func newExperiment(
+	master *Master, expModel *model.Experiment, taskSpec *tasks.TaskSpec, userModel *model.User,
+) (*experiment, error) {
 	conf := &expModel.Config
+
+	if userModel != nil {
+		expModel.OwnerID = &userModel.ID
+		expModel.Username = userModel.Username
+	}
 
 	resources := conf.Resources()
 	poolName, err := sproto.GetResourcePool(

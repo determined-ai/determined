@@ -466,7 +466,6 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	return dbExp, params.ValidateOnly, &taskSpec, err
 }
 
-// Deprecated in favor of CreateExperiment.
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
@@ -491,9 +490,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, nil
 	}
 
-	dbExp.OwnerID = &user.ID
-	dbExp.Username = user.Username
-	e, err := newExperiment(m, dbExp, taskSpec)
+	e, err := newExperiment(m, dbExp, taskSpec, &user)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}

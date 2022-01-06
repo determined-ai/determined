@@ -723,9 +723,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	dbExp.OwnerID = &user.ID
-	dbExp.Username = user.Username
-	e, err := newExperiment(a.m, dbExp, taskSpec)
+	e, err := newExperiment(a.m, dbExp, taskSpec, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}

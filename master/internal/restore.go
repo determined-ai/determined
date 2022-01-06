@@ -89,7 +89,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, err := newExperiment(m, expModel, &taskSpec)
+	e, err := newExperiment(m, expModel, &taskSpec, nil)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
