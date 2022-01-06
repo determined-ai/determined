@@ -390,7 +390,7 @@ type CreateExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
-func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
+func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
 	*model.Experiment, bool, *tasks.TaskSpec, error,
 ) {
 	// Read the config as the user provided it.
@@ -463,6 +463,11 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
+	if user != nil {
+		dbExp.OwnerID = &user.ID
+		dbExp.Username = user.Username
+	}
+
 	return dbExp, params.ValidateOnly, &taskSpec, err
 }
 
@@ -479,7 +484,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
 
-	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params)
+	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, &user)
 	if err != nil {
 		return nil, echo.NewHTTPError(
 			http.StatusBadRequest,
@@ -490,7 +495,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, nil
 	}
 
-	e, err := newExperiment(m, dbExp, taskSpec, &user)
+	e, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
