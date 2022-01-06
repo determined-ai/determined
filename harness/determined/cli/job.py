@@ -77,6 +77,11 @@ def ls(args: Namespace) -> None:
         ]
         render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
+@authentication.required
+def update(args: Namespace) -> None:
+    update = bindings.v1QueueControl(jobId=args.job_id, priority=args.priority, weight=args.weight)
+    bindings.post_UpdateJobQueue(setup_session(args),
+                                 body=bindings.v1UpdateJobQueueRequest([update]))
 
 @authentication.required
 def update(args: Namespace) -> None:
@@ -133,6 +138,16 @@ args_description = [
                             "--weight",
                             type=float,
                             help="The new weight. Exclusive to fair_share scheduler.",
+                        ),
+                        Arg(
+                            "--before",
+                            type=str,
+                            help="The job ID to insert before",
+                        ),
+                        Arg(
+                            "--after",
+                            type=str,
+                            help="The job ID to insert after",
                         ),
                     ),
                 ],
