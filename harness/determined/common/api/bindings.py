@@ -3455,38 +3455,42 @@ class v1QueueControl:
     def __init__(
         self,
         jobId: str,
+        aheadOf: "typing.Optional[str]" = None,
+        behindOf: "typing.Optional[str]" = None,
         priority: "typing.Optional[int]" = None,
         queuePosition: "typing.Optional[float]" = None,
         resourcePool: "typing.Optional[str]" = None,
-        sourceResourcePool: "typing.Optional[str]" = None,
         weight: "typing.Optional[float]" = None,
     ):
         self.jobId = jobId
-        self.sourceResourcePool = sourceResourcePool
+        self.aheadOf = aheadOf
+        self.behindOf = behindOf
         self.resourcePool = resourcePool
-        self.queuePosition = queuePosition
         self.priority = priority
         self.weight = weight
+        self.queuePosition = queuePosition
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueueControl":
         return cls(
             jobId=obj["jobId"],
-            sourceResourcePool=obj["sourceResourcePool"] if obj.get("sourceResourcePool", None) is not None else None,
+            aheadOf=obj["aheadOf"] if obj.get("aheadOf", None) is not None else None,
+            behindOf=obj["behindOf"] if obj.get("behindOf", None) is not None else None,
             resourcePool=obj["resourcePool"] if obj.get("resourcePool", None) is not None else None,
-            queuePosition=float(obj["queuePosition"]) if obj.get("queuePosition", None) is not None else None,
             priority=obj["priority"] if obj.get("priority", None) is not None else None,
             weight=float(obj["weight"]) if obj.get("weight", None) is not None else None,
+            queuePosition=float(obj["queuePosition"]) if obj.get("queuePosition", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "jobId": self.jobId,
-            "sourceResourcePool": self.sourceResourcePool if self.sourceResourcePool is not None else None,
+            "aheadOf": self.aheadOf if self.aheadOf is not None else None,
+            "behindOf": self.behindOf if self.behindOf is not None else None,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
-            "queuePosition": dump_float(self.queuePosition) if self.queuePosition is not None else None,
             "priority": self.priority if self.priority is not None else None,
             "weight": dump_float(self.weight) if self.weight is not None else None,
+            "queuePosition": dump_float(self.queuePosition) if self.queuePosition is not None else None,
         }
 
 class v1QueueStats:
