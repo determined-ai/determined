@@ -29,7 +29,7 @@ const (
 )
 
 // RendezvousTimeoutDuration is the default timeout for rendezvous.
-var RendezvousTimeoutDuration = 30 * time.Minute
+var RendezvousTimeoutDuration = 10 * time.Minute
 
 type (
 	// WatchRendezvousInfo begins watching for rendezvous info.
