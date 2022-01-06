@@ -71,6 +71,8 @@ require (
 	k8s.io/client-go v0.20.14
 )
 
+require github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
+
 require (
 	cloud.google.com/go/kms v0.1.0 // indirect
 	cloud.google.com/go/storage v1.16.1 // indirect

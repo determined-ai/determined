@@ -51,6 +51,8 @@ nfpms:
         dst: "/usr/share/determined/master/static"
       - src: "packaging/determined-master.service"
         dst: "/lib/systemd/system/determined-master.service"
+      - src: "packaging/determined-master.socket"
+        dst: "/lib/systemd/system/determined-master.socket"
 
       - src: "packaging/LICENSE"
         dst: "/usr/share/doc/determined-master/copyright"
