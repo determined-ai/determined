@@ -92,6 +92,8 @@ def update(args: Namespace) -> None:
         priority=args.priority,
         weight=args.weight,
         resourcePool=args.resource_pool,
+        behindOf=args.behind_of,
+        aheadOf=args.ahead_of,
     )
     bindings.post_UpdateJobQueue(
         setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
@@ -151,6 +153,16 @@ args_description = [
                             "--resource-pool",
                             type=str,
                             help="The target resource pool to move the job to.",
+                        ),
+                        Arg(
+                            "--ahead-of",
+                            type=str,
+                            help="The job ID of the job to be put ahead of in the queue.",
+                        ),
+                        Arg(
+                            "--behind-of",
+                            type=str,
+                            help="The job ID of the job to be put behind in the queue.",
                         ),
                     ),
                 ],
