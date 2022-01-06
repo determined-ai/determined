@@ -24,12 +24,12 @@ enum State {
   STATE_TERMINATING = 7;
 }
 
-// A record of Jupyter or TensorBoard.
+// Task is the model for a task in the database.
 message Task {
   // Unique ID of task.
   string task_id = 1;
   // The current state of the task.
   State state = 2;
-  // Whether the TensorBoard or Notebook is ready to access.
+  // Whether the task is ready to access.
   bool is_ready = 3;
 }
