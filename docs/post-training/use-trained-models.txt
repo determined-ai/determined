@@ -124,8 +124,39 @@ parameter, which changes the checkpoint download location.
    specific_path = checkpoint.download(path="specific-checkpoint-path")
 
 The :meth:`~determined.experimental.client.Checkpoint.load` method downloads the checkpoint, if it
-does not already exist locally, and then loads it into memory in a Python process, as shown in the
-following snippet.
+does not already exist locally, and loads it into memory. The return type and behavior is different
+depending on whether you are using TensorFlow or PyTorch.
+
+PyTorch Checkpoints
+===================
+
+When using PyTorch models, the :meth:`~determined.experimental.client.Checkpoint.load` method
+returns a parameterized instance of your trial class as defined in the experiment config under the
+:ref:`entrypoint <experiment-config-entrypoint>` field. The trained model can then be accessed from
+the ``model`` attribute of the ``Trial`` object, as shown in the following snippet.
+
+.. code:: python
+
+   from determined.experimental import client
+
+   checkpoint = client.get_experiment(id).top_checkpoint()
+   trial = checkpoint.load()
+   model = trial.model
+
+   predictions = model(samples)
+
+PyTorch checkpoints are saved using `pickle <https://docs.python.org/3/library/pickle.html>`__ and
+loaded as :doc:`/training-apis/api-pytorch` objects (see `the PyTorch documentation
+<https://pytorch.org/docs/stable/notes/serialization.html>`__ for details).
+
+TensorFlow Checkpoints
+======================
+
+When using TensorFlow models, the :meth:`~determined.experimental.client.Checkpoint.load` method
+returns a compiled model with weights loaded. This will be the same TensorFlow model returned by
+your ``build_model()`` method defined in your trial class specified by the experiment config
+:ref:`entrypoint <experiment-config-entrypoint>` field. The trained model can then be used to make
+predictions as shown in the following snippet.
 
 .. code:: python
 
@@ -134,13 +165,11 @@ following snippet.
    checkpoint = client.get_experiment(id).top_checkpoint()
    model = checkpoint.load()
 
+   predictions = model(samples)
+
 TensorFlow checkpoints are saved in either the ``saved_model`` or ``h5`` formats and are loaded as
 trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2
 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`__ for details).
-
-PyTorch checkpoints are saved using `pickle <https://docs.python.org/3/library/pickle.html>`__ and
-loaded as :doc:`/training-apis/api-pytorch` objects (see `the PyTorch documentation
-<https://pytorch.org/docs/stable/notes/serialization.html>`__ for details).
 
 .. _store-checkpoint-metadata:
 
