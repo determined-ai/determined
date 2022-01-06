@@ -93,7 +93,7 @@ linters:
     # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
     # golangci-lint can tell you which linters are enabled:
     #   golangci-lint linters | sed -n '/Enabled/,/Disabled/p'
-    # Only in the new list were disabled with this change:
+    # To maintain the same set us linters, disable those in the new set that are not in the old:
     #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
     - bidichk
     - contextcheck
