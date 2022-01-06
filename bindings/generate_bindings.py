@@ -309,7 +309,7 @@ class Enum(TypeDef):
         self.members = members
 
     def load(self, val: Code) -> Code:
-        return f"{val}"
+        return f"{self.name}({val})"
 
     def dump(self, val: Code) -> Code:
         return f"{val}.value"

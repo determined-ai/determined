@@ -28,10 +28,8 @@ def get_master(args: Namespace) -> None:
     resp = bindings.get_GetMaster(setup_session(args))
     if args.json:
         print(json.dumps(resp.to_json(), indent=4))
-    elif args.yaml:
-        print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
     else:
-        raise ValueError(f"Bad output format: {args.output}")
+        print(yaml.safe_dump(resp.to_json(), default_flow_style=False))
 
 
 @authentication.required
