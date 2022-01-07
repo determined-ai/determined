@@ -251,7 +251,12 @@ type ExperimentPatch struct {
 	Notes    *string `json:"notes"`
 }
 
-func (m *Master) patchExperiment(dbExp *model.Experiment, patch *ExperimentPatch) error {
+func (m *Master) patchExperiment(expID int, patch *ExperimentPatch) error {
+	dbExp, err := m.db.ExperimentByID(expID)
+	if err != nil {
+		return errors.Wrapf(err, "loading experiment %v", expID)
+	}
+
 	agentUserGroup, err := m.db.AgentUserGroup(*dbExp.OwnerID)
 	if err != nil {
 		return errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
@@ -390,12 +395,7 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	dbExp, err := m.db.ExperimentByID(args.ExperimentID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", args.ExperimentID)
-	}
-
-	return nil, m.patchExperiment(dbExp, &patch)
+	return nil, m.patchExperiment(args.ExperimentID, &patch)
 }
 
 // CreateExperimentParams defines a request to create an experiment.

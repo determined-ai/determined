@@ -563,6 +563,7 @@ func (a *apiServer) PatchExperiment(
 ) (*apiv1.PatchExperimentResponse, error) {
 	paths := req.UpdateMask.GetPaths()
 	patch := ExperimentPatch{}
+	expID := int(req.Experiment.Id)
 	for _, path := range paths {
 		switch {
 		case path == "name":
@@ -585,11 +586,7 @@ func (a *apiServer) PatchExperiment(
 				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
-	dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", req.Experiment.Id)
-	}
-	if err = a.m.patchExperiment(dbExp, &patch); err != nil {
+	if err := a.m.patchExperiment(expID, &patch); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update experiment")
 	}
 
