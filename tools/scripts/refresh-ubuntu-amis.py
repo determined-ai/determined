@@ -3,49 +3,38 @@
 """
 Fetch the latest official Ubuntu AMIs that we hardcode into our system.
 
-This will update all *_master_ami and *_bastion_ami tags in bumpenvs.yaml file.
+This can update all *_master_ami and *_bastion_ami tags in bumpenvs.yaml file.
 
-Usage: refresh-ubuntu-amis.py path/to/bumpenvs.yaml
+This can also update the environments-packer.json in the environments repo.
 """
 
+import argparse
+import json
+import re
 import sys
 from typing import Dict, List, Union
 
 import requests
 import yaml
 
-get_cache = {}  # type: Dict[str, str]
 
-
-def cacheable_get(url: str) -> str:
-    global get_cache
-    if url not in get_cache:
-        req = requests.get(url)
-        req.raise_for_status()
-        get_cache[url] = req.text
-    return get_cache[url]
-
-
-def get_ubuntu_ami(release: str, region: str) -> Union[None, str]:
-    resp = cacheable_get(
-        f"https://cloud-images.ubuntu.com/query/{release}/server/released.current.txt"
-    )
-
-    ami_lines = [line.split("\t") for line in resp.splitlines()]
-
+def get_ubuntu_ami(
+    table: List[List[str]], release: str, region: str
+) -> Union[None, str]:
     def filters(line: List[str]) -> bool:
         return all(
             [
+                line[0] == region,
+                line[1] == release,
+                line[3] == "amd64",
                 # Only use EBS, not instance-store.
-                line[4] == "ebs-ssd",
-                line[5] == "amd64",
-                line[6] == region,
+                line[4] == "hvm:ebs-ssd",
                 # Only use HVM virtualization, not paravirtualization.
-                line[10] == "hvm",
+                line[7] == "hvm",
             ]
         )
 
-    results = [line for line in ami_lines if filters(line)]
+    results = [item for item in table if filters(item)]
 
     if len(results) > 1:
         print(f"Found multiple AMIs for {region}!", file=sys.stderr)
@@ -53,7 +42,17 @@ def get_ubuntu_ami(release: str, region: str) -> Union[None, str]:
         print(f"Failed to find AMI for {region}!", file=sys.stderr)
         return None
 
-    return results[0][7]
+    # The only canonical endpoint for that shows us gov endpoints also gives us inline-html we have
+    # to strip to get the actual ami name.
+    href = results[0][6]
+
+    # We'll match the whole <a href=...>AMI</a> string to ensure that if canonical changes their
+    # format that we catch it (by puking).
+    pattern = '^<a href="[a-zA-Z_.:/?#=&-]*">(ami-[0-9a-f]*)</a>$'
+    match = re.match('^<a href="[a-zA-Z0-9_.:/?#=&-]*">(ami-[0-9a-f]*)</a>$', href)
+    assert match, f"failed to match '{pattern}' against '{href}'"
+
+    return match[1]
 
 
 def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
@@ -65,30 +64,69 @@ def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
     return True
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(__doc__, file=sys.stderr)
-        sys.exit(1)
-
-    path = sys.argv[1]
-
+def update_bumpenvs_yaml(table: List[List[str]], path: str) -> None:
     with open(path) as f:
-        conf = yaml.safe_load(f)
+        bumpenvs_conf = yaml.safe_load(f)
 
-    for image_type, subconf in conf.items():
+    # All master-amis and bastion-amis in bumpenvs.yaml are updated.
+    # The agent-amis are updated after each rebuild of the environments repo.
+    for image_type, subconf in bumpenvs_conf.items():
         if image_type.endswith("_master_ami"):
             region = image_type[: -len("_master_ami")].replace("_", "-")
             # Master AMIs are based on Focal.
-            new_ami = get_ubuntu_ami("focal", region)
+            new_ami = get_ubuntu_ami(table, "focal", region)
             if new_ami is not None:
                 update_tag_for_image_type(subconf, new_ami)
 
         if image_type.endswith("_bastion_ami"):
             region = image_type[: -len("_bastion_ami")].replace("_", "-")
             # Bastion AMIs are based on Focal.
-            new_ami = get_ubuntu_ami("focal", region)
+            new_ami = get_ubuntu_ami(table, "focal", region)
             if new_ami is not None:
                 update_tag_for_image_type(subconf, new_ami)
 
     with open(path, "w") as f:
-        yaml.dump(conf, f, sort_keys=True)
+        yaml.dump(bumpenvs_conf, f, sort_keys=True)
+
+
+def update_packer_json(table: List[List[str]], path: str) -> None:
+    with open(path) as f:
+        packer_conf = json.load(f)
+
+    # There are two specific keys we set in the environments-packer.json file.
+    new_ami = get_ubuntu_ami(table, "focal", "us-west-2")
+    packer_conf["variables"]["aws_base_image"] = new_ami
+    new_ami = get_ubuntu_ami(table, "focal", "us-gov-west-1")
+    packer_conf["variables"]["gov_aws_base_image"] = new_ami
+
+    with open(path, "w") as f:
+        json.dump(packer_conf, f, indent="  ")
+        # json.dump() leaves off the final newline.
+        f.write("\n")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("--bumpenvs-yaml", metavar="/PATH/TO/BUMPENVS.YAML")
+    parser.add_argument("--packer-json", metavar="/PATH/TO/ENIRONMENTS-PACKER.JSON")
+    args = parser.parse_args()
+
+    if not args.bumpenvs_yaml and not args.packer_json:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    # Do one fetch for all the ubuntu amis.
+    # Note that this is not a public endpoint, but it's the only one that has the gov amis.
+    req = requests.get("https://cloud-images.ubuntu.com/locator/ec2/releasesTable")
+    req.raise_for_status()
+    table = yaml.safe_load(req.text)
+    # Discard useless layer of data.
+    table = table["aaData"]
+
+    if args.bumpenvs_yaml:
+        update_bumpenvs_yaml(table, args.bumpenvs_yaml)
+
+    if args.packer_json:
+        update_packer_json(table, args.packer_json)

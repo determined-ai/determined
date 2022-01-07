@@ -17,6 +17,14 @@ be registered in the determined repo. Here is the process:
 1. Land the desired change in the environments repo. Remember the full commit
    hash (we'll call it `THECOMMIT` in these steps).
 
+   Note, you might as well include an update to the base AMIs if you're going
+   to rebuild them.  From the `tools/scripts` directory of the determined repo,
+   run:
+
+   ```bash
+   ./refresh-ubuntu-amis.py --packer-json /path/to/environments-packer.json
+   ```
+
 2. Wait for the post-merge-to-master CircleCI jobs on the environments repo to
    finish. These will publish the relevant Docker/AWS/GCP images and create
    machine-readable artifacts containing the image tags.
@@ -31,14 +39,11 @@ be registered in the determined repo. Here is the process:
    value to the artifact produced by CI, including the task environments and
    the agent AMIs.
 
-5. (optional) Run `./refresh-ubuntu-amis.py bumpenvs.yaml`.  This will fetch
-   the up-to-date Ubuntu AMIs for each region for each of the `*_master_ami`
-   and `*_bastion_ami` image tags in bumpenvs.yaml.  This isn't strictly
-   necessary; we just need to run it periodically, and now is a fine time. The
-   base images in environments/cloud/environments-packer.json also need to be
-   manually updated periodically. AWS GovCloud images need to be updated
-   manually as they are (at the time of this writing) missing or not current
-   in Ubuntu's AMI locator.
+5. Run `./refresh-ubuntu-amis.py --bumpenvs-yaml bumpenvs.yaml`.  This will
+   fetch the up-to-date Ubuntu AMIs for each region for each of the
+   `*_master_ami` and `*_bastion_ami` image tags in bumpenvs.yaml.  This isn't
+   strictly necessary; we just need to run it periodically, and now is a fine
+   time.
 
 6. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
    in the repository, replacing the `old` values with the `new` values for
