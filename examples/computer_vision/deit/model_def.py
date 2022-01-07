@@ -19,6 +19,8 @@ from timm.utils import NativeScaler, get_state_dict, ModelEma
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
+from attrdict import AttrDict
+
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 torch.set_grad_enabled(False);
@@ -37,10 +39,10 @@ class DeitTrial(PyTorchTrial):
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
-        self.args = (self.context.get_hparams())
+        self.args = AttrDict(self.context.get_hparams())
 
         self.model = self.context.wrap_model(torch.hub.load('facebookresearch/deit:main', 'deit_base_patch16_224', pretrained=False))
-        print('creat model: ', self.model)
+        print('args: ', self.args)
         self.optimizer = self.context.wrap_optimizer(create_optimizer(self.args, self.model))
         
         self.lr_scheduler, self.num_epochs = create_scheduler(self.args, self.optimizer)
@@ -57,6 +59,7 @@ class DeitTrial(PyTorchTrial):
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
         # Run forward passes on the models and backward passes on the optimizers.
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
+        print('batch: ', batch)
         data, labels = batch
 
         # Define the training forward pass and calculate loss.
