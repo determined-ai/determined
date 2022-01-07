@@ -234,6 +234,7 @@ type ExperimentPatch struct {
 	// than the top-level items, we should reorganize this into ExperimentPatch and
 	// ExperimentConfigPatch.
 	Description *string `json:"description"`
+	Name        *string `json:"name"`
 	// Labels set to nil are deleted.
 	Labels    map[string]*bool `json:"labels"`
 	Resources *struct {
@@ -280,6 +281,9 @@ func (m *Master) patchExperiment(dbExp *model.Experiment, patch *ExperimentPatch
 	}
 	if patch.Description != nil {
 		dbExp.Config.SetDescription(patch.Description)
+	}
+	if patch.Name != nil {
+		dbExp.Config.SetName(expconf.Name{RawString: patch.Name})
 	}
 	labels := dbExp.Config.Labels()
 	for label, keep := range patch.Labels {
