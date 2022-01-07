@@ -830,7 +830,7 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.GET("/:experiment_id/summary", api.Route(m.getExperimentSummary))
 	experimentsGroup.GET("/:experiment_id/metrics/summary", api.Route(m.getExperimentSummaryMetrics))
-	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
+	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperimentHandler))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 	experimentsGroup.POST("/:experiment_id/kill", api.Route(m.postExperimentKill))
 

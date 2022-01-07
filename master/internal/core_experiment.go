@@ -226,7 +226,33 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
+// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
+// Merge Patch (RFC 7386) format.
+type ExperimentPatch struct {
+	State *model.State `json:"state"`
+	// TODO: the config-level items like `description` are really at a different level
+	// than the top-level items, we should reorganize this into ExperimentPatch and
+	// ExperimentConfigPatch.
+	Description *string `json:"description"`
+	// Labels set to nil are deleted.
+	Labels    map[string]*bool `json:"labels"`
+	Resources *struct {
+		MaxSlots api.MaybeInt `json:"max_slots"`
+		Weight   *float64     `json:"weight"`
+		Priority *int         `json:"priority"`
+	} `json:"resources"`
+	CheckpointStorage *struct {
+		SaveExperimentBest int `json:"save_experiment_best"`
+		SaveTrialBest      int `json:"save_trial_best"`
+		SaveTrialLatest    int `json:"save_trial_latest"`
+	} `json:"checkpoint_storage"`
+	Archived *bool `json:"archived"`
+}
+
+// func (m *Master) patchExperiment(expId int, ) (interface{}, error) {
+// }
+
+func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
 	// (RFC 7386). Clients can only update certain fields of the experiment.
 	args := struct {
@@ -238,26 +264,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
-	patch := struct {
-		State *model.State `json:"state"`
-		// TODO: the config-level items like `description` are really at a different level
-		// than the top-level items, we should reorganize this into ExperimentPatch and
-		// ExperimentConfigPatch.
-		Description *string `json:"description"`
-		// Labels set to nil are deleted.
-		Labels    map[string]*bool `json:"labels"`
-		Resources *struct {
-			MaxSlots api.MaybeInt `json:"max_slots"`
-			Weight   *float64     `json:"weight"`
-			Priority *int         `json:"priority"`
-		} `json:"resources"`
-		CheckpointStorage *struct {
-			SaveExperimentBest int `json:"save_experiment_best"`
-			SaveTrialBest      int `json:"save_trial_best"`
-			SaveTrialLatest    int `json:"save_trial_latest"`
-		} `json:"checkpoint_storage"`
-		Archived *bool `json:"archived"`
-	}{}
+	patch := ExperimentPatch{}
 	if err := api.BindPatch(&patch, c); err != nil {
 		return nil, err
 	}
