@@ -195,14 +195,15 @@ class GLUETrial(hf.BaseTransformerTrial):
 
         # Combine TextAttack transformations from the augmentations into one CompositeTransformation
         tforms = []
-        for aug in self.data_config.augmentations:
-            if aug in transformations.__dir__():
-                tform_module = getattr(transformations, aug)
-                tforms.append(tform_module())
-        augmenter = Augmenter(
-            transformation=transformations.CompositeTransformation(tforms),
-            transformations_per_example=1,
-        )
+        if 'augmentations' in self.data_config:
+            for aug in self.data_config.augmentations:
+                if aug in transformations.__dir__():
+                    tform_module = getattr(transformations, aug)
+                    tforms.append(tform_module())
+            augmenter = Augmenter(
+                transformation=transformations.CompositeTransformation(tforms),
+                transformations_per_example=1,
+            )
 
         # We cannot use self.tokenizer as a non-local variable in the preprocess_function if we
         # want map to be able to cache the output of the tokenizer.  Hence, the preprocess_function
@@ -237,7 +238,7 @@ class GLUETrial(hf.BaseTransformerTrial):
                     self.tokenizer,
                     padding,
                     max_seq_length,
-                    augment=(len(self.data_config.augmentations) > 0),
+                    augment=('augmentations' in self.data_config),
                 ),
                 batched=True,
                 load_from_cache_file=not self.data_config.overwrite_cache,

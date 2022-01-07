@@ -57,4 +57,4 @@ resources:
 bind_mounts:
   - host_path: /tmp
     container_path: /root/.cache
-entrypoint: glue_trial:GLUEAugmentationTrial
+entrypoint: glue_trial:GLUETrial
