@@ -247,7 +247,8 @@ type ExperimentPatch struct {
 		SaveTrialBest      int `json:"save_trial_best"`
 		SaveTrialLatest    int `json:"save_trial_latest"`
 	} `json:"checkpoint_storage"`
-	Archived *bool `json:"archived"`
+	Archived *bool   `json:"archived"`
+	Notes    *string `json:"notes"`
 }
 
 func (m *Master) patchExperiment(dbExp *model.Experiment, patch *ExperimentPatch) error {
@@ -264,6 +265,17 @@ func (m *Master) patchExperiment(dbExp *model.Experiment, patch *ExperimentPatch
 		dbExp.Archived = *patch.Archived
 		if err := m.db.SaveExperimentArchiveStatus(dbExp); err != nil {
 			return errors.Wrapf(err, "archiving experiment %d", dbExp.ID)
+		}
+	}
+	if patch.Notes != nil {
+		dbExp.Notes = *patch.Notes
+		_, err := m.db.RawQuery(
+			"patch_experiment_notes",
+			dbExp.ID,
+			patch.Notes,
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to save experiment %d notes", dbExp.ID)
 		}
 	}
 	if patch.Resources != nil {
