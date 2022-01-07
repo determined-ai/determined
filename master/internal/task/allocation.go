@@ -42,6 +42,10 @@ type (
 		// State for the primary behavior of an allocation.
 		// The state of the allocation, just informational.
 		state model.AllocationState
+
+		// Readiness state for the allocation.
+		isReady bool
+
 		// State of all our reservations
 		reservations reservations
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.

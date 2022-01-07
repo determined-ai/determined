@@ -7,7 +7,7 @@ import PageMessage from 'components/PageMessage';
 import Spinner from 'components/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { ErrorType } from 'ErrorHandler';
+import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import { CommandState } from 'types';
@@ -65,13 +65,17 @@ const Wait: React.FC = () => {
         if (!response) {
           return;
         }
-        if ([ CommandState.Terminated ].includes(response.state)) {
+        const lastRun = response.allocations[0];
+        if (!lastRun) {
+          return;
+        }
+        if ([ CommandState.Terminated ].includes(lastRun.state)) {
           clearInterval(ival);
-        } else if (response.isReady) {
+        } else if (lastRun.isReady) {
           clearInterval(ival);
           window.location.assign(serverAddress(serviceAddr));
         }
-        setWaitStatus(response);
+        setWaitStatus(lastRun);
       } catch (e) {
         handleTaskError(e);
       }

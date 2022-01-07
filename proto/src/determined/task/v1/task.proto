@@ -32,6 +32,10 @@ message Allocation {
   State state = 2;
   // Whether the allocation is ready to access.
   bool is_ready = 3;
+  // Start timestamp.
+  string start_time = 4;
+  // End timestamp if completed.
+  string end_time = 5;
 }
 
 // Task is the model for a task in the database.

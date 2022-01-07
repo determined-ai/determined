@@ -288,31 +288,31 @@ export enum ProtobufNullValue {
 }
 
 /**
- *
+ * 
  * @export
  * @interface RuntimeError
  */
 export interface RuntimeError {
     /**
-     *
+     * 
      * @type {string}
      * @memberof RuntimeError
      */
     error?: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof RuntimeError
      */
     code?: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof RuntimeError
      */
     message?: string;
     /**
-     *
+     * 
      * @type {Array<ProtobufAny>}
      * @memberof RuntimeError
      */
@@ -320,37 +320,37 @@ export interface RuntimeError {
 }
 
 /**
- *
+ * 
  * @export
  * @interface RuntimeStreamError
  */
 export interface RuntimeStreamError {
     /**
-     *
+     * 
      * @type {number}
      * @memberof RuntimeStreamError
      */
     grpcCode?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof RuntimeStreamError
      */
     httpCode?: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof RuntimeStreamError
      */
     message?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof RuntimeStreamError
      */
     httpStatus?: string;
     /**
-     *
+     * 
      * @type {Array<ProtobufAny>}
      * @memberof RuntimeStreamError
      */
@@ -358,19 +358,19 @@ export interface RuntimeStreamError {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1GetHPImportanceResponse
  */
 export interface StreamResultOfV1GetHPImportanceResponse {
     /**
-     *
+     * 
      * @type {V1GetHPImportanceResponse}
      * @memberof StreamResultOfV1GetHPImportanceResponse
      */
     result?: V1GetHPImportanceResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1GetHPImportanceResponse
      */
@@ -378,19 +378,19 @@ export interface StreamResultOfV1GetHPImportanceResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
  */
 export interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse {
     /**
-     *
+     * 
      * @type {V1GetTrialProfilerAvailableSeriesResponse}
      * @memberof StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
      */
     result?: V1GetTrialProfilerAvailableSeriesResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
      */
@@ -398,19 +398,19 @@ export interface StreamResultOfV1GetTrialProfilerAvailableSeriesResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1GetTrialProfilerMetricsResponse
  */
 export interface StreamResultOfV1GetTrialProfilerMetricsResponse {
     /**
-     *
+     * 
      * @type {V1GetTrialProfilerMetricsResponse}
      * @memberof StreamResultOfV1GetTrialProfilerMetricsResponse
      */
     result?: V1GetTrialProfilerMetricsResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1GetTrialProfilerMetricsResponse
      */
@@ -418,19 +418,19 @@ export interface StreamResultOfV1GetTrialProfilerMetricsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1MasterLogsResponse
  */
 export interface StreamResultOfV1MasterLogsResponse {
     /**
-     *
+     * 
      * @type {V1MasterLogsResponse}
      * @memberof StreamResultOfV1MasterLogsResponse
      */
     result?: V1MasterLogsResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MasterLogsResponse
      */
@@ -438,19 +438,19 @@ export interface StreamResultOfV1MasterLogsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1MetricBatchesResponse
  */
 export interface StreamResultOfV1MetricBatchesResponse {
     /**
-     *
+     * 
      * @type {V1MetricBatchesResponse}
      * @memberof StreamResultOfV1MetricBatchesResponse
      */
     result?: V1MetricBatchesResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MetricBatchesResponse
      */
@@ -458,19 +458,19 @@ export interface StreamResultOfV1MetricBatchesResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1MetricNamesResponse
  */
 export interface StreamResultOfV1MetricNamesResponse {
     /**
-     *
+     * 
      * @type {V1MetricNamesResponse}
      * @memberof StreamResultOfV1MetricNamesResponse
      */
     result?: V1MetricNamesResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MetricNamesResponse
      */
@@ -478,19 +478,19 @@ export interface StreamResultOfV1MetricNamesResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1NotebookLogsResponse
  */
 export interface StreamResultOfV1NotebookLogsResponse {
     /**
-     *
+     * 
      * @type {V1NotebookLogsResponse}
      * @memberof StreamResultOfV1NotebookLogsResponse
      */
     result?: V1NotebookLogsResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1NotebookLogsResponse
      */
@@ -498,19 +498,19 @@ export interface StreamResultOfV1NotebookLogsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1TrialLogsFieldsResponse
  */
 export interface StreamResultOfV1TrialLogsFieldsResponse {
     /**
-     *
+     * 
      * @type {V1TrialLogsFieldsResponse}
      * @memberof StreamResultOfV1TrialLogsFieldsResponse
      */
     result?: V1TrialLogsFieldsResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1TrialLogsFieldsResponse
      */
@@ -518,19 +518,19 @@ export interface StreamResultOfV1TrialLogsFieldsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1TrialLogsResponse
  */
 export interface StreamResultOfV1TrialLogsResponse {
     /**
-     *
+     * 
      * @type {V1TrialLogsResponse}
      * @memberof StreamResultOfV1TrialLogsResponse
      */
     result?: V1TrialLogsResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1TrialLogsResponse
      */
@@ -538,19 +538,19 @@ export interface StreamResultOfV1TrialLogsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1TrialsSampleResponse
  */
 export interface StreamResultOfV1TrialsSampleResponse {
     /**
-     *
+     * 
      * @type {V1TrialsSampleResponse}
      * @memberof StreamResultOfV1TrialsSampleResponse
      */
     result?: V1TrialsSampleResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1TrialsSampleResponse
      */
@@ -558,19 +558,19 @@ export interface StreamResultOfV1TrialsSampleResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface StreamResultOfV1TrialsSnapshotResponse
  */
 export interface StreamResultOfV1TrialsSnapshotResponse {
     /**
-     *
+     * 
      * @type {V1TrialsSnapshotResponse}
      * @memberof StreamResultOfV1TrialsSnapshotResponse
      */
     result?: V1TrialsSnapshotResponse;
     /**
-     *
+     * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1TrialsSnapshotResponse
      */
@@ -780,7 +780,7 @@ export interface V1Agent {
      */
     label?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Agent
      */
@@ -826,6 +826,44 @@ export interface V1AgentUserGroup {
 }
 
 /**
+ * Allocation tracks a specific instance of a Task.
+ * @export
+ * @interface V1Allocation
+ */
+export interface V1Allocation {
+    /**
+     * Unique ID of task associated with the allocation.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    taskId?: string;
+    /**
+     * The current state of the allocation.
+     * @type {Determinedtaskv1State}
+     * @memberof V1Allocation
+     */
+    state?: Determinedtaskv1State;
+    /**
+     * Whether the allocation is ready to access.
+     * @type {boolean}
+     * @memberof V1Allocation
+     */
+    isReady?: boolean;
+    /**
+     * Start timestamp.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    startTime?: string;
+    /**
+     * End timestamp if completed.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    endTime?: string;
+}
+
+/**
  * Response to AllocationPreemptionSignalRequest.
  * @export
  * @interface V1AllocationPreemptionSignalResponse
@@ -840,7 +878,7 @@ export interface V1AllocationPreemptionSignalResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1AllocationRendezvousInfoResponse
  */
@@ -862,7 +900,7 @@ export interface V1ArchiveExperimentResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ArchiveModelResponse
  */
@@ -870,19 +908,19 @@ export interface V1ArchiveModelResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1AwsCustomTag
  */
 export interface V1AwsCustomTag {
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1AwsCustomTag
      */
     key: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1AwsCustomTag
      */
@@ -1138,13 +1176,13 @@ export interface V1Command {
      */
     username: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Command
      */
     resourcePool: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Command
      */
@@ -1158,7 +1196,7 @@ export interface V1Command {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1CompleteTrialSearcherValidationResponse
  */
@@ -1186,7 +1224,7 @@ export interface V1CompleteValidateAfterOperation {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ComputeHPImportanceResponse
  */
@@ -1306,7 +1344,7 @@ export interface V1DeleteExperimentResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1DeleteModelResponse
  */
@@ -1314,7 +1352,7 @@ export interface V1DeleteModelResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1DeleteModelVersionResponse
  */
@@ -1504,13 +1542,13 @@ export interface V1Experiment {
      */
     username: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Experiment
      */
     resourcePool?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Experiment
      */
@@ -1749,7 +1787,7 @@ export interface V1GetCommandsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1GetCurrentTrialSearcherOperationResponse
  */
@@ -1935,7 +1973,7 @@ export interface V1GetExperimentsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1GetHPImportanceResponse
  */
@@ -2434,7 +2472,7 @@ export interface V1GetTensorboardResponse {
      */
     tensorboard?: V1Tensorboard;
     /**
-     *
+     * 
      * @type {any}
      * @memberof V1GetTensorboardResponse
      */
@@ -2523,7 +2561,7 @@ export interface V1GetTrialProfilerAvailableSeriesResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1GetTrialProfilerMetricsResponse
  */
@@ -2597,7 +2635,7 @@ export interface V1IdleNotebookRequest {
      */
     notebookId?: string;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1IdleNotebookRequest
      */
@@ -2725,7 +2763,7 @@ export interface V1JobSummary {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1K8PriorityClass
  */
@@ -2861,7 +2899,7 @@ export interface V1LaunchCommandResponse {
      */
     command: V1Command;
     /**
-     *
+     * 
      * @type {any}
      * @memberof V1LaunchCommandResponse
      */
@@ -2913,7 +2951,7 @@ export interface V1LaunchNotebookResponse {
      */
     notebook: V1Notebook;
     /**
-     *
+     * 
      * @type {any}
      * @memberof V1LaunchNotebookResponse
      */
@@ -2965,7 +3003,7 @@ export interface V1LaunchShellResponse {
      */
     shell: V1Shell;
     /**
-     *
+     * 
      * @type {any}
      * @memberof V1LaunchShellResponse
      */
@@ -3023,7 +3061,7 @@ export interface V1LaunchTensorboardResponse {
      */
     tensorboard: V1Tensorboard;
     /**
-     *
+     * 
      * @type {any}
      * @memberof V1LaunchTensorboardResponse
      */
@@ -3602,7 +3640,7 @@ export interface V1PatchExperimentResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1PatchModel
  */
@@ -3674,7 +3712,7 @@ export interface V1PatchModelResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1PatchModelVersion
  */
@@ -3930,7 +3968,7 @@ export interface V1PostTrialProfilerMetricsBatchRequest {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1PostTrialProfilerMetricsBatchResponse
  */
@@ -3938,7 +3976,7 @@ export interface V1PostTrialProfilerMetricsBatchResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1PostTrialRunnerMetadataResponse
  */
@@ -4132,7 +4170,7 @@ export interface V1RendezvousInfo {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ReportTrialCheckpointMetadataResponse
  */
@@ -4140,7 +4178,7 @@ export interface V1ReportTrialCheckpointMetadataResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ReportTrialProgressResponse
  */
@@ -4148,7 +4186,7 @@ export interface V1ReportTrialProgressResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ReportTrialSearcherEarlyExitResponse
  */
@@ -4156,7 +4194,7 @@ export interface V1ReportTrialSearcherEarlyExitResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ReportTrialTrainingMetricsResponse
  */
@@ -4164,7 +4202,7 @@ export interface V1ReportTrialTrainingMetricsResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ReportTrialValidationMetricsResponse
  */
@@ -4329,31 +4367,31 @@ export interface V1ResourcePool {
      */
     name: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePool
      */
     description: string;
     /**
-     *
+     * 
      * @type {V1ResourcePoolType}
      * @memberof V1ResourcePool
      */
     type: V1ResourcePoolType;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePool
      */
     numAgents: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePool
      */
     slotsAvailable: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePool
      */
@@ -4365,25 +4403,25 @@ export interface V1ResourcePool {
      */
     slotType: Determineddevicev1Type;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePool
      */
     auxContainerCapacity: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePool
      */
     auxContainersRunning: number;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePool
      */
     defaultComputePool: boolean;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePool
      */
@@ -4413,13 +4451,13 @@ export interface V1ResourcePool {
      */
     slotsPerAgent?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePool
      */
     auxContainerCapacityPerAgent: number;
     /**
-     *
+     * 
      * @type {V1SchedulerType}
      * @memberof V1ResourcePool
      */
@@ -4449,13 +4487,13 @@ export interface V1ResourcePool {
      */
     instanceType: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePool
      */
     masterUrl: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePool
      */
@@ -4479,19 +4517,19 @@ export interface V1ResourcePool {
      */
     agentDockerNetwork: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePool
      */
     agentDockerRuntime: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePool
      */
     agentDockerImage: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePool
      */
@@ -4509,7 +4547,7 @@ export interface V1ResourcePool {
      */
     maxAgentStartingPeriod: number;
     /**
-     *
+     * 
      * @type {V1ResourcePoolDetail}
      * @memberof V1ResourcePool
      */
@@ -4517,67 +4555,67 @@ export interface V1ResourcePool {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ResourcePoolAwsDetail
  */
 export interface V1ResourcePoolAwsDetail {
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     region: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePoolAwsDetail
      */
     rootVolumeSize: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     imageId: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     tagKey: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     tagValue: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     instanceName: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     sshKeyName: string;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePoolAwsDetail
      */
     publicIp: boolean;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     subnetId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
@@ -4589,37 +4627,37 @@ export interface V1ResourcePoolAwsDetail {
      */
     iamInstanceProfileArn: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     instanceType?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     logGroup?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     logStream?: string;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePoolAwsDetail
      */
     spotEnabled: boolean;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
     spotMaxPrice?: string;
     /**
-     *
+     * 
      * @type {Array<V1AwsCustomTag>}
      * @memberof V1ResourcePoolAwsDetail
      */
@@ -4627,25 +4665,25 @@ export interface V1ResourcePoolAwsDetail {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ResourcePoolDetail
  */
 export interface V1ResourcePoolDetail {
     /**
-     *
+     * 
      * @type {V1ResourcePoolAwsDetail}
      * @memberof V1ResourcePoolDetail
      */
     aws?: V1ResourcePoolAwsDetail;
     /**
-     *
+     * 
      * @type {V1ResourcePoolGcpDetail}
      * @memberof V1ResourcePoolDetail
      */
     gcp?: V1ResourcePoolGcpDetail;
     /**
-     *
+     * 
      * @type {V1ResourcePoolPrioritySchedulerDetail}
      * @memberof V1ResourcePoolDetail
      */
@@ -4653,31 +4691,31 @@ export interface V1ResourcePoolDetail {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ResourcePoolGcpDetail
  */
 export interface V1ResourcePoolGcpDetail {
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     project: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     zone: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePoolGcpDetail
      */
     bootDiskSize: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
@@ -4689,37 +4727,37 @@ export interface V1ResourcePoolGcpDetail {
      */
     labelKey: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     labelValue: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     namePrefix: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     network: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     subnetwork?: string;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePoolGcpDetail
      */
     externalIp: boolean;
     /**
-     *
+     * 
      * @type {Array<string>}
      * @memberof V1ResourcePoolGcpDetail
      */
@@ -4731,37 +4769,37 @@ export interface V1ResourcePoolGcpDetail {
      */
     serviceAccountEmail: string;
     /**
-     *
+     * 
      * @type {Array<string>}
      * @memberof V1ResourcePoolGcpDetail
      */
     serviceAccountScopes: Array<string>;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     machineType: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
     gpuType: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePoolGcpDetail
      */
     gpuNum: number;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePoolGcpDetail
      */
     preemptible: boolean;
     /**
-     *
+     * 
      * @type {number}
      * @memberof V1ResourcePoolGcpDetail
      */
@@ -4769,13 +4807,13 @@ export interface V1ResourcePoolGcpDetail {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1ResourcePoolPrioritySchedulerDetail
  */
 export interface V1ResourcePoolPrioritySchedulerDetail {
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof V1ResourcePoolPrioritySchedulerDetail
      */
@@ -4820,7 +4858,7 @@ export interface V1RunnableOperation {
      */
     type?: V1RunnableType;
     /**
-     *
+     * 
      * @type {V1TrainingLength}
      * @memberof V1RunnableOperation
      */
@@ -5090,25 +5128,25 @@ export interface V1Shell {
      */
     username: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Shell
      */
     resourcePool: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Shell
      */
     exitStatus?: string;
     /**
-     *
+     * 
      * @type {Array<any>}
      * @memberof V1Shell
      */
     addresses?: Array<any>;
     /**
-     *
+     * 
      * @type {any}
      * @memberof V1Shell
      */
@@ -5172,17 +5210,11 @@ export interface V1Task {
      */
     taskId?: string;
     /**
-     * The current state of the task.
-     * @type {Determinedtaskv1State}
+     * List of Allocations.
+     * @type {Array<V1Allocation>}
      * @memberof V1Task
      */
-    state?: Determinedtaskv1State;
-    /**
-     * Whether the task is ready to access.
-     * @type {boolean}
-     * @memberof V1Task
-     */
-    isReady?: boolean;
+    allocations?: Array<V1Allocation>;
 }
 
 /**
@@ -5266,13 +5298,13 @@ export interface V1Tensorboard {
      */
     serviceAddress?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Tensorboard
      */
     resourcePool: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof V1Tensorboard
      */
@@ -5428,7 +5460,7 @@ export interface V1TrialMetrics {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1TrialProfilerMetricLabels
  */
@@ -5532,7 +5564,7 @@ export interface V1TrialSimulation {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1TrialsSampleResponse
  */
@@ -5584,7 +5616,7 @@ export interface V1TrialsSampleResponseTrial {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1TrialsSnapshotResponse
  */
@@ -5638,7 +5670,7 @@ export interface V1UnarchiveExperimentResponse {
 }
 
 /**
- *
+ * 
  * @export
  * @interface V1UnarchiveModelResponse
  */
@@ -5753,7 +5785,7 @@ export interface V1ValidationHistoryEntry {
 export const AuthenticationApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -5784,9 +5816,9 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             };
         },
         /**
-         *
+         * 
          * @summary Login the user.
-         * @param {V1LoginRequest} body
+         * @param {V1LoginRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -5816,7 +5848,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             };
         },
         /**
-         *
+         * 
          * @summary Logout the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -5856,7 +5888,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
 export const AuthenticationApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -5874,9 +5906,9 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Login the user.
-         * @param {V1LoginRequest} body
+         * @param {V1LoginRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -5893,7 +5925,7 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Logout the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -5920,7 +5952,7 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
 export const AuthenticationApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -5929,9 +5961,9 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
             return AuthenticationApiFp(configuration).currentUser(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Login the user.
-         * @param {V1LoginRequest} body
+         * @param {V1LoginRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -5939,7 +5971,7 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
             return AuthenticationApiFp(configuration).login(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Logout the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -5958,7 +5990,7 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
  */
 export class AuthenticationApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the current user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -5969,9 +6001,9 @@ export class AuthenticationApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Login the user.
-     * @param {V1LoginRequest} body
+     * @param {V1LoginRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AuthenticationApi
@@ -5981,7 +6013,7 @@ export class AuthenticationApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Logout the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -6000,7 +6032,7 @@ export class AuthenticationApi extends BaseAPI {
 export const CheckpointsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested checkpoint.
          * @param {string} checkpointUuid The uuid for the requested checkpoint.
          * @param {*} [options] Override http request option.
@@ -6037,10 +6069,10 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Update checkpoint metadata.
          * @param {string} checkpointUuid UUID of the checkpoint.
-         * @param {V1PostCheckpointMetadataRequest} body
+         * @param {V1PostCheckpointMetadataRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6092,7 +6124,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
 export const CheckpointsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested checkpoint.
          * @param {string} checkpointUuid The uuid for the requested checkpoint.
          * @param {*} [options] Override http request option.
@@ -6111,10 +6143,10 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Update checkpoint metadata.
          * @param {string} checkpointUuid UUID of the checkpoint.
-         * @param {V1PostCheckpointMetadataRequest} body
+         * @param {V1PostCheckpointMetadataRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6140,7 +6172,7 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
 export const CheckpointsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested checkpoint.
          * @param {string} checkpointUuid The uuid for the requested checkpoint.
          * @param {*} [options] Override http request option.
@@ -6150,10 +6182,10 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
             return CheckpointsApiFp(configuration).getCheckpoint(checkpointUuid, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Update checkpoint metadata.
          * @param {string} checkpointUuid UUID of the checkpoint.
-         * @param {V1PostCheckpointMetadataRequest} body
+         * @param {V1PostCheckpointMetadataRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6171,7 +6203,7 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
  */
 export class CheckpointsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the requested checkpoint.
      * @param {string} checkpointUuid The uuid for the requested checkpoint.
      * @param {*} [options] Override http request option.
@@ -6183,10 +6215,10 @@ export class CheckpointsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Update checkpoint metadata.
      * @param {string} checkpointUuid UUID of the checkpoint.
-     * @param {V1PostCheckpointMetadataRequest} body
+     * @param {V1PostCheckpointMetadataRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CheckpointsApi
@@ -6204,10 +6236,10 @@ export class CheckpointsApi extends BaseAPI {
 export const ClusterApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
-         * @param {V1DisableAgentRequest} body
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6250,7 +6282,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -6293,7 +6325,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Enable the agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -6330,7 +6362,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Enable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -6373,7 +6405,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -6410,7 +6442,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get a set of agents from the cluster.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME'} [sortBy] Sort agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -6466,7 +6498,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period (CSV).
          * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
          * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
@@ -6524,7 +6556,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get master information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -6547,7 +6579,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get master config.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -6578,7 +6610,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get a detailed view of resource allocation during the given time period (CSV).
          * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
@@ -6627,7 +6659,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -6670,7 +6702,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get all the slots for an agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -6707,7 +6739,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Stream master logs.
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -6753,7 +6785,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -6799,7 +6831,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         *
+         * 
          * @summary Get a detailed view of resource allocation during the given time period.
          * @param {Date} [timestampAfter] The start of the period to consider.
          * @param {Date} [timestampBefore] The end of the period to consider.
@@ -6849,10 +6881,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
 export const ClusterApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
-         * @param {V1DisableAgentRequest} body
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -6869,7 +6901,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -6889,7 +6921,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Enable the agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -6908,7 +6940,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Enable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -6928,7 +6960,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -6947,7 +6979,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a set of agents from the cluster.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME'} [sortBy] Sort agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -6970,7 +7002,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period (CSV).
          * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
          * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
@@ -6991,7 +7023,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get master information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7009,7 +7041,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get master config.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7027,7 +7059,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a detailed view of resource allocation during the given time period (CSV).
          * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
@@ -7047,7 +7079,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -7067,7 +7099,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get all the slots for an agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -7086,7 +7118,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream master logs.
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -7107,7 +7139,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -7128,7 +7160,7 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a detailed view of resource allocation during the given time period.
          * @param {Date} [timestampAfter] The start of the period to consider.
          * @param {Date} [timestampBefore] The end of the period to consider.
@@ -7157,10 +7189,10 @@ export const ClusterApiFp = function(configuration?: Configuration) {
 export const ClusterApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
-         * @param {V1DisableAgentRequest} body
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7168,7 +7200,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).disableAgent(agentId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Disable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -7179,7 +7211,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).disableSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Enable the agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -7189,7 +7221,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).enableAgent(agentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Enable the slot.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -7200,7 +7232,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).enableSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the requested agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -7210,7 +7242,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getAgent(agentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a set of agents from the cluster.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME'} [sortBy] Sort agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -7224,7 +7256,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period (CSV).
          * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
          * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
@@ -7236,7 +7268,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get master information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7245,7 +7277,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getMaster(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get master config.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -7254,7 +7286,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getMasterConfig(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a detailed view of resource allocation during the given time period (CSV).
          * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
          * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
@@ -7265,7 +7297,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
@@ -7276,7 +7308,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get all the slots for an agent.
          * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
@@ -7286,7 +7318,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).getSlots(agentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream master logs.
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -7298,7 +7330,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).masterLogs(offset, limit, follow, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get an aggregated view of resource allocation during the given time period.
          * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
          * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -7310,7 +7342,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
             return ClusterApiFp(configuration).resourceAllocationAggregated(startDate, endDate, period, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a detailed view of resource allocation during the given time period.
          * @param {Date} [timestampAfter] The start of the period to consider.
          * @param {Date} [timestampBefore] The end of the period to consider.
@@ -7331,10 +7363,10 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
  */
 export class ClusterApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Disable the agent.
      * @param {string} agentId The id of the agent.
-     * @param {V1DisableAgentRequest} body
+     * @param {V1DisableAgentRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
@@ -7344,7 +7376,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Disable the slot.
      * @param {string} agentId The id of the agent.
      * @param {string} slotId The id of the slot.
@@ -7357,7 +7389,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Enable the agent.
      * @param {string} agentId The id of the agent.
      * @param {*} [options] Override http request option.
@@ -7369,7 +7401,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Enable the slot.
      * @param {string} agentId The id of the agent.
      * @param {string} slotId The id of the slot.
@@ -7382,7 +7414,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the requested agent.
      * @param {string} agentId The id of the agent.
      * @param {*} [options] Override http request option.
@@ -7394,7 +7426,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a set of agents from the cluster.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME'} [sortBy] Sort agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -7410,7 +7442,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get an aggregated view of resource allocation during the given time period (CSV).
      * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
      * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
@@ -7424,7 +7456,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get master information.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -7435,7 +7467,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get master config.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -7446,7 +7478,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a detailed view of resource allocation during the given time period (CSV).
      * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
      * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
@@ -7459,7 +7491,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the requested slot for an agent.
      * @param {string} agentId The id of the agent.
      * @param {string} slotId The id of the slot.
@@ -7472,7 +7504,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get all the slots for an agent.
      * @param {string} agentId The id of the agent.
      * @param {*} [options] Override http request option.
@@ -7484,7 +7516,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream master logs.
      * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
      * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -7498,7 +7530,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get an aggregated view of resource allocation during the given time period.
      * @param {string} [startDate] The first day to consider (the exact time is midnight UTC at the beginning of the day).
      * @param {string} [endDate] The last day to consider (the exact time is midnight UTC at the end of the day).
@@ -7512,7 +7544,7 @@ export class ClusterApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a detailed view of resource allocation during the given time period.
      * @param {Date} [timestampAfter] The start of the period to consider.
      * @param {Date} [timestampBefore] The end of the period to consider.
@@ -7533,7 +7565,7 @@ export class ClusterApi extends BaseAPI {
 export const CommandsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested command.
          * @param {string} commandId The id of the command.
          * @param {*} [options] Override http request option.
@@ -7570,7 +7602,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of commands.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -7626,7 +7658,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested command.
          * @param {string} commandId The id of the command.
          * @param {*} [options] Override http request option.
@@ -7663,9 +7695,9 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Launch a command.
-         * @param {V1LaunchCommandRequest} body
+         * @param {V1LaunchCommandRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7703,10 +7735,10 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested command.
          * @param {string} commandId The id of the command.
-         * @param {V1SetCommandPriorityRequest} body
+         * @param {V1SetCommandPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7758,7 +7790,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
 export const CommandsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested command.
          * @param {string} commandId The id of the command.
          * @param {*} [options] Override http request option.
@@ -7777,7 +7809,7 @@ export const CommandsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of commands.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -7800,7 +7832,7 @@ export const CommandsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested command.
          * @param {string} commandId The id of the command.
          * @param {*} [options] Override http request option.
@@ -7819,9 +7851,9 @@ export const CommandsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Launch a command.
-         * @param {V1LaunchCommandRequest} body
+         * @param {V1LaunchCommandRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7838,10 +7870,10 @@ export const CommandsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested command.
          * @param {string} commandId The id of the command.
-         * @param {V1SetCommandPriorityRequest} body
+         * @param {V1SetCommandPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7867,7 +7899,7 @@ export const CommandsApiFp = function(configuration?: Configuration) {
 export const CommandsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested command.
          * @param {string} commandId The id of the command.
          * @param {*} [options] Override http request option.
@@ -7877,7 +7909,7 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
             return CommandsApiFp(configuration).getCommand(commandId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of commands.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -7891,7 +7923,7 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
             return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill the requested command.
          * @param {string} commandId The id of the command.
          * @param {*} [options] Override http request option.
@@ -7901,9 +7933,9 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
             return CommandsApiFp(configuration).killCommand(commandId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Launch a command.
-         * @param {V1LaunchCommandRequest} body
+         * @param {V1LaunchCommandRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7911,10 +7943,10 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
             return CommandsApiFp(configuration).launchCommand(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested command.
          * @param {string} commandId The id of the command.
-         * @param {V1SetCommandPriorityRequest} body
+         * @param {V1SetCommandPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -7932,7 +7964,7 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
  */
 export class CommandsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the requested command.
      * @param {string} commandId The id of the command.
      * @param {*} [options] Override http request option.
@@ -7944,7 +7976,7 @@ export class CommandsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of commands.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -7960,7 +7992,7 @@ export class CommandsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill the requested command.
      * @param {string} commandId The id of the command.
      * @param {*} [options] Override http request option.
@@ -7972,9 +8004,9 @@ export class CommandsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Launch a command.
-     * @param {V1LaunchCommandRequest} body
+     * @param {V1LaunchCommandRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CommandsApi
@@ -7984,10 +8016,10 @@ export class CommandsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Set the priority of the requested command.
      * @param {string} commandId The id of the command.
-     * @param {V1SetCommandPriorityRequest} body
+     * @param {V1SetCommandPriorityRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CommandsApi
@@ -8005,7 +8037,7 @@ export class CommandsApi extends BaseAPI {
 export const ExperimentsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Activate an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -8042,7 +8074,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Archive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -8079,7 +8111,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Cancel an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -8116,7 +8148,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -8153,7 +8185,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -8190,7 +8222,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
@@ -8257,7 +8289,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of unique experiment labels (sorted by popularity).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -8288,7 +8320,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -8350,7 +8382,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get the validation history for an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -8387,7 +8419,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -8468,7 +8500,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get the model definition of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -8505,7 +8537,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -8542,7 +8574,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
@@ -8609,7 +8641,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Kill an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -8646,7 +8678,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -8683,7 +8715,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
          * @param {V1Experiment} body Patched experiment attributes.
@@ -8729,7 +8761,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Pause an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -8766,9 +8798,9 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Preview hyperparameter search.
-         * @param {V1PreviewHPSearchRequest} body
+         * @param {V1PreviewHPSearchRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8806,7 +8838,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -8898,7 +8930,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial log fields.
          * @param {number} trialId The ID of the trial.
          * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -8940,7 +8972,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             };
         },
         /**
-         *
+         * 
          * @summary Unarchive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -8986,7 +9018,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 export const ExperimentsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Activate an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9005,7 +9037,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Archive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9024,7 +9056,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Cancel an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9043,7 +9075,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -9062,7 +9094,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9081,7 +9113,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
@@ -9106,7 +9138,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of unique experiment labels (sorted by popularity).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -9124,7 +9156,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -9148,7 +9180,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the validation history for an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9167,7 +9199,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -9195,7 +9227,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the model definition of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9214,7 +9246,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -9233,7 +9265,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
@@ -9258,7 +9290,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9277,7 +9309,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -9296,7 +9328,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
          * @param {V1Experiment} body Patched experiment attributes.
@@ -9316,7 +9348,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Pause an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9335,9 +9367,9 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Preview hyperparameter search.
-         * @param {V1PreviewHPSearchRequest} body
+         * @param {V1PreviewHPSearchRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9354,7 +9386,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -9384,7 +9416,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial log fields.
          * @param {number} trialId The ID of the trial.
          * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -9404,7 +9436,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Unarchive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9432,7 +9464,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
 export const ExperimentsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Activate an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9442,7 +9474,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).activateExperiment(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Archive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9452,7 +9484,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).archiveExperiment(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Cancel an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9462,7 +9494,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).cancelExperiment(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -9472,7 +9504,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).deleteExperiment(experimentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9482,7 +9514,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getExperiment(experimentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
@@ -9498,7 +9530,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of unique experiment labels (sorted by popularity).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -9507,7 +9539,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getExperimentLabels(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -9522,7 +9554,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the validation history for an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9532,7 +9564,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getExperimentValidationHistory(experimentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -9551,7 +9583,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the model definition of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9561,7 +9593,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getModelDef(experimentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -9571,7 +9603,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getTrial(trialId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
@@ -9587,7 +9619,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9597,7 +9629,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).killExperiment(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -9607,7 +9639,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).killTrial(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
          * @param {V1Experiment} body Patched experiment attributes.
@@ -9618,7 +9650,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).patchExperiment(experimentId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Pause an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9628,9 +9660,9 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).pauseExperiment(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Preview hyperparameter search.
-         * @param {V1PreviewHPSearchRequest} body
+         * @param {V1PreviewHPSearchRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9638,7 +9670,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -9659,7 +9691,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream trial log fields.
          * @param {number} trialId The ID of the trial.
          * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -9670,7 +9702,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
             return ExperimentsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Unarchive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -9690,7 +9722,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
  */
 export class ExperimentsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Activate an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -9702,7 +9734,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Archive an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -9714,7 +9746,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Cancel an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -9726,7 +9758,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Delete the requested experiment.
      * @param {number} experimentId The ID of the experiment.
      * @param {*} [options] Override http request option.
@@ -9738,7 +9770,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the requested experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
@@ -9750,7 +9782,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of checkpoints for an experiment.
      * @param {number} id The experiment id.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
@@ -9768,7 +9800,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of unique experiment labels (sorted by popularity).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -9779,7 +9811,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -9796,7 +9828,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the validation history for an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
@@ -9808,7 +9840,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of experiments.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -9829,7 +9861,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the model definition of an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
@@ -9841,7 +9873,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {*} [options] Override http request option.
@@ -9853,7 +9885,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of checkpoints for a trial.
      * @param {number} id The trial id.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
@@ -9871,7 +9903,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -9883,7 +9915,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill a trial.
      * @param {number} id The trial id
      * @param {*} [options] Override http request option.
@@ -9895,7 +9927,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Patch an experiment's fields.
      * @param {number} experimentId The id of the experiment.
      * @param {V1Experiment} body Patched experiment attributes.
@@ -9908,7 +9940,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Pause an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -9920,9 +9952,9 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Preview hyperparameter search.
-     * @param {V1PreviewHPSearchRequest} body
+     * @param {V1PreviewHPSearchRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
@@ -9932,7 +9964,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream trial logs.
      * @param {number} trialId The id of the trial.
      * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -9955,7 +9987,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream trial log fields.
      * @param {number} trialId The ID of the trial.
      * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -9968,7 +10000,7 @@ export class ExperimentsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Unarchive an experiment.
      * @param {number} id The experiment id.
      * @param {*} [options] Override http request option.
@@ -9988,10 +10020,10 @@ export class ExperimentsApi extends BaseAPI {
 export const InternalApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
          * @param {string} allocationId The allocation that is acknowledging the request.
-         * @param {V1AckAllocationPreemptionSignalRequest} body
+         * @param {V1AckAllocationPreemptionSignalRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10034,7 +10066,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -10076,7 +10108,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
          * @param {string} allocationId The id of the allocation.
          * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
@@ -10119,7 +10151,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -10165,7 +10197,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -10202,9 +10234,9 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Create an experiment.
-         * @param {V1CreateExperimentRequest} body
+         * @param {V1CreateExperimentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10242,7 +10274,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -10279,7 +10311,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get the current searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {*} [options] Override http request option.
@@ -10316,7 +10348,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
          * @param {number} experimentId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -10358,7 +10390,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get job queue stats for a resource pool.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
          * @param {*} [options] Override http request option.
@@ -10394,7 +10426,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of jobs in queue.
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
@@ -10445,7 +10477,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -10486,7 +10518,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -10509,10 +10541,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Send notebook idle data to master
          * @param {string} notebookId The id of the notebook.
-         * @param {V1IdleNotebookRequest} body
+         * @param {V1IdleNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10555,11 +10587,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
          * @param {string} allocationId The allocation ID for the reservation.
          * @param {string} containerId The container ID for the reservation.
-         * @param {V1MarkAllocationReservationDaemonRequest} body
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10607,7 +10639,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -10667,7 +10699,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get the set of metric names recorded for an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -10709,9 +10741,9 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
-         * @param {V1PostTrialProfilerMetricsBatchRequest} body
+         * @param {V1PostTrialProfilerMetricsBatchRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -10749,7 +10781,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary For bookkeeping, update trial runner metadata (currently just state).
          * @param {number} trialId The id of the trial.
          * @param {V1TrialRunnerMetadata} body The state for the trial runner.
@@ -10795,7 +10827,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Record a checkpoint.
          * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
          * @param {V1CheckpointMetadata} body The training metrics to persist.
@@ -10841,7 +10873,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
          * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -10887,7 +10919,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Reports to the searcher that the trial has completed the current requested amount of training with the given searcher validation metric.
          * @param {number} trialId The id of the trial.
          * @param {V1TrialEarlyExit} body The exit reason.
@@ -10933,7 +10965,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -10979,7 +11011,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -11025,7 +11057,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -11105,7 +11137,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -11179,9 +11211,9 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Control the job queues.
-         * @param {V1UpdateJobQueueRequest} body
+         * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11228,10 +11260,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
 export const InternalApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
          * @param {string} allocationId The allocation that is acknowledging the request.
-         * @param {V1AckAllocationPreemptionSignalRequest} body
+         * @param {V1AckAllocationPreemptionSignalRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11248,7 +11280,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -11268,7 +11300,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
          * @param {string} allocationId The id of the allocation.
          * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
@@ -11288,7 +11320,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -11308,7 +11340,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -11327,9 +11359,9 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Create an experiment.
-         * @param {V1CreateExperimentRequest} body
+         * @param {V1CreateExperimentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11346,7 +11378,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -11365,7 +11397,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the current searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {*} [options] Override http request option.
@@ -11384,7 +11416,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
          * @param {number} experimentId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -11404,7 +11436,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get job queue stats for a resource pool.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
          * @param {*} [options] Override http request option.
@@ -11423,7 +11455,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of jobs in queue.
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
@@ -11445,7 +11477,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -11465,7 +11497,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11483,10 +11515,10 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Send notebook idle data to master
          * @param {string} notebookId The id of the notebook.
-         * @param {V1IdleNotebookRequest} body
+         * @param {V1IdleNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11503,11 +11535,11 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
          * @param {string} allocationId The allocation ID for the reservation.
          * @param {string} containerId The container ID for the reservation.
-         * @param {V1MarkAllocationReservationDaemonRequest} body
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11524,7 +11556,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -11546,7 +11578,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the set of metric names recorded for an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -11566,9 +11598,9 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
-         * @param {V1PostTrialProfilerMetricsBatchRequest} body
+         * @param {V1PostTrialProfilerMetricsBatchRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11585,7 +11617,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary For bookkeeping, update trial runner metadata (currently just state).
          * @param {number} trialId The id of the trial.
          * @param {V1TrialRunnerMetadata} body The state for the trial runner.
@@ -11605,7 +11637,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Record a checkpoint.
          * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
          * @param {V1CheckpointMetadata} body The training metrics to persist.
@@ -11625,7 +11657,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
          * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -11645,7 +11677,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Reports to the searcher that the trial has completed the current requested amount of training with the given searcher validation metric.
          * @param {number} trialId The id of the trial.
          * @param {V1TrialEarlyExit} body The exit reason.
@@ -11665,7 +11697,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -11685,7 +11717,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -11705,7 +11737,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -11731,7 +11763,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -11755,9 +11787,9 @@ export const InternalApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Control the job queues.
-         * @param {V1UpdateJobQueueRequest} body
+         * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11783,10 +11815,10 @@ export const InternalApiFp = function(configuration?: Configuration) {
 export const InternalApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
          * @param {string} allocationId The allocation that is acknowledging the request.
-         * @param {V1AckAllocationPreemptionSignalRequest} body
+         * @param {V1AckAllocationPreemptionSignalRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11794,7 +11826,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).ackAllocationPreemptionSignal(allocationId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -11805,7 +11837,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
          * @param {string} allocationId The id of the allocation.
          * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
@@ -11816,7 +11848,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).allocationRendezvousInfo(allocationId, containerId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -11827,7 +11859,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).completeTrialSearcherValidation(trialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -11837,9 +11869,9 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).computeHPImportance(experimentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Create an experiment.
-         * @param {V1CreateExperimentRequest} body
+         * @param {V1CreateExperimentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11847,7 +11879,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).createExperiment(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -11857,7 +11889,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the current searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {*} [options] Override http request option.
@@ -11867,7 +11899,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
          * @param {number} experimentId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -11878,7 +11910,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get job queue stats for a resource pool.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
          * @param {*} [options] Override http request option.
@@ -11888,7 +11920,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of jobs in queue.
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
@@ -11901,7 +11933,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getJobs(paginationOffset, paginationLimit, resourcePool, orderBy, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of all resource pools from the cluster.
          * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
          * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -11912,7 +11944,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getResourcePools(offset, limit, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get telemetry information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11921,10 +11953,10 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).getTelemetry(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Send notebook idle data to master
          * @param {string} notebookId The id of the notebook.
-         * @param {V1IdleNotebookRequest} body
+         * @param {V1IdleNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11932,11 +11964,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).idleNotebook(notebookId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
          * @param {string} allocationId The allocation ID for the reservation.
          * @param {string} containerId The container ID for the reservation.
-         * @param {V1MarkAllocationReservationDaemonRequest} body
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11944,7 +11976,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).markAllocationReservationDaemon(allocationId, containerId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -11957,7 +11989,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the set of metric names recorded for an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -11968,9 +12000,9 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
-         * @param {V1PostTrialProfilerMetricsBatchRequest} body
+         * @param {V1PostTrialProfilerMetricsBatchRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11978,7 +12010,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).postTrialProfilerMetricsBatch(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary For bookkeeping, update trial runner metadata (currently just state).
          * @param {number} trialId The id of the trial.
          * @param {V1TrialRunnerMetadata} body The state for the trial runner.
@@ -11989,7 +12021,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).postTrialRunnerMetadata(trialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Record a checkpoint.
          * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
          * @param {V1CheckpointMetadata} body The training metrics to persist.
@@ -12000,7 +12032,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).reportTrialCheckpointMetadata(checkpointMetadataTrialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
          * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -12011,7 +12043,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).reportTrialProgress(trialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Reports to the searcher that the trial has completed the current requested amount of training with the given searcher validation metric.
          * @param {number} trialId The id of the trial.
          * @param {V1TrialEarlyExit} body The exit reason.
@@ -12022,7 +12054,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).reportTrialSearcherEarlyExit(trialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -12033,7 +12065,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).reportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
          * @param {V1TrialMetrics} body The training metrics to persist.
@@ -12044,7 +12076,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -12061,7 +12093,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a snapshot of a metric across all trials at a certain point of progress.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -12076,9 +12108,9 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
             return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Control the job queues.
-         * @param {V1UpdateJobQueueRequest} body
+         * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12096,10 +12128,10 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
  */
 export class InternalApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
      * @param {string} allocationId The allocation that is acknowledging the request.
-     * @param {V1AckAllocationPreemptionSignalRequest} body
+     * @param {V1AckAllocationPreemptionSignalRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -12109,7 +12141,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
      * @param {string} allocationId The id of the allocation.
      * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12122,7 +12154,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
      * @param {string} allocationId The id of the allocation.
      * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
@@ -12135,7 +12167,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Reports to the searcher that the trial has completed the given searcher operation.
      * @param {number} trialId The id of the trial.
      * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -12148,7 +12180,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Trigger the computation of hyperparameter importance on-demand for a specific metric on a specific experiment. The status and results can be retrieved with GetHPImportance.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
@@ -12160,9 +12192,9 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Create an experiment.
-     * @param {V1CreateExperimentRequest} body
+     * @param {V1CreateExperimentRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -12172,7 +12204,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the best searcher validation for an experiment by the given metric.
      * @param {number} experimentId The ID of the experiment.
      * @param {*} [options] Override http request option.
@@ -12184,7 +12216,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the current searcher operation.
      * @param {number} trialId The id of the trial.
      * @param {*} [options] Override http request option.
@@ -12196,7 +12228,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Retrieve the latest computation of hyperparameter importance. Currently this is triggered for training loss (if emitted) and the searcher metric after 10% increments in an experiment's progress, but no more than every 10 minutes.
      * @param {number} experimentId The id of the experiment.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -12209,7 +12241,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get job queue stats for a resource pool.
      * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
      * @param {*} [options] Override http request option.
@@ -12221,7 +12253,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of jobs in queue.
      * @param {number} [paginationOffset] The number of records to skip before returning results.
      * @param {number} [paginationLimit] The amount of records limited in the results.
@@ -12236,7 +12268,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of all resource pools from the cluster.
      * @param {number} [offset] Skip the number of resource pools before returning results. Negative values denote number of resource pools to skip from the end before returning results.
      * @param {number} [limit] Limit the number of resource pools. A value of 0 denotes no limit.
@@ -12249,7 +12281,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get telemetry information.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -12260,10 +12292,10 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Send notebook idle data to master
      * @param {string} notebookId The id of the notebook.
-     * @param {V1IdleNotebookRequest} body
+     * @param {V1IdleNotebookRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -12273,11 +12305,11 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
      * @param {string} allocationId The allocation ID for the reservation.
      * @param {string} containerId The container ID for the reservation.
-     * @param {V1MarkAllocationReservationDaemonRequest} body
+     * @param {V1MarkAllocationReservationDaemonRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -12287,7 +12319,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
@@ -12302,7 +12334,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the set of metric names recorded for an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -12315,9 +12347,9 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
-     * @param {V1PostTrialProfilerMetricsBatchRequest} body
+     * @param {V1PostTrialProfilerMetricsBatchRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -12327,7 +12359,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary For bookkeeping, update trial runner metadata (currently just state).
      * @param {number} trialId The id of the trial.
      * @param {V1TrialRunnerMetadata} body The state for the trial runner.
@@ -12340,7 +12372,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Record a checkpoint.
      * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
      * @param {V1CheckpointMetadata} body The training metrics to persist.
@@ -12353,7 +12385,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
      * @param {number} trialId The id of the trial.
      * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
@@ -12366,7 +12398,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Reports to the searcher that the trial has completed the current requested amount of training with the given searcher validation metric.
      * @param {number} trialId The id of the trial.
      * @param {V1TrialEarlyExit} body The exit reason.
@@ -12379,7 +12411,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Record training metrics for specified training.
      * @param {number} trainingMetricsTrialId The trial associated with these metrics.
      * @param {V1TrialMetrics} body The training metrics to persist.
@@ -12392,7 +12424,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Record validation metrics.
      * @param {number} validationMetricsTrialId The trial associated with these metrics.
      * @param {V1TrialMetrics} body The training metrics to persist.
@@ -12405,7 +12437,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a sample of the metrics over time for a sample of the trials.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
@@ -12424,7 +12456,7 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a snapshot of a metric across all trials at a certain point of progress.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
@@ -12441,9 +12473,9 @@ export class InternalApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Control the job queues.
-     * @param {V1UpdateJobQueueRequest} body
+     * @param {V1UpdateJobQueueRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -12461,7 +12493,7 @@ export class InternalApi extends BaseAPI {
 export const ModelsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Archive a model
          * @param {number} modelId The id of the model to archive.
          * @param {*} [options] Override http request option.
@@ -12498,7 +12530,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Delete a model
          * @param {number} modelId The id of the model to delete.
          * @param {*} [options] Override http request option.
@@ -12535,7 +12567,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Delete a model version
          * @param {number} modelId The id of the model associated with the model version.
          * @param {number} modelVersionId THe id of the model version to delete.
@@ -12578,7 +12610,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12615,7 +12647,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of unique model labels (sorted by popularity).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12646,7 +12678,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested model version.
          * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
@@ -12689,7 +12721,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of versions for the requested model.
          * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -12746,7 +12778,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of models.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -12822,10 +12854,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Patch a model's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {V1PatchModelRequest} body
+         * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12868,11 +12900,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body
+         * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12920,9 +12952,9 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Create a model in the registry.
-         * @param {V1PostModelRequest} body
+         * @param {V1PostModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12960,10 +12992,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Create a model version.
          * @param {number} modelId The id of the model to add this version to.
-         * @param {V1PostModelVersionRequest} body
+         * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13006,7 +13038,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Unarchive a model
          * @param {number} modelId The id of the model to un-archive.
          * @param {*} [options] Override http request option.
@@ -13052,7 +13084,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
 export const ModelsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Archive a model
          * @param {number} modelId The id of the model to archive.
          * @param {*} [options] Override http request option.
@@ -13071,7 +13103,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Delete a model
          * @param {number} modelId The id of the model to delete.
          * @param {*} [options] Override http request option.
@@ -13090,7 +13122,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Delete a model version
          * @param {number} modelId The id of the model associated with the model version.
          * @param {number} modelVersionId THe id of the model version to delete.
@@ -13110,7 +13142,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -13129,7 +13161,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of unique model labels (sorted by popularity).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13147,7 +13179,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested model version.
          * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
@@ -13167,7 +13199,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of versions for the requested model.
          * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -13190,7 +13222,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of models.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -13217,10 +13249,10 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Patch a model's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {V1PatchModelRequest} body
+         * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13237,11 +13269,11 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body
+         * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13258,9 +13290,9 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Create a model in the registry.
-         * @param {V1PostModelRequest} body
+         * @param {V1PostModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13277,10 +13309,10 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Create a model version.
          * @param {number} modelId The id of the model to add this version to.
-         * @param {V1PostModelVersionRequest} body
+         * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13297,7 +13329,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Unarchive a model
          * @param {number} modelId The id of the model to un-archive.
          * @param {*} [options] Override http request option.
@@ -13325,7 +13357,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
 export const ModelsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Archive a model
          * @param {number} modelId The id of the model to archive.
          * @param {*} [options] Override http request option.
@@ -13335,7 +13367,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).archiveModel(modelId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Delete a model
          * @param {number} modelId The id of the model to delete.
          * @param {*} [options] Override http request option.
@@ -13345,7 +13377,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).deleteModel(modelId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Delete a model version
          * @param {number} modelId The id of the model associated with the model version.
          * @param {number} modelVersionId THe id of the model version to delete.
@@ -13356,7 +13388,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).deleteModelVersion(modelId, modelVersionId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -13366,7 +13398,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).getModel(modelId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of unique model labels (sorted by popularity).
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13375,7 +13407,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).getModelLabels(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the requested model version.
          * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
@@ -13386,7 +13418,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).getModelVersion(modelId, modelVersion, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of versions for the requested model.
          * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -13400,7 +13432,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).getModelVersions(modelId, sortBy, orderBy, offset, limit, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of models.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -13418,10 +13450,10 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Patch a model's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {V1PatchModelRequest} body
+         * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13429,11 +13461,11 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).patchModel(modelId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body
+         * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13441,9 +13473,9 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).patchModelVersion(modelId, modelVersionId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Create a model in the registry.
-         * @param {V1PostModelRequest} body
+         * @param {V1PostModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13451,10 +13483,10 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).postModel(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Create a model version.
          * @param {number} modelId The id of the model to add this version to.
-         * @param {V1PostModelVersionRequest} body
+         * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13462,7 +13494,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
             return ModelsApiFp(configuration).postModelVersion(modelId, body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Unarchive a model
          * @param {number} modelId The id of the model to un-archive.
          * @param {*} [options] Override http request option.
@@ -13482,7 +13514,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
  */
 export class ModelsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Archive a model
      * @param {number} modelId The id of the model to archive.
      * @param {*} [options] Override http request option.
@@ -13494,7 +13526,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Delete a model
      * @param {number} modelId The id of the model to delete.
      * @param {*} [options] Override http request option.
@@ -13506,7 +13538,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Delete a model version
      * @param {number} modelId The id of the model associated with the model version.
      * @param {number} modelVersionId THe id of the model version to delete.
@@ -13519,7 +13551,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the requested model.
      * @param {number} modelId The name of the template.
      * @param {*} [options] Override http request option.
@@ -13531,7 +13563,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of unique model labels (sorted by popularity).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -13542,7 +13574,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the requested model version.
      * @param {number} modelId The id of the model.
      * @param {number} modelVersion The version number.
@@ -13555,7 +13587,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of versions for the requested model.
      * @param {number} modelId The id of the model.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
@@ -13571,7 +13603,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of models.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -13591,10 +13623,10 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Patch a model's fields.
      * @param {number} modelId The id of the model being updated.
-     * @param {V1PatchModelRequest} body
+     * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
@@ -13604,11 +13636,11 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Patch a model version's fields.
      * @param {number} modelId The id of the model being updated.
      * @param {number} modelVersionId The id of the model version being updated.
-     * @param {V1PatchModelVersionRequest} body
+     * @param {V1PatchModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
@@ -13618,9 +13650,9 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Create a model in the registry.
-     * @param {V1PostModelRequest} body
+     * @param {V1PostModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
@@ -13630,10 +13662,10 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Create a model version.
      * @param {number} modelId The id of the model to add this version to.
-     * @param {V1PostModelVersionRequest} body
+     * @param {V1PostModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
@@ -13643,7 +13675,7 @@ export class ModelsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Unarchive a model
      * @param {number} modelId The id of the model to un-archive.
      * @param {*} [options] Override http request option.
@@ -13663,7 +13695,7 @@ export class ModelsApi extends BaseAPI {
 export const NotebooksApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -13700,7 +13732,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of notebooks.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -13756,7 +13788,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -13793,9 +13825,9 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Launch a notebook.
-         * @param {V1LaunchNotebookRequest} body
+         * @param {V1LaunchNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13833,7 +13865,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Stream notebook logs.
          * @param {string} notebookId Requested Notebook id.
          * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
@@ -13885,10 +13917,10 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested notebook.
          * @param {string} notebookId The id of the notebook.
-         * @param {V1SetNotebookPriorityRequest} body
+         * @param {V1SetNotebookPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13940,7 +13972,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
 export const NotebooksApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -13959,7 +13991,7 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of notebooks.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -13982,7 +14014,7 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -14001,9 +14033,9 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Launch a notebook.
-         * @param {V1LaunchNotebookRequest} body
+         * @param {V1LaunchNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14020,7 +14052,7 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream notebook logs.
          * @param {string} notebookId Requested Notebook id.
          * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
@@ -14042,10 +14074,10 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested notebook.
          * @param {string} notebookId The id of the notebook.
-         * @param {V1SetNotebookPriorityRequest} body
+         * @param {V1SetNotebookPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14071,7 +14103,7 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
 export const NotebooksApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -14081,7 +14113,7 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
             return NotebooksApiFp(configuration).getNotebook(notebookId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of notebooks.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -14095,7 +14127,7 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
             return NotebooksApiFp(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {*} [options] Override http request option.
@@ -14105,9 +14137,9 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
             return NotebooksApiFp(configuration).killNotebook(notebookId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Launch a notebook.
-         * @param {V1LaunchNotebookRequest} body
+         * @param {V1LaunchNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14115,7 +14147,7 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
             return NotebooksApiFp(configuration).launchNotebook(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream notebook logs.
          * @param {string} notebookId Requested Notebook id.
          * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
@@ -14128,10 +14160,10 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
             return NotebooksApiFp(configuration).notebookLogs(notebookId, offset, limit, follow, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested notebook.
          * @param {string} notebookId The id of the notebook.
-         * @param {V1SetNotebookPriorityRequest} body
+         * @param {V1SetNotebookPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14149,7 +14181,7 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
  */
 export class NotebooksApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the requested notebook.
      * @param {string} notebookId The id of the notebook.
      * @param {*} [options] Override http request option.
@@ -14161,7 +14193,7 @@ export class NotebooksApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of notebooks.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -14177,7 +14209,7 @@ export class NotebooksApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill the requested notebook.
      * @param {string} notebookId The id of the notebook.
      * @param {*} [options] Override http request option.
@@ -14189,9 +14221,9 @@ export class NotebooksApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Launch a notebook.
-     * @param {V1LaunchNotebookRequest} body
+     * @param {V1LaunchNotebookRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotebooksApi
@@ -14201,7 +14233,7 @@ export class NotebooksApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream notebook logs.
      * @param {string} notebookId Requested Notebook id.
      * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
@@ -14216,10 +14248,10 @@ export class NotebooksApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Set the priority of the requested notebook.
      * @param {string} notebookId The id of the notebook.
-     * @param {V1SetNotebookPriorityRequest} body
+     * @param {V1SetNotebookPriorityRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotebooksApi
@@ -14237,7 +14269,7 @@ export class NotebooksApi extends BaseAPI {
 export const ProfilerApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Stream the available series in a trial's profiler metrics.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {boolean} [follow] Continue streaming labels until the trial stops. Defaults to False.
@@ -14279,7 +14311,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial profiler metrics.
          * @param {number} labelsTrialId The ID of the trial.
          * @param {string} [labelsName] The name of the metric.
@@ -14350,7 +14382,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
 export const ProfilerApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Stream the available series in a trial's profiler metrics.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {boolean} [follow] Continue streaming labels until the trial stops. Defaults to False.
@@ -14370,7 +14402,7 @@ export const ProfilerApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial profiler metrics.
          * @param {number} labelsTrialId The ID of the trial.
          * @param {string} [labelsName] The name of the metric.
@@ -14403,7 +14435,7 @@ export const ProfilerApiFp = function(configuration?: Configuration) {
 export const ProfilerApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Stream the available series in a trial's profiler metrics.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {boolean} [follow] Continue streaming labels until the trial stops. Defaults to False.
@@ -14414,7 +14446,7 @@ export const ProfilerApiFactory = function (configuration?: Configuration, fetch
             return ProfilerApiFp(configuration).getTrialProfilerAvailableSeries(trialId, follow, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream trial profiler metrics.
          * @param {number} labelsTrialId The ID of the trial.
          * @param {string} [labelsName] The name of the metric.
@@ -14439,7 +14471,7 @@ export const ProfilerApiFactory = function (configuration?: Configuration, fetch
  */
 export class ProfilerApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Stream the available series in a trial's profiler metrics.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {boolean} [follow] Continue streaming labels until the trial stops. Defaults to False.
@@ -14452,7 +14484,7 @@ export class ProfilerApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream trial profiler metrics.
      * @param {number} labelsTrialId The ID of the trial.
      * @param {string} [labelsName] The name of the metric.
@@ -14477,7 +14509,7 @@ export class ProfilerApi extends BaseAPI {
 export const ShellsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested shell.
          * @param {string} shellId The id of the shell.
          * @param {*} [options] Override http request option.
@@ -14514,7 +14546,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of shells.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -14570,7 +14602,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested shell.
          * @param {string} shellId The id of the shell.
          * @param {*} [options] Override http request option.
@@ -14607,9 +14639,9 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Launch a shell.
-         * @param {V1LaunchShellRequest} body
+         * @param {V1LaunchShellRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14647,10 +14679,10 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested shell.
          * @param {string} shellId The id of the shell.
-         * @param {V1SetShellPriorityRequest} body
+         * @param {V1SetShellPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14702,7 +14734,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
 export const ShellsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested shell.
          * @param {string} shellId The id of the shell.
          * @param {*} [options] Override http request option.
@@ -14721,7 +14753,7 @@ export const ShellsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of shells.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -14744,7 +14776,7 @@ export const ShellsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested shell.
          * @param {string} shellId The id of the shell.
          * @param {*} [options] Override http request option.
@@ -14763,9 +14795,9 @@ export const ShellsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Launch a shell.
-         * @param {V1LaunchShellRequest} body
+         * @param {V1LaunchShellRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14782,10 +14814,10 @@ export const ShellsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested shell.
          * @param {string} shellId The id of the shell.
-         * @param {V1SetShellPriorityRequest} body
+         * @param {V1SetShellPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14811,7 +14843,7 @@ export const ShellsApiFp = function(configuration?: Configuration) {
 export const ShellsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested shell.
          * @param {string} shellId The id of the shell.
          * @param {*} [options] Override http request option.
@@ -14821,7 +14853,7 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
             return ShellsApiFp(configuration).getShell(shellId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of shells.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -14835,7 +14867,7 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
             return ShellsApiFp(configuration).getShells(sortBy, orderBy, offset, limit, users, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill the requested shell.
          * @param {string} shellId The id of the shell.
          * @param {*} [options] Override http request option.
@@ -14845,9 +14877,9 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
             return ShellsApiFp(configuration).killShell(shellId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Launch a shell.
-         * @param {V1LaunchShellRequest} body
+         * @param {V1LaunchShellRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14855,10 +14887,10 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
             return ShellsApiFp(configuration).launchShell(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested shell.
          * @param {string} shellId The id of the shell.
-         * @param {V1SetShellPriorityRequest} body
+         * @param {V1SetShellPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14876,7 +14908,7 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
  */
 export class ShellsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the requested shell.
      * @param {string} shellId The id of the shell.
      * @param {*} [options] Override http request option.
@@ -14888,7 +14920,7 @@ export class ShellsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of shells.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -14904,7 +14936,7 @@ export class ShellsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill the requested shell.
      * @param {string} shellId The id of the shell.
      * @param {*} [options] Override http request option.
@@ -14916,9 +14948,9 @@ export class ShellsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Launch a shell.
-     * @param {V1LaunchShellRequest} body
+     * @param {V1LaunchShellRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ShellsApi
@@ -14928,10 +14960,10 @@ export class ShellsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Set the priority of the requested shell.
      * @param {string} shellId The id of the shell.
-     * @param {V1SetShellPriorityRequest} body
+     * @param {V1SetShellPriorityRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ShellsApi
@@ -14949,7 +14981,7 @@ export class ShellsApi extends BaseAPI {
 export const TasksApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Check the status of a requested task.
          * @param {string} taskId The requested task id.
          * @param {*} [options] Override http request option.
@@ -14995,7 +15027,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
 export const TasksApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Check the status of a requested task.
          * @param {string} taskId The requested task id.
          * @param {*} [options] Override http request option.
@@ -15023,7 +15055,7 @@ export const TasksApiFp = function(configuration?: Configuration) {
 export const TasksApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Check the status of a requested task.
          * @param {string} taskId The requested task id.
          * @param {*} [options] Override http request option.
@@ -15043,7 +15075,7 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
  */
 export class TasksApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Check the status of a requested task.
      * @param {string} taskId The requested task id.
      * @param {*} [options] Override http request option.
@@ -15063,7 +15095,7 @@ export class TasksApi extends BaseAPI {
 export const TemplatesApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Delete a template.
          * @param {string} templateName The id of the template.
          * @param {*} [options] Override http request option.
@@ -15100,7 +15132,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested template.
          * @param {string} templateName The id of the template.
          * @param {*} [options] Override http request option.
@@ -15137,7 +15169,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of templates.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME'} [sortBy] Sort templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order templates in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15193,7 +15225,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             };
         },
         /**
-         *
+         * 
          * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -15248,7 +15280,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
 export const TemplatesApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Delete a template.
          * @param {string} templateName The id of the template.
          * @param {*} [options] Override http request option.
@@ -15267,7 +15299,7 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get the requested template.
          * @param {string} templateName The id of the template.
          * @param {*} [options] Override http request option.
@@ -15286,7 +15318,7 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of templates.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME'} [sortBy] Sort templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order templates in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15309,7 +15341,7 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -15338,7 +15370,7 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
 export const TemplatesApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Delete a template.
          * @param {string} templateName The id of the template.
          * @param {*} [options] Override http request option.
@@ -15348,7 +15380,7 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
             return TemplatesApiFp(configuration).deleteTemplate(templateName, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get the requested template.
          * @param {string} templateName The id of the template.
          * @param {*} [options] Override http request option.
@@ -15358,7 +15390,7 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
             return TemplatesApiFp(configuration).getTemplate(templateName, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of templates.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME'} [sortBy] Sort templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order templates in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15372,7 +15404,7 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
             return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -15393,7 +15425,7 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
  */
 export class TemplatesApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Delete a template.
      * @param {string} templateName The id of the template.
      * @param {*} [options] Override http request option.
@@ -15405,7 +15437,7 @@ export class TemplatesApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get the requested template.
      * @param {string} templateName The id of the template.
      * @param {*} [options] Override http request option.
@@ -15417,7 +15449,7 @@ export class TemplatesApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of templates.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME'} [sortBy] Sort templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order templates in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15433,7 +15465,7 @@ export class TemplatesApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Update or create (upsert) the requested template.
      * @param {string} templateName The name of the template.
      * @param {V1Template} body The template to put.
@@ -15454,7 +15486,7 @@ export class TemplatesApi extends BaseAPI {
 export const TensorboardsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -15491,7 +15523,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of tensorboards.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15547,7 +15579,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -15584,9 +15616,9 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             };
         },
         /**
-         *
+         * 
          * @summary Launch a tensorboard.
-         * @param {V1LaunchTensorboardRequest} body
+         * @param {V1LaunchTensorboardRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15624,10 +15656,10 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested TensorBoard.
          * @param {string} tensorboardId The id of the TensorBoard.
-         * @param {V1SetTensorboardPriorityRequest} body
+         * @param {V1SetTensorboardPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15679,7 +15711,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
 export const TensorboardsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -15698,7 +15730,7 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of tensorboards.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15721,7 +15753,7 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -15740,9 +15772,9 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Launch a tensorboard.
-         * @param {V1LaunchTensorboardRequest} body
+         * @param {V1LaunchTensorboardRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15759,10 +15791,10 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested TensorBoard.
          * @param {string} tensorboardId The id of the TensorBoard.
-         * @param {V1SetTensorboardPriorityRequest} body
+         * @param {V1SetTensorboardPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15788,7 +15820,7 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
 export const TensorboardsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -15798,7 +15830,7 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
             return TensorboardsApiFp(configuration).getTensorboard(tensorboardId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of tensorboards.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15812,7 +15844,7 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
             return TensorboardsApiFp(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill the requested tensorboard.
          * @param {string} tensorboardId The id of the tensorboard.
          * @param {*} [options] Override http request option.
@@ -15822,9 +15854,9 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
             return TensorboardsApiFp(configuration).killTensorboard(tensorboardId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Launch a tensorboard.
-         * @param {V1LaunchTensorboardRequest} body
+         * @param {V1LaunchTensorboardRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15832,10 +15864,10 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
             return TensorboardsApiFp(configuration).launchTensorboard(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Set the priority of the requested TensorBoard.
          * @param {string} tensorboardId The id of the TensorBoard.
-         * @param {V1SetTensorboardPriorityRequest} body
+         * @param {V1SetTensorboardPriorityRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15853,7 +15885,7 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
  */
 export class TensorboardsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the requested tensorboard.
      * @param {string} tensorboardId The id of the tensorboard.
      * @param {*} [options] Override http request option.
@@ -15865,7 +15897,7 @@ export class TensorboardsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of tensorboards.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -15881,7 +15913,7 @@ export class TensorboardsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill the requested tensorboard.
      * @param {string} tensorboardId The id of the tensorboard.
      * @param {*} [options] Override http request option.
@@ -15893,9 +15925,9 @@ export class TensorboardsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Launch a tensorboard.
-     * @param {V1LaunchTensorboardRequest} body
+     * @param {V1LaunchTensorboardRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TensorboardsApi
@@ -15905,10 +15937,10 @@ export class TensorboardsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Set the priority of the requested TensorBoard.
      * @param {string} tensorboardId The id of the TensorBoard.
-     * @param {V1SetTensorboardPriorityRequest} body
+     * @param {V1SetTensorboardPriorityRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TensorboardsApi
@@ -15926,7 +15958,7 @@ export class TensorboardsApi extends BaseAPI {
 export const TrialsApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -15988,7 +16020,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -16025,7 +16057,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -16062,7 +16094,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -16154,7 +16186,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial log fields.
          * @param {number} trialId The ID of the trial.
          * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -16205,7 +16237,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
 export const TrialsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -16229,7 +16261,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -16248,7 +16280,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -16267,7 +16299,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -16297,7 +16329,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Stream trial log fields.
          * @param {number} trialId The ID of the trial.
          * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -16326,7 +16358,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
 export const TrialsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -16341,7 +16373,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
             return TrialsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -16351,7 +16383,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
             return TrialsApiFp(configuration).getTrial(trialId, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -16361,7 +16393,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
             return TrialsApiFp(configuration).killTrial(id, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -16382,7 +16414,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
             return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Stream trial log fields.
          * @param {number} trialId The ID of the trial.
          * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -16403,7 +16435,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
  */
 export class TrialsApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.
@@ -16420,7 +16452,7 @@ export class TrialsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {*} [options] Override http request option.
@@ -16432,7 +16464,7 @@ export class TrialsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Kill a trial.
      * @param {number} id The trial id
      * @param {*} [options] Override http request option.
@@ -16444,7 +16476,7 @@ export class TrialsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream trial logs.
      * @param {number} trialId The id of the trial.
      * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -16467,7 +16499,7 @@ export class TrialsApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Stream trial log fields.
      * @param {number} trialId The ID of the trial.
      * @param {boolean} [follow] Continue following fields until the trial stops.
@@ -16488,7 +16520,7 @@ export class TrialsApi extends BaseAPI {
 export const UsersApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested user.
          * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
@@ -16525,7 +16557,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16556,9 +16588,9 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         *
+         * 
          * @summary Create a new user.
-         * @param {V1PostUserRequest} body
+         * @param {V1PostUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16596,7 +16628,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         *
+         * 
          * @summary Set the requested user's password.
          * @param {string} username The username of the user.
          * @param {string} body The password of the user.
@@ -16651,7 +16683,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
 export const UsersApiFp = function(configuration?: Configuration) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested user.
          * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
@@ -16670,7 +16702,7 @@ export const UsersApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16688,9 +16720,9 @@ export const UsersApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Create a new user.
-         * @param {V1PostUserRequest} body
+         * @param {V1PostUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16707,7 +16739,7 @@ export const UsersApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         *
+         * 
          * @summary Set the requested user's password.
          * @param {string} username The username of the user.
          * @param {string} body The password of the user.
@@ -16736,7 +16768,7 @@ export const UsersApiFp = function(configuration?: Configuration) {
 export const UsersApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         *
+         * 
          * @summary Get the requested user.
          * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
@@ -16746,7 +16778,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
             return UsersApiFp(configuration).getUser(username, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16755,9 +16787,9 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
             return UsersApiFp(configuration).getUsers(options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Create a new user.
-         * @param {V1PostUserRequest} body
+         * @param {V1PostUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16765,7 +16797,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
             return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
         },
         /**
-         *
+         * 
          * @summary Set the requested user's password.
          * @param {string} username The username of the user.
          * @param {string} body The password of the user.
@@ -16786,7 +16818,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
  */
 export class UsersApi extends BaseAPI {
     /**
-     *
+     * 
      * @summary Get the requested user.
      * @param {string} username The username of the user.
      * @param {*} [options] Override http request option.
@@ -16798,7 +16830,7 @@ export class UsersApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Get a list of users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -16809,9 +16841,9 @@ export class UsersApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Create a new user.
-     * @param {V1PostUserRequest} body
+     * @param {V1PostUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
@@ -16821,7 +16853,7 @@ export class UsersApi extends BaseAPI {
     }
 
     /**
-     *
+     * 
      * @summary Set the requested user's password.
      * @param {string} username The username of the user.
      * @param {string} body The password of the user.
@@ -16834,3 +16866,4 @@ export class UsersApi extends BaseAPI {
     }
 
 }
+
