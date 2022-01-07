@@ -391,9 +391,6 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-	// Merge Patch (RFC 7386) format.
-	// TODO: check for extraneous fields.
 	expPatch := ExperimentPatch{}
 	if err := api.BindPatch(&expPatch, c); err != nil {
 		return nil, err
