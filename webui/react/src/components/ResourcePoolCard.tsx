@@ -116,7 +116,7 @@ const ResourcePoolCard: React.FC<Props> = ({
         </section>
         <hr />
         <section>
-          {(pool.slotsPerAgent ?? 0) > 0 && (
+          {totalComputeSlots > 0 && (
             <SlotAllocationBar
               resourceStates={computeContainerStates}
               title={deviceTypes.has(resourceType) ? resourceType : undefined}
