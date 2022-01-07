@@ -562,31 +562,32 @@ func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
 	paths := req.UpdateMask.GetPaths()
-	patch := ExperimentPatch{}
+	expPatch := ExperimentPatch{}
+	configPatch := ExperimentConfigPatch{}
 	expID := int(req.Experiment.Id)
 	for _, path := range paths {
 		switch {
+		case path == "notes":
+			expPatch.Notes = &req.Experiment.Notes
 		case path == "name":
 			if len(strings.TrimSpace(req.Experiment.Name)) == 0 {
 				return nil, status.Errorf(codes.InvalidArgument, "`name` is required.")
 			}
-			patch.Name = &req.Experiment.Name
-		case path == "notes":
-			patch.Notes = &req.Experiment.Notes
+			configPatch.Name = &req.Experiment.Name
 		case path == "labels":
 			// TODO convert labels
 			// exp.Labels = req.Experiment.Labels
 			// prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
 			// 	req.Experiment.Labels)
 		case path == "description":
-			patch.Description = &req.Experiment.Description
+			configPatch.Description = &req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
 				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
-	if err := a.m.patchExperiment(expID, &patch); err != nil {
+	if err := a.m.patchExperiment(expID, &expPatch, &configPatch); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update experiment")
 	}
 

@@ -230,14 +230,18 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 // Merge Patch (RFC 7386) format.
 type ExperimentPatch struct {
 	State *model.State `json:"state"`
-	// TODO: the config-level items like `description` are really at a different level
-	// than the top-level items, we should reorganize this into ExperimentPatch and
-	// ExperimentConfigPatch.
-	Description *string `json:"description"`
-	Name        *string `json:"name"`
 	// Labels set to nil are deleted.
-	Labels    map[string]*bool `json:"labels"`
-	Resources *struct {
+	Archived *bool   `json:"archived"`
+	Notes    *string `json:"notes"`
+}
+
+// ExperimentConfigPatch represents the allowed mutations that can be performed on an experiment
+// config, in JSON Merge Patch (RFC 7386) format.
+type ExperimentConfigPatch struct {
+	Description *string `json:"description"`
+	Name        *string
+	Labels      map[string]*bool `json:"labels"`
+	Resources   *struct {
 		MaxSlots api.MaybeInt `json:"max_slots"`
 		Weight   *float64     `json:"weight"`
 		Priority *int         `json:"priority"`
@@ -247,11 +251,11 @@ type ExperimentPatch struct {
 		SaveTrialBest      int `json:"save_trial_best"`
 		SaveTrialLatest    int `json:"save_trial_latest"`
 	} `json:"checkpoint_storage"`
-	Archived *bool   `json:"archived"`
-	Notes    *string `json:"notes"`
 }
 
-func (m *Master) patchExperiment(expID int, patch *ExperimentPatch) error {
+func (m *Master) patchExperiment(
+	expID int, expPatch *ExperimentPatch, configPatch *ExperimentConfigPatch,
+) error {
 	dbExp, err := m.db.ExperimentByID(expID)
 	if err != nil {
 		return errors.Wrapf(err, "loading experiment %v", expID)
@@ -266,44 +270,44 @@ func (m *Master) patchExperiment(expID int, patch *ExperimentPatch) error {
 		agentUserGroup = &m.config.Security.DefaultTask
 	}
 
-	if patch.Archived != nil {
-		dbExp.Archived = *patch.Archived
+	if expPatch.Archived != nil {
+		dbExp.Archived = *expPatch.Archived
 		if err := m.db.SaveExperimentArchiveStatus(dbExp); err != nil {
 			return errors.Wrapf(err, "archiving experiment %d", dbExp.ID)
 		}
 	}
-	if patch.Notes != nil {
-		dbExp.Notes = *patch.Notes
+	if expPatch.Notes != nil {
+		dbExp.Notes = *expPatch.Notes
 		_, err := m.db.RawQuery(
 			"patch_experiment_notes",
 			dbExp.ID,
-			patch.Notes,
+			expPatch.Notes,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to save experiment %d notes", dbExp.ID)
 		}
 	}
-	if patch.Resources != nil {
+	if configPatch.Resources != nil {
 		resources := dbExp.Config.Resources()
-		if patch.Resources.MaxSlots.IsPresent {
-			resources.SetMaxSlots(patch.Resources.MaxSlots.Value)
+		if configPatch.Resources.MaxSlots.IsPresent {
+			resources.SetMaxSlots(configPatch.Resources.MaxSlots.Value)
 		}
-		if patch.Resources.Weight != nil {
-			resources.SetWeight(*patch.Resources.Weight)
+		if configPatch.Resources.Weight != nil {
+			resources.SetWeight(*configPatch.Resources.Weight)
 		}
-		if patch.Resources.Priority != nil {
-			resources.SetPriority(patch.Resources.Priority)
+		if configPatch.Resources.Priority != nil {
+			resources.SetPriority(configPatch.Resources.Priority)
 		}
 		dbExp.Config.SetResources(resources)
 	}
-	if patch.Description != nil {
-		dbExp.Config.SetDescription(patch.Description)
+	if configPatch.Description != nil {
+		dbExp.Config.SetDescription(configPatch.Description)
 	}
-	if patch.Name != nil {
-		dbExp.Config.SetName(expconf.Name{RawString: patch.Name})
+	if configPatch.Name != nil {
+		dbExp.Config.SetName(expconf.Name{RawString: configPatch.Name})
 	}
 	labels := dbExp.Config.Labels()
-	for label, keep := range patch.Labels {
+	for label, keep := range configPatch.Labels {
 		switch _, ok := labels[label]; {
 		case ok && keep == nil:
 			delete(labels, label)
@@ -315,11 +319,11 @@ func (m *Master) patchExperiment(expID int, patch *ExperimentPatch) error {
 		}
 	}
 	dbExp.Config.SetLabels(labels)
-	if patch.CheckpointStorage != nil {
+	if configPatch.CheckpointStorage != nil {
 		storage := dbExp.Config.CheckpointStorage()
-		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
-		storage.SetSaveTrialBest(patch.CheckpointStorage.SaveTrialBest)
-		storage.SetSaveTrialLatest(patch.CheckpointStorage.SaveTrialLatest)
+		storage.SetSaveExperimentBest(configPatch.CheckpointStorage.SaveExperimentBest)
+		storage.SetSaveTrialBest(configPatch.CheckpointStorage.SaveTrialBest)
+		storage.SetSaveTrialLatest(configPatch.CheckpointStorage.SaveTrialLatest)
 		dbExp.Config.SetCheckpointStorage(storage)
 	}
 
@@ -327,26 +331,26 @@ func (m *Master) patchExperiment(expID int, patch *ExperimentPatch) error {
 		return errors.Wrapf(err, "patching experiment %d", dbExp.ID)
 	}
 
-	if patch.State != nil {
-		m.system.TellAt(actor.Addr("experiments", dbExp.ID), *patch.State)
+	if expPatch.State != nil {
+		m.system.TellAt(actor.Addr("experiments", dbExp.ID), *expPatch.State)
 	}
 
-	if patch.Resources != nil {
-		if patch.Resources.MaxSlots.IsPresent {
+	if configPatch.Resources != nil {
+		if configPatch.Resources.MaxSlots.IsPresent {
 			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
-				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
+				sproto.SetGroupMaxSlots{MaxSlots: configPatch.Resources.MaxSlots.Value})
 		}
-		if patch.Resources.Weight != nil {
+		if configPatch.Resources.Weight != nil {
 			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
-				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
+				sproto.SetGroupWeight{Weight: *configPatch.Resources.Weight})
 		}
-		if patch.Resources.Priority != nil {
+		if configPatch.Resources.Priority != nil {
 			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
-				sproto.SetGroupPriority{Priority: patch.Resources.Priority})
+				sproto.SetGroupPriority{Priority: configPatch.Resources.Priority})
 		}
 	}
 
-	if patch.CheckpointStorage != nil {
+	if configPatch.CheckpointStorage != nil {
 		checkpoints, err := m.db.ExperimentCheckpointsToGCRaw(
 			dbExp.ID,
 			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
@@ -390,12 +394,16 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
-	patch := ExperimentPatch{}
-	if err := api.BindPatch(&patch, c); err != nil {
+	expPatch := ExperimentPatch{}
+	if err := api.BindPatch(&expPatch, c); err != nil {
+		return nil, err
+	}
+	expConfigPatch := ExperimentConfigPatch{}
+	if err := api.BindPatch(&expConfigPatch, c); err != nil {
 		return nil, err
 	}
 
-	return nil, m.patchExperiment(args.ExperimentID, &patch)
+	return nil, m.patchExperiment(args.ExperimentID, &expPatch, &expConfigPatch)
 }
 
 // CreateExperimentParams defines a request to create an experiment.
