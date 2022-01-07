@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -14,6 +15,7 @@ import (
 var (
 	// JobsActorAddr is the address of the jobs actor.
 	JobsActorAddr = actor.Addr("jobs")
+	epsilon       = 1e-6
 )
 
 // RMJobInfo packs information available only to the RM that updates frequently.
@@ -60,13 +62,22 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// SchedulingParams is user modifable set of parameters used for schedluing.
+	SchedulingParams struct {
+		Priority      *int
+		Weight        float64
+		QueuePosition *float64
+	}
+	// GetSchedulingParams requests SchedulingParams from a job.
+	GetSchedulingParams struct{}
 )
 
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
 type RegisterJob struct {
-	JobID    model.JobID
-	JobActor *actor.Ref
+	JobID        model.JobID
+	JobActor     *actor.Ref
+	ResourcePool string
 }
 
 // UnregisterJob removes a job from the jobs actor.
@@ -77,7 +88,9 @@ type UnregisterJob struct {
 // Jobs manage jobs.
 type Jobs struct {
 	RMRef     *actor.Ref
+	db        *db.PgDB
 	actorByID map[model.JobID]*actor.Ref
+	rPByID    map[model.JobID]string
 }
 
 // AQueue is a map of jobID to RMJobInfo.
@@ -88,10 +101,12 @@ func errJobNotFound(jobID model.JobID) error {
 }
 
 // NewJobs creates a new jobs actor.
-func NewJobs(rmRef *actor.Ref) *Jobs {
+func NewJobs(rmRef *actor.Ref, db *db.PgDB) *Jobs {
 	return &Jobs{
 		RMRef:     rmRef,
+		db:        db,
 		actorByID: make(map[model.JobID]*actor.Ref),
+		rPByID:    make(map[model.JobID]string),
 	}
 }
 
@@ -129,6 +144,31 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, er
 	return jobQ, nil
 }
 
+func (j *Jobs) getJobSchedulingParams(ctx *actor.Context, jobID model.JobID) (
+	*SchedulingParams, error,
+) {
+	targetJobActor := j.actorByID[jobID]
+	if targetJobActor == nil {
+		return nil, errJobNotFound(jobID)
+	}
+	response := ctx.Ask(targetJobActor, GetSchedulingParams{})
+	if err := response.Error(); err != nil {
+		ctx.Log().WithError(err).Error("getting scheduling params from target job")
+		return nil, err
+	}
+	targetSchedulingParams, ok := response.Get().(SchedulingParams)
+	if !ok {
+		err := fmt.Errorf("unexpected response type: %T", response.Get())
+		ctx.Log().WithError(err).Error("")
+		ctx.Respond(err)
+		return nil, err
+	}
+	if targetSchedulingParams.Priority == nil {
+		return nil, fmt.Errorf("target job %s has no priority", jobID)
+	}
+	return &targetSchedulingParams, nil
+}
+
 // Receive implements the actor.Actor interface.
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -136,9 +176,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 
 	case RegisterJob:
 		j.actorByID[msg.JobID] = msg.JobActor
+		j.rPByID[msg.JobID] = msg.ResourcePool
 
 	case UnregisterJob:
 		delete(j.actorByID, msg.JobID)
+		delete(j.rPByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
 		jobQ, err := j.jobQSnapshot(ctx, msg.ResourcePool)
@@ -182,6 +224,8 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				ctx.Respond(errJobNotFound(jobID))
 				return nil
 			}
+			// TODO validate if the action is supported in the
+			// active scheduler.
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
@@ -211,14 +255,36 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				return nil
 			case *jobv1.QueueControl_QueuePosition:
 				// REMOVEME: keep this until ahead_of and behind_of are implemented
-				ctx.Respond(api.ErrNotImplemented)
+				ctx.Tell(jobActor, SetGroupOrder{
+					QPosition: float64(update.GetQueuePosition()),
+				})
+			case *jobv1.QueueControl_AheadOf:
+				targetJobID := model.JobID(update.GetAheadOf())
+				targetSchedulingParams, err := j.getJobSchedulingParams(ctx, targetJobID)
+				if err != nil {
+					ctx.Respond(err)
+					return nil
+				}
+				targetQPos := 1.0
+				if targetSchedulingParams.QueuePosition != nil {
+					targetQPos = *targetSchedulingParams.QueuePosition
+				}
+
+				ctx.Tell(jobActor, SetGroupPriority{
+					Priority: targetSchedulingParams.Priority,
+				})
+				// FIXME instead, split the difference between target and the next one
+				newQPosition := targetQPos - epsilon
+				ctx.Tell(jobActor, SetGroupOrder{
+					QPosition: newQPosition,
+				})
+
 				return nil
-			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
+			case *jobv1.QueueControl_BehindOf:
 				ctx.Respond(api.ErrNotImplemented)
 				return nil
 			default:
-				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
-				return nil
+				return actor.ErrUnexpectedMessage(ctx)
 			}
 		}
 		if len(errors) > 0 {

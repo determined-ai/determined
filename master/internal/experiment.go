@@ -87,7 +87,9 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
-		rmJobInfo             *job.RMJobInfo
+		// like priority or weight but internal used for fine grained scheduling
+		queuePosition *float64 // QUESTION do we want this as a pointer? -1? 0 value
+		rmJobInfo     *job.RMJobInfo
 	}
 )
 
@@ -171,10 +173,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.setPriority(ctx, e.Config.Resources().Priority()); err != nil {
 			return err
 		}
+		if err := e.setOrder(ctx, *e.queuePosition); err != nil {
+			return err
+		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
-			JobID:    e.JobID,
-			JobActor: ctx.Self(),
+			JobID:        e.JobID,
+			JobActor:     ctx.Self(),
+			ResourcePool: e.Config.Resources().ResourcePool(),
 		})
 
 		if e.restored {
@@ -269,7 +275,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupOrder:
-		err := e.setOrder(ctx, msg.QPosition)
+		err := e.setOrder(ctx, msg.QPosition) // FIXME
 		ctx.Respond(err)
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
@@ -279,6 +285,15 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	case job.GetJobSummary:
 		ctx.Respond(e.toV1Job().Summary)
+
+	case job.GetSchedulingParams:
+		priority := config.ReadPriority(e.Config.Resources().ResourcePool(), &e.Config)
+		weight := config.ReadWeight(e.Config.Resources().ResourcePool(), &e.Config)
+		ctx.Respond(job.SchedulingParams{
+			Priority:      &priority,
+			Weight:        weight,
+			QueuePosition: e.queuePosition,
+		})
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -615,13 +630,12 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 }
 
 func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
-	// TODO persist similar to the other set* methods?
 	jobModel := model.Job{
 		JobID: e.JobID,
 		QPos:  queuePosition,
 	}
-	err := e.db.UpdateJob(&jobModel)
-	if err != nil {
+	e.queuePosition = &queuePosition // FIXME
+	if err := e.db.UpdateJob(&jobModel); err != nil {
 		return err
 	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
@@ -642,6 +656,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Progress:       float32(e.searcher.Progress()),
 		Name:           e.Config.Name().String(),
 	}
+	// read prio, weight, orider, name from db. bulk read.
 
 	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) // && true
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))

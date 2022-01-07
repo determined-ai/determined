@@ -90,6 +90,7 @@ type command struct {
 	serviceAddress *string
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
+	queuePosition  *float64
 	rmJobInfo      *job.RMJobInfo
 }
 
@@ -182,8 +183,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
-			JobID:    c.jobID,
-			JobActor: ctx.Self(),
+			JobID:        c.jobID,
+			JobActor:     ctx.Self(),
+			ResourcePool: c.Config.Resources.ResourcePool,
 		})
 
 	case *job.RMJobInfo:
@@ -308,7 +310,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupOrder:
-		// TODO persist in the job actor if we want to report it
 		c.setOrder(ctx, msg.QPosition)
 
 	case job.SetGroupWeight:
@@ -318,6 +319,15 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if msg.Priority != nil {
 			c.setPriority(ctx, *msg.Priority)
 		}
+
+	case job.GetSchedulingParams:
+		priority := config.ReadPriority(c.Config.Resources.ResourcePool, &c.Config)
+		weight := config.ReadWeight(c.Config.Resources.ResourcePool, &c.Config)
+		ctx.Respond(job.SchedulingParams{
+			Priority:      &priority,
+			Weight:        weight,
+			QueuePosition: c.queuePosition,
+		})
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -342,7 +352,7 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) {
 }
 
 func (c *command) setOrder(ctx *actor.Context, queuePosition float64) {
-	// TODO persist similar to the other set* methods?
+	c.queuePosition = &queuePosition
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
 		QPosition: queuePosition,
 		Handler:   ctx.Self(),

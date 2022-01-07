@@ -94,11 +94,16 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
 	if snapshot != nil {
-		if err := e.Restore(snapshot); err != nil {
+		if err = e.Restore(snapshot); err != nil {
 			return errors.Wrap(err, "failed to restore experiment")
 		}
 		e.restored = true
 	}
+	queuePosition, err := m.db.GetJobQueuePosition(e.JobID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get job queue position for experiment %d", expModel.ID)
+	}
+	e.queuePosition = &queuePosition
 
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 	return nil

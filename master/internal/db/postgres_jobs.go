@@ -46,3 +46,13 @@ SET q_position = :q_position
 WHERE job_id = :job_id`
 	return db.namedExecOne(query, job)
 }
+
+// GetJobQueuePosition returns the queue position of the job.
+func (db *PgDB) GetJobQueuePosition(jobID model.JobID) (float64, error) {
+	query := "SELECT q_position FROM jobs WHERE job_id = $1"
+	var qPosition float64
+	if err := db.sql.Get(&qPosition, query, jobID); err != nil {
+		return 0, errors.Wrap(err, "getting job queue position")
+	}
+	return qPosition, nil
+}

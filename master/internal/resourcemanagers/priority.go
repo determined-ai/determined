@@ -38,6 +38,13 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
 	reqs, _ := sortTasksWithPosition(taskList, groups, false)
 	jobQInfo, jobActors := reduceToJobQInfo(reqs)
+	// print q positions
+	// for _, req := range reqs {
+	// 	group, ok := groups[req.Group]
+	// 	if ok {
+	// 		fmt.Println("group qpos", group.qPosition, "job", req.JobID)
+	// 	}
+	// }
 	for jobID, jobActor := range jobActors {
 		rmJobInfo, ok := jobQInfo[jobID]
 		if jobActor == nil || !ok || rmJobInfo == nil {
@@ -77,8 +84,14 @@ func setPositions(rp *ResourcePool) {
 	} else {
 		for i, req := range reqs {
 			group, ok := rp.groups[req.Group]
+			qPosition := float64(i)
 			if ok {
-				group.qPosition = float64(i)
+				group.qPosition = qPosition
+			}
+			if req.JobID != nil {
+				req.Group.System().Tell(req.Group, job.SetGroupOrder{
+					QPosition: qPosition,
+				})
 			}
 		}
 	}
