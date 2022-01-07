@@ -36,9 +36,8 @@ data:
   augmentations:
     - WordSwapRandomCharacterDeletion
     - WordSwapHomoglyphSwap
-# Number of records per epoch differs based on max_seq_length.
-records_per_epoch: 8551
-max_restarts: 0
+# Number of records per epoch differs based on max_seq_length and augmentations.
+records_per_epoch: 17102
 min_validation_period:
   batches: 500
 searcher:
