@@ -1985,13 +1985,13 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
-// UpdateAllocationState provides a mock function with given fields: allocationID, state, isReady
-func (_m *DB) UpdateAllocationState(allocationID model.AllocationID, state model.AllocationState, isReady bool) error {
-	ret := _m.Called(allocationID, state, isReady)
+// UpdateAllocationState provides a mock function with given fields: allocation
+func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
+	ret := _m.Called(allocation)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.AllocationID, model.AllocationState, bool) error); ok {
-		r0 = rf(allocationID, state, isReady)
+	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
+		r0 = rf(allocation)
 	} else {
 		r0 = ret.Error(0)
 	}

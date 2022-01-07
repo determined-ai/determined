@@ -100,18 +100,12 @@ func TestAllocation(t *testing.T) {
 						Devices: []device.Device{},
 					},
 				}
-				db.On("UpdateAllocationState", a.req.AllocationID, model.AllocationStateAssigned,
-					false).Return(nil)
-				db.On("UpdateAllocationState", a.req.AllocationID, model.AllocationStatePulling,
-					false).Return(nil)
-				db.On("UpdateAllocationState", a.req.AllocationID, model.AllocationStateStarting,
-					false).Return(nil)
-				db.On("UpdateAllocationState", a.req.AllocationID,
-					model.AllocationStateRunning, false).Return(nil)
-				db.On("UpdateAllocationState", a.req.AllocationID, model.AllocationStateTerminating,
-					false).Return(nil)
-				db.On("UpdateAllocationState", a.req.AllocationID, model.AllocationStateTerminated,
-					false).Return(nil)
+				db.On("UpdateAllocationState", a.model).Return(model.AllocationStateAssigned)
+				db.On("UpdateAllocationState", a.model).Return(model.AllocationStatePulling)
+				db.On("UpdateAllocationState", a.model).Return(model.AllocationStateStarting)
+				db.On("UpdateAllocationState", a.model).Return(model.AllocationStateRunning)
+				db.On("UpdateAllocationState", a.model).Return(model.AllocationStateTerminating)
+				db.On("UpdateAllocationState", a.model).Return(model.AllocationStateTerminated)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.Container.State = cproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())

@@ -43,9 +43,6 @@ type (
 		// The state of the allocation, just informational.
 		state model.AllocationState
 
-		// Readiness state for the allocation.
-		isReady bool
-
 		// State of all our reservations
 		reservations reservations
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
@@ -198,7 +195,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 						IsReady:           a.logBasedReadinessPassed,
 						ServiceReadyEvent: &msg,
 					})
-					err := a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
+					a.model.State = a.state
+					a.model.IsReady = a.logBasedReadinessPassed
+					err := a.db.UpdateAllocationState(a.model)
 					if err != nil {
 						a.Error(ctx, err)
 					}
@@ -453,7 +452,9 @@ func (a *Allocation) TaskContainerStateChanged(
 		}
 	}
 
-	err := a.db.UpdateAllocationState(a.req.AllocationID, a.state, a.logBasedReadinessPassed)
+	a.model.State = a.state
+	a.model.IsReady = a.logBasedReadinessPassed
+	err := a.db.UpdateAllocationState(a.model)
 	if err != nil {
 		ctx.Log().Error(err)
 	}
