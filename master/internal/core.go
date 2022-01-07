@@ -185,7 +185,7 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-// @Summary Get a detailed view of resource allocation during the given time period (CSV).
+// @Summary Deprecated, use /v2/allocation/raw for correct results after Determined version 0.17.8.
 // @Tags Cluster
 // @ID get-raw-resource-allocation-csv
 // @Accept  json
@@ -240,6 +240,83 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 
 	header := []string{
 		"experiment_id", "kind", "username", "labels", "slots", "start_time", "end_time", "seconds",
+	}
+	if err := csvWriter.Write(header); err != nil {
+		return err
+	}
+
+	for _, entry := range resp.ResourceEntries {
+		var labels []string
+		for _, label := range entry.Labels {
+			labels = append(labels, labelEscaper.Replace(label))
+		}
+		fields := []string{
+			strconv.Itoa(int(entry.ExperimentId)), entry.Kind, entry.Username, strings.Join(labels, ","),
+			strconv.Itoa(int(entry.Slots)), formatTimestamp(entry.StartTime), formatTimestamp(entry.EndTime),
+			fmt.Sprintf("%f", entry.Seconds),
+		}
+		if err := csvWriter.Write(fields); err != nil {
+			return err
+		}
+	}
+	csvWriter.Flush()
+	return nil
+}
+
+// @Summary Get a detailed view of resource allocation during the given time period (CSV).
+// @Tags Cluster
+// @ID get-raw-resource-allocation-csv
+// @Accept  json
+// @Produce  text/csv
+//nolint:lll
+// @Param   timestamp_after query string true "Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//nolint:lll
+// @Param   timestamp_before query string true "End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//nolint:lll
+// @Success 200 {} string "A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
+//nolint:godot
+// @Router /v2/allocation/raw [get]
+func (m *Master) getRawResourceAllocationV2(c echo.Context) error {
+	args := struct {
+		Start string `query:"timestamp_after"`
+		End   string `query:"timestamp_before"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
+	if err != nil {
+		return errors.Wrap(err, "invalid start time")
+	}
+	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
+	if err != nil {
+		return errors.Wrap(err, "invalid end time")
+	}
+	if start.After(end) {
+		return errors.New("start time cannot be after end time")
+	}
+
+	resp := &apiv1.ResourceAllocationRawResponse{}
+	if err := m.db.QueryProto(
+		"get_raw_allocation_v2", &resp.ResourceEntries, start.UTC(), end.UTC(),
+	); err != nil {
+		return errors.Wrap(err, "error fetching allocation data")
+	}
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+
+	labelEscaper := strings.NewReplacer("\\", "\\\\", ",", "\\,")
+	csvWriter := csv.NewWriter(c.Response())
+	formatTimestamp := func(ts *timestamppb.Timestamp) string {
+		if ts == nil {
+			return ""
+		}
+		return ts.AsTime().Format(time.RFC3339Nano)
+	}
+
+	header := []string{
+		"username", "slots", "start_time", "end_time", "seconds",
 	}
 	if err := csvWriter.Write(header); err != nil {
 		return err
@@ -883,6 +960,8 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
+	v2Group := m.echo.Group("/v2", authFuncs...)
+
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
@@ -898,6 +977,9 @@ func (m *Master) Run(ctx context.Context) error {
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
+
+	resourcesV2Group := v2Group.Group("/resources")
+	resourcesV2Group.GET("/allocation/raw", m.getRawResourceAllocationV2)
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
 
