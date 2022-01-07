@@ -41,6 +41,19 @@ VALUES (:task_id, :task_type, :start_time, :job_id)
 	return nil
 }
 
+// TaskByID returns a task by its ID.
+func (db *PgDB) TaskByID(tID model.TaskID) (*model.Task, error) {
+	var t model.Task
+	if err := db.query(`
+SELECT *
+FROM tasks
+WHERE task_id = $1
+`, &t, tID); err != nil {
+		return nil, errors.Wrap(err, "querying task")
+	}
+	return &t, nil
+}
+
 // CompleteTask persists the completion of a task.
 func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)
@@ -60,8 +73,8 @@ WHERE task_id = $1
 // AddAllocation persists the existence of an allocation.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
-INSERT INTO allocations (task_id, allocation_id, resource_pool, start_time)
-VALUES (:task_id, :allocation_id, :resource_pool, :start_time)
+INSERT INTO allocations (task_id, allocation_id, slots, resource_pool, agent_label, start_time)
+VALUES (:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time)
 `, a)
 }
 
@@ -72,6 +85,18 @@ UPDATE allocations
 SET end_time = :end_time
 WHERE allocation_id = :allocation_id
 `, a)
+}
+
+func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error) {
+	var a model.Allocation
+	if err := db.query(`
+SELECT *
+FROM allocations
+WHERE allocation_id = $1
+`, &a, aID); err != nil {
+		return nil, errors.Wrap(err, "querying allocation")
+	}
+	return &a, nil
 }
 
 // StartAllocationSession creates a row in the allocation_sessions table.
