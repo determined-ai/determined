@@ -708,7 +708,12 @@ func (a *apiServer) CreateExperiment(
 		detParams.ParentID = &parentID
 	}
 
-	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
@@ -718,12 +723,6 @@ func (a *apiServer) CreateExperiment(
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
-	dbExp.OwnerID = &user.ID
 	e, err := newExperiment(a.m, dbExp, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
