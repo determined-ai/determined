@@ -227,94 +227,131 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
-	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
-	// (RFC 7386). Clients can only update certain fields of the experiment.
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-	// Merge Patch (RFC 7386) format.
-	// TODO: check for extraneous fields.
-	patch := struct {
-		State     *model.State `json:"state"`
-		Resources *struct {
-			MaxSlots api.MaybeInt `json:"max_slots"`
-			Weight   *float64     `json:"weight"`
-			Priority *int         `json:"priority"`
-		} `json:"resources"`
-		CheckpointStorage *struct {
-			SaveExperimentBest int `json:"save_experiment_best"`
-			SaveTrialBest      int `json:"save_trial_best"`
-			SaveTrialLatest    int `json:"save_trial_latest"`
-		} `json:"checkpoint_storage"`
-	}{}
-	if err := api.BindPatch(&patch, c); err != nil {
-		return nil, err
-	}
+// ExperimentPatch represents the allowed mutations that can be performed on an experiment, in JSON
+// Merge Patch (RFC 7386) format.
+type ExperimentPatch struct {
+	State *model.State `json:"state"`
+	// Labels set to nil are deleted.
+	Archived *bool   `json:"archived"`
+	Notes    *string `json:"notes"`
+}
 
-	dbExp, err := m.db.ExperimentByID(args.ExperimentID)
+// ExperimentConfigPatch represents the allowed mutations that can be performed on an experiment
+// config, in JSON Merge Patch (RFC 7386) format.
+type ExperimentConfigPatch struct {
+	Description *string `json:"description"`
+	Name        *string
+	Labels      map[string]*bool `json:"labels"`
+	Resources   *struct {
+		MaxSlots api.MaybeInt `json:"max_slots"`
+		Weight   *float64     `json:"weight"`
+		Priority *int         `json:"priority"`
+	} `json:"resources"`
+	CheckpointStorage *struct {
+		SaveExperimentBest int `json:"save_experiment_best"`
+		SaveTrialBest      int `json:"save_trial_best"`
+		SaveTrialLatest    int `json:"save_trial_latest"`
+	} `json:"checkpoint_storage"`
+}
+
+func (m *Master) patchExperiment(
+	expID int, expPatch *ExperimentPatch, configPatch *ExperimentConfigPatch,
+) error {
+	dbExp, err := m.db.ExperimentByID(expID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", args.ExperimentID)
+		return errors.Wrapf(err, "loading experiment %v", expID)
 	}
 
 	agentUserGroup, err := m.db.AgentUserGroup(*dbExp.OwnerID)
 	if err != nil {
-		return nil, errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
+		return errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
 	}
 
 	if agentUserGroup == nil {
 		agentUserGroup = &m.config.Security.DefaultTask
 	}
 
-	if patch.Resources != nil {
+	if expPatch.Archived != nil {
+		dbExp.Archived = *expPatch.Archived
+		if err := m.db.SaveExperimentArchiveStatus(dbExp); err != nil {
+			return errors.Wrapf(err, "archiving experiment %d", dbExp.ID)
+		}
+	}
+	if expPatch.Notes != nil {
+		dbExp.Notes = *expPatch.Notes
+		_, err := m.db.RawQuery(
+			"patch_experiment_notes",
+			dbExp.ID,
+			expPatch.Notes,
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to save experiment %d notes", dbExp.ID)
+		}
+	}
+	if configPatch.Resources != nil {
 		resources := dbExp.Config.Resources()
-		if patch.Resources.MaxSlots.IsPresent {
-			resources.SetMaxSlots(patch.Resources.MaxSlots.Value)
+		if configPatch.Resources.MaxSlots.IsPresent {
+			resources.SetMaxSlots(configPatch.Resources.MaxSlots.Value)
 		}
-		if patch.Resources.Weight != nil {
-			resources.SetWeight(*patch.Resources.Weight)
+		if configPatch.Resources.Weight != nil {
+			resources.SetWeight(*configPatch.Resources.Weight)
 		}
-		if patch.Resources.Priority != nil {
-			resources.SetPriority(patch.Resources.Priority)
+		if configPatch.Resources.Priority != nil {
+			resources.SetPriority(configPatch.Resources.Priority)
 		}
 		dbExp.Config.SetResources(resources)
 	}
-	if patch.CheckpointStorage != nil {
+	if configPatch.Description != nil {
+		dbExp.Config.SetDescription(configPatch.Description)
+	}
+	if configPatch.Name != nil {
+		dbExp.Config.SetName(expconf.Name{RawString: configPatch.Name})
+	}
+	labels := dbExp.Config.Labels()
+	for label, keep := range configPatch.Labels {
+		switch _, ok := labels[label]; {
+		case ok && keep == nil:
+			delete(labels, label)
+		case !ok && keep != nil:
+			if labels == nil {
+				labels = make(expconf.Labels)
+			}
+			labels[label] = true
+		}
+	}
+	dbExp.Config.SetLabels(labels)
+	if configPatch.CheckpointStorage != nil {
 		storage := dbExp.Config.CheckpointStorage()
-		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
-		storage.SetSaveTrialBest(patch.CheckpointStorage.SaveTrialBest)
-		storage.SetSaveTrialLatest(patch.CheckpointStorage.SaveTrialLatest)
+		storage.SetSaveExperimentBest(configPatch.CheckpointStorage.SaveExperimentBest)
+		storage.SetSaveTrialBest(configPatch.CheckpointStorage.SaveTrialBest)
+		storage.SetSaveTrialLatest(configPatch.CheckpointStorage.SaveTrialLatest)
 		dbExp.Config.SetCheckpointStorage(storage)
 	}
 
 	if err := m.db.SaveExperimentConfig(dbExp); err != nil {
-		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
+		return errors.Wrapf(err, "patching experiment %d", dbExp.ID)
 	}
 
-	if patch.State != nil {
-		m.system.TellAt(actor.Addr("experiments", args.ExperimentID), *patch.State)
+	if expPatch.State != nil {
+		m.system.TellAt(actor.Addr("experiments", dbExp.ID), *expPatch.State)
 	}
 
-	if patch.Resources != nil {
-		if patch.Resources.MaxSlots.IsPresent {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
+	if configPatch.Resources != nil {
+		if configPatch.Resources.MaxSlots.IsPresent {
+			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
+				sproto.SetGroupMaxSlots{MaxSlots: configPatch.Resources.MaxSlots.Value})
 		}
-		if patch.Resources.Weight != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupWeight{Weight: *patch.Resources.Weight})
+		if configPatch.Resources.Weight != nil {
+			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
+				job.SetGroupWeight{Weight: *configPatch.Resources.Weight})
 		}
-		if patch.Resources.Priority != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupPriority{Priority: patch.Resources.Priority})
+		if configPatch.Resources.Priority != nil {
+			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
+				job.SetGroupPriority{Priority: configPatch.Resources.Priority})
 		}
 	}
 
-	if patch.CheckpointStorage != nil {
+	if configPatch.CheckpointStorage != nil {
 		checkpoints, err := m.db.ExperimentCheckpointsToGCRaw(
 			dbExp.ID,
 			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
@@ -323,7 +360,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			true,
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		taskSpec := *m.taskSpec
@@ -345,8 +382,28 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 				db: m.db,
 			})
 	}
+	return nil
+}
 
-	return nil, nil
+func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
+	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
+	// (RFC 7386). Clients can only update certain fields of the experiment.
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	expPatch := ExperimentPatch{}
+	if err := api.BindPatch(&expPatch, c); err != nil {
+		return nil, err
+	}
+	expConfigPatch := ExperimentConfigPatch{}
+	if err := api.BindPatch(&expConfigPatch, c); err != nil {
+		return nil, err
+	}
+
+	return nil, m.patchExperiment(args.ExperimentID, &expPatch, &expConfigPatch)
 }
 
 // CreateExperimentParams defines a request to create an experiment.
