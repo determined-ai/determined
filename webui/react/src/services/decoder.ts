@@ -168,7 +168,6 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
 
 export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
   return {
-    taskId: task.taskId || '',
     allocations: task.allocations?.map(a => {
       const setState = {
         STATE_ASSIGNED: types.CommandState.Assigned,
@@ -183,9 +182,10 @@ export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
       return {
         isReady: a.isReady || false,
         state: setState,
-        taskId: a.taskId
+        taskId: a.taskId,
       };
-    }) || []
+    }) || [],
+    taskId: task.taskId || '',
   };
 };
 
