@@ -318,7 +318,7 @@ const ExperimentList: React.FC = () => {
         key: 'labels',
         onHeaderCell: () => settings.tag ? { className: tableCss.headerFilterOn } : {},
         render: labelsRenderer,
-        title: 'Labels',
+        title: 'Tags',
         width: 120,
       },
       {
