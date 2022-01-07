@@ -88,6 +88,16 @@ def test_text_classification_glue() -> None:
 
 
 @pytest.mark.model_hub_transformers
+def test_text_classification_glue_augmentation() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/text-classification")
+    config = conf.load_config(os.path.join(example_path, "glue_augmentation_config.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers
 def test_text_classification_xnli() -> None:
     example_path = conf.model_hub_examples_path("huggingface/text-classification")
     config = conf.load_config(os.path.join(example_path, "xnli_config.yaml"))

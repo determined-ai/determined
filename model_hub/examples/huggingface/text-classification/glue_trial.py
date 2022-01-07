@@ -193,11 +193,31 @@ class GLUETrial(hf.BaseTransformerTrial):
             )
         max_seq_length = min(self.data_config.max_seq_length, self.tokenizer.model_max_length)
 
+        # Combine TextAttack transformations from the augmentations into one CompositeTransformation
+        tforms = []
+        for aug in self.data_config.augmentations:
+            if aug in transformations.__dir__():
+                tform_module = getattr(transformations, aug)
+                tforms.append(tform_module())
+        augmenter = Augmenter(
+            transformation=transformations.CompositeTransformation(tforms),
+            transformations_per_example=1,
+        )
+
         # We cannot use self.tokenizer as a non-local variable in the preprocess_function if we
         # want map to be able to cache the output of the tokenizer.  Hence, the preprocess_function
         # takes a tokenizer explicitly as an input and we create a closure using functools.partial.
-        def preprocess_function(tokenizer, padding, max_seq_length, examples):
+        def preprocess_function(tokenizer, padding, max_seq_length, examples, augment=False):
             # Tokenize the texts
+            aug_examples = {}
+            del examples["idx"]
+            if augment:
+                for k in [sentence1_key, sentence2_key]:
+                    if k is not None:
+                        example_count = len(examples)
+                        for ind in range(0, len(examples[k])):
+                            examples[k].append(augmenter.augment(examples[k][ind])[0])
+                            examples["label"].append(examples["label"][ind])
             args = (
                 (examples[sentence1_key],)
                 if sentence2_key is None
@@ -210,11 +230,26 @@ class GLUETrial(hf.BaseTransformerTrial):
                 result["label"] = [label_to_id[label] for label in examples["label"]]
             return result
 
-        tokenized_datasets = self.raw_datasets.map(
-            functools.partial(preprocess_function, self.tokenizer, padding, max_seq_length),
-            batched=True,
-            load_from_cache_file=not self.data_config.overwrite_cache,
-        )
+        tokenized_datasets = {
+            "train": self.raw_datasets["train"].map(
+                functools.partial(
+                    preprocess_function,
+                    self.tokenizer,
+                    padding,
+                    max_seq_length,
+                    augment=(len(self.data_config.augmentations) > 0),
+                ),
+                batched=True,
+                load_from_cache_file=not self.data_config.overwrite_cache,
+            ),
+            "validation": self.raw_datasets["validation"].map(
+                functools.partial(
+                    preprocess_function, self.tokenizer, padding, max_seq_length, augment=False
+                ),
+                batched=True,
+                load_from_cache_file=not self.data_config.overwrite_cache,
+            ),
+        }
         for _, data in tokenized_datasets.items():
             hf.remove_unused_columns(self.model, data)
 
@@ -254,128 +289,3 @@ class GLUETrial(hf.BaseTransformerTrial):
         self.reducer.update((preds, out_label_ids))
         # We will return just the metrics outputed by the reducer.
         return {}
-
-
-class GLUEAugmentationTrial(GLUETrial):
-    def build_datasets(self) -> Union[datasets.Dataset, datasets.DatasetDict]:
-        # Preprocessing the datasets
-        if self.hparams.finetuning_task is not None:
-            sentence1_key, sentence2_key = task_to_keys[self.hparams.finetuning_task]
-        else:
-            # We try to have some nice defaults but don't hesitate to tweak to your use case.
-            non_label_column_names = [
-                name for name in self.raw_datasets["train"].column_names if name != "label"
-            ]
-            if "sentence1" in non_label_column_names and "sentence2" in non_label_column_names:
-                sentence1_key, sentence2_key = "sentence1", "sentence2"
-            else:
-                if len(non_label_column_names) >= 2:
-                    sentence1_key, sentence2_key = non_label_column_names[:2]
-                else:
-                    sentence1_key, sentence2_key = non_label_column_names[0], None
-
-        # Padding strategy
-        if self.data_config.pad_to_max_length:
-            padding = "max_length"
-        else:
-            # We will pad later, dynamically at batch creation to the max_seq_length in each batch.
-            padding = False
-
-        # Some models have set the order of the labels to use, so let's make sure we do use it.
-        label_to_id = None
-        if (
-            self.model.config.label2id
-            != transformers.PretrainedConfig(num_labels=self.hparams.num_labels).label2id
-            and self.hparams.finetuning_task is not None
-            and not self.is_regression
-        ):
-            # Some have all caps in their config, some don't.
-            label_name_to_id = {k.lower(): v for k, v in self.model.config.label2id.items()}
-            if sorted(label_name_to_id.keys()) == sorted(self.label_list):
-                label_to_id = {
-                    i: label_name_to_id[self.label_list[i]] for i in range(self.hparams.num_labels)
-                }
-            else:
-                self.logger.warning(
-                    "Your model seems to have been trained with labels, but they don't match the "
-                    f"dataset: model labels: {sorted(label_name_to_id.keys())}, "
-                    f"dataset labels: {sorted(self.label_list)}."
-                    "\nIgnoring the model labels as a result.",
-                )
-        elif self.hparams.finetuning_task is None and not self.is_regression:
-            label_to_id = {v: i for i, v in enumerate(self.label_list)}
-
-        if self.data_config.max_seq_length > self.tokenizer.model_max_length:
-            self.logger.warning(
-                f"The max_seq_length passed ({self.data_config.max_seq_length}) is larger than "
-                f"the maximum length for the model ({self.tokenizer.model_max_length}). Using "
-                f"max_seq_length={self.tokenizer.model_max_length}."
-            )
-        max_seq_length = min(self.data_config.max_seq_length, self.tokenizer.model_max_length)
-
-        tforms = []
-        for aug in self.data_config.augmentations:
-            if aug in transformations.__dir__():
-                tform_module = getattr(transformations, aug)
-                tforms.append(tform_module())
-
-        augmenter = Augmenter(
-            transformation=transformations.CompositeTransformation(tforms),
-            transformations_per_example=1,
-        )
-
-        # We cannot use self.tokenizer as a non-local variable in the preprocess_function if we
-        # want map to be able to cache the output of the tokenizer.  Hence, the preprocess_function
-        # takes a tokenizer explicitly as an input and we create a closure using functools.partial.
-        def preprocess_function(tokenizer, padding, max_seq_length, examples, augment=False):
-            # Tokenize the texts
-            aug_examples = {}
-            del examples["idx"]
-            if augment:
-                for k in [sentence1_key, sentence2_key]:
-                    if k is not None:
-                        example_count = len(examples)
-                        for ind in range(0, len(examples[k])):
-                            examples[k].append(augmenter.augment(examples[k][ind])[0])
-                            examples["label"].append(examples["label"][ind])
-            args = (
-                (examples[sentence1_key],)
-                if sentence2_key is None
-                else (examples[sentence1_key], examples[sentence2_key])
-            )
-            result = tokenizer(*args, padding=padding, max_length=max_seq_length, truncation=True)
-
-            # Map labels to IDs (not necessary for GLUE tasks)
-            if label_to_id is not None and "label" in examples:
-                result["label"] = [label_to_id[label] for label in examples["label"]]
-            return result
-
-        tokenized_datasets = {
-            "train": self.raw_datasets["train"].map(
-                functools.partial(
-                    preprocess_function, self.tokenizer, padding, max_seq_length, augment=True
-                ),
-                batched=True,
-                load_from_cache_file=not self.data_config.overwrite_cache,
-            ),
-            "validation": self.raw_datasets["validation"].map(
-                functools.partial(
-                    preprocess_function, self.tokenizer, padding, max_seq_length, augment=False
-                ),
-                batched=True,
-                load_from_cache_file=not self.data_config.overwrite_cache,
-            ),
-        }
-        for _, data in tokenized_datasets.items():
-            hf.remove_unused_columns(self.model, data)
-
-        # Data collator will default to DataCollatorWithPadding, so we change it if we already
-        # did the padding.
-        if self.data_config.pad_to_max_length:
-            self.collator = transformers.default_data_collator
-        elif self.hparams.use_apex_amp:
-            collator = transformers.DataCollatorWithPadding(self.tokenizer, pad_to_multiple_of=8)
-            self.collator = lambda x: collator(x).data
-        else:
-            self.collator = None
-        return tokenized_datasets
