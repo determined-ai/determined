@@ -121,13 +121,13 @@ func (db *PgDB) DeleteAllocationSession(allocationID model.AllocationID) error {
 }
 
 // UpdateAllocationState stores the latest task state and readiness.
-func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
+func (db *PgDB) UpdateAllocationState(a model.Allocation) (model.AllocationState, error) {
 	_, err := db.sql.Exec(`
 		UPDATE allocations
 		SET state=$2, is_ready=$3
 		WHERE allocation_id=$1
 	`, a.AllocationID, a.State, a.IsReady)
-	return err
+	return a.State, err
 }
 
 // CloseOpenAllocations finds all allocations that were open when the master crashed
