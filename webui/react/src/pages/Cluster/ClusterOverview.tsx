@@ -82,25 +82,26 @@ const ClusterOverview: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.CPU);
   }, [ agents ]);
 
-  const cudaTotalSlots = useMemo(() => {
-    return resourcePools.filter(pool => pool.slotType === ResourceType.CUDA)
-      .reduce((totalSlots, currentPool) => {
-        return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-      }, 0);
-  }, [ resourcePools ]);
-
-  const rocmTotalSlots = useMemo(() => {
-    return resourcePools.filter(pool => pool.slotType === ResourceType.ROCM)
-      .reduce((totalSlots, currentPool) => {
-        return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-      }, 0);
-  }, [ resourcePools ]);
-
-  const cpuTotalSlots = useMemo(() => {
-    return resourcePools.filter(pool => pool.slotType === ResourceType.CPU)
-      .reduce((totalSlots, currentPool) => {
-        return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-      }, 0);
+  const [ cudaTotalSlots, rocmTotalSlots, cpuTotalSlots ] = useMemo(() => {
+    return resourcePools.reduce((acc, pool) => {
+      let index;
+      switch (pool.slotType) {
+        case ResourceType.CUDA:
+          index = 0;
+          break;
+        case ResourceType.ROCM:
+          index = 1;
+          break;
+        case ResourceType.CPU:
+          index = 2;
+          break;
+        default:
+          index = undefined;
+      }
+      if (index === undefined) return acc;
+      acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
+      return acc;
+    }, [ 0, 0, 0 ]);
   }, [ resourcePools ]);
 
   const getSlotTypeOverview = useCallback((
