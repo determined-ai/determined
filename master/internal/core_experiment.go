@@ -226,7 +226,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
+// ExperimentPatch represents the allowed mutations that can be performed on an experiment, in JSON
 // Merge Patch (RFC 7386) format.
 type ExperimentPatch struct {
 	State *model.State `json:"state"`
@@ -249,34 +249,10 @@ type ExperimentPatch struct {
 	Archived *bool `json:"archived"`
 }
 
-// func (m *Master) patchExperiment(expId int, ) (interface{}, error) {
-// }
-
-func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
-	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
-	// (RFC 7386). Clients can only update certain fields of the experiment.
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-	// Merge Patch (RFC 7386) format.
-	// TODO: check for extraneous fields.
-	patch := ExperimentPatch{}
-	if err := api.BindPatch(&patch, c); err != nil {
-		return nil, err
-	}
-
-	dbExp, err := m.db.ExperimentByID(args.ExperimentID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", args.ExperimentID)
-	}
-
+func (m *Master) patchExperiment(dbExp *model.Experiment, patch *ExperimentPatch) error {
 	agentUserGroup, err := m.db.AgentUserGroup(*dbExp.OwnerID)
 	if err != nil {
-		return nil, errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
+		return errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
 	}
 
 	if agentUserGroup == nil {
@@ -286,7 +262,7 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 	if patch.Archived != nil {
 		dbExp.Archived = *patch.Archived
 		if err := m.db.SaveExperimentArchiveStatus(dbExp); err != nil {
-			return nil, errors.Wrapf(err, "archiving experiment %d", dbExp.ID)
+			return errors.Wrapf(err, "archiving experiment %d", dbExp.ID)
 		}
 	}
 	if patch.Resources != nil {
@@ -327,24 +303,24 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 	}
 
 	if err := m.db.SaveExperimentConfig(dbExp); err != nil {
-		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
+		return errors.Wrapf(err, "patching experiment %d", dbExp.ID)
 	}
 
 	if patch.State != nil {
-		m.system.TellAt(actor.Addr("experiments", args.ExperimentID), *patch.State)
+		m.system.TellAt(actor.Addr("experiments", dbExp.ID), *patch.State)
 	}
 
 	if patch.Resources != nil {
 		if patch.Resources.MaxSlots.IsPresent {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
 				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
 		}
 		if patch.Resources.Weight != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
 				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
 		}
 		if patch.Resources.Priority != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			m.system.TellAt(actor.Addr("experiments", dbExp.ID),
 				sproto.SetGroupPriority{Priority: patch.Resources.Priority})
 		}
 	}
@@ -358,7 +334,7 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 			true,
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		taskSpec := *m.taskSpec
@@ -378,8 +354,32 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 				db: m.db,
 			})
 	}
+	return nil
+}
 
-	return nil, nil
+func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
+	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
+	// (RFC 7386). Clients can only update certain fields of the experiment.
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
+	// Merge Patch (RFC 7386) format.
+	// TODO: check for extraneous fields.
+	patch := ExperimentPatch{}
+	if err := api.BindPatch(&patch, c); err != nil {
+		return nil, err
+	}
+
+	dbExp, err := m.db.ExperimentByID(args.ExperimentID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", args.ExperimentID)
+	}
+
+	return nil, m.patchExperiment(dbExp, &patch)
 }
 
 // CreateExperimentParams defines a request to create an experiment.
