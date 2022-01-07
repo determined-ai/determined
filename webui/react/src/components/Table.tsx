@@ -59,8 +59,8 @@ export const defaultPaginationConfig = {
 
 /* Table Column Renderers */
 
-export const archivedRenderer = (archived: boolean): React.ReactNode => {
-  return archived ? <Icon name="checkmark" /> : null;
+export const checkmarkRenderer = (yesNo: boolean): React.ReactNode => {
+  return yesNo ? <Icon name="checkmark" /> : null;
 };
 
 export const durationRenderer = (times: StartEndTimes): React.ReactNode => (

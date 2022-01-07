@@ -10,7 +10,7 @@ import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  archivedRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
+  checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
   ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig,
   relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
@@ -380,7 +380,7 @@ const ExperimentList: React.FC = () => {
         ],
         key: 'archived',
         onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
-        render: archivedRenderer,
+        render: checkmarkRenderer,
         title: 'Archived',
       },
       {
