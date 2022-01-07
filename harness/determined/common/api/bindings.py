@@ -463,6 +463,40 @@ class v1AgentUserGroup:
             "agentGid": self.agentGid if self.agentGid is not None else None,
         }
 
+class v1Allocation:
+    def __init__(
+        self,
+        endTime: "typing.Optional[str]" = None,
+        isReady: "typing.Optional[bool]" = None,
+        startTime: "typing.Optional[str]" = None,
+        state: "typing.Optional[determinedtaskv1State]" = None,
+        taskId: "typing.Optional[str]" = None,
+    ):
+        self.taskId = taskId
+        self.state = state
+        self.isReady = isReady
+        self.startTime = startTime
+        self.endTime = endTime
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Allocation":
+        return cls(
+            taskId=obj["taskId"] if obj.get("taskId", None) is not None else None,
+            state=determinedtaskv1State(obj["state"]) if obj.get("state", None) is not None else None,
+            isReady=obj["isReady"] if obj.get("isReady", None) is not None else None,
+            startTime=obj["startTime"] if obj.get("startTime", None) is not None else None,
+            endTime=obj["endTime"] if obj.get("endTime", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "taskId": self.taskId if self.taskId is not None else None,
+            "state": self.state.value if self.state is not None else None,
+            "isReady": self.isReady if self.isReady is not None else None,
+            "startTime": self.startTime if self.startTime is not None else None,
+            "endTime": self.endTime if self.endTime is not None else None,
+        }
+
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
@@ -1861,6 +1895,24 @@ class v1GetSlotsResponse:
     def to_json(self) -> typing.Any:
         return {
             "slots": [x.to_json() for x in self.slots] if self.slots is not None else None,
+        }
+
+class v1GetTaskResponse:
+    def __init__(
+        self,
+        task: "typing.Optional[v1Task]" = None,
+    ):
+        self.task = task
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskResponse":
+        return cls(
+            task=v1Task.from_json(obj["task"]) if obj.get("task", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "task": self.task.to_json() if self.task is not None else None,
         }
 
 class v1GetTelemetryResponse:
@@ -4405,6 +4457,28 @@ class v1Slot:
             "draining": self.draining if self.draining is not None else None,
         }
 
+class v1Task:
+    def __init__(
+        self,
+        allocations: "typing.Optional[typing.Sequence[v1Allocation]]" = None,
+        taskId: "typing.Optional[str]" = None,
+    ):
+        self.taskId = taskId
+        self.allocations = allocations
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Task":
+        return cls(
+            taskId=obj["taskId"] if obj.get("taskId", None) is not None else None,
+            allocations=[v1Allocation.from_json(x) for x in obj["allocations"]] if obj.get("allocations", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "taskId": self.taskId if self.taskId is not None else None,
+            "allocations": [x.to_json() for x in self.allocations] if self.allocations is not None else None,
+        }
+
 class v1Template:
     def __init__(
         self,
@@ -5984,6 +6058,25 @@ def get_GetSlots(
     if _resp.status_code == 200:
         return v1GetSlotsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetSlots", _resp)
+
+def get_GetTask(
+    session: "client.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTask", _resp)
 
 def get_GetTelemetry(
     session: "client.Session",
