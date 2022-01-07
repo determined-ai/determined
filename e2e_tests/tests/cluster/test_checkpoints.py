@@ -1,5 +1,6 @@
 import json
 import operator
+import sys
 import tempfile
 import time
 from typing import Any, Dict, Set
@@ -8,9 +9,30 @@ import pytest
 import yaml
 
 from determined import errors
-from determined.common import storage
+from determined.common import api, storage
+from determined.common.api import authentication, certs
 from tests import config as conf
 from tests import experiment as exp
+
+
+def wait_for_gc_to_finish(experiment_id: int) -> None:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    saw_gc = False
+    # Don't wait longer than 5 minutes (as 600 half-seconds to improve our sampling resolution).
+    for _ in range(600):
+        r = api.get(conf.make_master_url(), "tasks").json()
+        names = [task["name"] for task in r.values()]
+        gc_name = f"Checkpoint GC (Experiment {experiment_id})"
+        if gc_name in names:
+            saw_gc = True
+        elif saw_gc:
+            # We previously saw checkpoint gc but now we don't, so it must have finished.
+            return
+        time.sleep(0.5)
+
+    # It's possible that it ran really fast and we missed it, so just log this.
+    print("Did not observe checkpoint gc start or finish!", file=sys.stderr)
 
 
 @pytest.mark.e2e_gpu
@@ -48,6 +70,10 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
         exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+
+        # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
+        # be spun up still.  So we'll wait for it to run.
+        wait_for_gc_to_finish(experiment_id)
 
         # Checkpoints are not marked as deleted until gc_checkpoint task starts.
         retries = 5
