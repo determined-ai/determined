@@ -87,6 +87,7 @@ WHERE allocation_id = :allocation_id
 `, a)
 }
 
+// AllocationByID retrieves an allocation by its ID.
 func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error) {
 	var a model.Allocation
 	if err := db.query(`

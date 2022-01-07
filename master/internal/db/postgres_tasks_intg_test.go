@@ -56,7 +56,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		TaskID:    tID,
 		JobID:     jID,
 		TaskType:  model.TaskTypeTrial,
-		StartTime: time.Now().UTC(),
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
 	err = db.AddTask(tIn)
 	require.NoError(t, err, "failed to add task")
@@ -67,7 +67,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
 	// Complete it.
-	tIn.EndTime = ptrs.TimePtr(time.Now().UTC())
+	tIn.EndTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
 	err = db.CompleteTask(tID, *tIn.EndTime)
 	require.NoError(t, err, "failed to mark task completed")
 
@@ -84,7 +84,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		Slots:        8,
 		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
-		StartTime:    time.Now().UTC(),
+		StartTime:    time.Now().UTC().Truncate(time.Millisecond),
 	}
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
@@ -95,7 +95,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
 
 	// Complete it.
-	aIn.EndTime = ptrs.TimePtr(time.Now().UTC())
+	aIn.EndTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
 	err = db.CompleteAllocation(aIn)
 	require.NoError(t, err, "failed to mark allocation completed")
 
