@@ -195,7 +195,7 @@ class GLUETrial(hf.BaseTransformerTrial):
 
         # Combine TextAttack transformations from the augmentations into one CompositeTransformation
         tforms = []
-        if 'augmentations' in self.data_config:
+        if "augmentations" in self.data_config:
             for aug in self.data_config.augmentations:
                 if aug in transformations.__dir__():
                     tform_module = getattr(transformations, aug)
@@ -238,7 +238,7 @@ class GLUETrial(hf.BaseTransformerTrial):
                     self.tokenizer,
                     padding,
                     max_seq_length,
-                    augment=('augmentations' in self.data_config),
+                    augment=("augmentations" in self.data_config),
                 ),
                 batched=True,
                 load_from_cache_file=not self.data_config.overwrite_cache,
