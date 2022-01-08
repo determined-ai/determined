@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/prom"
-
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
@@ -563,76 +561,42 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
-	var exp experimentv1.Experiment
-	switch err := a.m.db.QueryProto("get_experiment", &exp, req.Experiment.Id); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.Experiment.Id)
-	case err != nil:
-		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", req.Experiment.Id)
-	}
-
 	paths := req.UpdateMask.GetPaths()
-	shouldUpdateNotes := false
-	shouldUpdateConfig := false
+	expPatch := ExperimentPatch{}
+	configPatch := ExperimentConfigPatch{}
+	expID := int(req.Experiment.Id)
 	for _, path := range paths {
 		switch {
+		case path == "notes":
+			expPatch.Notes = &req.Experiment.Notes
 		case path == "name":
 			if len(strings.TrimSpace(req.Experiment.Name)) == 0 {
 				return nil, status.Errorf(codes.InvalidArgument, "`name` is required.")
 			}
-			exp.Name = req.Experiment.Name
-		case path == "notes":
-			shouldUpdateNotes = true
-			exp.Notes = req.Experiment.Notes
+			configPatch.Name = &req.Experiment.Name
 		case path == "labels":
-			exp.Labels = req.Experiment.Labels
-			prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
-				req.Experiment.Labels)
+			// TODO convert labels
+			// exp.Labels = req.Experiment.Labels
+			// prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
+			// 	req.Experiment.Labels)
 		case path == "description":
-			exp.Description = req.Experiment.Description
+			configPatch.Description = &req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
 				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
-	shouldUpdateConfig = (shouldUpdateNotes && len(paths) > 1) ||
-		(!shouldUpdateNotes && len(paths) > 0)
-
-	if shouldUpdateNotes {
-		_, err := a.m.db.RawQuery(
-			"patch_experiment_notes",
-			req.Experiment.Id,
-			req.Experiment.Notes,
-		)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to update experiment")
-		}
+	if err := a.m.patchExperiment(expID, &expPatch, &configPatch); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update experiment")
 	}
 
-	if shouldUpdateConfig {
-		type experimentPatch struct {
-			Labels      []string `json:"labels"`
-			Description string   `json:"description"`
-			Name        string   `json:"name"`
-		}
-		patches := experimentPatch{
-			Labels:      exp.Labels,
-			Description: exp.Description,
-			Name:        exp.Name,
-		}
-		marshalledPatches, err := json.Marshal(patches)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
-		}
-		_, err = a.m.db.RawQuery(
-			"patch_experiment_config",
-			req.Experiment.Id,
-			marshalledPatches,
-		)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to update experiment")
-		}
+	var exp experimentv1.Experiment
+	switch err := a.m.db.QueryProto("get_experiment", &exp, req.Experiment.Id); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.Experiment.Id)
+	case err != nil:
+		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", req.Experiment.Id)
 	}
 
 	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
