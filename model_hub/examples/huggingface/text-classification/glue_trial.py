@@ -210,12 +210,10 @@ class GLUETrial(hf.BaseTransformerTrial):
         # takes a tokenizer explicitly as an input and we create a closure using functools.partial.
         def preprocess_function(tokenizer, padding, max_seq_length, examples, augment=False):
             # Tokenize the texts
-            aug_examples = {}
             del examples["idx"]
             if augment:
                 for k in [sentence1_key, sentence2_key]:
                     if k is not None:
-                        example_count = len(examples)
                         for ind in range(0, len(examples[k])):
                             examples[k].append(augmenter.augment(examples[k][ind])[0])
                             examples["label"].append(examples["label"][ind])
