@@ -256,11 +256,13 @@ class DistributedContext:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
         if self._is_chief:
-            worker_stuff, _ = self._chief_zmq.gather_with_polling(lambda: None)
+            worker_stuff_ranked, _ = self._chief_zmq.gather_with_polling(lambda: None)
+            worker_stuff_ranked.sort(key=lambda x: x[1])
+            worker_stuff = [value for value, index in worker_stuff_ranked]
             all_stuff = [stuff, *worker_stuff]
             self._chief_zmq.broadcast(all_stuff)
         else:
-            self._worker_zmq.send(stuff)
+            self._worker_zmq.send((stuff, self.get_rank()))
             all_stuff = self._worker_zmq.recv()
         logging.debug(f"Worker {self.get_rank()} finished zmq allgather.")
         return all_stuff
