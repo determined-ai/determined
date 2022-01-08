@@ -93,6 +93,7 @@ export const setupAnalytics = (auth: Auth, info: DeterminedInfo): void => {
         clusterName: info.clusterName,
         edition: 'OSS',
         masterId: info.masterId,
+        username: auth.user.username,
         version: info.version,
       });
     } catch (e) {
