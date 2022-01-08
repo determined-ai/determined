@@ -62,6 +62,7 @@ export const loadAnalytics = async (info: DeterminedInfo): Promise<void> => {
       const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
       if (isProperKey) {
         data.analytics.load(telemetry.segmentKey || '');
+        data.analytics.page();
         data.isEnabled = true;
       }
     } catch (e) {
