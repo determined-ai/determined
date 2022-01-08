@@ -2003,7 +2003,7 @@ func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
 		r1 = ret.Error(1)
 	}
 
-	return r0, r1
+	return r1
 }
 
 // UpdateCheckpointMetadata provides a mock function with given fields: checkpoint
