@@ -1,5 +1,7 @@
-import { AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, Job, JobState, JobType,
-  RunState } from 'types';
+import { DaError, ErrorType } from 'ErrorHandler';
+import * as Api from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
+import { CommandType, JobState, JobType } from 'types';
 
 import { capitalize } from './string';
 
@@ -31,23 +33,30 @@ export const jobTypeToCommandType = (
   }
 };
 
-export const taskFromJob = (job: Job): AnyTask => {
-  const baseTask = { id: job.entityId, name: job.name };
-  let rv: AnyTask;
-  if (job.type === JobType.EXPERIMENT) {
-    rv = { ...baseTask, archived: false, state: RunState.Active } as ExperimentTask;
-  } else {
-    rv = {
-      ...baseTask,
-      state: CommandState.Running,
-      type: jobTypeToCommandType(job.type),
-    } as CommandTask;
-  }
-  return rv;
-};
-
 export const jobStateToLabel: {[key in JobState]: string} = {
   [JobState.SCHEDULED]: 'Scheduled',
   [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
+};
+
+export const orderedSchedulers = new Set(
+  [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
+);
+
+export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1QueueControl => {
+  if (position < 1 || position % 1 !== 0) {
+    const err: DaError = {
+      message: `Invalid queue position: ${position}`,
+      type: ErrorType.Input,
+    };
+    throw err;
+  }
+  return {
+    jobId,
+    queuePosition: position - 1,
+  };
+};
+
+export const moveJobToPosition = async (jobId: string, position: number): Promise<void> => {
+  await detApi.Internal.updateJobQueue({ updates: [ moveJobToPositionUpdate(jobId, position) ] });
 };

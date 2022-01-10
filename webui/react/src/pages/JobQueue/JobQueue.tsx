@@ -6,9 +6,7 @@ import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
-import {
-  defaultRowClassName, getFullPaginationConfig,
-} from 'components/Table';
+import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -23,6 +21,7 @@ import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
+import { moveJobToPosition, orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -30,8 +29,6 @@ import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 import RPStatsOverview from './RPStats';
-
-const orderdQTypes = [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ];
 
 const JobQueue: React.FC = () => {
   const { resourcePools } = useStore();
@@ -54,6 +51,7 @@ const JobQueue: React.FC = () => {
   } = useSettings<Settings>(settingsConfig);
 
   const fetchResourcePools = useFetchResourcePools(canceler);
+  const isJobOrderAvailable = !!selectedRp && orderedSchedulers.has(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
     if (!selectedRp?.name) return;
@@ -122,9 +120,8 @@ const JobQueue: React.FC = () => {
       },
       [JobAction.ManageJob]: () => setManagingJob(job),
     };
-    const isFirst = job.summary.jobsAhead === 0;
-    if (!isFirst) {
-      triggers[JobAction.MoveToTop] = () => window.alert('TODO move top');
+    if (isJobOrderAvailable && job.summary.jobsAhead > 0) {
+      triggers[JobAction.MoveToTop] = () => moveJobToPosition(job.jobId, 0);
     }
 
     // if job is an experiment type add action to kill it
@@ -135,7 +132,7 @@ const JobQueue: React.FC = () => {
     }
 
     return triggers;
-  }, []);
+  }, [ isJobOrderAvailable ]);
 
   const hideModal = useCallback(() => setManagingJob(undefined), []);
 
@@ -180,21 +177,28 @@ const JobQueue: React.FC = () => {
           }
           break;
         case 'jobsAhead':
-          col.render = (_: unknown, record) => {
-            return (
-              <div className={css.centerVertically}>
-                {record.summary.jobsAhead >= 0 && record.summary.jobsAhead}
-                {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
-              </div>
-            );
-          };
-          if (selectedRp && !orderdQTypes.includes(selectedRp.schedulerType)) {
+          if (!isJobOrderAvailable) {
             col.sorter = undefined;
             col.title = 'Preemptible';
+            col.render = (_: unknown, record) => {
+              return (
+                <div className={css.centerVertically}>
+                  {checkmarkRenderer(record.isPreemptible)}
+                </div>
+              );
+            };
           } else {
             col.sorter = (a: Job, b: Job): number =>
               numericSorter(a.summary.jobsAhead, b.summary.jobsAhead);
             col.title = '#';
+            col.render = (_: unknown, record) => {
+              return (
+                <div className={css.centerVertically}>
+                  {record.summary.jobsAhead}
+                  {!record.isPreemptible && <Icon name="lock" title="Not Preemtible" />}
+                </div>
+              );
+            };
           }
           break;
       }
@@ -208,7 +212,7 @@ const JobQueue: React.FC = () => {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ dropDownOnTrigger, selectedRp, jobs ]);
+  }, [ dropDownOnTrigger, selectedRp, jobs, isJobOrderAvailable ]);
 
   useEffect(() => {
     if (resourcePools.length === 0) {
@@ -321,6 +325,7 @@ const JobQueue: React.FC = () => {
       {!!managingJob && !!selectedRp && (
         <ManageJob
           job={managingJob}
+          jobs={jobs}
           schedulerType={selectedRp.schedulerType}
           selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
           onFinish={hideModal}

@@ -10,7 +10,7 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import Section from 'components/Section';
-import { archivedRenderer, getFullPaginationConfig, modelNameRenderer,
+import { checkmarkRenderer, getFullPaginationConfig, modelNameRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
@@ -369,7 +369,7 @@ const ModelRegistry: React.FC = () => {
         ],
         key: 'archived',
         onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
-        render: archivedRenderer,
+        render: checkmarkRenderer,
         title: 'Archived',
         width: 120,
       },
