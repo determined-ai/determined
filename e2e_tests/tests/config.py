@@ -13,13 +13,13 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-4537b95"
+DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-eb6c7d1"
 DEFAULT_TF2_CPU_IMAGE = (
-    "determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-4537b95"
+    "determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-eb6c7d1"
 )
-DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-4537b95"
+DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-eb6c7d1"
 DEFAULT_TF2_GPU_IMAGE = (
-    "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-4537b95"
+    "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-eb6c7d1"
 )
 
 TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE
