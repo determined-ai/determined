@@ -1,27 +1,18 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { recordPageAccess } from 'Analytics';
+import Telemetry from 'classes/Telemetry';
 
 const useRouteTracker = (): void => {
-  const { listen, location } = useHistory();
-  const pathnameRef = useRef(location.pathname);
+  const { listen } = useHistory();
 
   useEffect(() => {
-    // The very first page access which doesn't trigger location change.
-    recordPageAccess(pathnameRef.current);
-
     // Listen for route changes.
-    const unlisten = listen((newLocation) => recordPageAccess(newLocation.pathname));
+    const unlisten = listen(() => Telemetry.page());
 
     // Clean up listener during unmount.
     return () => unlisten();
   }, [ listen ]);
-
-  // Update pathname reference when location changes.
-  useEffect(() => {
-    pathnameRef.current = location.pathname;
-  }, [ location.pathname ]);
 };
 
 export default useRouteTracker;

@@ -3,9 +3,9 @@ import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { setupAnalytics } from 'Analytics';
 import LogoGoogle from 'assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'assets/images/logo-sso-okta-white.svg';
+import Telemetry from 'classes/Telemetry';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoType } from 'components/Logo';
@@ -63,7 +63,7 @@ const SignIn: React.FC = () => {
    */
   useEffect(() => {
     if (auth.isAuthenticated) {
-      setupAnalytics(auth, info);
+      Telemetry.setup(auth, info);
 
       // Stop the spinner, prepping for user redirect.
       storeDispatch({ type: StoreAction.HideUISpinner });

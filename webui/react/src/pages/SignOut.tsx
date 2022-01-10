@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-import { resetAnalytics } from 'Analytics';
+import Telemetry from 'classes/Telemetry';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
@@ -20,7 +20,6 @@ const SignOut: React.FC = () => {
       setIsSigningOut(true);
       try {
         await logout({});
-        resetAnalytics();
       } catch (e) {
         handleError(e, {
           isUserTriggered: false,
@@ -29,7 +28,8 @@ const SignOut: React.FC = () => {
           type: ErrorType.Server,
         });
       }
-      resetAnalytics();
+
+      Telemetry.reset();
       updateDetApi({ apiKey: undefined });
       storeDispatch({ type: StoreAction.ResetAuth });
 

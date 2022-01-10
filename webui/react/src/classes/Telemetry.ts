@@ -2,6 +2,11 @@ import { getTelemetry } from 'services/api';
 import { Auth, DeterminedInfo } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
+/*
+ * Telemetry is written as a modular class instance instead of
+ * a React hook because the telemetry capabilities are needed
+ * outside of React.
+ */
 class Telemetry {
   private isReady: boolean;
 
@@ -70,7 +75,6 @@ class Telemetry {
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   page(...args: any[]) {
-    console.log('args', args);
     analytics.page(...args);
   }
 

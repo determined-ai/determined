@@ -2,7 +2,7 @@ import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
-import { loadAnalytics } from 'Analytics';
+import Telemetry from 'classes/Telemetry';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
@@ -42,7 +42,7 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    loadAnalytics(info);
+    Telemetry.load(info);
 
     /*
      * Check to make sure the WebUI version matches the platform version.
