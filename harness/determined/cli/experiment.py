@@ -1,3 +1,4 @@
+import base64
 import cgi
 import distutils.util
 import io
@@ -18,8 +19,9 @@ import determined.load
 from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
+from determined.cli.session import setup_session
 from determined.common import api, constants, context, set_logger, util, yaml
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -36,19 +38,19 @@ def patch_experiment(args: Namespace, verb: str, patch_doc: Dict[str, Any]) -> N
 
 @authentication.required
 def activate(args: Namespace) -> None:
-    api.activate_experiment(args.master, args.experiment_id)
+    bindings.post_ActivateExperiment(setup_session(args), id=args.experiment_id)
     print("Activated experiment {}".format(args.experiment_id))
 
 
 @authentication.required
 def archive(args: Namespace) -> None:
-    patch_experiment(args, "archive", {"archived": True})
+    bindings.post_ArchiveExperiment(setup_session(args), id=args.experiment_id)
     print("Archived experiment {}".format(args.experiment_id))
 
 
 @authentication.required
 def cancel(args: Namespace) -> None:
-    patch_experiment(args, "cancel", {"state": "STOPPING_CANCELED"})
+    bindings.post_CancelExperiment(setup_session(args), id=args.experiment_id)
     print("Canceled experiment {}".format(args.experiment_id))
 
 
@@ -194,7 +196,7 @@ def delete_experiment(args: Namespace) -> None:
         "alternative, see the 'det archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        api.delete(args.master, "/api/v1/experiments/{}".format(args.experiment_id))
+        bindings.delete_DeleteExperiment(setup_session(args), id=args.experiment_id)
         print("Successfully deleted experiment {}".format(args.experiment_id))
     else:
         print("Aborting experiment deletion.")
@@ -204,11 +206,11 @@ def delete_experiment(args: Namespace) -> None:
 def describe(args: Namespace) -> None:
     docs = []
     for experiment_id in args.experiment_ids.split(","):
-        if args.metrics:
-            r = api.get(args.master, "experiments/{}/metrics/summary".format(experiment_id))
+        r = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
+        if args.json:
+            docs.append(r.experiment.to_json())
         else:
-            r = api.get(args.master, "experiments/{}".format(experiment_id))
-        docs.append(r.json())
+            docs.append(r.experiment)
 
     if args.json:
         print(json.dumps(docs, indent=4))
@@ -229,16 +231,16 @@ def describe(args: Namespace) -> None:
     ]
     values = [
         [
-            doc["id"],
-            doc["state"],
-            render.format_percent(doc["progress"]),
-            render.format_time(doc.get("start_time")),
-            render.format_time(doc.get("end_time")),
-            doc["config"].get("name"),
-            doc["config"].get("description"),
-            doc["archived"],
-            doc["config"]["resources"].get("resource_pool"),
-            ", ".join(sorted(doc["config"].get("labels") or [])),
+            doc.id,
+            doc.state.name,
+            render.format_percent(doc.progress),
+            render.format_time(doc.startTime),
+            render.format_time(doc.endTime),
+            doc.name,
+            doc.description,
+            doc.archived,
+            doc.resourcePool,
+            ", ".join(sorted(doc.labels or [])),
         ]
         for doc in docs
     ]
@@ -250,18 +252,23 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display trial-related information.
+    trials_by_experiment = {}
+    for doc in docs:
+        trials_by_experiment[doc.id] = bindings.get_GetExperimentTrials(
+            setup_session(args), experimentId=doc.id
+        ).trials
     headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
     values = [
         [
-            trial["id"],
-            doc["id"],
-            trial["state"],
-            render.format_time(trial.get("start_time")),
-            render.format_time(trial.get("end_time")),
-            json.dumps(trial["hparams"], indent=4),
+            trial.id,
+            doc.id,
+            trial.state.name,
+            render.format_time(trial.startTime),
+            render.format_time(trial.endTime),
+            json.dumps(trial.hparams, indent=4),
         ]
         for doc in docs
-        for trial in doc["trials"]
+        for trial in trials_by_experiment[doc.id]
     ]
     if not args.outdir:
         outfile = None
@@ -295,59 +302,59 @@ def describe(args: Namespace) -> None:
     )
 
     values = []
-    for doc in docs:
-        for trial in doc["trials"]:
-            for step in trial["steps"]:
-                t_metrics_fields = []
-                if step.get("metrics"):
-                    avg_metrics = step["metrics"]["avg_metrics"]
-                    for name in t_metrics_names:
-                        if name in avg_metrics:
-                            t_metrics_fields.append(avg_metrics[name])
-                        else:
-                            t_metrics_fields.append(None)
-
-                checkpoint = step.get("checkpoint")
-                if checkpoint:
-                    checkpoint_state = checkpoint["state"]
-                    checkpoint_end_time = checkpoint.get("end_time")
-                else:
-                    checkpoint_state = None
-                    checkpoint_end_time = None
-
-                validation = step.get("validation")
-                if validation:
-                    validation_state = validation["state"]
-                    validation_end_time = validation.get("end_time")
-                else:
-                    validation_state = None
-                    validation_end_time = None
-
-                if args.metrics:
-                    v_metrics_fields = [
-                        api.metric.get_validation_metric(name, validation)
-                        for name in v_metrics_names
-                    ]
-                else:
-                    v_metrics_fields = []
-
-                row = (
-                    [
-                        step["trial_id"],
-                        step["total_batches"],
-                        step["state"],
-                        render.format_time(step.get("end_time")),
-                    ]
-                    + t_metrics_fields
-                    + [
-                        checkpoint_state,
-                        render.format_time(checkpoint_end_time),
-                        validation_state,
-                        render.format_time(validation_end_time),
-                    ]
-                    + v_metrics_fields
-                )
-                values.append(row)
+    # for doc in docs:
+    #     for trial in trials_by_experiment[doc.id]:
+    #         for step in trial["steps"]:
+    #             t_metrics_fields = []
+    #             if step.get("metrics"):
+    #                 avg_metrics = step["metrics"]["avg_metrics"]
+    #                 for name in t_metrics_names:
+    #                     if name in avg_metrics:
+    #                         t_metrics_fields.append(avg_metrics[name])
+    #                     else:
+    #                         t_metrics_fields.append(None)
+    #
+    #             checkpoint = step.get("checkpoint")
+    #             if checkpoint:
+    #                 checkpoint_state = checkpoint["state"]
+    #                 checkpoint_end_time = checkpoint.get("end_time")
+    #             else:
+    #                 checkpoint_state = None
+    #                 checkpoint_end_time = None
+    #
+    #             validation = step.get("validation")
+    #             if validation:
+    #                 validation_state = validation["state"]
+    #                 validation_end_time = validation.get("end_time")
+    #             else:
+    #                 validation_state = None
+    #                 validation_end_time = None
+    #
+    #             if args.metrics:
+    #                 v_metrics_fields = [
+    #                     api.metric.get_validation_metric(name, validation)
+    #                     for name in v_metrics_names
+    #                 ]
+    #             else:
+    #                 v_metrics_fields = []
+    #
+    #             row = (
+    #                 [
+    #                     step["trial_id"],
+    #                     step["total_batches"],
+    #                     step["state"],
+    #                     render.format_time(step.get("end_time")),
+    #                 ]
+    #                 + t_metrics_fields
+    #                 + [
+    #                     checkpoint_state,
+    #                     render.format_time(checkpoint_end_time),
+    #                     validation_state,
+    #                     render.format_time(validation_end_time),
+    #                 ]
+    #                 + v_metrics_fields
+    #             )
+    #             values.append(row)
 
     if not args.outdir:
         outfile = None
@@ -359,21 +366,15 @@ def describe(args: Namespace) -> None:
 
 @authentication.required
 def config(args: Namespace) -> None:
-    result = api.get(args.master, "experiments/{}/config".format(args.experiment_id))
-    yaml.safe_dump(result.json(), stream=sys.stdout, default_flow_style=False)
+    result = bindings.get_GetExperiment(setup_session(args), experimentId=args.experiment_id).config
+    yaml.safe_dump(result, stream=sys.stdout, default_flow_style=False)
 
 
 @authentication.required
 def download_model_def(args: Namespace) -> None:
-    resp = api.get(args.master, "experiments/{}/model_def".format(args.experiment_id))
-    value, params = cgi.parse_header(resp.headers["Content-Disposition"])
-    if value == "attachment" and "filename" in params:
-        with args.output_dir.joinpath(params["filename"]).open("wb") as f:
-            f.write(resp.content)
-    else:
-        raise api.errors.BadResponseException(
-            "Unexpected Content-Disposition header format. {}: {}".format(value, params)
-        )
+    resp = bindings.get_GetModelDef(setup_session(args), experimentId=args.experiment_id)
+    with args.output_dir.joinpath(str(args.experiment_id)).open("wb") as f:
+        f.write(base64.b64decode(resp.b64Tgz))
 
 
 def download(args: Namespace) -> None:
@@ -395,14 +396,14 @@ def download(args: Namespace) -> None:
 
 @authentication.required
 def kill_experiment(args: Namespace) -> None:
-    api.post(args.master, "experiments/{}/kill".format(args.experiment_id))
+    bindings.post_KillExperiment(setup_session(args), id=args.experiment_id)
     print("Killed experiment {}".format(args.experiment_id))
 
 
 @authentication.required
 def wait(args: Namespace) -> None:
     while True:
-        r = api.get(args.master, "experiments/{}".format(args.experiment_id)).json()
+        r = bindings.get_GetExperiment(setup_session(args), experimentId=args.experiment_id)
 
         if r["state"] in constants.TERMINAL_STATES:
             print("Experiment {} terminated with state {}".format(args.experiment_id, r["state"]))
@@ -422,21 +423,21 @@ def list_experiments(args: Namespace) -> None:
     else:
         params["user"] = authentication.must_cli_auth().get_session_user()
 
-    r = api.get(args.master, "experiments", params=params)
+    r = bindings.get_GetExperiments(setup_session(args))
 
     def format_experiment(e: Any) -> List[Any]:
         result = [
-            e["id"],
-            e["owner"]["username"],
-            e["config"]["name"],
-            e["state"],
-            render.format_percent(e["progress"]),
-            render.format_time(e["start_time"]),
-            render.format_time(e["end_time"]),
-            e["config"]["resources"].get("resource_pool"),
+            e.id,
+            e.username,
+            e.name,
+            e.state.name,
+            render.format_percent(e.progress),
+            render.format_time(e.startTime),
+            render.format_time(e.endTime),
+            e.resourcePool,
         ]
         if args.all:
-            result.append(e["archived"])
+            result.append(e.archived)
         return result
 
     headers = [
@@ -452,7 +453,7 @@ def list_experiments(args: Namespace) -> None:
     if args.all:
         headers.append("Archived")
 
-    values = [format_experiment(e) for e in r.json()]
+    values = [format_experiment(e) for e in r.experiments]
     render.tabulate_or_csv(headers, values, args.csv)
 
 
@@ -493,20 +494,20 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 
 @authentication.required
 def list_trials(args: Namespace) -> None:
-    r = api.get(args.master, "experiments/{}/summary".format(args.experiment_id))
-    experiment = r.json()
+    r = bindings.get_GetExperimentTrials(setup_session(args), experimentId=args.experiment_id)
+    trials = r.trials
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
     values = [
         [
-            t["id"],
-            t["state"],
-            json.dumps(t["hparams"], indent=4),
-            render.format_time(t["start_time"]),
-            render.format_time(t["end_time"]),
-            t["total_batches_processed"],
+            t.id,
+            t.state.name,
+            json.dumps(t.hparams, indent=4),
+            render.format_time(t.startTime),
+            render.format_time(t.endTime),
+            t.totalBatchesProcessed,
         ]
-        for t in experiment["trials"]
+        for t in trials
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
@@ -514,31 +515,45 @@ def list_trials(args: Namespace) -> None:
 
 @authentication.required
 def pause(args: Namespace) -> None:
-    patch_experiment(args, "pause", {"state": "PAUSED"})
+    bindings.post_PauseExperiment(setup_session(args), id=args.experiment_id)
     print("Paused experiment {}".format(args.experiment_id))
 
 
 @authentication.required
 def set_description(args: Namespace) -> None:
-    api.patch_experiment_v1(args.master, args.experiment_id, {"description": args.description})
+    session = setup_session(args)
+    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    experiment.description = args.description
+    bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
 
 
 @authentication.required
 def set_name(args: Namespace) -> None:
-    api.patch_experiment_v1(args.master, args.experiment_id, {"name": args.name})
+    session = setup_session(args)
+    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    experiment.name = args.name
+    bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
 
 
 @authentication.required
 def add_label(args: Namespace) -> None:
-    patch_experiment(args, "add label to", {"labels": {args.label: True}})
+    session = setup_session(args)
+    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    if args.label not in experiment.labels:
+        experiment.labels.append(args.label)
+        bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
 
 
 @authentication.required
 def remove_label(args: Namespace) -> None:
-    patch_experiment(args, "remove label from", {"labels": {args.label: None}})
+    session = setup_session(args)
+    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    if args.label in experiment.labels:
+        experiment.labels.remove(args.label)
+        bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
 
 
@@ -624,7 +639,7 @@ def set_gc_policy(args: Namespace) -> None:
 
 @authentication.required
 def unarchive(args: Namespace) -> None:
-    patch_experiment(args, "archive", {"archived": False})
+    bindings.post_UnarchiveExperiment(setup_session(args), id=args.experiment_id)
     print("Unarchived experiment {}".format(args.experiment_id))
 
 
