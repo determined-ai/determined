@@ -15,7 +15,7 @@ class Telemetry {
   }
 
   async load(info: DeterminedInfo): Promise<void> {
-    if (!info.isTelemetryEnabled) return;
+    if (!analytics?.load || !analytics?.page || !info.isTelemetryEnabled) return;
 
     /*
      * Segment key should be 32 characters composed of upper case letters,
@@ -42,7 +42,7 @@ class Telemetry {
   }
 
   setup(auth: Auth, info: DeterminedInfo) {
-    if (!auth.user || !info.isTelemetryEnabled) return;
+    if (!analytics?.identify || !auth.user || !info.isTelemetryEnabled) return;
 
     /*
      * Segment key should be 32 characters composed of upper case letters,
@@ -70,17 +70,17 @@ class Telemetry {
   }
 
   reset() {
-    analytics.reset();
+    if (analytics?.reset) analytics.reset();
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   page(...args: any[]) {
-    analytics.page(...args);
+    if (analytics?.page) analytics.page(...args);
   }
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   track(event: string, ...args: any[]) {
-    analytics.track(event, ...args);
+    if (analytics?.track) analytics.track(event, ...args);
   }
 }
 
