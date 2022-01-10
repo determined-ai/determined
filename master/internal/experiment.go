@@ -164,8 +164,13 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		e.setWeight(ctx, e.Config.Resources().Weight())
-		e.setPriority(ctx, e.Config.Resources().Priority())
+		// FIXME we could avoid resetting these in the database
+		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
+			return err
+		}
+		if err := e.setPriority(ctx, e.Config.Resources().Priority()); err != nil {
+			return err
+		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
 			JobID:    e.JobID,
@@ -252,12 +257,17 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 	case job.SetGroupWeight:
-		e.setWeight(ctx, msg.Weight)
+		if err := e.setWeight(ctx, msg.Weight); err != nil {
+			ctx.Log().WithError(err)
+		}
 	case job.SetGroupPriority:
-		e.setPriority(ctx, msg.Priority)
+		if err := e.setPriority(ctx, msg.Priority); err != nil {
+			ctx.Log().WithError(err)
+		}
 	case job.SetGroupOrder:
-		err := e.setOrder(ctx, msg.QPosition)
-		ctx.Respond(err)
+		if err := e.setOrder(ctx, msg.QPosition); err != nil {
+			ctx.Log().WithError(err)
+		}
 
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
@@ -563,24 +573,32 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int) {
+func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 	resources := e.Config.Resources()
 	resources.SetPriority(priority)
 	e.Config.SetResources(resources)
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: priority,
 		Handler:  ctx.Self(),
 	})
+	return nil
 }
 
-func (e *experiment) setWeight(ctx *actor.Context, weight float64) {
+func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	resources := e.Config.Resources()
 	resources.SetWeight(weight)
 	e.Config.SetResources(resources)
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		return errors.Wrapf(err, "setting experiment %d weight", e.ID)
+	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
+	return nil
 }
 
 func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
@@ -589,8 +607,7 @@ func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
 		JobID: e.JobID,
 		QPos:  queuePosition,
 	}
-	err := e.db.UpdateJob(&jobModel)
-	if err != nil {
+	if err := e.db.UpdateJob(&jobModel); err != nil {
 		return err
 	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
