@@ -158,15 +158,13 @@ export const columns: ColumnType<Job>[] = [
   },
 ];
 
-if (process.env.IS_DEV) {
-  columns.push(
-    {
-      align: 'right',
-      className: 'fullCell',
-      fixed: 'right',
-      key: 'actions',
-      title: '',
-      width: 40,
-    },
-  );
-}
+columns.push(
+  {
+    align: 'right',
+    className: 'fullCell',
+    fixed: 'right',
+    key: 'actions',
+    title: '',
+    width: 40,
+  },
+);
