@@ -1,4 +1,4 @@
-from determined.common.api import analytics, authentication, errors, metric, request
+from determined.common.api import authentication, errors, metric, request
 from determined.common.api.authentication import Authentication, Session, salt_and_hash
 from determined.common.api.experiment import (
     activate_experiment,

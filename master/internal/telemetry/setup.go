@@ -8,7 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/config"
 )
 
-// Setup sets up the actor and endpoints for resource managers.
+// Setup sets up the actor for the telemetry.
 func Setup(
 	system *actor.System,
 	db db.DB,

@@ -86,7 +86,7 @@ def main(chief_ip: Optional[str]) -> int:
             try:
                 analytics.send_analytics("trial_loaded", analytics.get_trial_analytics(trial_class))
             except Exception as e:
-                logging.debug(f"Cannot sending analytics: {e}")
+                logging.debug(f"Cannot send analytics: {e}")
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
         distributed_backend = det._DistributedBackend()
