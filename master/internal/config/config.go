@@ -25,6 +25,13 @@ var (
 var once sync.Once
 var masterConfig *Config
 
+type (
+	// ExperimentConfigPatch is the updatedble fields for patching an experiment.
+	ExperimentConfigPatch struct {
+		Name *string `json:"name,omitempty"`
+	}
+)
+
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{

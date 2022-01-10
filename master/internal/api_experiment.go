@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/prom"
 
 	"github.com/google/uuid"
@@ -581,6 +582,10 @@ func (a *apiServer) PatchExperiment(
 				return nil, status.Errorf(codes.InvalidArgument, "`name` is required.")
 			}
 			exp.Name = req.Experiment.Name
+			patch := config.ExperimentConfigPatch{
+				Name: &req.Experiment.Name,
+			}
+			a.m.system.TellAt(actor.Addr("experiments", req.Experiment.Id), patch)
 		case path == "notes":
 			shouldUpdateNotes = true
 			exp.Notes = req.Experiment.Notes
