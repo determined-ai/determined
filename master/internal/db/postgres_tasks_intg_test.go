@@ -91,7 +91,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 
 	// Retrieve it back and make sure the mapping is exhaustive.
 	aOut, err := db.AllocationByID(aIn.AllocationID)
-	require.NoError(t, err, "failed to retreive allocation")
+	require.NoError(t, err, "failed to retrieve allocation")
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
 
 	// Complete it.
@@ -101,7 +101,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 
 	// Re-retrieve it back and make sure the mapping is still exhaustive.
 	aOut, err = db.AllocationByID(aIn.AllocationID)
-	require.NoError(t, err, "failed to re-retreive allocation")
+	require.NoError(t, err, "failed to re-retrieve allocation")
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
 }
 
