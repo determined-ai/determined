@@ -77,7 +77,7 @@ export const columns: ColumnType<Job>[] = [
       const title = jobTypeLabel(record.type);
       const TypeCell = (
         <Tooltip placement="topLeft" title={title}>
-          <div>
+          <div className={''}>
             <Icon name={jobTypeIconName(record.type)} />
           </div>
         </Tooltip>

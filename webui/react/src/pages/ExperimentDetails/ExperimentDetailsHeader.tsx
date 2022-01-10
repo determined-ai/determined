@@ -270,15 +270,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     trial?.id,
   ]);
 
-  const jobInfoLinkText = useMemo(() => {
-    if (!experiment.jobSummary) return 'Not available';
-    const isJobOrderAvailable = experiment.jobSummary.jobsAhead >= 0;
-    const isFirstJob = experiment.jobSummary.jobsAhead === 0;
-    if (!isJobOrderAvailable) return 'Available here';
-    if (isFirstJob) return 'No jobs ahead of this one';
-    return `${experiment.jobSummary.jobsAhead} jobs ahead of this one`;
-  }, [ experiment.jobSummary ]);
-
   return (
     <>
       <PageHeaderFoldable
@@ -308,7 +299,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {experiment.jobSummary && !terminalRunStates.has(experiment.state) && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Job Info:</span>
-                <Link className={css.link} path={paths.jobs()}>{jobInfoLinkText}</Link>
+                <Link path={paths.jobs()}>
+                  {experiment.jobSummary?.jobsAhead || 'No'}{' '}
+                  job{experiment.jobSummary?.jobsAhead > 1 ? 's' : ''} ahead of this one.
+                </Link>
               </div>
             )}
             <TagList

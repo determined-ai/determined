@@ -45,6 +45,8 @@ example:
 
 **Required Fields**
 
+.. _experiment-config-entrypoint:
+
 ``entrypoint``
    The location of the trial class in a user's model definition as an `entrypoint specification
    string <https://packaging.python.org/specifications/entry-points/>`_. The entrypoint
