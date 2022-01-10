@@ -21,8 +21,8 @@ const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
     <RadioGroup
       iconOnly
       options={[
-        { icon: 'grid', id: GridListView.Grid, tag: 'Grid View' },
-        { icon: 'list', id: GridListView.List, tag: 'List View' },
+        { icon: 'grid', id: GridListView.Grid, label: 'Grid View' },
+        { icon: 'list', id: GridListView.List, label: 'List View' },
       ]}
       value={value}
       onChange={handleChange}

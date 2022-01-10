@@ -23,7 +23,7 @@
     height: var(--theme-sizes-navigation-toolbarHeight);
 
     [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
-    .tag { font-size: var(--theme-sizes-font-medium); }
+    .label { font-size: var(--theme-sizes-font-medium); }
   }
 }
 .sheetEnter {

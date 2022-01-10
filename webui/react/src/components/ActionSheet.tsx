@@ -7,7 +7,7 @@ import Link, { Props as LinkProps } from './Link';
 
 export interface ActionItem extends LinkProps {
   icon?: string;
-  tag: string;
+  label: string;
   popout?: boolean;
 }
 
@@ -46,15 +46,15 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
       <div className={css.base} onClick={handleOverlayClick}>
         <div className={css.sheet} ref={sheetRef}>
           {props.actions.map(action => (
-            <Link className={css.item} key={action.tag} path={action.path} {...action}>
+            <Link className={css.item} key={action.label} path={action.path} {...action}>
               {action.icon && <Icon name={action.icon} size="large" />}
-              <div className={css.tag}>{action.tag}</div>
+              <div className={css.label}>{action.label}</div>
             </Link>
           ))}
           {!props.hideCancel && (
             <Link className={css.item} onClick={handleCancelClick}>
               <Icon name="error" size="large" />
-              <div className={css.tag}>Cancel</div>
+              <div className={css.label}>Cancel</div>
             </Link>
           )}
         </div>

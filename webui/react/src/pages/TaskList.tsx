@@ -456,7 +456,7 @@ const TaskList: React.FC = () => {
       title="Tasks">
       <div className={css.base}>
         <TableBatch
-          actions={[ { disabled: !hasKillable, tag: Action.Kill, value: Action.Kill } ]}
+          actions={[ { disabled: !hasKillable, label: Action.Kill, value: Action.Kill } ]}
           selectedRowCount={(settings.row ?? []).length}
           onAction={handleBatchAction}
           onClear={clearSelected}

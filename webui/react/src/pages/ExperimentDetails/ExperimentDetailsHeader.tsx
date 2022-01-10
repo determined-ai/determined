@@ -174,7 +174,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       archive: {
         isLoading: isRunningArchive,
         key: 'unarchive',
-        tag: 'Unarchive',
+        label: 'Unarchive',
         onClick: async (): Promise<void> => {
           setIsRunningUnarchive(true);
           try {
@@ -187,20 +187,20 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
       continueTrial: {
         key: 'continue-trial',
-        tag: 'Continue Trial',
+        label: 'Continue Trial',
         onClick: handleContinueTrialClick,
       },
       delete: {
         icon: <Icon name="fork" size="small" />,
         isLoading: isRunningDelete,
         key: 'delete',
-        tag: 'Delete',
+        label: 'Delete',
         onClick: handleDeleteClick,
       },
       downloadModel: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
-        tag: 'Download Experiment Code',
+        label: 'Download Experiment Code',
         onClick: (e) => {
           handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
@@ -208,14 +208,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       fork: {
         icon: <Icon name="fork" size="small" />,
         key: 'fork',
-        tag: 'Fork',
+        label: 'Fork',
         onClick: handleForkClick,
       },
       tensorboard: {
         icon: <Icon name="tensorboard" size="small" />,
         isLoading: isRunningTensorBoard,
         key: 'tensorboard',
-        tag: 'TensorBoard',
+        label: 'TensorBoard',
         onClick: async () => {
           setIsRunningTensorBoard(true);
           try {
@@ -230,7 +230,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       unarchive: {
         isLoading: isRunningUnarchive,
         key: 'archive',
-        tag: 'Archive',
+        label: 'Archive',
         onClick: async (): Promise<void> => {
           setIsRunningArchive(true);
           try {

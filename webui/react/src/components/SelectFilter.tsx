@@ -18,7 +18,7 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   disableTags?: boolean;
   enableSearchFilter?: boolean;
   itemName?: string;
-  tag?: string;
+  label?: string;
   ref?: React.Ref<RefSelectProps>;
   style?: React.CSSProperties;
   verticalLayout?: boolean;
@@ -89,22 +89,22 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
      * - string
      * - string[]
      */
-    let tag = null;
+    let label = null;
     if (option.children) {
       if (Array.isArray(option.children)) {
-        tag = option.children.join(' ');
-      } else if (option.children.props?.tag) {
-        tag = option.children.props?.tag;
+        label = option.children.join(' ');
+      } else if (option.children.props?.label) {
+        label = option.children.props?.label;
       } else if (typeof option.children === 'string') {
-        tag = option.children;
+        label = option.children;
       }
     }
-    return tag && tag.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+    return label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   }, []);
 
   return (
     <div className={classes.join(' ')}>
-      {props.tag && <Label>{props.tag}</Label>}
+      {props.label && <Label>{props.label}</Label>}
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}

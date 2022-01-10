@@ -16,7 +16,7 @@ export const Default = (): React.ReactNode => {
   const count = number('Number of Options', 5, { max: 26, min: 0, range: true, step: 1 });
   return (
     <SelectFilter
-      tag={text('Tag', 'Default Tag')}
+      label={text('Label', 'Default Label')}
       placeholder={text('Placeholder', 'Pick an option')}>
       {new Array(count).fill(null).map((v, index) => (
         <Option key={index} value={String.fromCharCode(65 + index)}>

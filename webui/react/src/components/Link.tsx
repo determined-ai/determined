@@ -11,7 +11,7 @@ export interface Props {
   external?: boolean;
   inherit?: boolean;
   isButton?: boolean;
-  tag?: string;
+  label?: string;
   onClick?: AnyMouseEventHandler;
   path?: string;
   popout?: boolean;
@@ -43,7 +43,7 @@ const Link: React.FC<Props> = ({
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
     <a
-      aria-label={props.tag}
+      aria-label={props.label}
       className={classes.join(' ')}
       href={href}
       rel={rel}

@@ -24,7 +24,7 @@ const EditableRow: React.FC<Props> = (
       noStyle>
       <Input.Group className={css.row} compact>
         <Form.Item name={[ name, 'key' ]} noStyle>
-          <Input placeholder="Enter metadata tag" />
+          <Input placeholder="Enter metadata label" />
         </Form.Item>
         <Form.Item name={[ name, 'value' ]} noStyle>
           <Input placeholder="Enter metadata value" />

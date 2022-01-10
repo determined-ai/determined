@@ -5,7 +5,7 @@ import css from './TableBatch.module.scss';
 
 interface Action {
   disabled?: boolean;
-  tag: string;
+  label: string;
   value: string;
 }
 

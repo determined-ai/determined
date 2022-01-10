@@ -166,7 +166,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       {showMaxTrials && (
         <SelectFilter
           enableSearchFilter={false}
-          tag="Top Trials"
+          label="Top Trials"
           showSearch={false}
           style={{ width: 70 }}
           value={localFilters.maxTrial}
@@ -180,7 +180,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <>
           <SelectFilter
             enableSearchFilter={false}
-            tag="Batches Processed"
+            label="Batches Processed"
             showSearch={false}
             value={localFilters.batch}
             onChange={handleBatchChange}>
@@ -188,7 +188,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           </SelectFilter>
           <SelectFilter
             enableSearchFilter={false}
-            tag="Batch Margin"
+            label="Batch Margin"
             showSearch={false}
             value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
@@ -201,7 +201,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       {showMetrics && (
         <MetricSelectFilter
           defaultMetricNames={metrics}
-          tag="Metric"
+          label="Metric"
           metricNames={metrics}
           multiple={false}
           value={localFilters.metric}
@@ -213,7 +213,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <HpSelectFilter
           fullHParams={fullHParams}
           hpImportance={hpImportance}
-          tag={`HP (max ${MAX_HPARAM_COUNT})`}
+          label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
           onChange={handleHParamChange}
         />
@@ -222,16 +222,16 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <RadioGroup
           iconOnly
           options={[
-            { icon: 'grid', id: ViewType.Grid, tag: 'Table View' },
-            { icon: 'list', id: ViewType.List, tag: 'Wrapped View' },
+            { icon: 'grid', id: ViewType.Grid, label: 'Table View' },
+            { icon: 'list', id: ViewType.List, label: 'Wrapped View' },
           ]}
           value={localFilters.view}
           onChange={handleViewChange}
         />
       )}
       <div className={css.buttons}>
-        <IconButton icon="reset" tag="Reset" onClick={handleReset} />
-        <IconButton icon="checkmark" tag="Apply" type="primary" onClick={handleApply} />
+        <IconButton icon="reset" label="Reset" onClick={handleReset} />
+        <IconButton icon="checkmark" label="Apply" type="primary" onClick={handleApply} />
       </div>
     </>
   );

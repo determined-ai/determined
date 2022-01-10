@@ -50,10 +50,10 @@ const getStorageLocation = (
   return `${location}/${checkpoint.uuid}`;
 };
 
-const renderRow = (tag: string, content: React.ReactNode): React.ReactNode => {
+const renderRow = (label: string, content: React.ReactNode): React.ReactNode => {
   return (
-    <div className={css.row} key={tag}>
-      <div className={css.tag}>{tag}</div>
+    <div className={css.row} key={label}>
+      <div className={css.label}>{label}</div>
       <div className={css.content}>{content}</div>
     </div>
   );

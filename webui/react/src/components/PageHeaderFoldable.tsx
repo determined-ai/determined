@@ -10,7 +10,7 @@ export interface Option {
   icon?: React.ReactNode,
   isLoading?: boolean,
   key: string;
-  tag: string;
+  label: string;
   onClick?: (ev: React.MouseEvent) => void;
   tooltip?: string;
 }
@@ -25,8 +25,8 @@ interface Props {
 const renderOptionLabel =
   (option: Option): React.ReactNode => {
     return option.tooltip
-      ? <Tooltip title={option.tooltip}><span>{option.tag}</span></Tooltip>
-      : <span>{option.tag}</span>;
+      ? <Tooltip title={option.tooltip}><span>{option.label}</span></Tooltip>
+      : <span>{option.label}</span>;
   };
 
 const PageHeaderFoldable: React.FC<Props> = (

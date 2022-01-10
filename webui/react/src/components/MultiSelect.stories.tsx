@@ -22,7 +22,7 @@ export const Default = (): React.ReactNode => {
 
   return (
     <MultiSelect
-      tag={text('Tag', 'Default Tag')}
+      label={text('Label', 'Default Label')}
       placeholder={text('Placeholder', 'All')}
       value={value}
       onChange={onChange}>

@@ -45,14 +45,14 @@ export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
 };
 
 const poolAttributes = [
-  { key: 'location', tag: 'Location' },
-  { key: 'instanceType', tag: 'Instance Type' },
-  { key: 'preemptible', tag: 'Spot/Preemptible' },
-  { key: 'minAgents', tag: 'Min Agents' },
-  { key: 'maxAgents', tag: 'Max Agents' },
-  { key: 'slotsPerAgent', tag: 'Slots Per Agent' },
-  { key: 'auxContainerCapacityPerAgent', tag: 'Max Aux Containers Per Agent' },
-  { key: 'schedulerType', tag: 'Scheduler Type' },
+  { key: 'location', label: 'Location' },
+  { key: 'instanceType', label: 'Instance Type' },
+  { key: 'preemptible', label: 'Spot/Preemptible' },
+  { key: 'minAgents', label: 'Min Agents' },
+  { key: 'maxAgents', label: 'Max Agents' },
+  { key: 'slotsPerAgent', label: 'Slots Per Agent' },
+  { key: 'auxContainerCapacityPerAgent', label: 'Max Aux Containers Per Agent' },
+  { key: 'schedulerType', label: 'Scheduler Type' },
 ];
 
 type SafeRawJson = Record<string, unknown>;
@@ -83,7 +83,7 @@ const ResourcePoolCard: React.FC<Props> = ({
   const shortDetails = useMemo(() => {
     return poolAttributes.reduce((acc, attribute) => {
       const value = processedPool[attribute.key as keyof ResourcePool];
-      acc[attribute.tag] = value;
+      acc[attribute.label] = value;
       return acc;
     }, {} as SafeRawJson);
   }, [ processedPool ]);

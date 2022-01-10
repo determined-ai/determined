@@ -28,7 +28,7 @@ interface Props {
 
 export interface Dimension {
   categories?: Primitive[];
-  tag: string;
+  label: string;
   range?: Range;
   type: DimensionType,
 }
@@ -84,10 +84,10 @@ const ParallelCoordinates: React.FC<Props> = ({
       .map(dimension => {
         if (!dimension) return;
 
-        const key = dimension.tag;
-        const tag = truncate(key, MAX_LABEL_LENGTH);
+        const key = dimension.label;
+        const label = truncate(key, MAX_LABEL_LENGTH);
         const hpDimension: Record<string, unknown> = {
-          tag,
+          label,
           multiselect: false,
           range: dimension.range,
           values: data[key],
@@ -114,8 +114,8 @@ const ParallelCoordinates: React.FC<Props> = ({
             data[key].map(value => map[value.toString()]) : undefined;
         }
 
-        if (constraints[dimension.tag] != null) {
-          hpDimension.constraintrange = clone(constraints[dimension.tag].range);
+        if (constraints[dimension.label] != null) {
+          hpDimension.constraintrange = clone(constraints[dimension.label].range);
         }
 
         return hpDimension;
@@ -168,7 +168,7 @@ const ParallelCoordinates: React.FC<Props> = ({
         const range: Range = data[0][keys[0]] ? data[0][keys[0]][0] : undefined;
         const dimIndex = parseInt(matches[1]);
         const dim = dimensionsRef.current[dimIndex] || {};
-        const dimKey = dim.tag;
+        const dimKey = dim.label;
         const constraint: Constraint = { range };
         if (!dimKey) return;
 

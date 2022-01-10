@@ -13,10 +13,10 @@ ornare condimentum vitae nunc. Sed eu eros pulvinar, tristique nisi sit amet,
 pulvinar ante. Nulla non finibus justo.`;
 
 const rows: InfoRow[] = [
-  { content: 'Ipsum', tag: 'Lorem' },
-  { content: longText, tag: 'Long Content' },
-  { content: longText.split('.'), tag: 'Array Content' },
-  { content: 'Long Label', tag: longText },
+  { content: 'Ipsum', label: 'Lorem' },
+  { content: longText, label: 'Long Content' },
+  { content: longText.split('.'), label: 'Array Content' },
+  { content: 'Long Label', label: longText },
 ];
 
 export const Default = (): React.ReactNode => <InfoBox rows={rows} />;

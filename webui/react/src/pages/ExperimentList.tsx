@@ -45,7 +45,7 @@ import { openCommand } from 'wait';
 
 import settingsConfig, { Settings } from './ExperimentList.settings';
 
-const filterKeys: Array<keyof Settings> = [ 'archived', 'tag', 'search', 'state', 'user' ];
+const filterKeys: Array<keyof Settings> = [ 'archived', 'label', 'search', 'state', 'user' ];
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -118,7 +118,7 @@ const ExperimentList: React.FC = () => {
       const response = await getExperiments(
         {
           archived: settings.archived,
-          labels: settings.tag,
+          labels: settings.label,
           limit: settings.tableLimit,
           name: settings.search,
           offset: settings.tableOffset,
@@ -141,7 +141,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ canceler,
     settings.archived,
-    settings.tag,
+    settings.label,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
@@ -212,13 +212,13 @@ const ExperimentList: React.FC = () => {
 
   const handleLabelFilterApply = useCallback((labels: string[]) => {
     updateSettings({
-      tag: labels.length !== 0 ? labels : undefined,
+      label: labels.length !== 0 ? labels : undefined,
       row: undefined,
     });
   }, [ updateSettings ]);
 
   const handleLabelFilterReset = useCallback(() => {
-    updateSettings({ tag: undefined, row: undefined });
+    updateSettings({ label: undefined, row: undefined });
   }, [ updateSettings ]);
 
   const labelFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
@@ -226,11 +226,11 @@ const ExperimentList: React.FC = () => {
       {...filterProps}
       multiple
       searchable
-      values={settings.tag}
+      values={settings.label}
       onFilter={handleLabelFilterApply}
       onReset={handleLabelFilterReset}
     />
-  ), [ handleLabelFilterApply, handleLabelFilterReset, settings.tag ]);
+  ), [ handleLabelFilterApply, handleLabelFilterReset, settings.label ]);
 
   const handleStateFilterApply = useCallback((states: string[]) => {
     updateSettings({
@@ -314,9 +314,9 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
-        filters: labels.map(tag => ({ text: tag, value: tag })),
+        filters: labels.map(label => ({ text: label, value: label })),
         key: 'labels',
-        onHeaderCell: () => settings.tag ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
         render: labelsRenderer,
         title: 'Tags',
         width: 120,
@@ -525,7 +525,7 @@ const ExperimentList: React.FC = () => {
   }, [
     fetchExperiments,
     settings.archived,
-    settings.tag,
+    settings.label,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
@@ -546,14 +546,14 @@ const ExperimentList: React.FC = () => {
       title="Experiments">
       <TableBatch
         actions={[
-          { tag: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-          { disabled: !hasActivatable, tag: Action.Activate, value: Action.Activate },
-          { disabled: !hasPausable, tag: Action.Pause, value: Action.Pause },
-          { disabled: !hasArchivable, tag: Action.Archive, value: Action.Archive },
-          { disabled: !hasUnarchivable, tag: Action.Unarchive, value: Action.Unarchive },
-          { disabled: !hasCancelable, tag: Action.Cancel, value: Action.Cancel },
-          { disabled: !hasKillable, tag: Action.Kill, value: Action.Kill },
-          { disabled: !hasDeletable, tag: Action.Delete, value: Action.Delete },
+          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+          { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
+          { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
+          { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
+          { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
+          { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
+          { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
+          { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
         ]}
         selectedRowCount={(settings.row ?? []).length}
         onAction={handleBatchAction}

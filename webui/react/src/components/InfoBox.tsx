@@ -4,7 +4,7 @@ import css from './InfoBox.module.scss';
 
 export interface InfoRow {
   content?: React.ReactNode | React.ReactNode[];
-  tag: React.ReactNode;
+  label: React.ReactNode;
 }
 
 interface InfoRowProps extends InfoRow {
@@ -17,13 +17,13 @@ interface Props {
   separator?: boolean;
 }
 
-export const renderRow = ({ tag, content, separator }: InfoRowProps): React.ReactNode => {
+export const renderRow = ({ label, content, separator }: InfoRowProps): React.ReactNode => {
   if (content == null) return null;
   return (
     <div
       className={[ css.info, separator ? css.separator : null ].join(' ')}
-      key={tag?.toString()}>
-      <dt className={css.tag}>{tag}</dt>
+      key={label?.toString()}>
+      <dt className={css.label}>{label}</dt>
       {Array.isArray(content) ? (
         <dd className={css.contentList}>
           {content.map((item, idx) => <div className={css.content} key={idx}>{item}</div>)}

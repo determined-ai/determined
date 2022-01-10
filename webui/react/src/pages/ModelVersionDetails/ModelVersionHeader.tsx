@@ -68,13 +68,13 @@ const ModelVersionHeader: React.FC<Props> = (
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>
       ),
-      tag: 'Created by',
+      label: 'Created by',
     },
     {
       content: relativeTimeRenderer(
         new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime),
       ),
-      tag: 'Updated',
+      label: 'Updated',
     },
     {
       content: (
@@ -85,7 +85,7 @@ const ModelVersionHeader: React.FC<Props> = (
           onSave={onSaveDescription}
         />
       ),
-      tag: 'Description',
+      label: 'Description',
     },
     {
       content: (
@@ -96,7 +96,7 @@ const ModelVersionHeader: React.FC<Props> = (
           onChange={onUpdateTags}
         />
       ),
-      tag: 'Tags',
+      label: 'Tags',
     } ] as InfoRow[];
   }, [ modelVersion, onSaveDescription, onUpdateTags ]);
 

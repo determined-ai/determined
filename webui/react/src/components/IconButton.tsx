@@ -11,7 +11,7 @@ interface Props {
   className?: string;
   icon: string;
   iconSize?: IconSize;
-  tag: string;
+  label: string;
   onClick?: (event: React.MouseEvent) => void;
   tooltipPlacement?: TooltipPlacement;
   type?: ButtonType;
@@ -21,7 +21,7 @@ const IconButton: React.FC<Props> = ({
   className,
   icon,
   iconSize = 'medium',
-  tag,
+  label,
   onClick,
   tooltipPlacement = 'top',
   type,
@@ -35,9 +35,9 @@ const IconButton: React.FC<Props> = ({
   }, [ onClick ]);
 
   return (
-    <Tooltip placement={tooltipPlacement} title={tag}>
+    <Tooltip placement={tooltipPlacement} title={label}>
       <Button
-        aria-label={tag}
+        aria-label={label}
         className={classes.join(' ')}
         type={type}
         onClick={handleClick}>

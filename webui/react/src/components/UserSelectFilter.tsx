@@ -52,7 +52,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
     <SelectFilter
       dropdownMatchSelectWidth={200}
-      tag="Users"
+      label="Users"
       style={{ maxWidth: 200 }}
       value={value || ALL_VALUE}
       onSelect={handleSelect}>

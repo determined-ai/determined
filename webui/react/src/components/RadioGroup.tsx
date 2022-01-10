@@ -21,7 +21,7 @@ export interface RadioGroupOption {
   icon?: string;
   iconSize?: IconSize;
   id: string;
-  tag?: string;
+  label?: string;
 }
 
 interface SizeInfo {
@@ -50,7 +50,7 @@ const RadioGroup: React.FC<Props> = ({
 
   const hasIconsAndLabels = useMemo(() => {
     if (options.length === 0) return false;
-    return options.reduce((acc, option) => acc || (!!option.icon && !!option.tag), false);
+    return options.reduce((acc, option) => acc || (!!option.icon && !!option.label), false);
   }, [ options ]);
 
   if (iconOnly) classes.push(css.iconOnly);
@@ -113,12 +113,12 @@ const RadioGroup: React.FC<Props> = ({
           condition={!showLabels || iconOnly}
           key={option.id}
           wrapper={children => (
-            <Tooltip placement="top" title={option.tag}>{children}</Tooltip>
+            <Tooltip placement="top" title={option.label}>{children}</Tooltip>
           )}>
           <Radio.Button className={css.option} value={option.id}>
-            {option.icon && <Icon name={option.icon} size={option.iconSize} title={option.tag} />}
-            {option.tag && showLabels && !iconOnly && (
-              <span className={css.tag}>{option.tag}</span>
+            {option.icon && <Icon name={option.icon} size={option.iconSize} title={option.label} />}
+            {option.label && showLabels && !iconOnly && (
+              <span className={css.label}>{option.label}</span>
             )}
           </Radio.Button>
         </ConditionalWrapper>

@@ -5,7 +5,7 @@ import { RunState } from 'types';
 
 export interface Settings {
   archived?: boolean;
-  tag?: string[];
+  label?: string[];
   row?: number[];
   search?: string;
   sortDesc: boolean;
@@ -24,7 +24,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      key: 'tag',
+      key: 'label',
       storageKey: 'label',
       type: {
         baseType: BaseType.String,

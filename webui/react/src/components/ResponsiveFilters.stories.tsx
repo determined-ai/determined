@@ -20,7 +20,7 @@ export const Default = (): React.ReactNode => (
   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
     <ResponsiveFilters>
       {new Array(4).fill(null).map((_, index) => (
-        <SelectFilter key={index} tag={`Filter ${index}`} value={0}>{options}</SelectFilter>
+        <SelectFilter key={index} label={`Filter ${index}`} value={0}>{options}</SelectFilter>
       ))}
     </ResponsiveFilters>
   </div>
