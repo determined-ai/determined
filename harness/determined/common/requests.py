@@ -30,4 +30,5 @@ class Session(requests.sessions.Session):
 def request(method: str, url: str, **kwargs: Any) -> requests.Response:
     server_hostname = kwargs.pop("server_hostname", None)
     with Session(server_hostname) as session:
-        return session.request(method=method, url=url, **kwargs)
+        out = session.request(method=method, url=url, **kwargs)  # type: requests.Response
+        return out
