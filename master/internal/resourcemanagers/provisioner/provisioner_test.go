@@ -253,9 +253,11 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			NumSlots: 4,
 		},
 		Config: &Config{
-			MaxAgentStartingPeriod: model.Duration(100 * time.Millisecond),
-			MaxIdleAgentPeriod:     model.Duration(100 * time.Millisecond),
-			MaxInstances:           100,
+			// If startup period is too short, we might try to re-launch agents.
+			MaxAgentStartingPeriod: model.Duration(1 * time.Hour),
+			// If idle period is too short, this test might do extra terminate/launch cycles.
+			MaxIdleAgentPeriod: model.Duration(1 * time.Hour),
+			MaxInstances:       100,
 		},
 		initInstances: []*Instance{
 			{
@@ -295,12 +297,24 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			"agent3": {Name: "agent3", IsIdle: true},
 		},
 	}).Get()
+
+	// Give the provisioner chances to launch too many instances.
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
-	time.Sleep(50 * time.Millisecond)
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
-	assert.DeepEqual(t, mock.cluster.history[len(mock.cluster.history)-1], newMockFuncCall("list"))
+
+	// We should have exactly 1 launch call.
+	calls := 0
+	for _, call := range mock.cluster.history {
+		if call.Name == "launch" {
+			calls++
+		}
+	}
+
+	assert.DeepEqual(t, calls, 1)
 }
 
 func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
