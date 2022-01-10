@@ -95,7 +95,7 @@ args_description = [
                 "list jobs",
                 [
                     Arg(
-                        "-rp", "--resource-pool", type=str, help="The target resource pool, if any."
+                        "--rp", "--resource-pool", type=str, help="The target resource pool, if any."
                     ),
                     *pagination_args,
                     Group(
