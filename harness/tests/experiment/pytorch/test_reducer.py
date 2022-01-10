@@ -89,14 +89,15 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
 
     trials = do_parallel(make_reducer_context)
 
-    def get_batch_list(rank, batch_size, num_workers, seq):
+    def get_batch_list(
+        rank: int, batch_size: int, num_workers: int, seq: List[int]
+    ) -> List[List[int]]:
         total_batches = (len(seq) + (batch_size - 1)) // batch_size
         my_batch_indices = [i for i in range(total_batches) if i % num_workers == rank]
         all_batches = [
             seq[batch_size * k : min(batch_size * k + batch_size, len(seq))]
             for k in range(total_batches)
         ]
-        logger.debug(f"{total_batches}, {my_batch_indices}, {all_batches}")
         return [b for i, b in enumerate(all_batches) if i in my_batch_indices]
 
     observations = list(range(dataset_size))
