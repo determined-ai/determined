@@ -139,7 +139,7 @@ const ModelDetails: React.FC = () => {
     }, [ id ]);
 
   const columns = useMemo(() => {
-    const labelsRenderer = (value: string, record: ModelVersion) => (
+    const tagsRenderer = (value: string, record: ModelVersion) => (
       <TagList
         compact
         disabled={record.model.archived}
@@ -219,7 +219,7 @@ const ModelDetails: React.FC = () => {
         title: 'User',
         width: 1,
       },
-      { dataIndex: 'labels', render: labelsRenderer, title: 'Tags', width: 120 },
+      { dataIndex: 'labels', render: tagsRenderer, title: 'Tags', width: 120 },
       { render: OverflowRenderer, title: '', width: 1 },
     ];
 
