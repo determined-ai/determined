@@ -27,22 +27,10 @@ WHERE job_id = $1
 // addJob persists the existence of a job from a tx.
 func addJob(tx queryHandler, j *model.Job) error {
 	if _, err := tx.NamedExec(`
-INSERT INTO jobs (job_id, job_type, owner_id, q_position)
-VALUES (:job_id, :job_type, :owner_id, :q_position)
+INSERT INTO jobs (job_id, job_type, owner_id)
+VALUES (:job_id, :job_type, :owner_id)
 `, j); err != nil {
 		return errors.Wrap(err, "adding job")
 	}
 	return nil
-}
-
-// UpdateJob propagates the new queue position to the job.
-func (db *PgDB) UpdateJob(job *model.Job) error {
-	if job.JobID.String() == "" {
-		return errors.Errorf("error modifying job with empty id")
-	}
-	query := `
-UPDATE jobs
-SET q_position = :q_position
-WHERE job_id = :job_id`
-	return db.namedExecOne(query, job)
 }

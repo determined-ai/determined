@@ -113,8 +113,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			StartTime: c.registeredTime,
 			JobID:     c.jobID,
 		}); err != nil {
-			// TODO why do we persist the task when the underlying command isn't persisted?
-			// or is it now persisted?
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 
@@ -306,10 +304,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
-	case job.SetGroupOrder:
-		// TODO persist in the job actor if we want to report it
-		c.setOrder(ctx, msg.QPosition)
-
 	case job.SetGroupWeight:
 		c.setWeight(ctx, msg.Weight)
 
@@ -337,14 +331,6 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) {
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
-	})
-}
-
-func (c *command) setOrder(ctx *actor.Context, queuePosition float64) {
-	// TODO persist similar to the other set* methods?
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
-		QPosition: queuePosition,
-		Handler:   ctx.Self(),
 	})
 }
 

@@ -116,7 +116,7 @@ args_description = [
                         type=str,
                         help="The target job ID",
                     ),
-                    Group( # TODO make the group required
+                    Group(
                         Arg(
                             "-p",
                             "--priority",
@@ -128,16 +128,6 @@ args_description = [
                             "--weight",
                             type=float,
                             help="The new weight. Exclusive to fair_share scheduler.",
-                        ),
-                        Arg(
-                            "--before",
-                            type=str,
-                            help="The job ID to insert before",
-                        ),
-                        Arg(
-                            "--after",
-                            type=str,
-                            help="The job ID to insert after",
                         ),
                     ),
                 ],
