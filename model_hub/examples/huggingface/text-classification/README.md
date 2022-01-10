@@ -7,7 +7,8 @@ The two examples here mirror the [text-classification examples](https://github.c
 * **glue_trial.py**: The [PyTorchTrial definition](https://docs.determined.ai/latest/reference/api/pytorch.html#pytorch-trial) for this example. A few class methods are overwritten and specialized for text classification but otherwise the behavior is the same as the [BaseTransformerTrial class](../model_hub/transformers/_trial.py).
 
 #### Configuration Files
-* **glue_config.yaml**: Experiment configuration for finetuning on GLUE datasets with Bert.  
+* **glue_config.yaml**: Experiment configuration for finetuning on GLUE datasets with Bert.
+* **glue_augmentation_config.yaml**: Experiment configuration for finetuning on GLUE datasets, augmenting the training data with transformations from TextAttack.
 
 ### Configuration
 To run with your own data, change the following fields in `glue_config.yaml`:
@@ -17,6 +18,10 @@ To run with your own data, change the following fields in `glue_config.yaml`:
 
 If you want to use custom data, the `train_file` and `validation_file` need to be in either csv or 
 json format.   See the trial definition for more guidance on how to use custom data files.  
+
+Data augmentation is a technique to expand and diversify training data.
+A list of Transformations from the [TextAttack](https://github.com/QData/TextAttack)
+can be listed under the `augmentations` section of the data configuration.
 
 To run with multiple GPUs (whether single node or multiple nodes), change `slots_per_trial` to the desired
 degree of parallelism.  You will likely want to change `global_batch_size` so that each GPU will
