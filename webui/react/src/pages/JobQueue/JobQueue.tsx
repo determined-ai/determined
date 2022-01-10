@@ -21,7 +21,7 @@ import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { canManageJob, orderedSchedulers } from 'utils/job';
+import { canManageJob, moveJobToPosition, orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -117,6 +117,9 @@ const JobQueue: React.FC = () => {
         }
       },
     };
+    if (isJobOrderAvailable && job.summary.jobsAhead > 0) {
+      triggers[JobAction.MoveToTop] = () => moveJobToPosition(jobs, job.jobId, 1);
+    }
 
     // if job is an experiment type add action to kill it
     if (job.type === JobType.EXPERIMENT) {
@@ -130,7 +133,7 @@ const JobQueue: React.FC = () => {
     }
 
     return triggers;
-  }, [ selectedRp ]);
+  }, [ isJobOrderAvailable, jobs, selectedRp ]);
 
   const hideModal = useCallback(() => setManagingJob(undefined), []);
 

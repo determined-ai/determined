@@ -1,7 +1,7 @@
+import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
 import { CommandType, Job, JobState, JobType, ResourcePool } from 'types';
-import { DetError, ErrorType } from 'utils/error';
+import handleError, { DetError, DetErrorOptions, ErrorType, isDetError } from 'utils/error';
 
 import { capitalize } from './string';
 
@@ -43,15 +43,58 @@ export const orderedSchedulers = new Set(
   [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
 );
 
-export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1QueueControl => {
+export const moveJobToPositionUpdate = (
+  jobs: Job[],
+  jobId: string,
+  position: number,
+): Api.V1QueueControl => {
+  const errOpts: DetErrorOptions = {
+    publicMessage: `Failed to move job to position ${position}`,
+    publicSubject: 'TITLE',
+    silent: false,
+  };
   if (position < 1 || position % 1 !== 0) {
-    throw new DetError(`Invalid queue position: ${position}.`, { type: ErrorType.Input });
+    throw new DetError(
+      `Invalid queue position: ${position}.`,
+      { ...errOpts, type: ErrorType.Input },
+    );
   }
-  return { jobId };
+  // what has the same position as the job we want to move?
+  const anchorJob = jobs.find(job => job.summary.jobsAhead === position - 1);
+  if (!anchorJob) {
+    // job view is out of sync.
+    // FIXME what's the remedy? They need to retry.
+    throw new DetError('Job view is out of sync.', { ...errOpts, type: ErrorType.Ui });
+  }
+
+  const isLastJob = jobs.length === position;
+  if (isLastJob) {
+    return {
+      behindOf: anchorJob.jobId,
+      jobId,
+    };
+  }
+  return {
+    aheadOf: anchorJob.jobId,
+    jobId,
+  };
 };
 
-export const moveJobToPosition = async (jobId: string, position: number): Promise<void> => {
-  await detApi.Internal.updateJobQueue({ updates: [ moveJobToPositionUpdate(jobId, position) ] });
+export const moveJobToPosition = async (
+  jobs: Job[],
+  jobId: string,
+  position: number,
+): Promise<void> => {
+  try {
+    await updateJobQueue(
+      { updates: [ moveJobToPositionUpdate(jobs, jobId, position) ] },
+    );
+  } catch (e) {
+    if (isDetError(e)) {
+      e.publicMessage = `Failed to move job to position ${position}`;
+    }
+    handleError(e);
+  }
 };
 
 /*
