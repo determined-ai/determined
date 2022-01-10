@@ -53,12 +53,6 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
-	// SetGroupOrder sets the order of the group in the priority scheduler.
-	SetGroupOrder struct {
-		QPosition    float64
-		ResourcePool string
-		Handler      *actor.Ref
-	}
 )
 
 // RegisterJob Registers an active job with the jobs actor.
@@ -111,12 +105,11 @@ func (j *Jobs) parseV1JobMsgs(
 	return jobs, nil
 }
 
-// jobQSnapshot ask for a fresh consistent snapshot of the job queue from the RM.
+// jobQSnapshot asks for a fresh consistent snapshot of the job queue from the RM.
 func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, error) {
 	aResp := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: resourcePool})
 	if err := aResp.Error(); err != nil {
 		ctx.Log().WithError(err).Error("getting job queue info from RM")
-		// ctx.Respond(err)
 		return nil, err
 	}
 
@@ -124,7 +117,6 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, er
 	if !ok {
 		err := fmt.Errorf("unexpected response type: %T from RM", aResp.Get())
 		ctx.Log().WithError(err).Error("")
-		// ctx.Respond(err)
 		return nil, err
 	}
 	return jobQ, nil
@@ -182,8 +174,6 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				ctx.Respond(errJobNotFound(jobID))
 				return nil
 			}
-			// TODO validate if the action is supported in the
-			// active scheduler.
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
@@ -200,11 +190,9 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				return nil
 			case *jobv1.QueueControl_QueuePosition:
 				// REMOVEME: keep this until ahead_of and behind_of are implemented
-				ctx.Tell(jobActor, SetGroupOrder{
-					QPosition: float64(update.GetQueuePosition()),
-				})
+				ctx.Respond(api.ErrNotImplemented)
+				return nil
 			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
-				// TODO not supported yet
 				ctx.Respond(api.ErrNotImplemented)
 				return nil
 			default:

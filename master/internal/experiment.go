@@ -164,7 +164,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		// FIXME we could avoid resetting these in the database
 		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
 			return err
 		}
@@ -264,11 +263,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.setPriority(ctx, msg.Priority); err != nil {
 			ctx.Log().WithError(err)
 		}
-	case job.SetGroupOrder:
-		if err := e.setOrder(ctx, msg.QPosition); err != nil {
-			ctx.Log().WithError(err)
-		}
-
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -388,8 +382,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.clearJobInfo()
 
 	default:
-		// TODO: Should we return actor.ErrUnexpectedMessage(ctx) instead?
-		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil
@@ -597,22 +590,6 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
-	})
-	return nil
-}
-
-func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
-	// TODO persist similar to the other set* methods?
-	jobModel := model.Job{
-		JobID: e.JobID,
-		QPos:  queuePosition,
-	}
-	if err := e.db.UpdateJob(&jobModel); err != nil {
-		return err
-	}
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
-		QPosition: queuePosition,
-		Handler:   ctx.Self(),
 	})
 	return nil
 }
