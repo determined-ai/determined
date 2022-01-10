@@ -197,7 +197,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 					})
 					a.model.State = a.state
 					a.model.IsReady = a.logBasedReadinessPassed
-					err := a.db.UpdateAllocationState(&a.model)
+					err := a.db.UpdateAllocationState(a.model)
 					if err != nil {
 						a.Error(ctx, err)
 					}
@@ -454,7 +454,7 @@ func (a *Allocation) TaskContainerStateChanged(
 
 	a.model.State = a.state
 	a.model.IsReady = a.logBasedReadinessPassed
-	err := a.db.UpdateAllocationState(&a.model)
+	err := a.db.UpdateAllocationState(a.model)
 	if err != nil {
 		ctx.Log().Error(err)
 	}
