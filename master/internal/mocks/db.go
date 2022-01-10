@@ -1989,21 +1989,14 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
 	ret := _m.Called(allocation)
 
-	var r0 model.AllocationState
-	if rf, ok := ret.Get(0).(func(model.Allocation) model.AllocationState); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
 		r0 = rf(allocation)
 	} else {
-		r0 = ret.Get(0).(model.AllocationState)
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(model.Allocation) error); ok {
-		r1 = rf(allocation)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r1
+	return r0
 }
 
 // UpdateCheckpointMetadata provides a mock function with given fields: checkpoint
