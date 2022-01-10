@@ -176,8 +176,7 @@ RETURNING id`)
 	}
 	defer stmt.Close()
 
-	var userID model.UserID
-	if err := stmt.QueryRowx(user).Scan(&userID); err != nil {
+	if err := stmt.QueryRowx(user).Scan(&user.ID); err != nil {
 		if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
 			if pgerr.Code == uniqueViolation {
 				return 0, ErrDuplicateRecord
@@ -186,7 +185,7 @@ RETURNING id`)
 		return 0, errors.Wrapf(err, "error creating user %v", err)
 	}
 
-	return userID, nil
+	return user.ID, nil
 }
 
 func addAgentUserGroup(tx *sqlx.Tx, userID model.UserID, ug *model.AgentUserGroup) error {
