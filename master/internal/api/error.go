@@ -45,6 +45,8 @@ var (
 	ErrInvalid = errors.New("invalid arguments")
 	// ErrNotFound is the inner error for errors that convert to a 404.
 	ErrNotFound = errors.New("not found")
+	// ErrNotImplemented is the inner error for errors that convert to a 501.
+	ErrNotImplemented = errors.New("not implemented")
 )
 
 // AsValidationError returns an error that wraps ErrInvalid, so that errors.Is can identify it.

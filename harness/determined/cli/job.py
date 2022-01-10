@@ -107,7 +107,7 @@ args_description = [
                 ],
             ),
             Cmd(
-                "update",
+                "u|pdate",
                 update,
                 "update job",
                 [
