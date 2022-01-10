@@ -121,7 +121,7 @@ func (db *PgDB) DeleteAllocationSession(allocationID model.AllocationID) error {
 }
 
 // UpdateAllocationState stores the latest task state and readiness.
-func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
+func (db *PgDB) UpdateAllocationState(a *model.Allocation) error {
 	_, err := db.sql.Exec(`
 		UPDATE allocations
 		SET state=$2, is_ready=$3

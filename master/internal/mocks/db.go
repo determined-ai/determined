@@ -1986,7 +1986,7 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 }
 
 // UpdateAllocationState provides a mock function with given fields: allocation
-func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
+func (_m *DB) UpdateAllocationState(allocation *model.Allocation) error {
 	ret := _m.Called(allocation)
 
 	var r0 error

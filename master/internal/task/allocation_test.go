@@ -21,11 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-func modModel(m model.Allocation, s model.AllocationState) model.Allocation {
-	m.State = s
-	return m
-}
-
 func TestAllocation(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -105,12 +100,7 @@ func TestAllocation(t *testing.T) {
 						Devices: []device.Device{},
 					},
 				}
-				db.On("UpdateAllocationState", modModel(a.model, model.AllocationStateAssigned)).Return(nil)
-				db.On("UpdateAllocationState", modModel(a.model, model.AllocationStatePulling)).Return(nil)
-				db.On("UpdateAllocationState", modModel(a.model, model.AllocationStateStarting)).Return(nil)
-				db.On("UpdateAllocationState", modModel(a.model, model.AllocationStateRunning)).Return(nil)
-				db.On("UpdateAllocationState", modModel(a.model, model.AllocationStateTerminating)).Return(nil)
-				db.On("UpdateAllocationState", modModel(a.model, model.AllocationStateTerminated)).Return(nil)
+				db.On("UpdateAllocationState", &a.model).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.Container.State = cproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
