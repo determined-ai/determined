@@ -173,16 +173,9 @@ class Checkpoint(object):
     def load(
         self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
     ) -> Any:
-        """Loads a Determiend checkpoint into memory.
-
-        If the checkpoint is not present on disk it will be downloaded from persistent storage.
-        The behavior here is different for TensorFlow and PyTorch checkpoints.
-
-        For PyTorch checkpoints, the return type is an object that inherits from
-        ``determined.pytorch.PyTorchTrial`` as defined by the ``entrypoint`` field
-        in the experiment config.
-
-        For TensorFlow checkpoints, the return type is a TensorFlow autotrackable object.
+        """
+        Loads a Determined checkpoint into memory. If the checkpoint is not
+        present on disk it will be downloaded from persistent storage.
 
         Arguments:
             path (string, optional): Top level directory to load the
@@ -237,13 +230,11 @@ class Checkpoint(object):
 
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
-        """Loads a Determined checkpoint from a local file system path into memory.
-
-        For PyTorch checkpoints, the return type is an object that inherits from
-        ``determined.pytorch.PyTorchTrial`` as defined by the ``entrypoint`` field
-        in the experiment config.
-
-        For TensorFlow checkpoints, the return type is a TensorFlow autotrackable object.
+        """
+        Loads a Determined checkpoint from a local file system path into
+        memory. If the checkpoint is a PyTorch model, a ``torch.nn.Module`` is returned.
+        If the checkpoint contains a TensorFlow SavedModel, a TensorFlow
+        autotrackable object is returned.
 
         Arguments:
             path (string): Local path to the checkpoint directory.
