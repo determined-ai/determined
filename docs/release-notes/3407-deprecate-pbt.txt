@@ -1,0 +1,6 @@
+:orphan:
+
+**Deprecated Features**
+
+-  The Population Based Searcher (``pbt`` in the searcher config) will be removed in the following
+   release.
