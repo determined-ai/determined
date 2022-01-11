@@ -4,7 +4,7 @@ import logging
 import shutil
 import socket
 import tempfile
-from typing import Any, Callable, List, Optional, Tuple, cast
+from typing import Any, Callable, List, Optional
 
 from determined import constants, ipc
 
