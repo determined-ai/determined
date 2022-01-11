@@ -472,6 +472,17 @@ export enum ExperimentVisualizationType {
   LearningCurve = 'learning-curve',
 }
 
+interface Allocation {
+  isReady: boolean;
+  state: CommandState;
+  taskId?: string;
+}
+
+export interface TaskItem {
+  allocations: Allocation[];
+  taskId: string;
+}
+
 export interface ModelItem {
   archived?: boolean;
   creationTime: string;

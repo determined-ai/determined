@@ -166,6 +166,29 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
   return { config: template.config, name: template.name };
 };
 
+export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
+  return {
+    allocations: task.allocations?.map(a => {
+      const setState = {
+        STATE_ASSIGNED: types.CommandState.Assigned,
+        STATE_PENDING: types.CommandState.Pending,
+        STATE_PULLING: types.CommandState.Pulling,
+        STATE_RUNNING: types.CommandState.Running,
+        STATE_STARTING: types.CommandState.Starting,
+        STATE_TERMINATED: types.CommandState.Terminated,
+        STATE_TERMINATING: types.CommandState.Terminating,
+      }[String(a?.state) || 'STATE_PENDING'] || types.CommandState.Pending;
+
+      return {
+        isReady: a.isReady || false,
+        state: setState,
+        taskId: a.taskId,
+      };
+    }) || [],
+    taskId: task.taskId || '',
+  };
+};
+
 export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
   return {
     archived: model.archived,

@@ -1,7 +1,6 @@
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
@@ -10,9 +9,10 @@ import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
+import { getTask } from 'services/api';
 import { CommandState } from 'types';
 import { capitalize } from 'utils/string';
-import { createWsUrl, WaitStatus } from 'wait';
+import { WaitStatus } from 'wait';
 
 import css from './Wait.module.scss';
 
@@ -47,7 +47,7 @@ const Wait: React.FC = () => {
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-  const handleWsError = (err: Error) => {
+  const handleTaskError = (err: Error) => {
     handleError({
       error: err,
       message: 'failed while waiting for command to be ready',
@@ -58,29 +58,28 @@ const Wait: React.FC = () => {
 
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
-
-    const url = createWsUrl(eventUrl);
-    const client = new W3CWebSocket(url);
-
-    client.onmessage = (messageEvent) => {
-      if (typeof messageEvent.data !== 'string') return;
-      const msg = JSON.parse(messageEvent.data);
-      if (msg.state) {
-        const state = msg.state;
-        if (state === CommandState.Running && msg.is_ready) {
-          setWaitStatus({ isReady: true, state: CommandState.Running });
-          client.close();
-          window.location.assign(serverAddress(serviceAddr));
-        } else if (terminalCommandStates.has(state)) {
-          setWaitStatus({ isReady: false, state });
-          client.close();
+    const taskId = (serviceAddr.match(/[0-f-]+/) || ' ')[0];
+    const ival = setInterval(async () => {
+      try {
+        const response = await getTask({ taskId });
+        if (!response) {
+          return;
         }
-        setWaitStatus({ isReady: false, state });
+        const lastRun = response.allocations[0];
+        if (!lastRun) {
+          return;
+        }
+        if ([ CommandState.Terminated ].includes(lastRun.state)) {
+          clearInterval(ival);
+        } else if (lastRun.isReady) {
+          clearInterval(ival);
+          window.location.assign(serverAddress(serviceAddr));
+        }
+        setWaitStatus(lastRun);
+      } catch (e) {
+        handleTaskError(e);
       }
-    };
-
-    // client.onclose = handleWsError;
-    client.onerror = handleWsError;
+    }, 1000);
   }, [ eventUrl, serviceAddr ]);
 
   return (

@@ -42,6 +42,7 @@ type (
 		// State for the primary behavior of an allocation.
 		// The state of the allocation, just informational.
 		state model.AllocationState
+
 		// State of all our reservations
 		reservations reservations
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
@@ -194,6 +195,11 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 						IsReady:           a.logBasedReadinessPassed,
 						ServiceReadyEvent: &msg,
 					})
+					a.model.State = a.state
+					a.model.IsReady = a.logBasedReadinessPassed
+					if err := a.db.UpdateAllocationState(a.model); err != nil {
+						a.Error(ctx, err)
+					}
 				}
 			}
 		}
@@ -443,6 +449,13 @@ func (a *Allocation) TaskContainerStateChanged(
 				a.req.TaskActor.Address())
 			prom.RemoveAllocationReservation(a.reservations[cID].Summary())
 		}
+	}
+
+	a.model.State = a.state
+	a.model.IsReady = a.logBasedReadinessPassed
+	err := a.db.UpdateAllocationState(a.model)
+	if err != nil {
+		ctx.Log().Error(err)
 	}
 }
 

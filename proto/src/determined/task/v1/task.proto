@@ -23,3 +23,27 @@ enum State {
   // The task has begun to exit.
   STATE_TERMINATING = 7;
 }
+
+// Allocation tracks a specific instance of a Task.
+message Allocation {
+  // Unique ID of task associated with the allocation.
+  string task_id = 1;
+  // The current state of the allocation.
+  State state = 2;
+  // Whether the allocation is ready to access.
+  bool is_ready = 3;
+  // Start timestamp.
+  string start_time = 4;
+  // End timestamp if completed.
+  string end_time = 5;
+  // Unique ID of the allocation.
+  string allocation_id = 6;
+}
+
+// Task is the model for a task in the database.
+message Task {
+  // Unique ID of task.
+  string task_id = 1;
+  // List of Allocations.
+  repeated Allocation allocations = 4;
+}

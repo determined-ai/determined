@@ -15,6 +15,7 @@ import "determined/api/v1/job.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
+import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
@@ -949,6 +950,16 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Tensorboards"
+    };
+  }
+
+  // Check the status of a requested task.
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
     };
   }
 

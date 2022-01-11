@@ -100,6 +100,7 @@ func TestAllocation(t *testing.T) {
 						Devices: []device.Device{},
 					},
 				}
+				db.On("UpdateAllocationState", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.Container.State = cproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())

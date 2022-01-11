@@ -826,6 +826,50 @@ export interface V1AgentUserGroup {
 }
 
 /**
+ * Allocation tracks a specific instance of a Task.
+ * @export
+ * @interface V1Allocation
+ */
+export interface V1Allocation {
+    /**
+     * Unique ID of task associated with the allocation.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    taskId?: string;
+    /**
+     * The current state of the allocation.
+     * @type {Determinedtaskv1State}
+     * @memberof V1Allocation
+     */
+    state?: Determinedtaskv1State;
+    /**
+     * Whether the allocation is ready to access.
+     * @type {boolean}
+     * @memberof V1Allocation
+     */
+    isReady?: boolean;
+    /**
+     * Start timestamp.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    startTime?: string;
+    /**
+     * End timestamp if completed.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    endTime?: string;
+    /**
+     * Unique ID of the allocation.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    allocationId?: string;
+}
+
+/**
  * Response to AllocationPreemptionSignalRequest.
  * @export
  * @interface V1AllocationPreemptionSignalResponse
@@ -2341,6 +2385,20 @@ export interface V1GetSlotsResponse {
      * @memberof V1GetSlotsResponse
      */
     slots?: Array<V1Slot>;
+}
+
+/**
+ * Response to GetTaskRequest.
+ * @export
+ * @interface V1GetTaskResponse
+ */
+export interface V1GetTaskResponse {
+    /**
+     * The requested task.
+     * @type {V1Task}
+     * @memberof V1GetTaskResponse
+     */
+    task?: V1Task;
 }
 
 /**
@@ -5143,6 +5201,26 @@ export interface V1Slot {
      * @memberof V1Slot
      */
     draining?: boolean;
+}
+
+/**
+ * Task is the model for a task in the database.
+ * @export
+ * @interface V1Task
+ */
+export interface V1Task {
+    /**
+     * Unique ID of task.
+     * @type {string}
+     * @memberof V1Task
+     */
+    taskId?: string;
+    /**
+     * List of Allocations.
+     * @type {Array<V1Allocation>}
+     * @memberof V1Task
+     */
+    allocations?: Array<V1Allocation>;
 }
 
 /**
@@ -14898,6 +14976,120 @@ export class ShellsApi extends BaseAPI {
      */
     public setShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
         return ShellsApiFp(this.configuration).setShellPriority(shellId, body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * TasksApi - fetch parameter creator
+ * @export
+ */
+export const TasksApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Check the status of a requested task.
+         * @param {string} taskId The requested task id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTask(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * TasksApi - functional programming interface
+ * @export
+ */
+export const TasksApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Check the status of a requested task.
+         * @param {string} taskId The requested task id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * TasksApi - factory interface
+ * @export
+ */
+export const TasksApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Check the status of a requested task.
+         * @param {string} taskId The requested task id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTask(taskId: string, options?: any) {
+            return TasksApiFp(configuration).getTask(taskId, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * TasksApi - object-oriented interface
+ * @export
+ * @class TasksApi
+ * @extends {BaseAPI}
+ */
+export class TasksApi extends BaseAPI {
+    /**
+     * 
+     * @summary Check the status of a requested task.
+     * @param {string} taskId The requested task id.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getTask(taskId: string, options?: any) {
+        return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
     }
 
 }
