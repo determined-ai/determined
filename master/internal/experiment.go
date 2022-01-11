@@ -259,10 +259,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Tell(e.rm, msg)
 	case job.SetGroupWeight:
 		if err := e.setWeight(ctx, msg.Weight); err != nil {
+			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
 		if err := e.setPriority(ctx, msg.Priority); err != nil {
+			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
 	case job.GetJob:

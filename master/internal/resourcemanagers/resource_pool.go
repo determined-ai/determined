@@ -375,14 +375,14 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
 	case job.SetGroupPriority:
-		group := rp.getOrCreateGroup(ctx, msg.Handler)
+		g := rp.getOrCreateGroup(ctx, msg.Handler)
 		if msg.Priority != nil {
-			group.priority = msg.Priority
+			g.priority = msg.Priority
 		}
 
 		if rp.config.Scheduler.Priority != nil {
 			ctx.Log().Infof("setting priority for group of %s to %d",
-				msg.Handler.Address().String(), *group.priority)
+				msg.Handler.Address().String(), *g.priority)
 		}
 
 	case sproto.SetTaskName:
