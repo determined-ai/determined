@@ -466,6 +466,7 @@ class v1AgentUserGroup:
 class v1Allocation:
     def __init__(
         self,
+        allocationId: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         isReady: "typing.Optional[bool]" = None,
         startTime: "typing.Optional[str]" = None,
@@ -477,6 +478,7 @@ class v1Allocation:
         self.isReady = isReady
         self.startTime = startTime
         self.endTime = endTime
+        self.allocationId = allocationId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Allocation":
@@ -486,6 +488,7 @@ class v1Allocation:
             isReady=obj["isReady"] if obj.get("isReady", None) is not None else None,
             startTime=obj["startTime"] if obj.get("startTime", None) is not None else None,
             endTime=obj["endTime"] if obj.get("endTime", None) is not None else None,
+            allocationId=obj["allocationId"] if obj.get("allocationId", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -495,6 +498,7 @@ class v1Allocation:
             "isReady": self.isReady if self.isReady is not None else None,
             "startTime": self.startTime if self.startTime is not None else None,
             "endTime": self.endTime if self.endTime is not None else None,
+            "allocationId": self.allocationId if self.allocationId is not None else None,
         }
 
 class v1AllocationPreemptionSignalResponse:
