@@ -3,7 +3,7 @@ import pathlib
 import sys
 import tempfile
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Type
 
 import determined as det
 import determined.common
@@ -108,32 +108,6 @@ def _make_test_workloads(config: det.ExperimentConfig) -> workload.Stream:
     logging.info("Saving a checkpoint.")
     yield workload.checkpoint_workload(), workload.ignore_workload_response
     logging.info("Finished saving a checkpoint.")
-
-
-def _load_trial_for_checkpoint_export(
-    context_dir: pathlib.Path,
-    managed_training: bool,
-    config: Dict[str, Any],
-    hparams: Dict[str, Any],
-) -> Tuple[Type[det.Trial], det.TrialContext]:
-    with det._local_execution_manager(context_dir):
-        trial_entrypoint = load.parse_trial_class_from_entrypoint(config["entrypoint"])
-        if not trial_entrypoint:
-            raise errors.InvalidExperimentException(
-                f"Unable to find trial class (model_def:TrialClass) "
-                f"specification in entrypoint {config['entrypoint']}"
-            )
-
-        trial_class = load.trial_class_from_entrypoint(trial_entrypoint)
-        core_context, env = det._make_local_execution_env(
-            managed_training=managed_training,
-            test_mode=False,
-            config=config,
-            checkpoint_dir="/tmp",
-            hparams=hparams,
-        )
-        trial_context = trial_class.trial_context_class(core_context, env)
-    return trial_class, trial_context
 
 
 def test_one_batch(

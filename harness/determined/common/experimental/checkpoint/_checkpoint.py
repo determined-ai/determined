@@ -153,28 +153,38 @@ class Checkpoint(object):
                 manager.download(self.uuid, str(local_ckpt_dir))
 
         if not local_ckpt_dir.joinpath("metadata.json").exists():
-            with open(local_ckpt_dir.joinpath("metadata.json"), "w") as f:
-                json.dump(
-                    {
-                        "determined_version": self.determined_version,
-                        "framework": self.framework,
-                        "format": self.format,
-                        "experiment_id": self.experiment_id,
-                        "trial_id": self.trial_id,
-                        "hparams": self.hparams,
-                        "experiment_config": self.experiment_config,
-                        "metadata": self.metadata,
-                    },
-                    f,
-                    indent=2,
-                )
+            self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
 
         return str(local_ckpt_dir)
+
+    def write_metadata_file(self, path: str) -> None:
+        """
+        Write a file with this Checkpoint's metadata inside of it.
+
+        This is normally executed as part of Checkpoint.download().  However, in the special case
+        where you are accessing the checkpoint files directly (not via Checkpoint.download) you may
+        use this method directly to obtain the latest metadata.
+        """
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "determined_version": self.determined_version,
+                    "framework": self.framework,
+                    "format": self.format,
+                    "experiment_id": self.experiment_id,
+                    "trial_id": self.trial_id,
+                    "hparams": self.hparams,
+                    "experiment_config": self.experiment_config,
+                    "metadata": self.metadata,
+                },
+                f,
+                indent=2,
+            )
 
     def load(
         self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
     ) -> Any:
-        """Loads a Determiend checkpoint into memory.
+        """Loads a Determined checkpoint into memory.
 
         If the checkpoint is not present on disk it will be downloaded from persistent storage.
         The behavior here is different for TensorFlow and PyTorch checkpoints.
@@ -196,7 +206,25 @@ class Checkpoint(object):
             kwargs: Only relevant for PyTorch checkpoints. The keyword arguments
                 will be applied to ``torch.load``. See documentation for `torch.load
                 <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
+
+        .. warning::
+
+           Checkpoint.load() has been deprecated and will be removed in a future version.
+
+           Please combine Checkpoint.download() with one of the following instead:
+             - ``det.pytorch.load_trial_from_checkpoint()``
+             - ``det.keras.load_trial_from_checkpoint()``
+             - ``det.estimator.load_trial_from_checkpoint()``
         """
+        warnings.warn(
+            "Checkpoint.load() has been deprecated and will be removed in a future version.\n"
+            "\n"
+            "Please combine Checkpoint.download() with one of the following instead:\n"
+            "  - det.pytorch.load_trial_from_checkpoint_path()\n"
+            "  - det.keras.load_model_from_checkpoint_path()\n"
+            "  - det.estimator.load_estimator_from_checkpoint_path()\n",
+            FutureWarning,
+        )
         ckpt_path = self.download(path)
         return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
 
@@ -253,26 +281,52 @@ class Checkpoint(object):
                 the TensorFlow SavedModel. See documentation for
                 `tf.compat.v1.saved_model.load_v2
                 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
+
+        .. warning::
+
+           Checkpoint.load_from_path() has been deprecated and will be removed in a future version.
+
+           Please use one of the following instead to load your checkpoint:
+             - ``det.pytorch.load_trial_from_checkpoint_path()``
+             - ``det.keras.load_model_from_checkpoint_path()``
+             - ``det.estimator.load_estimator_from_checkpoint_path()``
         """
+        warnings.warn(
+            "Checkpoint.load_from_path() has been deprecated and will be removed in a future "
+            "version.\n"
+            "\n"
+            "Please use one of the following instead to load your checkpoint:\n"
+            "  - det.pytorch.load_trial_from_checkpoint_path()\n"
+            "  - det.keras.load_model_from_checkpoint_path()\n"
+            "  - det.estimator.load_estimator_from_checkpoint_path()\n",
+            FutureWarning,
+        )
         checkpoint_dir = pathlib.Path(path)
-        metadata = Checkpoint.parse_metadata(checkpoint_dir)
-        checkpoint_type = Checkpoint.get_type(metadata)
+        metadata = Checkpoint._parse_metadata(checkpoint_dir)
+        checkpoint_type = Checkpoint._get_type(metadata)
 
         if checkpoint_type == ModelFramework.PYTORCH:
-            import determined.common.experimental.checkpoint._torch
+            from determined import pytorch
 
-            return determined.common.experimental.checkpoint._torch.load_model(
-                checkpoint_dir, metadata, **kwargs
-            )
+            return pytorch.load_trial_from_checkpoint_path(path, **kwargs)
 
-        elif checkpoint_type == ModelFramework.TENSORFLOW:
-            import determined.common.experimental.checkpoint._tf
+        if checkpoint_type == ModelFramework.TENSORFLOW:
+            save_format = metadata.get("format", "saved_model")
 
-            return determined.common.experimental.checkpoint._tf.load_model(
-                checkpoint_dir, metadata, tags=tags
-            )
+            # For tf.estimators we save the entire model using the saved_model format.
+            # For tf.keras we save only the weights also using the saved_model format,
+            # which we call saved_weights.
+            if cast(str, save_format) == "saved_model":
+                from determined import estimator
 
-        raise AssertionError("Unknown checkpoint format at {}".format(checkpoint_dir))
+                return estimator.load_estimator_from_checkpoint_path(path, tags)
+
+            if save_format in ("saved_weights", "h5"):
+                from determined import keras
+
+                return keras.load_model_from_checkpoint_path(path, tags)
+
+        raise AssertionError("Unknown checkpoint format at {}".format(path))
 
     @staticmethod
     def _parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:

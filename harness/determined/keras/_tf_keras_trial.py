@@ -1,4 +1,5 @@
 import inspect
+import json
 import logging
 import pathlib
 import pickle
@@ -298,6 +299,7 @@ class TFKerasTrialController(det.TrialController):
             context.model,
             session,
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
+            trial,
             context,
             env,
             workloads,
@@ -308,6 +310,7 @@ class TFKerasTrialController(det.TrialController):
         model: tf.keras.models.Model,
         session: tf.compat.v1.ConfigProto,
         train_config: keras.TFKerasTrainConfig,
+        trial: "TFKerasTrial",
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -315,6 +318,7 @@ class TFKerasTrialController(det.TrialController):
 
         self.model = model
         self.session = session
+        self.trial = trial
 
         # Configure optimizers, done for backwards compatibility.
         self.context._select_optimizers()
@@ -587,6 +591,18 @@ class TFKerasTrialController(det.TrialController):
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
+
+        trial_cls = type(self.trial)
+        with open(path.joinpath("load_data.json"), "w") as f2:
+            json.dump(
+                {
+                    "trial_type": "TFKerasTrial",
+                    "experiment_config": self.context.env.experiment_config,
+                    "hparams": self.context.env.hparams,
+                    "trial_cls_spec": f"{trial_cls.__module__}:{trial_cls.__qualname__}",
+                },
+                f2,
+            )
 
     def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
         logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")

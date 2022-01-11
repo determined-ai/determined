@@ -19,3 +19,4 @@ from determined.pytorch._reducer import (
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext
 from determined.pytorch._pytorch_trial import PyTorchTrial, PyTorchTrialController, reset_parameters
+from determined.pytorch._load import load_trial_from_checkpoint_path

@@ -1,3 +1,4 @@
+import json
 import logging
 import pathlib
 import pickle
@@ -851,6 +852,18 @@ class PyTorchTrialController(det.TrialController):
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
+
+        trial_cls = type(self.trial)
+        with open(path.joinpath("load_data.json"), "w") as f2:
+            json.dump(
+                {
+                    "trial_type": "PyTorchTrial",
+                    "experiment_config": self.context.env.experiment_config,
+                    "hparams": self.context.env.hparams,
+                    "trial_cls_spec": f"{trial_cls.__module__}:{trial_cls.__qualname__}",
+                },
+                f2,
+            )
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)

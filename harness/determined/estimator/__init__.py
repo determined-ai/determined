@@ -17,3 +17,4 @@ from determined.estimator._util import (
     _scan_checkpoint_directory,
 )
 from determined.estimator._estimator_trial import EstimatorTrial, EstimatorTrialController
+from determined.estimator._load import load_estimator_from_checkpoint_path
