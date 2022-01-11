@@ -108,7 +108,7 @@ const ResourcePoolCard: React.FC<Props> = ({
         </div>
       </div>
       <div className={statusClasses.join(' ')}>
-        <p>{`${pool.numAgents || 'No'} Connect Agent${pool.numAgents > 1 ? 's' : ''}`}</p>
+        <p>{`${pool.numAgents || 'No'} Connected Agent${pool.numAgents > 1 ? 's' : ''}`}</p>
       </div>
       <div className={css.body}>
         <section className={descriptionClasses.join(' ')}>
@@ -116,15 +116,19 @@ const ResourcePoolCard: React.FC<Props> = ({
         </section>
         <hr />
         <section>
-          <SlotAllocationBar
-            resourceStates={computeContainerStates}
-            title={deviceTypes.has(resourceType) ? resourceType : undefined}
-            totalSlots={totalComputeSlots}
-          />
-          <div className={css.cpuContainers}>
-            <span>Aux containers running:</span>
-            <span>{pool.auxContainersRunning}</span>
-          </div>
+          {totalComputeSlots > 0 && (
+            <SlotAllocationBar
+              resourceStates={computeContainerStates}
+              title={deviceTypes.has(resourceType) ? resourceType : undefined}
+              totalSlots={totalComputeSlots}
+            />
+          )}
+          {pool.auxContainerCapacityPerAgent > 0 && (
+            <div className={css.cpuContainers}>
+              <span>Aux containers running:</span>
+              <span>{pool.auxContainersRunning}</span>
+            </div>
+          )}
         </section>
         <hr />
         <section className={css.details}>

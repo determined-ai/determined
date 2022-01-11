@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
+import { percent } from 'utils/number';
 
 import ActionSheet from './ActionSheet';
 import Icon from './Icon';
@@ -36,12 +37,20 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui } = useStore();
+  const { auth, cluster: overview, ui, resourcePools } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
 
-  const cluster = overview[ResourceType.ALL].allocation === 0 ?
-    undefined : `${overview[ResourceType.ALL].allocation}%`;
+  const cluster = useMemo(() => {
+    if (overview[ResourceType.ALL].allocation === 0) return undefined;
+    const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
+      return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
+    }, 0);
+    if (totalSlots === 0) return undefined;
+    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
+        / totalSlots)}%`;
+  }, [ overview, resourcePools ]);
+
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);

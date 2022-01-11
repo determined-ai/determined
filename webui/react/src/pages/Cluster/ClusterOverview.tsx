@@ -82,6 +82,25 @@ const ClusterOverview: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.CPU);
   }, [ agents ]);
 
+  const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
+    return resourcePools.reduce((acc, pool) => {
+      let index;
+      switch (pool.slotType) {
+        case ResourceType.CUDA:
+          index = 0;
+          break;
+        case ResourceType.ROCM:
+          index = 1;
+          break;
+        default:
+          index = undefined;
+      }
+      if (index === undefined) return acc;
+      acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
+      return acc;
+    }, [ 0, 0 ]);
+  }, [ resourcePools ]);
+
   const getSlotTypeOverview = useCallback((
     resPoolName: string,
     resType: ResourceType,
@@ -172,14 +191,14 @@ const ClusterOverview: React.FC = () => {
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
-          {overview.CUDA.total ? (
+          {cudaTotalSlots ? (
             <OverviewStats title="CUDA Slots Allocated">
-              {overview.CUDA.total - overview.CUDA.available} <small>/ {overview.CUDA.total}</small>
+              {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
             </OverviewStats>
           ) : null}
-          {overview.ROCM.total ? (
+          {rocmTotalSlots ? (
             <OverviewStats title="ROCm Slots Allocated">
-              {overview.ROCM.total - overview.ROCM.available} <small>/ {overview.ROCM.total}</small>
+              {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
             </OverviewStats>
           ) : null}
           {overview.CPU.total ? (
@@ -195,25 +214,25 @@ const ClusterOverview: React.FC = () => {
         </Grid>
       </Section>
       <Section hideTitle title="Overall Allocation">
-        {overview.ALL.total === 0 ? (
+        {cudaTotalSlots + rocmTotalSlots + overview.CPU.total === 0 ? (
           <Message title="No connected agents." type={MessageType.Empty} />
         ) : null }
-        {overview.CUDA.total > 0 && (
+        {cudaTotalSlots > 0 && (
           <SlotAllocationBar
             resourceStates={cudaSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.CUDA})`}
-            totalSlots={overview.CUDA.total}
+            totalSlots={cudaTotalSlots}
           />
         )}
-        {overview.ROCM.total > 0 && (
+        {rocmTotalSlots > 0 && (
           <SlotAllocationBar
             resourceStates={rocmSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.ROCM})`}
-            totalSlots={overview.ROCM.total}
+            totalSlots={rocmTotalSlots}
           />
         )}
         {overview.CPU.total > 0 && (
@@ -239,7 +258,7 @@ const ClusterOverview: React.FC = () => {
                 key={idx}
                 resourcePool={rp}
                 resourceType={rp.slotType}
-                totalComputeSlots={getSlotTypeOverview(rp.name, rp.slotType).total}
+                totalComputeSlots={rp.maxAgents * (rp.slotsPerAgent ?? 0)}
               />
             ))}
           </Grid>
