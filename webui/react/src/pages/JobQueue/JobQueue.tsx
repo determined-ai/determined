@@ -120,9 +120,6 @@ const JobQueue: React.FC = () => {
       },
       [JobAction.ManageJob]: () => setManagingJob(job),
     };
-    // if (isJobOrderAvailable && job.summary.jobsAhead > 0) {
-    //   triggers[JobAction.MoveToTop] = () => moveJobToPosition(job.jobId, 0);
-    // }
 
     // if job is an experiment type add action to kill it
     if (job.type === JobType.EXPERIMENT) {

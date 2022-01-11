@@ -156,9 +156,6 @@ export const columns: ColumnType<Job>[] = [
     },
     title: 'User',
   },
-];
-
-columns.push(
   {
     align: 'right',
     className: 'fullCell',
@@ -167,4 +164,4 @@ columns.push(
     title: '',
     width: 40,
   },
-);
+];

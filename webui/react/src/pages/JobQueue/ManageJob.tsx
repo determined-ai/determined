@@ -142,7 +142,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         ref={formRef}>
         {schedulerType === api.V1SchedulerType.PRIORITY && (
           <Form.Item
-            extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest."
+            extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
             label="Priority"
             name="priority">
             <Input addonAfter="out of 99" max={99} min={1} type="number" />
@@ -150,7 +150,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         )}
         {schedulerType === api.V1SchedulerType.KUBERNETES && (
           <Form.Item
-            extra="Priority is an integer with 1 being the lowest priority."
+            extra="Priority is a whole number with 1 being the lowest priority."
             label="Priority"
             name="priority">
             <Input min={1} type="number" />
