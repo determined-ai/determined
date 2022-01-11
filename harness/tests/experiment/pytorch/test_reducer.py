@@ -63,6 +63,7 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
 
             threads.append(threading.Thread(target=_fn, args=(rank, cross_rank, local_rank)))
 
+        # encourage allgather to occur in not-the-correct order to test the reordering
         for thread in reversed(threads):
             thread.start()
 
