@@ -1,5 +1,5 @@
 WITH allo AS (
-  SELECT task_id, state, is_ready, start_time, end_time
+  SELECT allocation_id, task_id, state, is_ready, start_time, end_time
   FROM allocations
   WHERE task_id = $1
   ORDER BY end_time DESC NULLS FIRST

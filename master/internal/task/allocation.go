@@ -197,8 +197,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 					})
 					a.model.State = a.state
 					a.model.IsReady = a.logBasedReadinessPassed
-					err := a.db.UpdateAllocationState(a.model)
-					if err != nil {
+					if err := a.db.UpdateAllocationState(a.model); err != nil {
 						a.Error(ctx, err)
 					}
 				}

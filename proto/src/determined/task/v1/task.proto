@@ -36,6 +36,8 @@ message Allocation {
   string start_time = 4;
   // End timestamp if completed.
   string end_time = 5;
+  // Unique ID of the allocation.
+  string allocation_id = 6;
 }
 
 // Task is the model for a task in the database.

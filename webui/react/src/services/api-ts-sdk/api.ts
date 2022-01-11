@@ -861,6 +861,12 @@ export interface V1Allocation {
      * @memberof V1Allocation
      */
     endTime?: string;
+    /**
+     * Unique ID of the allocation.
+     * @type {string}
+     * @memberof V1Allocation
+     */
+    allocationId?: string;
 }
 
 /**
