@@ -77,11 +77,14 @@ def ls(args: Namespace) -> None:
         ]
         render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
+
 @authentication.required
 def update(args: Namespace) -> None:
     update = bindings.v1QueueControl(jobId=args.job_id, priority=args.priority, weight=args.weight)
-    bindings.post_UpdateJobQueue(setup_session(args),
-                                 body=bindings.v1UpdateJobQueueRequest([update]))
+    bindings.post_UpdateJobQueue(
+        setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
+    )
+
 
 args_description = [
     Cmd(
@@ -95,7 +98,10 @@ args_description = [
                 "list jobs",
                 [
                     Arg(
-                        "--rp", "--resource-pool", type=str, help="The target resource pool, if any."
+                        "--rp",
+                        "--resource-pool",
+                        type=str,
+                        help="The target resource pool, if any.",
                     ),
                     *pagination_args,
                     Group(
