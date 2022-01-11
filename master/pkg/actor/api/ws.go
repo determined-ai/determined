@@ -35,7 +35,7 @@ const (
 
 // MaxMaxWebsocketMessageSizeExceededError indicates to the call that the message exceeded the
 // maximum websocket size.
-type MaxMaxWebsocketMessageSizeExceededError struct {
+type MaxWebsocketMessageSizeExceededError struct {
 	size int
 }
 
