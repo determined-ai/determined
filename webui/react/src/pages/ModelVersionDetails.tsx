@@ -9,13 +9,13 @@ import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
-import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/workload';
 
@@ -81,8 +81,8 @@ const ModelVersionDetails: React.FC = () => {
       });
       await fetchModelVersion();
     } catch (e) {
-      handleError({
-        message: 'Unable to save metadata.',
+      handleError(e, {
+        publicSubject: 'Unable to save metadata.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -98,8 +98,8 @@ const ModelVersionDetails: React.FC = () => {
       });
       setModelVersion(versionResponse);
     } catch (e) {
-      handleError({
-        message: 'Unable to update notes.',
+      handleError(e, {
+        publicSubject: 'Unable to update notes.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -114,8 +114,8 @@ const ModelVersionDetails: React.FC = () => {
         versionId: parseInt(versionId),
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save description.',
+      handleError(e, {
+        publicSubject: 'Unable to save description.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -130,8 +130,8 @@ const ModelVersionDetails: React.FC = () => {
         versionId: parseInt(versionId),
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save name.',
+      handleError(e, {
+        publicSubject: 'Unable to save name.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -147,8 +147,8 @@ const ModelVersionDetails: React.FC = () => {
       });
       fetchModelVersion();
     } catch (e) {
-      handleError({
-        message: 'Unable to save tags.',
+      handleError(e, {
+        publicSubject: 'Unable to save tags.',
         silent: true,
         type: ErrorType.Api,
       });

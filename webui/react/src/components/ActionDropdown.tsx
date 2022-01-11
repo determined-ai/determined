@@ -3,8 +3,8 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor } from 'react';
 
 import Icon from 'components/Icon';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { Eventually } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 
 import css from './ActionDropdown.module.scss';
@@ -52,10 +52,8 @@ const ActionDropdown = <T extends string>(
       }
 
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: `Unable to ${params.key} ${kind} ${id}.`,
         publicSubject: `${capitalize(params.key.toString())} failed.`,
         silent: false,

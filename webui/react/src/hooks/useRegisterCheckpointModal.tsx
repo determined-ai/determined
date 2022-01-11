@@ -5,13 +5,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { Metadata, ModelItem } from 'types';
 import { isEqual } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
 
 import css from './useRegisterCheckpointModal.module.scss';
 
@@ -63,7 +63,11 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
         return response.models;
       });
     } catch(e) {
-      handleError({ message: 'Unable to fetch models.', silent: true, type: ErrorType.Api });
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     }
   }, [ canceler.signal ]);
 
@@ -138,9 +142,9 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
           message: '',
         },
       );
-    } catch {
-      handleError({
-        message: 'Unable to register checkpoint.',
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to register checkpoint.',
         silent: true,
         type: ErrorType.Api,
       });

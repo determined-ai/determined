@@ -7,10 +7,10 @@ import PageMessage from 'components/PageMessage';
 import Spinner from 'components/Spinner';
 import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import { CommandState } from 'types';
+import handleError, { ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { WaitStatus } from 'wait';
 

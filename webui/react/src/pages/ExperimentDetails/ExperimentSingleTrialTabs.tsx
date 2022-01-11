@@ -9,12 +9,12 @@ import SkeletonTable from 'components/Skeleton/SkeletonTable';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, TrialDetails } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
@@ -85,10 +85,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         setWontHaveTrials(true);
       }
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Failed to fetch experiment trials.',
         silent: true,
         type: ErrorType.Server,
@@ -103,10 +101,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
       setTrialDetails(response);
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Failed to fetch experiment trials.',
         silent: true,
         type: ErrorType.Server,
@@ -165,10 +161,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to update experiment notes.',
         silent: false,

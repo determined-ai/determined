@@ -22,7 +22,6 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -38,6 +37,7 @@ import {
   ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentItem, RecordKey, RunState,
 } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
@@ -135,7 +135,11 @@ const ExperimentList: React.FC = () => {
         return response.experiments;
       });
     } catch (e) {
-      handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+      handleError(e, {
+        publicSubject: 'Unable to fetch experiments.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -470,10 +474,8 @@ const ExperimentList: React.FC = () => {
       const publicSubject = action === Action.OpenTensorBoard ?
         'Unable to View TensorBoard for Selected Experiments' :
         `Unable to ${action} Selected Experiments`;
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,

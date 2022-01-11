@@ -8,7 +8,6 @@ import React from 'react';
 import Icon from 'components/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
@@ -17,6 +16,7 @@ import {
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { isExperimentTask, isTaskKillable } from 'utils/task';
 import { openCommand } from 'wait';
@@ -129,10 +129,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
           });
       }
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: `Unable to ${params.key} task ${task.id}.`,
         publicSubject: `${capitalize(params.key.toString())} failed.`,
         silent: false,

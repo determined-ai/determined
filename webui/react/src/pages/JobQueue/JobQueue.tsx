@@ -9,7 +9,6 @@ import Section from 'components/Section';
 import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -21,6 +20,7 @@ import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
@@ -80,10 +80,8 @@ const JobQueue: React.FC = () => {
       // Process job stats response.
       setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicSubject: 'Unable to fetch job queue and stats.',
         silent: false,
         type: ErrorType.Server,

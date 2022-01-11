@@ -7,7 +7,6 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -18,6 +17,7 @@ import {
   metricTypeParamMap, RunState,
 } from 'types';
 import { flattenObject } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
@@ -180,10 +180,8 @@ const LearningCurve: React.FC<Props> = ({
       const publicSubject = action === Action.OpenTensorBoard ?
         'Unable to View TensorBoard for Selected Trials' :
         `Unable to ${action} Selected Trials`;
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,

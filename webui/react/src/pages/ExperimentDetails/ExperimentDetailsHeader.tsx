@@ -15,7 +15,6 @@ import {
   stateToLabel,
   terminalRunStates,
 } from 'constants/states';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
@@ -33,6 +32,7 @@ import {
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { getDuration } from 'utils/datetime';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -80,10 +80,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       await pauseExperiment({ experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to pause experiment.',
         silent: false,
@@ -100,10 +98,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       await activateExperiment({ experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to activate experiment.',
         silent: false,
@@ -140,10 +136,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to update experiment description.',
         silent: false,
@@ -157,10 +151,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to update experiment name.',
         silent: false,

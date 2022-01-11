@@ -3,7 +3,7 @@ import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { Prompt, useLocation } from 'react-router-dom';
 
-import handleError, { ErrorType } from 'ErrorHandler';
+import handleError, { ErrorType } from 'utils/error';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
@@ -38,8 +38,8 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
       await onSave?.(editedNotes);
       setIsEditing(false);
     } catch (e) {
-      handleError({
-        message: 'Unable to update notes.',
+      handleError(e, {
+        publicSubject: 'Unable to update notes.',
         silent: true,
         type: ErrorType.Api,
       });

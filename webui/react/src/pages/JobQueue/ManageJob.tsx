@@ -2,11 +2,11 @@ import { Form, FormInstance, Input, List, Modal, Typography } from 'antd';
 import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import * as api from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { Job, RPStats } from 'types';
+import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 
@@ -100,11 +100,10 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         const update = formValuesToQUpdate(formRef);
         if (update) await detApi.Internal.updateJobQueue({ updates: [ update ] });
       } catch (e) {
-        handleError({
-          error: e as Error,
+        handleError(e, {
           isUserTriggered: true,
-          message: 'Failed to update job queue',
           publicMessage: `Failed to update job ${job.jobId}`,
+          publicSubject: 'Failed to update job queue',
           type: ErrorType.Api,
         });
       }

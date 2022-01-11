@@ -17,7 +17,6 @@ import { getFullPaginationConfig, modelVersionNameRenderer, modelVersionNumberRe
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
-import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
@@ -26,6 +25,7 @@ import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound, validateDetApiEnum } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, { Settings } from './ModelDetails/ModelDetails.settings';
@@ -83,8 +83,8 @@ const ModelDetails: React.FC = () => {
       await deleteModelVersion({ modelId: version.model.id, versionId: version.id });
       await fetchModel();
     } catch (e) {
-      handleError({
-        message: `Unable to delete model version ${version.id}.`,
+      handleError(e, {
+        publicSubject: `Unable to delete model version ${version.id}.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -98,8 +98,8 @@ const ModelDetails: React.FC = () => {
       await patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
       await fetchModel();
     } catch (e) {
-      handleError({
-        message: `Unable to update model version ${versionId} tags.`,
+      handleError(e, {
+        publicSubject: `Unable to update model version ${versionId} tags.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -130,8 +130,8 @@ const ModelDetails: React.FC = () => {
           versionId: versionId,
         });
       } catch (e) {
-        handleError({
-          message: 'Unable to save version description.',
+        handleError(e, {
+          publicSubject: 'Unable to save version description.',
           silent: true,
           type: ErrorType.Api,
         });
@@ -263,8 +263,8 @@ const ModelDetails: React.FC = () => {
       });
       await fetchModel();
     } catch (e) {
-      handleError({
-        message: 'Unable to save metadata.',
+      handleError(e, {
+        publicSubject: 'Unable to save metadata.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -279,8 +279,8 @@ const ModelDetails: React.FC = () => {
         modelId: parseInt(modelId),
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save description.',
+      handleError(e, {
+        publicSubject: 'Unable to save description.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -295,8 +295,8 @@ const ModelDetails: React.FC = () => {
         modelId: parseInt(modelId),
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save name.',
+      handleError(e, {
+        publicSubject: 'Unable to save name.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -311,8 +311,8 @@ const ModelDetails: React.FC = () => {
       });
       await fetchModel();
     } catch (e) {
-      handleError({
-        message: 'Unable to update notes.',
+      handleError(e, {
+        publicSubject: 'Unable to update notes.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -327,8 +327,8 @@ const ModelDetails: React.FC = () => {
       });
       fetchModel();
     } catch (e) {
-      handleError({
-        message: 'Unable to update model tags.',
+      handleError(e, {
+        publicSubject: 'Unable to update model tags.',
         silent: true,
         type: ErrorType.Api,
       });

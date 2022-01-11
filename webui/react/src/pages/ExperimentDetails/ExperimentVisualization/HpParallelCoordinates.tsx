@@ -9,7 +9,6 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -20,6 +19,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommand } from 'wait';
@@ -244,10 +244,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
       const publicSubject = action === Action.OpenTensorBoard ?
         'Unable to View TensorBoard for Selected Trials' :
         `Unable to ${action} Selected Trials`;
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,

@@ -1,7 +1,7 @@
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
 import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
 import { RawJson } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
 
 interface JupyterLabOptions {
@@ -36,10 +36,8 @@ export const launchJupyterLab = async (
     });
     openCommand(jupyterLab);
   } catch (e) {
-    handleError({
-      error: e,
+    handleError(e, {
       level: ErrorLevel.Error,
-      message: e.message,
       publicMessage: 'Please try again later.',
       publicSubject: 'Unable to Launch JupyterLab',
       silent: false,

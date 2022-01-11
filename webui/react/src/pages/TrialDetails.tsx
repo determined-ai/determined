@@ -8,7 +8,6 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -21,6 +20,7 @@ import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api'
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, TrialDetails } from 'types';
+import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 const { TabPane } = Tabs;
@@ -75,9 +75,7 @@ const TrialDetailsComp: React.FC = () => {
       }
     } catch (e) {
       if (axios.isCancel(e)) return;
-      handleError({
-        error: e,
-        message: 'Failed to load experiment details.',
+      handleError(e, {
         publicMessage: 'Failed to load experiment details.',
         publicSubject: 'Unable to fetch Trial Experiment Detail',
         silent: false,

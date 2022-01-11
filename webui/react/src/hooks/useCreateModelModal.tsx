@@ -7,10 +7,10 @@ import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
+import handleError, { ErrorType } from 'utils/error';
 
 import css from './useCreateModelModal.module.scss';
 import useRegisterCheckpointModal from './useRegisterCheckpointModal';
@@ -87,21 +87,23 @@ const useCreateModelModal = (): ModalHooks => {
       if (checkpointUuid){
         showRegisterCheckpointModal({ checkpointUuid, selectedModelId: response.id });
       }
-      notification.open(
-        {
-          btn: null,
-          description: (
-            <div className={css.toast}>
-              <p>{`"${modelName}"`} created</p>
-              <Link path={paths.modelDetails(response.id)}>
-                View Model
-              </Link>
-            </div>),
-          message: '',
-        },
-      );
-    } catch {
-      handleError({ message: 'Unable to create model.', silent: true, type: ErrorType.Api });
+      notification.open({
+        btn: null,
+        description: (
+          <div className={css.toast}>
+            <p>{`"${modelName}"`} created</p>
+            <Link path={paths.modelDetails(response.id)}>
+              View Model
+            </Link>
+          </div>),
+        message: '',
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to create model.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     }
   }, [ closeModal, showRegisterCheckpointModal, user?.username ]);
 
