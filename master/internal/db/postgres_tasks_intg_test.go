@@ -85,6 +85,8 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    time.Now().UTC().Truncate(time.Millisecond),
+		State:        1,
+		IsReady:      false,
 	}
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
