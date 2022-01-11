@@ -1536,6 +1536,13 @@ jobs:
       - store_test_results:
           path: /tmp/test-results/
 
+      - when:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - store_artifacts:
+                path: /tmp/devcluster/
+                destination: devcluster-logs
+
   deploy:
     parameters:
       compute-agent-instance-type:
