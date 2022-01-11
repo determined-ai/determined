@@ -245,7 +245,7 @@ class ExperimentReference:
         checkpoint_refs = []
         for ckpt in checkpoints:
             if ckpt["trialId"] not in t_ids:
-                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._session))
+                checkpoint_refs.append(checkpoint.Checkpoint._from_json(ckpt, self._session))
                 t_ids.add(ckpt["trialId"])
 
         return checkpoint_refs[:limit]

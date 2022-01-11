@@ -1,6 +1,7 @@
 import datetime
 import enum
 import json
+import warnings
 from typing import Any, Dict, List, Optional
 
 from determined.common.experimental import checkpoint, session
@@ -72,12 +73,12 @@ class ModelVersion:
             "/api/v1/models/{}/versions/{}".format(self.model_name, self.model_version_id),
         )
 
-    @staticmethod
-    def from_json(data: Dict[str, Any], session: session.Session) -> "ModelVersion":
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "ModelVersion":
         ckpt_data = data.get("checkpoint", {})
-        ckpt = checkpoint.Checkpoint.from_json(ckpt_data, session)
+        ckpt = checkpoint.Checkpoint._from_json(ckpt_data, session)
 
-        return ModelVersion(
+        return cls(
             session,
             model_version_id=data.get("id", 1),
             checkpoint=ckpt,
@@ -89,6 +90,15 @@ class ModelVersion:
             model_name=data.get("model", {}).get("name"),
             model_version=data.get("version"),
         )
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "ModelVersion":
+        warnings.warn(
+            "ModelVersion.from_json() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return cls._from_json(data, session)
 
 
 class ModelSortBy(enum.Enum):
@@ -197,7 +207,7 @@ class Model:
                 return None
 
             latest_version = data["modelVersions"][0]
-            return ModelVersion.from_json(
+            return ModelVersion._from_json(
                 latest_version,
                 self._session,
             )
@@ -205,7 +215,7 @@ class Model:
             resp = self._session.get("/api/v1/models/{}/versions/{}".format(self.name, version))
 
         data = resp.json()
-        return ModelVersion.from_json(data["modelVersion"], self._session)
+        return ModelVersion._from_json(data["modelVersion"], self._session)
 
     def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[ModelVersion]:
         """
@@ -223,7 +233,7 @@ class Model:
         data = resp.json()
 
         return [
-            ModelVersion.from_json(
+            ModelVersion._from_json(
                 version,
                 self._session,
             )
@@ -245,7 +255,7 @@ class Model:
         )
 
         data = resp.json()
-        return ModelVersion.from_json(
+        return ModelVersion._from_json(
             data["modelVersion"],
             self._session,
         )
@@ -347,9 +357,9 @@ class Model:
             self.model_id, self.name, json.dumps(self.metadata)
         )
 
-    @staticmethod
-    def from_json(data: Dict[str, Any], session: session.Session) -> "Model":
-        return Model(
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Model":
+        return cls(
             session,
             data["id"],
             data["name"],
@@ -361,3 +371,12 @@ class Model:
             data.get("username", ""),
             data.get("archived", False),
         )
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "Model":
+        warnings.warn(
+            "Model.from_json() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return cls._from_json(data, session)

@@ -2,6 +2,7 @@ import enum
 import json
 import pathlib
 import shutil
+import warnings
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import constants, storage
@@ -274,7 +275,7 @@ class Checkpoint(object):
         raise AssertionError("Unknown checkpoint format at {}".format(checkpoint_dir))
 
     @staticmethod
-    def parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
+    def _parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
         metadata_path = directory.joinpath("metadata.json")
         with metadata_path.open() as f:
             metadata = json.load(f)
@@ -282,7 +283,16 @@ class Checkpoint(object):
         return cast(Dict[str, Any], metadata)
 
     @staticmethod
-    def get_type(metadata: Dict[str, Any]) -> ModelFramework:
+    def parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
+        warnings.warn(
+            "Checkpoint.parse_metadata() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return Checkpoint._parse_metadata(directory)
+
+    @staticmethod
+    def _get_type(metadata: Dict[str, Any]) -> ModelFramework:
         if "framework" in metadata:
             if metadata["framework"].startswith("torch"):
                 return ModelFramework.PYTORCH
@@ -300,6 +310,15 @@ class Checkpoint(object):
 
         raise AssertionError("Unknown checkpoint format")
 
+    @staticmethod
+    def get_type(metadata: Dict[str, Any]) -> ModelFramework:
+        warnings.warn(
+            "Checkpoint.get_type() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return Checkpoint._get_type(metadata)
+
     def __repr__(self) -> str:
         if self.model_id is not None:
             return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
@@ -307,14 +326,14 @@ class Checkpoint(object):
             )
         return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
 
-    @staticmethod
-    def from_json(data: Dict[str, Any], session: session.Session) -> "Checkpoint":
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
         validation = {
             "metrics": data.get("metrics", {}),
             "state": data.get("validation_state", None),
         }
 
-        return Checkpoint(
+        return cls(
             session,
             data["uuid"],
             data.get("experiment_config", data.get("experimentConfig")),
@@ -333,3 +352,12 @@ class Checkpoint(object):
             determined_version=data.get("determined_version", data.get("determinedVersion")),
             model_version=data.get("model_version"),
         )
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
+        warnings.warn(
+            "Checkpoint.from_json() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return cls._from_json(data, session)
