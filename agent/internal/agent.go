@@ -52,7 +52,8 @@ type agent struct {
 	masterProto  string
 	masterClient *http.Client
 
-	reconnecting bool
+	reconnecting         bool
+	reconnectSendBacklog []interface{}
 }
 
 func newAgent(version string, options Options) *agent {
@@ -89,14 +90,34 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		}
 
 	case aproto.ContainerStateChanged:
+		wsm := api.WriteMessage{Message: aproto.MasterMessage{ContainerStateChanged: &msg}}
 		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerStateChanged: &msg}})
+			switch err := ctx.Ask(a.socket, wsm).Error(); err.(type) {
+			case nil:
+				return nil
+			case api.MaxMaxWebsocketMessageSizeExceededError:
+				ctx.Log().WithError(err).Error("container state change too large")
+			default:
+				ctx.Log().WithError(err).Warnf("writing container state change %v", msg)
+				a.bufferSendForRecovery(ctx, wsm)
+			}
 		} else {
 			ctx.Log().Warnf("Not sending container state change to the master: %+v", msg)
 		}
 	case aproto.ContainerLog:
+		wsm := api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}}
 		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
+			switch err := ctx.Ask(a.socket, wsm).Error(); err.(type) {
+			case nil:
+				return nil
+			case api.MaxMaxWebsocketMessageSizeExceededError:
+				ctx.Log().WithError(err).Error("container log too large")
+			default:
+				ctx.Log().WithError(err).Warnf("writing container log %v", msg)
+				a.bufferSendForRecovery(ctx, wsm)
+			}
+		} else {
+			ctx.Log().Warnf("Not sending container log change to the master: %+v", msg)
 		}
 
 	case model.TrialLog:
@@ -152,6 +173,11 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (a *agent) bufferSendForRecovery(ctx *actor.Context, msg interface{}) {
+	ctx.Log().WithField("msg", msg).Debugf("will retry send of message when agent reconnects")
+	a.reconnectSendBacklog = append(a.reconnectSendBacklog, msg)
 }
 
 func (a *agent) restartFluent(ctx *actor.Context) error {
@@ -351,6 +377,13 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 	for i := 0; i < aproto.AgentReconnectAttempts; i++ {
 		switch err := a.connect(ctx); {
 		case err == nil:
+			for msg := range a.reconnectSendBacklog {
+				if err = ctx.Ask(a.socket, msg).Error(); err != nil {
+					ctx.Log().WithError(err).Warnf("rewriting message: %v", msg)
+					return false
+				}
+			}
+			a.reconnectSendBacklog = nil
 			return true
 		case errors.Is(err, aproto.ErrAgentMustReconnect):
 			return false
@@ -428,14 +461,16 @@ func (a *agent) setup(ctx *actor.Context) error {
 		a.MasterSetAgentOptions.ContainersToReattach,
 	}).Get().(responseReattachContainers)
 
-	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
+	if err := ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
 		AgentStarted: &aproto.AgentStarted{
 			Version:              a.Version,
 			Devices:              a.Devices,
 			Label:                a.Label,
 			ContainersReattached: res.ContainersReattached,
 		},
-	}})
+	}}).Error(); err != nil {
+		return errors.Wrap(err, "writing agent started message")
+	}
 	return nil
 }
 

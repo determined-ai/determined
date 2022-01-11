@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net"
 	"reflect"
 	"strconv"
@@ -31,6 +32,16 @@ const (
 	// This is copied from MAX_WEBSOCKET_MSG_SIZE in determined/constants.py.
 	MaxWebsocketMessageSize = 128 * 1024 * 1024
 )
+
+// MaxMaxWebsocketMessageSizeExceededError indicates to the call that the message exceeded the
+// maximum websocket size.
+type MaxMaxWebsocketMessageSizeExceededError struct {
+	size int
+}
+
+func (e MaxMaxWebsocketMessageSizeExceededError) Error() string {
+	return fmt.Sprintf("message size %d exceeds maximum size %d", e.size, MaxWebsocketMessageSize)
+}
 
 // WebSocketConnected notifies the actor that a websocket is attempting to connect.
 type WebSocketConnected struct {
@@ -162,18 +173,26 @@ func (s *websocketActor) Receive(ctx *actor.Context) error {
 	}
 }
 
+// processWriteMessage writes a message to the socket. If writing a message returns any error other
+// MaxMaxWebsocketMessageSizeExceededError, it must cause the socket to fail since this is an
+// invariant callers rely on to know a message should be retried on reconnect before being notified
+// of the close.
 func (s *websocketActor) processWriteMessage(
 	ctx *actor.Context,
 	buf bytes.Buffer,
 ) error {
-	if cur, max := buf.Len(), MaxWebsocketMessageSize; cur > max {
-		ctx.Respond(errors.Errorf("message size %d exceeds maximum size %d", cur, max))
+	if buf.Len() > MaxWebsocketMessageSize {
+		ctx.Respond(MaxMaxWebsocketMessageSizeExceededError{size: buf.Len()})
 		return nil
 	}
 
-	ctx.Respond(WriteResponse{})
+	if err := s.conn.WriteMessage(websocket.TextMessage, buf.Bytes()); err != nil {
+		ctx.Respond(errors.Wrap(err, "writing message to connection"))
+		return err
+	}
 
-	return s.conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+	ctx.Respond(WriteResponse{})
+	return nil
 }
 
 func isClosingError(err error) bool {

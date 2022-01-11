@@ -55,9 +55,10 @@ type (
 		//    monumental clock skew), the agent manager shoos it away, telling it to restart.
 		// Because of all this, for future developers: messages must be replay-able and writes must
 		// get buffered while down.
-		awaitingReconnect bool
-		reconnectBacklog  []interface{}
-		reconnectTimers   []*actor.Ref
+		awaitingReconnect       bool
+		reconnectReceiveBacklog []interface{}
+		reconnectSendBacklog    []interface{}
+		reconnectTimers         []*actor.Ref
 		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
 		// pop back to our previous state.
 		preDisconnectEnabled  bool
@@ -122,6 +123,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		wsm := ws.WriteMessage{Message: masterSetAgentOptions}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			ctx.Log().WithError(err).Error("failed to write master set agent options")
+			return err
 		}
 
 		if a.awaitingReconnect {
@@ -144,16 +146,23 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			}
 			ctx.Tell(a.slots, patchSlot{Enabled: a.enabled, Drain: a.draining})
 
-			for msg := range a.reconnectBacklog {
+			for msg := range a.reconnectSendBacklog {
+				if err := ctx.Ask(a.socket, msg).Error(); err != nil {
+					return errors.Wrap(err, "replaying sends")
+				}
+			}
+			a.reconnectSendBacklog = nil
+
+			for msg := range a.reconnectReceiveBacklog {
 				if err := a.receive(ctx, msg); err != nil {
 					return errors.Wrapf(err, "replaying backlog")
 				}
 			}
-			a.reconnectBacklog = nil
+			a.reconnectReceiveBacklog = nil
 		}
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
-			a.bufferForRecovery(ctx, msg)
+			a.bufferReceiveForRecovery(ctx, msg)
 			return nil
 		}
 
@@ -162,22 +171,34 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
 		}
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+		switch err := ctx.Ask(a.socket, wsm).Error(); err.(type) {
+		case nil:
+			return nil
+		case ws.MaxMaxWebsocketMessageSizeExceededError:
+			ctx.Log().WithError(err).Error("kill task message too large")
+		default:
 			ctx.Log().WithError(err).Error("failed to write kill task message")
+			a.bufferSendForRecovery(ctx, wsm)
 		}
 	case aproto.SignalContainer:
 		if a.awaitingReconnect {
-			a.bufferForRecovery(ctx, msg)
+			a.bufferReceiveForRecovery(ctx, msg)
 			return nil
 		}
 
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+		switch err := ctx.Ask(a.socket, wsm).Error(); err.(type) {
+		case nil:
+			return nil
+		case ws.MaxMaxWebsocketMessageSizeExceededError:
+			ctx.Log().WithError(err).Error("kill signal container message too large")
+		default:
 			ctx.Log().WithError(err).Error("failed to write signal container message")
+			a.bufferSendForRecovery(ctx, wsm)
 		}
 	case sproto.StartTaskContainer:
 		if a.awaitingReconnect {
-			a.bufferForRecovery(ctx, msg)
+			a.bufferReceiveForRecovery(ctx, msg)
 			return nil
 		}
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
@@ -185,10 +206,16 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			msg.TaskActor.Address())
 
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
+		switch err := ctx.Ask(a.socket, wsm).Error(); err.(type) {
+		case nil:
+			return nil
+		case ws.MaxMaxWebsocketMessageSizeExceededError:
+			ctx.Log().WithError(err).Error("kill start container message too large")
+		default:
 			ctx.Log().WithError(err).Error("failed to write start container message")
+			a.bufferSendForRecovery(ctx, wsm)
 		}
+
 		ctx.Tell(a.slots, msg.StartContainer)
 		a.containers[msg.Container.ID] = msg.TaskActor
 	case aproto.MasterMessage:
@@ -290,9 +317,19 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	return nil
 }
 
-func (a *agent) bufferForRecovery(ctx *actor.Context, msg interface{}) {
+// bufferReceiveForRecovery buffers messages the agent actor received while the websocket was down
+// and fakes re-receiving them when it has recovered.
+func (a *agent) bufferReceiveForRecovery(ctx *actor.Context, msg interface{}) {
 	ctx.Log().WithField("msg", msg).Debugf("buffering message until agent reconnects")
-	a.reconnectBacklog = append(a.reconnectBacklog, msg)
+	a.reconnectReceiveBacklog = append(a.reconnectReceiveBacklog, msg)
+}
+
+// bufferSendForRecovery buffers messages the agent actor tried to send while the websocket was down
+// and retries them when we are sure the websocket has recovered. This would likely only pertain to
+// one message: the one that found out the connection was dead.
+func (a *agent) bufferSendForRecovery(ctx *actor.Context, msg interface{}) {
+	ctx.Log().WithField("msg", msg).Debugf("will retry send of message when agent reconnects")
+	a.reconnectSendBacklog = append(a.reconnectSendBacklog, msg)
 }
 
 func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
