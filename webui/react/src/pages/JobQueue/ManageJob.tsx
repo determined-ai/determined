@@ -63,7 +63,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       {
         label: 'Progress',
         value: job.progress ?
-          floatToPercent(job.progress, 1) + '%' : undefined,
+          floatToPercent(job.progress, 1) : undefined,
       },
       tableDetails.slots,
       { label: 'Is Preemtible', value: job.isPreemptible ? 'Yes' : 'No' },
