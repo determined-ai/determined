@@ -82,7 +82,7 @@ const ClusterOverview: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.CPU);
   }, [ agents ]);
 
-  const [ cudaTotalSlots, rocmTotalSlots, cpuTotalSlots ] = useMemo(() => {
+  const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
     return resourcePools.reduce((acc, pool) => {
       let index;
       switch (pool.slotType) {
@@ -92,16 +92,13 @@ const ClusterOverview: React.FC = () => {
         case ResourceType.ROCM:
           index = 1;
           break;
-        case ResourceType.CPU:
-          index = 2;
-          break;
         default:
           index = undefined;
       }
       if (index === undefined) return acc;
       acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
       return acc;
-    }, [ 0, 0, 0 ]);
+    }, [ 0, 0 ]);
   }, [ resourcePools ]);
 
   const getSlotTypeOverview = useCallback((
@@ -204,9 +201,9 @@ const ClusterOverview: React.FC = () => {
               {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
             </OverviewStats>
           ) : null}
-          {cpuTotalSlots ? (
+          {overview.CPU.total ? (
             <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} <small>/ {cpuTotalSlots}</small>
+              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
             </OverviewStats>
           ) : null}
           {auxContainers.total ? (
@@ -217,7 +214,7 @@ const ClusterOverview: React.FC = () => {
         </Grid>
       </Section>
       <Section hideTitle title="Overall Allocation">
-        {cudaTotalSlots + rocmTotalSlots + cpuTotalSlots === 0 ? (
+        {cudaTotalSlots + rocmTotalSlots + overview.CPU.total === 0 ? (
           <Message title="No connected agents." type={MessageType.Empty} />
         ) : null }
         {cudaTotalSlots > 0 && (
@@ -238,13 +235,13 @@ const ClusterOverview: React.FC = () => {
             totalSlots={rocmTotalSlots}
           />
         )}
-        {cpuTotalSlots > 0 && (
+        {overview.CPU.total > 0 && (
           <SlotAllocationBar
             resourceStates={cpuSlotStates}
             showLegends
             size={ShirtSize.enormous}
             title={`Compute (${ResourceType.CPU})`}
-            totalSlots={cpuTotalSlots}
+            totalSlots={overview.CPU.total}
           />
         )}
       </Section>
