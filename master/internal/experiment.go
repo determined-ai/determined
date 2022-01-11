@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -571,10 +572,18 @@ func checkpointFromTrialIDOrUUID(
 }
 
 func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
+	oldPriority := resourcemanagers.DefaultSchedulingPriority
+	var oldPriorityPtr *int
 	resources := e.Config.Resources()
+	if resources.Priority() != nil {
+		oldPriority = *resources.Priority()
+		oldPriorityPtr = &oldPriority
+	}
 	resources.SetPriority(priority)
 	e.Config.SetResources(resources)
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		resources.SetPriority(oldPriorityPtr)
+		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
@@ -586,9 +595,12 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 
 func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	resources := e.Config.Resources()
+	oldWeight := resources.Weight()
 	resources.SetWeight(weight)
 	e.Config.SetResources(resources)
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		resources.SetWeight(oldWeight)
+		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d weight", e.ID)
 	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
