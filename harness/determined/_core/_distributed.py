@@ -9,10 +9,6 @@ from typing import Any, Callable, List, Optional, Tuple, cast
 from determined import constants, ipc
 
 
-def _tuple_key_function(v: Any) -> int:
-    return cast(Tuple[Any, int], v)[1]
-
-
 class DistributedContext:
     """
     DistributedContext provides useful methods for effective distributed training.
@@ -220,12 +216,11 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather.")
         if self._is_chief:
             worker_stuff_ranked, _ = self._chief_zmq.gather_with_polling(lambda: None)
-            worker_stuff_ranked.sort(key=_tuple_key_function)
-            worker_stuff = [value for value, _ in worker_stuff_ranked]
+            worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             self._chief_zmq.broadcast(None)
             out = [stuff, *worker_stuff]  # type: Optional[List]
         else:
-            self._worker_zmq.send((stuff, self.get_rank()))
+            self._worker_zmq.send((self.get_rank(), stuff))
             # Synchronize with the chief so that there is no risk of accidentally calling send()
             # for a future gather before all workers have called send() on this gather.
             _ = self._worker_zmq.recv()
@@ -243,12 +238,11 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather local.")
         if self._is_local_chief:
             worker_stuff_ranked, _ = self._local_chief_zmq.gather_with_polling(lambda: None)
-            worker_stuff_ranked.sort(key=_tuple_key_function)
-            worker_stuff = [value for value, _ in worker_stuff_ranked]
+            worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             self._local_chief_zmq.broadcast(None)
             out = [stuff, *worker_stuff]  # type: Optional[List]
         else:
-            self._local_worker_zmq.send((stuff, self.get_local_rank()))
+            self._local_worker_zmq.send((self.get_local_rank(), stuff))
             # Synchronize with the chief so that there is no risk of accidentally calling send()
             # for a future gather before all workers have called send() on this gather.
             _ = self._local_worker_zmq.recv()
@@ -265,12 +259,11 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
         if self._is_chief:
             worker_stuff_ranked, _ = self._chief_zmq.gather_with_polling(lambda: None)
-            worker_stuff_ranked.sort(key=_tuple_key_function)
-            worker_stuff = [value for value, _ in worker_stuff_ranked]
+            worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             all_stuff = [stuff, *worker_stuff]
             self._chief_zmq.broadcast(all_stuff)
         else:
-            self._worker_zmq.send((stuff, self.get_rank()))
+            self._worker_zmq.send((self.get_rank(), stuff))
             all_stuff = self._worker_zmq.recv()
         logging.debug(f"Worker {self.get_rank()} finished zmq allgather.")
         return all_stuff
@@ -284,12 +277,11 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} beginning zmq local allgather.")
         if self._is_local_chief:
             worker_stuff_ranked, _ = self._local_chief_zmq.gather_with_polling(lambda: None)
-            worker_stuff_ranked.sort(key=_tuple_key_function)
-            worker_stuff = [value for value, _ in worker_stuff_ranked]
+            worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             all_stuff = [stuff, *worker_stuff]
             self._local_chief_zmq.broadcast(all_stuff)
         else:
-            self._local_worker_zmq.send((stuff, self.get_local_rank()))
+            self._local_worker_zmq.send((self.get_local_rank(), stuff))
             all_stuff = self._local_worker_zmq.recv()
         logging.debug(f"Worker {self.get_rank()} finished zmq local allgather.")
         return all_stuff
