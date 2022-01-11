@@ -8,7 +8,7 @@ import { isAborted } from 'services/utils';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';
 
-interface DetErrorOptions {
+export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
   isUserTriggered?: boolean; // whether the error was caused by an active interaction.
   level?: ErrorLevel;
