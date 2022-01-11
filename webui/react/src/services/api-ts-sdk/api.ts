@@ -1577,6 +1577,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     jobId: string;
+    /**
+     * Original id of a forked or continued experiment.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    forkedFrom?: number;
 }
 
 /**

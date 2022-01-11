@@ -13,6 +13,7 @@ SELECT
     e.archived AS archived,
     COALESCE(e.progress, 0) AS progress,
     e.job_id AS job_id,
+    e.parent_id AS forked_from,
     u.username AS username
 FROM
     experiments e

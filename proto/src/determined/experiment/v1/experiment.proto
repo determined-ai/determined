@@ -4,6 +4,7 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // The current state of the experiment.
@@ -85,6 +86,8 @@ message Experiment {
   string notes = 14;
   // Associated job's id.
   string job_id = 15;
+  // Original id of a forked or continued experiment.
+  google.protobuf.Int32Value forked_from = 16;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an
