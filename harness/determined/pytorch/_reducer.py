@@ -1,5 +1,6 @@
 import abc
 import enum
+import itertools
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
@@ -183,8 +184,25 @@ class _SimpleReducer(MetricReducer):
     def per_slot_reduce(self) -> Any:
         return self.values
 
+    class _NotMetric:
+        pass
+
+    NOT_METRIC = _NotMetric()
+
     def cross_slot_reduce(self, per_slot_metrics: List) -> Any:
-        flat_metrics = [item for sublist in per_slot_metrics for item in sublist]
+        """
+        Call the reducer function on metrics in their original order.
+
+        Interleave metrics from different slots as we flatten
+        the list of metrics to undo the effect of sharding.
+        Note: this will only reconstruct the original order if the user
+        calls ``update()`` once per batch
+        """
+        interleaved = itertools.zip_longest(*per_slot_metrics, fillvalue=_SimpleReducer.NOT_METRIC)
+        flat_metrics = [
+            m for sublist in interleaved for m in sublist if m is not _SimpleReducer.NOT_METRIC
+        ]
+
         return self.fn(flat_metrics)
 
 
