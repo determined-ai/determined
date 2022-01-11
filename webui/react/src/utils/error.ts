@@ -8,6 +8,8 @@ import { isAborted } from 'services/utils';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';
 
+import { isString } from './data';
+
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
   isUserTriggered?: boolean; // whether the error was caused by an active interaction.
@@ -60,7 +62,7 @@ export class DetError extends Error {
   type: ErrorType;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
-    const defaultMessage = isError(e) ? e.message : DEFAULT_ERROR_MESSAGE;
+    const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
