@@ -1,10 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 
-import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
 import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 
@@ -53,26 +53,27 @@ export const isAborted = (e: any): boolean => {
 
 export const http = axios.create({ responseType: 'json', withCredentials: false });
 
-export const processApiError = (name: string, e: Error): DaError => {
+export const processApiError = (name: string, e: unknown): void => {
   const isAuthError = isAuthFailure(e);
   const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
-  if (isDaError(e)) {
+
+  if (isDetError(e)) {
     if (e.type === ErrorType.ApiBadResponse) {
       e.message = `failed in decoding ${name} API response`;
       e.publicMessage = 'Unexpected response from the server.';
       e.publicSubject = 'Unexpected API response';
       e.silent = silent;
     }
-    return handleError(e);
+    handleError(e);
+  } else {
+    handleError(e, {
+      level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
+      publicSubject: isAuthError ?
+        `unauthenticated request ${name}` : `request ${name} failed.`,
+      silent,
+      type: isAuthError ? ErrorType.Auth : ErrorType.Server,
+    });
   }
-  return handleError({
-    error: e,
-    level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
-    message: isAuthError ?
-      `unauthenticated request ${name}` : `request ${name} failed.`,
-    silent,
-    type: isAuthError ? ErrorType.Auth : ErrorType.Server,
-  });
 };
 
 export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
