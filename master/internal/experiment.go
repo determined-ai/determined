@@ -444,7 +444,7 @@ func (e *experiment) processOperations(
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
-				trialTaskID(e.ID, op.RequestID), e.JobID, e.ID, e.State, state, e.rm, e.trialLogger, e.db,
+				trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State, state, e.rm, e.trialLogger, e.db,
 				config, checkpoint, e.taskSpec,
 			))
 		case searcher.ValidateAfter:

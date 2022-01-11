@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
+// TODO these are job related tasks as well.
 type checkpointGCTask struct {
 	rm *actor.Ref
 	db *db.PgDB

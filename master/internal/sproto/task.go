@@ -15,13 +15,15 @@ type (
 	// AllocateRequest notifies resource managers to assign resources to a task.
 	AllocateRequest struct {
 		// Identifying information.
-		AllocationID model.AllocationID
-		TaskID       model.TaskID
-		JobID        *model.JobID
-		State        job.SchedulingState
-		Name         string
-		TaskActor    *actor.Ref
-		Group        *actor.Ref
+		AllocationID      model.AllocationID
+		TaskID            model.TaskID
+		JobID             *model.JobID
+		JobSubmissionTime *time.Time // TODO or a job info struct
+		State             job.SchedulingState
+		Name              string
+		// Allocation actor
+		TaskActor *actor.Ref
+		Group     *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int
