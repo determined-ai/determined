@@ -247,6 +247,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Patch experiment messages.
 	case model.State:
 		e.updateState(ctx, msg)
+	case config.ExperimentConfigPatch:
+		e.Config.SetName(expconf.Name{RawString: msg.Name})
 	case sproto.SetGroupMaxSlots:
 		resources := e.Config.Resources()
 		resources.SetMaxSlots(msg.MaxSlots)
