@@ -1,5 +1,6 @@
 import abc
 import enum
+import itertools
 import logging
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -185,20 +186,16 @@ class _SimpleReducer(MetricReducer):
         return self.values
 
     def cross_slot_reduce(self, per_slot_metrics: List) -> Any:
+        """
+        Call the reducer function on metrics in their original order.
 
-        # restore the initial (pre-sharding) order of metrics
-        flat_metrics = []
-        i = 0
-        has_non_exhausted_sublist = True
-        while has_non_exhausted_sublist:
-            has_non_exhausted_sublist = False
-            for sublist in per_slot_metrics:
-                try:
-                    flat_metrics.append(sublist[i])
-                    has_non_exhausted_sublist = True
-                except IndexError:
-                    pass
-            i += 1
+        Interleave metrics from different slots as we flatten
+        the list of metrics to undo the effect of sharding.
+        Note: this will only reconstruct the original order if the user
+        calls ``update()`` the same number of times per batch
+        """
+        interleaved = itertools.zip_longest(*per_slot_metrics)
+        flat_metrics = [m for sublist in interleaved for m in sublist if m is not None]
 
         return self.fn(flat_metrics)
 
@@ -424,14 +421,10 @@ class _PyTorchReducerContext:
 
         metrics = {}
 
-        # gatherables = enumerate(wrapped.per_slot_reduce() for wrapped in reducables)
-        # print(f"gatherables={gatherables}")
         gatherables = [wrapped.per_slot_reduce() for wrapped in reducables]
 
         # Do one allgather for all metrics to improve .
         gathered = self._allgather_fn(gatherables)
-
-        logging.debug(f"len(gathered)={len(gathered)}")
 
         # Reshape list from per-slot-list-of-all-metrics to a per-metric-list-of-all-slots.
         all_per_slot_metrics = zip(*gathered)

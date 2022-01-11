@@ -25,11 +25,13 @@ def test_reducer() -> None:
     assert np.around(_reduce_metrics(Reducer.AVG, metrics, batches_per_process), decimals=2) == 6.43
 
 
-DummyTrial = namedtuple("DummyTrial", "distributed_context reducer_context wrapped_reducer")
+DummyDistributedReducerContext = namedtuple(
+    "DummyDistributedReducerContext", "distributed_context reducer_context wrapped_reducer"
+)
 
 
 def dummy_reducer(values: List) -> Any:
-    logger.info(f"reducing {values}")
+    logger.debug(f"reducing {values}")
     flat = [v for sublist in values for v in sublist]
     return {"values": flat, "sum": sum(flat)}
 
@@ -71,7 +73,9 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
 
         return results
 
-    def make_reducer_context(rank: int, cross_rank: int, local_rank: int) -> DummyTrial:
+    def make_reducer_context(
+        rank: int, cross_rank: int, local_rank: int
+    ) -> DummyDistributedReducerContext:
         distributed_context = _core.DistributedContext(
             rank=cross_rank * local_size + local_rank,
             size=cross_size * local_size,
@@ -85,7 +89,7 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
         reducer_context = _PyTorchReducerContext(distributed_context._zmq_allgather)
         # reducer_context.wrap_reducer(lambda x: x, "dummy")
         wrapped_reducer = reducer_context.wrap_reducer(dummy_reducer)
-        return DummyTrial(distributed_context, reducer_context, wrapped_reducer)
+        return DummyDistributedReducerContext(distributed_context, reducer_context, wrapped_reducer)
 
     trials = do_parallel(make_reducer_context)
 
@@ -112,7 +116,8 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
     for trial in trials:
         trial.distributed_context.close()
 
-    assert results[0]["sum"] == dataset_size * (dataset_size - 1) // 2
-    assert all(
-        i == v for i, v in enumerate(results[0]["values"])
-    ), f"{results[0]} is not in original order"
+    for i, result in enumerate(results):
+        assert result["sum"] == dataset_size * (dataset_size - 1) // 2
+        assert all(
+            i == v for i, v in enumerate(result["values"])
+        ), f"result[{i}]={result} is not in original order"
