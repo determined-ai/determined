@@ -274,9 +274,9 @@ const LogViewerCore: React.FC<Props> = ({
   useEffect(() => {
     fetchLogs({ canceler, isNewestFirst }, FetchType.Initial).then(logs => {
       addLogs(logs);
-
+    
       if (isNewestFirst) {
-        listRef.current?.scrollToItem(logs.length, 'end');
+        logs.length>0 && listRef.current?.scrollToItem(logs.length, 'end');
       } else {
         listRef.current?.scrollToItem(0, 'start');
       }
