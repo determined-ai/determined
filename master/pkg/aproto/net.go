@@ -8,7 +8,7 @@ import (
 
 const (
 	// AgentReconnectAttempts is the max attempts an agent has to reconnect.
-	AgentReconnectAttempts = 1
+	AgentReconnectAttempts = 5
 	// AgentReconnectBackoff is the time between attempts, with the exception of the first.
 	AgentReconnectBackoff = 5 * time.Second
 	// AgentReconnectWait is the max time the master should wait for an agent before considering
