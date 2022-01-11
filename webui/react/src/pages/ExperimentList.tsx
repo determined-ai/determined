@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
+import InlineEditor from 'components/InlineEditor';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -28,7 +29,7 @@ import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
-  getExperiments, killExperiment, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
+  getExperiments, killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -279,6 +280,22 @@ const ExperimentList: React.FC = () => {
     />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
+  const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
+    try {
+      await patchExperiment({
+        body: { description: editedDescription },
+        experimentId: id,
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to save experiment description.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+      setIsLoading(false);
+    }
+  }, [ ]);
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
@@ -293,6 +310,15 @@ const ExperimentList: React.FC = () => {
         curUser={user}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
+      />
+    );
+
+    const descriptionRenderer = (value:string, record: ExperimentItem) => (
+      <InlineEditor
+        disabled={record.archived}
+        placeholder="Add description..."
+        value={value}
+        onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
       />
     );
 
@@ -315,6 +341,7 @@ const ExperimentList: React.FC = () => {
         title: 'Name',
         width: 240,
       },
+      { dataIndex: 'description', render: descriptionRenderer, title: 'Description' },
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
@@ -362,6 +389,11 @@ const ExperimentList: React.FC = () => {
         render: stateRenderer,
         sorter: true,
         title: 'State',
+      },
+      {
+        dataIndex: 'searcherType',
+        key: 'searcherType',
+        title: 'Searcher Type',
       },
       {
         dataIndex: 'resourcePool',
@@ -422,6 +454,7 @@ const ExperimentList: React.FC = () => {
     labelFilterDropdown,
     labels,
     nameFilterSearch,
+    saveExperimentDescription,
     settings,
     stateFilterDropdown,
     tableSearchIcon,
