@@ -140,23 +140,27 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         labelCol={{ span: 6 }}
         name="form basic"
         ref={formRef}>
-        {[ api.V1SchedulerType.KUBERNETES, api.V1SchedulerType.PRIORITY ]
-          .includes(schedulerType) && (
-          <>
-            <Form.Item
-              // extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest."
-              label="Priority"
-              name="priority">
-              <Input addonAfter="out of 99" type="number" />
-              {/* FIXME What about K8? */}
-            </Form.Item>
-          </>
+        {schedulerType === api.V1SchedulerType.PRIORITY && (
+          <Form.Item
+            extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest."
+            label="Priority"
+            name="priority">
+            <Input addonAfter="out of 99" max={99} min={1} type="number" />
+          </Form.Item>
+        )}
+        {schedulerType === api.V1SchedulerType.KUBERNETES && (
+          <Form.Item
+            extra="Priority is an integer with 1 being the lowest priority."
+            label="Priority"
+            name="priority">
+            <Input min={1} type="number" />
+          </Form.Item>
         )}
         {schedulerType === api.V1SchedulerType.FAIRSHARE && (
           <Form.Item
             label="Weight"
             name="weight">
-            <Input disabled type="number" />
+            <Input min={0} type="number" />
           </Form.Item>
         )}
       </Form>
@@ -167,7 +171,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         dataSource={details}
         renderItem={item => (
           <List.Item className={css.item}>
-            <Typography.Text>{item.label}</Typography.Text>
+            <Typography.Text className={css.key}>{item.label}</Typography.Text>
             <div className={css.value}>
               {item.value}
             </div>
