@@ -1031,6 +1031,7 @@ class v1Experiment:
         username: str,
         description: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
+        forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
         progress: "typing.Optional[float]" = None,
@@ -1051,6 +1052,7 @@ class v1Experiment:
         self.name = name
         self.notes = notes
         self.jobId = jobId
+        self.forkedFrom = forkedFrom
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1070,6 +1072,7 @@ class v1Experiment:
             name=obj["name"],
             notes=obj["notes"] if obj.get("notes", None) is not None else None,
             jobId=obj["jobId"],
+            forkedFrom=obj["forkedFrom"] if obj.get("forkedFrom", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -1089,6 +1092,7 @@ class v1Experiment:
             "name": self.name,
             "notes": self.notes if self.notes is not None else None,
             "jobId": self.jobId,
+            "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
         }
 
 class v1ExperimentSimulation:
