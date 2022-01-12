@@ -178,7 +178,6 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
-				// TODO switch to Ask and check for errors
 				resp := ctx.Ask(jobActor, SetGroupPriority{
 					Priority: &priority,
 				})
