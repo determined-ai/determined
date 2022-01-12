@@ -190,6 +190,10 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_Weight:
+				if action.Weight <= 0 {
+					errors = append(errors, "weight must be greater than 0")
+					continue
+				}
 				resp := ctx.Ask(jobActor, SetGroupWeight{
 					Weight: float64(action.Weight),
 				})
