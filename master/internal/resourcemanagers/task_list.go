@@ -22,7 +22,10 @@ type taskList struct {
 
 func newTaskList() *taskList {
 	return &taskList{
-		taskByTime:    treeset.NewWith(taskComparator),
+		taskByTime: treeset.NewWith(func(a, b interface{}) int {
+			t1, t2 := a.(*sproto.AllocateRequest), b.(*sproto.AllocateRequest)
+			return aReqComparator(t1, t2)
+		}),
 		taskByHandler: make(map[*actor.Ref]*sproto.AllocateRequest),
 		taskByID:      make(map[model.AllocationID]*sproto.AllocateRequest),
 		allocations:   make(map[*actor.Ref]*sproto.ResourcesAllocated),
@@ -102,6 +105,18 @@ func (i *taskIterator) value() *sproto.AllocateRequest {
 	return i.it.Value().(*sproto.AllocateRequest)
 }
 
+// registerTimeComparator compares AllocateRequests based on when their Allocate actor was
+// registred.
+func registerTimeComparator(t1 *sproto.AllocateRequest, t2 *sproto.AllocateRequest) int {
+	if !t1.TaskActor.RegisteredTime().Equal(t2.TaskActor.RegisteredTime()) {
+		if t1.TaskActor.RegisteredTime().Before(t2.TaskActor.RegisteredTime()) {
+			return -1
+		}
+		return 1
+	}
+	return strings.Compare(string(t1.AllocationID), string(t2.AllocationID))
+}
+
 // aReqComparator compares AllocateRequests by how long their jobs have been submitted
 // while falling back to when their Allocation actor was created for non-job tasks.
 // a < b iff a is older than b.
@@ -123,20 +138,4 @@ func aReqComparator(a *sproto.AllocateRequest, b *sproto.AllocateRequest) int {
 		return -1
 	}
 	return 1
-}
-
-// registerTimeComparator compares AllocateRequests based on when their Allocate actor was registred.
-func registerTimeComparator(t1 *sproto.AllocateRequest, t2 *sproto.AllocateRequest) int {
-	if !t1.TaskActor.RegisteredTime().Equal(t2.TaskActor.RegisteredTime()) {
-		if t1.TaskActor.RegisteredTime().Before(t2.TaskActor.RegisteredTime()) {
-			return -1
-		}
-		return 1
-	}
-	return strings.Compare(string(t1.AllocationID), string(t2.AllocationID))
-}
-
-func taskComparator(a interface{}, b interface{}) int {
-	t1, t2 := a.(*sproto.AllocateRequest), b.(*sproto.AllocateRequest)
-	return aReqComparator(t1, t2)
 }
