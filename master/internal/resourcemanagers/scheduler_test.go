@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -61,6 +62,7 @@ type mockTask struct {
 	resourcePool     string
 	allocatedAgent   *mockAgent
 	containerStarted bool
+	jobSubmissionTime *time.Time
 }
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
@@ -365,6 +367,7 @@ func setupSchedulerStates(
 			Label:        mockTask.label,
 			TaskActor:    ref,
 			Preemptible:  !mockTask.nonPreemptible,
+			JobSubmissionTime: mockTask.jobSubmissionTime,
 		}
 		if mockTask.group == nil {
 			req.Group = ref
@@ -433,6 +436,18 @@ func assertEqualToAllocate(
 	}
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected tasks must have the same length")
+}
+
+func assertEqualToAllocateOrdered(
+	t *testing.T,
+	actual []*sproto.AllocateRequest,
+	expected []*mockTask,
+) {
+	assert.Equal(t, len(actual), len(expected),
+		"actual tasks and expected tasks must have the same length")
+	for i, _ := range expected {
+		assert.Equal(t, expected[i].id, actual[i].AllocationID)
+	}
 }
 
 func assertEqualToRelease(
