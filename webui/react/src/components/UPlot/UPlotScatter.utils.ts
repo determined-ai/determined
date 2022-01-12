@@ -7,25 +7,6 @@ const MAX_DIAMETER = 60;
 const MIN_AREA = Math.PI * (MIN_DIAMETER / 2) ** 2;
 const MAX_AREA = Math.PI * (MAX_DIAMETER / 2) ** 2;
 
-export const randomNumber = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-export const filledArray = (
-  length: number,
-  val: number | ((i: number) => number | number[][] | string),
-): any[] => {
-  const arr = new Array(length);
-
-  if (typeof val == 'function') {
-    for (let i = 0; i < length; ++i) arr[i] = val(i);
-  } else {
-    for (let i = 0; i < length; ++i) arr[i] = val;
-  }
-
-  return arr;
-};
-
 // quadratic scaling (px area)
 export const getSize = (
   value: number | null | undefined,
@@ -66,13 +47,6 @@ export const offsetRange = (offsetPercent = 0.1) => {
     return [ minValue - offset, maxValue + offset ];
   };
 };
-
-// export const getMinMax = (data: UPlotData[], index: number): [ number, number ] => {
-//   let [ min, max ] = [ Infinity, -Infinity ];
-
-//   for (let i = 1; i )
-//   return [ 0, 0 ];
-// };
 
 export const makeDrawPoints = (
   options: uPlot.Series.BarsPathBuilderOpts,
