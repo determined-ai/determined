@@ -28,6 +28,8 @@ CLEAR = "\033[39m"
 BLUE = "\033[94m"
 LOG_COLOR = BLUE
 
+gauge_cmd = ["npx", "gauge"]
+
 
 def run(cmd: List[str], config) -> None:
     logger.info(f"+ {' '.join(cmd)}")
@@ -110,10 +112,9 @@ def run_e2e_tests(config):
     """ depends on:
     1. a brand new, exclusive cluster at config['DET_MASTER']
     2. pre_e2e_tests() to have seeded that cluster recently* """
-    logger.info(f"testing against http://{config['DET_MASTER']}")
+    logger.info(f"testing against {config['DET_MASTER']}")
     command = [
-        "npx",
-        "gauge",
+        *gauge_cmd,
         "run",
         "--env",
         "ci",
@@ -123,7 +124,7 @@ def run_e2e_tests(config):
 
 
 def run_dev_tests(config):
-    run(["npx", "gauge", "run", "--env", "dev", "specs"], config)
+    run([*gauge_cmd, "run", "--env", "dev", "specs"], config)
 
 
 def e2e_tests(config):
