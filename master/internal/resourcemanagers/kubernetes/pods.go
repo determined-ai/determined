@@ -360,17 +360,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	return nil
 }
 
-//func (p *pods) handleReorderRequest(ctx *actor.Context, msg sproto.ReorderRequest) {
-//	// assume there is some new order or a new priority
-//	// if the pod has already been allocated resources and the priority gets increased, do nothing
-//	// if the pod is already running and the priority gets decreased,
-//  // release the resources and reset the priority class
-//	// if the pod is not yet running and the priority gets increased or decreased,
-//  // quickly release and reset the priority class
-//	// let the preemption logic handle
-//	// for every change in priority, recalculate the queue position
-//}
-
 func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 	switch msg := ctx.Message().(type) {
 	case SetPodOrder:
@@ -383,7 +372,7 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 				return
 			}
 			// TODO: we might want to try getting the pod to verify that it exists
-			//p.clientSet.CoreV1().Pods("default").Get(podName, metaV1.GetOptions{})
+			// p.clientSet.CoreV1().Pods("default").Get(podName, metaV1.GetOptions{})
 
 			payload := []patchStringValue{{
 				Op:    "replace",
