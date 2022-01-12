@@ -117,7 +117,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 				a.bufferSendForRecovery(ctx, wsm)
 			}
 		} else {
-			ctx.Log().Warnf("Not sending container log change to the master: %+v", msg)
+			ctx.Log().Warnf("Not sending container log to the master: %+v", msg)
 		}
 
 	case model.TrialLog:
