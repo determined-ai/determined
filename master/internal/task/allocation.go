@@ -195,8 +195,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 						IsReady:           a.logBasedReadinessPassed,
 						ServiceReadyEvent: &msg,
 					})
-					a.model.State = a.state
-					a.model.IsReady = a.logBasedReadinessPassed
+					a.model.State = &a.state
+					a.model.IsReady = &a.logBasedReadinessPassed
 					if err := a.db.UpdateAllocationState(a.model); err != nil {
 						a.Error(ctx, err)
 					}
@@ -451,8 +451,8 @@ func (a *Allocation) TaskContainerStateChanged(
 		}
 	}
 
-	a.model.State = a.state
-	a.model.IsReady = a.logBasedReadinessPassed
+	a.model.State = &a.state
+	a.model.IsReady = &a.logBasedReadinessPassed
 	err := a.db.UpdateAllocationState(a.model)
 	if err != nil {
 		ctx.Log().Error(err)

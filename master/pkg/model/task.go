@@ -63,15 +63,15 @@ func (a AllocationID) String() string {
 
 // Allocation is the model for an allocation in the database.
 type Allocation struct {
-	AllocationID AllocationID    `db:"allocation_id"`
-	TaskID       TaskID          `db:"task_id"`
-	Slots        int             `db:"slots"`
-	AgentLabel   string          `db:"agent_label"`
-	ResourcePool string          `db:"resource_pool"`
-	StartTime    time.Time       `db:"start_time"`
-	EndTime      *time.Time      `db:"end_time"`
-	State        AllocationState `db:"state"`
-	IsReady      bool            `db:"is_ready"`
+	AllocationID AllocationID     `db:"allocation_id"`
+	TaskID       TaskID           `db:"task_id"`
+	Slots        int              `db:"slots"`
+	AgentLabel   string           `db:"agent_label"`
+	ResourcePool string           `db:"resource_pool"`
+	StartTime    time.Time        `db:"start_time"`
+	EndTime      *time.Time       `db:"end_time"`
+	State        *AllocationState `db:"state"`
+	IsReady      *bool            `db:"is_ready"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
