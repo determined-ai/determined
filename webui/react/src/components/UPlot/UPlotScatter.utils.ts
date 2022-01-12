@@ -1,4 +1,3 @@
-import { number } from 'fp-ts';
 import uPlot from 'uplot';
 
 import { UPlotData } from './types';
@@ -33,7 +32,7 @@ export const getSize = (
   minValue: number,
   maxValue: number,
 ): number => {
-  if (value == null) return 0;
+  if (value == null || minValue === maxValue || minValue == null) return 0;
   const pct = (value - minValue) / (maxValue - minValue);
   const area = (MAX_AREA - MIN_AREA) * pct + MIN_AREA;
   return Math.sqrt(area / Math.PI) * 2;
@@ -55,12 +54,16 @@ export const getSizeMinMax = (u: uPlot): [ number, number ] => {
   return [ minValue, maxValue ];
 };
 
-export const range = (u: uPlot, min: number, max: number): [ number, number ] => [ min, max ];
+export const range = (u: uPlot, min: UPlotData, max: UPlotData): [ number, number ] => {
+  return [ min ?? 0, max ?? 0 ];
+};
 
 export const offsetRange = (offsetPercent = 0.1) => {
-  return (u: uPlot, min: number, max: number): [ number, number ] => {
-    const offset = (max - min) * offsetPercent;
-    return [ min - offset, max + offset ];
+  return (u: uPlot, min: UPlotData, max: UPlotData): [ number, number ] => {
+    const minValue = min ?? 0;
+    const maxValue = max ?? 0;
+    const offset = (maxValue - minValue) * offsetPercent;
+    return [ minValue - offset, maxValue + offset ];
   };
 };
 

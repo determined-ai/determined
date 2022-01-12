@@ -62,6 +62,7 @@ const TrialChart: React.FC<Props> = ({
 
     return [ xValues, ...yValuesArray ];
   }, [ metrics, workloads ]);
+
   const chartOptions: Options = useMemo(() => {
     return {
       axes: [

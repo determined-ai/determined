@@ -41,7 +41,20 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
 
     // Is the chart aligned (eg. linear) or faceted (eg. scatter plot)?
     if (options?.mode === 2) {
-      return [ true, data as AlignedData ];
+      // Check to ensure there are 2 or more unique values on both x and y axis.
+      const xData = (data as FacetedData)[1][0] || [];
+      const yData = (data as FacetedData)[1][1] || [];
+      const xUnique = xData.reduce((acc, x) => {
+        if (x != null) acc[x] = true;
+        return acc;
+      }, {} as Record<number, boolean>);
+      const yUnique = yData.reduce((acc, y) => {
+        if (y != null) acc[y] = true;
+        return acc;
+      }, {} as Record<number, boolean>);
+      const hasData = Object.keys(xUnique).length > 1 && Object.keys(yUnique).length > 1;
+
+      return [ hasData, data as AlignedData ];
     } else {
       // Figure out the lowest sized series data.
       const chartData = data as AlignedData;
