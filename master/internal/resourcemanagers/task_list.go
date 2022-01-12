@@ -121,9 +121,8 @@ func aReqComparator(a *sproto.AllocateRequest, b *sproto.AllocateRequest) int {
 	}
 	if a.JobSubmissionTime.Before(*b.JobSubmissionTime) {
 		return -1
-	} else {
-		return 1
 	}
+	return 1
 }
 
 // registerTimeComparator compares AllocateRequests based on when their Allocate actor was registred.
