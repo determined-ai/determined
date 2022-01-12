@@ -34,11 +34,12 @@ import (
 // this information and works with the resource manager, allocation, etc, to push us towards
 // a terminal state, by requesting resources, managing them and restarting them on failures.
 type trial struct {
-	id           int
-	taskID       model.TaskID
-	jobID        model.JobID
-	idSet        bool
-	experimentID int
+	id                int
+	taskID            model.TaskID
+	jobID             model.JobID
+	jobSubmissionTime time.Time
+	idSet             bool
+	experimentID      int
 
 	// System dependencies.
 	rm     *actor.Ref
@@ -70,6 +71,7 @@ type trial struct {
 func newTrial(
 	taskID model.TaskID,
 	jobID model.JobID,
+	jobSubmissionTime time.Time,
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
@@ -80,11 +82,12 @@ func newTrial(
 	taskSpec *tasks.TaskSpec,
 ) *trial {
 	return &trial{
-		taskID:       taskID,
-		jobID:        jobID,
-		experimentID: experimentID,
-		state:        initialState,
-		searcher:     searcher,
+		taskID:            taskID,
+		jobID:             jobID,
+		jobSubmissionTime: jobSubmissionTime,
+		experimentID:      experimentID,
+		state:             initialState,
+		searcher:          searcher,
 
 		rm:     rm,
 		logger: logger,
@@ -204,12 +207,13 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 	ctx.Log().Info("decided to allocate trial")
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
-		AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
-		TaskID:       t.taskID,
-		JobID:        &t.jobID,
-		Name:         name,
-		TaskActor:    ctx.Self(),
-		Group:        ctx.Self().Parent(),
+		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
+		TaskID:            t.taskID,
+		JobID:             &t.jobID,
+		JobSubmissionTime: &t.jobSubmissionTime,
+		Name:              name,
+		TaskActor:         ctx.Self(),
+		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
 		Label:        t.config.Resources().AgentLabel(),

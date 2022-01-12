@@ -157,12 +157,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 		allocation := task.NewAllocation(sproto.AllocateRequest{
-			AllocationID: c.allocationID,
-			TaskID:       c.taskID,
-			JobID:        &c.jobID,
-			Name:         c.Config.Description,
-			TaskActor:    ctx.Self(),
-			Group:        ctx.Self(),
+			AllocationID:      c.allocationID,
+			TaskID:            c.taskID,
+			JobID:             &c.jobID,
+			JobSubmissionTime: &c.registeredTime,
+			Name:              c.Config.Description,
+			TaskActor:         ctx.Self(),
+			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
 			Label:        c.Config.Resources.AgentLabel,

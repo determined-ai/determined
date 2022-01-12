@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
@@ -201,6 +202,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	tr := newTrial(
 		taskID,
 		model.JobID("1"),
+		time.Now(),
 		1,
 		model.PausedState,
 		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
