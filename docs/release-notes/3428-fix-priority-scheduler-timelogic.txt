@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Master: Fixes two separate issues when priority between tasks/jobs is equal in priority scheduler
+   and it falls back on its secondary sorting logic.
