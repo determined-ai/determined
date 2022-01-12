@@ -12,7 +12,13 @@ jest.mock('antd', () => {
    * sets the DOM container and if this prop is set, the popup div may not be available in the body
    */
   const Tooltip = (props) => {
-    return <antd.Tooltip {...props} getPopupContainer={null} mouseEnterDelay={0} />;
+    return (
+      <antd.Tooltip
+        {...props}
+        getPopupContainer={(trigger: HTMLElement) => trigger}
+        mouseEnterDelay={0}
+      />
+    );
   };
 
   return {
