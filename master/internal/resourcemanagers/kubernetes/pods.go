@@ -374,7 +374,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 	switch msg := ctx.Message().(type) {
 	case SetPodOrder:
-		// TODO: This works in the CLI, but not in golang
 		if msg.QPosition > 0 {
 			podName, ok := p.containerIDToPodName[msg.PodID.String()]
 			if !ok {
@@ -382,8 +381,12 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 					"received change position command for unregistered container id")
 				return
 			}
-			// TODO: we might want to try getting the pod to verify that it exists
-			//p.clientSet.CoreV1().Pods("default").Get(podName, metaV1.GetOptions{})
+			// check that the pod exists
+			_, err := p.clientSet.CoreV1().Pods("default").Get(context.TODO(), podName, metaV1.GetOptions{})
+			if err != nil {
+				ctx.Log().WithField("pod-id", msg.PodID).Info(
+					"change position command failed with err: ", err)
+			}
 
 			payload := []patchStringValue{{
 				Op:    "replace",
@@ -393,8 +396,7 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 
 			payloadBytes, _ := json.Marshal(payload)
 
-			// TODO(eric) check
-			_, err := p.clientSet.CoreV1().Pods("default").Patch(
+			_, err = p.clientSet.CoreV1().Pods("default").Patch(
 				context.TODO(), podName, types.JSONPatchType, payloadBytes, metaV1.PatchOptions{},
 			)
 			if err != nil {
