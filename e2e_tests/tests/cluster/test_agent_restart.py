@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union, cast
 
 import pytest
@@ -14,6 +16,7 @@ from .utils import get_command_info, run_command, wait_for_command_state
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
+DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 
 def _get_agent_data(master_url: str) -> List[Dict[str, Any]]:
@@ -131,9 +134,14 @@ class ManagedCluster:
         s = self.fetch_config()["resource_pools"][0]["agent_reconnect_wait"]
         return float(s.rstrip("s"))
 
+    def log_marker(self, marker: str) -> None:
+        for log_path in DEVCLUSTER_LOG_PATH.glob("*.log"):
+            with log_path.open("a") as fout:
+                fout.write(marker)
+
 
 @pytest.fixture(scope="session", params=[False, True], ids=["reattach-off", "reattach-on"])
-def managed_cluster(request: Any) -> Iterator[ManagedCluster]:
+def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
     reattach = cast(bool, request.param)
     if reattach:
         config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
@@ -143,6 +151,17 @@ def managed_cluster(request: Any) -> Iterator[ManagedCluster]:
     with ManagedCluster(config, reattach=reattach) as mc:
         mc.initial_startup()
         yield mc
+
+
+@pytest.fixture
+def managed_cluster(
+    managed_cluster_session: ManagedCluster, request: Any
+) -> Iterator[ManagedCluster]:
+    ts = datetime.now(timezone.utc).astimezone().isoformat()
+    nodeid = request.node.nodeid
+    managed_cluster_session.log_marker(f"pytest [{ts}] {nodeid} setup\n")
+    yield managed_cluster_session
+    managed_cluster_session.log_marker(f"pytest [{ts}] {nodeid} teardown\n")
 
 
 @pytest.mark.managed_devcluster
