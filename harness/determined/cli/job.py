@@ -57,6 +57,13 @@ def ls(args: Namespace) -> None:
             "Status",
             "User",
         ]
+
+        def computed_job_name(job: bindings.v1Job) -> str:
+            if job.type == bindings.determinedjobv1Type.TYPE_EXPERIMENT:
+                return f"{job.name} ({job.entityId})"
+            else:
+                return job.name
+
         values = [
             [
                 j.summary.jobsAhead
@@ -64,7 +71,7 @@ def ls(args: Namespace) -> None:
                 else "N/A",
                 j.jobId,
                 j.type.value,
-                j.name,
+                computed_job_name(j),
                 j.priority if is_priority else j.weight,
                 pytz.utc.localize(
                     datetime.strptime(j.submissionTime.split(".")[0], "%Y-%m-%dT%H:%M:%S")
