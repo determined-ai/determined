@@ -87,6 +87,21 @@ WHERE allocation_id = :allocation_id
 `, a)
 }
 
+// CompleteAllocationTelemetry returns the analytics of an allocation for the telemetry.
+func (db *PgDB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error) {
+	return db.rawQuery(`
+SELECT json_build_object(
+	'allocation_id', a.allocation_id, 
+	'job_id', t.job_id,
+	'task_type', t.task_type,
+    'duration_sec', COALESCE(EXTRACT(EPOCH FROM (a.end_time - a.start_time)), 0)
+) 
+FROM allocations as a JOIN tasks as t 
+ON a.task_id = t.task_id 
+WHERE a.allocation_id = $1;
+`, aID)
+}
+
 // AllocationByID retrieves an allocation by its ID.
 func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error) {
 	var a model.Allocation

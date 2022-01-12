@@ -18,37 +18,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/prom"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/coreos/go-systemd/activation"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/elastic"
-	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/masterv1"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/config"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
+	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -59,6 +53,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/version"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/masterv1"
 )
 
 const (
@@ -71,7 +68,6 @@ const (
 type Master struct {
 	ClusterID string
 	MasterID  string
-	Version   string
 
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
@@ -89,11 +85,10 @@ type Master struct {
 }
 
 // New creates an instance of the Determined master.
-func New(version string, logStore *logger.LogBuffer, config *config.Config) *Master {
+func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	logger.SetLogrus(config.Log)
 	return &Master{
 		MasterID: uuid.New().String(),
-		Version:  version,
 		logs:     logStore,
 		config:   config,
 	}
@@ -136,7 +131,7 @@ func (m *Master) Info() aproto.MasterInfo {
 	return aproto.MasterInfo{
 		ClusterID:   m.ClusterID,
 		MasterID:    m.MasterID,
-		Version:     m.Version,
+		Version:     version.Version,
 		Telemetry:   telemetryInfo,
 		ClusterName: m.config.ClusterName,
 	}
@@ -581,7 +576,7 @@ func (m *Master) postTrialLogs(c echo.Context) (interface{}, error) {
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 func (m *Master) Run(ctx context.Context) error {
-	log.Infof("Determined master %s (built with %s)", m.Version, runtime.Version())
+	log.Infof("Determined master %s (built with %s)", version.Version, runtime.Version())
 
 	var err error
 
@@ -595,7 +590,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	m.ClusterID, err = m.db.GetClusterID()
+	m.ClusterID, err = m.db.GetOrCreateClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
@@ -885,24 +880,12 @@ func (m *Master) Run(ctx context.Context) error {
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
-	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
-		if telemetry, tErr := telemetry.NewActor(
-			m.db,
-			m.ClusterID,
-			m.MasterID,
-			m.Version,
-			resourcemanagers.GetResourceManagerType(m.config.ResourceManager),
-			m.config.Telemetry.SegmentMasterKey,
-		); tErr != nil {
-			// We wouldn't want to totally fail just because telemetry failed; just note the error.
-			log.WithError(tErr).Errorf("failed to initialize telemetry")
-		} else {
-			log.Info("telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable")
-			m.system.ActorOf(actor.Addr("telemetry"), telemetry)
-		}
-	} else {
-		log.Info("telemetry reporting is disabled")
-	}
+	telemetry.Setup(
+		m.system,
+		m.db,
+		m.ClusterID,
+		m.config.Telemetry,
+	)
 
 	return m.startServers(ctx, cert)
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
-	"github.com/determined-ai/determined/master/version"
 )
 
 const defaultConfigPath = "/etc/determined/master.yaml"
@@ -56,7 +55,7 @@ func runRoot() error {
 	}
 	log.Infof("master configuration: %s", printableConfig)
 
-	m := internal.New(version.Version, logStore, config)
+	m := internal.New(logStore, config)
 	return m.Run(context.TODO())
 }
 

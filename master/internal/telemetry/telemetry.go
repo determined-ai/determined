@@ -1,8 +1,7 @@
 package telemetry
 
 import (
-	"encoding/json"
-	"runtime"
+	"math/rand"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,44 +10,27 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/version"
 )
 
-// telemetryActor manages gathering and sending telemetry data.
-type telemetryActor struct {
-	db           *db.PgDB
-	client       analytics.Client
-	tickInterval time.Duration
-	clusterID    string
+const minTickIntervalMins = 10
+const maxTickIntervalMins = 60
+
+type telemetryTick struct{}
+
+// TelemetryActor manages gathering and sending telemetry data.
+type TelemetryActor struct {
+	db        db.DB
+	client    analytics.Client
+	clusterID string
 }
 
-type telemetryTick struct {
-	cause string
-}
-
-// debugLogger is an implementation of Segment's logger type that prints all messages at the debug
-// level in order to reduce noise from failed messages.
-type debugLogger struct{}
-
-// Logf implements the analytics.Logger interface.
-func (debugLogger) Logf(s string, a ...interface{}) {
-	logrus.Debugf("segment log message: "+s, a...)
-}
-
-// Errorf implements the analytics.Logger interface.
-func (debugLogger) Errorf(s string, a ...interface{}) {
-	logrus.Debugf("segment error message: "+s, a...)
-}
-
-// NewActor creates an actor to handle collecting and sending telemetry information.
-func NewActor(
-	db *db.PgDB,
+// New creates an actor to handle collecting and sending telemetry information.
+func New(
+	db db.DB,
 	clusterID string,
-	masterID string,
-	masterVersion string,
-	resourceManagerType string,
 	segmentKey string,
-) (actor.Actor, error) {
+) (*TelemetryActor, error) {
 	client, err := analytics.NewWithConfig(
 		segmentKey,
 		analytics.Config{Logger: debugLogger{}},
@@ -57,70 +39,38 @@ func NewActor(
 		return nil, err
 	}
 
-	err = client.Enqueue(analytics.Identify{
+	if err := client.Enqueue(analytics.Identify{
 		UserId: clusterID,
 		Traits: analytics.Traits{
-			"go_version":            runtime.Version(),
-			"master_id":             masterID,
-			"master_version":        masterVersion,
-			"resource_manager_type": resourceManagerType,
+			"master_version": version.Version,
 		},
-	})
-	if err != nil {
-		logrus.WithError(err).Warn("failed to identify for telemetry")
+	}); err != nil {
+		logrus.WithError(err).Warnf("failed to enqueue identity %s", clusterID)
 	}
 
-	return &telemetryActor{db, client, 1 * time.Hour, clusterID}, nil
-}
-
-func (s *telemetryActor) enqueue(ctx *actor.Context, t analytics.Track) {
-	check.Panic(check.Equal(t.UserId, ""))
-	t.UserId = s.clusterID
-	if err := s.client.Enqueue(t); err != nil {
-		ctx.Log().WithError(err).Warnf("failed to enqueue event %s", t.Event)
-	}
-}
-
-func (s *telemetryActor) snapshotValues() (analytics.Properties, error) {
-	dbInfo, err := s.db.PeriodicTelemetryInfo()
-	if err != nil {
-		return nil, err
-	}
-
-	props := analytics.Properties{}
-	if err = json.Unmarshal(dbInfo, &props); err != nil {
-		return nil, err
-	}
-	return props, nil
+	return &TelemetryActor{db, client, clusterID}, nil
 }
 
 // Receive implements the actor.Actor interface.
-func (s *telemetryActor) Receive(ctx *actor.Context) error {
+func (s *TelemetryActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		actors.NotifyAfter(ctx, 0, telemetryTick{"master_started"})
+		actors.NotifyAfter(ctx, 0, telemetryTick{})
 
 	case analytics.Track:
-		s.enqueue(ctx, msg)
+		msg.UserId = s.clusterID
+		if err := s.client.Enqueue(msg); err != nil {
+			ctx.Log().WithError(err).Warnf("failed to enqueue track %s", msg.Event)
+		}
 
 	case telemetryTick:
-		actors.NotifyAfter(ctx, s.tickInterval, telemetryTick{"master_tick"})
+		// Tick in a random interval.
+		randNum := rand.Intn(maxTickIntervalMins-minTickIntervalMins) + minTickIntervalMins
+		actors.NotifyAfter(ctx, time.Duration(randNum)*time.Minute, telemetryTick{})
 
-		props, err := s.snapshotValues()
-		if err != nil {
-			// Log the error but return nil so that this actor continues running.
-			ctx.Log().WithError(err).Error("failed to retrieve telemetry information")
-			return nil
-		}
-		s.enqueue(ctx, analytics.Track{
-			Event:      msg.cause,
-			Properties: props,
-		})
+		ReportMasterTick(ctx.Self().System(), s.db)
 
 	case actor.PostStop:
-		s.enqueue(ctx, analytics.Track{
-			Event: "master_stopped",
-		})
 		_ = s.client.Close()
 	}
 

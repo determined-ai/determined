@@ -339,6 +339,29 @@ func (_m *DB) CompleteAllocation(a *model.Allocation) error {
 	return r0
 }
 
+// CompleteAllocationTelemetry provides a mock function with given fields: aID
+func (_m *DB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error) {
+	ret := _m.Called(aID)
+
+	var r0 []byte
+	if rf, ok := ret.Get(0).(func(model.AllocationID) []byte); ok {
+		r0 = rf(aID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.AllocationID) error); ok {
+		r1 = rf(aID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteAllocationSession provides a mock function with given fields: allocationID
 func (_m *DB) DeleteAllocationSession(allocationID model.AllocationID) error {
 	ret := _m.Called(allocationID)
@@ -1028,27 +1051,6 @@ func (_m *DB) FetchHPImportanceValidationData(experimentID int, metric string) (
 	return r0, r1
 }
 
-// GetClusterID provides a mock function with given fields:
-func (_m *DB) GetClusterID() (string, error) {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetExperimentStatus provides a mock function with given fields: experimentID
 func (_m *DB) GetExperimentStatus(experimentID int) (model.State, float64, error) {
 	ret := _m.Called(experimentID)
@@ -1091,6 +1093,27 @@ func (_m *DB) GetHPImportance(experimentID int) (model.ExperimentHPImportance, e
 	var r1 error
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(experimentID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetOrCreateClusterID provides a mock function with given fields:
+func (_m *DB) GetOrCreateClusterID() (string, error) {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -285,7 +286,7 @@ telemetry:
 				RawSecretKey: ptrs.StringPtr(s3Secret),
 			},
 		},
-		Telemetry: TelemetryConfig{
+		Telemetry: config.TelemetryConfig{
 			Enabled:          true,
 			SegmentMasterKey: masterSecret,
 			SegmentWebUIKey:  webuiSecret,
