@@ -149,10 +149,10 @@ export default class StepImplementation {
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
     await goto(`${BASE_URL}/login`);
-    await t.clear(t.focus(t.textBox({ id: 'login_username' })));
+    await t.clear(t.focus(t.$('#login_username')));
     await t.write(username);
     if (password !== '') {
-      await t.focus(t.textBox({ id: 'login_password' }));
+      await t.focus(t.$('#login_password'));
       await t.write(password);
     }
     await clickAndWaitForPage(t.button('Sign In'));
