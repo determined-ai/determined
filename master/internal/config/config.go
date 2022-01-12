@@ -12,16 +12,20 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // These are package-level variables so that they can be set at link time.
+// WARN: if you move them to a different package, you need to change the linked
+// path in the make file and CI.
 var (
 	DefaultSegmentMasterKey = ""
 	DefaultSegmentWebUIKey  = ""
 )
+
 var once sync.Once
 var masterConfig *Config
 
@@ -55,7 +59,7 @@ func DefaultConfig() *Config {
 		Port:        0,
 		HarnessPath: "/opt/determined",
 		Root:        "/usr/share/determined/master",
-		Telemetry: TelemetryConfig{
+		Telemetry: config.TelemetryConfig{
 			Enabled:          true,
 			SegmentMasterKey: DefaultSegmentMasterKey,
 			SegmentWebUIKey:  DefaultSegmentWebUIKey,
@@ -90,7 +94,7 @@ type Config struct {
 	Port                  int                               `json:"port"`
 	HarnessPath           string                            `json:"harness_path"`
 	Root                  string                            `json:"root"`
-	Telemetry             TelemetryConfig                   `json:"telemetry"`
+	Telemetry             config.TelemetryConfig            `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
@@ -125,9 +129,15 @@ func SetMasterConfig(aConfig *Config) {
 // Printable returns a printable string.
 func (c Config) Printable() ([]byte, error) {
 	const hiddenValue = "********"
-	c.DB.Password = hiddenValue
-	c.Telemetry.SegmentMasterKey = hiddenValue
-	c.Telemetry.SegmentWebUIKey = hiddenValue
+	if c.DB.Password != "" {
+		c.DB.Password = hiddenValue
+	}
+	if c.Telemetry.SegmentMasterKey != "" {
+		c.Telemetry.SegmentMasterKey = hiddenValue
+	}
+	if c.Telemetry.SegmentWebUIKey != "" {
+		c.Telemetry.SegmentWebUIKey = hiddenValue
+	}
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
 
@@ -224,13 +234,6 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 	}
 	cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
 	return &cert, err
-}
-
-// TelemetryConfig is the configuration for telemetry.
-type TelemetryConfig struct {
-	Enabled          bool   `json:"enabled"`
-	SegmentMasterKey string `json:"segment_master_key"`
-	SegmentWebUIKey  string `json:"segment_webui_key"`
 }
 
 // InternalConfig is the configuration for internal knobs.

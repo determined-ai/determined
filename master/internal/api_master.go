@@ -9,18 +9,18 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/logger"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
-		Version:           a.m.Version,
+		Version:           version.Version,
 		MasterId:          a.m.MasterID,
 		ClusterId:         a.m.ClusterID,
 		ClusterName:       a.m.config.ClusterName,

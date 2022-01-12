@@ -125,6 +125,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		if err = master.db.AddExperiment(expModel); err != nil {
 			return nil, err
 		}
+		telemetry.ReportExperimentCreated(master.system, expModel)
 	}
 
 	agentUserGroup, err := master.db.AgentUserGroup(*expModel.OwnerID)
@@ -160,8 +161,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	// Searcher-related messages.
 	case actor.PreStart:
-		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
-
 		ctx.Tell(e.rm, sproto.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),

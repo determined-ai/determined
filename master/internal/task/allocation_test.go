@@ -134,6 +134,7 @@ func TestAllocation(t *testing.T) {
 			// Terminating stage.
 			db.On("DeleteAllocationSession", a.model.AllocationID).Return(nil)
 			db.On("CompleteAllocation", mock.Anything).Return(nil)
+			db.On("CompleteAllocationTelemetry", a.model.AllocationID).Return([]byte{}, nil)
 			for _, r := range reservations {
 				containerStateChanged := sproto.TaskContainerStateChanged{
 					Container: cproto.Container{

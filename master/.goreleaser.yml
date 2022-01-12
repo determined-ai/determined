@@ -11,8 +11,8 @@ builds:
   - main: ./cmd/determined-master
     ldflags:
       - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
-      - -X github.com/determined-ai/determined/master/internal.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
-      - -X github.com/determined-ai/determined/master/internal.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
+      - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
+      - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
     goos:
       - linux
       - darwin

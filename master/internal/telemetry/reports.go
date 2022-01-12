@@ -1,48 +1,132 @@
 package telemetry
 
 import (
-	"github.com/google/uuid"
+	"encoding/json"
+	"reflect"
+
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/version"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/devicev1"
 )
 
-func report(system *actor.System, event string, properties map[string]interface{}) {
+// ReportMasterTick reports the master snapshot on a periodic tick.
+func ReportMasterTick(system *actor.System, db db.DB) {
+	resourceManagerType := ""
+	req := &apiv1.GetResourcePoolsRequest{}
+	var resp *apiv1.GetResourcePoolsResponse
+	switch {
+	case sproto.UseAgentRM(system):
+		resourceManagerType = "agent"
+		resp = system.AskAt(sproto.AgentRMAddr, req).Get().(*apiv1.GetResourcePoolsResponse)
+
+	case sproto.UseK8sRM(system):
+		resourceManagerType = "kubernetes"
+		resp = system.AskAt(sproto.K8sRMAddr, req).Get().(*apiv1.GetResourcePoolsResponse)
+
+	default:
+		logrus.WithError(errors.New("cannot find appropriate resource manager")).
+			Error("failed to retrieve telemetry information")
+		return
+	}
+
+	gpuTotalNum, gpuUsedNum := 0, 0
+	poolTypes := make(map[string]int)
+	for _, pool := range resp.ResourcePools {
+		poolTypes[sproto.StringFromResourcePoolTypeProto(pool.Type)]++
+		if pool.SlotType == devicev1.Type_TYPE_CUDA || pool.SlotType == devicev1.Type_TYPE_ROCM {
+			gpuTotalNum += int(pool.SlotsAvailable)
+			gpuUsedNum += int(pool.SlotsUsed)
+		}
+	}
+
+	dbInfo, err := db.PeriodicTelemetryInfo()
+	if err != nil {
+		logrus.WithError(err).Error("failed to retrieve telemetry information")
+		return
+	}
+
+	props := analytics.Properties{
+		"master_version":        version.Version,
+		"resource_manager_type": resourceManagerType,
+		"pool_type":             poolTypes,
+		"gpu_total_num":         gpuTotalNum,
+		"gpu_used_num":          gpuUsedNum,
+	}
+
+	if err = json.Unmarshal(dbInfo, &props); err != nil {
+		logrus.WithError(err).Error("failed to retrieve telemetry information")
+		return
+	}
+
 	system.TellAt(
 		actor.Addr("telemetry"),
-		analytics.Track{Event: event, Properties: analytics.Properties(properties)},
+		analytics.Track{
+			Event:      "master_tick",
+			Properties: props,
+		},
 	)
 }
 
-// ReportAgentConnected reports that an agent has connected to the master.
-func ReportAgentConnected(system *actor.System, uuid uuid.UUID, devices []device.Device) {
-	report(system, "agent_connected", map[string]interface{}{
-		"uuid":    uuid,
-		"devices": devices,
-	})
-}
-
-// ReportAgentDisconnected reports that an agent has discconnected from the master.
-func ReportAgentDisconnected(system *actor.System, uuid uuid.UUID) {
-	report(system, "agent_disconnected", map[string]interface{}{
-		"uuid": uuid,
-	})
-}
-
 // ReportExperimentCreated reports that an experiment has been created.
-func ReportExperimentCreated(system *actor.System, e model.Experiment) {
-	report(system, "experiment_created", map[string]interface{}{
-		"id":               e.ID,
-		"searcher":         e.Config.Searcher(),
-		"resources":        e.Config.Resources(),
-		"image":            e.Config.Environment().Image(),
-		"num_hparams":      len(e.Config.Hyperparameters()),
-		"batches_per_step": e.Config.SchedulingUnit(),
-	})
+func ReportExperimentCreated(system *actor.System, e *model.Experiment) {
+	system.TellAt(
+		actor.Addr("telemetry"),
+		analytics.Track{
+			Event: "experiment_created",
+			Properties: map[string]interface{}{
+				"id":                        e.ID,
+				"searcher_name":             reflect.TypeOf(e.Config.Searcher().GetUnionMember()),
+				"num_hparams":               len(e.Config.Hyperparameters()),
+				"resources_slots_per_trial": e.Config.Resources().SlotsPerTrial(),
+				"image":                     e.Config.Environment().Image(),
+			},
+		},
+	)
+}
+
+// ReportAllocationTerminal reports that an allocation ends.
+func ReportAllocationTerminal(
+	system *actor.System, db db.DB, a model.Allocation, d *device.Device,
+) {
+	res, err := db.CompleteAllocationTelemetry(a.AllocationID)
+	if err != nil {
+		logrus.WithError(err).Warn("failed to fetch allocation telemetry")
+		return
+	}
+
+	props := analytics.Properties{
+		"allocation_id": a.AllocationID,
+		"task_id":       a.TaskID,
+		"start_time":    a.StartTime,
+		"end_time":      *a.EndTime,
+		"slots":         a.Slots,
+	}
+	if d != nil {
+		props["slot_type"] = d.Type
+		props["slot_brand"] = d.Brand
+	}
+
+	if err = json.Unmarshal(res, &props); err != nil {
+		logrus.WithError(err).Warn("failed to report allocation telemetry")
+		return
+	}
+
+	system.TellAt(
+		actor.Addr("telemetry"),
+		analytics.Track{
+			Event:      "allocation_terminal",
+			Properties: props,
+		},
+	)
 }
 
 func fetchNumTrials(db *db.PgDB, experimentID int) *int64 {
@@ -86,37 +170,33 @@ func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Exp
 		totalStepTime = fetchTotalStepTime(db, e.ID)
 	}
 
-	report(system, "experiment_state_changed", map[string]interface{}{
-		"id":              e.ID,
-		"state":           e.State,
-		"start_time":      e.StartTime,
-		"end_time":        e.EndTime,
-		"num_trials":      numTrials,
-		"num_steps":       numSteps,
-		"total_step_time": totalStepTime,
-	})
+	system.TellAt(
+		actor.Addr("telemetry"),
+		analytics.Track{
+			Event: "experiment_state_changed",
+			Properties: map[string]interface{}{
+				"id":              e.ID,
+				"state":           e.State,
+				"start_time":      e.StartTime,
+				"end_time":        e.EndTime,
+				"num_trials":      numTrials,
+				"num_steps":       numSteps,
+				"total_step_time": totalStepTime,
+			},
+		},
+	)
 }
 
 // ReportUserCreated reports that a user has been created.
 func ReportUserCreated(system *actor.System, admin, active bool) {
-	report(system, "user_created", map[string]interface{}{
-		"admin":  admin,
-		"active": active,
-	})
-}
-
-// ReportResourcePoolCreated reports that a resource pool has been created.
-func ReportResourcePoolCreated(
-	system *actor.System,
-	poolName, schedulerType,
-	fittingPolicy string,
-	preemptionEnabled bool,
-) {
-	report(system, "resource_pool_created", map[string]interface{}{
-		"pool_name":          poolName,
-		"scheduler_type":     schedulerType,
-		"fitting_policy":     fittingPolicy,
-		"preemption_enabled": preemptionEnabled,
-		"version":            "1",
-	})
+	system.TellAt(
+		actor.Addr("telemetry"),
+		analytics.Track{
+			Event: "user_created",
+			Properties: map[string]interface{}{
+				"admin":  admin,
+				"active": active,
+			},
+		},
+	)
 }

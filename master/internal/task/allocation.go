@@ -6,25 +6,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/prom"
-
-	"github.com/determined-ai/determined/master/pkg/device"
-
-	"github.com/determined-ai/determined/master/internal/proxy"
-
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/pkg/tasks"
-
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/prom"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type (
@@ -672,6 +668,8 @@ func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
 		ctx.Log().WithError(err).Error("failed to mark allocation completed")
 	}
+
+	telemetry.ReportAllocationTerminal(ctx.Self().System(), a.db, a.model, a.State().FirstDevice())
 }
 
 const killedLogSubstr = "exit code 137"
@@ -738,6 +736,16 @@ func (a *AllocationExited) String() string {
 func (a *AllocationState) FirstContainer() *cproto.Container {
 	for _, c := range a.Containers {
 		return &c
+	}
+	return nil
+}
+
+// FirstDevice returns the first device in the allocation state.
+func (a AllocationState) FirstDevice() *device.Device {
+	if a.FirstContainer() != nil {
+		for _, d := range a.FirstContainer().Devices {
+			return &d
+		}
 	}
 	return nil
 }

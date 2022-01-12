@@ -30,7 +30,7 @@ type DB interface {
 	AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
 	Migrate(migrationURL string, actions []string) error
 	Close() error
-	GetClusterID() (string, error)
+	GetOrCreateClusterID() (string, error)
 	ExperimentWithTrialSummariesRaw(id int) ([]byte, error)
 	ExperimentWithSummaryMetricsRaw(id int) ([]byte, error)
 	CheckExperimentExists(id int) (bool, error)
@@ -84,6 +84,7 @@ type DB interface {
 	TrialDetailsRaw(id int) ([]byte, error)
 	AddAllocation(a *model.Allocation) error
 	CompleteAllocation(a *model.Allocation) error
+	CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error)
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	UpdateTrialRunID(id, runID int) error
 	UpdateTrialRestarts(id, restarts int) error
