@@ -64,7 +64,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
+	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority:
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetTaskHandler:
@@ -158,6 +158,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 		return nil
 
+	case job.GetJobQStats:
+		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
+		ctx.Respond(resp)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

@@ -19,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -334,11 +335,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Weight != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
+				job.SetGroupWeight{Weight: *patch.Resources.Weight})
 		}
 		if patch.Resources.Priority != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupPriority{Priority: patch.Resources.Priority})
+				job.SetGroupPriority{Priority: patch.Resources.Priority})
 		}
 	}
 

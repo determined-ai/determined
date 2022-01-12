@@ -4084,23 +4084,23 @@ export interface V1QueueControl {
      */
     jobId: string;
     /**
-     * The resource pool to perform an action on.
+     * The desired job position in the queue in terms of another job.
      * @type {string}
      * @memberof V1QueueControl
      */
-    sourceResourcePool?: string;
+    aheadOf?: string;
+    /**
+     * The desired job position in the queue in terms of another job.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    behindOf?: string;
     /**
      * Name of the target resource_pool to move the job to.
      * @type {string}
      * @memberof V1QueueControl
      */
     resourcePool?: string;
-    /**
-     * The desired job position in the queue.
-     * @type {number}
-     * @memberof V1QueueControl
-     */
-    queuePosition?: number;
     /**
      * The desired job priority in priority scheduler.
      * @type {number}
@@ -4113,6 +4113,12 @@ export interface V1QueueControl {
      * @memberof V1QueueControl
      */
     weight?: number;
+    /**
+     * DEV: the desired job position in queue.
+     * @type {number}
+     * @memberof V1QueueControl
+     */
+    queuePosition?: number;
 }
 
 /**

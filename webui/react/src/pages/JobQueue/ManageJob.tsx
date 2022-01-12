@@ -1,8 +1,7 @@
-import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd';
+import { Form, FormInstance, Input, List, Modal, Typography } from 'antd';
 import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import * as api from 'services/api-ts-sdk';
@@ -12,8 +11,6 @@ import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
-
-const { Option } = Select;
 
 interface Props {
   job: Job;
@@ -30,9 +27,8 @@ interface FormValues {
   weight?: string;
 }
 
-const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType, jobs }) => {
+const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType }) => {
   const formRef = useRef <FormInstance<FormValues>>(null);
-  const { resourcePools } = useStore();
   const isOrderedQ = orderedSchedulers.has(schedulerType);
 
   const details = useMemo(() => {
@@ -67,7 +63,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       {
         label: 'Progress',
         value: job.progress ?
-          floatToPercent(job.progress, 1) + '%' : undefined,
+          floatToPercent(job.progress, 1) : undefined,
       },
       tableDetails.slots,
       { label: 'Is Preemtible', value: job.isPreemptible ? 'Yes' : 'No' },
@@ -117,20 +113,6 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
     [ formRef, onFinish, formValuesToQUpdate, job.jobId ],
   );
 
-  const curRP = resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
-
-  const RPDetails = (
-    <div>
-      <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable}
-        <br />
-        Jobs in queue:
-        {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
-        <br />
-        Spot instance pool: {!!curRP?.details.aws?.spotEnabled + ''}
-      </p>
-    </div>
-  );
-
   const isSingular = job.summary && job.summary.jobsAhead === 1;
 
   return (
@@ -158,46 +140,29 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         labelCol={{ span: 6 }}
         name="form basic"
         ref={formRef}>
-        {[ api.V1SchedulerType.KUBERNETES, api.V1SchedulerType.PRIORITY ]
-          .includes(schedulerType) && (
-          <>
-            <Form.Item
-              label="Position in Queue"
-              name="position">
-              <Input addonAfter={`out of ${jobs.length}`} max={jobs.length} min={1} type="number" />
-            </Form.Item>
-            <Form.Item
-              // extra="Jobs are scheduled based on priority of 1-99 with 1 being the highest."
-              label="Priority"
-              name="priority">
-              <Input addonAfter="out of 99" type="number" />
-              {/* FIXME What about K8? */}
-            </Form.Item>
-          </>
+        {schedulerType === api.V1SchedulerType.PRIORITY && (
+          <Form.Item
+            extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
+            label="Priority"
+            name="priority">
+            <Input addonAfter="out of 99" max={99} min={1} type="number" />
+          </Form.Item>
+        )}
+        {schedulerType === api.V1SchedulerType.KUBERNETES && (
+          <Form.Item
+            extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority."
+            label="Priority"
+            name="priority">
+            <Input max={99} min={1} type="number" />
+          </Form.Item>
         )}
         {schedulerType === api.V1SchedulerType.FAIRSHARE && (
           <Form.Item
             label="Weight"
             name="weight">
-            <Input disabled type="number" />
+            <Input min={0} type="number" />
           </Form.Item>
         )}
-        <Form.Item
-          extra={RPDetails}
-          label="Resource Pool"
-          name="resourcePool">
-          <Select disabled>
-            {resourcePools.map(rp => (
-              <Option key={rp.name} value={rp.name}>{rp.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-        {/* <Form.Item
-          extra="Change the resource request. Note: this can only be modified before a job is run."
-          label="Slots"
-          name="slots">
-          <Input disabled type="number" />
-        </Form.Item> */}
       </Form>
       <h6>
         Job Details
@@ -206,7 +171,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         dataSource={details}
         renderItem={item => (
           <List.Item className={css.item}>
-            <Typography.Text>{item.label}</Typography.Text>
+            <Typography.Text className={css.key}>{item.label}</Typography.Text>
             <div className={css.value}>
               {item.value}
             </div>

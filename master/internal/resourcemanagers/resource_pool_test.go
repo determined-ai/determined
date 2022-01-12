@@ -9,6 +9,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -196,12 +197,12 @@ func TestSettingGroupPriority(t *testing.T) {
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
 	assert.Assert(t, created)
 	updatedPriority := 22
-	system.Tell(ref, sproto.SetGroupPriority{Priority: &updatedPriority, Handler: groupRefOne})
+	system.Tell(ref, job.SetGroupPriority{Priority: &updatedPriority, Handler: groupRefOne})
 
 	// Test leaving the default priority for a group.
 	groupRefTwo, created := system.ActorOf(actor.Addr("group2"), &mockGroup{})
 	assert.Assert(t, created)
-	system.Tell(ref, sproto.SetGroupPriority{Priority: nil, Handler: groupRefTwo})
+	system.Tell(ref, job.SetGroupPriority{Priority: nil, Handler: groupRefTwo})
 
 	for _, n := range rp.notifications {
 		<-n

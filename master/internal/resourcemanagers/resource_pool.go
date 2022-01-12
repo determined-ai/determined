@@ -237,8 +237,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
-		sproto.SetGroupWeight,
-		sproto.SetGroupPriority,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
@@ -371,18 +371,18 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	case sproto.SetGroupMaxSlots:
 		rp.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight:
+	case job.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
-	case sproto.SetGroupPriority:
-		group := rp.getOrCreateGroup(ctx, msg.Handler)
+	case job.SetGroupPriority:
+		g := rp.getOrCreateGroup(ctx, msg.Handler)
 		if msg.Priority != nil {
-			group.priority = msg.Priority
+			g.priority = msg.Priority
 		}
 
 		if rp.config.Scheduler.Priority != nil {
 			ctx.Log().Infof("setting priority for group of %s to %d",
-				msg.Handler.Address().String(), *group.priority)
+				msg.Handler.Address().String(), *g.priority)
 		}
 
 	case sproto.SetTaskName:

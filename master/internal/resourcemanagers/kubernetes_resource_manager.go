@@ -29,6 +29,7 @@ type kubernetesResourceManager struct {
 
 	reqList           *taskList
 	groups            map[*actor.Ref]*group
+	addrToContainerID map[*actor.Ref]cproto.ID
 	containerIDtoAddr map[string]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
@@ -53,6 +54,7 @@ func newKubernetesResourceManager(
 
 		reqList:           newTaskList(),
 		groups:            make(map[*actor.Ref]*group),
+		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
 
@@ -100,8 +102,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
-		sproto.SetGroupWeight,
-		sproto.SetGroupPriority,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased,
@@ -111,6 +113,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case
 		job.GetJobQ,
 		job.GetJobSummary,
+		job.GetJobQStats,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -207,13 +210,23 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight:
-		// SetGroupWeight and SetGroupPriority are not supported by the Kubernetes RP.
+	case job.SetGroupWeight:
+		// setting weights in kubernetes is not supported
 
-	case sproto.SetGroupPriority:
+	case job.SetGroupPriority:
 		group := k.getOrCreateGroup(ctx, msg.Handler)
 		if msg.Priority != nil {
 			group.priority = msg.Priority
+		}
+
+		for it := k.reqList.iterator(); it.next(); {
+			if it.value().Group == msg.Handler {
+				taskActor := it.value().TaskActor
+				if id, ok := k.addrToContainerID[taskActor]; ok {
+					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
+					delete(k.addrToContainerID, taskActor)
+				}
+			}
 		}
 
 	case sproto.SetTaskName:
@@ -280,6 +293,8 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		)
 		ctx.Respond(resp)
 
+	case job.GetJobQStats:
+		ctx.Respond(jobStats(k.reqList))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -335,7 +350,10 @@ func (k *kubernetesResourceManager) assignResources(
 			req:       req,
 			agent:     k.agent,
 			container: container,
+			group:     k.groups[req.Group],
 		})
+
+		k.addrToContainerID[req.TaskActor] = container.id
 		k.containerIDtoAddr[container.id.String()] = req.TaskActor
 	}
 
@@ -410,6 +428,7 @@ type k8sPodReservation struct {
 	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
+	group     *group
 }
 
 // Summary summarizes a container allocation.
@@ -431,6 +450,7 @@ func (p k8sPodReservation) Start(
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
+	spec.ResourcesConfig.SetPriority(p.group.priority)
 	ctx.Tell(handler, kubernetes.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,

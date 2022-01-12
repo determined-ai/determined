@@ -165,6 +165,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case PreemptTaskPod:
 		p.receivePodPreemption(ctx, msg)
 
+	case ChangePriority:
+		p.receivePriorityChange(ctx, msg)
+
 	case KillTaskPod:
 		p.receiveKillPod(ctx, msg)
 
@@ -401,6 +404,23 @@ func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {
 			"received preemption command for unregistered pod")
 		return
 	}
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
+	podName, ok := p.containerIDToPodName[msg.PodID.String()]
+	if !ok {
+		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+			"received change priority command for unregistered container id")
+		return
+	}
+	ref, ok := p.podNameToPodHandler[podName]
+	if !ok {
+		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+			"received change priority command for unregistered container id")
+		return
+	}
+
 	ctx.Tell(ref, msg)
 }
 

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -164,11 +166,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources().Weight(), Handler: ctx.Self()})
-		ctx.Tell(e.rm, sproto.SetGroupPriority{
-			Priority: e.Config.Resources().Priority(),
-			Handler:  ctx.Self(),
-		})
+		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
+			return err
+		}
+		if err := e.setPriority(ctx, e.Config.Resources().Priority()); err != nil {
+			return err
+		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
 			JobID:    e.JobID,
@@ -254,20 +257,18 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources.SetMaxSlots(msg.MaxSlots)
 		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
-	case sproto.SetGroupWeight:
-		resources := e.Config.Resources()
-		resources.SetWeight(msg.Weight)
-		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
-	case sproto.SetGroupPriority:
-		resources := e.Config.Resources()
-		resources.SetPriority(msg.Priority)
-		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
-
+	case job.SetGroupWeight:
+		if err := e.setWeight(ctx, msg.Weight); err != nil {
+			ctx.Respond(err)
+			ctx.Log().WithError(err)
+		}
+	case job.SetGroupPriority:
+		if err := e.setPriority(ctx, msg.Priority); err != nil {
+			ctx.Respond(err)
+			ctx.Log().WithError(err)
+		}
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -569,6 +570,45 @@ func checkpointFromTrialIDOrUUID(
 		}
 	}
 	return checkpoint, nil
+}
+
+func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
+	oldPriority := resourcemanagers.DefaultSchedulingPriority
+	var oldPriorityPtr *int
+	resources := e.Config.Resources()
+	if resources.Priority() != nil {
+		oldPriority = *resources.Priority()
+		oldPriorityPtr = &oldPriority
+	}
+	resources.SetPriority(priority)
+	e.Config.SetResources(resources)
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		resources.SetPriority(oldPriorityPtr)
+		e.Config.SetResources(resources)
+		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+	}
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+		Priority: priority,
+		Handler:  ctx.Self(),
+	})
+	return nil
+}
+
+func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
+	resources := e.Config.Resources()
+	oldWeight := resources.Weight()
+	resources.SetWeight(weight)
+	e.Config.SetResources(resources)
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		resources.SetWeight(oldWeight)
+		e.Config.SetResources(resources)
+		return errors.Wrapf(err, "setting experiment %d weight", e.ID)
+	}
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+		Weight:  weight,
+		Handler: ctx.Self(),
+	})
+	return nil
 }
 
 func (e *experiment) toV1Job() *jobv1.Job {

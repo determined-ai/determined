@@ -3,14 +3,17 @@ package job
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// JobsActorAddr is the address of the jobs actor.
-var JobsActorAddr = actor.Addr("jobs")
+var (
+	// JobsActorAddr is the address of the jobs actor.
+	JobsActorAddr = actor.Addr("jobs")
+)
 
 // RMJobInfo packs information available only to the RM that updates frequently.
 type RMJobInfo struct { // rename ?
@@ -34,7 +37,23 @@ type GetJobQ struct {
 // GetJobQStats requests stats for a queue.
 // Expected response: jobv1.QueueStats.
 type GetJobQStats struct {
+	ResourcePool string
 }
+
+type (
+	// SetGroupWeight sets the weight of a group in the fair share scheduler.
+	SetGroupWeight struct {
+		Weight       float64
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+	// SetGroupPriority sets the priority of the group in the priority scheduler.
+	SetGroupPriority struct {
+		Priority     *int
+		ResourcePool string
+		Handler      *actor.Ref
+	}
+)
 
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
@@ -50,18 +69,22 @@ type UnregisterJob struct {
 
 // Jobs manage jobs.
 type Jobs struct {
-	RMRef    *actor.Ref
-	jobsByID map[model.JobID]*actor.Ref
+	RMRef     *actor.Ref
+	actorByID map[model.JobID]*actor.Ref
 }
 
 // AQueue is a map of jobID to RMJobInfo.
 type AQueue = map[model.JobID]*RMJobInfo
 
+func errJobNotFound(jobID model.JobID) error {
+	return fmt.Errorf("job %s not found", jobID)
+}
+
 // NewJobs creates a new jobs actor.
 func NewJobs(rmRef *actor.Ref) *Jobs {
 	return &Jobs{
-		RMRef:    rmRef,
-		jobsByID: make(map[model.JobID]*actor.Ref),
+		RMRef:     rmRef,
+		actorByID: make(map[model.JobID]*actor.Ref),
 	}
 }
 
@@ -82,30 +105,37 @@ func (j *Jobs) parseV1JobMsgs(
 	return jobs, nil
 }
 
+// jobQSnapshot asks for a fresh consistent snapshot of the job queue from the RM.
+func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, error) {
+	aResp := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: resourcePool})
+	if err := aResp.Error(); err != nil {
+		ctx.Log().WithError(err).Error("getting job queue info from RM")
+		return nil, err
+	}
+
+	jobQ, ok := aResp.Get().(AQueue)
+	if !ok {
+		err := fmt.Errorf("unexpected response type: %T from RM", aResp.Get())
+		ctx.Log().WithError(err).Error("")
+		return nil, err
+	}
+	return jobQ, nil
+}
+
 // Receive implements the actor.Actor interface.
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case RegisterJob:
-		j.jobsByID[msg.JobID] = msg.JobActor
+		j.actorByID[msg.JobID] = msg.JobActor
 
 	case UnregisterJob:
-		delete(j.jobsByID, msg.JobID)
+		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		// Ask for a consistent snapshot of the job queue from the RM.
-		aResp := ctx.Ask(j.RMRef, GetJobQ{ResourcePool: msg.ResourcePool})
-		if err := aResp.Error(); err != nil {
-			ctx.Log().WithError(err).Error("getting job queue info from RM")
-			ctx.Respond(err)
-			return nil
-		}
-
-		jobQ, ok := aResp.Get().(AQueue)
-		if !ok {
-			err := fmt.Errorf("unexpected response type: %T from RM", aResp.Get())
-			ctx.Log().WithError(err).Error("")
+		jobQ, err := j.jobQSnapshot(ctx, msg.ResourcePool)
+		if err != nil {
 			ctx.Respond(err)
 			return nil
 		}
@@ -113,7 +143,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		// Get jobs from the job actors.
 		jobRefs := make([]*actor.Ref, 0)
 		for jID := range jobQ {
-			jobRef, ok := j.jobsByID[jID]
+			jobRef, ok := j.actorByID[jID]
 			if ok {
 				jobRefs = append(jobRefs, jobRef)
 			}
@@ -136,6 +166,49 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(jobsInRM)
 
+	case *apiv1.UpdateJobQueueRequest:
+		errors := ""
+		for _, update := range msg.Updates {
+			jobID := model.JobID(update.JobId)
+			jobActor := j.actorByID[jobID]
+			if jobActor == nil {
+				ctx.Respond(errJobNotFound(jobID))
+				return nil
+			}
+			switch action := update.GetAction().(type) {
+			case *jobv1.QueueControl_Priority:
+				priority := int(action.Priority)
+				resp := ctx.Ask(jobActor, SetGroupPriority{
+					Priority: &priority,
+				})
+				if err := resp.Error(); err != nil {
+					errors = fmt.Sprintf("%s \n %s", errors, err.Error())
+				}
+			case *jobv1.QueueControl_Weight:
+				resp := ctx.Ask(jobActor, SetGroupWeight{
+					Weight: float64(action.Weight),
+				})
+				if err := resp.Error(); err != nil {
+					errors = fmt.Sprintf("%s \n %s", errors, err.Error())
+				}
+			case *jobv1.QueueControl_ResourcePool:
+				ctx.Respond(api.ErrNotImplemented)
+				return nil
+			case *jobv1.QueueControl_QueuePosition:
+				// REMOVEME: keep this until ahead_of and behind_of are implemented
+				ctx.Respond(api.ErrNotImplemented)
+				return nil
+			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
+				ctx.Respond(api.ErrNotImplemented)
+				return nil
+			default:
+				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
+				return nil
+			}
+		}
+		if errors != "" {
+			ctx.Respond(fmt.Errorf("encountered the following errors: %s", errors))
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

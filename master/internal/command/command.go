@@ -118,7 +118,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
 
-		ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
+		ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 			Priority: c.Config.Resources.Priority,
 			Handler:  ctx.Self(),
 		})
@@ -304,6 +304,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
+	case job.SetGroupWeight:
+		c.setWeight(ctx, msg.Weight)
+
+	case job.SetGroupPriority:
+		if msg.Priority != nil {
+			c.setPriority(ctx, *msg.Priority)
+		}
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -311,9 +319,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 }
 
 func (c *command) setPriority(ctx *actor.Context, priority int) {
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
+	c.Config.Resources.Priority = &priority
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: &priority,
 		Handler:  ctx.Self(),
+	})
+}
+
+func (c *command) setWeight(ctx *actor.Context, weight float64) {
+	c.Config.Resources.Weight = weight
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+		Weight:  weight,
+		Handler: ctx.Self(),
 	})
 }
 

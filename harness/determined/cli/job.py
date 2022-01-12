@@ -78,6 +78,14 @@ def ls(args: Namespace) -> None:
         render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
 
+@authentication.required
+def update(args: Namespace) -> None:
+    update = bindings.v1QueueControl(jobId=args.job_id, priority=args.priority, weight=args.weight)
+    bindings.post_UpdateJobQueue(
+        setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
+    )
+
+
 args_description = [
     Cmd(
         "j|ob",
@@ -90,7 +98,9 @@ args_description = [
                 "list jobs",
                 [
                     Arg(
-                        "-rp", "--resource-pool", type=str, help="The target resource pool, if any."
+                        "--resource-pool",
+                        type=str,
+                        help="The target resource pool, if any.",
                     ),
                     *pagination_args,
                     Group(
@@ -101,6 +111,32 @@ args_description = [
                     ),
                 ],
             ),
+            Cmd(
+                "u|pdate",
+                update,
+                "update job",
+                [
+                    Arg(
+                        "job_id",
+                        type=str,
+                        help="The target job ID",
+                    ),
+                    Group(
+                        Arg(
+                            "-p",
+                            "--priority",
+                            type=int,
+                            help="The new priority. Exclusive to priority scheduler.",
+                        ),
+                        Arg(
+                            "-w",
+                            "--weight",
+                            type=float,
+                            help="The new weight. Exclusive to fair_share scheduler.",
+                        ),
+                    ),
+                ],
+            ),
         ],
-    )
+    ),
 ]  # type: List[Any]

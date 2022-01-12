@@ -71,5 +71,10 @@ func (a *apiServer) UpdateJobQueue(
 	_ context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (resp *apiv1.UpdateJobQueueResponse, err error) {
 	resp = &apiv1.UpdateJobQueueResponse{}
+
+	actorResp := a.m.system.AskAt(job.JobsActorAddr, req)
+	if err := actorResp.Error(); err != nil {
+		return nil, err
+	}
 	return resp, nil
 }

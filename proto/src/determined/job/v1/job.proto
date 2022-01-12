@@ -102,18 +102,20 @@ message QueueControl {
   };
   // Job id.
   string job_id = 1;
-  // The resource pool to perform an action on.
-  string source_resource_pool = 2;
   // The action to perform.
   oneof action {
+    // The desired job position in the queue in terms of another job.
+    string ahead_of = 2;
+    // The desired job position in the queue in terms of another job.
+    string behind_of = 4;
     // Name of the target resource_pool to move the job to.
     string resource_pool = 3;
-    // The desired job position in the queue.
-    float queue_position = 4;
     // The desired job priority in priority scheduler.
     int32 priority = 5;
     // The desired job weight in fairshare scheduler.
     float weight = 6;
+    // DEV: the desired job position in queue.
+    float queue_position = 7;
   }
 }
 
