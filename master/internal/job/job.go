@@ -178,6 +178,10 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
+				if priority < 1 || priority > 99 {
+					errors = fmt.Sprintf("%s \n %s", errors, "priority must be between 1 and 99")
+					continue
+				}
 				resp := ctx.Ask(jobActor, SetGroupPriority{
 					Priority: &priority,
 				})
