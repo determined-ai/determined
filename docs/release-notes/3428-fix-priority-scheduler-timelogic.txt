@@ -2,4 +2,5 @@
 
 **Bug Fixes**
 
--  Master: Fix a bug in the priority scheduler where jobs with equal priority would be scheduled or preempted in an order not correctly respecting job submission time.
+-  Master: Fix a bug in the priority scheduler where jobs with equal priority would be scheduled or
+   preempted in an order not correctly respecting job submission time.

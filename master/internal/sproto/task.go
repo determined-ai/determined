@@ -18,7 +18,7 @@ type (
 		AllocationID      model.AllocationID
 		TaskID            model.TaskID
 		JobID             *model.JobID
-		JobSubmissionTime *time.Time // TODO or a job info struct
+		JobSubmissionTime *time.Time
 		State             job.SchedulingState
 		Name              string
 		// Allocation actor
