@@ -105,6 +105,7 @@ args_description = [
                 "list jobs",
                 [
                     Arg(
+                        "-p",
                         "--resource-pool",
                         type=str,
                         help="The target resource pool, if any.",
