@@ -1193,6 +1193,8 @@ jobs:
           path: webui/tests/reports/xml-report/
       - store_artifacts:
           path: webui/tests/reports/
+      - store_artifacts:
+          path: webui/tests/.gauge/
 
   lint-react:
     docker:
