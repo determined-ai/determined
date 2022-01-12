@@ -971,8 +971,6 @@ var (
                                     "args": "container Args are not configurable",
                                     "working_dir": "container WorkingDir is not configurable",
                                     "ports": "container Ports are not configurable",
-                                    "env_from": "container EnvFrom is not configurable",
-                                    "env": "container Env is not configurable, set it in the experiment config",
                                     "liveness_probe": "container LivenessProbe is not configurable",
                                     "readiness_probe": "container ReadinessProbe is not configurable",
                                     "startup_probe": "container StartupProbe is not configurable",

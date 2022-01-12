@@ -317,6 +317,9 @@ func (p *pod) configurePodSpec(
 			continue
 		}
 
+		determinedContainer.Env = append(determinedContainer.Env, container.Env...)
+		determinedContainer.EnvFrom = append(determinedContainer.EnvFrom, container.EnvFrom...)
+
 		for k, v := range podSpec.Spec.Containers[idx].Resources.Limits {
 			if _, present := determinedContainer.Resources.Limits[k]; !present {
 				determinedContainer.Resources.Limits[k] = v
