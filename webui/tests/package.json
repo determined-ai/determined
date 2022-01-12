@@ -9,7 +9,7 @@
     "gauge-ts": "0.1.0"
   },
   "devDependencies": {
-    "@getgauge/cli": "^1.1.8",
+    "@getgauge/cli": "^1.4.2",
     "@types/expect": "^24.3.0",
     "@types/node": "latest",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
