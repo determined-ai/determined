@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 
 	"github.com/google/uuid"
