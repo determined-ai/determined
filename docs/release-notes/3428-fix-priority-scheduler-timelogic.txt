@@ -2,5 +2,4 @@
 
 **Bug Fixes**
 
--  Master: Fixes two separate issues when priority between tasks/jobs is equal in priority scheduler
-   and it falls back on its secondary sorting logic.
+-  Master: Fix a bug in the priority scheduler where jobs with equal priority would be scheduled or preempted in an order not correctly respecting job submission time.
