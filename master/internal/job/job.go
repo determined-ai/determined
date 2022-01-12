@@ -2,6 +2,7 @@ package job
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -167,7 +168,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		ctx.Respond(jobsInRM)
 
 	case *apiv1.UpdateJobQueueRequest:
-		errors := ""
+		errors := make([]string, 0)
 		for _, update := range msg.Updates {
 			jobID := model.JobID(update.JobId)
 			jobActor := j.actorByID[jobID]
@@ -178,18 +179,26 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
+				if priority < 1 || priority > 99 {
+					errors = append(errors, "priority must be between 1 and 99")
+					continue
+				}
 				resp := ctx.Ask(jobActor, SetGroupPriority{
 					Priority: &priority,
 				})
 				if err := resp.Error(); err != nil {
-					errors = fmt.Sprintf("%s \n %s", errors, err.Error())
+					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_Weight:
+				if action.Weight <= 0 {
+					errors = append(errors, "weight must be greater than 0")
+					continue
+				}
 				resp := ctx.Ask(jobActor, SetGroupWeight{
 					Weight: float64(action.Weight),
 				})
 				if err := resp.Error(); err != nil {
-					errors = fmt.Sprintf("%s \n %s", errors, err.Error())
+					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_ResourcePool:
 				ctx.Respond(api.ErrNotImplemented)
@@ -206,8 +215,8 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				return nil
 			}
 		}
-		if errors != "" {
-			ctx.Respond(fmt.Errorf("encountered the following errors: %s", errors))
+		if len(errors) > 0 {
+			ctx.Respond(fmt.Errorf("encountered the following errors: %s", strings.Join(errors, ", ")))
 		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
