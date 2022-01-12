@@ -102,8 +102,32 @@ func (i *taskIterator) value() *sproto.AllocateRequest {
 	return i.it.Value().(*sproto.AllocateRequest)
 }
 
-func taskComparator(a interface{}, b interface{}) int {
-	t1, t2 := a.(*sproto.AllocateRequest), b.(*sproto.AllocateRequest)
+// aReqComparator compares AllocateRequests by how long their jobs have been submitted
+// while falling back to when their Allocation actor was created for non-job tasks.
+// a < b iff a is older than b.
+// The result will be 0 if a==b, -1 if a < b, and +1 if a > b.
+func aReqComparator(a *sproto.AllocateRequest, b *sproto.AllocateRequest) int {
+	if a.JobSubmissionTime == nil && b.JobSubmissionTime == nil {
+		return registerTimeComparator(a, b)
+	}
+	if a.JobSubmissionTime == nil {
+		return 1
+	}
+	if b.JobSubmissionTime == nil {
+		return -1
+	}
+	if a.JobSubmissionTime.Equal(*b.JobSubmissionTime) {
+		return registerTimeComparator(a, b)
+	}
+	if a.JobSubmissionTime.Before(*b.JobSubmissionTime) {
+		return -1
+	} else {
+		return 1
+	}
+}
+
+// registerTimeComparator compares AllocateRequests based on when their Allocate actor was registred.
+func registerTimeComparator(t1 *sproto.AllocateRequest, t2 *sproto.AllocateRequest) int {
 	if !t1.TaskActor.RegisteredTime().Equal(t2.TaskActor.RegisteredTime()) {
 		if t1.TaskActor.RegisteredTime().Before(t2.TaskActor.RegisteredTime()) {
 			return -1
@@ -111,4 +135,9 @@ func taskComparator(a interface{}, b interface{}) int {
 		return 1
 	}
 	return strings.Compare(string(t1.AllocationID), string(t2.AllocationID))
+}
+
+func taskComparator(a interface{}, b interface{}) int {
+	t1, t2 := a.(*sproto.AllocateRequest), b.(*sproto.AllocateRequest)
+	return aReqComparator(t1, t2)
 }

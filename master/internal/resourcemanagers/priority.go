@@ -348,16 +348,16 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 func compareByRegisteredTime(tasks []*sproto.AllocateRequest, i, j int) bool {
 	aReqI := tasks[i]
 	aReqJ := tasks[j]
-	if aReqI.JobSubmissionTime != nil && aReqJ.JobSubmissionTime != nil {
-		return aReqI.JobSubmissionTime.Before(*aReqJ.JobSubmissionTime)
-	}
-	if aReqI.JobSubmissionTime != nil {
-		return true
-	}
-	if aReqJ.JobSubmissionTime != nil {
+	switch aReqComparator(aReqI, aReqJ) {
+	case 0:
 		return false
+	case 1:
+		return false
+	case -1:
+		return true
+	default:
+		panic("unexpected comparison result")
 	}
-	return aReqI.TaskActor.RegisteredTime().Before(aReqJ.TaskActor.RegisteredTime())
 }
 
 func sortTasks(
