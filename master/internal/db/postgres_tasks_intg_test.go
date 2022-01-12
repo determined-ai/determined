@@ -10,13 +10,12 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/guregu/null.v3"
-
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/guregu/null.v3"
 )
 
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the

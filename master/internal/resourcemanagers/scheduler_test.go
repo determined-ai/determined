@@ -53,15 +53,15 @@ var errMock = errors.New("mock error")
 type mockTask struct {
 	rmRef *actor.Ref
 
-	id               model.AllocationID
-	jobID            string
-	group            *mockGroup
-	slotsNeeded      int
-	nonPreemptible   bool
-	label            string
-	resourcePool     string
-	allocatedAgent   *mockAgent
-	containerStarted bool
+	id                model.AllocationID
+	jobID             string
+	group             *mockGroup
+	slotsNeeded       int
+	nonPreemptible    bool
+	label             string
+	resourcePool      string
+	allocatedAgent    *mockAgent
+	containerStarted  bool
 	jobSubmissionTime *time.Time
 }
 
@@ -361,12 +361,12 @@ func setupSchedulerStates(
 		}
 
 		req := &sproto.AllocateRequest{
-			AllocationID: mockTask.id,
-			JobID:        jobID,
-			SlotsNeeded:  mockTask.slotsNeeded,
-			Label:        mockTask.label,
-			TaskActor:    ref,
-			Preemptible:  !mockTask.nonPreemptible,
+			AllocationID:      mockTask.id,
+			JobID:             jobID,
+			SlotsNeeded:       mockTask.slotsNeeded,
+			Label:             mockTask.label,
+			TaskActor:         ref,
+			Preemptible:       !mockTask.nonPreemptible,
 			JobSubmissionTime: mockTask.jobSubmissionTime,
 		}
 		if mockTask.group == nil {
@@ -445,7 +445,7 @@ func assertEqualToAllocateOrdered(
 ) {
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected tasks must have the same length")
-	for i, _ := range expected {
+	for i := range expected {
 		assert.Equal(t, expected[i].id, actual[i].AllocationID)
 	}
 }
