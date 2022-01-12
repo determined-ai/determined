@@ -200,7 +200,7 @@ const NavigationSideBar: React.FC = () => {
         </main>
         <footer>
           <div className={css.version}>
-            {isVersionLong ? (
+            {isVersionLong && settings.navbarCollapsed ? (
               <Tooltip placement="right" title={`Version ${version}`}>
                 <span className={css.versionLabel}>{shortVersion}</span>
               </Tooltip>
