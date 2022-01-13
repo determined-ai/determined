@@ -271,7 +271,7 @@ func sortTasksByPriorityAndTimestamp(
 	} {
 		for _, tasks := range tasksMap {
 			sort.Slice(tasks, func(i, j int) bool {
-				return compareByRegisteredTime(tasks, i, j)
+				return aReqComparator(tasks[i], tasks[j]) < 0
 			})
 		}
 	}
@@ -343,23 +343,6 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 	}
 }
 
-// compareByRegisteredTime sorts tasks by how long their jobs have been submitted.
-// while falling back to when their Allocation actor was created for non-job tasks.
-func compareByRegisteredTime(tasks []*sproto.AllocateRequest, i, j int) bool {
-	aReqI := tasks[i]
-	aReqJ := tasks[j]
-	if aReqI.JobSubmissionTime != nil && aReqJ.JobSubmissionTime != nil {
-		return aReqI.JobSubmissionTime.Before(*aReqJ.JobSubmissionTime)
-	}
-	if aReqI.JobSubmissionTime != nil {
-		return true
-	}
-	if aReqJ.JobSubmissionTime != nil {
-		return false
-	}
-	return aReqI.TaskActor.RegisteredTime().Before(aReqJ.TaskActor.RegisteredTime())
-}
-
 func sortTasks(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
@@ -390,7 +373,7 @@ func sortTasks(
 			}
 		}
 
-		return compareByRegisteredTime(reqs, i, j)
+		return aReqComparator(reqs[i], reqs[j]) < 0
 	})
 
 	return reqs
