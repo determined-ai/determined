@@ -172,10 +172,17 @@ export default class StepImplementation {
     await this.signInWithPassword(username, '');
   }
 
-  @Step('Sign out')
-  public async signOut() {
+  @Step('Sign out through UI')
+  public async signOutUI() {
+    await goto(`${BASE_URL}`);
     await t.click(t.$('#avatar'));
     await t.click(t.link('Sign Out'));
+    await t.button('Sign In').exists();
+  }
+
+  @Step('Ensure user is signed out')
+  public async signOut() {
+    await goto(`${BASE_URL}/logout`);
     await t.button('Sign In').exists();
   }
 

@@ -19,4 +19,4 @@ Toggle all table row selection
 
 ## Sign out
 
-* Sign out
+* Ensure user is signed out

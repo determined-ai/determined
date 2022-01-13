@@ -3,19 +3,21 @@ Tags: parallelizable
 
 Specification to test authentication related operations.
 
-## Sign out
+## Prepare the state
 
-* Sign out
+* Ensure user is signed out
 
 ## Sign in as user without password
 
 * Sign in as "user-wo-pw" without password
-* Sign out
+
+test the ui driven sign out flow without slowing down the test suite with a separate test
+* Sign out through UI
 
 ## Sign in as user with password
 
 * Sign in as "user-w-pw" with "special-pw"
-* Sign out
+* Ensure user is signed out
 
 ## Sign in
 
