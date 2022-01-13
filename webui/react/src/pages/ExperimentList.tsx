@@ -31,7 +31,8 @@ import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
-  getExperiments, killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment, unarchiveExperiment,
+  getExperiments, killExperiment, openOrCreateTensorBoard,
+  patchExperiment, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
