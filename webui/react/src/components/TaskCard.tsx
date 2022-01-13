@@ -11,7 +11,7 @@ import { canBeOpened, isExperimentTask } from 'utils/task';
 import { openCommand } from 'wait';
 
 import css from './TaskCard.module.scss';
-import TimeAgo from './TimeAgo';
+import TimeAgo, { TimeAgoCase } from './TimeAgo';
 
 type Props = AnyTask & RecentEvent & {curUser?: DetailedUser}
 
@@ -45,7 +45,7 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
             <div className={css.name}>{task.name}</div>
             <div className={css.age}>
               <div className={css.event}>{task.lastEvent.name}</div>
-              <TimeAgo datetime={task.lastEvent.date} />
+              <TimeAgo datetime={task.lastEvent.date} stringCase={TimeAgoCase.Lower} />
             </div>
           </div>
         </div>
