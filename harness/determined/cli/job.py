@@ -77,15 +77,16 @@ def ls(args: Namespace) -> None:
         ]
         render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
-@authentication.required
-def update(args: Namespace) -> None:
-    update = bindings.v1QueueControl(jobId=args.job_id, priority=args.priority, weight=args.weight)
-    bindings.post_UpdateJobQueue(setup_session(args),
-                                 body=bindings.v1UpdateJobQueueRequest([update]))
 
 @authentication.required
 def update(args: Namespace) -> None:
-    update = bindings.v1QueueControl(jobId=args.job_id, priority=args.priority, weight=args.weight)
+    update = bindings.v1QueueControl(
+        jobId=args.job_id,
+        priority=args.priority,
+        weight=args.weight,
+        behindOf=args.behind_of,
+        aheadOf=args.ahead_of,
+    )
     bindings.post_UpdateJobQueue(
         setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
     )
@@ -140,14 +141,14 @@ args_description = [
                             help="The new weight. Exclusive to fair_share scheduler.",
                         ),
                         Arg(
-                            "--before",
+                            "--ahead-of",
                             type=str,
-                            help="The job ID to insert before",
+                            help="The job ID of the job to be put ahead of in the queue.",
                         ),
                         Arg(
-                            "--after",
+                            "--behind-of",
                             type=str,
-                            help="The job ID to insert after",
+                            help="The job ID of the job to be put behind in the queue.",
                         ),
                     ),
                 ],
