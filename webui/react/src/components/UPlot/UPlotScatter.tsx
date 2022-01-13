@@ -115,9 +115,10 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
         padding: [ 0, 0, 0, 0 ],
         scales: {
           x: { range: offsetRange(), time: false },
-          xLog: { distr: 3, range, time: false },
+          xCategorical: { range: offsetRange(), time: false },
+          xLog: { distr: 3, log: 10, range: offsetRange(), time: false },
           y: { range: offsetRange() },
-          yLog: { distr: 3, range },
+          yLog: { distr: 3, range: offsetRange() },
         },
         series: [
           null,

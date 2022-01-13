@@ -66,11 +66,13 @@ const ScatterPlots: React.FC<Props> = ({
       const xLabel = hParam;
       const yLabel = metricNameToStr(selectedMetric);
       const title = `${yLabel} (y) vs ${xLabel} (x)`;
-      const xScale = chartData?.hpLogScales[hParam] ? 'xLog' : 'x';
       const hpLabels = chartData?.hpLabels[hParam];
-      const xLabelValues = hpLabels?.length !== 0 ? hpLabels : undefined;
-      const xSplits = xLabelValues
-        ? new Array(xLabelValues.length).fill(0).map((x, i) => i) : undefined;
+      const isLogarithmic = chartData?.hpLogScales[hParam];
+      const isCategorical = hpLabels?.length !== 0;
+      const xScaleKey = isCategorical ? 'xCategorical' : (isLogarithmic ? 'xLog' : 'x');
+      const xSplits = isCategorical
+        ? new Array(hpLabels.length).fill(0).map((x, i) => i) : undefined;
+      const xValues = isCategorical ? hpLabels : undefined;
       return {
         data: [
           null,
@@ -86,9 +88,9 @@ const ScatterPlots: React.FC<Props> = ({
         options: {
           axes: [
             {
-              scale: xScale,
+              scale: xScaleKey,
               splits: xSplits,
-              values: xLabelValues,
+              values: xValues,
             },
             { scale: 'y' },
           ],

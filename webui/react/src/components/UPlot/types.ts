@@ -1,3 +1,5 @@
+import uPlot from 'uplot';
+
 export type UPlotData = number | null | undefined;
 export type FacetedData = [
   null: null,
@@ -9,3 +11,10 @@ export type FacetedData = [
     labels: (number | string)[] | null,
   ],
 ];
+
+export type UPlotAxisSplits = (
+  u: uPlot,
+  axisIndex: number,
+  min: UPlotData,
+  max: UPlotData,
+) => number[];

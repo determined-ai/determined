@@ -1,7 +1,10 @@
 import uPlot from 'uplot';
 
-import { UPlotData } from './types';
+import { Range } from 'types';
 
+import { UPlotAxisSplits, UPlotData } from './types';
+
+const DEFAULT_LOG_BASE = 10;
 const MIN_DIAMETER = 6;
 const MAX_DIAMETER = 60;
 const MIN_AREA = Math.PI * (MIN_DIAMETER / 2) ** 2;
@@ -35,14 +38,51 @@ export const getSizeMinMax = (u: uPlot): [ number, number ] => {
   return [ minValue, maxValue ];
 };
 
-export const range = (u: uPlot, min: UPlotData, max: UPlotData): [ number, number ] => {
-  return [ min ?? 0, max ?? 0 ];
+export const range = (
+  u: uPlot,
+  min: UPlotData,
+  max: UPlotData,
+  scaleKey: string,
+): Range<number> => {
+  // Return a standard range if there is not any valid data.
+  if (min == null || max == null) return [ 0, 100 ];
+
+  // When there is only one distinct value in the dataset.
+  if (min === max) {
+    const axisIndex = u.axes.findIndex(axis => axis.scale === scaleKey);
+    const axis = u.axes[axisIndex] as uPlot.Axis | undefined;
+    const getSplits = axis?.splits as UPlotAxisSplits | undefined;
+
+    if (/categorical/i.test(scaleKey)) {
+      // Using splits for categorical axis.
+      const splits = getSplits?.(u, axisIndex, min, max) || [];
+      if (splits.length > 1) return [ splits.first(), splits.last() ];
+    } else if (/log/i.test(scaleKey)) {
+      const logBase = u.scales[scaleKey].log || DEFAULT_LOG_BASE;
+      const nearestBase = Math.log(max) / Math.log(logBase);
+      return [ logBase ** (nearestBase - 1), logBase ** (nearestBase + 1) ];
+    } else {
+      const delta = Math.abs(max) || 100;
+      return [ min - delta, max + delta ];
+    }
+  }
+
+  return [ min as number, max as number ];
 };
 
 export const offsetRange = (offsetPercent = 0.1) => {
-  return (u: uPlot, min: UPlotData, max: UPlotData): [ number, number ] => {
-    const minValue = min ?? 0;
-    const maxValue = max ?? 0;
+  return (u: uPlot, min: UPlotData, max: UPlotData, scaleKey: string): Range<number> => {
+    const [ minValue, maxValue ] = range(u, min, max, scaleKey);
+
+    // Offset log scale based on the exponents.
+    if (/log/i.test(scaleKey)) {
+      const logBase = u.scales[scaleKey].log || DEFAULT_LOG_BASE;
+      const minLog = Math.log(minValue) / Math.log(logBase);
+      const maxLog = Math.log(maxValue) / Math.log(logBase);
+      const offset = (maxLog - minLog) * offsetPercent;
+      return [ logBase ** (minLog - offset), logBase ** (maxLog + offset) ];
+    }
+
     const offset = (maxValue - minValue) * offsetPercent;
     return [ minValue - offset, maxValue + offset ];
   };
