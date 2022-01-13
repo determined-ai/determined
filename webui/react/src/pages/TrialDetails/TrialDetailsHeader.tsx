@@ -47,7 +47,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
     if (!trialWillNeverHaveData(trial)) {
       options.push({
-        icon: <Icon name="tensorboard" size="small" />,
+        icon: <Icon name="tensor-board" size="small" />,
         isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
         label: 'TensorBoard',

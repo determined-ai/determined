@@ -204,7 +204,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: handleForkClick,
       },
       tensorboard: {
-        icon: <Icon name="tensorboard" size="small" />,
+        icon: <Icon name="tensor-board" size="small" />,
         isLoading: isRunningTensorBoard,
         key: 'tensorboard',
         label: 'TensorBoard',
