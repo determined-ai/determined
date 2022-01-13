@@ -25,7 +25,7 @@ type (
 		PodName string
 	}
 
-	// ChangePriority notifies the pods actor of a priority change and to preempt the specified pod
+	// ChangePriority notifies the pods actor of a priority change and to preempt the specified pod.
 	ChangePriority struct {
 		PodID cproto.ID
 	}
