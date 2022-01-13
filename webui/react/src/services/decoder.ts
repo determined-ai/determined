@@ -384,6 +384,7 @@ export const mapV1Experiment = (
     archived: data.archived,
     description: data.description,
     endTime: data.endTime as unknown as string,
+    forkedFrom: data.forkedFrom,
     id: data.id,
     jobId: data.jobId,
     labels: data.labels || [],

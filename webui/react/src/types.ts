@@ -442,6 +442,7 @@ export interface ExperimentItem {
   archived: boolean;
   description?: string;
   endTime?: string;
+  forkedFrom?: number;
   id: number;
   jobId: string;
   jobSummary?: JobSummary;

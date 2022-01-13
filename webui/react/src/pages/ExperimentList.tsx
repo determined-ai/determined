@@ -7,6 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -27,6 +28,7 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
   getExperiments, killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment, unarchiveExperiment,
@@ -322,6 +324,12 @@ const ExperimentList: React.FC = () => {
       />
     );
 
+    const forkedFromRenderer = (
+      value: string | number | undefined,
+    ): React.ReactNode => (
+      value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
+    );
+
     const tableColumns: ColumnsType<ExperimentItem> = [
       {
         dataIndex: 'id',
@@ -418,6 +426,12 @@ const ExperimentList: React.FC = () => {
         onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: checkmarkRenderer,
         title: 'Archived',
+      },
+      {
+        dataIndex: 'forkedFrom',
+        key: 'forkedFrom',
+        render: forkedFromRenderer,
+        title: 'Forked From',
       },
       {
         filterDropdown: userFilterDropdown,
