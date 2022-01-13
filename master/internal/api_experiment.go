@@ -595,10 +595,6 @@ func (a *apiServer) PatchExperiment(
 				req.Experiment.Labels)
 		case path == "description":
 			exp.Description = req.Experiment.Description
-			// case !strings.HasPrefix(path, "update_mask"):
-			// 	return nil, status.Errorf(
-			// 		codes.InvalidArgument,
-			// 		"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
 	shouldUpdateConfig = (shouldUpdateNotes && len(paths) > 1) ||

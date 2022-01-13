@@ -1,5 +1,4 @@
 import base64
-import cgi
 import distutils.util
 import io
 import json
@@ -196,7 +195,7 @@ def delete_experiment(args: Namespace) -> None:
         "alternative, see the 'det archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        bindings.delete_DeleteExperiment(setup_session(args), id=args.experiment_id)
+        bindings.delete_DeleteExperiment(setup_session(args), experimentId=args.experiment_id)
         print("Successfully deleted experiment {}".format(args.experiment_id))
     else:
         print("Aborting experiment deletion.")
@@ -405,11 +404,13 @@ def kill_experiment(args: Namespace) -> None:
 @authentication.required
 def wait(args: Namespace) -> None:
     while True:
-        r = bindings.get_GetExperiment(setup_session(args), experimentId=args.experiment_id)
+        r = bindings.get_GetExperiment(
+            setup_session(args), experimentId=args.experiment_id
+        ).experiment
 
-        if r["state"] in constants.TERMINAL_STATES:
-            print("Experiment {} terminated with state {}".format(args.experiment_id, r["state"]))
-            if r["state"] == constants.COMPLETED:
+        if r.state in constants.TERMINAL_STATES:
+            print("Experiment {} terminated with state {}".format(args.experiment_id, r.state))
+            if r.state == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
@@ -545,6 +546,8 @@ def set_name(args: Namespace) -> None:
 def add_label(args: Namespace) -> None:
     session = setup_session(args)
     experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    if experiment.labels is None:
+        experiment.labels = []
     if args.label not in experiment.labels:
         experiment.labels.append(args.label)
         bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
@@ -555,7 +558,7 @@ def add_label(args: Namespace) -> None:
 def remove_label(args: Namespace) -> None:
     session = setup_session(args)
     experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    if args.label in experiment.labels:
+    if (experiment.labels is not None) and (args.label in experiment.labels):
         experiment.labels.remove(args.label)
         bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
