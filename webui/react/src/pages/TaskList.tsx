@@ -22,7 +22,6 @@ import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
@@ -31,6 +30,7 @@ import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } fro
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
@@ -127,7 +127,11 @@ const TaskList: React.FC = () => {
         return newTasks;
       });
     } catch (e) {
-      handleError({ message: 'Unable to fetch tasks.', silent: true, type: ErrorType.Api });
+      handleError(e, {
+        publicSubject: 'Unable to fetch tasks.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     }
   }, [ canceler ]);
 
@@ -389,10 +393,8 @@ const TaskList: React.FC = () => {
       // Refetch task list to get updates based on batch action.
       fetchAll();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to Kill Selected Tasks',
         silent: false,

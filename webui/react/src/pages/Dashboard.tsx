@@ -9,8 +9,6 @@ import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
 import { activeCommandStates, activeRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import { ErrorType } from 'ErrorHandler';
-import handleError from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -26,6 +24,7 @@ import {
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
 import { isEqual, validateEnumList } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
 import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
 
 const defaultFilters: TaskFilters = {
@@ -81,7 +80,11 @@ const Dashboard: React.FC = () => {
         return response.experiments;
       });
     } catch (e) {
-      handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+      handleError(e, {
+        publicSubject: 'Unable to fetch experiments.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     }
   }, [ canceler, filters, setExperiments ]);
 
@@ -93,8 +96,8 @@ const Dashboard: React.FC = () => {
       );
       setActiveExperimentCount(response.pagination.total);
     } catch (e) {
-      handleError({
-        message: 'Unable to fetch active experiments.',
+      handleError(e, {
+        publicSubject: 'Unable to fetch active experiments.',
         silent: true,
         type: ErrorType.Api,
       });
@@ -125,7 +128,11 @@ const Dashboard: React.FC = () => {
         return newTasks;
       });
     } catch (e) {
-      handleError({ message: 'Unable to fetch tasks.', silent: true, type: ErrorType.Api });
+      handleError(e, {
+        publicSubject: 'Unable to fetch tasks.',
+        silent: true,
+        type: ErrorType.Api,
+      });
     }
   }, [ canceler ]);
 

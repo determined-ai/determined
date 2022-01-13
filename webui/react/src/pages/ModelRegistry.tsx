@@ -16,7 +16,6 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
-import handleError, { ErrorType } from 'ErrorHandler';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -28,6 +27,7 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ArchiveFilter, ModelItem } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -70,7 +70,11 @@ const ModelRegistry: React.FC = () => {
       });
       setIsLoading(false);
     } catch(e) {
-      handleError({ message: 'Unable to fetch models.', silent: true, type: ErrorType.Api });
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
       setIsLoading(false);
     }
   }, [ settings, canceler.signal ]);
@@ -118,8 +122,8 @@ const ModelRegistry: React.FC = () => {
       }
       await fetchModels();
     } catch (e) {
-      handleError({
-        message: `Unable to switch model ${model.id} archive status.`,
+      handleError(e, {
+        publicSubject: `Unable to switch model ${model.id} archive status.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -133,8 +137,8 @@ const ModelRegistry: React.FC = () => {
       await patchModel({ body: { id: modelId, labels: tags }, modelId });
       await fetchModels();
     } catch (e) {
-      handleError({
-        message: `Unable to update model ${modelId} tags.`,
+      handleError(e, {
+        publicSubject: `Unable to update model ${modelId} tags.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -258,8 +262,8 @@ const ModelRegistry: React.FC = () => {
         modelId: id,
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save model description.',
+      handleError(e, {
+        publicSubject: 'Unable to save model description.',
         silent: true,
         type: ErrorType.Api,
       });

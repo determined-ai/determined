@@ -1,7 +1,6 @@
 import { message } from 'antd';
 import Fuse from 'fuse.js';
 
-import handleError, { ErrorType } from 'ErrorHandler';
 import root from 'omnibar/tree-extension/trees/index';
 import {
   Children, LeafNode, NonLeafNode, TreeNode, TreePath,
@@ -10,6 +9,7 @@ import {
   getNodeChildren, isLeafNode, isNLNode, traverseTree,
 } from 'omnibar/tree-extension/utils';
 import { noOp } from 'services/utils';
+import handleError, { ErrorType } from 'utils/error';
 
 const SEPARATOR = ' ';
 
@@ -75,9 +75,8 @@ export const extension = async(input: string): Promise<Children> => {
     // query the default tree.
     return await queryTree(input, root);
   } catch (e) {
-    handleError({
-      error: e,
-      message: 'failed to query omnibar',
+    handleError(e, {
+      publicSubject: 'Failed to query omnibar.',
       type: ErrorType.Ui,
     });
     return [];

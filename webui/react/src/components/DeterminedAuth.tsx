@@ -4,10 +4,10 @@ import React, { useCallback, useState } from 'react';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
+import handleError, { ErrorType } from 'utils/error';
 import { Storage } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
@@ -52,10 +52,8 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
       storeDispatch({ type: StoreAction.HideUISpinner });
       const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
       if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
-      handleError({
-        error: e,
+      handleError(e, {
         isUserTriggered: true,
-        message: e.message,
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
         type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,

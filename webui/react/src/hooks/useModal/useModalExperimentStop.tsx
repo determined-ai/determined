@@ -3,9 +3,9 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { cancelExperiment, killExperiment } from 'services/api';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import css from './useModalExperimentStop.module.scss';
 
@@ -60,10 +60,8 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
         await killExperiment({ experimentId });
       }
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to stop experiment.',
         silent: false,

@@ -3,7 +3,6 @@ import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
-import handleError, { ErrorType } from 'ErrorHandler';
 import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { serverAddress } from 'routes/utils';
@@ -12,6 +11,7 @@ import { jsonToTrialLog } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+import handleError, { ErrorType } from 'utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsLogs.settings';
@@ -60,14 +60,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     try {
       await downloadTrialLogs(trial.id);
     } catch (e) {
-      handleError({
-        error: e,
-        message: 'trial log download failed.',
+      handleError(e, {
         publicMessage: `
           Failed to download trial ${trial.id} logs.
           If the problem persists please try our CLI "det trial logs ${trial.id}"
         `,
-        publicSubject: 'Download Failed',
+        publicSubject: 'Trial log download failed.',
         type: ErrorType.Ui,
       });
     }

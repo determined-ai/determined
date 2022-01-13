@@ -16,7 +16,6 @@ import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths, routeToReactUrl } from 'routes/utils';
@@ -30,6 +29,7 @@ import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
 } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
 
@@ -216,8 +216,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       setTrials(experimentTrials);
       setIsLoading(false);
     } catch (e) {
-      handleError({
-        message: `Unable to fetch experiments ${experiment.id} trials.`,
+      handleError(e, {
+        publicSubject: `Unable to fetch experiments ${experiment.id} trials.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -254,10 +254,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       const publicSubject = action === Action.OpenTensorBoard ?
         'Unable to View TensorBoard for Selected Trials' :
         `Unable to ${action} Selected Trials`;
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,

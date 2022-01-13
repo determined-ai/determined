@@ -4,11 +4,11 @@ import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 const { TabPane } = Tabs;
 
@@ -66,10 +66,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
       await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
       await fetchExperimentDetails();
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to update experiment notes.',
         silent: false,

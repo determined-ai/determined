@@ -1,6 +1,6 @@
 import { DeterminedInfo } from 'types';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
-import handleError, { ErrorLevel, ErrorType } from './ErrorHandler';
 import { getTelemetry } from './services/api';
 
 interface InternalSegmentAnalytics extends SegmentAnalytics.AnalyticsJS {
@@ -66,10 +66,8 @@ export const setupAnalytics = async (info: DeterminedInfo): Promise<void> => {
         data.isEnabled = true;
       }
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Failed to get telemetry info',
         silent: true,
         type: ErrorType.Server,

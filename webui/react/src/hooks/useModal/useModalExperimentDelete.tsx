@@ -2,9 +2,9 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { ModalFuncProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths, routeToReactUrl } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import useModal, { ModalHooks } from './useModal';
 
@@ -21,10 +21,8 @@ const useModalExperimentDelete = ({ experimentId, onClose }: Props): ModalHooks 
       await deleteExperiment({ experimentId: experimentId });
       routeToReactUrl(paths.experimentList());
     } catch (e) {
-      handleError({
-        error: e,
+      handleError(e, {
         level: ErrorLevel.Error,
-        message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to delete experiment.',
         silent: false,
