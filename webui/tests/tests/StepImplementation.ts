@@ -151,7 +151,7 @@ export default class StepImplementation {
     await goto(`${BASE_URL}/login`);
     const loginSelector = t.$('#login_username');
     await t.focus(loginSelector);
-    await t.clear(loginSelector);
+    await t.clear();
     await t.write(username);
     if (password !== '') {
       await t.focus(t.$('#login_password'));
