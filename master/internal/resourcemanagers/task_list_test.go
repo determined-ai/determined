@@ -9,7 +9,6 @@ import (
 )
 
 func TestAllocateRequestComparator(t *testing.T) {
-
 	lowerPriority := 50
 	higherPriority := 40
 	newTime := time.Now()
