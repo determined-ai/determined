@@ -45,7 +45,7 @@ func (h LegacyConfig) PodSpec() *PodSpec {
 }
 
 func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, error) {
-	cs := CheckpointStorageConfig{}
+	var cs CheckpointStorageConfig
 
 	csOnly := raw["checkpoint_storage"]
 
@@ -177,7 +177,7 @@ func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
 	// - There was a removal of adaptive and adaptive_simple.  As of 0.15.5, some of that is handled
 	//   by reading select parts of the searcher config in SQL queries.  Eventually that may get
 	//   handled here, in which case we need to be aware of that removal.
-	out := LegacyConfig{}
+	var out LegacyConfig
 
 	raw := map[string]interface{}{}
 	if err := json.Unmarshal(byts, &raw); err != nil {

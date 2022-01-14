@@ -52,16 +52,16 @@ Exposes mapping of Determined's container ID to the GPU UUID/device ID as given 
 )
 
 const (
-	// CAdvisorPort is the default port for cAdvisor
+	// CAdvisorPort is the default port for cAdvisor.
 	CAdvisorPort = ":8080"
 
-	// DcgmPort is the default port for DCGM
+	// DcgmPort is the default port for DCGM.
 	DcgmPort = ":9400"
 
-	// DetAgentIDLabel is the internal ID for the Determined agent
+	// DetAgentIDLabel is the internal ID for the Determined agent.
 	DetAgentIDLabel = "det_agent_id"
 
-	// DetResourcePoolLabel is the resource pool name
+	// DetResourcePoolLabel is the resource pool name.
 	DetResourcePoolLabel = "det_resource_pool"
 )
 

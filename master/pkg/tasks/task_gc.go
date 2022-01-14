@@ -35,12 +35,13 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 	// Set Environment.
 	// Keep only the EnvironmentVariables provided by the experiment's config.
 	envVars := g.LegacyConfig.EnvironmentVariables()
+	//nolint:exhaustivestruct // This has caused an issue before, but is valid as a partial struct.
 	env := expconf.EnvironmentConfig{
 		RawEnvironmentVariables: &envVars,
 		RawPodSpec:              g.LegacyConfig.PodSpec(),
 	}
 	// Fill the rest of the environment with default values.
-	defaultConfig := expconf.ExperimentConfig{}
+	var defaultConfig expconf.ExperimentConfig
 	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
 	if defaultConfig.RawEnvironment != nil {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)

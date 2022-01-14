@@ -196,7 +196,7 @@ func validateMaxSpotPrice(spotMaxPriceInput string) error {
 				numDecimalPoints))
 	}
 
-	priceWithoutDecimalPoint := strings.Replace(spotMaxPriceInput, ".", "", -1)
+	priceWithoutDecimalPoint := strings.ReplaceAll(spotMaxPriceInput, ".", "")
 	for _, char := range priceWithoutDecimalPoint {
 		if !unicode.IsDigit(char) {
 			return errors.New(

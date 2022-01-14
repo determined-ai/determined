@@ -65,6 +65,9 @@ linters-settings:
     line-length: 100
   misspell:
     locale: US
+  exhaustivestruct:
+    struct-patterns:
+      - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
 
 linters:
   enable-all: true
@@ -85,3 +88,38 @@ linters:
     - testpackage
     - unparam
     - wsl
+
+    # Below here are new linters from upgrading to 1.43.0. Since we enable all and disable
+    # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
+    # golangci-lint can tell you which linters are enabled:
+    #   golangci-lint linters | sed -n '/Enabled/,/Disabled/p'
+    # To maintain the same set us linters, disable those in the new set that are not in the old:
+    #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
+    - bidichk
+    - contextcheck
+    - cyclop
+    - durationcheck
+    - errname
+    - errorlint
+    - forbidigo
+    - forcetypeassert
+    - gci
+    - gomoddirectives
+    - ifshort
+    - importas
+    - ireturn
+    - makezero
+    - nilerr
+    - nilnil
+    - nlreturn
+    - paralleltest
+    - predeclared
+    - promlinter
+    - revive
+    - tagliatelle
+    - tenv
+    - thelper
+    - tparallel
+    - varnamelen
+    - wastedassign
+    - wrapcheck

@@ -34,6 +34,7 @@ import (
 var commandsAddr = actor.Addr("commands")
 
 func getRandomPort(min, max int) int {
+	//nolint:gosec // Weak RNG doesn't matter here.
 	return rand.Intn(max-min) + min
 }
 

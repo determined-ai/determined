@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	//nolint:gosec // It thinks these are credentials...
 	credentialsHelperPrefix = "docker-credential-"
 	tokenUsername           = "<token>"
 )

@@ -38,7 +38,7 @@ type spotRequest struct {
 // provisioning outside of our code that we need to account for.
 //
 // Once the spot request has been fulfilled, the request in the API will have a
-// pointer to the instance id. If the spot request is cancelled, the instance will
+// pointer to the instance id. If the spot request is canceled, the instance will
 // continue to run. The spot request will have the status
 // "request-canceled-and-instance-running". If the instance is stopped or terminated,
 // either manually or automatically by AWS, the spot request will enter a terminal
@@ -67,8 +67,9 @@ type spotRequest struct {
 // able to intervene and solve the problem. It is not clear how to differentiate
 // these cases, so we handle them identically.
 //
-// AWS documentation on the spot instance lifecycle -
-// nolint[:lll] https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
+// AWS documentation on the spot instance lifecycle:
+//nolint:lll
+// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
 type spotState struct {
 	// Keep track of spot requests that haven't entered a terminal state. This map primarily
 	// exists to handle problems caused by eventual consistency, where we will create a spot
@@ -436,7 +437,8 @@ func (c *awsCluster) buildInstanceListFromTrackedReqs(ctx *actor.Context) ([]*In
 		}
 	}
 
-	combined := append(realInstances, pendingSpotRequestsAsInstances...)
+	combined := realInstances
+	combined = append(combined, pendingSpotRequestsAsInstances...)
 	ctx.Log().
 		WithField("log-type", "listSpot.returnCombinedList").
 		Debugf("Returning list of instances: %d EC2 instances and %d dummy spot instances for %d total.",

@@ -87,8 +87,8 @@ func (t *TaskSpec) ResolveWorkDir() {
 	if t.Owner != nil {
 		detUser = t.Owner.Username
 	}
-	workDir := strings.Replace(t.WorkDir, "$AGENT_USER", agentUser, -1)
-	t.WorkDir = strings.Replace(workDir, "$DET_USER", detUser, -1)
+	workDir := strings.ReplaceAll(t.WorkDir, "$AGENT_USER", agentUser)
+	t.WorkDir = strings.ReplaceAll(workDir, "$DET_USER", detUser)
 }
 
 // Archives returns all the archives.

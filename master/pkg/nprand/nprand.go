@@ -9,7 +9,7 @@ import "fmt"
 const (
 	stateLen  int    = 624
 	maxUint32 uint32 = 0xffffffff
-	// Magic Mersenne Twister constants
+	// Magic Mersenne Twister constants.
 	mtN       int    = 624
 	mtM       int    = 397
 	matrixA   uint32 = 0x9908b0df

@@ -68,9 +68,11 @@ func Simulate(
 		Results: make(SimulationResults),
 		Seed:    time.Now().Unix(),
 	}
+	//nolint:gosec // Weak RNG doesn't matter here.
 	random := rand.New(rand.NewSource(simulation.Seed))
 	if seed != nil {
 		simulation.Seed = *seed
+		//nolint:gosec // Weak RNG doesn't matter here.
 		random = rand.New(rand.NewSource(*seed))
 	}
 

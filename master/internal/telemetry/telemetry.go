@@ -65,6 +65,7 @@ func (s *TelemetryActor) Receive(ctx *actor.Context) error {
 
 	case telemetryTick:
 		// Tick in a random interval.
+		//nolint:gosec // Weak RNG is fine here.
 		randNum := rand.Intn(maxTickIntervalMins-minTickIntervalMins) + minTickIntervalMins
 		actors.NotifyAfter(ctx, time.Duration(randNum)*time.Minute, telemetryTick{})
 

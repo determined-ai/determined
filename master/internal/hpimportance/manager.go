@@ -19,7 +19,7 @@ const (
 	// RootAddr is the path to use for looking up the manager actor.
 	RootAddr = "hpimportance"
 
-	// Evaluate after every 10%, but no more than every 10 minutes
+	// Evaluate after every 10%, but no more than every 10 minutes.
 	minPause   = 10 * time.Minute
 	minPercent = 0.1
 
@@ -27,7 +27,7 @@ const (
 	// This directory is deleted on startup, so be cautious if it changes.
 	workingDir = "/tmp/determined/growforest"
 
-	// The name of the CloudForest executable to look for
+	// The name of the CloudForest executable to look for.
 	growforestBin = "growforest"
 )
 

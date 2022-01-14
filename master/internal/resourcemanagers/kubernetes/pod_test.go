@@ -601,7 +601,7 @@ func TestReceivePodEventUpdate(t *testing.T) {
 	time.Sleep(time.Second)
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
-	//When container is in Terminated state, pod actor should not forward message.
+	// When container is in Terminated state, pod actor should not forward message.
 	newPod.container.State = cproto.Terminated
 	system.Ask(ref, podEventUpdate{event: &newEvent})
 	time.Sleep(time.Second)
