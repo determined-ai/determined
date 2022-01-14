@@ -2,7 +2,6 @@ import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
-import Telemetry from 'classes/Telemetry';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
@@ -14,6 +13,7 @@ import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracke
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
+import useTelemetry from 'hooks/useTelemetry';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
@@ -30,6 +30,7 @@ const AppView: React.FC = () => {
   const { info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
   const { setThemeId } = useTheme();
+  const { loadTelemetry } = useTelemetry();
 
   const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
@@ -42,7 +43,7 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    Telemetry.load(info);
+    loadTelemetry(info);
 
     /*
      * Check to make sure the WebUI version matches the platform version.
@@ -67,7 +68,7 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ info ]);
+  }, [ info, loadTelemetry ]);
 
   // Detect branding changes and update theme accordingly.
   useEffect(() => {

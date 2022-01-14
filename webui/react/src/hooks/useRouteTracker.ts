@@ -1,18 +1,19 @@
 import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import Telemetry from 'classes/Telemetry';
+import useTelemetry from './useTelemetry';
 
 const useRouteTracker = (): void => {
   const { listen } = useHistory();
+  const { trackPage } = useTelemetry();
 
   useEffect(() => {
     // Listen for route changes.
-    const unlisten = listen(() => Telemetry.page());
+    const unlisten = listen(() => trackPage());
 
     // Clean up listener during unmount.
     return () => unlisten();
-  }, [ listen ]);
+  }, [ listen, trackPage ]);
 };
 
 export default useRouteTracker;
