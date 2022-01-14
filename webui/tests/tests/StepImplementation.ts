@@ -180,6 +180,7 @@ export default class StepImplementation {
     await t.button('Sign In').exists();
   }
 
+  // Passes whether or not the user is signed in.
   @Step('Ensure user is signed out')
   public async signOut() {
     await goto(`${BASE_URL}/logout`);
