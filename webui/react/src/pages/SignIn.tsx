@@ -14,7 +14,6 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
-import useTelemetry from 'hooks/useTelemetry';
 import { defaultRoute } from 'routes';
 import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
 import { RecordKey } from 'types';
@@ -39,7 +38,6 @@ const SignIn: React.FC = () => {
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
   const [ canceler ] = useState(new AbortController());
-  const { setupTelemetry } = useTelemetry();
 
   const queries: Queries = queryString.parse(location.search);
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
@@ -64,8 +62,6 @@ const SignIn: React.FC = () => {
    */
   useEffect(() => {
     if (auth.isAuthenticated) {
-      setupTelemetry(auth, info);
-
       // Stop the spinner, prepping for user redirect.
       storeDispatch({ type: StoreAction.HideUISpinner });
 
@@ -82,14 +78,7 @@ const SignIn: React.FC = () => {
     } else if (auth.checked) {
       storeDispatch({ type: StoreAction.HideUISpinner });
     }
-  }, [
-    auth,
-    info,
-    location,
-    queries,
-    setupTelemetry,
-    storeDispatch,
-  ]);
+  }, [ auth, info, location, queries, storeDispatch ]);
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });

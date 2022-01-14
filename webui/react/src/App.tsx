@@ -27,10 +27,10 @@ import { paths, serverAddress } from './routes/utils';
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
-  const { info, ui } = useStore();
+  const { auth, info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
   const { setThemeId } = useTheme();
-  const { loadTelemetry } = useTelemetry();
+  const { updateTelemetry } = useTelemetry();
 
   const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
@@ -43,8 +43,6 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    loadTelemetry(info);
-
     /*
      * Check to make sure the WebUI version matches the platform version.
      * Skip this check for development version.
@@ -68,7 +66,11 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ info, loadTelemetry ]);
+  }, [ info ]);
+
+  useEffect(() => {
+    updateTelemetry(auth, info);
+  }, [ auth, info, updateTelemetry ]);
 
   // Detect branding changes and update theme accordingly.
   useEffect(() => {
