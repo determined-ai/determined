@@ -46,7 +46,7 @@ const NavigationTabbar: React.FC = () => {
     const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
       return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
     }, 0);
-    if (totalSlots === 0) return undefined;
+    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
     return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
         / totalSlots)}%`;
   }, [ overview, resourcePools ]);
