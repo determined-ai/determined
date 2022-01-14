@@ -1,7 +1,7 @@
 import { notification as antdNotification } from 'antd';
 import { ArgsProps, NotificationApi } from 'antd/lib/notification';
 
-import { getAnalytics } from 'Analytics';
+import { telemetryInstance } from 'hooks/useTelemetry';
 import history from 'routes/history';
 import { filterOutLoginLocation, paths } from 'routes/utils';
 import { isAborted } from 'services/utils';
@@ -129,8 +129,7 @@ const handleError = (error: unknown, options?: DetErrorOptions): void => {
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
 
   // Report to segment.
-  const analytics = getAnalytics();
-  if (analytics) analytics.track(`${ERROR_NAMESPACE}: ${e.level}`, e);
+  telemetryInstance.track(`${ERROR_NAMESPACE}: ${e.level}`, e);
 
   // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js

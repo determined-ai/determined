@@ -102,7 +102,7 @@ class Telemetry {
 }
 
 // Create the instance outside of the hook to ensure a single instance.
-const telemetryInstance = new Telemetry();
+export const telemetryInstance = new Telemetry();
 
 interface TelemetryHook {
   track: (...args: any[]) => void;
