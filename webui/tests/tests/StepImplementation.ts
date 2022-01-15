@@ -52,7 +52,12 @@ const clickAndCloseTab = async (selector: t.SearchElement | t.MouseCoordinates) 
   await t.closeTab();
 };
 
-const sleep = (ms = 1000) => {
+/*
+ * Waiting for a certain time frame for animations and UI changes
+ * seems to be more reliable and definitely more efficient than the `waitFor`
+ * routine, which typically takes 8~10 second per operation.
+ */
+const sleep = (ms = 300): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
@@ -269,12 +274,12 @@ export default class StepImplementation {
   /* Modal Steps */
 
   @Step('Confirm or cancel modal with button <label>')
-  public async confirmModal(label: string) {
+  public async confirmOrCancelModal(label: string) {
     // Wait for the modal to animate in.
-    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
+    await sleep();
     await t.click(t.button(label, t.within(t.$('.ant-modal-body'))));
     // Wait for the modal to animate away
-    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
+    await sleep();
   }
 
   /* Experiment Steps */
@@ -332,14 +337,10 @@ export default class StepImplementation {
   @Step('<action> all table rows')
   public async actionOnAllTableRows(action: string) {
     await t.click(BATCH_ACTION_TEXT);
-    // Wait for the dropdown animation to finish
-    await sleep(500);
+    // Wait for the dropdown to animate in
+    await sleep();
     await t.click(action, t.within(t.$('.ant-select-dropdown')));
-    // Wait for the modal to animate in.
-    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
-    await t.click(t.button(action, t.within(t.$('.ant-modal-body'))));
-    // Wait for the modal to animate away
-    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
+    this.confirmOrCancelModal(action);
   }
 
   @Step('Scroll table to the <direction>')
@@ -371,20 +372,24 @@ export default class StepImplementation {
   public async launchNotebook() {
     await t.click('Launch JupyterLab');
     // Wait for the modal to animate in
-    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
+    await sleep();
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
     await t.click(t.$('.ant-select-item-option-content'));
     await clickAndCloseTab(t.button('Launch'));
+    // Wait for the modal to animate away
+    await sleep();
   }
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
     await t.click(t.button('Launch JupyterLab'));
     // Wait for the modal to animate in
-    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
+    await sleep();
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
     await t.click(t.$('.ant-select-item-option-content'));
     await clickAndCloseTab(t.button('Launch'));
+    // Wait for the modal to animate away
+    await sleep();
   }
 
   @Step('Launch tensorboard')
