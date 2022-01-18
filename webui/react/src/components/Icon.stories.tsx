@@ -31,7 +31,7 @@ export const OverflowHorizontal = (): React.ReactNode => <Icon name="overflow-ho
 export const OverflowVertical = (): React.ReactNode => <Icon name="overflow-vertical" />;
 export const Shell = (): React.ReactNode => <Icon name="shell" />;
 export const Star = (): React.ReactNode => <Icon name="star" />;
-export const TensorBoard = (): React.ReactNode => <Icon name="tensorboard" />;
+export const TensorBoard = (): React.ReactNode => <Icon name="tensor-board" />;
 export const TensorFlow = (): React.ReactNode => <Icon name="tensorflow" />;
 export const User = (): React.ReactNode => <Icon name="user" />;
 export const UserSmall = (): React.ReactNode => <Icon name="user-small" />;
