@@ -36,7 +36,7 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 }
 
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
-	reqs := sortTasks(taskList, groups, false)
+	reqs, _ := sortTasksWithPosition(taskList, groups, false)
 	jobQInfo, jobActors := reduceToJobQInfo(reqs)
 	for jobID, jobActor := range jobActors {
 		rmJobInfo, ok := jobQInfo[jobID]
@@ -435,7 +435,7 @@ func sortTasksWithPosition(
 				return true
 			}
 		}
-		return reqs[i].TaskActor.RegisteredTime().Before(reqs[j].TaskActor.RegisteredTime())
+		return compareByRegisteredTime(reqs, i, j)
 	})
 
 	return reqs, isPositionSet
@@ -503,40 +503,4 @@ func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool
 	return func(request *sproto.AllocateRequest) bool {
 		return request.Label == label && (request.SlotsNeeded == 0) == zeroSlots
 	}
-}
-
-func sortTasks(
-	taskList *taskList,
-	groups map[*actor.Ref]*group,
-	k8s bool,
-) []*sproto.AllocateRequest {
-	var reqs []*sproto.AllocateRequest
-
-	for it := taskList.iterator(); it.next(); {
-		reqs = append(reqs, it.value())
-	}
-
-	sort.Slice(reqs, func(i, j int) bool {
-		p1 := *groups[reqs[i].Group].priority
-		p2 := *groups[reqs[j].Group].priority
-		if k8s { // in k8s, higher priority == more prioritized
-			switch {
-			case p1 > p2:
-				return true
-			case p2 > p1:
-				return false
-			}
-		} else {
-			switch {
-			case p1 > p2:
-				return false
-			case p2 > p1:
-				return true
-			}
-		}
-
-		return aReqComparator(reqs[i], reqs[j]) < 0
-	})
-
-	return reqs
 }
