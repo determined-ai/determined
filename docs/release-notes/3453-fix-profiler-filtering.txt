@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: fix the issue of the profiler filter UI not triggering updates.
