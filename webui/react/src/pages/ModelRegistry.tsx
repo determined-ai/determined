@@ -272,7 +272,7 @@ const ModelRegistry: React.FC = () => {
   }, [ ]);
 
   const columns = useMemo(() => {
-    const labelsRenderer = (value: string, record: ModelItem) => (
+    const tagsRenderer = (value: string, record: ModelItem) => (
       <TagList
         compact
         disabled={record.archived}
@@ -360,7 +360,7 @@ const ModelRegistry: React.FC = () => {
         filterDropdown: labelFilterDropdown,
         filters: tags.map(tag => ({ text: tag, value: tag })),
         onHeaderCell: () => settings.tags ? { className: tableCss.headerFilterOn } : {},
-        render: labelsRenderer,
+        render: tagsRenderer,
         title: 'Tags',
         width: 120,
       },

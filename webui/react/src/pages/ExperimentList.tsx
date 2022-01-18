@@ -280,7 +280,7 @@ const ExperimentList: React.FC = () => {
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const columns = useMemo(() => {
-    const labelsRenderer = (value: string, record: ExperimentItem) => (
+    const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
         compact
         tags={record.labels}
@@ -321,8 +321,8 @@ const ExperimentList: React.FC = () => {
         filters: labels.map(label => ({ text: label, value: label })),
         key: 'labels',
         onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
-        render: labelsRenderer,
-        title: 'Labels',
+        render: tagsRenderer,
+        title: 'Tags',
         width: 120,
       },
       {
