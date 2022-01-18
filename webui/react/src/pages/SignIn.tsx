@@ -78,13 +78,7 @@ const SignIn: React.FC = () => {
     } else if (auth.checked) {
       storeDispatch({ type: StoreAction.HideUISpinner });
     }
-  }, [
-    auth.checked,
-    auth.isAuthenticated,
-    location,
-    queries,
-    storeDispatch,
-  ]);
+  }, [ auth, info, location, queries, storeDispatch ]);
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });
