@@ -130,8 +130,9 @@ const ModelVersionHeader: React.FC<Props> = (
     return (
       `from determined.experimental import Determined
 client = Determined()
-model_entry = client.get_model(name="${modelVersion.model.name}")
-ckpt = model_entry.get_version(${modelVersion.version})
+model_entry = client.get_model_by_name("${modelVersion.model.name}")
+version = model_entry.get_version(${modelVersion.version})
+ckpt = version.checkpoint
       
 ################ Approach 1 ################
 # You can load the trial directly without having to instantiate the model. 
