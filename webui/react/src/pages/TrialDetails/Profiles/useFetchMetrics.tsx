@@ -24,11 +24,13 @@ export const useFetchMetrics = (
   labelsAgentId: string|undefined = undefined,
   labelsGpuUuid: string|undefined = undefined,
 ): MetricsAggregateInterface => {
-  const [ canceler ] = useState(new AbortController());
   const [ data, setData ] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
 
   useEffect(() => {
     setData(clone(DEFAULT_DATA));
+
+    const canceler = new AbortController();
+    const follow = !terminalRunStates.has(trialState);
 
     consumeStream(
       detApi.StreamingProfiler.getTrialProfilerMetrics(
@@ -37,7 +39,7 @@ export const useFetchMetrics = (
         labelsAgentId,
         labelsGpuUuid,
         labelsMetricType,
-        true,
+        follow,
         { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerMetricsResponse) => {
@@ -69,16 +71,7 @@ export const useFetchMetrics = (
     });
 
     return () => canceler.abort();
-  }, [ canceler, labelsAgentId, labelsGpuUuid, labelsMetricType, labelsName, trialId ]);
-
-  // Cancel fetch request if trial has reached terminal state.
-  useEffect(() => {
-    if (terminalRunStates.has(trialState)) {
-      setTimeout(() => {
-        if (!canceler.signal.aborted) canceler.abort();
-      }, 2000);
-    }
-  }, [ canceler, trialState ]);
+  }, [ labelsAgentId, labelsGpuUuid, labelsMetricType, labelsName, trialId, trialState ]);
 
   return data;
 };
