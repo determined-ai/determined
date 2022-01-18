@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"encoding/csv"
@@ -13,6 +14,7 @@ import (
 	"net/http/pprof"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -396,6 +398,48 @@ func (m *Master) getSystemdListener() (net.Listener, error) {
 	}
 }
 
+func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
+	tcpListener, ok := listener.(*net.TCPListener)
+	if !ok {
+		return 0, errors.New("listener is not a TCP listener")
+	}
+
+	file, err := tcpListener.File()
+	if err != nil {
+		return 0, err
+	}
+	link, err := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", file.Fd()))
+	if err != nil {
+		return 0, err
+	}
+	matches := regexp.MustCompile(`socket:\[(.*)\]`).FindStringSubmatch(link)
+	inode := matches[1]
+	tcp, err := os.Open("/proc/self/net/tcp")
+	if err != nil {
+		return 0, err
+	}
+	// Deferring a close sets off gosec, but it's actually fine for read-only files.
+	//nolint:gosec
+	defer func() {
+		_ = tcp.Close()
+	}()
+
+	lines := bufio.NewScanner(tcp)
+	for lines.Scan() {
+		fields := strings.Fields(lines.Text())
+		if fields[9] == inode {
+			addr := fields[1]
+			port, err := strconv.ParseInt(strings.Split(addr, ":")[1], 16, 16)
+			if err != nil {
+				return 0, err
+			}
+			return uint16(port), nil
+		}
+	}
+
+	return 0, errors.New("listener not found")
+}
+
 func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error {
 	// Create the base socket listener by either fetching one passed to us from systemd or creating a
 	// TCP listener manually.
@@ -406,6 +450,12 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		return errors.Wrap(err, "failed to find systemd listeners")
 	case systemdListener != nil:
 		baseListener = systemdListener
+		port, pErr := m.findListeningPort(systemdListener)
+		if pErr != nil {
+			return pErr
+		}
+		log.Infof("found port %d for systemd listener", port)
+		m.config.Port = int(port)
 	default:
 		baseListener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
 		if err != nil {
