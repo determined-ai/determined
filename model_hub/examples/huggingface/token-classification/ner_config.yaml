@@ -13,7 +13,7 @@ hyperparameters:
   lr_scheduler_type: linear
   num_warmup_steps: 0
 data:
-  dataset_name: conll2003
+  dataset_name: conllpp
   dataset_config_name: null
   train_file: null
   validation_file: null
