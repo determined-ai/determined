@@ -33,7 +33,7 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
 	mockery --name=Reservation --dir=internal/sproto --output internal/mocks --filename reservation.go
 	# fmt once since the mocks are not generated formatted.
-	$(MAKE) fmt
+	goimports -l -local github.com/determined-ai -w ./internal/mocks
 	mkdir -p build
 	touch $@
 

@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"gotest.tools/assert"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestAllocateRequestComparator(t *testing.T) {
