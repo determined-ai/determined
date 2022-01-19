@@ -370,9 +370,6 @@ func (k *kubernetesResourceManager) assignResources(
 			group:     k.groups[req.Group],
 		})
 
-		//if _, ok := k.addrToContainerID[req.TaskActor]; !ok {
-		//	k.addrToContainerID[req.TaskActor] = []cproto.ID{}
-		//}
 		k.addrToContainerID[req.TaskActor] = container.id
 		ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{
 			QPosition: -1,
