@@ -16,7 +16,7 @@
   # Default build command.
   command = "npm run build"
 
-  environment = { PUBLIC_URL = "", SERVER_ADDRESS = "https://ec2-52-12-244-63.us-west-2.compute.amazonaws.com/dynamic/http/ec2-35-81-187-207.us-west-2.compute.amazonaws.com:8080" }
+  environment = { PUBLIC_URL = "", SERVER_ADDRESS = "https://netlify.determined.ai/dynamic/http/ec2-35-81-187-207.us-west-2.compute.amazonaws.com:8080" }
 
   # Ignore allows for returning early from a build.
   # ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
