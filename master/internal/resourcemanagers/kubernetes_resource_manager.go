@@ -295,6 +295,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(k.reqList))
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

@@ -277,6 +277,13 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case job.GetJobSummary:
 		ctx.Respond(e.toV1Job().Summary)
 
+	case job.SetRP:
+		resources := e.Config.Resources()
+		resources.SetResourcePool(msg.ResourcePool)
+		// TODO: check if the RP exists
+		e.Config.SetResources(resources)
+		ctx.Tell(e.rm, job.SetRP{ResourcePool: msg.ResourcePool, Handler: ctx.Self()})
+
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {

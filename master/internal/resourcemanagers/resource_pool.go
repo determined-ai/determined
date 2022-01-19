@@ -353,8 +353,10 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case job.GetJobQStats:
 		ctx.Respond(*jobStats(rp.taskList))
+
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

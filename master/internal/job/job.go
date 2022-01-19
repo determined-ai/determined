@@ -54,6 +54,11 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// ChangeRP switches the resource pool that the job belongs to
+	SetRP struct {
+		ResourcePool string
+		Handler      *actor.Ref
+	}
 )
 
 // RegisterJob Registers an active job with the jobs actor.
@@ -201,8 +206,15 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_ResourcePool:
-				ctx.Respond(api.ErrNotImplemented)
-				return nil
+				if action.ResourcePool == "" {
+					errors = append(errors, "resource pool must be set")
+				}
+				resp := ctx.Ask(jobActor, SetRP{
+					ResourcePool: action.ResourcePool,
+				})
+				if err := resp.Error(); err != nil {
+					errors = append(errors, err.Error())
+				}
 			case *jobv1.QueueControl_QueuePosition:
 				// REMOVEME: keep this until ahead_of and behind_of are implemented
 				ctx.Respond(api.ErrNotImplemented)
