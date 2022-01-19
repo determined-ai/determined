@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -41,14 +42,20 @@ func removeContainerByName(docker *client.Client, name string) error {
 		return errors.Wrap(err, "failed to list containers by name")
 	}
 	for _, cont := range containers {
-		log.WithFields(log.Fields{"name": name, "id": cont.ID}).Infof(
-			"killing and removing Docker container",
-		)
-		err := docker.ContainerRemove(
-			context.Background(), cont.ID, types.ContainerRemoveOptions{Force: true},
-		)
-		if err != nil {
-			return err
+		// ContainerList by name filters by prefix.
+		// Check for an exact match while accounting for / prefix.
+		for _, containerName := range cont.Names {
+			if strings.TrimLeft(containerName, "/") == name {
+				log.WithFields(log.Fields{"name": name, "id": cont.ID}).Infof(
+					"killing and removing Docker container",
+				)
+				err := docker.ContainerRemove(
+					context.Background(), cont.ID, types.ContainerRemoveOptions{Force: true},
+				)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
