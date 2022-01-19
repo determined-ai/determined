@@ -164,6 +164,17 @@ class Determined:
         r = self._session.get("/api/v1/models/{}".format(model_id))
         return model.Model.from_json(r.json().get("model"), self._session)
 
+    def get_model_by_name(self, name: str) -> model.Model:
+        """
+        Get the :class:`~determined.experimental.Model` from the model registry
+        with the provided name. If no model with that name is found in the registry,
+        an exception is raised.
+        """
+        r = self._session.get("/api/v1/models?name={}".format(name))
+        models = r.json().get("models")
+        assert len(models) > 0
+        return model.Model.from_json(models[0], self._session)
+
     def get_models(
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
