@@ -205,11 +205,11 @@ def delete_experiment(args: Namespace) -> None:
 def describe(args: Namespace) -> None:
     docs = []
     for experiment_id in args.experiment_ids.split(","):
-        r = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
-        if args.json:
-            docs.append(r.experiment.to_json())
+        if args.metrics:
+            r = api.get(args.master, "experiments/{}/metrics/summary".format(experiment_id))
         else:
-            docs.append(r.experiment)
+            r = api.get(args.master, "experiments/{}".format(experiment_id))
+        docs.append(r.json())
 
     if args.json:
         print(json.dumps(docs, indent=4))
@@ -223,7 +223,6 @@ def describe(args: Namespace) -> None:
         "Start Time",
         "End Time",
         "Name",
-        "Parent ID",
         "Description",
         "Archived",
         "Resource Pool",
@@ -231,17 +230,16 @@ def describe(args: Namespace) -> None:
     ]
     values = [
         [
-            doc.id,
-            doc.state.name,
-            render.format_percent(doc.progress),
-            render.format_time(doc.startTime),
-            render.format_time(doc.endTime),
-            doc.name,
-            doc.forkedFrom,
-            doc.description,
-            doc.archived,
-            doc.resourcePool,
-            ", ".join(sorted(doc.labels or [])),
+            doc["id"],
+            doc["state"],
+            render.format_percent(doc["progress"]),
+            render.format_time(doc.get("start_time")),
+            render.format_time(doc.get("end_time")),
+            doc["config"].get("name"),
+            doc["config"].get("description"),
+            doc["archived"],
+            doc["config"]["resources"].get("resource_pool"),
+            ", ".join(sorted(doc["config"].get("labels") or [])),
         ]
         for doc in docs
     ]
@@ -253,23 +251,18 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display trial-related information.
-    trials_by_experiment = {}
-    for doc in docs:
-        trials_by_experiment[doc.id] = bindings.get_GetExperimentTrials(
-            setup_session(args), experimentId=doc.id
-        ).trials
     headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
     values = [
         [
-            trial.id,
-            doc.id,
-            trial.state.name,
-            render.format_time(trial.startTime),
-            render.format_time(trial.endTime),
-            json.dumps(trial.hparams, indent=4),
+            trial["id"],
+            doc["id"],
+            trial["state"],
+            render.format_time(trial.get("start_time")),
+            render.format_time(trial.get("end_time")),
+            json.dumps(trial["hparams"], indent=4),
         ]
         for doc in docs
-        for trial in trials_by_experiment[doc.id]
+        for trial in doc["trials"]
     ]
     if not args.outdir:
         outfile = None
@@ -303,59 +296,59 @@ def describe(args: Namespace) -> None:
     )
 
     values = []
-    # for doc in docs:
-    #     for trial in trials_by_experiment[doc.id]:
-    #         for step in trial["steps"]:
-    #             t_metrics_fields = []
-    #             if step.get("metrics"):
-    #                 avg_metrics = step["metrics"]["avg_metrics"]
-    #                 for name in t_metrics_names:
-    #                     if name in avg_metrics:
-    #                         t_metrics_fields.append(avg_metrics[name])
-    #                     else:
-    #                         t_metrics_fields.append(None)
-    #
-    #             checkpoint = step.get("checkpoint")
-    #             if checkpoint:
-    #                 checkpoint_state = checkpoint["state"]
-    #                 checkpoint_end_time = checkpoint.get("end_time")
-    #             else:
-    #                 checkpoint_state = None
-    #                 checkpoint_end_time = None
-    #
-    #             validation = step.get("validation")
-    #             if validation:
-    #                 validation_state = validation["state"]
-    #                 validation_end_time = validation.get("end_time")
-    #             else:
-    #                 validation_state = None
-    #                 validation_end_time = None
-    #
-    #             if args.metrics:
-    #                 v_metrics_fields = [
-    #                     api.metric.get_validation_metric(name, validation)
-    #                     for name in v_metrics_names
-    #                 ]
-    #             else:
-    #                 v_metrics_fields = []
-    #
-    #             row = (
-    #                 [
-    #                     step["trial_id"],
-    #                     step["total_batches"],
-    #                     step["state"],
-    #                     render.format_time(step.get("end_time")),
-    #                 ]
-    #                 + t_metrics_fields
-    #                 + [
-    #                     checkpoint_state,
-    #                     render.format_time(checkpoint_end_time),
-    #                     validation_state,
-    #                     render.format_time(validation_end_time),
-    #                 ]
-    #                 + v_metrics_fields
-    #             )
-    #             values.append(row)
+    for doc in docs:
+        for trial in doc["trials"]:
+            for step in trial["steps"]:
+                t_metrics_fields = []
+                if step.get("metrics"):
+                    avg_metrics = step["metrics"]["avg_metrics"]
+                    for name in t_metrics_names:
+                        if name in avg_metrics:
+                            t_metrics_fields.append(avg_metrics[name])
+                        else:
+                            t_metrics_fields.append(None)
+
+                checkpoint = step.get("checkpoint")
+                if checkpoint:
+                    checkpoint_state = checkpoint["state"]
+                    checkpoint_end_time = checkpoint.get("end_time")
+                else:
+                    checkpoint_state = None
+                    checkpoint_end_time = None
+
+                validation = step.get("validation")
+                if validation:
+                    validation_state = validation["state"]
+                    validation_end_time = validation.get("end_time")
+                else:
+                    validation_state = None
+                    validation_end_time = None
+
+                if args.metrics:
+                    v_metrics_fields = [
+                        api.metric.get_validation_metric(name, validation)
+                        for name in v_metrics_names
+                    ]
+                else:
+                    v_metrics_fields = []
+
+                row = (
+                    [
+                        step["trial_id"],
+                        step["total_batches"],
+                        step["state"],
+                        render.format_time(step.get("end_time")),
+                    ]
+                    + t_metrics_fields
+                    + [
+                        checkpoint_state,
+                        render.format_time(checkpoint_end_time),
+                        validation_state,
+                        render.format_time(validation_end_time),
+                    ]
+                    + v_metrics_fields
+                )
+                values.append(row)
 
     if not args.outdir:
         outfile = None
@@ -470,7 +463,6 @@ def scalar_training_metrics_names(exp: Dict[str, Any]) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
     that are associated with scalar, numeric values.
-
     This function assumes that all batches in an experiment return
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
@@ -549,7 +541,7 @@ def add_label(args: Namespace) -> None:
     if experiment.labels is None:
         experiment.labels = []
     if args.label not in experiment.labels:
-        experiment.labels += (args.label,)
+        experiment.labels = [label for label in experiment.labels] + [args.label]
         bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
 
