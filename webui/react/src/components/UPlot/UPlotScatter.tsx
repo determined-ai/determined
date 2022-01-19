@@ -3,11 +3,12 @@ import uPlot from 'uplot';
 
 import QuadTree, { pointWithin } from 'components/UPlot/quadtree';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
+import { Range } from 'types';
 
 import { FacetedData, UPlotData } from './types';
 import css from './UPlotScatter.module.scss';
 import {
-  FILL_INDEX, getColorFn, getSize, getSizeMinMax, makeDrawPoints, offsetRange,
+  FILL_INDEX, getColorFn, getMinMax, getSize, makeDrawPoints, offsetRange,
   SIZE_INDEX, STROKE_INDEX,
 } from './UPlotScatter.utils';
 
@@ -23,6 +24,7 @@ const DEFAULT_STROKE_COLOR = 'rgba(0, 155, 222, 1.0)';
 const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
   const quadtree = useRef<QuadTree>();
   const hRect = useRef<QuadTree | null>();
+  const ranges = useRef<(Range<number>)[]>([]);
 
   const drawPoints = useMemo(() => {
     return makeDrawPoints({
@@ -35,7 +37,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
             const fillData = u?.data[seriesIndex][FILL_INDEX];
             if (fillData === null) return yData.map(() => getColor(0, 0, 1));
 
-            const [ minValue, maxValue ] = getSizeMinMax(u, FILL_INDEX);
+            const [ minValue, maxValue ] = ranges.current[FILL_INDEX];
             const seriesData = (fillData || []) as unknown as UPlotData[];
             return seriesData.map(value => getColor(value, minValue, maxValue)) || [];
           },
@@ -43,12 +45,11 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
         size: {
           unit: 3,
           values: (u, seriesIndex) => {
-            // TODO: only run once per setData() call
             const yData = (u?.data[seriesIndex][1] || []) as unknown as UPlotData[];
             const sizeData = u?.data[seriesIndex][SIZE_INDEX];
             if (sizeData === null) return yData.map(() => getSize(0, 0, 1));
 
-            const [ minValue, maxValue ] = getSizeMinMax(u, SIZE_INDEX);
+            const [ minValue, maxValue ] = ranges.current[SIZE_INDEX];
             const seriesData = (sizeData || []) as unknown as UPlotData[];
             return seriesData.map(value => getSize(value, minValue, maxValue)) || [];
           },
@@ -61,7 +62,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
             const strokeData = u?.data[seriesIndex][STROKE_INDEX];
             if (strokeData === null) return yData.map(() => getColor(0, 0, 1));
 
-            const [ minValue, maxValue ] = getSizeMinMax(u, STROKE_INDEX);
+            const [ minValue, maxValue ] = ranges.current[STROKE_INDEX];
             const seriesData = (strokeData || []) as unknown as UPlotData[];
             return seriesData.map(value => getColor(value, minValue, maxValue)) || [];
           },
@@ -133,7 +134,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
               const value = (fillData || [])[dataIndex];
               if (value == null) return getColor(0, 0, 1);
 
-              const [ minValue, maxValue ] = getSizeMinMax(u, FILL_INDEX);
+              const [ minValue, maxValue ] = ranges.current[FILL_INDEX];
               return getColor(value, minValue, maxValue);
             },
             size: (u, seriesIndex) => {
@@ -153,6 +154,14 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
               // force-clear the path cache to cause drawBars() to rebuild new quadtree
               u.series.forEach((s, i) => {
                 if (i > 0) (s as unknown as { _paths: uPlot.Series.Paths | null })._paths = null;
+              });
+            },
+          ],
+          setData: [
+            u => {
+              // Calculate the min and max of each data properties such as size, fill and stroke.
+              (u.data[1] || []).forEach((data, index) => {
+                if (data != null) ranges.current[index] = getMinMax(u, index);
               });
             },
           ],

@@ -46,19 +46,7 @@ export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn =>
   };
 };
 
-// quadratic scaling (px area)
-export const getSize = (
-  value: number | null | undefined,
-  minValue: number,
-  maxValue: number,
-): number => {
-  if (value == null || minValue === maxValue || minValue == null) return 0;
-  const percent = (value - minValue) / (maxValue - minValue);
-  const area = (MAX_AREA - MIN_AREA) * percent + MIN_AREA;
-  return Math.sqrt(area / Math.PI) * 2;
-};
-
-export const getSizeMinMax = (u: uPlot, dataIndex: number): [ number, number ] => {
+export const getMinMax = (u: uPlot, dataIndex: number): [ number, number ] => {
   let minValue = Infinity;
   let maxValue = -Infinity;
 
@@ -73,6 +61,18 @@ export const getSizeMinMax = (u: uPlot, dataIndex: number): [ number, number ] =
   }
 
   return [ minValue, maxValue ];
+};
+
+// quadratic scaling (px area)
+export const getSize = (
+  value: number | null | undefined,
+  minValue: number,
+  maxValue: number,
+): number => {
+  if (value == null || minValue === maxValue || minValue == null) return 0;
+  const percent = (value - minValue) / (maxValue - minValue);
+  const area = (MAX_AREA - MIN_AREA) * percent + MIN_AREA;
+  return Math.sqrt(area / Math.PI) * 2;
 };
 
 export const range = (
