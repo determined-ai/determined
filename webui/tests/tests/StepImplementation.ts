@@ -331,7 +331,8 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllTableRows(action: string) {
-    await t.click(BATCH_ACTION_TEXT);
+    console.log('start');
+    await t.click(t.text(BATCH_ACTION_TEXT));
     console.log('opened batch dropdown');
     // Wait for the dropdown animation to finish
     await sleep(500);
