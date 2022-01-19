@@ -24,12 +24,12 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 		{id: "group2", priority: &higherPriority},
 	}
 	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[0], jobSubmissionTime: &timeNow},
-		{id: "task2", slotsNeeded: 1, group: groups[0], jobSubmissionTime: &olderTime},
-		{id: "task3", slotsNeeded: 0, group: groups[1], jobSubmissionTime: &timeNow},
-		{id: "task4", slotsNeeded: 0, group: groups[1], jobSubmissionTime: &olderTime},
-		{id: "task5", slotsNeeded: 4, group: groups[1], jobSubmissionTime: &timeNow},
-		{id: "task6", slotsNeeded: 4, group: groups[1], jobSubmissionTime: &olderTime},
+		{id: "task1", slotsNeeded: 4, group: groups[0], jobSubmissionTime: timeNow},
+		{id: "task2", slotsNeeded: 1, group: groups[0], jobSubmissionTime: olderTime},
+		{id: "task3", slotsNeeded: 0, group: groups[1], jobSubmissionTime: timeNow},
+		{id: "task4", slotsNeeded: 0, group: groups[1], jobSubmissionTime: olderTime},
+		{id: "task5", slotsNeeded: 4, group: groups[1], jobSubmissionTime: timeNow},
+		{id: "task6", slotsNeeded: 4, group: groups[1], jobSubmissionTime: olderTime},
 	}
 
 	system := actor.NewSystem(t.Name())
@@ -655,11 +655,10 @@ func AddUnallocatedTasks(
 		ref, created := system.ActorOf(actor.Addr(mockTask.id), mockTask)
 		assert.Assert(t, created)
 
-		jobID := model.JobID(mockTask.jobID)
 		req := &sproto.AllocateRequest{
 			AllocationID: mockTask.id,
 			SlotsNeeded:  mockTask.slotsNeeded,
-			JobID:        &jobID,
+			JobID:        model.JobID(mockTask.jobID),
 			Label:        mockTask.label,
 			TaskActor:    ref,
 			Preemptible:  !mockTask.nonPreemptible,

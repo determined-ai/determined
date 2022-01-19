@@ -13,22 +13,19 @@ func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model
 	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
 	for _, req := range reqs {
-		if req.JobID == nil {
-			continue
-		}
-		v1JobInfo, exists := isAdded[*req.JobID]
+		v1JobInfo, exists := isAdded[req.JobID]
 		if !exists {
 			v1JobInfo = &job.RMJobInfo{
 				JobsAhead: jobsAhead,
 				State:     req.State,
 			}
-			isAdded[*req.JobID] = v1JobInfo
-			jobActors[*req.JobID] = req.Group
+			isAdded[req.JobID] = v1JobInfo
+			jobActors[req.JobID] = req.Group
 			jobsAhead++
 		}
 		// Carry over the the highest state.
 		if v1JobInfo.State < req.State {
-			isAdded[*req.JobID].State = req.State
+			isAdded[req.JobID].State = req.State
 		}
 		v1JobInfo.RequestedSlots += req.SlotsNeeded
 		if job.ScheduledStates[req.State] {
@@ -43,9 +40,6 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 	reqs := make(AllocReqs, 0)
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		if req.JobID == nil {
-			continue
-		}
 		reqs = append(reqs, req)
 	}
 	jobsMap, _ := reduceToJobQInfo(reqs)

@@ -209,8 +209,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
 		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
-		JobID:             &t.jobID,
-		JobSubmissionTime: &t.jobSubmissionTime,
+		JobID:             t.jobID,
+		JobSubmissionTime: t.jobSubmissionTime,
 		Name:              name,
 		TaskActor:         ctx.Self(),
 		Group:             ctx.Self().Parent(),

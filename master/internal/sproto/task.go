@@ -17,8 +17,8 @@ type (
 		// Identifying information.
 		AllocationID      model.AllocationID
 		TaskID            model.TaskID
-		JobID             *model.JobID
-		JobSubmissionTime *time.Time
+		JobID             model.JobID
+		JobSubmissionTime time.Time
 		State             job.SchedulingState
 		Name              string
 		// Allocation actor
