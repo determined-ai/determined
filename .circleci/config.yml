@@ -2453,7 +2453,6 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
-              slack-mentions: ["${SLACK_USER_ID}"]
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws
@@ -2464,7 +2463,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["${SLACK_USER_ID}"]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers
           context: aws
@@ -2475,7 +2473,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["${SLACK_USER_ID}"]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers-amp
           context: aws
@@ -2486,7 +2483,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["${SLACK_USER_ID}"]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
           context: aws
@@ -2497,7 +2493,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["${SLACK_USER_ID}"]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
           context: aws
@@ -2509,7 +2504,6 @@ workflows:
               environment-gpu-enabled: ["0"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
-              slack-mentions: ["${SLACK_USER_ID}"]
 
   weekly-cuda-11:
     triggers:
