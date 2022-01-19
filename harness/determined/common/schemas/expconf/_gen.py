@@ -2828,7 +2828,6 @@ schemas = {
     }
 }
 
-
 """
     ),
     "http://determined.ai/schemas/expconf/v0/searcher-pbt.json": json.loads(

@@ -2650,7 +2650,6 @@ var (
         ]
     }
 }
-
 `)
 	textPBTConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
