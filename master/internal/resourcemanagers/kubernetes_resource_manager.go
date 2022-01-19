@@ -38,6 +38,7 @@ type kubernetesResourceManager struct {
 
 	reschedule bool
 
+	queuePositions  jobSortState
 	echoRef         *echo.Echo
 	masterTLSConfig model.TLSClientConfig
 	loggingConfig   model.LoggingConfig
@@ -57,6 +58,7 @@ func newKubernetesResourceManager(
 		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
+		queuePositions:    make(jobSortState),
 
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
@@ -298,19 +300,19 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		}
 
 	case job.SetGroupOrder:
-		group := k.getOrCreateGroup(ctx, msg.Handler)
-		if msg.QPosition > 0 {
-			group.qPosition = msg.QPosition
-		}
+		// group := k.getOrCreateGroup(ctx, msg.Handler)
+		// if msg.QPosition > 0 {
+		// 	group.qPosition = msg.QPosition
+		// }
 
-		for it := k.reqList.iterator(); it.next(); {
-			if it.value().Group == msg.Handler {
-				taskActor := it.value().TaskActor
-				if id, ok := k.addrToContainerID[taskActor]; ok {
-					ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{QPosition: msg.QPosition, PodID: id})
-				}
-			}
-		}
+		// for it := k.reqList.iterator(); it.next(); {
+		// 	if it.value().Group == msg.Handler {
+		// 		taskActor := it.value().TaskActor
+		// 		if id, ok := k.addrToContainerID[taskActor]; ok {
+		// 			ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{QPosition: msg.QPosition, PodID: id})
+		// 		}
+		// 	}
+		// }
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -319,7 +321,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
-	reqs, _ := sortTasksWithPosition(k.reqList, k.groups, true)
+	reqs := sortTasksWithPosition(k.reqList, k.groups, k.queuePositions, true)
 	jobQinfo, _ := reduceToJobQInfo(reqs)
 
 	return jobQinfo
@@ -422,7 +424,7 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	}
 
 	priority := KubernetesDefaultPriority
-	g := &group{handler: handler, weight: 1, priority: &priority, qPosition: -1}
+	g := &group{handler: handler, weight: 1, priority: &priority}
 
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0

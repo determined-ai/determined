@@ -72,13 +72,15 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 	case SendRequestResourcesToResourceManager:
 		task := sproto.AllocateRequest{
-			AllocationID: t.id,
-			Name:         string(t.id),
-			SlotsNeeded:  t.slotsNeeded,
-			Preemptible:  !t.nonPreemptible,
-			Label:        t.label,
-			ResourcePool: t.resourcePool,
-			TaskActor:    ctx.Self(),
+			AllocationID:      t.id,
+			JobID:             model.JobID(t.jobID),
+			JobSubmissionTime: t.jobSubmissionTime,
+			Name:              string(t.id),
+			SlotsNeeded:       t.slotsNeeded,
+			Preemptible:       !t.nonPreemptible,
+			Label:             t.label,
+			ResourcePool:      t.resourcePool,
+			TaskActor:         ctx.Self(),
 		}
 		if t.group == nil {
 			task.Group = ctx.Self()
@@ -516,9 +518,11 @@ func TestJobStats(t *testing.T) {
 		p := &priorityScheduler{}
 		system := actor.NewSystem(t.Name())
 		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-		toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
+			make(map[model.JobID]float64), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
-		p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+		p.prioritySchedule(taskList, groupMap,
+			make(map[model.JobID]float64), agentMap, BestFit)
 		assertStatsEqual(t, jobStats(taskList), expectedStats)
 	}
 	testFairshare := func(
@@ -594,7 +598,8 @@ func TestJobOrder(t *testing.T) {
 		p := &priorityScheduler{preemptionEnabled: false}
 		system := actor.NewSystem(t.Name())
 		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-		toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
+			make(map[model.JobID]float64), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		return p.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
 	}
@@ -670,7 +675,8 @@ func TestJobOrderPriority(t *testing.T) {
 	p := &priorityScheduler{preemptionEnabled: false}
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, _ := p.prioritySchedule(taskList, groupMap,
+		make(map[model.JobID]float64), agentMap, BestFit)
 	AllocateTasks(toAllocate, agentMap, taskList)
 	jobInfo := p.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
 	assert.Equal(t, len(jobInfo), 1)
@@ -683,7 +689,8 @@ func TestJobOrderPriority(t *testing.T) {
 	}
 
 	AddUnallocatedTasks(t, newTasks, system, taskList)
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap,
+		make(map[model.JobID]float64), agentMap, BestFit)
 	assert.Equal(t, len(toRelease), 0)
 	AllocateTasks(toAllocate, agentMap, taskList)
 	jobInfo = p.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})

@@ -64,3 +64,47 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
 }
+
+// TODO add a comment.
+func adjustPriorities(positions *jobSortState) {
+	// prev := float64(0)
+	// i := 0
+
+	// for i < len(reqs) {
+	// 	if groups[reqs[i].Group].qPosition == -1 {
+	// 		if i == len(reqs)-1 {
+	// 			groups[reqs[i].Group].qPosition = prev + 1
+	// 		} else {
+	// 			// seek the next populated value
+	// 			var seeker int
+	// 			for loc := i + 1; loc < len(reqs); loc++ {
+	// 				seeker = loc
+	// 				if groups[reqs[loc].Group].qPosition != -1 {
+	// 					break
+	// 				} else if loc == len(reqs) {
+	// 					break
+	// 				}
+	// 			}
+
+	// 			// set queue positions
+	// 			if seeker >= len(reqs)-1 {
+	// 				for setter := i; setter < len(reqs); setter++ {
+	// 					groups[reqs[setter].Group].qPosition = prev + 1
+	// 					prev++
+	// 				}
+	// 			} else {
+	// 				maxValue := groups[reqs[seeker].Group].qPosition
+	// 				diff := float64(seeker - i)
+	// 				increment := (maxValue - prev) / diff
+
+	// 				for setter := i; setter < seeker; setter++ {
+	// 					groups[reqs[setter].Group].qPosition = prev + increment
+	// 					prev += increment
+	// 				}
+	// 			} // find the value of the non negative position and add increments
+	// 		}
+	// 	}
+	// 	prev = groups[reqs[i].Group].qPosition
+	// 	i++
+	// }
+}

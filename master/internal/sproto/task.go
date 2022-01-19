@@ -169,3 +169,8 @@ type Event struct {
 	// LogEvent is triggered when a new log message is available.
 	LogEvent *string `json:"log_event"`
 }
+
+// InitialQueuePosition blah.. TODO this shouldn't be on allocateRequest.
+func (r AllocateRequest) InitialQueuePosition() float64 {
+	return float64(r.JobSubmissionTime.UnixNano())
+}

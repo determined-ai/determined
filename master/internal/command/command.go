@@ -309,7 +309,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupOrder:
-		// TODO persist in the job actor if we want to report it
 		c.setOrder(ctx, msg.QPosition)
 
 	case job.SetGroupWeight:
@@ -359,7 +358,6 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 }
 
 func (c *command) setOrder(ctx *actor.Context, queuePosition float64) {
-	// TODO persist similar to the other set* methods?
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
 		QPosition: queuePosition,
 		Handler:   ctx.Self(),

@@ -64,9 +64,8 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority, job.SetGroupOrder:
-		// QUESTION do we wanna be forwarding these to all pools? they don't seem to
-		// perform any checks
+	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority, job.SetGroupOrder,
+		job.MoveJob:
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetTaskHandler:

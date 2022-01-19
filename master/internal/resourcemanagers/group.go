@@ -12,10 +12,8 @@ type groupActorStopped struct {
 // group manages the common state for a set of tasks that all share the same scheduling restrictions
 // (e.g. max slots or fair share weight).
 type group struct {
-	handler *actor.Ref
-	// job      *sproto.JobSummary
-	maxSlots  *int
-	weight    float64 // QUESTION why is prio a ptr but weight is not.
-	priority  *int
-	qPosition float64
+	handler  *actor.Ref
+	maxSlots *int
+	weight   float64 // QUESTION why is prio a ptr but weight is not.
+	priority *int
 }

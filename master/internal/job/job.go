@@ -55,10 +55,17 @@ type (
 		Handler      *actor.Ref
 	}
 	// SetGroupOrder sets the order of the group in the priority scheduler.
+	// TODO delete.
 	SetGroupOrder struct {
 		QPosition    float64
 		ResourcePool string
 		Handler      *actor.Ref
+	}
+	// MoveJob requests the job to be moved within a priority queue relative to another job.
+	MoveJob struct {
+		ID      model.JobID
+		Anchor  model.JobID
+		AheadOf bool
 	}
 )
 

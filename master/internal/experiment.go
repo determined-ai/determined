@@ -269,8 +269,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupOrder:
-		err := e.setOrder(ctx, msg.QPosition)
-		ctx.Respond(err)
+		if err := e.setOrder(ctx, msg.QPosition); err != nil {
+			ctx.Respond(err)
+			ctx.Log().WithError(err)
+		}
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -617,7 +619,6 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 }
 
 func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
-	// TODO persist similar to the other set* methods?
 	jobModel := model.Job{
 		JobID: e.JobID,
 		QPos:  queuePosition,
