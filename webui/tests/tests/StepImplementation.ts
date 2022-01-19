@@ -333,6 +333,8 @@ export default class StepImplementation {
   public async actionOnAllTableRows(action: string) {
     console.log('start');
     console.log(`batch action text exists: ${await t.text(BATCH_ACTION_TEXT).exists()}`);
+    console.log(`batch action text visible: ${await t.text(BATCH_ACTION_TEXT).isVisible()}`);
+    console.log(`batch action text enabled: ${!(await t.text(BATCH_ACTION_TEXT).isDisabled())}`);
     await t.click(t.text(BATCH_ACTION_TEXT));
     console.log('opened batch dropdown');
     // Wait for the dropdown animation to finish
