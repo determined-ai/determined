@@ -435,7 +435,7 @@ func sortTasksWithPosition(
 				return true
 			}
 		}
-		return compareByRegisteredTime(reqs, i, j)
+		return aReqComparator(reqs[i], reqs[j]) < 0
 	})
 
 	return reqs, isPositionSet
