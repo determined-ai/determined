@@ -308,6 +308,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case job.SetGroupWeight:
 		c.setWeight(ctx, msg.Weight)
 
+
 	case job.SetGroupPriority:
 		if msg.Priority != nil {
 			c.setPriority(ctx, *msg.Priority)
@@ -320,6 +321,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 }
 
 func (c *command) setPriority(ctx *actor.Context, priority int) {
+	if sproto.UseK8sRM(ctx.Self().System()) {
+		ctx.Respond(fmt.Errorf("unable to set priority for %s in kubernetes. Please cancel the " +
+			"task and resubmit with the new priority", c.jobType))
+	}
 	c.Config.Resources.Priority = &priority
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: &priority,
@@ -328,6 +333,10 @@ func (c *command) setPriority(ctx *actor.Context, priority int) {
 }
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) {
+	if sproto.UseK8sRM(ctx.Self().System()) {
+		ctx.Respond(fmt.Errorf("unable to set weight for %s in kubernetes. Please cancel the " +
+			"task and resubmit with the new priority", c.jobType))
+	}
 	c.Config.Resources.Weight = weight
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
