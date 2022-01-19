@@ -331,24 +331,15 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllTableRows(action: string) {
-    console.log('start');
-    console.log(`batch action text exists: ${await t.text(BATCH_ACTION_TEXT).exists()}`);
-    console.log(`batch action text visible: ${await t.text(BATCH_ACTION_TEXT).isVisible()}`);
-    console.log(`batch action text enabled: ${!(await t.text(BATCH_ACTION_TEXT).isDisabled())}`);
     await t.click(t.text(BATCH_ACTION_TEXT));
-    console.log('opened batch dropdown');
     // Wait for the dropdown animation to finish
     await sleep(500);
     await t.click(action, t.within(t.$('.ant-select-dropdown')));
-    console.log(`pressed "${action}" button`);
     // Wait for the modal to animate in.
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
-    console.log('modal opened');
     await t.click(t.button(action, t.within(t.$('.ant-modal-body'))));
-    console.log(`pressed "${action}" button`);
     // Wait for the modal to animate away
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
-    console.log('modal closed');
   }
 
   @Step('Scroll table to the <direction>')
