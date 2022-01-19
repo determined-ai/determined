@@ -408,9 +408,9 @@ def wait(args: Namespace) -> None:
             setup_session(args), experimentId=args.experiment_id
         ).experiment
 
-        if r.state in constants.TERMINAL_STATES:
+        if r.state.value.replace("STATE_", "") in constants.TERMINAL_STATES:
             print("Experiment {} terminated with state {}".format(args.experiment_id, r.state))
-            if r.state == constants.COMPLETED:
+            if r.state.value.replace("STATE_", "") == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
@@ -549,7 +549,7 @@ def add_label(args: Namespace) -> None:
     if experiment.labels is None:
         experiment.labels = []
     if args.label not in experiment.labels:
-        experiment.labels.append(args.label)
+        experiment.labels += (args.label,)
         bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
 
@@ -559,7 +559,7 @@ def remove_label(args: Namespace) -> None:
     session = setup_session(args)
     experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
     if (experiment.labels is not None) and (args.label in experiment.labels):
-        experiment.labels.remove(args.label)
+        experiment.labels = [label for label in experiment.labels if label != args.label]
         bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
 
