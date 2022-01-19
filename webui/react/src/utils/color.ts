@@ -93,14 +93,14 @@ export const rgba2str = (rgba: RgbaColor): string => {
 export const rgbaFromGradient = (
   rgba0: RgbaColor,
   rgba1: RgbaColor,
-  distance: number,
+  percent: number,
 ): RgbaColor => {
-  const r = Math.round((rgba1.r - rgba0.r) * distance + rgba0.r);
-  const g = Math.round((rgba1.g - rgba0.g) * distance + rgba0.g);
-  const b = Math.round((rgba1.b - rgba0.b) * distance + rgba0.b);
+  const r = Math.round((rgba1.r - rgba0.r) * percent + rgba0.r);
+  const g = Math.round((rgba1.g - rgba0.g) * percent + rgba0.g);
+  const b = Math.round((rgba1.b - rgba0.b) * percent + rgba0.b);
 
   if (rgba0.a != null && rgba1.a != null) {
-    const a = (rgba1.a - rgba0.a) * distance + rgba0.a;
+    const a = (rgba1.a - rgba0.a) * percent + rgba0.a;
     return { a, b, g, r };
   }
 

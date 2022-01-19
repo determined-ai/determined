@@ -6,7 +6,9 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 
 import { FacetedData, UPlotData } from './types';
 import css from './UPlotScatter.module.scss';
-import { getSize, getSizeMinMax, makeDrawPoints, offsetRange, range } from './UPlotScatter.utils';
+import {
+  FILL_INDEX, getColorFn, getSize, getSizeMinMax, makeDrawPoints, offsetRange, SIZE_INDEX,
+} from './UPlotScatter.utils';
 
 interface Props {
   data?: FacetedData;
@@ -20,16 +22,28 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
   const drawPoints = useMemo(() => {
     return makeDrawPoints({
       disp: {
+        fill: {
+          unit: 3,
+          values: (u, seriesIndex) => {
+            const getColor = getColorFn(u.series[1].fill);
+            const yData = (u?.data[seriesIndex][1] || []) as unknown as UPlotData[];
+            const fillData = u?.data[seriesIndex][FILL_INDEX];
+            if (fillData === null) return yData.map(() => getColor(0, 0, 1));
+
+            const [ minValue, maxValue ] = getSizeMinMax(u, FILL_INDEX);
+            const seriesData = (fillData || []) as unknown as UPlotData[];
+            return seriesData.map(value => getColor(value, minValue, maxValue)) || [];
+          },
+        },
         size: {
-          unit: 3, // raw CSS pixels
-          //	discr: true,
+          unit: 3,
           values: (u, seriesIndex) => {
             // TODO: only run once per setData() call
             const yData = (u?.data[seriesIndex][1] || []) as unknown as UPlotData[];
-            const sizeData = u?.data[seriesIndex][2];
+            const sizeData = u?.data[seriesIndex][SIZE_INDEX];
             if (sizeData === null) return yData.map(() => getSize(0, 0, 1));
 
-            const [ minValue, maxValue ] = getSizeMinMax(u);
+            const [ minValue, maxValue ] = getSizeMinMax(u, SIZE_INDEX);
             const seriesData = (sizeData || []) as unknown as UPlotData[];
             return seriesData.map(value => getSize(value, minValue, maxValue)) || [];
           },
@@ -112,7 +126,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
         },
         legend: { show: false },
         mode: 2,
-        padding: [ 0, 0, 0, 0 ],
+        padding: [ 0, 8, 0, 8 ],
         scales: {
           x: { range: offsetRange(), time: false },
           xCategorical: { range: offsetRange(), time: false },
@@ -127,10 +141,9 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
               { auto: true, scale: options.axes?.[0].scale || 'x' },
               { auto: true, scale: options.axes?.[1].scale || 'y' },
             ],
-            fill: 'rgba(0,0,255,0.3)',
-            // label: 'Region C',
+            fill: 'rgba(255,0,0,0.3) rgba(0,0,255,0.3)',
             paths: drawPoints,
-            // stroke: 'blue',
+            stroke: 'rgba(255,0,0,1)',
           },
         ],
       } as Partial<Options>,

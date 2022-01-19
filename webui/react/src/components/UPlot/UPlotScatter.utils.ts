@@ -1,14 +1,50 @@
 import uPlot from 'uplot';
 
 import { Range } from 'types';
+import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 
 import { UPlotAxisSplits, UPlotData } from './types';
+
+export const SIZE_INDEX = 2;
+export const FILL_INDEX = 3;
+export const DEFAULT_COLOR = '#009bde';
 
 const DEFAULT_LOG_BASE = 10;
 const MIN_DIAMETER = 6;
 const MAX_DIAMETER = 60;
 const MIN_AREA = Math.PI * (MIN_DIAMETER / 2) ** 2;
 const MAX_AREA = Math.PI * (MAX_DIAMETER / 2) ** 2;
+const STROKE_WIDTH = 1;
+
+export type ColorFn = () => string;
+
+type BubbleFn<T = number | string> = (
+  value: number | null | undefined,
+  minValue: number,
+  maxValue: number
+) => T;
+
+export const getColorFn = (colorFn?: unknown): BubbleFn => {
+  const color = colorFn ? (colorFn as ColorFn)() : DEFAULT_COLOR;
+  const colorFnRegex = new RegExp(/(rgba?\([^)]+\))\s+(rgba?\([^)]+\))/i);
+  const matches = color.match(colorFnRegex);
+  if (matches?.length !== 3) return () => color;
+
+  const minColor = matches[1];
+  const maxColor = matches[2];
+  const rgbaMin = str2rgba(minColor);
+  const rgbaMax = str2rgba(maxColor);
+  return (
+    value: number | null | undefined,
+    minValue: number,
+    maxValue: number,
+  ): string => {
+    if (value == null || minValue === maxValue || minValue == null) return minColor;
+    const percent = (value - minValue) / (maxValue - minValue);
+    const rgba = rgbaFromGradient(rgbaMin, rgbaMax, percent);
+    return rgba2str(rgba);
+  };
+};
 
 // quadratic scaling (px area)
 export const getSize = (
@@ -17,17 +53,18 @@ export const getSize = (
   maxValue: number,
 ): number => {
   if (value == null || minValue === maxValue || minValue == null) return 0;
-  const pct = (value - minValue) / (maxValue - minValue);
-  const area = (MAX_AREA - MIN_AREA) * pct + MIN_AREA;
+  const percent = (value - minValue) / (maxValue - minValue);
+  const area = (MAX_AREA - MIN_AREA) * percent + MIN_AREA;
   return Math.sqrt(area / Math.PI) * 2;
 };
 
-export const getSizeMinMax = (u: uPlot): [ number, number ] => {
+export const getSizeMinMax = (u: uPlot, dataIndex: number): [ number, number ] => {
   let minValue = Infinity;
   let maxValue = -Infinity;
 
+  // Go through each series.
   for (let i = 1; i < u.series.length; i++) {
-    const sizeData = u.data[i][2] as unknown as number[];
+    const sizeData = u.data[i][dataIndex] as unknown as number[];
 
     for (let j = 0; j < sizeData.length; j++) {
       minValue = Math.min(minValue, sizeData[j]);
@@ -111,24 +148,26 @@ export const makeDrawPoints = (
       // rect,
       // arc,
     ) => {
-      if (!series?.fill || !series?.stroke || !disp?.size || !scaleX?.key || !scaleY?.key) return;
+      if (!series?.fill || !series?.stroke || !scaleX?.key || !scaleY?.key) return;
+      // if (!disp?.fill || !disp?.size) return;
 
       const data = u.data[seriesIdx];
-      const strokeWidth = 1;
+      const strokeWidth = STROKE_WIDTH;
 
       u.ctx.save();
 
       u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       u.ctx.clip();
 
-      u.ctx.fillStyle = typeof series.fill === 'function'
-        ? series.fill(u, seriesIdx) : series.fill;
+      // u.ctx.fillStyle = typeof series.fill === 'function'
+      //   ? series.fill(u, seriesIdx) : series.fill;
       u.ctx.strokeStyle = typeof series.stroke === 'function'
         ? series.stroke(u, seriesIdx) : series.stroke;
       u.ctx.lineWidth = strokeWidth;
 
-      // compute bubble dims
-      const sizes = disp.size.values(u, seriesIdx, idx0, idx1) as unknown as number[];
+      // Calculate bubble fill and size.
+      const fills = (disp?.fill?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
+      const sizes = (disp?.size?.values(u, seriesIdx, idx0, idx1) || []) as unknown as number[];
 
       // todo: this depends on direction & orientation
       // todo: calc once per redraw, not per path
@@ -143,11 +182,14 @@ export const makeDrawPoints = (
       for (let i = 0; i < xData.length; i++) {
         const xVal = xData[i];
         const yVal = yData[i] ?? 0;
-        const size = sizes[i] * devicePixelRatio;
+        const fill = fills?.[i] ? fills[i] : DEFAULT_COLOR;
+        const size = (sizes?.[i] ? sizes[i] : MIN_DIAMETER) * devicePixelRatio;
 
         if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
           const cx = valToPosX(xVal, scaleX, xDim, xOff);
           const cy = valToPosY(yVal, scaleY, yDim, yOff);
+
+          u.ctx.fillStyle = fill;
 
           u.ctx.moveTo(cx + size / 2, cy);
           u.ctx.beginPath();
