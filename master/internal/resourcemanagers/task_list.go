@@ -51,6 +51,10 @@ func (l *taskList) GetTaskByID(id model.AllocationID) (*sproto.AllocateRequest, 
 }
 
 func (l *taskList) AddTask(req *sproto.AllocateRequest) bool {
+	if req.JobID == "" {
+		panic("taskList.AddTask: task has no job ID")
+	}
+
 	if _, ok := l.GetTaskByHandler(req.TaskActor); ok {
 		return false
 	}
