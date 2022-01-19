@@ -314,7 +314,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		taskSpec := *e.taskSpec
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			taskID: model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
+			taskID:            model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
+			jobID:             e.JobID,
+			jobSubmissionTime: e.StartTime,
 			GCCkptSpec: tasks.GCCkptSpec{
 				Base:         taskSpec,
 				ExperimentID: e.Experiment.ID,
