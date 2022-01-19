@@ -17,7 +17,7 @@ const (
 	Records     Unit = "records"
 	Batches     Unit = "batches"
 	Epochs      Unit = "epoches"
-	Unitless    Unit = "_unitless"
+	Unitless    Unit = "unitless"
 	Unspecified Unit = "unspecified"
 )
 

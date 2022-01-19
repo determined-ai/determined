@@ -177,7 +177,7 @@ class Searcher:
         get_configured_units() reports what units were used in the searcher field of the experiment
         config.  If no units were configured, None is returned.
 
-        An experiment configured like this would cause ``get_configured_units()`` to return epochs:
+        An experiment configured like this would cause ``get_configured_units()`` to return EPOCHS:
 
         .. code:: yaml
 

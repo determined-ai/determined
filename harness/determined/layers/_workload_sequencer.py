@@ -102,7 +102,7 @@ class WorkloadSequencer(workload.Source):
             logging.warning(
                 "The searcher configuration provided was configured without units, but the "
                 "training loop you are using (one of the Trial APIs) requires a searcher "
-                "configure with units.  Proceeding anyway, and assuming that the lengths "
+                "configured with units.  Proceeding anyway, and assuming that the lengths "
                 "configured in the searcher are in terms of epochs."
             )
             unit = _core.Unit.EPOCHS
