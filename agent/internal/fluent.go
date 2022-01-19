@@ -55,6 +55,7 @@ func removeContainerByName(docker *client.Client, name string) error {
 				if err != nil {
 					return err
 				}
+				break
 			}
 		}
 	}
