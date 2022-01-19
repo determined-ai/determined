@@ -62,7 +62,7 @@ const Wait: React.FC = () => {
     const ival = setInterval(async () => {
       try {
         const response = await getTask({ taskId });
-        if (!response) {
+        if (!response?.allocations?.length) {
           return;
         }
         const lastRun = response.allocations[0];
