@@ -7,7 +7,7 @@ import { UPlotAxisSplits, UPlotData } from './types';
 
 export const SIZE_INDEX = 2;
 export const FILL_INDEX = 3;
-export const DEFAULT_COLOR = '#009bde';
+export const STROKE_INDEX = 4;
 
 const DEFAULT_LOG_BASE = 10;
 const MIN_DIAMETER = 6;
@@ -24,8 +24,8 @@ type BubbleFn<T = number | string> = (
   maxValue: number
 ) => T;
 
-export const getColorFn = (colorFn?: unknown): BubbleFn => {
-  const color = colorFn ? (colorFn as ColorFn)() : DEFAULT_COLOR;
+export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn => {
+  const color = (colorFn as ColorFn)() || fallbackColor;
   const colorFnRegex = new RegExp(/(rgba?\([^)]+\))\s+(rgba?\([^)]+\))/i);
   const matches = color.match(colorFnRegex);
   if (matches?.length !== 3) return () => color;
@@ -143,13 +143,8 @@ export const makeDrawPoints = (
       yOff,
       xDim,
       yDim,
-      // moveTo,
-      // lineTo,
-      // rect,
-      // arc,
     ) => {
       if (!series?.fill || !series?.stroke || !scaleX?.key || !scaleY?.key) return;
-      // if (!disp?.fill || !disp?.size) return;
 
       const data = u.data[seriesIdx];
       const strokeWidth = STROKE_WIDTH;
@@ -161,13 +156,15 @@ export const makeDrawPoints = (
 
       // u.ctx.fillStyle = typeof series.fill === 'function'
       //   ? series.fill(u, seriesIdx) : series.fill;
-      u.ctx.strokeStyle = typeof series.stroke === 'function'
-        ? series.stroke(u, seriesIdx) : series.stroke;
+      // u.ctx.strokeStyle = typeof series.stroke === 'function'
+      //   ? series.stroke(u, seriesIdx) : series.stroke;
+      u.ctx.strokeStyle = 'green';
       u.ctx.lineWidth = strokeWidth;
 
       // Calculate bubble fill and size.
-      const fills = (disp?.fill?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
       const sizes = (disp?.size?.values(u, seriesIdx, idx0, idx1) || []) as unknown as number[];
+      const fills = (disp?.fill?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
+      const strokes = (disp?.stroke?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
 
       // todo: this depends on direction & orientation
       // todo: calc once per redraw, not per path
@@ -182,14 +179,16 @@ export const makeDrawPoints = (
       for (let i = 0; i < xData.length; i++) {
         const xVal = xData[i];
         const yVal = yData[i] ?? 0;
-        const fill = fills?.[i] ? fills[i] : DEFAULT_COLOR;
-        const size = (sizes?.[i] ? sizes[i] : MIN_DIAMETER) * devicePixelRatio;
+        const size = sizes[i] * devicePixelRatio;
+        const fill = fills[i];
+        const stroke = strokes[i];
 
         if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
           const cx = valToPosX(xVal, scaleX, xDim, xOff);
           const cy = valToPosY(yVal, scaleY, yDim, yOff);
 
           u.ctx.fillStyle = fill;
+          u.ctx.strokeStyle = stroke;
 
           u.ctx.moveTo(cx + size / 2, cy);
           u.ctx.beginPath();

@@ -29,6 +29,9 @@ export interface ColorScale {
   scale: number;    // scale between 0.0 and 1.0
 }
 
+const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
+const rgbaRegex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
+
 export const glasbeyColor = (seriesIdx: number): string => {
   const index = seriesIdx % GLASBEY.length;
   const rgb = GLASBEY[index];
@@ -68,7 +71,7 @@ export const hex2hsl = (hex: string): HslColor => {
 
 export const hex2rgb = (hex: string): RgbaColor => {
   const rgb = { b: 0, g: 0, r: 0 };
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const result = hexRegex.exec(hex);
 
   if (result && result.length > 3) {
     rgb.r = parseInt(result[1], 16);
@@ -108,9 +111,9 @@ export const rgbaFromGradient = (
 };
 
 export const str2rgba = (str: string): RgbaColor => {
-  if (/^#/.test(str)) return hex2rgb(str);
+  if (hexRegex.test(str)) return hex2rgb(str);
 
-  const regex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
+  const regex = rgbaRegex;
   const result = regex.exec(str);
   if (result && result.length > 3) {
     const rgba = { a: 1.0, b: 0, g: 0, r: 0 };

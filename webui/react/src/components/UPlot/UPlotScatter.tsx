@@ -7,13 +7,18 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { FacetedData, UPlotData } from './types';
 import css from './UPlotScatter.module.scss';
 import {
-  FILL_INDEX, getColorFn, getSize, getSizeMinMax, makeDrawPoints, offsetRange, SIZE_INDEX,
+  FILL_INDEX, getColorFn, getSize, getSizeMinMax, makeDrawPoints, offsetRange,
+  SIZE_INDEX, STROKE_INDEX,
 } from './UPlotScatter.utils';
 
 interface Props {
   data?: FacetedData;
   options?: Partial<Options>;
 }
+
+const DEFAULT_FILL_COLOR = 'rgba(0, 155, 222, 0.3)';
+const DEFAULT_HOVER_COLOR = 'rgba(0, 155, 222, 1.0)';
+const DEFAULT_STROKE_COLOR = 'rgba(0, 155, 222, 1.0)';
 
 const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
   const quadtree = useRef<QuadTree>();
@@ -25,7 +30,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
         fill: {
           unit: 3,
           values: (u, seriesIndex) => {
-            const getColor = getColorFn(u.series[1].fill);
+            const getColor = getColorFn(u.series[seriesIndex].fill, DEFAULT_FILL_COLOR);
             const yData = (u?.data[seriesIndex][1] || []) as unknown as UPlotData[];
             const fillData = u?.data[seriesIndex][FILL_INDEX];
             if (fillData === null) return yData.map(() => getColor(0, 0, 1));
@@ -48,26 +53,42 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
             return seriesData.map(value => getSize(value, minValue, maxValue)) || [];
           },
         },
+        stroke: {
+          unit: 3,
+          values: (u, seriesIndex) => {
+            const getColor = getColorFn(u.series[seriesIndex].stroke, DEFAULT_STROKE_COLOR);
+            const yData = (u?.data[seriesIndex][1] || []) as unknown as UPlotData[];
+            const strokeData = u?.data[seriesIndex][STROKE_INDEX];
+            if (strokeData === null) return yData.map(() => getColor(0, 0, 1));
+
+            const [ minValue, maxValue ] = getSizeMinMax(u, STROKE_INDEX);
+            const seriesData = (strokeData || []) as unknown as UPlotData[];
+            return seriesData.map(value => getColor(value, minValue, maxValue)) || [];
+          },
+        },
       },
-      each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
-        // we get back raw canvas coords (included axes & padding).
-        // translate to the plotting area origin
-        lft -= u.bbox.left;
+      each: (u, seriesIndex, dataIndex, left, top, width, height) => {
+        /**
+         * We get back raw canvas coords (included axes & padding).
+         * Translate to the plotting area origin.
+         */
+        left -= u.bbox.left;
         top -= u.bbox.top;
         quadtree.current?.add(new QuadTree(
-          lft,
+          left,
           top,
-          wid,
-          hgt,
+          width,
+          height,
           undefined,
-          seriesIdx,
-          dataIdx,
+          seriesIndex,
+          dataIndex,
         ));
       },
     });
   }, []);
 
   const chartOptions = useMemo(() => {
+    const seriesOptions = options.series?.[1] || {};
     return uPlot.assign(
       {
         cursor: {
@@ -88,9 +109,9 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
 
                   const d = Math.sqrt(dx ** 2 + dy ** 2);
 
-                  // test against radius for actual hover
+                  // Test against radius for actual hover.
                   if (d <= o.w / 2) {
-                  // only hover bbox with closest distance
+                    // Only hover bbox with closest distance.
                     if (d <= dist) {
                       dist = d;
                       hRect.current = o;
@@ -103,6 +124,18 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
             return seriesIndex === hRect.current?.seriesIndex ? hRect.current.dataIndex : null;
           },
           points: {
+            fill: (u, seriesIndex) => {
+              const dataIndex = u?.cursor?.dataIdx?.(u, seriesIndex, 0, 0);
+              if (dataIndex == null) return DEFAULT_HOVER_COLOR;
+
+              const getColor = getColorFn(u.series[1].stroke, DEFAULT_HOVER_COLOR);
+              const fillData = u?.data?.[seriesIndex]?.[FILL_INDEX] as unknown as UPlotData[];
+              const value = (fillData || [])[dataIndex];
+              if (value == null) return getColor(0, 0, 1);
+
+              const [ minValue, maxValue ] = getSizeMinMax(u, FILL_INDEX);
+              return getColor(value, minValue, maxValue);
+            },
             size: (u, seriesIndex) => {
               return seriesIndex === hRect.current?.seriesIndex
                 ? hRect.current.w / devicePixelRatio : 0;
@@ -134,20 +167,23 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
           y: { range: offsetRange() },
           yLog: { distr: 3, range: offsetRange() },
         },
+      } as Partial<Options>,
+      options,
+      // Override paths drawing option to support faceted data drawing.
+      {
         series: [
           null,
           {
+            ...seriesOptions,
             facets: [
               { auto: true, scale: options.axes?.[0].scale || 'x' },
               { auto: true, scale: options.axes?.[1].scale || 'y' },
             ],
-            fill: 'rgba(255,0,0,0.3) rgba(0,0,255,0.3)',
+            fill: seriesOptions.fill,
             paths: drawPoints,
-            stroke: 'rgba(255,0,0,1)',
           },
         ],
       } as Partial<Options>,
-      options || {},
     );
   }, [ drawPoints, options ]);
 

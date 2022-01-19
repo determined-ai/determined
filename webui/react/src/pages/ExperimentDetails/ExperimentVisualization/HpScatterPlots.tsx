@@ -81,6 +81,7 @@ const ScatterPlots: React.FC<Props> = ({
             chartData?.metricValues[hParam] || [],
             null,
             null,
+            null,
             chartData?.trialIds || [],
           ],
         ] as FacetedData,

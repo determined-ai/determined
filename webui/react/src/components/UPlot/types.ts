@@ -7,7 +7,8 @@ export type FacetedData = [
     xValues: UPlotData[],
     yValues: UPlotData[],
     sizes: UPlotData[] | null,
-    colors: UPlotData[] | null,
+    fills: UPlotData[] | null,
+    strokes: UPlotData[] | null,
     labels: (number | string)[] | null,
   ],
 ];
