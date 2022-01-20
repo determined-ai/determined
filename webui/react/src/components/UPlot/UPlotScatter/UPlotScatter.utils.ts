@@ -12,7 +12,7 @@ export const FILL_INDEX = 3;
 export const STROKE_INDEX = 4;
 
 const DEFAULT_LOG_BASE = 10;
-const MIN_DIAMETER = 6;
+const MIN_DIAMETER = 8;
 const MAX_DIAMETER = 60;
 const MIN_AREA = Math.PI * (MIN_DIAMETER / 2) ** 2;
 const MAX_AREA = Math.PI * (MAX_DIAMETER / 2) ** 2;
