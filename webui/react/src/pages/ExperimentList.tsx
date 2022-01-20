@@ -350,7 +350,7 @@ const ExperimentList: React.FC = () => {
         title: 'Name',
         width: 240,
       },
-      { dataIndex: 'description', render: descriptionRenderer, title: 'Description' },
+      { /*dataIndex: 'description', render: descriptionRenderer, title: 'Description' */},
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
@@ -399,10 +399,11 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'State',
       },
-      {
+      { /*
         dataIndex: 'searcherType',
         key: 'searcherType',
         title: 'Searcher Type',
+        */
       },
       {
         dataIndex: 'resourcePool',
@@ -428,11 +429,12 @@ const ExperimentList: React.FC = () => {
         render: checkmarkRenderer,
         title: 'Archived',
       },
-      {
+      {/*
         dataIndex: 'forkedFrom',
         key: 'forkedFrom',
         render: forkedFromRenderer,
         title: 'Forked From',
+        */
       },
       {
         filterDropdown: userFilterDropdown,
