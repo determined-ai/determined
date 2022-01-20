@@ -229,9 +229,9 @@ The master supports the following configuration settings:
    -  ``image``: Defines the default docker image to use when executing the workload. If a docker
       image is specified in the :ref:`experiment config <exp-environment-image>` this default is
       overriden. This image must be accessible via ``docker pull`` to every Determined agent machine
-      in the cluster. Users can configure different container images for NVIDIA GPU tasks using
+      in the cluster. Users can configure different container images for NVIDIA GPU tasks using the
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
-      using ``rocm`` key. Default values:
+      using the ``rocm`` key. Default values:
 
       -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.6`` for
          NVIDIA GPUs.
