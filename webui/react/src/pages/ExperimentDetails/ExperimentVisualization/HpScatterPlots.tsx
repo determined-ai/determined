@@ -1,13 +1,12 @@
 import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import uPlot from 'uplot';
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import { FacetedData } from 'components/UPlot/types';
+import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
@@ -38,12 +37,6 @@ interface HpMetricData {
   hpValues: Record<string, number[]>;
   metricValues: Record<string, number[]>;
   trialIds: number[];
-}
-
-interface ChartProp {
-  data: FacetedData;
-  options: Partial<uPlot.Options>;
-  tooltipLabels: (string | null)[];
 }
 
 const ScatterPlots: React.FC<Props> = ({
@@ -106,7 +99,7 @@ const ScatterPlots: React.FC<Props> = ({
         tooltipLabels: [ xLabel, yLabel, null, null, null, 'trial ID' ],
       };
       return acc;
-    }, {} as Record<string, ChartProp>);
+    }, {} as Record<string, UPlotScatterProps>);
   }, [ chartData, selectedHParams, selectedMetric ]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);

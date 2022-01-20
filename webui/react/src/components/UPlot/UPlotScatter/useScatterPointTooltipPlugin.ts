@@ -87,7 +87,9 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
       .map((data: unknown, index: number) => {
         if (data == null) return null;
 
-        const label = props.labels?.[index] || `prop ${index}`;
+        const label = props.labels?.[index];
+        if (label == null) return null;
+
         const value = (data as UPlotData[])[dataIndex];
         if (value == null) return null;
 

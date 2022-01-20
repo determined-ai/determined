@@ -19,3 +19,9 @@ export type UPlotAxisSplits = (
   min: UPlotData,
   max: UPlotData,
 ) => number[];
+
+export interface UPlotScatterProps {
+  data: FacetedData;
+  options: Partial<uPlot.Options>;
+  tooltipLabels: (string | null)[];
+}

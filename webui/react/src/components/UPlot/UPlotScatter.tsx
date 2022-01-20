@@ -195,6 +195,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
             ],
             fill: seriesOptions.fill,
             paths: drawPoints,
+            stroke: seriesOptions.stroke,
           },
         ],
       } as Partial<Options>,

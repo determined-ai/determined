@@ -120,7 +120,7 @@ export const str2rgba = (str: string): RgbaColor => {
     rgba.r = parseInt(result[1]);
     rgba.g = parseInt(result[2]);
     rgba.b = parseInt(result[3]);
-    if (result.length > 5) rgba.a = parseFloat(result[5]);
+    if (result.length > 5 && result[5] != null) rgba.a = parseFloat(result[5]);
     return rgba;
   }
 
