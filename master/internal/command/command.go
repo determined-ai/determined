@@ -243,7 +243,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 		c.clearJobInfo()
 	case *apiv1.SetNotebookPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
 
 	case *commandv1.Command:
@@ -261,7 +261,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetCommandPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
 
 	case *shellv1.Shell:
@@ -279,7 +279,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetShellPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
 
 	case *tensorboardv1.Tensorboard:
@@ -297,7 +297,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetTensorboardPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case sproto.ContainerLog:
