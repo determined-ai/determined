@@ -606,6 +606,7 @@ commands:
       - run:
           command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci
           name: Create GKE cluster
+          no_output_timeout: 30m
       - run:
           command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
           name: Get Kubeconfig
@@ -706,6 +707,7 @@ commands:
       - run:
           command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1
           name: Create GKE cluster
+          no_output_timeout: 30m
       - run:
           command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
           name: Create GPU node pool
@@ -2451,8 +2453,6 @@ workflows:
               parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
           context: aws
@@ -2463,8 +2463,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers
           context: aws
@@ -2475,8 +2473,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers-amp
           context: aws
@@ -2487,8 +2483,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
           context: aws
@@ -2499,8 +2493,6 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
           context: aws
@@ -2512,8 +2504,6 @@ workflows:
               environment-gpu-enabled: ["0"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
 
   weekly-cuda-11:
     triggers:
