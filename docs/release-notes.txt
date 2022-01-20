@@ -8,6 +8,53 @@
  Version 0.17
 **************
 
+Version 0.17.6
+==============
+
+**Release Date:** January 20, 2022
+
+**New Features**
+
+-  Master: Add support for `systemd socket activation
+   <https://0pointer.de/blog/projects/socket-activation.html>`__ to the master. See :ref:`the
+   documentation <socket-activation>` for more information.
+
+-  Scheduling/CLI: Add support for adjusting job priority and weight through the WebUI and CLI.
+
+-  Add experimental ROCm support. In the environment config for images and environment variables,
+   the ``rocm`` key configures ROCm support. See :ref:`the documentation <rocm-support>` for more
+   information. The ``gpu`` key has been renamed to ``cuda``; ``gpu`` is still supported for
+   backward compatibility, but its use is discouraged.
+
+**Improvement**
+
+-  Docs: Improve many pages to address onboarding gaps.
+
+**Bug Fixes**
+
+-  Master: Fix an issue where an update to an experiment's name wouldn't be reflected in its job
+   representation until a master restart.
+-  Agent: Fix displayed CPU core count for CPU slots.
+-  WebUI: Fix an issue where the JupyterLab modal didn't pass the full config.
+-  WebUI: Fix the issue of the profiler filter UI not triggering updates.
+
+**Improvements**
+
+-  Logging: Decrease the volume of Docker image pull logs that are rendered into trial logs, and
+   make the overall image pull progress more understandable by combining all layers' progress into a
+   single progress bar.
+
+**Deprecated Features**
+
+-  Searcher: The Population Based Training searcher (``pbt`` in the searcher config) will be removed
+   in the next release.
+-  Model Registry: The API and Python interface will be returning to primarily identifying models
+   based on their names, rather than their numeric IDs, in the next release.
+
+**Removed Features**
+
+-  Remove support for Python 3.6, which has reached end-of-life.
+
 Version 0.17.5
 ==============
 
