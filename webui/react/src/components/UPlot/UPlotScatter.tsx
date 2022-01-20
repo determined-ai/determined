@@ -1,8 +1,8 @@
 import React, { useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
-import QuadTree, { pointWithin } from 'components/UPlot/quadtree';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
+import QuadTree, { pointWithin } from 'components/UPlot/UPlotScatter/quadtree';
 import { Range } from 'types';
 
 import { FacetedData, UPlotData } from './types';
@@ -10,7 +10,7 @@ import css from './UPlotScatter.module.scss';
 import {
   FILL_INDEX, getColorFn, getMinMax, getSize, makeDrawPoints, offsetRange,
   SIZE_INDEX, STROKE_INDEX,
-} from './UPlotScatter.utils';
+} from './UPlotScatter/UPlotScatter.utils';
 import useScatterPointTooltipPlugin from './UPlotScatter/useScatterPointTooltipPlugin';
 
 interface Props {

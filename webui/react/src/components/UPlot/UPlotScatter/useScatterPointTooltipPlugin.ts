@@ -1,4 +1,3 @@
-import { string } from 'fp-ts';
 import { useMemo, useRef } from 'react';
 import uPlot, { Plugin } from 'uplot';
 
@@ -6,8 +5,8 @@ import { humanReadableNumber } from 'utils/number';
 import { generateAlphaNumeric } from 'utils/string';
 
 import { UPlotData } from '../types';
-import { X_INDEX, Y_INDEX } from '../UPlotScatter.utils';
 
+import { X_INDEX, Y_INDEX } from './UPlotScatter.utils';
 import css from './useScatterPointTooltipPlugin.module.scss';
 
 interface Props {
