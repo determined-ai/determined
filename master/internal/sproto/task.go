@@ -23,7 +23,8 @@ type (
 		Name              string
 		// Allocation actor
 		TaskActor *actor.Ref
-		Group     *actor.Ref
+		// Job actor
+		Group *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int
