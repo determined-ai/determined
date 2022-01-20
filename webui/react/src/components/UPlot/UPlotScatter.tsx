@@ -11,20 +11,24 @@ import {
   FILL_INDEX, getColorFn, getMinMax, getSize, makeDrawPoints, offsetRange,
   SIZE_INDEX, STROKE_INDEX,
 } from './UPlotScatter.utils';
+import useScatterPointTooltipPlugin from './UPlotScatter/useScatterPointTooltipPlugin';
 
 interface Props {
   data?: FacetedData;
   options?: Partial<Options>;
+  tooltipLabels?: (string | null)[];
 }
 
 const DEFAULT_FILL_COLOR = 'rgba(0, 155, 222, 0.3)';
 const DEFAULT_HOVER_COLOR = 'rgba(0, 155, 222, 1.0)';
 const DEFAULT_STROKE_COLOR = 'rgba(0, 155, 222, 1.0)';
 
-const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
+const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Props) => {
   const quadtree = useRef<QuadTree>();
   const hRect = useRef<QuadTree | null>();
   const ranges = useRef<(Range<number>)[]>([]);
+
+  const { plugin: tooltipPlugin } = useScatterPointTooltipPlugin({ labels: tooltipLabels });
 
   const drawPoints = useMemo(() => {
     return makeDrawPoints({
@@ -169,6 +173,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
         legend: { show: false },
         mode: 2,
         padding: [ 0, 8, 0, 8 ],
+        plugins: [ tooltipPlugin ],
         scales: {
           x: { range: offsetRange(), time: false },
           xCategorical: { range: offsetRange(), time: false },
@@ -194,7 +199,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {} }: Props) => {
         ],
       } as Partial<Options>,
     );
-  }, [ drawPoints, options ]);
+  }, [ drawPoints, options, tooltipPlugin ]);
 
   return (
     <div className={css.base}>

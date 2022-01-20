@@ -1,10 +1,10 @@
 import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import uPlot from 'uplot';
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
-import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import { FacetedData } from 'components/UPlot/types';
@@ -40,6 +40,12 @@ interface HpMetricData {
   trialIds: number[];
 }
 
+interface ChartProp {
+  data: FacetedData;
+  options: Partial<uPlot.Options>;
+  tooltipLabels: (string | null)[];
+}
+
 const ScatterPlots: React.FC<Props> = ({
   experiment,
   filters,
@@ -62,7 +68,7 @@ const ScatterPlots: React.FC<Props> = ({
   const chartProps = useMemo(() => {
     if (!chartData) return undefined;
 
-    return selectedHParams.map(hParam => {
+    return selectedHParams.reduce((acc, hParam) => {
       const xLabel = hParam;
       const yLabel = metricNameToStr(selectedMetric);
       const title = `${yLabel} (y) vs ${xLabel} (x)`;
@@ -73,7 +79,7 @@ const ScatterPlots: React.FC<Props> = ({
       const xSplits = isCategorical
         ? new Array(hpLabels.length).fill(0).map((x, i) => i) : undefined;
       const xValues = isCategorical ? hpLabels : undefined;
-      return {
+      acc[hParam] = {
         data: [
           null,
           [
@@ -85,7 +91,6 @@ const ScatterPlots: React.FC<Props> = ({
             chartData?.trialIds || [],
           ],
         ] as FacetedData,
-        key: hParam,
         options: {
           axes: [
             {
@@ -95,10 +100,13 @@ const ScatterPlots: React.FC<Props> = ({
             },
             { scale: 'y' },
           ],
+          cursor: { drag: { setScale: false, x: false, y: false } },
           title,
         },
+        tooltipLabels: [ xLabel, yLabel, null, null, null, 'trial ID' ],
       };
-    });
+      return acc;
+    }, {} as Record<string, ChartProp>);
   }, [ chartData, selectedHParams, selectedMetric ]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
@@ -241,9 +249,13 @@ const ScatterPlots: React.FC<Props> = ({
               border={true}
               minItemWidth={resize.width > 320 ? 350 : 270}
               mode={GridMode.AutoFill}>
-              {chartProps.map(({ data, key, options }) => (
-                <div key={key} onClick={() => handleChartClick(key)}>
-                  <UPlotScatter data={data} options={options} />
+              {selectedHParams.map(hParam => (
+                <div key={hParam} onClick={() => handleChartClick(hParam)}>
+                  <UPlotScatter
+                    data={chartProps[hParam].data}
+                    options={chartProps[hParam].options}
+                    tooltipLabels={chartProps[hParam].tooltipLabels}
+                  />
                 </div>
               ))}
             </Grid>
@@ -258,14 +270,15 @@ const ScatterPlots: React.FC<Props> = ({
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
         onPrevious={handleGalleryPrevious}>
-        {activeHParam && (
-          <ScatterPlot
-            height={galleryHeight}
-            x={chartData?.hpValues[activeHParam] || []}
-            xLabel={activeHParam}
-            xLogScale={chartData?.hpLogScales[activeHParam]}
-            y={chartData?.metricValues[activeHParam] || []}
-            yLabel={metricNameToStr(selectedMetric)}
+        {chartProps && activeHParam && (
+          <UPlotScatter
+            data={chartProps[activeHParam].data}
+            options={{
+              ...chartProps[activeHParam].options,
+              cursor: { drag: undefined },
+              height: galleryHeight,
+            }}
+            tooltipLabels={chartProps[activeHParam].tooltipLabels}
           />
         )}
       </GalleryModal>

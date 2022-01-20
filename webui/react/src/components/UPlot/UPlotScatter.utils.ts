@@ -5,6 +5,8 @@ import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 
 import { UPlotAxisSplits, UPlotData } from './types';
 
+export const X_INDEX = 0;
+export const Y_INDEX = 1;
 export const SIZE_INDEX = 2;
 export const FILL_INDEX = 3;
 export const STROKE_INDEX = 4;
