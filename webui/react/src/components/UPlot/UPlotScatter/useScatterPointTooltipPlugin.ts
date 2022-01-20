@@ -69,6 +69,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
     if (!tooltipRef.current || !tooltipVisible.current) return;
     tooltipRef.current.className = css.tooltip;
     tooltipVisible.current = false;
+    uPlotRef.current.previousDataIndex = undefined;
   }, []);
 
   const setTooltip = useCallback((u: uPlot) => {
