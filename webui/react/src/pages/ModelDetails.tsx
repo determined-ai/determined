@@ -391,6 +391,7 @@ const ModelDetails: React.FC = () => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             }, total)}
+            rowKey="id"
             showSorterTooltip={false}
             size="small"
             onChange={handleTableChange}
