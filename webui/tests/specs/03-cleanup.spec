@@ -6,7 +6,7 @@ Specification to clean up outstanding experiments and tasks.
 
 * Navigate to experiment list page
 * Toggle all table row selection
-"Kill" all table rows
+* "Kill" all table rows
 
 ## Kill all tasks
 
