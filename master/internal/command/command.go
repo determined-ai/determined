@@ -243,7 +243,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 		c.clearJobInfo()
 	case *apiv1.SetNotebookPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
 
 	case *commandv1.Command:
@@ -261,7 +261,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetCommandPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
 
 	case *shellv1.Shell:
@@ -279,7 +279,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetShellPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
 
 	case *tensorboardv1.Tensorboard:
@@ -297,7 +297,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetTensorboardPriorityRequest:
-		c.setPriority(ctx, int(msg.Priority))
+		_ = c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case sproto.ContainerLog:
@@ -306,11 +306,17 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupWeight:
-		c.setWeight(ctx, msg.Weight)
+		err := c.setWeight(ctx, msg.Weight)
+		if err != nil {
+			ctx.Respond(err)
+		}
 
 	case job.SetGroupPriority:
 		if msg.Priority != nil {
-			c.setPriority(ctx, *msg.Priority)
+			err := c.setPriority(ctx, *msg.Priority)
+			if err != nil {
+				ctx.Respond(err)
+			}
 		}
 
 	default:
@@ -319,20 +325,30 @@ func (c *command) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *command) setPriority(ctx *actor.Context, priority int) {
+func (c *command) setPriority(ctx *actor.Context, priority int) error {
+	if sproto.UseK8sRM(ctx.Self().System()) {
+		return fmt.Errorf("setting priority for job type %s in kubernetes is not supported",
+			c.jobType)
+	}
 	c.Config.Resources.Priority = &priority
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: &priority,
 		Handler:  ctx.Self(),
 	})
+	return nil
 }
 
-func (c *command) setWeight(ctx *actor.Context, weight float64) {
+func (c *command) setWeight(ctx *actor.Context, weight float64) error {
+	if sproto.UseK8sRM(ctx.Self().System()) {
+		return fmt.Errorf("setting weight for job type %s in kubernetes is not supported",
+			c.jobType)
+	}
 	c.Config.Resources.Weight = weight
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
+	return nil
 }
 
 func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
