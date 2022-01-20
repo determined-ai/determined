@@ -122,10 +122,19 @@ func registerTimeComparator(t1 *sproto.AllocateRequest, t2 *sproto.AllocateReque
 // a < b iff a is older than b.
 // The result will be 0 if a==b, -1 if a < b, and +1 if a > b.
 func aReqComparator(a *sproto.AllocateRequest, b *sproto.AllocateRequest) int {
-	if a.JobSubmissionTime.Equal(b.JobSubmissionTime) {
+	if a.JobSubmissionTime == nil && b.JobSubmissionTime == nil {
 		return registerTimeComparator(a, b)
 	}
-	if a.JobSubmissionTime.Before(b.JobSubmissionTime) {
+	if a.JobSubmissionTime == nil {
+		return 1
+	}
+	if b.JobSubmissionTime == nil {
+		return -1
+	}
+	if a.JobSubmissionTime.Equal(*b.JobSubmissionTime) {
+		return registerTimeComparator(a, b)
+	}
+	if a.JobSubmissionTime.Before(*b.JobSubmissionTime) {
 		return -1
 	}
 	return 1

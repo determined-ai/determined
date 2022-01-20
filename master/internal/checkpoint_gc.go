@@ -34,8 +34,8 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		t.task = &sproto.AllocateRequest{
 			TaskID:            t.taskID,
-			JobID:             t.jobID,
-			JobSubmissionTime: t.jobSubmissionTime,
+			JobID:             &t.jobID,
+			JobSubmissionTime: &t.jobSubmissionTime,
 			AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, 1)),
 			Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
