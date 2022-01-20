@@ -436,6 +436,14 @@ class PyTorchTrialController(det.TrialController):
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 
+            if self.context.is_epoch_end():
+                epoch_idx = self.get_epoch_idx(batch_idx)
+                for callback in self.callbacks.values():
+                    with self.prof.record_timing(
+                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_end"
+                    ):
+                        callback.on_training_epoch_end(epoch_idx)
+
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1 and self.context._average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):

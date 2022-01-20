@@ -321,12 +321,15 @@ class TestPyTorchTrial:
         def make_workloads1() -> workload.Stream:
             nonlocal controller
 
-            yield workload.train_workload(1, 1, 0), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0, 2), workload.ignore_workload_response
             assert controller is not None, "controller was never set!"
             assert controller.trial.counter.__dict__ == {
                 "validation_steps_started": 0,
                 "validation_steps_ended": 0,
                 "checkpoints_ended": 0,
+                "training_started_times": 1,
+                "training_epochs_started": 2,
+                "training_epochs_ended": 2,
             }
 
             yield workload.validation_workload(), workload.ignore_workload_response
@@ -334,6 +337,9 @@ class TestPyTorchTrial:
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
                 "checkpoints_ended": 0,
+                "training_started_times": 1,
+                "training_epochs_started": 2,
+                "training_epochs_ended": 2,
             }
 
             interceptor = workload.WorkloadResponseInterceptor()
@@ -345,6 +351,9 @@ class TestPyTorchTrial:
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
                 "checkpoints_ended": 1,
+                "training_started_times": 1,
+                "training_epochs_started": 2,
+                "training_epochs_ended": 2,
             }
 
         controller = utils.make_trial_controller_from_trial_implementation(
@@ -373,6 +382,9 @@ class TestPyTorchTrial:
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
             "checkpoints_ended": 0,
+            "training_started_times": 2,
+            "training_epochs_started": 3,
+            "training_epochs_ended": 3,
         }
 
     def test_context(self) -> None:
