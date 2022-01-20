@@ -413,13 +413,11 @@ def wait(args: Namespace) -> None:
 
 @authentication.required
 def list_experiments(args: Namespace) -> None:
-    params = {}
-    if args.all:
-        params["filter"] = "all"
-    else:
-        params["user"] = authentication.must_cli_auth().get_session_user()
+    users: List[str] = []
+    if not args.all:
+        users = [authentication.must_cli_auth().get_session_user()]
 
-    r = bindings.get_GetExperiments(setup_session(args))
+    r = bindings.get_GetExperiments(setup_session(args), users=users)
 
     def format_experiment(e: Any) -> List[Any]:
         result = [
