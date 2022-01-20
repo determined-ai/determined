@@ -332,8 +332,7 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllTableRows(action: string) {
-    await t.waitFor(async () => await t.text(BATCH_ACTION_TEXT).exists());
-    await t.click(t.text(BATCH_ACTION_TEXT));
+    await t.click(BATCH_ACTION_TEXT, { force: true });
     // Wait for the dropdown animation to finish
     await sleep(500);
     await t.click(action, t.within(t.$('.ant-select-dropdown')));

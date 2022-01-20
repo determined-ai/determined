@@ -350,7 +350,7 @@ const ExperimentList: React.FC = () => {
         title: 'Name',
         width: 240,
       },
-      { dataIndex: 'description', title: 'Description' },
+      { dataIndex: 'description', render: descriptionRenderer, title: 'Description' },
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
