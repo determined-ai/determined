@@ -231,7 +231,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       )}
       <div className={css.buttons}>
         <IconButton icon="reset" label="Reset" onClick={handleReset} />
-        <IconButton icon="checkmark" label="Apply" type="primary" onClick={handleApply} />
+        <IconButton icon="checkmark" label="Apply" onClick={handleApply} />
       </div>
     </>
   );
