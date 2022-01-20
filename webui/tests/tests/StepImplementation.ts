@@ -310,6 +310,7 @@ export default class StepImplementation {
   public async toggleAllTableRowSelection() {
     await t.waitFor(async () => await t.$('th input[type=checkbox]').exists());
     await t.click(t.$('th input[type=checkbox]'));
+    await t.waitFor(async () => await t.text(BATCH_ACTION_TEXT).isVisible());
   }
 
   @Step('Table batch should have following buttons <table>')
