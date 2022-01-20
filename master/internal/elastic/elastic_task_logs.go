@@ -88,7 +88,6 @@ func (e *Elastic) TaskLogsCount(taskID model.TaskID, fs []api.Filter) (int, erro
 // expensive for deep pagination and the scroll api specifically recommends
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
-//nolint:dupl // True but duplication is a prior version that should never change.
 func (e *Elastic) TaskLogs(
 	taskID model.TaskID, limit int, fs []api.Filter, order apiv1.OrderBy,
 	searchAfter interface{},

@@ -206,18 +206,28 @@ WHERE end_time IS NULL
 // in trial logs to either read timestamps or regex them out of logs.
 var taskLogsFieldMap = map[string]string{}
 
+type taskLogsFollowState struct {
+	// The last ID returned by the query. Historically the trial logs API when streaming
+	// repeatedly made a request like SELECT ... FROM trial_logs ... ORDER BY k OFFSET N LIMIT M.
+	// Since offset is less than optimal (no filtering is done during the initial
+	// index scan), we at least pass Postgres the ID and let it begin after a certain ID rather
+	// than offset N into the query.
+	id int64
+}
+
 // TaskLogs takes a task ID and log offset, limit and filters and returns matching logs.
 func (db *PgDB) TaskLogs(
 	taskID model.TaskID, limit int, fs []api.Filter, order apiv1.OrderBy, followState interface{},
 ) ([]*model.TaskLog, interface{}, error) {
-	var offset int
-	if followState == nil {
-		offset = 0
-	} else {
-		offset = followState.(int)
+	if followState != nil {
+		fs = append(fs, api.Filter{
+			Field:     "id",
+			Operation: api.FilterOperationGreaterThan,
+			Values:    []int64{followState.(*taskLogsFollowState).id},
+		})
 	}
 
-	params := []interface{}{taskID, offset, limit}
+	params := []interface{}{taskID, limit}
 	fragment, params := filtersToSQL(fs, params, taskLogsFieldMap)
 	query := fmt.Sprintf(`
 SELECT
@@ -234,7 +244,7 @@ SELECT
 FROM task_logs l
 WHERE l.task_id = $1
 %s
-ORDER BY timestamp %s OFFSET $2 LIMIT $3
+ORDER BY l.id %s LIMIT $2
 `, fragment, orderByToSQL(order))
 
 	var b []*model.TaskLog
@@ -246,7 +256,12 @@ ORDER BY timestamp %s OFFSET $2 LIMIT $3
 		l.FlatLog = l.Message()
 	}
 
-	return b, offset + len(b), nil
+	if len(b) > 0 {
+		lastLog := b[len(b)-1]
+		followState = &taskLogsFollowState{id: int64(*lastLog.ID)}
+	}
+
+	return b, followState, nil
 }
 
 // AddTaskLogs adds a list of *model.TaskLog objects to the database with automatic IDs.

@@ -39,7 +39,6 @@ func (e *Elastic) TrialLogsCount(trialID int, fs []api.Filter) (int, error) {
 // expensive for deep pagination and the scroll api specifically recommends
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
-//nolint:dupl // This is a prior version and a dedup would make the other hard to read and maintain.
 func (e *Elastic) TrialLogs(
 	trialID, limit int, fs []api.Filter, order apiv1.OrderBy, searchAfter interface{},
 ) ([]*model.TrialLog, interface{}, error) {

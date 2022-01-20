@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	taskLogsBatchSize = 1000
+	taskLogsChanBuffer = 5
+	taskLogsBatchSize  = 1000
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 	taskLogsBatchMissWaitTime   = time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 
-	// Common errors
+	// Common errors.
 	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
 
@@ -66,7 +67,7 @@ func (a *apiServer) TaskLogs(
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan api.BatchResult)
+	res := make(chan api.BatchResult, taskLogsChanBuffer)
 	go a.taskLogs(ctx, req, res)
 
 	return processBatches(res, func(b api.Batch) error {

@@ -85,7 +85,7 @@ func (a *apiServer) TrialLogs(
 		fallthrough
 	case t.LogVersion == model.TaskLogVersion0:
 		// First stream the legacy logs.
-		res := make(chan api.BatchResult, 1)
+		res := make(chan api.BatchResult, taskLogsChanBuffer)
 		go a.legacyTrialLogs(ctx, req, res)
 		if err := processBatches(res, func(b api.Batch) error {
 			return b.ForEach(func(i interface{}) error {
@@ -103,7 +103,7 @@ func (a *apiServer) TrialLogs(
 		fallthrough
 	case t.LogVersion == model.TaskLogVersion1:
 		// Translate the request.
-		res := make(chan api.BatchResult, 1)
+		res := make(chan api.BatchResult, taskLogsChanBuffer)
 		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
 			TaskId:          string(taskID),
 			Limit:           req.Limit,
