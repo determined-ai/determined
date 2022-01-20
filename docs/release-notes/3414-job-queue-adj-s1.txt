@@ -1,5 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Added support for adjusting job priority and weight through WebUI and CLI.

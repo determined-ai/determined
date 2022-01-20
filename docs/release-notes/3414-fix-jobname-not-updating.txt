@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  fix an issue where the updating an experiment name wouldn't reflect the change in its job
-   representation until a master restart.

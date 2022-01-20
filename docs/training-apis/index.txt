@@ -87,7 +87,7 @@ includes ROCm 4.2, Pytorch 1.9 and Tensorflow 2.5:
 
 Known limitations:
 
--  Only agent-based deployments are available, kubernetes is not yet supported.
+-  Only agent-based deployments are available; Kubernetes is not yet supported.
 -  GPU profiling is not yet supported.
 
 ************

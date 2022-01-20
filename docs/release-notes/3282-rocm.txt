@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Added experimental ROCm support. In the environment config for images and env variables, ``gpu``
-   key was renamed to ``cuda``. Deprecated ``gpu`` key is still supported for backwards
-   compatibility but its use is discouraged.
