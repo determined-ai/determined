@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import uPlot, { Plugin } from 'uplot';
 
 import { humanReadableNumber } from 'utils/number';
@@ -13,10 +13,6 @@ interface Props {
   labels?: (string | null)[];
   offsetX?: number;
   offsetY?: number;
-}
-
-interface PluginHook {
-  plugin: Plugin;
 }
 
 interface UPlotState {
@@ -58,7 +54,7 @@ const createTooltipContent = (tooltip: HTMLDivElement, keyValues: KeyValue[]) =>
   });
 };
 
-const useScatterPointTooltipPlugin = (props: Props = {}): PluginHook => {
+const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const tooltipId = useRef(generateAlphaNumeric());
   const tooltipRef = useRef<HTMLDivElement>();
@@ -69,13 +65,13 @@ const useScatterPointTooltipPlugin = (props: Props = {}): PluginHook => {
     seriesIndex: 1,
   });
 
-  const hideTooltip = () => {
+  const hideTooltip = useCallback(() => {
     if (!tooltipRef.current || !tooltipVisible.current) return;
     tooltipRef.current.className = css.tooltip;
     tooltipVisible.current = false;
-  };
+  }, []);
 
-  const setTooltip = (u: uPlot) => {
+  const setTooltip = useCallback((u: uPlot) => {
     if (!tooltipRef.current) return;
 
     const { dataIndex, seriesIndex } = uPlotRef.current;
@@ -127,7 +123,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): PluginHook => {
     tooltipRef.current.style.top = `${top + offsetY}px`;
 
     uPlotRef.current.previousDataIndex = uPlotRef.current.dataIndex;
-  };
+  }, [ props.labels, props.offsetX, props.offsetY ]);
 
   const plugin = useMemo(() => ({
     hooks: {
@@ -152,9 +148,9 @@ const useScatterPointTooltipPlugin = (props: Props = {}): PluginHook => {
         }
       },
     },
-  }), []);
+  }), [ hideTooltip, setTooltip ]);
 
-  return { plugin };
+  return plugin;
 };
 
 export default useScatterPointTooltipPlugin;

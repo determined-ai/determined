@@ -28,7 +28,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
   const hRect = useRef<QuadTree | null>();
   const ranges = useRef<(Range<number>)[]>([]);
 
-  const { plugin: tooltipPlugin } = useScatterPointTooltipPlugin({ labels: tooltipLabels });
+  const tooltipPlugin = useScatterPointTooltipPlugin({ labels: tooltipLabels });
 
   const drawPoints = useMemo(() => {
     return makeDrawPoints({
