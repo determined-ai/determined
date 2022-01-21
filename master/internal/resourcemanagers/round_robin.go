@@ -36,7 +36,7 @@ func roundRobinSchedule(
 	groupMapping := make(map[*group]*groupState)
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		group := groups[req.GroupID()]
+		group := groups[req.Group]
 		state, ok := groupMapping[group]
 		if !ok {
 			state = &groupState{group: group}

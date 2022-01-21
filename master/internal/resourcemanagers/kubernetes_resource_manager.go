@@ -338,7 +338,7 @@ func (k *kubernetesResourceManager) assignResources(
 		}
 	}
 
-	k.slotsUsedPerGroup[k.groups[req.GroupID()]] += req.SlotsNeeded
+	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
 	allocations := make([]sproto.Reservation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
@@ -347,7 +347,7 @@ func (k *kubernetesResourceManager) assignResources(
 			req:       req,
 			agent:     k.agent,
 			container: container,
-			group:     k.groups[req.GroupID()],
+			group:     k.groups[req.Group],
 		})
 
 		k.addrToContainerID[req.TaskActor] = container.id
@@ -407,7 +407,7 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 	for it := k.reqList.iterator(); it.next(); {
 		req := it.value()
-		group := k.groups[req.GroupID()]
+		group := k.groups[req.Group]
 		assigned := k.reqList.GetAllocations(req.TaskActor)
 		if !assignmentIsScheduled(assigned) {
 			if maxSlots := group.maxSlots; maxSlots != nil {

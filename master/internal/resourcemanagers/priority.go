@@ -251,7 +251,7 @@ func sortTasksByPriorityAndTimestamp(
 			continue
 		}
 
-		priority := groups[req.GroupID()].priority
+		priority := groups[req.Group].priority
 		if priority == nil {
 			panic(fmt.Sprintf("priority not set for task %s", req.Name))
 		}
@@ -355,8 +355,8 @@ func sortTasks(
 	}
 
 	sort.Slice(reqs, func(i, j int) bool {
-		p1 := *groups[reqs[i].GroupID()].priority
-		p2 := *groups[reqs[j].GroupID()].priority
+		p1 := *groups[reqs[i].Group].priority
+		p2 := *groups[reqs[j].Group].priority
 		if k8s { // in k8s, higher priority == more prioritized
 			switch {
 			case p1 > p2:

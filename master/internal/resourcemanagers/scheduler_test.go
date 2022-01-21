@@ -35,7 +35,7 @@ func (g *mockGroup) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case actor.PreStart:
 	case actor.PostStop:
-	case *job.RMJobInfo:
+	case job.RMJobInfo:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -80,7 +80,9 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 			ResourcePool: t.resourcePool,
 			TaskActor:    ctx.Self(),
 		}
-		if t.group != nil {
+		if t.group == nil {
+			task.Group = ctx.Self()
+		} else {
 			task.Group = ctx.Self().System().Get(actor.Addr(t.group.id))
 		}
 		if ctx.ExpectingResponse() {
@@ -271,6 +273,7 @@ func forceAddTask(
 	req := &sproto.AllocateRequest{
 		AllocationID: model.AllocationID(taskID),
 		TaskActor:    ref,
+		Group:        ref,
 		SlotsNeeded:  slotsNeeded,
 	}
 	taskList.AddTask(req)
@@ -367,7 +370,9 @@ func setupSchedulerStates(
 			Preemptible:       !mockTask.nonPreemptible,
 			JobSubmissionTime: mockTask.jobSubmissionTime,
 		}
-		if mockTask.group != nil {
+		if mockTask.group == nil {
+			req.Group = ref
+		} else {
 			req.Group = groupActors[mockTask.group]
 		}
 		taskList.AddTask(req)

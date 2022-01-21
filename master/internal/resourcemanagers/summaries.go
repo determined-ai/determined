@@ -48,7 +48,7 @@ func newTaskSummary(
 		SchedulerType:  schedulerType,
 	}
 
-	if group, ok := groups[request.GroupID()]; ok {
+	if group, ok := groups[request.Group]; ok {
 		summary.Priority = group.priority
 	}
 	return summary
