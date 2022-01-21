@@ -299,6 +299,8 @@ class Counter(det.pytorch.PyTorchCallback):
         self.checkpoints_ended = 0
         self.training_started_times = 0
         self.training_epochs_started = 0
+        self.training_batches_started = 0
+        self.training_batches_ended = 0
         self.training_epochs_ended = 0
 
     def on_validation_start(self) -> None:
@@ -314,12 +316,20 @@ class Counter(det.pytorch.PyTorchCallback):
         logging.debug("starting training")
         self.training_started_times += 1
 
+    def on_training_batch_start(self) -> None:
+        logging.debug("starting batch")
+        self.training_batches_started += 1
+
+    def on_training_batch_end(self, batch_idx: int) -> None:
+        logging.debug(f"ending batch {batch_idx}")
+        self.training_batches_ended += 1
+
     def on_training_epoch_start(self) -> None:
         logging.debug("starting epoch")
         self.training_epochs_started += 1
 
     def on_training_epoch_end(self, epoch_idx: int) -> None:
-        logging.debug(f"end of an epoch {epoch_idx}")
+        logging.debug(f"end of epoch {epoch_idx}")
         self.training_epochs_ended += 1
 
     def state_dict(self) -> Dict[str, Any]:

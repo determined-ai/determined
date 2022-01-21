@@ -91,6 +91,18 @@ class PyTorchCallback:
         """
         pass
 
+    def on_training_batch_start(self) -> None:
+        """
+        Run on start of a new training batch
+        """
+        pass
+
+    def on_training_batch_end(self, batch_idx: int) -> None:
+        """
+        Run on end of a training batch
+        """
+        pass
+
     def on_training_epoch_start(self) -> None:
         """
         Run on start of a new training epoch

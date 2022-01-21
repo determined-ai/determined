@@ -389,6 +389,11 @@ class PyTorchTrialController(det.TrialController):
                     ):
                         callback.on_training_epoch_start()
             self.context._loss_ids = {}
+            for callback in self.callbacks.values():
+                with self.prof.record_timing(
+                        f"callbacks.{callback.__class__.__name__}.on_training_batch_start"
+                ):
+                    callback.on_training_batch_start()
 
             with self.prof.record_timing("train_batch", requires_sync=False):
                 if self.context.profiler:
@@ -435,6 +440,12 @@ class PyTorchTrialController(det.TrialController):
             samples_per_second *= self.context.distributed.size
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
+
+            for callback in self.callbacks.values():
+                with self.prof.record_timing(
+                        f"callbacks.{callback.__class__.__name__}.on_training_batch_end"
+                ):
+                    callback.on_training_batch_end(batch_idx)
 
             if self.context.is_epoch_end():
                 epoch_idx = self.get_epoch_idx(batch_idx)

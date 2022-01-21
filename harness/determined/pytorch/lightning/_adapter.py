@@ -220,6 +220,9 @@ class LightningAdapter(PyTorchTrial):
                     type(lm).current_epoch = context.current_train_epoch()  # type: ignore
                 lm.on_train_epoch_start()
 
+            def on_training_epoch_end(self, epoch_idx: int) -> None:
+                lm.on_train_epoch_end()
+
             def on_validation_epoch_start(self) -> None:
                 lm.on_validation_epoch_start()
 

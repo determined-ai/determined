@@ -321,7 +321,7 @@ class TestPyTorchTrial:
         def make_workloads1() -> workload.Stream:
             nonlocal controller
 
-            yield workload.train_workload(1, 1, 0, 2), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0, 4), workload.ignore_workload_response
             assert controller is not None, "controller was never set!"
             assert controller.trial.counter.__dict__ == {
                 "validation_steps_started": 0,
@@ -330,6 +330,8 @@ class TestPyTorchTrial:
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "training_batches_started": 4,
+                "training_batches_ended": 4,
             }
 
             yield workload.validation_workload(), workload.ignore_workload_response
@@ -340,6 +342,8 @@ class TestPyTorchTrial:
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "training_batches_started": 4,
+                "training_batches_ended": 4,
             }
 
             interceptor = workload.WorkloadResponseInterceptor()
@@ -354,11 +358,15 @@ class TestPyTorchTrial:
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "training_batches_started": 4,
+                "training_batches_ended": 4,
             }
 
+        hparams1 = dict(self.hparams)
+        hparams1["global_batch_size"] = 2
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialCallbacks,
-            hparams=self.hparams,
+            hparams=hparams1,
             workloads=make_workloads1(),
             checkpoint_dir=str(checkpoint_dir),
         )
@@ -385,6 +393,8 @@ class TestPyTorchTrial:
             "training_started_times": 2,
             "training_epochs_started": 3,
             "training_epochs_ended": 3,
+            "training_batches_started": 5,
+            "training_batches_ended": 5,
         }
 
     def test_context(self) -> None:
