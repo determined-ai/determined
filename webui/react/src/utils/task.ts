@@ -123,6 +123,7 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
         name: experimentTask.name,
         numTrials: Math.round(Math.random() * 60000),
         resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
+        searcherType: 'single',
         username: user.username,
       } as Type.ExperimentItem;
     });

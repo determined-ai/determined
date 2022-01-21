@@ -442,6 +442,7 @@ export interface ExperimentItem {
   archived: boolean;
   description?: string;
   endTime?: string;
+  forkedFrom?: number;
   id: number;
   jobId: string;
   jobSummary?: JobSummary;
@@ -450,7 +451,8 @@ export interface ExperimentItem {
   notes?: string;
   numTrials: number;
   progress?: number;
-  resourcePool: string
+  resourcePool: string;
+  searcherType: string;
   startTime: string;
   state: CompoundRunState;
   username: string;
