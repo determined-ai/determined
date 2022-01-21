@@ -174,6 +174,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 	case sproto.ReleaseResources:
 		a.Terminate(ctx)
+	case sproto.ChangeRP:
+		a.Terminate(ctx)
 	case actor.PostStop:
 		a.Cleanup(ctx)
 	case sproto.ContainerLog:

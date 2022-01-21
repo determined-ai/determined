@@ -282,6 +282,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources.SetResourcePool(msg.ResourcePool)
 		// TODO: check if the RP exists
 		e.Config.SetResources(resources)
+		for _, ref := range ctx.Children() {
+			ctx.Tell(ref, msg)
+		}
 		ctx.Tell(e.rm, job.SetRP{ResourcePool: msg.ResourcePool, Handler: ctx.Self()})
 
 	// Experiment shutdown logic.
