@@ -145,7 +145,7 @@ func calculateGroupStates(
 		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.Label] {
 			continue
 		}
-		group := groups[req.Group]
+		group := groups[req.GroupID()]
 		state, ok := groupMapping[group]
 		if !ok {
 			state = &groupState{

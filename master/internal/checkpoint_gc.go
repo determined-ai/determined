@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -65,9 +64,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		})
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.
-
-	case *job.RMJobInfo:
-		// Ignore job information updates as users don't care about these
 
 	case sproto.TaskContainerStateChanged:
 		if msg.Container.State != cproto.Terminated {

@@ -13,6 +13,9 @@ func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model
 	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
 	for _, req := range reqs {
+		if !req.UserVisible() {
+			continue
+		}
 		v1JobInfo, exists := isAdded[req.JobID]
 		if !exists {
 			v1JobInfo = &job.RMJobInfo{
@@ -40,6 +43,9 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 	reqs := make(AllocReqs, 0)
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
+		if !req.UserVisible() {
+			continue
+		}
 		reqs = append(reqs, req)
 	}
 	jobsMap, _ := reduceToJobQInfo(reqs)

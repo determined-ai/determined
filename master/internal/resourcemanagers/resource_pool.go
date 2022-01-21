@@ -90,10 +90,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-	if msg.Group == nil {
-		msg.Group = msg.TaskActor
-	}
-	rp.getOrCreateGroup(ctx, msg.Group)
+	rp.getOrCreateGroup(ctx, msg.GroupID())
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed Task"
 	}

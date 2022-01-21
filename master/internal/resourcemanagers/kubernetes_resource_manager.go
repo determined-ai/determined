@@ -220,7 +220,7 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		}
 
 		for it := k.reqList.iterator(); it.next(); {
-			if it.value().Group == msg.Handler {
+			if it.value().GroupID() == msg.Handler {
 				taskActor := it.value().TaskActor
 				if id, ok := k.addrToContainerID[taskActor]; ok {
 					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
@@ -263,10 +263,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
-	if msg.Group == nil {
-		msg.Group = msg.TaskActor
-	}
-	k.getOrCreateGroup(ctx, msg.Group)
+	k.getOrCreateGroup(ctx, msg.GroupID())
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed-k8-Task"
 	}
