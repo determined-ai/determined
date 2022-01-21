@@ -429,7 +429,7 @@ def start_tensorboard(experiment_id: int) -> str:
 def delete_experiments(*experiment_ids: int) -> None:
     eids = set(experiment_ids)
     while eids:
-        output = extract_columns(det_run(["e", "list", "-a"]), [0, 3])
+        output = extract_columns(det_run(["e", "list", "-a"]), [0, 4])
 
         running_ids = {int(o[0]) for o in output if o[1] == "COMPLETED"}
         intersection = eids & running_ids

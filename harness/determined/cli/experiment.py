@@ -425,7 +425,7 @@ def list_experiments(args: Namespace) -> None:
             e.username,
             e.name,
             e.forkedFrom,
-            e.state.name,
+            e.state.value.replace("STATE_", ""),
             render.format_percent(e.progress),
             render.format_time(e.startTime),
             render.format_time(e.endTime),
@@ -461,6 +461,7 @@ def scalar_training_metrics_names(exp: Dict[str, Any]) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
     that are associated with scalar, numeric values.
+
     This function assumes that all batches in an experiment return
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
@@ -496,7 +497,7 @@ def list_trials(args: Namespace) -> None:
     values = [
         [
             t.id,
-            t.state.name,
+            t.state.value.replace("STATE_", ""),
             json.dumps(t.hparams, indent=4),
             render.format_time(t.startTime),
             render.format_time(t.endTime),
