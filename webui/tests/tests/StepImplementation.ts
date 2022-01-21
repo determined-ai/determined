@@ -410,15 +410,13 @@ export default class StepImplementation {
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    const lastCol = (await t.$('th').elements()).length;
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: lastCol }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 16 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Open TensorBoard from experiment row <row>')
   public async openExperimentInTensorBoard(row: string) {
-    const lastCol = (await t.$('th').elements()).length;
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: lastCol }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 16 }));
     await clickAndCloseTab(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))));
   }
 
