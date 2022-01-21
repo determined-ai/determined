@@ -570,6 +570,13 @@ class TestPyTorchTrial:
         controller.run()
 
 
+@pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
+def test_checkpoint_loading(ckpt_ver):
+    checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-pytorch")
+    trial = pytorch.load_trial_from_checkpoint_path(checkpoint_dir)
+    assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
+
+
 def test_create_trial_instance() -> None:
     utils.create_trial_instance(pytorch_xor_model.XORTrial)
 
