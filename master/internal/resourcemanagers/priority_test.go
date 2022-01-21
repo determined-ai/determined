@@ -663,8 +663,10 @@ func AddUnallocatedTasks(
 			TaskActor:    ref,
 			Preemptible:  !mockTask.nonPreemptible,
 		}
-		groupRef, _ := system.ActorOf(actor.Addr(mockTask.group.id), mockTask.group)
-		req.Group = groupRef
+		if mockTask.group != nil {
+			groupRef, _ := system.ActorOf(actor.Addr(mockTask.group.id), mockTask.group)
+			req.Group = groupRef
+		}
 
 		taskList.AddTask(req)
 	}
