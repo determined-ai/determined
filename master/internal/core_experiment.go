@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -74,53 +72,6 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	}
 
 	return &queries, nil
-}
-
-func (m *Master) getExperimentSummaries(c echo.Context) (interface{}, error) {
-	type ExperimentSummary struct {
-		ID        int             `db:"id" json:"id"`
-		State     string          `db:"state" json:"state"`
-		OwnerID   int             `db:"owner_id" json:"owner_id"`
-		Progress  *float64        `db:"progress" json:"progress"`
-		Archived  bool            `db:"archived" json:"archived"`
-		StartTime string          `db:"start_time" json:"start_time"`
-		EndTime   *string         `db:"end_time" json:"end_time"`
-		Config    json.RawMessage `db:"config" json:"config"`
-	}
-	states := c.QueryParam("states")
-	if states == "" {
-		var allStates []string
-		for state := range model.ExperimentTransitions {
-			allStates = append(allStates, string(state))
-		}
-		states = strings.Join(allStates, ",")
-	}
-	var results []ExperimentSummary
-	err := m.db.Query("get_experiment_summaries", &results, states)
-	return results, err
-}
-
-func (m *Master) getExperimentList(c echo.Context) (interface{}, error) {
-	userFilter := c.QueryParam("user")
-	skipInactive, err := strconv.ParseBool(c.QueryParam("skipInactive"))
-	if err != nil {
-		skipInactive = false
-	}
-	if userFilter != "" {
-		return m.db.ExperimentDescriptorsRawForUser(true, skipInactive, userFilter)
-	}
-	return m.db.ExperimentDescriptorsRaw(true, skipInactive)
-}
-
-func (m *Master) getExperiments(c echo.Context) (interface{}, error) {
-	query, err := ParseExperimentsQuery(c)
-	if err != nil {
-		return nil, err
-	}
-
-	skipArchived := query.Filter != "all"
-
-	return m.db.ExperimentListRaw(skipArchived, query.User, query.Limit, query.Offset)
 }
 
 func (m *Master) getExperiment(c echo.Context) (interface{}, error) {
@@ -495,24 +446,4 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		Labels:   make([]string, 0),
 	}
 	return response, nil
-}
-
-func (m *Master) postExperimentKill(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-
-	exp := actor.Addr("experiments", args.ExperimentID)
-	resp := m.system.AskAt(exp, &apiv1.KillExperimentRequest{})
-	if resp.Source() == nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("active experiment not found: %d", args.ExperimentID))
-	}
-	if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
-		return nil, errors.Errorf("attempt to kill experiment timed out")
-	}
-	return nil, nil
 }
