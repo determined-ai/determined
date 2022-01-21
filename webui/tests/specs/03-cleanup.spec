@@ -7,7 +7,7 @@ Specification to clean up outstanding experiments and tasks.
 These tests are being skipped because they have been failing repeatedly.
 See https://github.com/determined-ai/determined/issues/3477
 
-Navigate to experiment list page
+* Navigate to experiment list page
 Toggle all table row selection
 "Kill" all table rows
 
