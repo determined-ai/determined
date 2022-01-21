@@ -5,6 +5,7 @@ Specification to clean up outstanding experiments and tasks.
 ## Kill all experiments
 
 * Navigate to experiment list page
+* Scroll table to the "left"
 * Toggle all table row selection
 * "Kill" all table rows
 

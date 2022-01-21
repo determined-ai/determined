@@ -332,7 +332,7 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllTableRows(action: string) {
-    await t.click(BATCH_ACTION_TEXT, { force: true });
+    await t.click(BATCH_ACTION_TEXT);
     // Wait for the dropdown animation to finish
     await sleep(500);
     await t.click(action, t.within(t.$('.ant-select-dropdown')));
@@ -411,15 +411,15 @@ export default class StepImplementation {
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    // const lastCol = (await t.$('th').elements()).length;
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 16 }));
+    const lastCol = (await t.$('th').elements()).length;
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: lastCol }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Open TensorBoard from experiment row <row>')
   public async openExperimentInTensorBoard(row: string) {
-    // const lastCol = (await t.$('th').elements()).length;
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 16 }));
+    const lastCol = (await t.$('th').elements()).length;
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: lastCol }));
     await clickAndCloseTab(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))));
   }
 
