@@ -27,7 +27,9 @@ def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) ->
 
 
 def activate_experiment(master_url: str, exp_id: int) -> None:
-    patch_experiment(master_url, exp_id, {"state": "ACTIVE"})
+    path = "/api/v1/experiments/{}/activate".format(exp_id)
+    headers = {"Content-Type": "application/merge-patch+json"}
+    req.post(master_url, path, headers=headers)
 
 
 def trial_logs(

@@ -240,13 +240,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
 	patch := struct {
-		State *model.State `json:"state"`
-		// TODO: the config-level items like `description` are really at a different level
-		// than the top-level items, we should reorganize this into ExperimentPatch and
-		// ExperimentConfigPatch.
-		Description *string `json:"description"`
-		// Labels set to nil are deleted.
-		Labels    map[string]*bool `json:"labels"`
+		State     *model.State `json:"state"`
 		Resources *struct {
 			MaxSlots api.MaybeInt `json:"max_slots"`
 			Weight   *float64     `json:"weight"`
@@ -257,7 +251,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			SaveTrialBest      int `json:"save_trial_best"`
 			SaveTrialLatest    int `json:"save_trial_latest"`
 		} `json:"checkpoint_storage"`
-		Archived *bool `json:"archived"`
 	}{}
 	if err := api.BindPatch(&patch, c); err != nil {
 		return nil, err
@@ -277,12 +270,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		agentUserGroup = &m.config.Security.DefaultTask
 	}
 
-	if patch.Archived != nil {
-		dbExp.Archived = *patch.Archived
-		if err := m.db.SaveExperimentArchiveStatus(dbExp); err != nil {
-			return nil, errors.Wrapf(err, "archiving experiment %d", dbExp.ID)
-		}
-	}
 	if patch.Resources != nil {
 		resources := dbExp.Config.Resources()
 		if patch.Resources.MaxSlots.IsPresent {
@@ -296,22 +283,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		dbExp.Config.SetResources(resources)
 	}
-	if patch.Description != nil {
-		dbExp.Config.SetDescription(patch.Description)
-	}
-	labels := dbExp.Config.Labels()
-	for label, keep := range patch.Labels {
-		switch _, ok := labels[label]; {
-		case ok && keep == nil:
-			delete(labels, label)
-		case !ok && keep != nil:
-			if labels == nil {
-				labels = make(expconf.Labels)
-			}
-			labels[label] = true
-		}
-	}
-	dbExp.Config.SetLabels(labels)
 	if patch.CheckpointStorage != nil {
 		storage := dbExp.Config.CheckpointStorage()
 		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
