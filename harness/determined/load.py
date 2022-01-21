@@ -2,6 +2,7 @@ import contextlib
 import importlib
 import json
 import logging
+import re
 import runpy
 import sys
 from typing import Iterator, List, Optional, Tuple, Type, cast
@@ -77,6 +78,15 @@ def get_trial_class_from_native(command: List[str]) -> Type[det.Trial]:
     return trial_cls
 
 
+def parse_trial_class_from_entrypoint(entrypoint: str) -> Optional[str]:
+    entrypoint_cmd = entrypoint.split(" ")
+    trial_class_regex = re.compile("^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$")
+    for arg in entrypoint_cmd:
+        if trial_class_regex.match(arg):
+            return arg
+    return None
+
+
 def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
     """
     Load and initialize a Trial class from an entrypoint specification.
@@ -150,11 +160,14 @@ def get_trial_controller_class(trial_class: Type[det.Trial]) -> Type[det.TrialCo
 
 def get_trial_and_controller_class(
     experiment_config: det.ExperimentConfig,
+    train_entrypoint: Optional[str],
 ) -> Tuple[Type[det.Trial], Type[det.TrialController]]:
     if experiment_config.native_enabled():
         command = experiment_config["internal"]["native"]["command"]  # type: List[str]
         trial_class = get_trial_class_from_native(command)
     else:
-        trial_class = trial_class_from_entrypoint(experiment_config["entrypoint"])
+        if not train_entrypoint:
+            raise ValueError("Entrypoint must be specified when native is disabled")
+        trial_class = trial_class_from_entrypoint(train_entrypoint)
 
     return trial_class, get_trial_controller_class(trial_class)

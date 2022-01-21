@@ -64,4 +64,4 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # Do rendezvous last, to ensure all launch layers start around the same time.
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --rendezvous
 
-exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.launch_autohorovod "$@"
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.launch "$@"

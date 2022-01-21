@@ -175,7 +175,16 @@ def local_experiment(args: Namespace) -> None:
     set_logger(bool(experiment_config.get("debug", False)))
 
     with _local_execution_manager(args.model_def.resolve()):
-        trial_class = determined.load.trial_class_from_entrypoint(experiment_config["entrypoint"])
+        trial_entrypoint = determined.load.parse_trial_class_from_entrypoint(
+            experiment_config["entrypoint"]
+        )
+        if not trial_entrypoint:
+            raise ValueError(
+                "no class specification (model_def:TrialClass) "
+                "was found in ({experiment_config['entrypoint']})"
+            )
+
+        trial_class = determined.load.trial_class_from_entrypoint(trial_entrypoint)
         determined.experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 

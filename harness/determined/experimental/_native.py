@@ -117,7 +117,14 @@ def _load_trial_for_checkpoint_export(
     hparams: Dict[str, Any],
 ) -> Tuple[Type[det.Trial], det.TrialContext]:
     with det._local_execution_manager(context_dir):
-        trial_class = load.trial_class_from_entrypoint(config["entrypoint"])
+        trial_entrypoint = load.parse_trial_class_from_entrypoint(config["entrypoint"])
+        if not trial_entrypoint:
+            raise errors.InvalidExperimentException(
+                f"Unable to find trial class (model_def:TrialClass) "
+                f"specification in entrypoint {config['entrypoint']}"
+            )
+
+        trial_class = load.trial_class_from_entrypoint(trial_entrypoint)
         core_context, env = det._make_local_execution_env(
             managed_training=managed_training,
             test_mode=False,

@@ -1,6 +1,6 @@
 import enum
 import numbers
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, Union
 
 from determined.common import schemas
 from determined.common.schemas import expconf
@@ -17,12 +17,15 @@ KNOWN_DICT_TYPES = {}  # type: Dict[Any, Any]
 
 KNOWN_LIST_TYPES = {}  # type: Dict[Any, Any]
 
+KNOWN_UNION_TYPES = {}  # type: Dict[Any, Any]
+
 R = TypeVar("R")
 
 
 def register_known_type(cls: R) -> R:
     KNOWN_OPTIONAL_TYPES[Optional[cls]] = cls
     KNOWN_OPTIONAL_TYPES[Optional[List[cls]]] = List[cls]  # type: ignore
+    KNOWN_OPTIONAL_TYPES[Optional[Union[cls, List[cls]]]] = Union[cls, List[cls]]  # type: ignore
     KNOWN_OPTIONAL_TYPES[Optional[Dict[str, cls]]] = Dict[str, cls]  # type: ignore
 
     KNOWN_LIST_TYPES[List[cls]] = cls  # type: ignore
@@ -30,6 +33,7 @@ def register_known_type(cls: R) -> R:
     # Note that schemas only support Dict[str, *], since json objects only support string keys.
     KNOWN_DICT_TYPES[Dict[str, cls]] = cls  # type: ignore
 
+    KNOWN_UNION_TYPES[Union[cls, List[cls]]] = cls  # type: ignore
     return cls
 
 
@@ -144,6 +148,10 @@ def _instance_from_annotation(anno: type, value: Any, prevalidated: bool = False
         if not isinstance(value, Mapping):
             raise TypeError(f"unable to create instance of {anno} from {value}")
         return {k: _instance_from_annotation(subanno, v, prevalidated) for k, v in value.items()}
+
+    # Detect known Union[*] types
+    if anno in KNOWN_UNION_TYPES:
+        anno = KNOWN_UNION_TYPES[anno]
 
     # Detect Union[*] types and convert them to their UnionBase class.
     if anno in schemas.UnionBase._union_types:

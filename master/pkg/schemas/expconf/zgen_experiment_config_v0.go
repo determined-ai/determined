@@ -76,11 +76,11 @@ func (e *ExperimentConfigV0) SetDescription(val *string) {
 	e.RawDescription = val
 }
 
-func (e ExperimentConfigV0) Entrypoint() *string {
+func (e ExperimentConfigV0) Entrypoint() *EntrypointV0 {
 	return e.RawEntrypoint
 }
 
-func (e *ExperimentConfigV0) SetEntrypoint(val *string) {
+func (e *ExperimentConfigV0) SetEntrypoint(val *EntrypointV0) {
 	e.RawEntrypoint = val
 }
 

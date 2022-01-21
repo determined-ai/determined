@@ -196,3 +196,9 @@ def set_profiling_enabled(config: Dict[Any, Any]) -> Dict[Any, Any]:
     config.setdefault("profiling", {})
     config["profiling"]["enabled"] = True
     return config
+
+
+def set_entrypoint(config: Dict[Any, Any], entrypoint: str) -> Dict[Any, Any]:
+    config = config.copy()
+    config["entrypoint"] = entrypoint
+    return config

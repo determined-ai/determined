@@ -1,45 +1,25 @@
 """
-launch_autohorovod.py is the default launch layer for Determined.
+autohorovod.py is the default launch layer for Determined.
 
 It launches the entrypoint script under horovodrun when slots_per_trial>1, or as a regular
 subprocess otherwise.
 """
-
-import copy
-import json
+import argparse
 import logging
 import os
 import socket
 import subprocess
 import sys
 import time
-from typing import Dict
 
 import determined as det
-import determined.common
 from determined import horovod
-from determined.common import api, constants, storage
+from determined.common import api
 from determined.common.api import certs
 from determined.constants import HOROVOD_SSH_PORT
 
 
-def mask_config_dict(d: Dict) -> Dict:
-    mask = "********"
-    new_dict = copy.deepcopy(d)
-
-    # checkpoint_storage
-    hidden_checkpoint_storage_keys = ("access_key", "secret_key")
-    try:
-        for key in new_dict["checkpoint_storage"].keys():
-            if key in hidden_checkpoint_storage_keys:
-                new_dict["checkpoint_storage"][key] = mask
-    except KeyError:
-        pass
-
-    return new_dict
-
-
-def main() -> int:
+def main(train_entrypoint: str) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
@@ -48,29 +28,6 @@ def main() -> int:
     experiment_config = info.trial._config
 
     debug = experiment_config.get("debug", False)
-    determined.common.set_logger(debug)
-
-    logging.info(
-        f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
-        + json.dumps(mask_config_dict(experiment_config))
-    )
-
-    # TODO: this should go in the chief worker, not in the launch layer.  For now, the
-    # DistributedContext is not created soon enough for that to work well.
-    try:
-        storage.validate_config(
-            experiment_config["checkpoint_storage"],
-            container_path=constants.SHARED_FS_CONTAINER_PATH,
-        )
-    except Exception as e:
-        logging.error("Checkpoint storage validation failed: {}".format(e))
-        return 1
-
-    if experiment_config.get("resources", {}).get("slots_per_trial", 1) < 2:
-        # Non-distriubuted training; skip running in subprocesses to improve startup times.
-        from determined.exec import harness
-
-        return harness.main(chief_ip=None)
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
@@ -80,6 +37,9 @@ def main() -> int:
     # can function with a different launch layer in a different environment.  Inside Determined, the
     # easiest way to get the chief_ip is with container_addrs.
     chief_ip = info.container_addrs[0]
+
+    # Chief IP is set as an environment variable to support nested launch layers
+    os.environ["DET_CHIEF_IP"] = chief_ip
 
     if info.container_rank > 0:
         # Non-chief machines just run sshd.
@@ -183,7 +143,7 @@ def main() -> int:
         inter_node_network_interface=info.trial._inter_node_network_interface,
         optimizations=experiment_config["optimizations"],
         debug=debug,
-        optional_args=hvd_optional_args + sys.argv[1:],
+        optional_args=hvd_optional_args,
     )
 
     pid_client_cmd = [
@@ -204,8 +164,8 @@ def main() -> int:
         "python3",
         "-m",
         "determined.exec.harness",
-        "--chief-ip",
-        chief_ip,
+        "--train-entrypoint",
+        train_entrypoint,
     ]
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
@@ -218,4 +178,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("train_entrypoint", type=str)
+    args = parser.parse_args()
+    sys.exit(main(args.train_entrypoint))
