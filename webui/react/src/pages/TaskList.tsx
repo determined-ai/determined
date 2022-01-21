@@ -334,7 +334,8 @@ const TaskList: React.FC = () => {
       {
         dataIndex: 'resourcePool',
         key: 'resourcePool',
-        sorter: true,
+        sorter: (a: CommandTask, b: CommandTask): number =>
+          alphaNumericSorter(a.resourcePool, b.resourcePool),
         title: 'Resource Pool',
       },
       {
