@@ -304,6 +304,32 @@ func forceSetTaskAllocations(
 	}
 }
 
+func mockTaskToAllocateRequest(
+	mockTask *mockTask, allocationRef *actor.Ref,
+) *sproto.AllocateRequest {
+	jobID := mockTask.jobID
+	jobSubmissionTime := mockTask.jobSubmissionTime
+
+	if jobID == "" {
+		jobID = string(mockTask.id)
+	}
+	if jobSubmissionTime.IsZero() {
+		jobSubmissionTime = allocationRef.RegisteredTime()
+	}
+
+	req := &sproto.AllocateRequest{
+		AllocationID:      mockTask.id,
+		JobID:             model.JobID(jobID),
+		SlotsNeeded:       mockTask.slotsNeeded,
+		Label:             mockTask.label,
+		IsUserVisible:     true,
+		TaskActor:         allocationRef,
+		Preemptible:       !mockTask.nonPreemptible,
+		JobSubmissionTime: jobSubmissionTime,
+	}
+	return req
+}
+
 func setupSchedulerStates(
 	t *testing.T,
 	system *actor.System,
@@ -357,22 +383,7 @@ func setupSchedulerStates(
 
 		groups[ref] = &group{handler: ref}
 
-		var jobID model.JobID
-		if mockTask.jobID != "" {
-			jid := model.JobID(mockTask.jobID)
-			jobID = jid
-		}
-
-		req := &sproto.AllocateRequest{
-			AllocationID:      mockTask.id,
-			JobID:             jobID,
-			IsUserVisible:     true,
-			SlotsNeeded:       mockTask.slotsNeeded,
-			Label:             mockTask.label,
-			TaskActor:         ref,
-			Preemptible:       !mockTask.nonPreemptible,
-			JobSubmissionTime: mockTask.jobSubmissionTime,
-		}
+		req := mockTaskToAllocateRequest(mockTask, ref)
 		if mockTask.group == nil {
 			req.Group = ref
 		} else {
