@@ -35,7 +35,7 @@ func (g *mockGroup) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case actor.PreStart:
 	case actor.PostStop:
-	case job.RMJobInfo:
+	case *job.RMJobInfo:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

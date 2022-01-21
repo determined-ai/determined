@@ -167,19 +167,3 @@ type Event struct {
 	// LogEvent is triggered when a new log message is available.
 	LogEvent *string `json:"log_event"`
 }
-
-// GroupID returns the group identifier for an AllocateRequest.
-func (r AllocateRequest) GroupID() *actor.Ref {
-	if r.Group != nil {
-		return r.Group
-	}
-	return r.TaskActor
-}
-
-// UserVisible determines whether the AllocateRequest should
-// be considered in user-visible reports.
-// AKA HasUserVisibleActor.
-func (r AllocateRequest) UserVisible() bool {
-	return r.Group != nil // CHECK we might want to define a new property for this
-	// and avoid overloading this one.
-}
