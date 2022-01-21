@@ -161,7 +161,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
 			JobSubmissionTime: c.registeredTime,
-			UserVisible:       true,
+			IsUserVisible:     true,
 			Name:              c.Config.Description,
 			TaskActor:         ctx.Self(),
 			Group:             ctx.Self(),

@@ -656,13 +656,13 @@ func AddUnallocatedTasks(
 		assert.Assert(t, created)
 
 		req := &sproto.AllocateRequest{
-			AllocationID: mockTask.id,
-			SlotsNeeded:  mockTask.slotsNeeded,
-			JobID:        model.JobID(mockTask.jobID),
-			UserVisible:  true,
-			Label:        mockTask.label,
-			TaskActor:    ref,
-			Preemptible:  !mockTask.nonPreemptible,
+			AllocationID:  mockTask.id,
+			SlotsNeeded:   mockTask.slotsNeeded,
+			JobID:         model.JobID(mockTask.jobID),
+			IsUserVisible: true,
+			Label:         mockTask.label,
+			TaskActor:     ref,
+			Preemptible:   !mockTask.nonPreemptible,
 		}
 		groupRef, _ := system.ActorOf(actor.Addr(mockTask.group.id), mockTask.group)
 		req.Group = groupRef

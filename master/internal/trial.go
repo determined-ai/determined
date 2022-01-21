@@ -211,7 +211,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
 		JobSubmissionTime: t.jobSubmissionTime,
-		UserVisible:       true,
+		IsUserVisible:     true,
 		Name:              name,
 		TaskActor:         ctx.Self(),
 		Group:             ctx.Self().Parent(),
