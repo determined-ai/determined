@@ -102,9 +102,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
-		job.SetGroupWeight,
-		job.SetGroupPriority,
-		job.SetGroupOrder,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased,
@@ -115,6 +112,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobSummary,
 		job.GetJobQStats,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
+		job.SetGroupOrder,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -211,40 +211,6 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case job.SetGroupWeight:
-		// setting weights in kubernetes is not supported
-
-	case job.SetGroupPriority:
-		group := k.getOrCreateGroup(ctx, msg.Handler)
-		if msg.Priority != nil {
-			group.priority = msg.Priority
-		}
-
-		for it := k.reqList.iterator(); it.next(); {
-			if it.value().Group == msg.Handler {
-				taskActor := it.value().TaskActor
-				if id, ok := k.addrToContainerID[taskActor]; ok {
-					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
-					delete(k.addrToContainerID, taskActor)
-				}
-			}
-		}
-
-	case job.SetGroupOrder:
-		group := k.getOrCreateGroup(ctx, msg.Handler)
-		if msg.QPosition > 0 {
-			group.qPosition = msg.QPosition
-		}
-
-		for it := k.reqList.iterator(); it.next(); {
-			if it.value().Group == msg.Handler {
-				taskActor := it.value().TaskActor
-				if id, ok := k.addrToContainerID[taskActor]; ok {
-					ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{QPosition: msg.QPosition, PodID: id})
-				}
-			}
-		}
-
 	case sproto.SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
 
@@ -295,7 +261,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 }
 
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
 	case job.GetJobQ:
 		ctx.Respond(k.jobQInfo())
 
@@ -311,6 +277,41 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(k.reqList))
+
+	case job.SetGroupWeight:
+		// setting weights in kubernetes is not supported
+
+	case job.SetGroupPriority:
+		group := k.getOrCreateGroup(ctx, msg.Handler)
+		if msg.Priority != nil {
+			group.priority = msg.Priority
+		}
+
+		for it := k.reqList.iterator(); it.next(); {
+			if it.value().Group == msg.Handler {
+				taskActor := it.value().TaskActor
+				if id, ok := k.addrToContainerID[taskActor]; ok {
+					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
+					delete(k.addrToContainerID, taskActor)
+				}
+			}
+		}
+
+	case job.SetGroupOrder:
+		group := k.getOrCreateGroup(ctx, msg.Handler)
+		if msg.QPosition > 0 {
+			group.qPosition = msg.QPosition
+		}
+
+		for it := k.reqList.iterator(); it.next(); {
+			if it.value().Group == msg.Handler {
+				taskActor := it.value().TaskActor
+				if id, ok := k.addrToContainerID[taskActor]; ok {
+					ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{QPosition: msg.QPosition, PodID: id})
+				}
+			}
+		}
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
