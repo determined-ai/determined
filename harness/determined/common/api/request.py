@@ -163,6 +163,32 @@ def get(
     )
 
 
+def delete(
+    host: str,
+    path: str,
+    params: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
+) -> requests.Response:
+    """
+    Send a DELETE request to the remote API.
+    """
+    return do_request(
+        "DELETE",
+        host,
+        path,
+        params=params,
+        headers=headers,
+        authenticated=authenticated,
+        auth=auth,
+        cert=cert,
+        timeout=timeout,
+    )
+
+
 def post(
     host: str,
     path: str,

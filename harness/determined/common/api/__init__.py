@@ -15,6 +15,7 @@ from determined.common.api.experiment import (
 from determined.common.api.request import (
     WebSocket,
     add_token_to_headers,
+    delete,
     do_request,
     get,
     make_url,
