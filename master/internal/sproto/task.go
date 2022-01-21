@@ -19,12 +19,14 @@ type (
 		TaskID            model.TaskID
 		JobID             model.JobID
 		JobSubmissionTime time.Time
-		State             job.SchedulingState
-		Name              string
+		// UserVisible determines whether the AllocateRequest should
+		// be considered in user-visible reports.
+		UserVisible bool
+		State       job.SchedulingState
+		Name        string
 		// Allocation actor
 		TaskActor *actor.Ref
-		// Job actor
-		Group *actor.Ref
+		Group     *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int

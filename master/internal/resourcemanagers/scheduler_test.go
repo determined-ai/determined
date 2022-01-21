@@ -364,6 +364,7 @@ func setupSchedulerStates(
 		req := &sproto.AllocateRequest{
 			AllocationID:      mockTask.id,
 			JobID:             jobID,
+			UserVisible:       true,
 			SlotsNeeded:       mockTask.slotsNeeded,
 			Label:             mockTask.label,
 			TaskActor:         ref,

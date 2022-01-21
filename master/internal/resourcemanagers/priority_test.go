@@ -659,6 +659,7 @@ func AddUnallocatedTasks(
 			AllocationID: mockTask.id,
 			SlotsNeeded:  mockTask.slotsNeeded,
 			JobID:        model.JobID(mockTask.jobID),
+			UserVisible:  true,
 			Label:        mockTask.label,
 			TaskActor:    ref,
 			Preemptible:  !mockTask.nonPreemptible,
