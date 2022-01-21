@@ -391,7 +391,7 @@ class PyTorchTrialController(det.TrialController):
             self.context._loss_ids = {}
             for callback in self.callbacks.values():
                 with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_training_batch_start"
+                    f"callbacks.{callback.__class__.__name__}.on_training_batch_start"
                 ):
                     callback.on_training_batch_start()
 
@@ -443,7 +443,7 @@ class PyTorchTrialController(det.TrialController):
 
             for callback in self.callbacks.values():
                 with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_training_batch_end"
+                    f"callbacks.{callback.__class__.__name__}.on_training_batch_end"
                 ):
                     callback.on_training_batch_end(batch_idx)
 
