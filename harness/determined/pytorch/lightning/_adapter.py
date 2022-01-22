@@ -215,7 +215,7 @@ class LightningAdapter(PyTorchTrial):
         lm = self._pls.lm
 
         class LightningAdapterCallback(PyTorchCallback):
-            def on_training_epoch_start(self) -> None:
+            def on_training_epoch_start(self, epoch_idx: int) -> None:
                 if context._current_batch_idx is not None:
                     type(lm).current_epoch = context.current_train_epoch()  # type: ignore
                 lm.on_train_epoch_start()

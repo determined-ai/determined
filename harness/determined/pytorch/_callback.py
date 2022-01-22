@@ -91,7 +91,7 @@ class PyTorchCallback:
         """
         pass
 
-    def on_training_batch_start(self) -> None:
+    def on_training_batch_start(self, batch_idx: int) -> None:
         """
         Run on start of a new training batch
         """
@@ -103,7 +103,7 @@ class PyTorchCallback:
         """
         pass
 
-    def on_training_epoch_start(self) -> None:
+    def on_training_epoch_start(self, epoch_idx: int) -> None:
         """
         Run on start of a new training epoch
         """

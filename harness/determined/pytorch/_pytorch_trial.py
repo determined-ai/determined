@@ -4,6 +4,7 @@ import pickle
 import random
 import time
 from abc import abstractmethod
+from inspect import signature
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
@@ -383,17 +384,27 @@ class PyTorchTrialController(det.TrialController):
 
             self.context._current_batch_idx = batch_idx
             if self.context.is_epoch_start():
+                epoch_idx = self.get_epoch_idx(batch_idx)
                 for callback in self.callbacks.values():
                     with self.prof.record_timing(
                         f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
                     ):
-                        callback.on_training_epoch_start()
+                        sig = signature(callback.on_training_epoch_start)
+                        if sig.parameters:
+                            callback.on_training_epoch_start(epoch_idx)
+                        else:
+                            logging.warning(
+                                "on_training_epoch_start() without parameters is deprecated."
+                                "Please add epoch_idx parameter"
+                            )
+                            callback.on_training_epoch_start()
+
             self.context._loss_ids = {}
             for callback in self.callbacks.values():
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_training_batch_start"
                 ):
-                    callback.on_training_batch_start()
+                    callback.on_training_batch_start(batch_idx)
 
             with self.prof.record_timing("train_batch", requires_sync=False):
                 if self.context.profiler:

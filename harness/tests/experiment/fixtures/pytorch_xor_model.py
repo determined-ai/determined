@@ -316,8 +316,8 @@ class Counter(det.pytorch.PyTorchCallback):
         logging.debug("starting training")
         self.training_started_times += 1
 
-    def on_training_batch_start(self) -> None:
-        logging.debug("starting batch")
+    def on_training_batch_start(self, batch_idx: int) -> None:
+        logging.debug(f"starting batch {batch_idx}")
         self.training_batches_started += 1
 
     def on_training_batch_end(self, batch_idx: int) -> None:
