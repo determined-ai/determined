@@ -108,7 +108,7 @@ const ModelRegistry: React.FC = () => {
   ]);
 
   const deleteCurrentModel = useCallback((model: ModelItem) => {
-    deleteModel({ modelId: model.id });
+    deleteModel({ modelName: model.name });
     fetchModels();
   }, [ fetchModels ]);
 
@@ -116,9 +116,9 @@ const ModelRegistry: React.FC = () => {
     try {
       setIsLoading(true);
       if (model.archived) {
-        await unarchiveModel({ modelId: model.id });
+        await unarchiveModel({ modelName: model.name });
       } else {
-        await archiveModel({ modelId: model.id });
+        await archiveModel({ modelName: model.name });
       }
       await fetchModels();
     } catch (e) {
@@ -131,14 +131,14 @@ const ModelRegistry: React.FC = () => {
     }
   }, [ fetchModels ]);
 
-  const setModelTags = useCallback(async (modelId, tags) => {
+  const setModelTags = useCallback(async (modelName, tags) => {
     try {
       setIsLoading(true);
-      await patchModel({ body: { id: modelId, labels: tags }, modelId });
+      await patchModel({ body: { labels: tags, name: modelName }, modelName });
       await fetchModels();
     } catch (e) {
       handleError(e, {
-        publicSubject: `Unable to update model ${modelId} tags.`,
+        publicSubject: `Unable to update model ${modelName} tags.`,
         silent: true,
         type: ErrorType.Api,
       });
@@ -244,7 +244,7 @@ const ModelRegistry: React.FC = () => {
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
       closable: true,
-      content: `Are you sure you want to delete this model "${model.name}" and all 
+      content: `Are you sure you want to delete this model "${model.name}" and all
       of its versions from the model registry?`,
       icon: null,
       maskClosable: true,
@@ -255,11 +255,11 @@ const ModelRegistry: React.FC = () => {
     });
   }, [ deleteCurrentModel ]);
 
-  const saveModelDescription = useCallback(async (editedDescription: string, id: number) => {
+  const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
       await patchModel({
-        body: { description: editedDescription, id },
-        modelId: id,
+        body: { description: editedDescription, name: modelName },
+        modelName,
       });
     } catch (e) {
       handleError(e, {
@@ -277,7 +277,7 @@ const ModelRegistry: React.FC = () => {
         compact
         disabled={record.archived}
         tags={record.labels ?? []}
-        onChange={(tags) => setModelTags(record.id, tags)}
+        onChange={(tags) => setModelTags(record.name, tags)}
       />
     );
 
@@ -314,7 +314,7 @@ const ModelRegistry: React.FC = () => {
         disabled={record.archived}
         placeholder="Add description..."
         value={value}
-        onSave={(newDescription: string) => saveModelDescription(newDescription, record.id)}
+        onSave={(newDescription: string) => saveModelDescription(record.name, newDescription)}
       />
     );
 

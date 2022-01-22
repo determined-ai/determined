@@ -85,14 +85,14 @@ const useCreateModelModal = (): ModalHooks => {
       if (!response?.id) return;
       closeModal();
       if (checkpointUuid){
-        showRegisterCheckpointModal({ checkpointUuid, selectedModelId: response.id });
+        showRegisterCheckpointModal({ checkpointUuid, selectedModelName: response.name });
       }
       notification.open({
         btn: null,
         description: (
           <div className={css.toast}>
             <p>{`"${modelName}"`} created</p>
-            <Link path={paths.modelDetails(response.id)}>
+            <Link path={paths.modelDetails(response.name)}>
               View Model
             </Link>
           </div>),

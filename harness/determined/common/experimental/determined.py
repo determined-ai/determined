@@ -155,25 +155,28 @@ class Determined:
 
         return model.Model.from_json(r.json().get("model"), self._session)
 
-    def get_model(self, model_id: int) -> model.Model:
+    def get_model(self, name: str) -> model.Model:
+        """
+        Get the :class:`~determined.experimental.Model` from the model registry
+        with the provided name. If no model with that id is found in the registry,
+        an exception is raised.
+        """
+        r = self._session.get("/api/v1/models/{}".format(name))
+        return model.Model.from_json(r.json().get("model"), self._session)
+
+    def get_model_by_id(self, model_id: int) -> model.Model:
         """
         Get the :class:`~determined.experimental.Model` from the model registry
         with the provided id. If no model with that id is found in the registry,
         an exception is raised.
         """
-        r = self._session.get("/api/v1/models/{}".format(model_id))
-        return model.Model.from_json(r.json().get("model"), self._session)
-
-    def get_model_by_name(self, name: str) -> model.Model:
-        """
-        Get the :class:`~determined.experimental.Model` from the model registry
-        with the provided name. If no model with that name is found in the registry,
-        an exception is raised.
-        """
-        r = self._session.get("/api/v1/models?name={}".format(name))
+        r = self._session.get("/api/v1/models?id={}".format(model_id))
         models = r.json().get("models")
         assert len(models) > 0
         return model.Model.from_json(models[0], self._session)
+
+    def get_model_by_name(self, name: str) -> model.Model:
+        return self.get_model(name)
 
     def get_models(
         self,

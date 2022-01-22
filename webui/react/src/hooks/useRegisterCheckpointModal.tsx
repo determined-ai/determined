@@ -17,14 +17,14 @@ import css from './useRegisterCheckpointModal.module.scss';
 
 export interface ShowRegisterCheckpointProps {
   checkpointUuid: string;
-  selectedModelId?: number;
+  selectedModelName?: string;
 }
 
 interface ModalState {
   checkpointUuid?: string;
   expandDetails: boolean;
   metadata: Metadata;
-  selectedModelId?: number;
+  selectedModelName?: string;
   tags: string[];
   versionDescription: string;
   versionName: string;
@@ -80,14 +80,14 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
   }, [ canceler ]);
 
   const showModal = useCallback((
-    { checkpointUuid, selectedModelId }: ShowRegisterCheckpointProps,
+    { checkpointUuid, selectedModelName }: ShowRegisterCheckpointProps,
   ) => {
     fetchModels();
     setModalState({
       checkpointUuid,
       expandDetails: false,
       metadata: {},
-      selectedModelId,
+      selectedModelName,
       tags: [],
       versionDescription: '',
       versionName: '',
@@ -106,15 +106,15 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
   }, [ closeModal ]);
 
   const selectedModelNumVersions = useMemo(() => {
-    return models.find(model => model.id === modalState.selectedModelId)?.numVersions ?? 0;
-  }, [ models, modalState.selectedModelId ]);
+    return models.find(model => model.name === modalState.selectedModelName)?.numVersions ?? 0;
+  }, [ models, modalState.selectedModelName ]);
 
   const registerModelVersion = useCallback(async (state: ModalState) => {
     const {
-      selectedModelId, versionDescription, tags,
+      selectedModelName, versionDescription, tags,
       metadata, versionName, checkpointUuid,
     } = state;
-    if (!selectedModelId || !checkpointUuid) return;
+    if (!selectedModelName || !checkpointUuid) return;
     try {
       const response = await postModelVersion({
         body: {
@@ -122,10 +122,10 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
           comment: versionDescription,
           labels: tags,
           metadata,
-          modelId: selectedModelId,
+          modelName: selectedModelName,
           name: versionName,
         },
-        modelId: selectedModelId,
+        modelName: selectedModelName,
       });
       if (!response) return;
       closeModal();
@@ -135,7 +135,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
           description: (
             <div className={css.toast}>
               <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-              <Link path={paths.modelVersionDetails(selectedModelId, response.id)}>
+              <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
                 View Model Version
               </Link>
             </div>),
@@ -157,7 +157,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
   }, [ registerModelVersion ]);
 
   const updateModel = useCallback((value) => {
-    setModalState(prev => ({ ...prev, selectedModelId: value }));
+    setModalState(prev => ({ ...prev, selectedModelName: value }));
   }, []);
 
   const updateVersionName = useCallback((e) => {
@@ -192,7 +192,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
 
   const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
     const {
-      selectedModelId, versionDescription,
+      selectedModelName, versionDescription,
       tags, metadata, versionName, expandDetails,
     } = state;
 
@@ -212,11 +212,11 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
             placeholder="Select a model..."
             showSearch
             style={{ width: '100%' }}
-            value={selectedModelId}
+            value={selectedModelName}
             onChange={updateModel}
           />
         </div>
-        {selectedModelId && (
+        {selectedModelName && (
           <>
             <div className={css.separator} />
             <div>
@@ -263,7 +263,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
     updateVersionName ]);
 
   const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
-    const { selectedModelId } = state;
+    const { selectedModelName } = state;
 
     const modalProps = {
       bodyStyle: { padding: 0 },
@@ -272,7 +272,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
       content: generateModalContent(state),
       icon: null,
       maskClosable: true,
-      okButtonProps: { disabled: selectedModelId == null },
+      okButtonProps: { disabled: selectedModelName == null },
       okText: 'Register Checkpoint',
       onCancel: handleCancel,
       onOk: () => handleOk(state),

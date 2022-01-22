@@ -3125,22 +3125,22 @@ class v1PatchModelRequest:
     def __init__(
         self,
         model: "typing.Optional[v1PatchModel]" = None,
-        modelId: "typing.Optional[int]" = None,
+        modelName: "typing.Optional[str]" = None,
     ):
         self.model = model
-        self.modelId = modelId
+        self.modelName = modelName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelRequest":
         return cls(
             model=v1PatchModel.from_json(obj["model"]) if obj.get("model", None) is not None else None,
-            modelId=obj["modelId"] if obj.get("modelId", None) is not None else None,
+            modelName=obj["modelName"] if obj.get("modelName", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "model": self.model.to_json() if self.model is not None else None,
-            "modelId": self.modelId if self.modelId is not None else None,
+            "modelName": self.modelName if self.modelName is not None else None,
         }
 
 class v1PatchModelResponse:
@@ -3202,25 +3202,25 @@ class v1PatchModelVersion:
 class v1PatchModelVersionRequest:
     def __init__(
         self,
-        modelId: "typing.Optional[int]" = None,
+        modelName: "typing.Optional[str]" = None,
         modelVersion: "typing.Optional[v1PatchModelVersion]" = None,
         modelVersionId: "typing.Optional[int]" = None,
     ):
-        self.modelId = modelId
+        self.modelName = modelName
         self.modelVersion = modelVersion
         self.modelVersionId = modelVersionId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelVersionRequest":
         return cls(
-            modelId=obj["modelId"] if obj.get("modelId", None) is not None else None,
+            modelName=obj["modelName"] if obj.get("modelName", None) is not None else None,
             modelVersion=v1PatchModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
             modelVersionId=obj["modelVersionId"] if obj.get("modelVersionId", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelId": self.modelId if self.modelId is not None else None,
+            "modelName": self.modelName if self.modelName is not None else None,
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
             "modelVersionId": self.modelVersionId if self.modelVersionId is not None else None,
         }
@@ -3339,14 +3339,14 @@ class v1PostModelVersionRequest:
     def __init__(
         self,
         checkpointUuid: str,
-        modelId: int,
+        modelName: str,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
     ):
-        self.modelId = modelId
+        self.modelName = modelName
         self.checkpointUuid = checkpointUuid
         self.name = name
         self.comment = comment
@@ -3357,7 +3357,7 @@ class v1PostModelVersionRequest:
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelVersionRequest":
         return cls(
-            modelId=obj["modelId"],
+            modelName=obj["modelName"],
             checkpointUuid=obj["checkpointUuid"],
             name=obj["name"] if obj.get("name", None) is not None else None,
             comment=obj["comment"] if obj.get("comment", None) is not None else None,
@@ -3368,7 +3368,7 @@ class v1PostModelVersionRequest:
 
     def to_json(self) -> typing.Any:
         return {
-            "modelId": self.modelId,
+            "modelName": self.modelName,
             "checkpointUuid": self.checkpointUuid,
             "name": self.name if self.name is not None else None,
             "comment": self.comment if self.comment is not None else None,
@@ -5116,12 +5116,12 @@ def post_ArchiveExperiment(
 def post_ArchiveModel(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/models/{modelId}/archive",
+        path=f"/api/v1/models/{modelName}/archive",
         params=_params,
         json=None,
         data=None,
@@ -5248,12 +5248,12 @@ def delete_DeleteExperiment(
 def delete_DeleteModel(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="DELETE",
-        path=f"/api/v1/models/{modelId}",
+        path=f"/api/v1/models/{modelName}",
         params=_params,
         json=None,
         data=None,
@@ -5267,13 +5267,13 @@ def delete_DeleteModel(
 def delete_DeleteModelVersion(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
     modelVersionId: int,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="DELETE",
-        path=f"/api/v1/models/{modelId}/versions/{modelVersionId}",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersionId}",
         params=_params,
         json=None,
         data=None,
@@ -5776,12 +5776,12 @@ def get_GetMasterConfig(
 def get_GetModel(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
 ) -> "v1GetModelResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/models/{modelId}",
+        path=f"/api/v1/models/{modelName}",
         params=_params,
         json=None,
         data=None,
@@ -5831,13 +5831,13 @@ def get_GetModelLabels(
 def get_GetModelVersion(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
     modelVersion: int,
 ) -> "v1GetModelVersionResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/models/{modelId}/versions/{modelVersion}",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersion}",
         params=_params,
         json=None,
         data=None,
@@ -5851,7 +5851,7 @@ def get_GetModelVersion(
 def get_GetModelVersions(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
@@ -5865,7 +5865,7 @@ def get_GetModelVersions(
     }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/models/{modelId}/versions",
+        path=f"/api/v1/models/{modelName}/versions",
         params=_params,
         json=None,
         data=None,
@@ -6581,12 +6581,12 @@ def patch_PatchModel(
     session: "client.Session",
     *,
     body: "v1PatchModelRequest",
-    modelId: int,
+    modelName: str,
 ) -> "v1PatchModelResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/models/{modelId}",
+        path=f"/api/v1/models/{modelName}",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -6601,13 +6601,13 @@ def patch_PatchModelVersion(
     session: "client.Session",
     *,
     body: "v1PatchModelVersionRequest",
-    modelId: int,
+    modelName: str,
     modelVersionId: int,
 ) -> "v1PatchModelVersionResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/models/{modelId}/versions/{modelVersionId}",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersionId}",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -6680,12 +6680,12 @@ def post_PostModelVersion(
     session: "client.Session",
     *,
     body: "v1PostModelVersionRequest",
-    modelId: int,
+    modelName: str,
 ) -> "v1PostModelVersionResponse":
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/models/{modelId}/versions",
+        path=f"/api/v1/models/{modelName}/versions",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7063,12 +7063,12 @@ def post_UnarchiveExperiment(
 def post_UnarchiveModel(
     session: "client.Session",
     *,
-    modelId: int,
+    modelName: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/models/{modelId}/unarchive",
+        path=f"/api/v1/models/{modelName}/unarchive",
         params=_params,
         json=None,
         data=None,

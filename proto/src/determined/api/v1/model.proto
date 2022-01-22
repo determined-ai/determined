@@ -11,8 +11,8 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested model.
 message GetModelRequest {
-  // The name of the template.
-  int32 model_id = 1;
+  // The name of the model.
+  string model_name = 2;
 }
 
 // Response to GetModelRequest.
@@ -114,8 +114,8 @@ message PostModelResponse {
 message PatchModelRequest {
   // The model desired model fields and values.
   determined.model.v1.PatchModel model = 1;
-  // The id of the model being updated.
-  int32 model_id = 2;
+  // The name of the model being updated.
+  string model_name = 3;
 }
 
 // Response to PatchModelRequest.
@@ -126,8 +126,8 @@ message PatchModelResponse {
 
 // Request for archiving a model in the registry.
 message ArchiveModelRequest {
-  // The id of the model to archive.
-  int32 model_id = 1;
+  // The name of the model to archive.
+  string model_name = 2;
 }
 
 // Response to ArchiveModelRequest
@@ -135,8 +135,8 @@ message ArchiveModelResponse {}
 
 // Request for un-archiving a model in the registry.
 message UnarchiveModelRequest {
-  // The id of the model to un-archive.
-  int32 model_id = 1;
+  // The name of the model to un-archive.
+  string model_name = 2;
 }
 
 // Response to UnarchiveModelRequest
@@ -144,8 +144,8 @@ message UnarchiveModelResponse {}
 
 // Request for deleting a model in the registry.
 message DeleteModelRequest {
-  // The id of the model to delete.
-  int32 model_id = 1;
+  // The name of the model to delete.
+  string model_name = 2;
 }
 
 // Response to DeleteModelRequest
@@ -153,8 +153,8 @@ message DeleteModelResponse {}
 
 // Request for a version of a model in the registry.
 message GetModelVersionRequest {
-  // The id of the model.
-  int32 model_id = 1;
+  // The name of the model.
+  string model_name = 3;
   // The version number.
   int32 model_version = 2;
 }
@@ -186,8 +186,8 @@ message GetModelVersionsRequest {
   int32 offset = 3;
   // Limit the number of model versions. A value of 0 denotes no limit.
   int32 limit = 4;
-  // The id of the model.
-  int32 model_id = 5;
+  // The name of the model.
+  string model_name = 6;
 }
 
 // Response for GetModelVersionRequest.
@@ -203,10 +203,10 @@ message GetModelVersionsResponse {
 // Request for creating a model version.
 message PostModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "model_id", "checkpoint_uuid" ] }
+    json_schema: { required: [ "model_name", "checkpoint_uuid" ] }
   };
-  // The id of the model to add this version to.
-  int32 model_id = 1;
+  // The name of the model to add this version to.
+  string model_name = 8;
   // UUID of the checkpoint.
   string checkpoint_uuid = 2;
   // User-friendly name for the model version.
@@ -229,8 +229,8 @@ message PostModelVersionResponse {
 
 // Request for updating a model version in the registry.
 message PatchModelVersionRequest {
-  // The id of the model being updated.
-  int32 model_id = 1;
+  // The name of the model being updated.
+  string model_name = 4;
   // The model version being updated.
   determined.model.v1.PatchModelVersion model_version = 2;
   // The id of the model version being updated.
@@ -245,8 +245,8 @@ message PatchModelVersionResponse {
 
 // Request for deleting a model version in the registry.
 message DeleteModelVersionRequest {
-  // The id of the model associated with the model version.
-  int32 model_id = 1;
+  // The name of the model associated with the model version.
+  string model_name = 3;
   // THe id of the model version to delete.
   int32 model_version_id = 2;
 }
