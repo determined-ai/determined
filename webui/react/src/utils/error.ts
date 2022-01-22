@@ -34,7 +34,7 @@ export enum ErrorType {
   Unknown = 'unknown',
   Ui = 'ui',
   Input = 'input',
-  ApiBadResponse = 'apiBadResponse',
+  ApiBadResponse = 'apiBadResponse', // unexpected response structure.
   Api = 'api', // third-party api
 }
 
@@ -50,6 +50,8 @@ export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
 };
 
+// An expected Error with supplemental information on
+// how it should be handled.
 export class DetError extends Error {
   id?: string;
   isUserTriggered: boolean;
@@ -60,6 +62,7 @@ export class DetError extends Error {
   publicSubject?: string;
   silent: boolean;
   type: ErrorType;
+  isHandled: boolean;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
     const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
@@ -76,6 +79,7 @@ export class DetError extends Error {
     this.publicSubject = options.publicSubject || detError?.publicSubject || undefined;
     this.silent = options.silent || detError?.silent || false;
     this.type = options.type || detError?.type || ErrorType.Unknown;
+    this.isHandled = false;
   }
 }
 
@@ -102,14 +106,23 @@ const log = (e: DetError) => {
   e.logger[key](e);
 };
 
+// handle at the point that you'd want to stop bubbling the exception up.
+// thus no handling and throwing shouldn't come right after one another. :thining_face:
+// rewrite me
 const handleError = (error: unknown, options?: DetErrorOptions): void => {
-  if (!isError(error) && !isDetError(error)) return;
-
-  // Normalize error as DetError.
-  const e = isError(error) ? new DetError(error, options) : error;
-
+  let e: DetError | undefined;
+  if (isDetError(error)) e = error;
+  if (isError(error)) e = new DetError(error, options);
+  if (!e) {
+    throw new Error(`Unexpected error encountered: ${error}`);
+  }
   // Ignore request cancellation errors.
   if (isAborted(e)) return;
+  if (e.isHandled) {
+    return;
+  } else {
+    e.isHandled = true;
+  }
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (e.type === ErrorType.Auth) {
@@ -133,6 +146,7 @@ const handleError = (error: unknown, options?: DetErrorOptions): void => {
 
   // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
+
 };
 
 export default handleError;

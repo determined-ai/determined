@@ -25,6 +25,16 @@ interface Props<T extends string> {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
+const menuClickErrorHandler = (e: unknown, actionKey: string, kind: string, id : string): void => {
+  handleError(e, {
+    level: ErrorLevel.Error,
+    publicMessage: `Unable to ${actionKey} ${kind} ${id}.`,
+    publicSubject: `${capitalize(actionKey.toString())} failed.`,
+    silent: false,
+    type: ErrorType.Server,
+  });
+};
+
 const ActionDropdown = <T extends string>(
   { id, kind, onComplete, onTrigger, confirmations, actionOrder }: Props<T>,
 ): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
@@ -36,8 +46,12 @@ const ActionDropdown = <T extends string>(
       const handleTrigger = onTrigger[action];
       if (!handleTrigger) throw new Error(`No triggers for action ${action}`);
       const onOk = async () => {
-        await handleTrigger();
-        onComplete?.(action);
+        try {
+          await handleTrigger();
+          onComplete?.(action);
+        } catch (e) {
+          menuClickErrorHandler(e, action, kind, id);
+        }
       };
 
       if (confirmations?.[action]) {
@@ -52,13 +66,7 @@ const ActionDropdown = <T extends string>(
       }
 
     } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: `Unable to ${params.key} ${kind} ${id}.`,
-        publicSubject: `${capitalize(params.key.toString())} failed.`,
-        silent: false,
-        type: ErrorType.Server,
-      });
+      menuClickErrorHandler(e, params.key, kind, id);
     }
   };
 

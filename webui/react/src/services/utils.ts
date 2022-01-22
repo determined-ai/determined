@@ -4,7 +4,7 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
-import handleError, { DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
+import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
 import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 
@@ -25,6 +25,10 @@ export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
   const authFailureStatuses = [ 401 ];
   if (supportExternalAuth) authFailureStatuses.push(500);
   return authFailureStatuses.includes(status);
+};
+
+const isApiResponse = (o: unknown): o is Response => {
+  return o instanceof Response;
 };
 
 /*
@@ -53,7 +57,10 @@ export const isAborted = (e: any): boolean => {
 
 export const http = axios.create({ responseType: 'json', withCredentials: false });
 
-export const processApiError = (name: string, e: unknown): void => {
+/*
+Checks the api error turns in into a DetError and decides if it needs to be bubbled up.
+*/
+export const processApiError = (name: string, e: unknown): DetError => {
   const isAuthError = isAuthFailure(e);
   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
   const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
@@ -72,7 +79,13 @@ export const processApiError = (name: string, e: unknown): void => {
     options.publicSubject = `Failed in decoding ${name} API response.`;
   }
 
-  handleError(e, options);
+  let msg: string | undefined;
+  if (isApiResponse(e)) {
+    msg = e.statusText;
+  }
+  return new DetError(msg, options);
+  // REMOVE ME We instead handle this at the top most level instead of the lowest level if
+  // it's DetError and is unhandled.
 };
 
 export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
@@ -98,8 +111,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      processApiError(api.name, e);
-      throw e;
+      throw processApiError(api.name, e);
     }
   };
 }
@@ -111,8 +123,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
         api.stubbedResponse : await api.request(params, options);
       return api.postProcess(response);
     } catch (e) {
-      processApiError(api.name, e);
-      throw e;
+      throw processApiError(api.name, e);
     }
   };
 }
@@ -166,8 +177,8 @@ export const consumeStream = async <T = unknown>(
       }
     }
   } catch (e) {
-    processApiError(fetchArgs.url, e);
-    if (!isAborted(e)) throw e;
+    const err = processApiError(fetchArgs.url, e);
+    if (err) throw e;
   }
 };
 
