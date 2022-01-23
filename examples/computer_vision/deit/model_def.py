@@ -7,6 +7,8 @@ from PIL import Image
 import requests
 import matplotlib.pyplot as plt
 # %config InlineBackend.figure_format = 'retina'
+import pickle, os
+import numpy as np
 
 import torch
 import timm
@@ -27,9 +29,48 @@ torch.set_grad_enabled(False);
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
+def unpickle(file):
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo)
+    return dict
+
+def load_databatch(data_folder, idx, img_size=32):
+    data_file = os.path.join(data_folder, 'train_data_batch_')
+
+    d = unpickle(data_file + str(idx))
+    x = d['data']
+    y = d['labels']
+    mean_image = d['mean']
+
+    x = x/np.float32(255)
+    mean_image = mean_image/np.float32(255)
+
+    # Labels are indexed from 1, shift it so that indexes start at 0
+    y = [i-1 for i in y]
+    data_size = x.shape[0]
+
+    x -= mean_image
+
+    img_size2 = img_size * img_size
+
+    x = np.dstack((x[:, :img_size2], x[:, img_size2:2*img_size2], x[:, 2*img_size2:]))
+    x = x.reshape((x.shape[0], img_size, img_size, 3)).transpose(0, 3, 1, 2)
+
+    # create mirrored images
+    X_train = x[0:data_size, :, :, :]
+    Y_train = y[0:data_size]
+    X_train_flip = X_train[:, :, :, ::-1]
+    Y_train_flip = Y_train
+    X_train = np.concatenate((X_train, X_train_flip), axis=0)
+    Y_train = np.concatenate((Y_train, Y_train_flip), axis=0)
+
+    return dict(
+        X_train=X_train,
+        Y_train=Y_train.astype('int32'),
+        mean=mean_image)
 class DeitTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
-        print('enter init at DeitTrial')
+
         # Initialize the trial class and wrap the models, optimizers, and LR schedulers.
          # Store trial context for later use.
         self.context = context
@@ -54,17 +95,17 @@ class DeitTrial(PyTorchTrial):
             T.ToTensor(),
             T.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
         ])
+    
         
-
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
         # Run forward passes on the models and backward passes on the optimizers.
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         print('batch: ', batch)
-        data, labels = batch
+        x_data, y_data, mean = batch
 
         # Define the training forward pass and calculate loss.
-        output = self.model(data)
-        loss = torch.nn.functional.nll_loss(output, labels)
+        output = self.model(x_data)
+        loss = torch.nn.functional.nll_loss(output, y_data)
 
         # Define the training backward pass and step the optimizer.
         self.context.backward(loss)
@@ -89,15 +130,14 @@ class DeitTrial(PyTorchTrial):
     def build_training_data_loader(self):
         # Create the training data loader.
         # This should return a determined.pytorch.Dataset.
-        url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-        im = Image.open(requests.get(url, stream=True).raw)
-        img = self.transform(im).unsqueeze(0)
-        return DataLoader(img, batch_size=self.context.get_per_slot_batch_size())
+        # url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
+        # im = Image.open(requests.get(url, stream=True).raw)
+        # img = self.transform(im).unsqueeze(0)
+        data = load_databatch('data/Imagenet8_train', 1, 8)
+        return DataLoader([data], batch_size=1)
 
     def build_validation_data_loader(self):
         # Create the validation data loader.
         # This should return a determined.pytorch.Dataset.
-        url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-        im = Image.open(requests.get(url, stream=True).raw)
-        img = self.transform(im).unsqueeze(0)
-        return DataLoader(img, batch_size=self.context.get_per_slot_batch_size())
+        data = load_databatch('data/Imagenet8_train', 1, 8)
+        return DataLoader([data], batch_size=1)
