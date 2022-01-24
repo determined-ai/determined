@@ -4,7 +4,7 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
-import handleError, { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
+import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
 import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 

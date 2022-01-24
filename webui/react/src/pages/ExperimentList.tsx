@@ -292,8 +292,9 @@ const ExperimentList: React.FC = () => {
     } catch (e) {
       handleError({
         message: 'Unable to save experiment description.',
-        silent: true,
-        type: ErrorType.Api,
+        silent: false, // CHECK example of why we want this. this was silent probably because a
+        // lower level handleError was covering it but that lower level error did not have the
+        // same information to provide as good a DetError.
       });
       setIsLoading(false);
     }
