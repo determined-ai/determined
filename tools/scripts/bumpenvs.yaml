@@ -62,8 +62,8 @@ eu_west_2_master_ami:
   new: ami-0ac10f53765369588
   old: ami-0fdf70ed5c34c5f52
 gcp_env:
-  new: det-environments-08f9c9b
-  old: det-environments-eb6c7d1
+  new: det-environments-f403806
+  old: det-environments-08f9c9b
 pytorch19_tf25_rocm_hashed:
   new: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-08f9c9b
   old: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-eb6c7d1
