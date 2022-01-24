@@ -110,26 +110,23 @@ const log = (e: DetError) => {
 // thus no handling and throwing shouldn't come right after one another. :thining_face:
 // rewrite me
 const handleError = (error: unknown, options?: DetErrorOptions): void => {
+  // Ignore request cancellation errors.
+  if (isAborted(error)) return;
   let e: DetError | undefined;
   if (isDetError(error)) e = error;
   if (isError(error)) e = new DetError(error, options);
   if (!e) {
     throw new Error(`Unexpected error encountered: ${error}`);
   }
-  // Ignore request cancellation errors.
-  if (isAborted(e)) return;
-  if (e.isHandled) {
-    return;
-  } else {
-    e.isHandled = true;
-  }
+  if (e.isHandled) return;
+  e.isHandled = true;
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (e.type === ErrorType.Auth) {
     history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
   }
 
-  // TODO add support and checking for saving and dismissing class of errors as user preference
+  // TODO add support for checking, saving, and dismissing class of errors as a user preference
   // using id.
   const skipNotification = e.silent || (e.level === ErrorLevel.Warn && !e.publicMessage);
   if (!skipNotification) openNotification(e);
@@ -146,7 +143,6 @@ const handleError = (error: unknown, options?: DetErrorOptions): void => {
 
   // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
-
 };
 
 export default handleError;
