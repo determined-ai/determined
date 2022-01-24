@@ -397,7 +397,7 @@ class PyTorchTrialController(det.TrialController):
                                 "on_training_epoch_start() without parameters is deprecated."
                                 "Please add epoch_idx parameter"
                             )
-                            callback.on_training_epoch_start()
+                            callback.on_training_epoch_start()  # type: ignore[call-arg]
 
             self.context._loss_ids = {}
             for callback in self.callbacks.values():
