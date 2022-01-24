@@ -57,9 +57,7 @@ export const isAborted = (e: any): boolean => {
 
 export const http = axios.create({ responseType: 'json', withCredentials: false });
 
-/*
-Checks the api error turns in into a DetError and decides if it needs to be bubbled up.
-*/
+/* Fits API errors into a DetError and decides if it needs to be bubbled up. */
 export const processApiError = (name: string, e: unknown): DetError => {
   const isAuthError = isAuthFailure(e);
   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
@@ -82,8 +80,9 @@ export const processApiError = (name: string, e: unknown): DetError => {
   let msg: string | undefined;
   if (isApiResponse(e)) {
     msg = e.statusText;
+    // msg = await e.text();
   }
-  return new DetError(msg, options);
+  return new DetError(`${name}: ${msg}`, options);
   // REMOVE ME We instead handle this at the top most level instead of the lowest level if
   // it's DetError and is unhandled.
 };
