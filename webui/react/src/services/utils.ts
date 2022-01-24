@@ -4,7 +4,7 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
-import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
+import handleError, { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
 import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 
@@ -61,11 +61,10 @@ export const http = axios.create({ responseType: 'json', withCredentials: false 
 export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
   const isAuthError = isAuthFailure(e);
   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
-  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   const options: DetErrorOptions = {
     level: ErrorLevel.Error,
     publicSubject: `Request ${name} failed.`,
-    silent,
+    silent: isAuthError || isAborted(e),
     type: ErrorType.Server,
   };
 

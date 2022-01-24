@@ -41,7 +41,7 @@ import {
   ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentItem, RecordKey, RunState,
 } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
@@ -141,8 +141,8 @@ const ExperimentList: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch experiments.',
-        silent: true,
-        type: ErrorType.Api,
+        silent: true, // CHECK do we want this to be silent?
+        // type: ErrorType.Api, // FIXME server? server vs api is a bit confusing to me.
       });
     } finally {
       setIsLoading(false);
@@ -163,7 +163,7 @@ const ExperimentList: React.FC = () => {
       const labels = await getExperimentLabels({ signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
-    } catch (e) {}
+    } catch (e) { handleError(e); }
   }, [ canceler.signal ]);
 
   const fetchAll = useCallback(() => {
@@ -527,7 +527,7 @@ const ExperimentList: React.FC = () => {
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,
-        type: ErrorType.Server,
+        // type: ErrorType.Server,
       });
     }
   }, [ fetchExperiments, sendBatchActions, updateSettings ]);

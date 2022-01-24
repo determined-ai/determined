@@ -84,7 +84,7 @@ const ModelRegistry: React.FC = () => {
       const tags = await getModelLabels({ signal: canceler.signal });
       tags.sort((a, b) => alphaNumericSorter(a, b));
       setTags(tags);
-    } catch (e) {}
+    } catch (e) { handleError(e); }
   }, [ canceler.signal ]);
 
   const fetchAll = useCallback(() => {

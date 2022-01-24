@@ -141,7 +141,10 @@ export const getAgents: Service.DetApi<
   Service.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
 > = {
   name: 'getAgents',
-  postProcess: (response) => decoder.jsonToAgents(response.agents || []),
+  postProcess: (response) => {
+    throw new Error('Not implemented');
+    return decoder.jsonToAgents(response.agents || []);
+  },
   request: () => detApi.Cluster.getAgents(),
 };
 
@@ -181,6 +184,7 @@ export const getExperiments: Service.DetApi<
 > = {
   name: 'getExperiments',
   postProcess: (response: Api.V1GetExperimentsResponse) => {
+    throw new Error('Not implemented');
     return {
       experiments: decoder.mapV1ExperimentList(response.experiments),
       pagination: response.pagination,

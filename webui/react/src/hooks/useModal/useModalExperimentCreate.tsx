@@ -9,6 +9,7 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone, isEqual } from 'utils/data';
+import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
@@ -142,7 +143,9 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
             ]);
 
             formRef.current.validateFields();
-          } catch (e) {}
+          } catch (e) {
+            handleError(e, { publicMessage: 'failed to load previous yaml config' });
+          }
         }
 
         return {
@@ -188,10 +191,10 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
-      if (e.name === 'YAMLException') {
+      if (e.name === 'YAMLException') { // where would this come from? e is unknown
         errorMessage = e.message;
       } else if (e.response?.data?.message) {
-        errorMessage = e.response.data.message;
+        errorMessage = e.response.data.message; // FIXME look at e.message instead?
       } else if (e.json) {
         const errorJSON = await e.json();
         errorMessage = errorJSON.error?.error;
