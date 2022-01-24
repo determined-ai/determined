@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -20,6 +21,8 @@ type checkpointGCTask struct {
 
 	taskID model.TaskID
 	tasks.GCCkptSpec
+	jobID             model.JobID
+	jobSubmissionTime time.Time
 
 	task *sproto.AllocateRequest
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
@@ -30,9 +33,11 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		t.task = &sproto.AllocateRequest{
-			TaskID:       t.taskID,
-			AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, 1)),
-			Name:         fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
+			TaskID:            t.taskID,
+			JobID:             t.jobID,
+			JobSubmissionTime: t.jobSubmissionTime,
+			AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, 1)),
+			Name:              fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},

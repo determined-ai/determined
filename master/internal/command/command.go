@@ -159,8 +159,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		allocation := task.NewAllocation(sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
-			JobID:             &c.jobID,
-			JobSubmissionTime: &c.registeredTime,
+			JobID:             c.jobID,
+			JobSubmissionTime: c.registeredTime,
+			IsUserVisible:     true,
 			Name:              c.Config.Description,
 			TaskActor:         ctx.Self(),
 			Group:             ctx.Self(),

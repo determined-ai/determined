@@ -17,10 +17,13 @@ type (
 		// Identifying information.
 		AllocationID      model.AllocationID
 		TaskID            model.TaskID
-		JobID             *model.JobID
-		JobSubmissionTime *time.Time
-		State             job.SchedulingState
-		Name              string
+		JobID             model.JobID
+		JobSubmissionTime time.Time
+		// IsUserVisible determines whether the AllocateRequest should
+		// be considered in user-visible reports.
+		IsUserVisible bool
+		State         job.SchedulingState
+		Name          string
 		// Allocation actor
 		TaskActor *actor.Ref
 		Group     *actor.Ref

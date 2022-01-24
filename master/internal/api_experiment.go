@@ -189,7 +189,9 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-		taskID: model.NewTaskID(),
+		taskID:            model.NewTaskID(),
+		jobID:             exp.JobID,
+		jobSubmissionTime: exp.StartTime,
 		GCCkptSpec: tasks.GCCkptSpec{
 			Base:               taskSpec,
 			ExperimentID:       exp.ID,

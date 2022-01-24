@@ -35,6 +35,7 @@ func (g *mockGroup) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case actor.PreStart:
 	case actor.PostStop:
+	case *job.RMJobInfo:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -62,7 +63,7 @@ type mockTask struct {
 	resourcePool      string
 	allocatedAgent    *mockAgent
 	containerStarted  bool
-	jobSubmissionTime *time.Time
+	jobSubmissionTime time.Time
 }
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
@@ -354,15 +355,16 @@ func setupSchedulerStates(
 
 		groups[ref] = &group{handler: ref}
 
-		var jobID *model.JobID
+		var jobID model.JobID
 		if mockTask.jobID != "" {
 			jid := model.JobID(mockTask.jobID)
-			jobID = &jid
+			jobID = jid
 		}
 
 		req := &sproto.AllocateRequest{
 			AllocationID:      mockTask.id,
 			JobID:             jobID,
+			IsUserVisible:     true,
 			SlotsNeeded:       mockTask.slotsNeeded,
 			Label:             mockTask.label,
 			TaskActor:         ref,
