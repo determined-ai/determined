@@ -58,7 +58,7 @@ export const isAborted = (e: any): boolean => {
 export const http = axios.create({ responseType: 'json', withCredentials: false });
 
 /* Fits API errors into a DetError and decides if it needs to be bubbled up. */
-export const processApiError = (name: string, e: unknown): DetError => {
+export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
   const isAuthError = isAuthFailure(e);
   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
   const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
@@ -79,8 +79,13 @@ export const processApiError = (name: string, e: unknown): DetError => {
 
   let msg: string | undefined;
   if (isApiResponse(e)) {
-    msg = e.statusText;
-    // msg = await e.text();
+    try {
+      const response = await e.json();
+      msg = response.message;
+    } catch (err) {
+      // FIXME Ignore or throw
+      msg = e.statusText;
+    }
   }
   return new DetError(`${name}: ${msg}`, options);
   // REMOVE ME We instead handle this at the top most level instead of the lowest level if
@@ -110,7 +115,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      throw processApiError(api.name, e);
+      throw (await processApiError(api.name, e));
     }
   };
 }
@@ -122,7 +127,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
         api.stubbedResponse : await api.request(params, options);
       return api.postProcess(response);
     } catch (e) {
-      throw processApiError(api.name, e);
+      throw (await processApiError(api.name, e));
     }
   };
 }
@@ -176,7 +181,7 @@ export const consumeStream = async <T = unknown>(
       }
     }
   } catch (e) {
-    const err = processApiError(fetchArgs.url, e);
+    const err = await processApiError(fetchArgs.url, e);
     if (err) throw e;
   }
 };
