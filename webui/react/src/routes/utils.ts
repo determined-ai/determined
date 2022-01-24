@@ -219,13 +219,13 @@ export const paths = {
     return '/logout';
   },
   modelDetails: (modelName: string): string => {
-    return `/models/${modelName}`;
+    return `/models/${encodeURIComponent(modelName)}`;
   },
   modelList: (): string => {
     return '/models';
   },
   modelVersionDetails: (modelName: string, versionId: number | string): string => {
-    return `/models/${modelName}/versions/${versionId}`;
+    return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;

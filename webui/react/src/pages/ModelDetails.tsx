@@ -38,7 +38,7 @@ interface Params {
 const ModelDetails: React.FC = () => {
   const { auth: { user } } = useStore();
   const [ model, setModel ] = useState<ModelVersions>();
-  const { modelName } = useParams<Params>();
+  const modelName = decodeURIComponent(useParams<Params>().modelName);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);

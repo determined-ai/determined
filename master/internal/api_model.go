@@ -27,10 +27,10 @@ func (a *apiServer) GetModel(
 	switch err := a.m.db.QueryProto("get_model", m, req.ModelName); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s not found", req.ModelName)
+			codes.NotFound, "model \"%s\" not found", req.ModelName)
 	default:
 		return &apiv1.GetModelResponse{Model: m},
-			errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
+			errors.Wrapf(err, "error fetching model \"%s\" from database", req.ModelName)
 	}
 }
 
@@ -127,31 +127,30 @@ func (a *apiServer) PatchModel(
 	if err != nil {
 		return nil, err
 	}
+	currModel := getResp.Model
 
-	if getResp.Model.Archived {
-		return nil, errors.Errorf("model %s is archived and cannot have attributes updated.", req.ModelName)
+	if currModel.Archived {
+		return nil, errors.Errorf("model \"%s\" is archived and cannot have attributes updated.", currModel.Name)
 	}
 
-	currModel := getResp.Model
 	madeChanges := false
-
 	if req.Model.Name != nil && req.Model.Name.Value != currModel.Name {
 		log.Infof("model (%d) name changing from \"%s\" to \"%s\"",
-			getResp.Model.Id, currModel.Name, req.Model.Name.Value)
+			currModel.Id, currModel.Name, req.Model.Name.Value)
 		madeChanges = true
 		currModel.Name = req.Model.Name.Value
 	}
 
 	if req.Model.Description != nil && req.Model.Description.Value != currModel.Description {
-		log.Infof("model (%s) description changing from \"%s\" to \"%s\"",
-			req.ModelName, currModel.Description, req.Model.Description.Value)
+		log.Infof("model \"%s\" description changing from \"%s\" to \"%s\"",
+			currModel.Name, currModel.Description, req.Model.Description.Value)
 		madeChanges = true
 		currModel.Description = req.Model.Description.Value
 	}
 
 	if req.Model.Notes != nil && req.Model.Notes.Value != currModel.Notes {
-		log.Infof("model (%s) notes changing from \"%s\" to \"%s\"",
-			req.ModelName, currModel.Notes, req.Model.Notes.Value)
+		log.Infof("model \"%s\" notes changing from \"%s\" to \"%s\"",
+			currModel.Name, currModel.Notes, req.Model.Notes.Value)
 		madeChanges = true
 		currModel.Notes = req.Model.Notes.Value
 	}
@@ -167,8 +166,8 @@ func (a *apiServer) PatchModel(
 		}
 
 		if !bytes.Equal(currMeta, newMeta) {
-			log.Infof("model (%s) metadata changing from %s to %s",
-				req.ModelName, currMeta, newMeta)
+			log.Infof("model \"%s\" metadata changing from %s to %s",
+				currModel.Name, currMeta, newMeta)
 			madeChanges = true
 			currMeta = newMeta
 		}
@@ -184,8 +183,8 @@ func (a *apiServer) PatchModel(
 		}
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
-			log.Infof("model (%s) labels changing from %s to %s",
-				req.ModelName, currModel.Labels, reqLabels)
+			log.Infof("model \"%s\" labels changing from %s to %s",
+				currModel.Name, currModel.Labels, reqLabels)
 			madeChanges = true
 		}
 		currLabels = reqLabels
@@ -197,11 +196,11 @@ func (a *apiServer) PatchModel(
 
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"update_model", finalModel, currModel.Name, currModel.Description,
+		"update_model", finalModel, currModel.Id, currModel.Name, currModel.Description,
 		currModel.Notes, currMeta, currLabels)
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
-		errors.Wrapf(err, "error updating model %s in database", req.ModelName)
+		errors.Wrapf(err, "error updating model \"%s\" in database", currModel.Name)
 }
 
 func (a *apiServer) ArchiveModel(
@@ -210,12 +209,12 @@ func (a *apiServer) ArchiveModel(
 	err := a.m.db.QueryProto("archive_model", holder, req.ModelName)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %s was not found and cannot be archived",
+		return nil, errors.Wrapf(err, "model \"%s\" was not found and cannot be archived",
 			req.ModelName)
 	}
 
 	return &apiv1.ArchiveModelResponse{},
-		errors.Wrapf(err, "error archiving model %s", req.ModelName)
+		errors.Wrapf(err, "error archiving model \"%s\"", req.ModelName)
 }
 
 func (a *apiServer) UnarchiveModel(
@@ -224,12 +223,12 @@ func (a *apiServer) UnarchiveModel(
 	err := a.m.db.QueryProto("unarchive_model", holder, req.ModelName)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %s was not found and cannot be un-archived",
+		return nil, errors.Wrapf(err, "model \"%s\" was not found and cannot be un-archived",
 			req.ModelName)
 	}
 
 	return &apiv1.UnarchiveModelResponse{},
-		errors.Wrapf(err, "error unarchiving model %s", req.ModelName)
+		errors.Wrapf(err, "error unarchiving model \"%s\"", req.ModelName)
 }
 
 func (a *apiServer) DeleteModel(
@@ -245,12 +244,12 @@ func (a *apiServer) DeleteModel(
 		user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %s does not exist or not delete-able by this user",
+		return nil, errors.Wrapf(err, "model \"%s\" does not exist or not delete-able by this user",
 			req.ModelName)
 	}
 
 	return &apiv1.DeleteModelResponse{},
-		errors.Wrapf(err, "error deleting model %s", req.ModelName)
+		errors.Wrapf(err, "error deleting model \"%s\"", req.ModelName)
 }
 
 func (a *apiServer) GetModelVersion(
@@ -299,7 +298,7 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	if modelResp.Model.Archived {
-		return nil, errors.Errorf("model %s is archived and cannot register new versions.", req.ModelName)
+		return nil, errors.Errorf("model \"%s\" is archived and cannot register new versions.", modelResp.Model.Name)
 	}
 
 	// make sure the checkpoint exists
@@ -348,7 +347,7 @@ func (a *apiServer) PostModelVersion(
 		user.User.Id,
 	)
 
-	return respModelVersion, errors.Wrapf(err, "error adding model version to model %s", req.ModelName)
+	return respModelVersion, errors.Wrapf(err, "error adding model version to model \"%s\"", modelResp.Model.Name)
 }
 
 func (a *apiServer) PatchModelVersion(
