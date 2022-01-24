@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { Button, Modal, Space } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -24,6 +24,7 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import useCustomizeColumnsModal from 'hooks/useCustomizeColumnsModal';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -43,11 +44,11 @@ import {
 import { isBoolean, isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { capitalize } from 'utils/string';
+import { capitalize, sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { openCommand } from 'wait';
 
-import settingsConfig, { Settings } from './ExperimentList.settings';
+import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
 
 const filterKeys: Array<keyof Settings> = [ 'archived', 'label', 'search', 'state', 'user' ];
 
@@ -58,6 +59,7 @@ const ExperimentList: React.FC = () => {
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
+  const { showModal } = useCustomizeColumnsModal();
 
   const {
     activeSettings,
@@ -471,6 +473,14 @@ const ExperimentList: React.FC = () => {
     users,
   ]);
 
+  const transferColumns = useMemo(() => {
+    return columns.filter(column => column.title !== '' && column.title !== 'Archived')
+      .map(column => ({
+        key: sentenceToCamelCase(column.title as string),
+        title: column.title as string,
+      }));
+  }, [ columns ]);
+
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
       return openOrCreateTensorBoard({ experimentIds: settings.row });
@@ -559,6 +569,14 @@ const ExperimentList: React.FC = () => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
+  const openModal = useCallback(() => {
+    showModal({
+      columns: transferColumns,
+      defaultVisibleColumns: DEFAULT_COLUMNS,
+      visibleColumns: settings.columns ?? [],
+    });
+  }, [ transferColumns, settings.columns, showModal ]);
+
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -586,7 +604,12 @@ const ExperimentList: React.FC = () => {
   return (
     <Page
       id="experiments"
-      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
+      options={(
+        <Space>
+          <Button onClick={openModal}>Columns</Button>
+          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+        </Space>
+      )}
       title="Experiments">
       <TableBatch
         actions={[
