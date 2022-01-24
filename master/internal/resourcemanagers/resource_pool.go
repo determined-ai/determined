@@ -105,7 +105,6 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 		msg.Group = msg.TaskActor
 	}
 	rp.getOrCreateGroup(ctx, msg.Group)
-	rp.groupActorToID[msg.Group] = msg.JobID
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed Task"
 	}
@@ -114,6 +113,16 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
+	if msg.IsUserVisible {
+		if _, ok := rp.queuePositions[msg.JobID]; !ok {
+			rp.queuePositions[msg.JobID] = msg.InitialQueuePosition()
+			if err := rp.persist(); err != nil {
+				ctx.Log().Errorf("error persisting queue positions: %s", err)
+				// CHECK: fail?
+			}
+		}
+		rp.groupActorToID[msg.Group] = msg.JobID
+	}
 	rp.taskList.AddTask(&msg)
 }
 
@@ -369,10 +378,12 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
-	// get (groups and then) q positions for anchor, anchor.next or before
-
 	// find out what is the job before or after the anchor
 	// jobInfo := rp.scheduler.JobQInfo(rp)
+
+	// get q positions for anchor, anchor.next or before
+	// qPos1 := rp.queuePositions[msg.Anchor]
+	// qPos2 := rp.queuePositions[nextOrBefore]
 
 	// find the mid point and update the id's qPosition.
 
@@ -446,13 +457,6 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		rp.receiveSetTaskName(ctx, msg)
 
 	case sproto.AllocateRequest:
-		if _, ok := rp.queuePositions[msg.JobID]; !ok {
-			rp.queuePositions[msg.JobID] = msg.InitialQueuePosition()
-			if err := rp.persist(); err != nil {
-				ctx.Log().Errorf("error persisting queue positions: %s", err)
-				// CHECK: fail?
-			}
-		}
 		rp.addTask(ctx, msg)
 
 	case sproto.ResourcesReleased:
