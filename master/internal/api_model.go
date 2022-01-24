@@ -37,6 +37,7 @@ func (a *apiServer) GetModel(
 func (a *apiServer) GetModels(
 	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
+	idFilterExpr := req.Id
 	nameFilterExpr := req.Name
 	descFilterExpr := req.Description
 	archFilterExpr := ""
@@ -75,6 +76,7 @@ func (a *apiServer) GetModels(
 		"get_models",
 		[]interface{}{orderExpr},
 		&resp.Models,
+		idFilterExpr,
 		archFilterExpr,
 		userFilterExpr,
 		labelFilterExpr,
@@ -130,7 +132,8 @@ func (a *apiServer) PatchModel(
 	currModel := getResp.Model
 
 	if currModel.Archived {
-		return nil, errors.Errorf("model \"%s\" is archived and cannot have attributes updated.", currModel.Name)
+		return nil, errors.Errorf("model \"%s\" is archived and cannot have attributes updated.",
+			currModel.Name)
 	}
 
 	madeChanges := false
@@ -254,7 +257,6 @@ func (a *apiServer) DeleteModel(
 
 func (a *apiServer) GetModelVersion(
 	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
-
 	parentModel, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
 	if err != nil {
 		return nil, err
@@ -281,7 +283,8 @@ func (a *apiServer) GetModelVersions(
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: getResp.Model}
-	if err := a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, getResp.Model.Id); err != nil {
+	err = a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, getResp.Model.Id)
+	if err != nil {
 		return nil, err
 	}
 
@@ -298,7 +301,8 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	if modelResp.Model.Archived {
-		return nil, errors.Errorf("model \"%s\" is archived and cannot register new versions.", modelResp.Model.Name)
+		return nil, errors.Errorf("model \"%s\" is archived and cannot register new versions.",
+			modelResp.Model.Name)
 	}
 
 	// make sure the checkpoint exists
@@ -347,7 +351,8 @@ func (a *apiServer) PostModelVersion(
 		user.User.Id,
 	)
 
-	return respModelVersion, errors.Wrapf(err, "error adding model version to model \"%s\"", modelResp.Model.Name)
+	return respModelVersion, errors.Wrapf(err, "error adding model version to model \"%s\"",
+		modelResp.Model.Name)
 }
 
 func (a *apiServer) PatchModelVersion(

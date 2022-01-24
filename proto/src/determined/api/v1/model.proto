@@ -63,6 +63,9 @@ message GetModelsRequest {
 
   // Limit the models to those made by the following users.
   repeated string users = 9;
+
+  // Limit the models to this model id.
+  int32 id = 10;
 }
 
 // Response to GetModelsRequest.

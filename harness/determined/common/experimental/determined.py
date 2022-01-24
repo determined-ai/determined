@@ -184,6 +184,7 @@ class Determined:
         order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
         name: str = "",
         description: str = "",
+        id: int = 0,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
@@ -196,6 +197,8 @@ class Determined:
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
+            id: If this paramter is set, models will be filtered to
+                only include the model with this unique numeric id.
         """
         r = self._session.get(
             "/api/v1/models/",
@@ -204,6 +207,7 @@ class Determined:
                 "order_by": order_by.value,
                 "name": name,
                 "description": description,
+                "id": id,
             },
         )
 
