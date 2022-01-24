@@ -21,8 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-type jobSortState = map[model.JobID]float64
-
 // ResourcePool manages the agent and task lifecycles.
 type ResourcePool struct {
 	config *ResourcePoolConfig
@@ -379,14 +377,13 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 
 func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
 	// find out what is the job before or after the anchor
-	// jobInfo := rp.scheduler.JobQInfo(rp)
+	queueInfo := rp.scheduler.JobQInfo(rp)
 
-	// get q positions for anchor, anchor.next or before
-	// qPos1 := rp.queuePositions[msg.Anchor]
-	// qPos2 := rp.queuePositions[nextOrBefore]
-
-	// find the mid point and update the id's qPosition.
-
+	newPos, err := computeNewJobPos(msg, queueInfo, rp.queuePositions)
+	if err != nil {
+		return err
+	}
+	rp.queuePositions[msg.ID] = newPos
 	// condiontally check if rebalancing is needed.
 	adjustPriorities(&rp.queuePositions)
 

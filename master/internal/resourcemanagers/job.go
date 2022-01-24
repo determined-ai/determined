@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"fmt"
+
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -70,6 +72,8 @@ func adjustPriorities(positions *jobSortState) {
 	// prev := float64(0)
 	// i := 0
 
+	// TODO make sure the highest qposition doesn't increase.. even when moving jobs
+
 	// for i < len(reqs) {
 	// 	if groups[reqs[i].Group].qPosition == -1 {
 	// 		if i == len(reqs)-1 {
@@ -107,4 +111,43 @@ func adjustPriorities(positions *jobSortState) {
 	// 	prev = groups[reqs[i].Group].qPosition
 	// 	i++
 	// }
+}
+
+type jobSortState = map[model.JobID]float64
+
+func computeNewJobPos(msg job.MoveJob, jobQ job.AQueue, qPositions jobSortState) (float64, error) {
+	if msg.Anchor == msg.ID {
+		return 0, fmt.Errorf("cannot move job relative to itself")
+	}
+	// find what that position of the anchor job is
+	// anchorInfo, ok := jobQ[msg.Anchor]
+	// if !ok {
+	// 	return 0, fmt.Errorf("could not find anchor job %s", msg.Anchor)
+	// }
+
+	// get q positions for anchor, anchor.next or before
+	qPos1, ok := qPositions[msg.Anchor]
+	if !ok {
+		return 0, fmt.Errorf("could not find anchor job %s", msg.Anchor)
+	}
+
+	/*
+		consider:
+			- moving to ahead of the first job
+			- movingto behind of the last job
+				WARN consider a job initialized at current time as the upper bound of qposValue
+	*/
+
+	// qPos2 := rp.queuePositions[nextOrBefore]
+
+	// find the mid point and update the id's qPosition.
+
+	// FIXME
+	epsilon := 1.0
+	if msg.AheadOf {
+		epsilon *= -1
+	}
+	newPos := qPos1 + epsilon
+
+	return newPos, nil
 }

@@ -172,5 +172,11 @@ type Event struct {
 
 // InitialQueuePosition blah.. TODO this shouldn't be on allocateRequest.
 func (r AllocateRequest) InitialQueuePosition() float64 {
-	return float64(r.JobSubmissionTime.UnixNano())
+	startTime, err := time.Parse(time.RFC3339, "2010-01-01T12:00:00Z")
+	if err != nil {
+		panic(err)
+	}
+	n := r.JobSubmissionTime.UnixMicro()
+	n -= startTime.UnixMicro()
+	return float64(n)
 }
