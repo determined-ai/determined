@@ -1163,7 +1163,7 @@ func (db *PgDB) LegacyExperimentConfigByID(
 	var byts []byte
 	if err := db.sql.QueryRow(
 		"SELECT config FROM experiments WHERE id = $1", id).Scan(&byts); err != nil {
-		return expconf.LegacyConfig{}, err
+		return expconf.LegacyConfig{}, errors.Wrap(err, "querying legacy config bytes")
 	}
 
 	config, err := expconf.ParseLegacyConfigJSON(byts)

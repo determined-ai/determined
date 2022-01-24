@@ -190,7 +190,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
 	case AllocationReady:
-		a.model.State = &a.state // TODO(Brad): This is ... wrong.
+		a.model.State = &a.state // TODO(Brad): Consolidate where state is store else bugs.
 		a.model.IsReady = ptrs.BoolPtr(true)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
@@ -212,7 +212,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if err := a.rendezvous.ReceiveMsg(ctx); err != nil {
-			ctx.Tell(ctx.Self(), sproto.ContainerLog{AuxMessage: ptrs.StringPtr(err.Error())})
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
@@ -223,7 +223,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if err := a.preemption.ReceiveMsg(ctx); err != nil {
-			ctx.Tell(ctx.Self(), sproto.ContainerLog{AuxMessage: ptrs.StringPtr(err.Error())})
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
 		}
 	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
@@ -399,18 +399,20 @@ func (a *Allocation) TaskContainerStateChanged(
 			a.registerProxies(ctx, msg)
 		}
 
-		a.sendEvent(ctx, sproto.Event{ContainerStartedEvent: msg.ContainerStarted})
+		a.sendEvent(ctx, sproto.Event{
+			ContainerID:           string(msg.Container.ID),
+			ContainerStartedEvent: msg.ContainerStarted,
+		})
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
 			a.req.TaskActor.Address())
 		prom.AddAllocationReservation(a.reservations[msg.Container.ID].Summary(), msg.ContainerStarted)
 
-		a.sendEvent(ctx, sproto.Event{ContainerStartedEvent: msg.ContainerStarted})
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
 		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-			ContainerID: &msg.Container.Proto().Id,
+			ContainerID: ptrs.StringPtr(msg.Container.ID.String()),
 			Log:         msg.ContainerStopped.String(),
 		}))
 		switch {
@@ -747,7 +749,7 @@ func (a *AllocationExited) String() string {
 }
 
 // FirstContainer returns the first container in the allocation state.
-func (a *AllocationState) FirstContainer() *cproto.Container {
+func (a AllocationState) FirstContainer() *cproto.Container {
 	for _, c := range a.Containers {
 		return &c
 	}
@@ -765,7 +767,7 @@ func (a AllocationState) FirstDevice() *device.Device {
 }
 
 // FirstContainerAddresses returns the first container's addresses in the allocation state.
-func (a *AllocationState) FirstContainerAddresses() []cproto.Address {
+func (a AllocationState) FirstContainerAddresses() []cproto.Address {
 	for _, ca := range a.Addresses {
 		return ca
 	}

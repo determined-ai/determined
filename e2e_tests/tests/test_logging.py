@@ -39,40 +39,35 @@ def test_trial_logs() -> None:
 @pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize(
-    "task_type,task_config,task_extras,log_regex",
+    "task_type,task_config,log_regex",
     [
-        (command.TaskTypeCommand, {"entrypoint": ["echo", "hello"]}, {}, re.compile("^.*hello.*$")),
-        (command.TaskTypeNotebook, {}, {}, re.compile("^.*Jupyter Server .* is running.*$")),
-        (command.TaskTypeShell, {}, {}, re.compile("^.*Server listening on.*$")),
-        (
-            command.TaskTypeTensorBoard,
-            {},
-            {"experiment_ids": [1]},
-            re.compile("^.*TensorBoard .* at .*$"),
-        ),
+        (command.TaskTypeCommand, {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
+        (command.TaskTypeNotebook, {}, re.compile("^.*Jupyter Server .* is running.*$")),
+        (command.TaskTypeShell, {}, re.compile("^.*Server listening on.*$")),
+        (command.TaskTypeTensorBoard, {}, re.compile("^.*TensorBoard .* at .*$")),
     ],
 )
-def test_task_logs(
-    task_type: str, task_config: Dict[str, Any], task_extras: Dict[str, Any], log_regex: Any
-) -> None:
+def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
     # TODO: refactor tests to not use cli singleton auth.
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
 
-    # Ensure tensorboard tests have an experiment to work with.
-    if (
-        task_type == command.TaskTypeTensorBoard
-        and not api.get(master_url, "/api/v1/experiments").json()["experiments"]
-    ):
-        exp.run_basic_test(conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1)
+    body = {}
+    if task_type == command.TaskTypeTensorBoard:
+        exp_id = exp.run_basic_test(
+            conf.fixtures_path("no_op/single.yaml"),
+            conf.fixtures_path("no_op"),
+            1,
+        )
+        body.update({"experiment_ids": [exp_id]})
 
     resp = command.launch_command(
         master_url,
         f"api/v1/{command.RemoteTaskNewAPIs[task_type]}",
         task_config,
         "",
-        default_body=task_extras,
+        default_body=body,
     )
     task_id = resp[command.RemoteTaskName[task_type]]["id"]
     try:

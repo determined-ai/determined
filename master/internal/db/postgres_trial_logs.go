@@ -77,7 +77,7 @@ SELECT
 FROM trial_logs l
 WHERE l.trial_id = $1
 %s
-ORDER BY timestamp %s LIMIT $2
+ORDER BY l.id %s LIMIT $2
 `, fragment, orderByToSQL(order))
 
 	var b []*model.TrialLog
