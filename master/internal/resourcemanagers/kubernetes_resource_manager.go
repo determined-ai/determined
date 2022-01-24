@@ -116,7 +116,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
-		job.SetGroupOrder,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -298,21 +297,6 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 				}
 			}
 		}
-
-	case job.SetGroupOrder:
-		// group := k.getOrCreateGroup(ctx, msg.Handler)
-		// if msg.QPosition > 0 {
-		// 	group.qPosition = msg.QPosition
-		// }
-
-		// for it := k.reqList.iterator(); it.next(); {
-		// 	if it.value().Group == msg.Handler {
-		// 		taskActor := it.value().TaskActor
-		// 		if id, ok := k.addrToContainerID[taskActor]; ok {
-		// 			ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{QPosition: msg.QPosition, PodID: id})
-		// 		}
-		// 	}
-		// }
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

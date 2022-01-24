@@ -308,9 +308,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
-	case job.SetGroupOrder:
-		c.setOrder(ctx, msg.QPosition)
-
 	case job.SetGroupWeight:
 		err := c.setWeight(ctx, msg.Weight)
 		if err != nil {
@@ -355,13 +352,6 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 		Handler: ctx.Self(),
 	})
 	return nil
-}
-
-func (c *command) setOrder(ctx *actor.Context, queuePosition float64) {
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
-		QPosition: queuePosition,
-		Handler:   ctx.Self(),
-	})
 }
 
 func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {

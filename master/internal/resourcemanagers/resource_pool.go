@@ -263,8 +263,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobQStats,
 		job.SetGroupWeight,
-		job.SetGroupPriority,
-		job.SetGroupOrder:
+		job.SetGroupPriority:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -408,13 +407,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 			ctx.Log().Infof("setting priority for group of %s to %d",
 				msg.Handler.Address().String(), *g.priority)
 		}
-
-	// TODO delete
-	case job.SetGroupOrder:
-		// group := rp.getOrCreateGroup(ctx, msg.Handler)
-		// if msg.QPosition != 0 {
-		// 	group.qPosition = msg.QPosition
-		// }
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

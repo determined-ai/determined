@@ -268,11 +268,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
-	case job.SetGroupOrder:
-		if err := e.setOrder(ctx, msg.QPosition); err != nil {
-			ctx.Respond(err)
-			ctx.Log().WithError(err)
-		}
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -614,22 +609,6 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
-	})
-	return nil
-}
-
-func (e *experiment) setOrder(ctx *actor.Context, queuePosition float64) error {
-	jobModel := model.Job{
-		JobID: e.JobID,
-		QPos:  queuePosition,
-	}
-	err := e.db.UpdateJob(&jobModel)
-	if err != nil {
-		return err
-	}
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupOrder{
-		QPosition: queuePosition,
-		Handler:   ctx.Self(),
 	})
 	return nil
 }
