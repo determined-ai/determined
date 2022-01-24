@@ -11,7 +11,7 @@ import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { StateOfUnion } from 'themes';
 import {
-  CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion, Pagination,
+  CommandTask, CommandType, ExperimentItem, ModelVersion, Pagination,
   StartEndTimes, TrialItem,
 } from 'types';
 import { getDuration } from 'utils/datetime';

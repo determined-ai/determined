@@ -5881,6 +5881,7 @@ def get_GetModels(
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
+    id: "typing.Optional[int]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
@@ -5892,6 +5893,7 @@ def get_GetModels(
     _params = {
         "archived": archived,
         "description": description,
+        "id": id,
         "labels": labels,
         "limit": limit,
         "name": name,

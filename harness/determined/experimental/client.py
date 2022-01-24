@@ -247,7 +247,7 @@ def get_model_by_id(model_id: int) -> Model:
         model_id (int): The unique id of the model.
     """
     assert _determined is not None
-    matching_models = _determined.get_models(id=model_id)
+    matching_models = _determined.get_models(model_id=model_id)
     assert len(matching_models) > 0
     return matching_models[0]
 
