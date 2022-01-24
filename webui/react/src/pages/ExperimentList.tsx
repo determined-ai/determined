@@ -141,7 +141,7 @@ const ExperimentList: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch experiments.',
-        silent: true, // CHECK do we want this to be silent?
+        silent: false, // CHECK do we want this to be silent?
         // type: ErrorType.Api, // FIXME server? server vs api is a bit confusing to me.
       });
     } finally {
