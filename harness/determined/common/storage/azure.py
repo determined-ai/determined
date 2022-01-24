@@ -62,13 +62,19 @@ class AzureStorageManager(StorageManager):
     def upload(self, storage_id: str, storage_dir: str) -> None:
         storage_prefix = storage_id
         for rel_path in sorted(self._list_directory(storage_dir)):
-            if rel_path.endswith("/"):
-                continue
             # Use posixpath so that we always use forward slashes, even on Windows.
             container_blob = posixpath.join(self.container, storage_prefix, rel_path)
-            blob_dir, blob_base = posixpath.split(container_blob)
-            abs_path = os.path.join(storage_dir, rel_path)
-            logging.debug(f"Uploading blob {blob_base} to container {blob_dir}.")
+
+            if rel_path.endswith("/"):
+                blob_dir, blob_base = posixpath.split(container_blob.rstrip("/"))
+                blob_base = f"{blob_base}/"
+                abs_path = "/dev/null"
+                logging.debug(f"Uploading blob empty {blob_base} to container {blob_dir}.")
+            else:
+                blob_dir, blob_base = posixpath.split(container_blob)
+                abs_path = os.path.join(storage_dir, rel_path)
+                logging.debug(f"Uploading blob {blob_base} to container {blob_dir}.")
+
             self.client.put(blob_dir, blob_base, abs_path)
 
     @util.preserve_random_state
@@ -79,11 +85,11 @@ class AzureStorageManager(StorageManager):
             found = True
             dst = os.path.join(storage_dir, os.path.relpath(blob, storage_prefix))
             dst_dir = os.path.dirname(dst)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir, exist_ok=True)
+            os.makedirs(dst_dir, exist_ok=True)
 
             # Only create empty directory for keys that end with "/".
             if blob.endswith("/"):
+                os.makedirs(dst, exist_ok=True)
                 continue
 
             # Use posixpath so that we always use forward slashes, even on Windows.

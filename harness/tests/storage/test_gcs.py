@@ -1,13 +1,19 @@
 import os
+import uuid
 from pathlib import Path
-from typing import Iterator
+from typing import Dict, Iterator, List
 
 import google.auth.exceptions
 import google.cloud.storage
 import pytest
 
 from determined.common import storage
+from determined.tensorboard.fetchers.gcs import GCSFetcher
 from tests.storage import util
+
+BUCKET_NAME = "storage-unit-tests"
+CHECK_ACCESS_KEY = "check-access"
+CHECK_KEY_CONTENT = b"yo, you have access"
 
 
 @pytest.fixture
@@ -51,9 +57,9 @@ def live_gcs_manager(
     # Instantiating a google.cloud.storage.Client() takes a few seconds, so we speed up test by
     # reusing the one created for the storage manager.
     try:
-        manager = storage.GCSStorageManager(bucket="storage-unit-tests", temp_dir=str(tmp_path))
-        blob = manager.bucket.blob("check-access")
-        assert blob.download_as_string() == b"yo, you have access"
+        manager = storage.GCSStorageManager(bucket=BUCKET_NAME, temp_dir=str(tmp_path))
+        blob = manager.bucket.blob(CHECK_ACCESS_KEY)
+        assert blob.download_as_string() == CHECK_KEY_CONTENT
     except google.auth.exceptions.DefaultCredentialsError:
         # No access detected.
         if require_secrets:
@@ -73,3 +79,48 @@ def test_gcs_lifecycle(live_gcs_manager: storage.GCSStorageManager) -> None:
             raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")
 
     util.run_storage_lifecycle_test(live_gcs_manager, post_delete_cb)
+
+
+def get_tensorboard_fetcher_gcs(
+    require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
+) -> GCSFetcher:
+
+    storage_config = {"bucket": BUCKET_NAME}
+
+    try:
+        fetcher = GCSFetcher(storage_config, paths_to_sync, local_sync_dir)
+
+        blob = fetcher.client.bucket(BUCKET_NAME).blob("check-access")
+        assert blob.download_as_string() == CHECK_KEY_CONTENT
+
+        return fetcher
+
+    except google.auth.exceptions.DefaultCredentialsError:
+        # No access detected.
+        if require_secrets:
+            raise
+        pytest.skip("No GCS access")
+
+
+@pytest.mark.cloud
+def test_tensorboard_fetcher_gcs(
+    require_secrets: bool, tmp_path: Path, prep_gcs_test_creds: None
+) -> None:
+
+    local_sync_dir = os.path.join(tmp_path, "sync_dir")
+    storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)
+
+    # Create two paths as multi-trial sync could happen.
+    paths_to_sync = [os.path.join("test_dir", str(uuid.uuid4()), "subdir") for _ in range(2)]
+
+    fetcher = get_tensorboard_fetcher_gcs(require_secrets, local_sync_dir, paths_to_sync)
+
+    def put_files(filepath_content: Dict[str, bytes]) -> None:
+        for filepath, content in filepath_content.items():
+            fetcher.client.bucket(BUCKET_NAME).blob(filepath).upload_from_string(content)
+
+    def rm_files(filepaths: List[str]) -> None:
+        for filepath in filepaths:
+            fetcher.client.bucket(BUCKET_NAME).blob(filepath).delete()
+
+    util.run_tensorboard_fetcher_test(local_sync_dir, fetcher, storage_relpath, put_files, rm_files)

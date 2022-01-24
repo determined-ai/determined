@@ -25,6 +25,8 @@ class AzureStorageClient(object):
             self.client = blob.BlobServiceClient.from_connection_string(connection_string)
         elif account_url:
             self.client = blob.BlobServiceClient(account_url, credential)
+        else:
+            raise ValueError("Either 'connection_string' or 'account_url' must be specified.")
 
         logging.info(f"Trying to create Azure Blob Storage Container: {container}.")
         try:
@@ -50,7 +52,7 @@ class AzureStorageClient(object):
     def put(self, container_name: str, blob_name: str, filename: Union[str, Path]) -> None:
         """Upload a file to the specified blob in the specified container."""
         with open(filename, "rb") as file:
-            self.client.get_blob_client(container_name, blob_name).upload_blob(file)
+            self.client.get_blob_client(container_name, blob_name).upload_blob(file, overwrite=True)
 
     @util.preserve_random_state
     def get(self, container_name: str, blob_name: str, filename: str) -> None:
