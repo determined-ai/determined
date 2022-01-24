@@ -188,7 +188,7 @@ const LogViewerCore: React.FC<Props> = ({
 
     local.current.isOnTop = visibleStartIndex === 0;
     local.current.isOnBottom = visibleStopIndex === logs.length - 1;
-    
+
     setIsTailing(local.current.isOnBottom && isNewestFirst);
 
     // Still busy with a previous fetch, prevent another fetch.
@@ -282,7 +282,7 @@ const LogViewerCore: React.FC<Props> = ({
   useEffect(() => {
     fetchLogs({ canceler, isNewestFirst }, FetchType.Initial).then(logs => {
       addLogs(logs);
-    
+
       if (isNewestFirst) {
         logs.length>0 && listRef.current?.scrollToItem(logs.length, 'end');
       } else {
