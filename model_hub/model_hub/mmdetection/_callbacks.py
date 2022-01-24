@@ -122,7 +122,7 @@ class LrUpdaterCallback(det_torch.PyTorchCallback):
     def on_training_start(self) -> None:
         self.hook.before_run(self.runner)
 
-    def on_training_epoch_start(self) -> None:
+    def on_training_epoch_start(self, epoch_idx: int) -> None:
         self.hook.before_train_epoch(self.runner)
 
     def on_batch_start(self) -> None:
