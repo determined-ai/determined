@@ -47,10 +47,7 @@ export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1
   if (position < 1 || position % 1 !== 0) {
     throw new DetError(`Invalid queue position: ${position}.`, { type: ErrorType.Input });
   }
-  return {
-    jobId,
-    queuePosition: position - 1,
-  };
+  return { jobId };
 };
 
 export const moveJobToPosition = async (jobId: string, position: number): Promise<void> => {

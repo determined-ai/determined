@@ -23,10 +23,7 @@ describe('Job Utilities', () => {
     const jobId = 'jobId';
     it('should return the correct update', () => {
       const position = 1;
-      expect(utils.moveJobToPositionUpdate(jobId, position)).toEqual({
-        jobId,
-        queuePosition: position - 1,
-      });
+      expect(utils.moveJobToPositionUpdate(jobId, position)).toEqual({ jobId });
     });
     it('should throw given invalid position input', () => {
       expect(() => utils.moveJobToPositionUpdate(jobId, -1))
