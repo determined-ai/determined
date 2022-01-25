@@ -16,6 +16,7 @@ import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';
 import { isNumber } from 'utils/data';
+import handleError from 'utils/error';
 import { extractMetricNames } from 'utils/metric';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
@@ -72,7 +73,8 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
       setTrialsDetails(prev => ({ ...prev, [trialId]: response }));
-    } catch {
+    } catch (e) {
+      handleError(e);
     }
   }, [ canceler.signal ]);
 
