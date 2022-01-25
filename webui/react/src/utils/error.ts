@@ -109,16 +109,21 @@ const log = (e: DetError) => {
 // handle at the point that you'd want to stop bubbling the exception up.
 // thus no handling and throwing shouldn't come right after one another. :thining_face:
 // rewrite me
-const handleError = (error: unknown, options?: DetErrorOptions): void => {
+const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
   // Ignore request cancellation errors.
   if (isAborted(error)) return;
   let e: DetError | undefined;
-  if (isDetError(error)) e = error;
-  if (isError(error)) e = new DetError(error, options); // convert to DetError
-  if (!e) {
-    throw new Error(`Unexpected error encountered: ${error}`);
+  if (isDetError(error)) {
+    e = error;
+  } else {
+    e = new DetError(error, options);
   }
-  if (e.isHandled) return;
+  if (e.isHandled) {
+    if (process.env.IS_DEV) {
+      console.warn(`Error "${e.message}" is handled twice.`);
+    }
+    return;
+  }
   e.isHandled = true;
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
