@@ -1,19 +1,20 @@
-import { Input, Modal, ModalFuncProps, Transfer } from 'antd';
+import { Button, Input, Modal, ModalFuncProps, Space, Transfer } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
-import { TransferItem } from 'antd/lib/transfer';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import css from './useCreateModelModal.module.scss';
+import { camelCaseToSentence, sentenceToCamelCase } from 'utils/string';
+
+import css from './useCustomizeColumnsModal.module.scss';
 
 interface ModalState {
-  columns: TransferItem[];
+  columns: string[];
   defaultVisibleColumns: string[];
   visible: boolean;
   visibleColumns: string[];
 }
 
 export interface ShowModalProps {
-  columns: TransferItem[];
+  columns: string[];
   defaultVisibleColumns: string[];
   visibleColumns: string[];
 }
@@ -53,22 +54,37 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     closeModal();
   }, [ closeModal ]);
 
+  const hiddenColumns = useMemo(() => {
+    return modalState.columns.filter(column =>
+      !modalState.visibleColumns.includes(sentenceToCamelCase(column)));
+  }, [ modalState.columns, modalState.visibleColumns ]);
+
   const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
-    const { columns, visibleColumns } = state;
+    const { visibleColumns } = state;
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        <Transfer
-          dataSource={columns}
-          render={item => item.title ?? ''}
-          targetKeys={visibleColumns}
-        />
+        <Input placeholder="Search columns..." />
+        <div className={css.columns}>
+          <div className={css.column}>
+            <h2>Hidden</h2>
+            <ul>{hiddenColumns.map(column => <li key={column}>{column}</li>)}</ul>
+            <Button type="link">Add All</Button>
+          </div>
+          <div className={css.column}>
+            <h2>Visible</h2>
+            <ul>{visibleColumns.map(column =>
+              <li key={column}>{column === 'id' ? 'ID' : camelCaseToSentence(column)}</li>)}
+            </ul>
+            <Button type="link">Remove All</Button>
+          </div>
+        </div>
       </div>
     );
-  }, [ ]);
+  }, [ hiddenColumns ]);
 
   const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
-    const modalProps = {
+    const modalProps: Partial<ModalFuncProps> = {
       bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,

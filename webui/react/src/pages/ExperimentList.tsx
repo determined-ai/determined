@@ -424,15 +424,13 @@ const ExperimentList: React.FC = () => {
       },
     ];
 
-    return tableColumns
-      .filter(column => settings.archived ? true : column.key !== 'archived')
-      .map(column => {
-        column.sortOrder = null;
-        if (column.key === settings.sortKey) {
-          column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-        }
-        return column;
-      });
+    return tableColumns.map(column => {
+      column.sortOrder = null;
+      if (column.key === settings.sortKey) {
+        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
+      }
+      return column;
+    });
   }, [
     user,
     handleActionComplete,
@@ -448,12 +446,17 @@ const ExperimentList: React.FC = () => {
     users,
   ]);
 
+  const visibleColumns = useMemo(() => {
+    return columns.filter(column => {
+      if (column.key === 'action') return true;
+      if (column.key === 'archived') return settings.archived;
+      return settings.columns?.includes(sentenceToCamelCase(column.title as string));
+    });
+  }, [ columns, settings.archived, settings.columns ]);
+
   const transferColumns = useMemo(() => {
     return columns.filter(column => column.title !== '' && column.title !== 'Archived')
-      .map(column => ({
-        key: sentenceToCamelCase(column.title as string),
-        title: column.title as string,
-      }));
+      .map(column => column.title as string);
   }, [ columns ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
@@ -608,7 +611,7 @@ const ExperimentList: React.FC = () => {
         onClear={clearSelected}
       />
       <ResponsiveTable<ExperimentItem>
-        columns={columns}
+        columns={visibleColumns}
         dataSource={experiments}
         loading={isLoading}
         pagination={getFullPaginationConfig({
