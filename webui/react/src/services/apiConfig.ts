@@ -141,9 +141,7 @@ export const getAgents: Service.DetApi<
   Service.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
 > = {
   name: 'getAgents',
-  postProcess: (response) => {
-    return decoder.jsonToAgents(response.agents || []);
-  },
+  postProcess: (response) => decoder.jsonToAgents(response.agents || []),
   request: () => detApi.Cluster.getAgents(),
 };
 

@@ -250,7 +250,7 @@ const JupyterLabForm: React.FC<FormProps> = (
   const fetchTemplates = useCallback(async () => {
     try {
       setTemplates(await getTaskTemplates({}));
-    } catch (e) { handleError(e); } // TODO we we want and eslint rule to disallow unhandled errors?
+    } catch (e) { handleError(e); }
   }, []);
 
   useEffect(() => {

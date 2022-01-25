@@ -12,7 +12,7 @@ import { isString } from './data';
 
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
-  isUserTriggered?: boolean; // whether the error was caused by an active interaction.
+  isUserTriggered?: boolean; // whether the error was triggered by an active interaction.
   level?: ErrorLevel;
   logger?: LoggerInterface;
   payload?: unknown;

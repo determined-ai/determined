@@ -139,11 +139,7 @@ const ExperimentList: React.FC = () => {
         return response.experiments;
       });
     } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch experiments.',
-        silent: false, // CHECK do we want this to be silent?
-        // type: ErrorType.Api, // FIXME server? server vs api is a bit confusing to me.
-      });
+      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
@@ -290,11 +286,11 @@ const ExperimentList: React.FC = () => {
         experimentId: id,
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save experiment description.',
-        silent: false, // CHECK example of why we want this. this was silent probably because a
-        // lower level handleError was covering it but that lower level error did not have the
-        // same information to provide as good a DetError.
+      handleError(e, {
+        isUserTriggered: true, // IMO we want to show errors for user triggered failures unless we
+        // have a better way of communicating this to the user.
+        publicMessage: 'Unable to save experiment description.',
+        silent: true,
       });
       setIsLoading(false);
     }
@@ -524,11 +520,11 @@ const ExperimentList: React.FC = () => {
         'Unable to View TensorBoard for Selected Experiments' :
         `Unable to ${action} Selected Experiments`;
       handleError(e, {
+        isUserTriggered: true,
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,
-        // type: ErrorType.Server,
       });
     }
   }, [ fetchExperiments, sendBatchActions, updateSettings ]);

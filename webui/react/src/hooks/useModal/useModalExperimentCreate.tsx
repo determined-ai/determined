@@ -9,7 +9,7 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone, isEqual } from 'utils/data';
-import handleError from 'utils/error';
+import handleError, { DetError, isDetError } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
@@ -191,19 +191,16 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
-      if (e.name === 'YAMLException') { // where would this come from? e is unknown
+      if (e.name === 'YAMLException') {
         errorMessage = e.message;
-      } else if (e.response?.data?.message) {
-        errorMessage = e.response.data.message; // FIXME look at e.message instead?
-      } else if (e.json) {
-        const errorJSON = await e.json();
-        errorMessage = errorJSON.error?.error;
+      } else if (isDetError(e)) {
+        errorMessage = e.publicMessage || e.message;
       }
 
       setModalState(prev => ({ ...prev, error: errorMessage }));
 
       // We throw an error to prevent the modal from closing.
-      throw new Error(errorMessage);
+      throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
   }, [ modalState ]);
 

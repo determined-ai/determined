@@ -64,7 +64,7 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
   const options: DetErrorOptions = {
     level: ErrorLevel.Error,
     publicSubject: `Request ${name} failed.`,
-    silent: isAuthError || isAborted(e), // TODO show in dev
+    silent: !process.env.IS_DEV || isAuthError || isAborted(e),
     type: ErrorType.Server,
   };
 
@@ -76,19 +76,15 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
     options.publicSubject = `Failed in decoding ${name} API response.`;
   }
 
-  let msg: string | undefined;
   if (isApiResponse(e)) {
     try {
       const response = await e.json();
-      msg = response.message;
+      options.publicMessage = response.message || response.error?.error;
     } catch (err) {
-      // FIXME Ignore or throw
-      msg = e.statusText;
+      // Ignore the error.
     }
   }
-  return new DetError(`${name}: ${msg}`, options);
-  // REMOVE ME We instead handle this at the top most level instead of the lowest level if
-  // it's DetError and is unhandled.
+  return new DetError(e, options);
 };
 
 export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
