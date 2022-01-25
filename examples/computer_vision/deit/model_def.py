@@ -25,6 +25,8 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from attrdict import AttrDict
 from datasets import build_dataset
 import torch.distributed as dist
+import models
+from losses import DistillationLoss
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
@@ -116,12 +118,18 @@ class DeitTrial(PyTorchTrial):
         )
         self.model = self.context.wrap_model(model)
 
+        n_parameters = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        print('number of params:', n_parameters)
+
         model_without_ddp = self.model
 
         optimizer = create_optimizer(self.args, model_without_ddp)
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
-        self.criterion = torch.nn.CrossEntropyLoss()
+        criterion = torch.nn.CrossEntropyLoss()
+        self.criterion = DistillationLoss(
+            criterion, None, 'none', 0.5, 1.0
+        )
 
     
         
@@ -131,7 +139,11 @@ class DeitTrial(PyTorchTrial):
             outputs = self.model(samples)
             loss = self.criterion(samples, outputs, targets)
 
-        self.context.backward(loss)
+        loss_scaler = NativeScaler()
+        is_second_order = hasattr(self.optimizer, 'is_second_order') and self.optimizer.is_second_order
+        loss_scaler(loss, self.optimizer, clip_grad=0,
+                    parameters=self.model.parameters(), create_graph=is_second_order)
+        # self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
         return {"loss": loss.item()}
 
@@ -151,7 +163,7 @@ class DeitTrial(PyTorchTrial):
         dataset_train, self.args.nb_classes = build_dataset(is_train=True, args=self.args)
         num_tasks = get_world_size()
         global_rank = get_rank()
-        sampler_train = samplers.DistributedSampler(
+        sampler_train = torch.utils.data.DistributedSampler(
                 dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True)
         return DataLoader(
             dataset_train, sampler=sampler_train,
@@ -166,7 +178,7 @@ class DeitTrial(PyTorchTrial):
         dataset_val, _ = build_dataset(is_train=False, args=self.args)
         num_tasks = get_world_size()
         global_rank = get_rank()
-        sampler_val = samplers.DistributedSampler(
+        sampler_val = torch.utils.data.DistributedSampler(
                 dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
         return DataLoader(
             dataset_val, sampler=sampler_val,
