@@ -21,8 +21,8 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
-  const fetchAuthOnly = useCallback(() => {
-    if (auth.isAuthenticated) fetchAgents();
+  const fetchAuthOnly = useCallback(async () => {
+    if (auth.isAuthenticated) await fetchAgents();
   }, [ auth.isAuthenticated, fetchAgents ]);
 
   usePolling(fetchAuthOnly);

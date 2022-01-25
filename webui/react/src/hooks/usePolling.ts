@@ -28,6 +28,12 @@ const DEFAULT_OPTIONS: PollingOptions = {
   runImmediately: true,
 };
 
+/**
+ * Polling hook that polls a given polling function.
+ * @param pollingFn
+ *    The function to poll. Pass an async/await function to ensure
+ *    the previous poll resolves first before making a new call.
+ */
 const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): PollingHooks => {
   const savedPollingFn = useRef<PollingFn>(pollingFn);
   const pollingOptions = useRef<PollingOptions>({ ...DEFAULT_OPTIONS, ...options });
