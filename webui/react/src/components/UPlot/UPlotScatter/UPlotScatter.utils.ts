@@ -95,7 +95,7 @@ export const range = (
     if (/categorical/i.test(scaleKey)) {
       // Using splits for categorical axis.
       const splits = getSplits?.(u, axisIndex, min, max) || [];
-      if (splits.length > 1) return [ splits.first(), splits.last() ];
+      return splits.length > 1 ? [ splits.first(), splits.last() ] : [ -1, 1 ];
     } else if (/log/i.test(scaleKey)) {
       const logBase = u.scales[scaleKey].log || DEFAULT_LOG_BASE;
       const nearestBase = Math.log(max) / Math.log(logBase);
@@ -156,11 +156,6 @@ export const makeDrawPoints = (
       u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       u.ctx.clip();
 
-      // u.ctx.fillStyle = typeof series.fill === 'function'
-      //   ? series.fill(u, seriesIdx) : series.fill;
-      // u.ctx.strokeStyle = typeof series.stroke === 'function'
-      //   ? series.stroke(u, seriesIdx) : series.stroke;
-      u.ctx.strokeStyle = 'green';
       u.ctx.lineWidth = strokeWidth;
 
       // Calculate bubble fill and size.
@@ -170,6 +165,7 @@ export const makeDrawPoints = (
 
       // todo: this depends on direction & orientation
       // todo: calc once per redraw, not per path
+      const devicePixelRatio = window.devicePixelRatio;
       const filtLft = u.posToVal(-MAX_DIAMETER / 2, scaleX.key);
       const filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + MAX_DIAMETER / 2, scaleX.key);
       const filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + MAX_DIAMETER / 2, scaleY.key);
