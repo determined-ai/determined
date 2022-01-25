@@ -1,0 +1,32 @@
+.tooltip {
+  background-color: var(--theme-colors-monochrome-17);
+  border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+  border-radius: var(--theme-sizes-border-radius);
+  box-shadow: var(--theme-shadow);
+  cursor: auto;
+  display: none;
+  padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
+  pointer-events: none;
+  position: absolute;
+
+  .row {
+    display: flex;
+    font-size: var(--theme-sizes-font-small);
+  }
+  .label {
+    color: var(--theme-colors-monochrome-6);
+    padding-right: var(--theme-sizes-layout-small);
+    white-space: nowrap;
+  }
+  .label::after {
+    content: ':';
+  }
+  .info {
+    color: var(--theme-colors-monochrome-0);
+    white-space: nowrap;
+  }
+}
+.tooltip.show {
+  cursor: pointer;
+  display: block;
+}

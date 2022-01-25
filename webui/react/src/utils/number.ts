@@ -1,6 +1,7 @@
 import { isString } from './data';
 
 const PERCENT_REGEX = /^(\d+\.?\d*|\.\d+)%$/;
+const DEFAULT_PRECISION = 6;
 
 export const clamp = (val: number, min: number, max: number):number => {
   return Math.max(Math.min(val, max), min);
@@ -20,6 +21,26 @@ export const findFactorOfNumber = (n: number): number[] => {
   }
 
   return factorsAsc.concat(factorsDesc.reverse());
+};
+
+export const humanReadableNumber = (num: number, precision = DEFAULT_PRECISION): string => {
+  const stringNum = num.toString();
+  let content: string = stringNum;
+
+  if (isNaN(num)) {
+    content = 'NaN';
+  } else if (!Number.isFinite(num)) {
+    content = `${num < 0 ? '-' : ''}Infinity`;
+  } else if (!Number.isInteger(num)) {
+    content = num.toFixed(precision);
+
+    const absoluteNum = Math.abs(num);
+    if (absoluteNum < 0.01 || absoluteNum > 999) {
+      content = num.toExponential(precision);
+    }
+  }
+
+  return content;
 };
 
 export const isPercent = (data: unknown): boolean => {

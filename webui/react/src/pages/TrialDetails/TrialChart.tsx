@@ -5,9 +5,9 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
-import UPlotChart, { Options } from 'components/UPlotChart';
-import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
-import { trackAxis } from 'components/UPlotChart/trackAxis';
+import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { MetricName, MetricType, WorkloadGroup } from 'types';
 import { glasbeyColor } from 'utils/color';
@@ -62,6 +62,7 @@ const TrialChart: React.FC<Props> = ({
 
     return [ xValues, ...yValuesArray ];
   }, [ metrics, workloads ]);
+
   const chartOptions: Options = useMemo(() => {
     return {
       axes: [

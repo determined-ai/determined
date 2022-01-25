@@ -7,21 +7,23 @@ import useResize from 'hooks/useResize';
 import { RecordKey } from 'types';
 import { distance } from 'utils/chart';
 
+import { FacetedData, UPlotData } from './types';
+
 export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
+}
+
+interface Props {
+  data?: AlignedData | FacetedData;
+  focusIndex?: number;
+  options?: Partial<Options>;
+  style?: React.CSSProperties;
 }
 
 interface ScaleZoomData {
   isZoomed?: boolean;
   max?: number;
   min?: number;
-}
-
-interface Props {
-  data?: AlignedData;
-  focusIndex?: number;
-  options?: Options;
-  style?: React.CSSProperties;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -35,21 +37,27 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   const mousePosition = useRef<[number, number]>();
 
   const [ hasData, normalizedData ] = useMemo(() => {
-    const chartData: unknown[][] = data || [];
+    if (!data || data.length < 2) return [ false, undefined ];
 
-    // Figure out the lowest sized series data.
-    const minDataLength = chartData.reduce((acc: number, series: unknown[]) => {
-      return Math.min(acc, series.length);
-    }, Number.MAX_SAFE_INTEGER);
+    // Is the chart aligned (eg. linear) or faceted (eg. scatter plot)?
+    if (options?.mode === 2) {
+      return [ true, data as AlignedData ];
+    } else {
+      // Figure out the lowest sized series data.
+      const chartData = data as AlignedData;
+      const minDataLength = chartData.reduce((acc: number, series: UPlotData[]) => {
+        return Math.min(acc, series.length);
+      }, Number.MAX_SAFE_INTEGER);
 
-    // Making sure the X series and all the other series data are the same length;
-    const trimmedData = chartData.map(series => series.slice(0, minDataLength));
+      // Making sure the X series and all the other series data are the same length;
+      const trimmedData = chartData.map(series => series.slice(0, minDataLength));
 
-    // Checking to make sure the X series has some data.
-    const hasXValues = trimmedData?.[0]?.length !== 0;
+      // Checking to make sure the X series has some data.
+      const hasXValues = trimmedData?.[0]?.length !== 0;
 
-    return [ hasXValues, trimmedData as unknown as AlignedData ];
-  }, [ data ]);
+      return [ hasXValues, trimmedData as unknown as AlignedData ];
+    }
+  }, [ data, options?.mode ]);
 
   /*
    * Chart mount and dismount.

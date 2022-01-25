@@ -29,6 +29,9 @@ export interface ColorScale {
   scale: number;    // scale between 0.0 and 1.0
 }
 
+const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
+const rgbaRegex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
+
 export const glasbeyColor = (seriesIdx: number): string => {
   const index = seriesIdx % GLASBEY.length;
   const rgb = GLASBEY[index];
@@ -68,7 +71,7 @@ export const hex2hsl = (hex: string): HslColor => {
 
 export const hex2rgb = (hex: string): RgbaColor => {
   const rgb = { b: 0, g: 0, r: 0 };
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const result = hexRegex.exec(hex);
 
   if (result && result.length > 3) {
     rgb.r = parseInt(result[1], 16);
@@ -93,14 +96,14 @@ export const rgba2str = (rgba: RgbaColor): string => {
 export const rgbaFromGradient = (
   rgba0: RgbaColor,
   rgba1: RgbaColor,
-  distance: number,
+  percent: number,
 ): RgbaColor => {
-  const r = Math.round((rgba1.r - rgba0.r) * distance + rgba0.r);
-  const g = Math.round((rgba1.g - rgba0.g) * distance + rgba0.g);
-  const b = Math.round((rgba1.b - rgba0.b) * distance + rgba0.b);
+  const r = Math.round((rgba1.r - rgba0.r) * percent + rgba0.r);
+  const g = Math.round((rgba1.g - rgba0.g) * percent + rgba0.g);
+  const b = Math.round((rgba1.b - rgba0.b) * percent + rgba0.b);
 
   if (rgba0.a != null && rgba1.a != null) {
-    const a = (rgba1.a - rgba0.a) * distance + rgba0.a;
+    const a = (rgba1.a - rgba0.a) * percent + rgba0.a;
     return { a, b, g, r };
   }
 
@@ -108,16 +111,16 @@ export const rgbaFromGradient = (
 };
 
 export const str2rgba = (str: string): RgbaColor => {
-  if (/^#/.test(str)) return hex2rgb(str);
+  if (hexRegex.test(str)) return hex2rgb(str);
 
-  const regex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
+  const regex = rgbaRegex;
   const result = regex.exec(str);
   if (result && result.length > 3) {
     const rgba = { a: 1.0, b: 0, g: 0, r: 0 };
     rgba.r = parseInt(result[1]);
     rgba.g = parseInt(result[2]);
     rgba.b = parseInt(result[3]);
-    if (result.length > 5) rgba.a = parseFloat(result[5]);
+    if (result.length > 5 && result[5] != null) rgba.a = parseFloat(result[5]);
     return rgba;
   }
 
