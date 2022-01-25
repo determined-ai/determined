@@ -102,14 +102,14 @@ func (a *apiServer) GetModelLabels(
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
-	if strings.Index(modelName, "  ") > -1 {
+	if strings.Contains(modelName, "  ") {
 		return errors.Errorf("model names cannot have excessive spacing")
 	}
-	if strings.Index(modelName, "/") > -1 || strings.Index(modelName, "\\") > -1 {
+	if strings.Contains(modelName, "/") || strings.Contains(modelName, "\\") {
 		return errors.Errorf("model names cannot have slashes")
 	}
 	re := regexp.MustCompile(`^\d+$`)
-	if len(re.FindAllString(modelName, 0)) > 0 {
+	if len(re.FindAllString(modelName, 1)) > 0 {
 		return errors.Errorf("model names cannot be only numbers")
 	}
 	getResp, err := a.GetModels(ctx, &apiv1.GetModelsRequest{Name: modelName})
