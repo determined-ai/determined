@@ -320,8 +320,10 @@ class Counter(det.pytorch.PyTorchCallback):
         logging.debug(f"epoch {epoch_idx}, starting batch {batch_idx}")
         self.training_batches_started += 1
 
-    def on_training_batch_end(self, epoch_idx: int, batch_idx: int) -> None:
-        logging.debug(f"epoch {epoch_idx}, ending batch {batch_idx}")
+    def on_training_batch_end(
+        self, epoch_idx: int, batch_idx: int, batch_metrics: Dict[str, Any]
+    ) -> None:
+        logging.debug(f"epoch {epoch_idx}, ending batch {batch_idx}; metrics={batch_metrics}")
         self.training_batches_ended += 1
 
     def on_training_epoch_start(self) -> None:

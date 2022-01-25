@@ -457,7 +457,7 @@ class PyTorchTrialController(det.TrialController):
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_training_batch_end"
                 ):
-                    callback.on_training_batch_end(epoch_idx, batch_idx)
+                    callback.on_training_batch_end(epoch_idx, batch_idx, tr_metrics)
 
             if self.context.is_epoch_end():
                 for callback in self.callbacks.values():
