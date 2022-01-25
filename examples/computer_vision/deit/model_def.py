@@ -1,5 +1,5 @@
 import torch.nn as nn
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler, samplers
 
 # from efficientdet_files.utils import *
 
@@ -17,11 +17,14 @@ import torchvision.transforms as T
 
 from timm.optim import create_optimizer
 from timm.scheduler import create_scheduler
-from timm.utils import NativeScaler, get_state_dict, ModelEma
+from timm.utils import NativeScaler, get_state_dict, ModelEma, accuracy
+from timm.models import create_model
 
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
 from attrdict import AttrDict
+from datasets import build_dataset
+import torch.distributed as dist
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
@@ -68,76 +71,107 @@ def load_databatch(data_folder, idx, img_size=32):
         X_train=X_train,
         Y_train=Y_train.astype('int32'),
         mean=mean_image)
+
+
+def is_dist_avail_and_initialized():
+    if not dist.is_available():
+        return False
+    if not dist.is_initialized():
+        return False
+    return True
+
+
+def get_world_size():
+    if not is_dist_avail_and_initialized():
+        return 1
+    return dist.get_world_size()
+
+
+def get_rank():
+    if not is_dist_avail_and_initialized():
+        return 0
+    return dist.get_rank()
+
 class DeitTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
 
-        # Initialize the trial class and wrap the models, optimizers, and LR schedulers.
-         # Store trial context for later use.
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each
         # other when doing distributed training.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-        self.data_downloaded = False
-
         self.args = AttrDict(self.context.get_hparams())
 
-        self.model = self.context.wrap_model(torch.hub.load('facebookresearch/deit:main', 'deit_base_patch16_224', pretrained=False))
-        print('args: ', self.args)
-        self.optimizer = self.context.wrap_optimizer(create_optimizer(self.args, self.model))
-        
-        self.lr_scheduler, self.num_epochs = create_scheduler(self.args, self.optimizer)
-        self.lr_scheduler = self.context.wrap_lr_scheduler(self.lr_scheduler, LRScheduler.StepMode.MANUAL_STEP)
+        self.args.data_path = self.download_directory
 
-        self.transform = T.Compose([
-            T.Resize(256, interpolation=3),
-            T.CenterCrop(224),
-            T.ToTensor(),
-            T.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD),
-        ])
+        _, nb_classes = build_dataset(is_train=True, args=self.args)
+
+        model = create_model(
+            'deit_base_patch16_224',
+            pretrained=False,
+            num_classes=nb_classes,
+            drop_rate=self.args['drop'],
+            drop_path_rate=self.args['drop_path'],
+            drop_block_rate=None,
+        )
+        self.model = self.context.wrap_model(model)
+
+        model_without_ddp = self.model
+
+        optimizer = create_optimizer(self.args, model_without_ddp)
+        self.optimizer = self.context.wrap_optimizer(optimizer)
+
+        self.criterion = torch.nn.CrossEntropyLoss()
+
     
         
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-        # Run forward passes on the models and backward passes on the optimizers.
-        batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
-        print('batch: ', batch)
-        x_data, y_data, mean = batch
+        samples, targets = batch
+        with torch.cuda.amp.autocast():
+            outputs = self.model(samples)
+            loss = self.criterion(samples, outputs, targets)
 
-        # Define the training forward pass and calculate loss.
-        output = self.model(x_data)
-        loss = torch.nn.functional.nll_loss(output, y_data)
-
-        # Define the training backward pass and step the optimizer.
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
-
-        return {"loss": loss}
+        return {"loss": loss.item()}
 
     def evaluate_batch(self, batch: TorchData):
-        # Define how to evaluate the model by calculating loss and other metrics
-        # for a batch of validation data.
-        batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
-        data, labels = batch
+        self.model.eval()
+        images, target = batch
 
-        output = self.model(data)
-        validation_loss = torch.nn.functional.nll_loss(output, labels).item()
+        with torch.cuda.amp.autocast():
+            output = self.model(images)
+            loss = self.criterion(output, target)
 
-        pred = output.argmax(dim=1, keepdim=True)
-        accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
+        acc1, acc5 = accuracy(output, target, topk=(1, 5))
+        return {"loss": loss, 'top1': acc1[0], 'top5': acc5[0]}
 
-        return {"validation_loss": validation_loss, "accuracy": accuracy}
 
     def build_training_data_loader(self):
-        # Create the training data loader.
-        # This should return a determined.pytorch.Dataset.
-        # url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-        # im = Image.open(requests.get(url, stream=True).raw)
-        # img = self.transform(im).unsqueeze(0)
-        data = load_databatch('data/Imagenet8_train', 1, 8)
-        return DataLoader([data], batch_size=1)
+        dataset_train, self.args.nb_classes = build_dataset(is_train=True, args=self.args)
+        num_tasks = get_world_size()
+        global_rank = get_rank()
+        sampler_train = samplers.DistributedSampler(
+                dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True)
+        return DataLoader(
+            dataset_train, sampler=sampler_train,
+            batch_size=self.context.get_per_slot_batch_size(),
+            num_workers=self.context.get_hparam("workers"),
+            pin_memory=True,
+            drop_last=True,
+        )
+
 
     def build_validation_data_loader(self):
-        # Create the validation data loader.
-        # This should return a determined.pytorch.Dataset.
-        data = load_databatch('data/Imagenet8_train', 1, 8)
-        return DataLoader([data], batch_size=1)
+        dataset_val, _ = build_dataset(is_train=False, args=self.args)
+        num_tasks = get_world_size()
+        global_rank = get_rank()
+        sampler_val = samplers.DistributedSampler(
+                dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+        return DataLoader(
+            dataset_val, sampler=sampler_val,
+            batch_size=int(1.5 * self.context.get_per_slot_batch_size()),
+            num_workers=self.context.get_hparam("workers"),
+            pin_memory=True,
+            drop_last=False
+        )

@@ -43,11 +43,11 @@ hyperparameters:
   patience_epochs: 10
   decay_rate: 0.1
   color_jitter: 0.4
-  aa: None
-  reprob: 0.
+  aa: rand-m9-mstd0.5-inc1
+  reprob: 0.25
   remode: pixel
   recount: 1
-  train_interpolation: random
+  train_interpolation: bicubic
   smoothing: None
   jit_loss: None
   new_focal: None
@@ -66,6 +66,10 @@ hyperparameters:
   tta: 0
   epochs: 300 # update according to max_length
   fake_data: False
+  drop: 0.0
+  drop_path: 0.1
+  input_size: 224
+  data_set: CIFAR
 records_per_epoch: 118287
 searcher:
   name: single
