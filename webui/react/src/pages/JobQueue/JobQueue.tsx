@@ -135,7 +135,10 @@ const JobQueue: React.FC = () => {
     return triggers;
   }, [ isJobOrderAvailable, jobs, selectedRp ]);
 
-  const hideModal = useCallback(() => setManagingJob(undefined), []);
+  const onModalClose = useCallback(() => {
+    setManagingJob(undefined);
+    fetchAll();
+  }, [ fetchAll ]);
 
   const columns = useMemo(() => {
     return defaultColumns.map(col => {
@@ -329,7 +332,7 @@ const JobQueue: React.FC = () => {
           jobs={jobs}
           schedulerType={selectedRp.schedulerType}
           selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
-          onFinish={hideModal}
+          onFinish={onModalClose}
         />
       )}
 
