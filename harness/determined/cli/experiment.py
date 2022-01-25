@@ -656,14 +656,8 @@ def none_or_int(string: str) -> Optional[int]:
     return int(string)
 
 
-def experiment_id_completer(prefix: str, parsed_args: Namespace, **kwargs: Any) -> List[str]:
-    params = {"filter": "all"}
-    r = api.get(parsed_args.master, "experiment-list", params=params)
-    return [str(e["id"]) for e in r.json()]
-
-
 def experiment_id_arg(help: str) -> Arg:  # noqa: A002
-    return Arg("experiment_id", type=int, help=help, completer=experiment_id_completer)
+    return Arg("experiment_id", type=int, help=help)
 
 
 main_cmd = Cmd(

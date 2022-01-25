@@ -863,11 +863,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
-	m.echo.GET("/experiment-list", api.Route(m.getExperimentList), authFuncs...)
-	m.echo.GET("/experiment-summaries", api.Route(m.getExperimentSummaries), authFuncs...)
-
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
-	experimentsGroup.GET("", api.Route(m.getExperiments))
 	experimentsGroup.GET("/:experiment_id", api.Route(m.getExperiment))
 	experimentsGroup.GET("/:experiment_id/checkpoints", api.Route(m.getExperimentCheckpoints))
 	experimentsGroup.GET("/:experiment_id/config", api.Route(m.getExperimentConfig))
@@ -877,7 +873,6 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.GET("/:experiment_id/metrics/summary", api.Route(m.getExperimentSummaryMetrics))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
-	experimentsGroup.POST("/:experiment_id/kill", api.Route(m.postExperimentKill))
 
 	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
