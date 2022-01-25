@@ -104,7 +104,7 @@ func (a *apiServer) GetModelLabels(
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
-	if len(strings.Replace(modelName, " ", "", -1)) == 0 {
+	if len(strings.ReplaceAll(modelName, " ", "", -1)) == 0 {
 		return errors.Errorf("model names cannot be blank")
 	}
 	if strings.Contains(modelName, "  ") {
