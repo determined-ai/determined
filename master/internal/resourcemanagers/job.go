@@ -176,4 +176,10 @@ func getJobSubmissionTime(taskList *taskList, jobID model.JobID) (time.Time, err
 		}
 	}
 	return time.Time{}, fmt.Errorf("could not find an active job with id %s", jobID)
+
+}
+
+// persistedState v0.
+type persistedState struct {
+	queuePositions jobSortState `json:"queuePositions"`
 }

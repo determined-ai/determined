@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -24,6 +25,8 @@ type agentResourceManager struct {
 	cert        *tls.Certificate
 
 	pools map[string]*actor.Ref
+
+	db *db.PgDB
 }
 
 func newAgentResourceManager(config *ResourceConfig, cert *tls.Certificate) *agentResourceManager {
@@ -189,6 +192,10 @@ func (a *agentResourceManager) createResourcePool(
 		MakeScheduler(config.Scheduler),
 		MakeFitFunction(config.Scheduler.FittingPolicy),
 	)
+	if err := rp.restore(); err != nil {
+		ctx.Log().Errorf("cannot restore resource pool: %s", config.PoolName)
+		return nil
+	}
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
 		ctx.Log().Errorf("cannot create resource pool actor: %s", config.PoolName)

@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -19,6 +20,7 @@ type schedulerTick struct{}
 // Currently support only one resource manager at a time.
 type ResourceManagers struct {
 	ref *actor.Ref
+	db  *db.PgDB
 }
 
 // Receive implements the actor.Actor interface.

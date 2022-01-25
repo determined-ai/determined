@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -41,6 +42,8 @@ type ResourcePool struct {
 
 	reschedule bool
 
+	db *db.PgDB
+
 	// Track notifyOnStop for testing purposes.
 	saveNotifications bool
 	notifications     []<-chan struct{}
@@ -57,6 +60,7 @@ func NewResourcePool(
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
 ) *ResourcePool {
+	// TODO restore from disk
 	d := &ResourcePool{
 		config: config,
 		cert:   cert,
@@ -439,11 +443,14 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 func (rp *ResourcePool) persist() error {
 	// exlude head and tail?
 	fmt.Println("TODO persist rp", rp.config.PoolName)
+	saveSnapshot(rp.db, &persistedState{}, rp.config.PoolName)
 	return nil // TODO
 }
 
 func (rp *ResourcePool) restore() error {
 	fmt.Println("TODO restore rp", rp.config.PoolName)
+	retrieveSnapshot(rp.db, rp.config.PoolName)
+	// TODO restore state
 	return nil // TODO
 }
 

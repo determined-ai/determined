@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/labstack/echo/v4"
@@ -56,11 +57,12 @@ func Setup(
 	config *ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
+	db *db.PgDB,
 ) *actor.Ref {
 	var ref *actor.Ref
 	switch {
 	case config.ResourceManager.AgentRM != nil:
-		ref = setupAgentResourceManager(system, echo, config, opts, cert)
+		ref = setupAgentResourceManager(system, echo, config, opts, cert, db)
 	case config.ResourceManager.KubernetesRM != nil:
 		tlsConfig, err := makeTLSConfig(cert)
 		if err != nil {
@@ -73,6 +75,9 @@ func Setup(
 		panic("no expected resource manager config is defined")
 	}
 
+	// TODO restore rm state from DB
+	// snapshot, err := m.retrieveExperimentSnapshot(expModel)
+	// rm.snapShot
 	rm, ok := system.ActorOf(actor.Addr("resourceManagers"), &ResourceManagers{ref: ref})
 	if !ok {
 		panic("cannot create resource managers")
@@ -86,6 +91,7 @@ func setupAgentResourceManager(
 	config *ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
+	db *db.PgDB,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("agentRM"),
@@ -104,9 +110,10 @@ func setupKubernetesResourceManager(
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 ) *actor.Ref {
+	k8 := newKubernetesResourceManager(config, echo, masterTLSConfig, loggingConfig)
+	// k8.restore()
 	ref, _ := system.ActorOf(
-		sproto.K8sRMAddr,
-		newKubernetesResourceManager(config, echo, masterTLSConfig, loggingConfig),
+		sproto.K8sRMAddr, k8,
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 	return ref

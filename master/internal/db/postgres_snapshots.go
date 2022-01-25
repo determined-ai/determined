@@ -6,6 +6,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+type SnapShot struct {
+	Version int    `db:"version"`
+	Content []byte `db:"content"`
+}
+
 // ExperimentSnapshot returns the snapshot for the specified experiment.
 func (db *PgDB) ExperimentSnapshot(experimentID int) ([]byte, int, error) {
 	ret := struct {
@@ -69,5 +74,15 @@ WHERE experiment_id IN (
 	WHERE state IN ('COMPLETED', 'CANCELED', 'ERROR'))`); err != nil {
 		return errors.Wrap(err, "failed to delete experiment snapshots")
 	}
+	return nil
+}
+
+// SchedulingSnapshot returns the snapshot for the specified experiment.
+func (db *PgDB) SchedulingSnapshot(id string) (SnapShot, error) {
+	snapshot := SnapShot{}
+	return snapshot, nil
+}
+
+func (db *PgDB) SaveSchedulingSnapshot(id string, snapshot SnapShot) error {
 	return nil
 }

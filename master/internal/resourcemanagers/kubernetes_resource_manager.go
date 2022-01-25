@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -35,6 +36,7 @@ type kubernetesResourceManager struct {
 
 	// Represent all pods as a single agent.
 	agent *agentState
+	db    *db.PgDB
 
 	reschedule bool
 
@@ -64,6 +66,17 @@ func newKubernetesResourceManager(
 		masterTLSConfig: masterTLSConfig,
 		loggingConfig:   loggingConfig,
 	}
+}
+
+func (k *kubernetesResourceManager) restore() error {
+	retrieveSnapshot(k.db, kubernetesDummyResourcePool) // FIXME ?
+	// set on k8
+	return nil
+}
+
+func (k *kubernetesResourceManager) persist() error {
+	// set on k8
+	return nil
 }
 
 func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
