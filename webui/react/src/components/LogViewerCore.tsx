@@ -63,6 +63,7 @@ const defaultLocal = {
   isOnBottom: false,
   isOnTop: false,
   isScrollReady: false,
+  isStreamReady: false,
   previousHeight: 0,
   previousWidth: 0,
 };
@@ -147,7 +148,14 @@ const LogViewerCore: React.FC<Props> = ({
 
   const addLogs = useCallback((newLogs: ViewerLog[], prepend = false): void => {
     if (newLogs.length === 0) return;
-    setLogs(prevLogs => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
+    setLogs(prevLogs => {
+      // Indicator for running experments when log stream is stable
+      if(local.current.isScrollReady && prevLogs.length > 0 && newLogs.length === 1) {
+        local.current.isStreamReady = true;
+      }
+      return prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ];
+    });
+
     resizeLogs();
   }, [ resizeLogs ]);
 
@@ -276,7 +284,7 @@ const LogViewerCore: React.FC<Props> = ({
       addLogs(logs);
 
       if (isNewestFirst) {
-        listRef.current?.scrollToItem(logs.length, 'end');
+        logs.length > 0 && listRef.current?.scrollToItem(logs.length, 'end');
       } else {
         listRef.current?.scrollToItem(0, 'start');
       }
@@ -339,6 +347,10 @@ const LogViewerCore: React.FC<Props> = ({
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
+
+  useEffect(() => {
+    if(local.current.isStreamReady) handleEnableTailing();
+  }, [ local.current.isStreamReady, handleEnableTailing ]);
 
   // Force recomputing messages height when container size changes.
   useLayoutEffect(() => {
