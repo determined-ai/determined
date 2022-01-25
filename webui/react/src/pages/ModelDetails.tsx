@@ -298,6 +298,7 @@ const ModelDetails: React.FC = () => {
         silent: true,
         type: ErrorType.Api,
       });
+      throw Error('Revert name change');
     }
   }, [ modelName ]);
 

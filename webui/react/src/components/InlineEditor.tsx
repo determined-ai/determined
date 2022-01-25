@@ -65,6 +65,8 @@ const InlineEditor: React.FC<Props> = ({
       try {
         setIsSaving(true);
         await onSave(newValue);
+      } catch (e) {
+        updateEditorValue(value);
       } finally {
         setIsSaving(false);
       }

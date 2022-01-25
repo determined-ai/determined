@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -100,8 +101,33 @@ func (a *apiServer) GetModelLabels(
 	return resp, errors.Wrapf(err, "error getting model labels")
 }
 
+func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
+	if strings.Index(modelName, "  ") > -1 {
+		return errors.Errorf("model names cannot have excessive spacing")
+	}
+	if strings.Index(modelName, "/") > -1 || strings.Index(modelName, "\\") > -1 {
+		return errors.Errorf("model names cannot have slashes")
+	}
+	re := regexp.MustCompile(`^\d+$`)
+	if len(re.FindAllString(modelName, 0)) > 0 {
+		return errors.Errorf("model names cannot be only numbers")
+	}
+	getResp, err := a.GetModels(ctx, &apiv1.GetModelsRequest{Name: modelName})
+	if err != nil {
+		return err
+	}
+	if len(getResp.Models) > 0 {
+		return errors.Errorf("avoid using model names with case-sensitive similar names")
+	}
+	return nil
+}
+
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
+	if err := a.clearModelName(ctx, req.Name); err != nil {
+		return nil, errors.Wrap(err, "error setting model name")
+	}
+
 	b, err := protojson.Marshal(req.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")
@@ -140,6 +166,9 @@ func (a *apiServer) PatchModel(
 	if req.Model.Name != nil && req.Model.Name.Value != currModel.Name {
 		log.Infof("model (%d) name changing from \"%s\" to \"%s\"",
 			currModel.Id, currModel.Name, req.Model.Name.Value)
+		if err = a.clearModelName(ctx, req.Model.Name.Value); err != nil {
+			return nil, errors.Wrap(err, "error renaming model")
+		}
 		madeChanges = true
 		currModel.Name = req.Model.Name.Value
 	}
