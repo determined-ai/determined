@@ -456,7 +456,7 @@ const ExperimentList: React.FC = () => {
 
   const transferColumns = useMemo(() => {
     return columns.filter(column => column.title !== '' && column.title !== 'Archived')
-      .map(column => column.title as string);
+      .map(column => sentenceToCamelCase(column.title as string));
   }, [ columns ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
@@ -551,7 +551,7 @@ const ExperimentList: React.FC = () => {
     showModal({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      visibleColumns: settings.columns ?? [],
+      initialVisibleColumns: settings.columns ?? [],
     });
   }, [ transferColumns, settings.columns, showModal ]);
 

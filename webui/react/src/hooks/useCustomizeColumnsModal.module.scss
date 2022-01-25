@@ -12,7 +12,8 @@
       flex-basis: 50%;
 
       ul {
-        border: 1px solid var(--theme-colors-monochrome-5);
+        border: 1px solid var(--theme-colors-monochrome-10);
+        border-radius: var(--theme-sizes-border-radius);
         height: 200px;
         list-style-type: none;
         margin-bottom: 0;

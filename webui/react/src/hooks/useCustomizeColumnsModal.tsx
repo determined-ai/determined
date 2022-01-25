@@ -1,4 +1,4 @@
-import { Button, Input, Modal, ModalFuncProps, Space, Transfer } from 'antd';
+import { Button, Input, Modal, ModalFuncProps } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,14 +9,14 @@ import css from './useCustomizeColumnsModal.module.scss';
 interface ModalState {
   columns: string[];
   defaultVisibleColumns: string[];
+  initialVisibleColumns: string[];
   visible: boolean;
-  visibleColumns: string[];
 }
 
 export interface ShowModalProps {
   columns: string[];
   defaultVisibleColumns: string[];
-  visibleColumns: string[];
+  initialVisibleColumns: string[];
 }
 
 interface ModalHooks {
@@ -28,14 +28,17 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   const [ modalState, setModalState ] = useState<ModalState>({
     columns: [],
     defaultVisibleColumns: [],
+    initialVisibleColumns: [],
     visible: false,
-    visibleColumns: [],
   });
+  const [ searchTerm, setSearchTerm ] = useState('');
+  const [ visibleColumns, setVisibleColumns ] = useState<string[]>([]);
 
   const showModal = useCallback((
-    { columns, visibleColumns, defaultVisibleColumns }: ShowModalProps,
+    { columns, initialVisibleColumns, defaultVisibleColumns }: ShowModalProps,
   ) => {
-    setModalState({ columns, defaultVisibleColumns, visible: true, visibleColumns });
+    setModalState({ columns, defaultVisibleColumns, initialVisibleColumns, visible: true });
+    setVisibleColumns(initialVisibleColumns);
   }, []);
 
   const closeModal = useCallback(() => {
@@ -54,34 +57,80 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     closeModal();
   }, [ closeModal ]);
 
+  const handleSearch = useCallback((e) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  }, []);
+
   const hiddenColumns = useMemo(() => {
     return modalState.columns.filter(column =>
-      !modalState.visibleColumns.includes(sentenceToCamelCase(column)));
-  }, [ modalState.columns, modalState.visibleColumns ]);
+      !visibleColumns.includes(column));
+  }, [ modalState.columns, visibleColumns ]);
+
+  const filteredHiddenColumns = useMemo(() => {
+    return hiddenColumns.filter(column => column.toLowerCase().includes(searchTerm));
+  }, [ hiddenColumns, searchTerm ]);
+
+  const filteredVisibleColumns = useMemo(() => {
+    return visibleColumns.filter(column => column.toLowerCase().includes(searchTerm));
+  }, [ visibleColumns, searchTerm ]);
+
+  const makeHidden = useCallback((transfer: string | string[]) => {
+    if (Array.isArray(transfer)) {
+      setVisibleColumns(prev => prev.filter(column => !transfer.includes(column)));
+    } else {
+      setVisibleColumns(prev => prev.filter(column => transfer !== column));
+    }
+  }, []);
+
+  const makeVisible = useCallback((transfer: string | string[]) => {
+    if (Array.isArray(transfer)) {
+      setVisibleColumns(prev => [ ...prev, ...transfer ]);
+    } else {
+      setVisibleColumns(prev => [ ...prev, transfer ]);
+    }
+  }, []);
+
+  const renderColumnName = useCallback((columnName:string) => {
+    return columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
+  }, []);
 
   const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
-    const { visibleColumns } = state;
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        <Input placeholder="Search columns..." />
+        <Input placeholder="Search columns..." onChange={handleSearch} />
         <div className={css.columns}>
           <div className={css.column}>
             <h2>Hidden</h2>
-            <ul>{hiddenColumns.map(column => <li key={column}>{column}</li>)}</ul>
+            <ul>
+              {filteredHiddenColumns.map(column => (
+                <li key={column} onClick={() => makeVisible(column)}>
+                  {renderColumnName(column)}
+                </li>
+              ))}
+            </ul>
             <Button type="link">Add All</Button>
           </div>
           <div className={css.column}>
             <h2>Visible</h2>
-            <ul>{visibleColumns.map(column =>
-              <li key={column}>{column === 'id' ? 'ID' : camelCaseToSentence(column)}</li>)}
+            <ul>
+              {filteredVisibleColumns.map(column => (
+                <li key={column} onClick={() => makeHidden(column)}>
+                  {renderColumnName(column)}
+                </li>
+              ))}
             </ul>
             <Button type="link">Remove All</Button>
           </div>
         </div>
       </div>
     );
-  }, [ hiddenColumns ]);
+  }, [ handleSearch,
+    filteredHiddenColumns,
+    filteredVisibleColumns,
+    renderColumnName,
+    makeVisible,
+    makeHidden ]);
 
   const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
     const modalProps: Partial<ModalFuncProps> = {
