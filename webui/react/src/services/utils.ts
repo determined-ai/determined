@@ -64,7 +64,7 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
   const options: DetErrorOptions = {
     level: ErrorLevel.Error,
     publicSubject: `Request ${name} failed.`,
-    silent: isAuthError || isAborted(e),
+    silent: isAuthError || isAborted(e), // TODO show in dev
     type: ErrorType.Server,
   };
 

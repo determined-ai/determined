@@ -114,7 +114,7 @@ const handleError = (error: unknown, options?: DetErrorOptions): void => {
   if (isAborted(error)) return;
   let e: DetError | undefined;
   if (isDetError(error)) e = error;
-  if (isError(error)) e = new DetError(error, options);
+  if (isError(error)) e = new DetError(error, options); // convert to DetError
   if (!e) {
     throw new Error(`Unexpected error encountered: ${error}`);
   }
