@@ -400,25 +400,26 @@ class PyTorchTrialController(det.TrialController):
                             callback.on_training_epoch_start()  # type: ignore[call-arg]
 
             self.context._loss_ids = {}
+            epoch_idx = self.get_epoch_idx(batch_idx)
             for callback in self.callbacks.values():
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_training_batch_start"
                 ):
-                    callback.on_training_batch_start(batch_idx)
+                    callback.on_training_batch_start(epoch_idx, batch_idx)
 
             with self.prof.record_timing("train_batch", requires_sync=False):
                 if self.context.profiler:
                     with self.context.profiler as torch_profiler:
                         tr_metrics = self.trial.train_batch(
                             batch=batch,
-                            epoch_idx=self.get_epoch_idx(batch_idx),
+                            epoch_idx=epoch_idx,
                             batch_idx=batch_idx,
                         )
                         torch_profiler.step()
                 else:
                     tr_metrics = self.trial.train_batch(
                         batch=batch,
-                        epoch_idx=self.get_epoch_idx(batch_idx),
+                        epoch_idx=epoch_idx,
                         batch_idx=batch_idx,
                     )
             if self._should_update_scaler():
@@ -456,10 +457,9 @@ class PyTorchTrialController(det.TrialController):
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_training_batch_end"
                 ):
-                    callback.on_training_batch_end(batch_idx)
+                    callback.on_training_batch_end(epoch_idx, batch_idx)
 
             if self.context.is_epoch_end():
-                epoch_idx = self.get_epoch_idx(batch_idx)
                 for callback in self.callbacks.values():
                     with self.prof.record_timing(
                         f"callbacks.{callback.__class__.__name__}.on_training_epoch_end"

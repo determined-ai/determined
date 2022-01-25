@@ -40,7 +40,6 @@ def check_compatibility(lm: pl.LightningModule) -> None:
         "on_test_batch_start",
         "on_test_epoch_end",
         "on_test_epoch_start",
-        "on_train_epoch_end",
         "optimizer_step",
         "optimizer_zero_grad",
         "setup",

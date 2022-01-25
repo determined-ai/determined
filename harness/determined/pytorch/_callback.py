@@ -91,15 +91,19 @@ class PyTorchCallback:
         """
         pass
 
-    def on_training_batch_start(self, batch_idx: int) -> None:
+    def on_training_batch_start(self, epoch_idx, batch_idx: int) -> None:
         """
         Run on start of a new training batch
         """
         pass
 
-    def on_training_batch_end(self, batch_idx: int) -> None:
+    def on_training_batch_end(self, epoch_idx: int, batch_idx: int) -> None:
         """
         Run on end of a training batch
+
+        Arguments:
+            epoch_idx (int): index of the current epoch
+            batch_idx (int): global batch index (does not get reset between epochs)
         """
         pass
 
