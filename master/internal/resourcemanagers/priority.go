@@ -269,7 +269,6 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 	priorityToScheduledTaskMap := make(map[int][]*sproto.AllocateRequest)
 
 	for _, req := range sortTasksWithPosition(taskList, groups, jobPositions, false) {
-
 		if !filter(req) {
 			continue
 		}
