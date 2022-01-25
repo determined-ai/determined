@@ -39,7 +39,6 @@ type trial struct {
 	jobID             model.JobID
 	jobSubmissionTime time.Time
 	idSet             bool
-	needUpdate        bool
 	experimentID      int
 
 	// System dependencies.
@@ -148,7 +147,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		resources := t.config.Resources()
 		resources.SetResourcePool(msg.ResourcePool)
 		t.config.SetResources(resources)
-		t.needUpdate = true
+		ctx.Tell(t.allocation, msg)
 	case task.BuildTaskSpec:
 		if spec, err := t.buildTaskSpec(ctx); err != nil {
 			ctx.Respond(err)
@@ -314,9 +313,6 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 
 	// Decide if this is permanent.
 	switch {
-	case t.needUpdate:
-		t.needUpdate = false
-		ctx.Log().Info("restarting trial after update")
 	case model.StoppingStates[t.state]:
 		if exit.Err != nil {
 			return t.transition(ctx, model.ErrorState)

@@ -278,14 +278,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Respond(e.toV1Job().Summary)
 
 	case job.SetRP:
-		resources := e.Config.Resources()
-		resources.SetResourcePool(msg.ResourcePool)
-		// TODO: check if the RP exists
-		e.Config.SetResources(resources)
-		for _, ref := range ctx.Children() {
-			ctx.Tell(ref, msg)
+		if err := e.setRP(ctx, msg); err != nil {
+			return err
 		}
-		ctx.Tell(e.rm, job.SetRP{ResourcePool: msg.ResourcePool, Handler: ctx.Self()})
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -619,6 +614,29 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
+	return nil
+}
+
+func (e *experiment) setRP(ctx *actor.Context, msg job.SetRP) error {
+	if sproto.UseK8sRM(ctx.Self().System()) {
+		ctx.Respond(fmt.Errorf("kubernetes does not support setting resource pools"))
+	}
+
+	if _, err := sproto.GetResourcePool(ctx.Self().System(), msg.ResourcePool, 0, false); err != nil {
+		ctx.Respond(fmt.Errorf("invalid resource pool name"))
+		return nil
+	}
+
+	resources := e.Config.Resources()
+	resources.SetResourcePool(msg.ResourcePool)
+	e.Config.SetResources(resources)
+
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		return errors.Wrapf(err, "setting experiment %s RP to %s", e.ID, msg.ResourcePool)
+	}
+	for _, ref := range ctx.Children() {
+		ctx.Tell(ref, sproto.ChangeRP{ResourcePool: msg.ResourcePool})
+	}
 	return nil
 }
 

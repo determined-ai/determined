@@ -146,11 +146,6 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 	handler.System().Tell(handler, sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
 }
 
-func (rp *ResourcePool) triggerReAllocation(ctx *actor.Context, handler *actor.Ref, poolName string) {
-	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, sproto.ChangeRP{ResourcePool: poolName})
-}
-
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
 		ctx.Log().Infof("resources are released for %s", handler.Address())
