@@ -227,15 +227,15 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
-// ExperimentPatch represents the allowed mutations that can be performed on an experiment, in JSON
+// experimentPatch represents the allowed mutations that can be performed on an experiment, in JSON
 // Merge Patch (RFC 7386) format.
-type ExperimentPatch struct {
+type experimentPatch struct {
 	State *model.State `json:"state"`
 }
 
-// ExperimentConfigPatch represents the allowed mutations that can be performed on an experiment
+// experimentConfigPatch represents the allowed mutations that can be performed on an experiment
 // config, in JSON Merge Patch (RFC 7386) format.
-type ExperimentConfigPatch struct {
+type experimentConfigPatch struct {
 	Resources *struct {
 		MaxSlots api.MaybeInt `json:"max_slots"`
 		Weight   *float64     `json:"weight"`
@@ -249,7 +249,7 @@ type ExperimentConfigPatch struct {
 }
 
 func (m *Master) patchExperiment(
-	expID int, expPatch *ExperimentPatch, configPatch *ExperimentConfigPatch,
+	expID int, expPatch *experimentPatch, configPatch *experimentConfigPatch,
 ) error {
 	dbExp, err := m.db.ExperimentByID(expID)
 	if err != nil {
@@ -352,11 +352,11 @@ func (m *Master) patchExperimentHandler(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	expPatch := ExperimentPatch{}
+	expPatch := experimentPatch{}
 	if err := api.BindPatch(&expPatch, c); err != nil {
 		return nil, err
 	}
-	expConfigPatch := ExperimentConfigPatch{}
+	expConfigPatch := experimentConfigPatch{}
 	if err := api.BindPatch(&expConfigPatch, c); err != nil {
 		return nil, err
 	}
