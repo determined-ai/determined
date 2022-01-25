@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal, Space } from 'antd';
+import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -7,6 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
@@ -39,18 +40,18 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentItem, RecordKey, RunState,
+  ExperimentAction as Action, CommandTask, ExperimentItem, RecordKey, RunState,
 } from 'types';
-import { isBoolean, isEqual } from 'utils/data';
+import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { capitalize, sentenceToCamelCase } from 'utils/string';
+import { sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
 
-const filterKeys: Array<keyof Settings> = [ 'archived', 'label', 'search', 'state', 'user' ];
+const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -123,7 +124,7 @@ const ExperimentList: React.FC = () => {
       const states = (settings.state || []).map(state => encodeExperimentState(state as RunState));
       const response = await getExperiments(
         {
-          archived: settings.archived,
+          archived: settings.archived ? undefined : false,
           labels: settings.label,
           limit: settings.tableLimit,
           name: settings.search,
@@ -173,27 +174,6 @@ const ExperimentList: React.FC = () => {
   const experimentTags = useExperimentTags(fetchAll);
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
-
-  const handleArchiveFilterApply = useCallback((archived: string[]) => {
-    const archivedFilter = archived.length === 1
-      ? archived[0] === ArchiveFilter.Archived : undefined;
-    updateSettings({ archived: archivedFilter, row: undefined });
-  }, [ updateSettings ]);
-
-  const handleArchiveFilterReset = useCallback(() => {
-    updateSettings({ archived: undefined, row: undefined });
-  }, [ updateSettings ]);
-
-  const archiveFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      values={isBoolean(settings.archived)
-        ? [ settings.archived ? ArchiveFilter.Archived : ArchiveFilter.Unarchived ]
-        : undefined}
-      onFilter={handleArchiveFilterApply}
-      onReset={handleArchiveFilterReset}
-    />
-  ), [ handleArchiveFilterApply, handleArchiveFilterReset, settings.archived ]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
@@ -414,13 +394,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'archived',
-        filterDropdown: archiveFilterDropdown,
-        filters: [
-          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
-          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
-        ],
         key: 'archived',
-        onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: checkmarkRenderer,
         title: 'Archived',
       },
@@ -450,16 +424,17 @@ const ExperimentList: React.FC = () => {
       },
     ];
 
-    return tableColumns.map(column => {
-      column.sortOrder = null;
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-      }
-      return column;
-    });
+    return tableColumns
+      .filter(column => settings.archived ? true : column.key !== 'archived')
+      .map(column => {
+        column.sortOrder = null;
+        if (column.key === settings.sortKey) {
+          column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
+        }
+        return column;
+      });
   }, [
     user,
-    archiveFilterDropdown,
     handleActionComplete,
     experimentTags,
     labelFilterDropdown,
@@ -577,6 +552,10 @@ const ExperimentList: React.FC = () => {
     });
   }, [ transferColumns, settings.columns, showModal ]);
 
+  const switchShowArchived = useCallback((newState: boolean) => {
+    updateSettings({ archived: newState, row: undefined });
+  }, [ updateSettings ]);
+
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -606,6 +585,8 @@ const ExperimentList: React.FC = () => {
       id="experiments"
       options={(
         <Space>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>

@@ -31,6 +31,7 @@ export interface Settings {
 const config: SettingsConfig = {
   settings: [
     {
+      defaultValue: false,
       key: 'archived',
       storageKey: 'archived',
       type: { baseType: BaseType.Boolean },
