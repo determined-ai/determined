@@ -2,6 +2,6 @@
 
 **Removed Features**
 
--  Master: removes /experiment-list, /experiment-summaries, and /:experiment_id/kill
-  endpoints from the legacy API. These functions are now replaced by the GRPC API
-  (/api/v1/experiments) in the Web UI, CLI, and tests.
+-  Master: removes /experiment-list, /experiment-summaries, and /:experiment_id/kill endpoints from
+   the legacy API. These functions are now replaced by the GRPC API (/api/v1/experiments) in the Web
+   UI, CLI, and tests.
