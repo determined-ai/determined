@@ -9,10 +9,10 @@
 -  API: On the list of models (`/api/v1/models`) the optional name parameter is now a case-sensitive
    match, unless you add the parameter `name_case_insensitive=true`.
 
--  Client: `get_model(int: id)` is deprecated - use `get_model(name: string)` or
-   `get_model_by_id(int: id)`.
+-  Client: `get_model(int: id)` is removed - use `get_model(name: string)` or `get_model_by_id(int:
+   id)`.
 
--  Client: `get_model_by_name` is deprecated - use `get_model(name: string)`.
+-  Client: `get_model_by_name` is removed - use `get_model(name: string)`.
 
 -  Model Registry: New model names must not be blank, have a slash, have multiple spaces, only
    numbers, or be case-insensitive matches to an existing model name.
