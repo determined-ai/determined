@@ -130,7 +130,7 @@ const ModelVersionHeader: React.FC<Props> = (
     return (
       `from determined.experimental import Determined
 client = Determined()
-model_entry = client.get_model_by_name("${modelVersion.model.name}")
+model_entry = client.get_model("${modelVersion.model.name}")
 version = model_entry.get_version(${modelVersion.version})
 ckpt = version.checkpoint
 

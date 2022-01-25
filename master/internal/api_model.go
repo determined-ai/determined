@@ -39,7 +39,8 @@ func (a *apiServer) GetModels(
 	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
 	idFilterExpr := req.Id
-	nameFilterExpr := req.Name
+	nameFilter := req.Name
+	nameFilterCaseInsensitive := req.NameCaseInsensitive
 	descFilterExpr := req.Description
 	archFilterExpr := ""
 	if req.Archived != nil {
@@ -81,7 +82,8 @@ func (a *apiServer) GetModels(
 		archFilterExpr,
 		userFilterExpr,
 		labelFilterExpr,
-		nameFilterExpr,
+		nameFilter,
+		nameFilterCaseInsensitive,
 		descFilterExpr,
 	)
 	if err != nil {
@@ -102,6 +104,9 @@ func (a *apiServer) GetModelLabels(
 }
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
+	if len(strings.Replace(modelName, " ", "", -1)) == 0 {
+		return errors.Errorf("model names cannot be blank")
+	}
 	if strings.Contains(modelName, "  ") {
 		return errors.Errorf("model names cannot have excessive spacing")
 	}
@@ -112,7 +117,8 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 	if len(re.FindAllString(modelName, 1)) > 0 {
 		return errors.Errorf("model names cannot be only numbers")
 	}
-	getResp, err := a.GetModels(ctx, &apiv1.GetModelsRequest{Name: modelName})
+	getResp, err := a.GetModels(ctx,
+		&apiv1.GetModelsRequest{Name: modelName, NameCaseInsensitive: true})
 	if err != nil {
 		return err
 	}

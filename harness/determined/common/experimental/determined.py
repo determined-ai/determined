@@ -175,9 +175,6 @@ class Determined:
         assert len(models) > 0
         return model.Model.from_json(models[0], self._session)
 
-    def get_model_by_name(self, name: str) -> model.Model:
-        return self.get_model(name)
-
     def get_models(
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,

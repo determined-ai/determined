@@ -156,9 +156,9 @@ export interface PatchModelParams {
 export interface PatchModelVersionParams {
   body: {
     comment?: string;
-    id: number;
     labels?: string[];
     metadata?: Record<RecordKey, string>;
+    modelName: string;
     name?: string;
     notes?: string;
   }

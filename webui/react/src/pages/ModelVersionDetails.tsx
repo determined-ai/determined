@@ -75,7 +75,7 @@ const ModelVersionDetails: React.FC = () => {
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
       await patchModelVersion({
-        body: { id: parseInt(versionId), metadata: editedMetadata },
+        body: { metadata: editedMetadata, modelName },
         modelName,
         versionId: parseInt(versionId),
       });
@@ -92,7 +92,7 @@ const ModelVersionDetails: React.FC = () => {
   const saveNotes = useCallback(async (editedNotes: string) => {
     try {
       const versionResponse = await patchModelVersion({
-        body: { id: parseInt(versionId), notes: editedNotes },
+        body: { modelName, notes: editedNotes },
         modelName,
         versionId: parseInt(versionId),
       });
@@ -109,7 +109,7 @@ const ModelVersionDetails: React.FC = () => {
   const saveDescription = useCallback(async (editedDescription: string) => {
     try {
       await patchModelVersion({
-        body: { comment: editedDescription, id: parseInt(versionId) },
+        body: { comment: editedDescription, modelName },
         modelName,
         versionId: parseInt(versionId),
       });
@@ -125,7 +125,7 @@ const ModelVersionDetails: React.FC = () => {
   const saveName = useCallback(async (editedName: string) => {
     try {
       await patchModelVersion({
-        body: { id: parseInt(versionId), name: editedName },
+        body: { modelName, name: editedName },
         modelName,
         versionId: parseInt(versionId),
       });
@@ -141,7 +141,7 @@ const ModelVersionDetails: React.FC = () => {
   const saveVersionTags = useCallback(async (newTags) => {
     try {
       await patchModelVersion({
-        body: { id: parseInt(versionId), labels: newTags },
+        body: { labels: newTags, modelName },
         modelName,
         versionId: parseInt(versionId),
       });
@@ -222,8 +222,8 @@ const ModelVersionDetails: React.FC = () => {
     }));
   }, [ modelVersion?.checkpoint ]);
 
-  if (modelName === '') {
-    return <Message title={`Invalid Model Name ${modelName}`} />;
+  if (!modelName) {
+    return <Message title="Model name is empty" />;
   } else if (isNaN(parseInt(versionId))) {
     return <Message title={`Invalid Version ID ${versionId}`} />;
   } else if (pageError) {

@@ -5,7 +5,7 @@ WHERE ($1 = 0 OR m.id = $1)
 AND ($2 = '' OR m.archived = $2::BOOL)
 AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
 AND ($4 = '' OR (m.labels <@ string_to_array($4, ',')))
-AND ($5 = '' OR m.name ILIKE $5)
-AND ($6 = '' OR m.description ILIKE $6)
+AND ($5 = '' OR m.name = $5 OR ($6 AND m.name ILIKE $5))
+AND ($7 = '' OR m.description ILIKE $7)
 GROUP BY m.id, u.id
 ORDER BY %s;

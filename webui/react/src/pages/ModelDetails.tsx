@@ -93,7 +93,7 @@ const ModelDetails: React.FC = () => {
   const saveModelVersionTags = useCallback(async (modelName, versionId, tags) => {
     try {
       setIsLoading(true);
-      await patchModelVersion({ body: { id: versionId, labels: tags }, modelName, versionId });
+      await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
       await fetchModel();
     } catch (e) {
       handleError(e, {
@@ -123,7 +123,7 @@ const ModelDetails: React.FC = () => {
     useCallback(async (editedDescription: string, versionId: number) => {
       try {
         await patchModelVersion({
-          body: { comment: editedDescription, id: versionId },
+          body: { comment: editedDescription, modelName },
           modelName,
           versionId,
         });
@@ -348,8 +348,8 @@ const ModelDetails: React.FC = () => {
     history.push('/det/models');
   }, [ history, modelName ]);
 
-  if (modelName === '') {
-    return <Message title={`Invalid Model ${modelName}`} />;
+  if (!modelName) {
+    return <Message title="Model name is empty" />;
   } else if (pageError) {
     const message = isNotFound(pageError) ?
       `Unable to find model ${modelName}` :
