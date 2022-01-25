@@ -106,9 +106,8 @@ const log = (e: DetError) => {
   e.logger[key](e);
 };
 
-// handle at the point that you'd want to stop bubbling the exception up.
-// thus no handling and throwing shouldn't come right after one another. :thining_face:
-// rewrite me
+// Handle an error at the point that you'd want to stop bubbling it up. Avoid handling
+// and re-throwing.
 const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
   // Ignore request cancellation errors.
   if (isAborted(error)) return;

@@ -58,7 +58,8 @@ export const isAborted = (e: any): boolean => {
 export const http = axios.create({ responseType: 'json', withCredentials: false });
 
 /* Fits API errors into a DetError and decides if it needs to be bubbled up. */
-export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
+export const processApiError = async (name: string, e: unknown): Promise<DetError | undefined> => {
+  if (isAborted(e)) return;
   const isAuthError = isAuthFailure(e);
   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
   const options: DetErrorOptions = {
