@@ -268,8 +268,7 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 	priorityToPendingTasksMap := make(map[int][]*sproto.AllocateRequest)
 	priorityToScheduledTaskMap := make(map[int][]*sproto.AllocateRequest)
 
-	for it := taskList.iterator(); it.next(); {
-		req := it.value()
+	for _, req := range sortTasksWithPosition(taskList, groups, jobPositions, false) {
 
 		if !filter(req) {
 			continue
@@ -285,18 +284,6 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		} else {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
-		}
-	}
-
-	// For each priority, independently sort pending and scheduled tasks by longest to shortest time of
-	// existence.
-	for _, tasksMap := range []map[int][]*sproto.AllocateRequest{
-		priorityToPendingTasksMap, priorityToScheduledTaskMap,
-	} {
-		for _, tasks := range tasksMap {
-			sort.Slice(tasks, func(i, j int) bool {
-				return comparePositions(tasks[i], tasks[j], jobPositions) > 0
-			})
 		}
 	}
 
