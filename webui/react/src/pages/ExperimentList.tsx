@@ -287,8 +287,7 @@ const ExperimentList: React.FC = () => {
       });
     } catch (e) {
       handleError(e, {
-        isUserTriggered: true, // IMO we want to show errors for user triggered failures unless we
-        // have a better way of communicating this to the user.
+        isUserTriggered: true,
         publicMessage: 'Unable to save experiment description.',
         silent: true,
       });

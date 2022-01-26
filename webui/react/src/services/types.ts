@@ -233,8 +233,6 @@ export interface TaskLogsParams extends LogsParams {
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export type EmptyParams = {}
 
-// FIXME we shouldn't need to include FetchOptions here. The api generator should already handle it.
-
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
