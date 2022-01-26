@@ -68,6 +68,7 @@ const AppView: React.FC = () => {
     }
   }, [ info ]);
 
+  // Detect telemetry settings changes and update telemetry library.
   useEffect(() => {
     updateTelemetry(auth, info);
   }, [ auth, info, updateTelemetry ]);
@@ -79,10 +80,12 @@ const AppView: React.FC = () => {
     }
   }, [ info.checked, info.branding, setThemeId ]);
 
+  // Abort cancel signal when app unmounts.
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  // Detect and handle key events.
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
       if (e.code === KeyCode.Space && e.ctrlKey) {
