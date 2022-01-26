@@ -12,8 +12,6 @@
 -  Client: `get_model(int: id)` is removed - use `get_model(name: string)` or `get_model_by_id(int:
    id)`.
 
--  Client: `get_model_by_name` is removed - use `get_model(name: string)`.
-
 -  Model Registry: New model names must not be blank, have a slash, have multiple spaces, only
    numbers, or be case-insensitive matches to an existing model name.
 

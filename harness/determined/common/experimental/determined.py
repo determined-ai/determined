@@ -172,7 +172,7 @@ class Determined:
         """
         r = self._session.get("/api/v1/models?id={}".format(model_id))
         models = r.json().get("models")
-        assert len(models) > 0
+        assert len(models) == 1
         return model.Model.from_json(models[0], self._session)
 
     def get_models(
