@@ -111,12 +111,7 @@ const log = (e: DetError) => {
 const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
   // Ignore request cancellation errors.
   if (isAborted(error)) return;
-  let e: DetError | undefined;
-  if (isDetError(error)) {
-    e = error;
-  } else {
-    e = new DetError(error, options);
-  }
+  const e = isDetError(error) ? error : new DetError(error, options);
   if (e.isHandled) {
     if (process.env.IS_DEV) {
       console.warn(`Error "${e.message}" is handled twice.`);
