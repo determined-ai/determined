@@ -1,0 +1,7 @@
+:orphan:
+
+**API Changes**
+
+-  Calls to `/api/v1/experiments` or `/api/v1/experiments/:id` will allow the value
+      of the `progress` field to be null in cases where the experiment is completed or otherwise not
+      mid-process.
