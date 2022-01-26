@@ -123,7 +123,7 @@ export interface GetModelsParams extends PaginationParams {
 }
 
 export interface GetModelParams {
-  modelId: number;
+  modelName: string;
 }
 
 export type ArchiveModelParams = GetModelParams;
@@ -131,12 +131,12 @@ export type ArchiveModelParams = GetModelParams;
 export type DeleteModelParams = GetModelParams;
 
 export interface GetModelDetailsParams extends PaginationParams {
-  modelId: number;
+  modelName: string;
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
 }
 
 export interface GetModelVersionParams {
-  modelId: number;
+  modelName: string;
   versionId: number;
 }
 
@@ -145,25 +145,24 @@ export type DeleteModelVersionParams = GetModelVersionParams;
 export interface PatchModelParams {
   body: {
     description?: string;
-    id: number;
     labels?: string[];
     metadata?: Record<RecordKey, string>;
-    name?: string;
+    name: string;
     notes?: string;
   }
-  modelId: number;
+  modelName: string;
 }
 
 export interface PatchModelVersionParams {
   body: {
     comment?: string;
-    id: number;
     labels?: string[];
     metadata?: Record<RecordKey, string>;
+    modelName: string;
     name?: string;
     notes?: string;
   }
-  modelId: number;
+  modelName: string;
   versionId: number;
 }
 
@@ -181,11 +180,11 @@ export interface PostModelVersionParams {
     comment?: string;
     labels?: string[];
     metadata?: Metadata;
-    modelId: number;
+    modelName: string;
     name?: string;
     notes?: string;
   }
-  modelId: number;
+  modelName: string;
 }
 
 export interface CreateExperimentParams {

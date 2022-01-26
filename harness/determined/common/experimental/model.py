@@ -22,6 +22,7 @@ class ModelVersion:
         comment: Optional[str] = "",
         notes: Optional[str] = "",
         model_id: Optional[int] = 0,
+        model_name: Optional[str] = "",
         model_version: Optional[int] = None,  # sequential
     ):
         self._session = session
@@ -31,6 +32,7 @@ class ModelVersion:
         self.comment = comment
         self.notes = notes
         self.model_id = model_id
+        self.model_name = model_name
         self.model_version_id = model_version_id
         self.model_version = model_version
 
@@ -44,7 +46,7 @@ class ModelVersion:
 
         self.name = name
         self._session.patch(
-            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+            "/api/v1/models/{}/versions/{}".format(self.model_name, self.model_version_id),
             json={"model_version": {"name": self.name}},
         )
 
@@ -58,7 +60,7 @@ class ModelVersion:
 
         self.notes = notes
         self._session.patch(
-            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+            "/api/v1/models/{}/versions/{}".format(self.model_name, self.model_version_id),
             json={"model_version": {"notes": self.notes}},
         )
 
@@ -67,7 +69,7 @@ class ModelVersion:
         Deletes the model version in the registry
         """
         self._session.delete(
-            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+            "/api/v1/models/{}/versions/{}".format(self.model_name, self.model_version_id),
         )
 
     @staticmethod
@@ -84,6 +86,7 @@ class ModelVersion:
             comment=data.get("comment"),
             notes=data.get("notes"),
             model_id=data.get("model", {}).get("id"),
+            model_name=data.get("model", {}).get("name"),
             model_version=data.get("version"),
         )
 
@@ -185,7 +188,7 @@ class Model:
         """
         if version == -1:
             resp = self._session.get(
-                "/api/v1/models/{}/versions/".format(self.model_id),
+                "/api/v1/models/{}/versions/".format(self.name),
                 {"limit": 1, "order_by": ModelOrderBy.DESC.value},
             )
 
@@ -199,7 +202,7 @@ class Model:
                 self._session,
             )
         else:
-            resp = self._session.get("/api/v1/models/{}/versions/{}".format(self.model_id, version))
+            resp = self._session.get("/api/v1/models/{}/versions/{}".format(self.name, version))
 
         data = resp.json()
         return ModelVersion.from_json(data["modelVersion"], self._session)
@@ -214,7 +217,7 @@ class Model:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
         """
         resp = self._session.get(
-            "/api/v1/models/{}/versions/".format(self.model_id),
+            "/api/v1/models/{}/versions/".format(self.name),
             params={"order_by": order_by.value},
         )
         data = resp.json()
@@ -237,7 +240,7 @@ class Model:
             checkpoint_uuid: The UUID of the checkpoint to register.
         """
         resp = self._session.post(
-            "/api/v1/models/{}/versions".format(self.model_id),
+            "/api/v1/models/{}/versions".format(self.name),
             json={"checkpointUuid": checkpoint_uuid},
         )
 
@@ -260,7 +263,7 @@ class Model:
             self.metadata[key] = val
 
         self._session.patch(
-            "/api/v1/models/{}".format(self.model_id),
+            "/api/v1/models/{}".format(self.name),
             json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
@@ -277,7 +280,7 @@ class Model:
                 del self.metadata[key]
 
         self._session.patch(
-            "/api/v1/models/{}".format(self.model_id),
+            "/api/v1/models/{}".format(self.name),
             json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
@@ -291,14 +294,14 @@ class Model:
         """
         self.labels = labels
         self._session.patch(
-            "/api/v1/models/{}".format(self.model_id),
+            "/api/v1/models/{}".format(self.name),
             json={"model": {"labels": self.labels}},
         )
 
     def set_description(self, description: str) -> None:
         self.description = description
         self._session.patch(
-            "/api/v1/models/{}".format(self.model_id),
+            "/api/v1/models/{}".format(self.name),
             json={"model": {"description": description}},
         )
 
@@ -308,7 +311,7 @@ class Model:
         """
         self.archived = True
         self._session.post(
-            "/api/v1/models/{}/archive".format(self.model_id),
+            "/api/v1/models/{}/archive".format(self.name),
         )
 
     def unarchive(self) -> None:
@@ -317,7 +320,7 @@ class Model:
         """
         self.archived = False
         self._session.post(
-            "/api/v1/models/{}/unarchive".format(self.model_id),
+            "/api/v1/models/{}/unarchive".format(self.name),
         )
 
     def delete(self) -> None:
@@ -325,7 +328,7 @@ class Model:
         Deletes the model in the registry
         """
         self._session.delete(
-            "/api/v1/models/{}".format(self.model_id),
+            "/api/v1/models/{}".format(self.name),
         )
 
     def to_json(self) -> Dict[str, Any]:

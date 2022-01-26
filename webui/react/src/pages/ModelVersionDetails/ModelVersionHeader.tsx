@@ -44,7 +44,7 @@ const ModelVersionHeader: React.FC<Props> = (
   const showConfirmDelete = useCallback(() => {
     Modal.confirm({
       closable: true,
-      content: `Are you sure you want to delete this version "Version ${modelVersion.version}" 
+      content: `Are you sure you want to delete this version "Version ${modelVersion.version}"
             from this model?`,
       icon: null,
       maskClosable: true,
@@ -130,15 +130,15 @@ const ModelVersionHeader: React.FC<Props> = (
     return (
       `from determined.experimental import Determined
 client = Determined()
-model_entry = client.get_model_by_name("${modelVersion.model.name}")
+model_entry = client.get_model("${modelVersion.model.name}")
 version = model_entry.get_version(${modelVersion.version})
 ckpt = version.checkpoint
-      
+
 ################ Approach 1 ################
-# You can load the trial directly without having to instantiate the model. 
+# You can load the trial directly without having to instantiate the model.
 # The trial should have the model as an attribute.
-trial = ckpt.load() 
-      
+trial = ckpt.load()
+
 ################ Approach 2 ################
 # You can download the checkpoint and load the model state manually.
 ckpt_path = ckpt.download()
@@ -156,7 +156,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
       <div className={css.breadcrumbs}>
         <Breadcrumb separator="">
           <Breadcrumb.Item>
-            <Link path={paths.modelDetails(modelVersion.model.id)}>
+            <Link path={paths.modelDetails(modelVersion.model.name)}>
               <LeftOutlined style={{ marginRight: 10 }} />
             </Link>
           </Breadcrumb.Item>
@@ -167,7 +167,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Link path={paths.modelDetails(modelVersion.model.id)}>
+            <Link path={paths.modelDetails(modelVersion.model.name)}>
               {modelVersion.model.name}
             </Link>
           </Breadcrumb.Item>

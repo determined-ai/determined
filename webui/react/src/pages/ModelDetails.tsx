@@ -32,13 +32,13 @@ import settingsConfig, { Settings } from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
 
 interface Params {
-  modelId: string;
+  modelName: string;
 }
 
 const ModelDetails: React.FC = () => {
   const { auth: { user } } = useStore();
   const [ model, setModel ] = useState<ModelVersions>();
-  const { modelId } = useParams<Params>();
+  const modelName = decodeURIComponent(useParams<Params>().modelName);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);
@@ -49,14 +49,12 @@ const ModelDetails: React.FC = () => {
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
 
-  const id = parseInt(modelId);
-
   const fetchModel = useCallback(async () => {
     try {
       const modelData = await getModelDetails(
         {
           limit: settings.tableLimit,
-          modelId: id,
+          modelName,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetModelVersionsRequestSortBy, settings.sortKey),
@@ -68,7 +66,7 @@ const ModelDetails: React.FC = () => {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
     setIsLoading(false);
-  }, [ id, pageError, settings ]);
+  }, [ modelName, pageError, settings ]);
 
   usePolling(fetchModel);
 
@@ -80,7 +78,7 @@ const ModelDetails: React.FC = () => {
   const deleteVersion = useCallback(async (version: ModelVersion) => {
     try {
       setIsLoading(true);
-      await deleteModelVersion({ modelId: version.model.id, versionId: version.id });
+      await deleteModelVersion({ modelName: version.model.name, versionId: version.id });
       await fetchModel();
     } catch (e) {
       handleError(e, {
@@ -92,10 +90,10 @@ const ModelDetails: React.FC = () => {
     }
   }, [ fetchModel ]);
 
-  const saveModelVersionTags = useCallback(async (modelId, versionId, tags) => {
+  const saveModelVersionTags = useCallback(async (modelName, versionId, tags) => {
     try {
       setIsLoading(true);
-      await patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
+      await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
       await fetchModel();
     } catch (e) {
       handleError(e, {
@@ -110,7 +108,7 @@ const ModelDetails: React.FC = () => {
   const showConfirmDelete = useCallback((version: ModelVersion) => {
     Modal.confirm({
       closable: true,
-      content: `Are you sure you want to delete this version "Version ${version.version}" 
+      content: `Are you sure you want to delete this version "Version ${version.version}"
       from this model?`,
       icon: null,
       maskClosable: true,
@@ -125,9 +123,9 @@ const ModelDetails: React.FC = () => {
     useCallback(async (editedDescription: string, versionId: number) => {
       try {
         await patchModelVersion({
-          body: { comment: editedDescription, id },
-          modelId: id,
-          versionId: versionId,
+          body: { comment: editedDescription, modelName },
+          modelName,
+          versionId,
         });
       } catch (e) {
         handleError(e, {
@@ -136,7 +134,7 @@ const ModelDetails: React.FC = () => {
           type: ErrorType.Api,
         });
       }
-    }, [ id ]);
+    }, [ modelName ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
@@ -144,7 +142,7 @@ const ModelDetails: React.FC = () => {
         compact
         disabled={record.model.archived}
         tags={record.labels ?? []}
-        onChange={(tags) => saveModelVersionTags(record.model.id, record.id, tags)}
+        onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
       />
     );
 
@@ -258,8 +256,8 @@ const ModelDetails: React.FC = () => {
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
       await patchModel({
-        body: { id: parseInt(modelId), metadata: editedMetadata },
-        modelId: parseInt(modelId),
+        body: { metadata: editedMetadata, name: modelName },
+        modelName,
       });
       await fetchModel();
     } catch (e) {
@@ -270,13 +268,13 @@ const ModelDetails: React.FC = () => {
       });
     }
 
-  }, [ fetchModel, modelId ]);
+  }, [ fetchModel, modelName ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
     try {
       await patchModel({
-        body: { description: editedDescription, id: parseInt(modelId) },
-        modelId: parseInt(modelId),
+        body: { description: editedDescription, name: modelName },
+        modelName,
       });
     } catch (e) {
       handleError(e, {
@@ -286,13 +284,13 @@ const ModelDetails: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ modelId ]);
+  }, [ modelName ]);
 
   const saveName = useCallback(async (editedName: string) => {
     try {
       await patchModel({
-        body: { id: parseInt(modelId), name: editedName },
-        modelId: parseInt(modelId),
+        body: { name: editedName },
+        modelName,
       });
     } catch (e) {
       handleError(e, {
@@ -300,14 +298,15 @@ const ModelDetails: React.FC = () => {
         silent: true,
         type: ErrorType.Api,
       });
+      throw Error('Revert name change');
     }
-  }, [ modelId ]);
+  }, [ modelName ]);
 
   const saveNotes = useCallback(async (editedNotes: string) => {
     try {
       await patchModel({
-        body: { id: parseInt(modelId), notes: editedNotes },
-        modelId: parseInt(modelId),
+        body: { name: modelName, notes: editedNotes },
+        modelName,
       });
       await fetchModel();
     } catch (e) {
@@ -317,13 +316,13 @@ const ModelDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelId, fetchModel ]);
+  }, [ modelName, fetchModel ]);
 
   const saveModelTags = useCallback(async (editedTags) => {
     try {
       await patchModel({
-        body: { id: parseInt(modelId), labels: editedTags },
-        modelId: parseInt(modelId),
+        body: { labels: editedTags, name: modelName },
+        modelName,
       });
       fetchModel();
     } catch (e) {
@@ -334,30 +333,30 @@ const ModelDetails: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ fetchModel, modelId ]);
+  }, [ fetchModel, modelName ]);
 
   const switchArchive = useCallback(() => {
     if (model?.model.archived) {
-      unarchiveModel({ modelId: parseInt(modelId) });
+      unarchiveModel({ modelName });
     } else {
-      archiveModel({ modelId: parseInt(modelId) });
+      archiveModel({ modelName });
     }
-  }, [ model?.model.archived, modelId ]);
+  }, [ model?.model.archived, modelName ]);
 
   const deleteCurrentModel = useCallback(() => {
-    deleteModel({ modelId: parseInt(modelId) });
+    deleteModel({ modelName });
     history.push('/det/models');
-  }, [ history, modelId ]);
+  }, [ history, modelName ]);
 
-  if (isNaN(id)) {
-    return <Message title={`Invalid Model ID ${modelId}`} />;
+  if (!modelName) {
+    return <Message title="Model name is empty" />;
   } else if (pageError) {
     const message = isNotFound(pageError) ?
-      `Unable to find model ${modelId}` :
-      `Unable to fetch model ${modelId}`;
+      `Unable to find model ${modelName}` :
+      `Unable to fetch model ${modelName}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!model) {
-    return <Spinner tip={`Loading model ${modelId} details...`} />;
+    return <Spinner tip={`Loading model ${modelName} details...`} />;
   }
 
   return (

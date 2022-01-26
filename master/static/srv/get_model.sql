@@ -3,5 +3,5 @@ FROM models as m
   LEFT JOIN model_versions as mv
     ON mv.model_id = m.id
   LEFT JOIN users as u ON u.id = m.user_id
-WHERE m.id = $1
+WHERE m.name = $1
 GROUP BY m.id, u.id;

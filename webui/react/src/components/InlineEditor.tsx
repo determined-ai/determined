@@ -65,11 +65,13 @@ const InlineEditor: React.FC<Props> = ({
       try {
         setIsSaving(true);
         await onSave(newValue);
+      } catch (e) {
+        updateEditorValue(value);
       } finally {
         setIsSaving(false);
       }
     }
-  }, [ onSave ]);
+  }, [ onSave, updateEditorValue, value ]);
 
   const handleWrapperClick = useCallback(() => {
     if (disabled) return;
