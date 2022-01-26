@@ -79,9 +79,9 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
   if (isApiResponse(e)) {
     try {
       const response = await e.json();
-      options.publicMessage = response.message || response.error?.error;
+      options.publicMessage = response.error?.error || response.message;
     } catch (err) {
-      // Ignore the error.
+      options.payload = err;
     }
   }
   return new DetError(e, options);
