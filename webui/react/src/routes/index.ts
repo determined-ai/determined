@@ -1,6 +1,7 @@
 import { FC } from 'react';
 
 import Cluster from 'pages/Cluster';
+import ClusterOverview from 'pages/Clusters';
 import ClusterLogs from 'pages/ClusterLogs';
 import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
@@ -22,6 +23,7 @@ import { RouteConfig } from './types';
 
 const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
+  clusters: ClusterOverview,
   clusterLogs: ClusterLogs,
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,

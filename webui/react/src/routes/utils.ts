@@ -190,6 +190,9 @@ export const paths = {
   cluster: (): string => {
     return '/cluster';
   },
+  clusters: (): string => {
+    return '/clusters';
+  },
   clusterLogs: (): string => {
     return '/logs';
   },
