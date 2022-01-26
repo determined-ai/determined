@@ -1,6 +1,6 @@
 import * as Api from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { CommandType, JobState, JobType } from 'types';
+import { CommandType, Job, JobState, JobType, ResourcePool } from 'types';
 import { DetError, ErrorType } from 'utils/error';
 
 import { capitalize } from './string';
@@ -55,4 +55,13 @@ export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1
 
 export const moveJobToPosition = async (jobId: string, position: number): Promise<void> => {
   await detApi.Internal.updateJobQueue({ updates: [ moveJobToPositionUpdate(jobId, position) ] });
+};
+
+/*
+We cannot modify scheduling parameters of non fault tolerant jobs in Kubernetes.
+*/
+export const canManageJob = (job: Job, rp?: ResourcePool): boolean => {
+  if (!rp) return false;
+  return !(rp.schedulerType === Api.V1SchedulerType.KUBERNETES &&
+    job.type !== JobType.EXPERIMENT);
 };

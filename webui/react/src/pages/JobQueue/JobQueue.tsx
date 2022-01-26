@@ -21,7 +21,7 @@ import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { orderedSchedulers } from 'utils/job';
+import { canManageJob, orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -116,7 +116,6 @@ const JobQueue: React.FC = () => {
             return Promise.resolve();
         }
       },
-      [JobAction.ManageJob]: () => setManagingJob(job),
     };
 
     // if job is an experiment type add action to kill it
@@ -126,8 +125,12 @@ const JobQueue: React.FC = () => {
       };
     }
 
+    if (canManageJob(job, selectedRp)) {
+      triggers[JobAction.ManageJob] = () => setManagingJob(job);
+    }
+
     return triggers;
-  }, []);
+  }, [ selectedRp ]);
 
   const hideModal = useCallback(() => setManagingJob(undefined), []);
 
