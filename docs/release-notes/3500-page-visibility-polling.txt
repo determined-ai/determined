@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  Web: Polling can potentially be an expensive operation. To reduce unnecessary polling, we use
+   modern browser Page Visiblity API to detect changes in page visibility, which maps to whether the
+   user is activately focused on the page/tab or not. If the page is hidden, ongoing polling are
+   stopped. When the page becomes visible again, the previously active polling are restarted.
