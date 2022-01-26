@@ -18,6 +18,7 @@ interface OmnibarState {
 
 interface UI {
   chromeCollapsed: boolean;
+  isPageHidden: boolean;
   omnibar: OmnibarState;
   showChrome: boolean;
   showSpinner: boolean;
@@ -52,6 +53,7 @@ export enum StoreAction {
   // UI
   HideUIChrome,
   HideUISpinner,
+  SetPageVisibility,
   ShowUIChrome,
   ShowUISpinner,
 
@@ -77,6 +79,7 @@ export type Action =
 | { type: StoreAction.SetInfoCheck }
 | { type: StoreAction.HideUIChrome }
 | { type: StoreAction.HideUISpinner }
+| { type: StoreAction.SetPageVisibility; value: boolean }
 | { type: StoreAction.ShowUIChrome }
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
@@ -109,6 +112,7 @@ const initInfo = {
 };
 const initUI = {
   chromeCollapsed: false,
+  isPageHidden: false,
   omnibar: { isShowing: false },
   showChrome: true,
   showSpinner: false,
@@ -191,6 +195,8 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.HideUISpinner:
       if (!state.ui.showSpinner) return state;
       return { ...state, ui: { ...state.ui, showSpinner: false } };
+    case StoreAction.SetPageVisibility:
+      return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
     case StoreAction.ShowUIChrome:
       if (state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: true } };
