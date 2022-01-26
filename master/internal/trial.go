@@ -206,6 +206,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	}
 
 	ctx.Log().Info("decided to allocate trial")
+	t.runID++
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
 		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
@@ -270,7 +271,6 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
 	}
 
-	t.runID++
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
 		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
 	}
