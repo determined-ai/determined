@@ -10,6 +10,7 @@ import Spinner from 'components/Spinner';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import usePageVisibility from 'hooks/usePageVisibility';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -37,6 +38,7 @@ const AppView: React.FC = () => {
   const fetchInfo = useFetchInfo(canceler);
 
   useKeyTracker();
+  usePageVisibility();
   useRouteTracker();
 
   // Poll every 10 minutes
