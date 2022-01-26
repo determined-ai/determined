@@ -94,11 +94,7 @@ message Experiment {
 // PatchModel is a partial update to an experiment with only id required.
 message PatchExperiment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "id"
-      ]
-    }
+    json_schema: { required: [ "id" ] }
   };
   // The id of the experiment.
   int32 id = 1;
