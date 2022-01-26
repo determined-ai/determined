@@ -24,7 +24,7 @@ def test_model_registry() -> None:
         assert mnist.metadata == {}
 
         mnist.add_metadata({"testing": "metadata"})
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         # Make sure the model metadata is correct and correctly saved to the db.
         assert mnist.metadata == db_model.metadata
         assert mnist.metadata == {"testing": "metadata"}
@@ -33,43 +33,43 @@ def test_model_registry() -> None:
         assert db_model.username == "determined"
 
         mnist.add_metadata({"some_key": "some_value"})
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert mnist.metadata == db_model.metadata
         assert mnist.metadata == {"testing": "metadata", "some_key": "some_value"}
 
         mnist.add_metadata({"testing": "override"})
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert mnist.metadata == db_model.metadata
         assert mnist.metadata == {"testing": "override", "some_key": "some_value"}
 
         mnist.remove_metadata(["some_key"])
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert mnist.metadata == db_model.metadata
         assert mnist.metadata == {"testing": "override"}
 
         mnist.set_labels(["hello", "world"])
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert mnist.labels == db_model.labels
         assert db_model.labels == ["hello", "world"]
 
         # confirm patch does not overwrite other fields
         mnist.set_description("abcde")
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert db_model.metadata == {"testing": "override"}
         assert db_model.labels == ["hello", "world"]
 
         # overwrite labels to empty list
         mnist.set_labels([])
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert db_model.labels == []
 
         # archive and unarchive
         assert mnist.archived is False
         mnist.archive()
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert db_model.archived is True
         mnist.unarchive()
-        db_model = d.get_model(mnist.model_id)
+        db_model = d.get_model(mnist.name)
         assert db_model.archived is False
 
         # Register a version for the model and validate the latest.
@@ -117,10 +117,10 @@ def test_model_registry() -> None:
 
         # Create some more models and validate listing models.
         tform = d.create_model("transformer", "all you need is attention")
-        objectdetect = d.create_model("object-detection", "a bounding box model")
+        objectdetect = d.create_model("ac - Dc", "a test name model")
 
         models = d.get_models(sort_by=ModelSortBy.NAME)
-        assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]
+        assert [m.name for m in models] == ["ac - Dc", "mnist", "transformer"]
 
         # Test model labels combined
         mnist.set_labels(["hello", "world"])
@@ -132,7 +132,7 @@ def test_model_registry() -> None:
         tform.delete()
         tform = None
         models = d.get_models(sort_by=ModelSortBy.NAME)
-        assert [m.name for m in models] == ["mnist", "object-detection"]
+        assert [m.name for m in models] == ["ac - Dc", "mnist"]
     finally:
         # Clean model registry of test models
         for model in [mnist, objectdetect, tform]:

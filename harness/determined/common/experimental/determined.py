@@ -155,24 +155,24 @@ class Determined:
 
         return model.Model.from_json(r.json().get("model"), self._session)
 
-    def get_model(self, model_id: int) -> model.Model:
+    def get_model(self, name: str) -> model.Model:
+        """
+        Get the :class:`~determined.experimental.Model` from the model registry
+        with the provided name. If no model with that id is found in the registry,
+        an exception is raised.
+        """
+        r = self._session.get("/api/v1/models/{}".format(name))
+        return model.Model.from_json(r.json().get("model"), self._session)
+
+    def get_model_by_id(self, model_id: int) -> model.Model:
         """
         Get the :class:`~determined.experimental.Model` from the model registry
         with the provided id. If no model with that id is found in the registry,
         an exception is raised.
         """
-        r = self._session.get("/api/v1/models/{}".format(model_id))
-        return model.Model.from_json(r.json().get("model"), self._session)
-
-    def get_model_by_name(self, name: str) -> model.Model:
-        """
-        Get the :class:`~determined.experimental.Model` from the model registry
-        with the provided name. If no model with that name is found in the registry,
-        an exception is raised.
-        """
-        r = self._session.get("/api/v1/models?name={}".format(name))
+        r = self._session.get("/api/v1/models?id={}".format(model_id))
         models = r.json().get("models")
-        assert len(models) > 0
+        assert len(models) == 1
         return model.Model.from_json(models[0], self._session)
 
     def get_models(
@@ -181,6 +181,7 @@ class Determined:
         order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
         name: str = "",
         description: str = "",
+        model_id: int = 0,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
@@ -193,6 +194,8 @@ class Determined:
                 include models with names matching this parameter.
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
+            model_id: If this paramter is set, models will be filtered to
+                only include the model with this unique numeric id.
         """
         r = self._session.get(
             "/api/v1/models/",
@@ -201,6 +204,7 @@ class Determined:
                 "order_by": order_by.value,
                 "name": name,
                 "description": description,
+                "id": model_id,
             },
         )
 

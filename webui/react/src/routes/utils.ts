@@ -218,14 +218,14 @@ export const paths = {
   logout: (): string => {
     return '/logout';
   },
-  modelDetails: (modelId: number | string): string => {
-    return `/models/${modelId}`;
+  modelDetails: (modelName: string): string => {
+    return `/models/${encodeURIComponent(modelName)}`;
   },
   modelList: (): string => {
     return '/models';
   },
-  modelVersionDetails: (modelId: number | string, versionId: number | string): string => {
-    return `/models/${modelId}/versions/${versionId}`;
+  modelVersionDetails: (modelName: string, versionId: number | string): string => {
+    return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
