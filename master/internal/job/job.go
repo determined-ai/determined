@@ -54,7 +54,7 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
-	// SetResourcePool switches the resource pool that the job belongs to
+	// SetResourcePool switches the resource pool that the job belongs to.
 	SetResourcePool struct {
 		ResourcePool string
 		Handler      *actor.Ref

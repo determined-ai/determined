@@ -623,7 +623,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 	}
 
 	if _, err := sproto.GetResourcePool(ctx.Self().System(), msg.ResourcePool, 0, false); err != nil {
-		return fmt.Errorf("invalid resource pool name")
+		return fmt.Errorf("invalid resource pool name %s", msg.ResourcePool)
 	}
 
 	resources := e.Config.Resources()
@@ -631,11 +631,10 @@ func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 	e.Config.SetResources(resources)
 
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
-		return errors.Wrapf(err, "setting experiment %s RP to %s", e.ID, msg.ResourcePool)
+		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, msg.ResourcePool)
 	}
-	for _, ref := range ctx.Children() {
-		ctx.Tell(ref, sproto.ChangeRP{ResourcePool: msg.ResourcePool})
-	}
+	ctx.TellAll(sproto.ChangeRP{ResourcePool: msg.ResourcePool}, ctx.Children()...)
+
 	return nil
 }
 

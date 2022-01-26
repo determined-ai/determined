@@ -91,8 +91,6 @@ def update(args: Namespace) -> None:
         jobId=args.job_id,
         priority=args.priority,
         weight=args.weight,
-        behindOf=args.behind_of,
-        aheadOf=args.ahead_of,
         resourcePool=args.resource_pool,
     )
     bindings.post_UpdateJobQueue(
@@ -148,16 +146,6 @@ args_description = [
                             "--weight",
                             type=float,
                             help="The new weight. Exclusive to fair_share scheduler.",
-                        ),
-                        Arg(
-                            "--ahead-of",
-                            type=str,
-                            help="The job ID of the job to be put ahead of in the queue.",
-                        ),
-                        Arg(
-                            "--behind-of",
-                            type=str,
-                            help="The job ID of the job to be put behind in the queue.",
                         ),
                         Arg(
                             "--resource-pool",
