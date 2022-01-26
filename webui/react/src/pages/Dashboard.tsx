@@ -136,11 +136,13 @@ const Dashboard: React.FC = () => {
     }
   }, [ canceler ]);
 
-  const fetchAll = useCallback(() => {
-    fetchUsers();
-    fetchExperiments();
-    fetchActiveExperiments();
-    fetchTasks();
+  const fetchAll = useCallback(async () => {
+    await Promise.allSettled([
+      fetchUsers(),
+      fetchExperiments(),
+      fetchActiveExperiments(),
+      fetchTasks(),
+    ]);
   }, [ fetchUsers, fetchExperiments, fetchActiveExperiments, fetchTasks ]);
 
   usePolling(fetchAll);

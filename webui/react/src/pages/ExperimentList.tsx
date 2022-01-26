@@ -162,10 +162,8 @@ const ExperimentList: React.FC = () => {
     } catch (e) { handleError(e); }
   }, [ canceler.signal ]);
 
-  const fetchAll = useCallback(() => {
-    fetchExperiments();
-    fetchLabels();
-    fetchUsers();
+  const fetchAll = useCallback(async () => {
+    await Promise.allSettled([ fetchExperiments(), fetchLabels(), fetchUsers() ]);
   }, [ fetchExperiments, fetchLabels, fetchUsers ]);
 
   usePolling(fetchAll);

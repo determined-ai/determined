@@ -87,10 +87,8 @@ const ModelRegistry: React.FC = () => {
     } catch (e) { handleError(e); }
   }, [ canceler.signal ]);
 
-  const fetchAll = useCallback(() => {
-    fetchModels();
-    fetchTags();
-    fetchUsers();
+  const fetchAll = useCallback(async () => {
+    await Promise.allSettled([ fetchModels(), fetchTags(), fetchUsers() ]);
   }, [ fetchModels, fetchTags, fetchUsers ]);
 
   usePolling(fetchAll);
