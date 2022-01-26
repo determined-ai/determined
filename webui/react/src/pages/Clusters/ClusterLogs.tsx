@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
-import Page from 'components/Page';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
 
@@ -32,12 +31,12 @@ const ClusterLogs: React.FC = () => {
   }, []);
 
   return (
-      <LogViewerCore
-        decoder={jsonToClusterLog}
-        sortKey="id"
-        title={<div className={css.title}>Cluster Logs</div>}
-        onFetch={handleFetch}
-      />
+    <LogViewerCore
+      decoder={jsonToClusterLog}
+      sortKey="id"
+      title={<div className={css.title}>Cluster Logs</div>}
+      onFetch={handleFetch}
+    />
   );
 };
 

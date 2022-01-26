@@ -6,8 +6,8 @@ import Page from 'components/Page';
 import { paths } from 'routes/utils';
 
 import ClusterHistoricalUsage from './Clusters/ClusterHistoricalUsage';
-import ClusterOverview from './Clusters/ClusterOverview';
 import ClusterLogs from './Clusters/ClusterLogs';
+import ClusterOverview from './Clusters/ClusterOverview';
 
 const { TabPane } = Tabs;
 
