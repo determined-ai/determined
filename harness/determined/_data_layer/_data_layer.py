@@ -12,6 +12,7 @@ from yogadl import storage, tensorflow
 import determined as det
 from determined import _core
 from determined.common import check
+from determined.common.api import analytics
 
 
 def init_container_storage_path(configured_storage_path: Optional[str]) -> pathlib.Path:
@@ -174,6 +175,8 @@ class _CacheableDecorator:
             )
         self._decorator_used = True
         dataset_version += "_train" if self._training else "_val"
+
+        analytics.send_analytics("data_layer_cache_dataset", {})
 
         def _wrap(make_dataset_fn: Callable) -> Callable:
             @functools.wraps(make_dataset_fn)
