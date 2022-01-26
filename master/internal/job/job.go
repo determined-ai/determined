@@ -54,8 +54,8 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
-	// ChangeRP switches the resource pool that the job belongs to
-	SetRP struct {
+	// SetResourcePool switches the resource pool that the job belongs to
+	SetResourcePool struct {
 		ResourcePool string
 		Handler      *actor.Ref
 	}
@@ -209,7 +209,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				if action.ResourcePool == "" {
 					errors = append(errors, "resource pool must be set")
 				}
-				resp := ctx.Ask(jobActor, SetRP{
+				resp := ctx.Ask(jobActor, SetResourcePool{
 					ResourcePool: action.ResourcePool,
 				})
 				if err := resp.Error(); err != nil {

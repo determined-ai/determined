@@ -277,9 +277,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case job.GetJobSummary:
 		ctx.Respond(e.toV1Job().Summary)
 
-	case job.SetRP:
+	case job.SetResourcePool:
 		if err := e.setRP(ctx, msg); err != nil {
-			return err
+			ctx.Respond(err)
 		}
 
 	// Experiment shutdown logic.
@@ -617,14 +617,13 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 	return nil
 }
 
-func (e *experiment) setRP(ctx *actor.Context, msg job.SetRP) error {
+func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 	if sproto.UseK8sRM(ctx.Self().System()) {
-		ctx.Respond(fmt.Errorf("kubernetes does not support setting resource pools"))
+		return fmt.Errorf("kubernetes does not support setting resource pools")
 	}
 
 	if _, err := sproto.GetResourcePool(ctx.Self().System(), msg.ResourcePool, 0, false); err != nil {
-		ctx.Respond(fmt.Errorf("invalid resource pool name"))
-		return nil
+		return fmt.Errorf("invalid resource pool name")
 	}
 
 	resources := e.Config.Resources()
