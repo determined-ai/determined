@@ -31,7 +31,7 @@ to be compatible with a larger or smaller batch size.
 Mix precision training with Apex Amp can be enabled by setting `use_apex_amp` to `true`.  
 
 ### Results
-Using the provided experiment config `glue_config.yaml` yields a Matthew's Correlation of ~59 on the CoLA dataset.
+Using the provided experiment config `glue_config.yaml` yields a Matthew's Correlation of ~57 on the CoLA dataset. Running with data augmentations, `glue_augmentation_config.yaml` improves Matthew's Correlation to ~59.
 ![GLUE results](./figures/glue.png)
 
 ## XNLI Dataset
