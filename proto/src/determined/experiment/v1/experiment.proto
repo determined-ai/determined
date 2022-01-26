@@ -73,8 +73,6 @@ message Experiment {
   bool archived = 7;
   // The number of trials linked to the experiment.
   int32 num_trials = 8;
-  // The current progress of the experiment.
-  double progress = 9;
   // The username of the user that created the experiment.
   string username = 10;
   // The resource pool the experiment was created in
@@ -89,6 +87,8 @@ message Experiment {
   string job_id = 15;
   // Original id of a forked or continued experiment.
   google.protobuf.Int32Value forked_from = 16;
+  // The current progress of a running experiment.
+  google.protobuf.DoubleValue progress = 17;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

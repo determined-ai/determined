@@ -1510,12 +1510,6 @@ export interface V1Experiment {
      */
     numTrials: number;
     /**
-     * The current progress of the experiment.
-     * @type {number}
-     * @memberof V1Experiment
-     */
-    progress?: number;
-    /**
      * The username of the user that created the experiment.
      * @type {string}
      * @memberof V1Experiment
@@ -1557,6 +1551,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     forkedFrom?: number;
+    /**
+     * The current progress of a running experiment.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    progress?: number;
 }
 
 /**
