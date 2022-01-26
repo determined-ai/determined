@@ -5,7 +5,6 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
-import "google/protobuf/field_mask.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/pagination.proto";
@@ -188,9 +187,7 @@ message UnarchiveExperimentResponse {}
 // others will be ignored.
 message PatchExperimentRequest {
   // Patched experiment attributes.
-  determined.experiment.v1.Experiment experiment = 1;
-  // Update mask.
-  google.protobuf.FieldMask update_mask = 2;
+  determined.experiment.v1.PatchExperiment experiment = 2;
 }
 
 // Response to PatchExperimentRequest.
