@@ -41,7 +41,7 @@ import {
   ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentItem, RecordKey, RunState,
 } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
@@ -139,11 +139,7 @@ const ExperimentList: React.FC = () => {
         return response.experiments;
       });
     } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch experiments.',
-        silent: true,
-        type: ErrorType.Api,
-      });
+      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +159,7 @@ const ExperimentList: React.FC = () => {
       const labels = await getExperimentLabels({ signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
-    } catch (e) {}
+    } catch (e) { handleError(e); }
   }, [ canceler.signal ]);
 
   const fetchAll = useCallback(() => {
@@ -290,10 +286,10 @@ const ExperimentList: React.FC = () => {
         experimentId: id,
       });
     } catch (e) {
-      handleError({
-        message: 'Unable to save experiment description.',
+      handleError(e, {
+        isUserTriggered: true,
+        publicMessage: 'Unable to save experiment description.',
         silent: true,
-        type: ErrorType.Api,
       });
       setIsLoading(false);
     }
@@ -523,11 +519,11 @@ const ExperimentList: React.FC = () => {
         'Unable to View TensorBoard for Selected Experiments' :
         `Unable to ${action} Selected Experiments`;
       handleError(e, {
+        isUserTriggered: true,
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
         publicSubject,
         silent: false,
-        type: ErrorType.Server,
       });
     }
   }, [ fetchExperiments, sendBatchActions, updateSettings ]);

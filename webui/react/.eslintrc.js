@@ -78,9 +78,10 @@ module.exports = {
     } ],
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
-    'no-empty': [ 'error', { allowEmptyCatch: true } ],
+    'no-empty': [ 'error', { allowEmptyCatch: false } ],
     'no-multi-spaces': [ 'error', { ignoreEOLComments: true } ],
     'no-multiple-empty-lines': [ 'error', { max: 1, maxBOF: 0, maxEOF: 0 } ],
+    'no-throw-literal': 'error',
     'no-trailing-spaces': [ 'error', {} ],
     'no-unused-vars': 'off',
     'object-curly-newline': [ 'error', {
