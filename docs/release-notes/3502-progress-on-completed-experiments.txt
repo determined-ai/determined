@@ -2,6 +2,9 @@
 
 **API Changes**
 
+-  When an experiment successfully completes, its progress value will be set to 1 instead of 0 or
+   null.
+
 -  Calls to `/api/v1/experiments` or `/api/v1/experiments/:id` will allow the value
-      of the `progress` field to be null instead of 0 in cases where the experiment is completed or
-      otherwise not mid-process.
+      of the `progress` field to be null instead of 0 in cases where the experiment has not yet run
+      or failed to complete.
