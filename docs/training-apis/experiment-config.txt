@@ -915,9 +915,10 @@ The ``resources`` section defines the resources that an experiment is allowed to
    <master-configuration>`.
 
 ``priority``
-   The priority assigned to this experiment. Experiments with smaller priority values are scheduled
-   before experiments with higher priority values. Only applicable when using the ``priority``
-   scheduler. Refer to :ref:`scheduling` for more information.
+   The priority assigned to this experiment. Only applicable when using the ``priority`` scheduler.
+   Experiments with smaller priority values are scheduled before experiments with higher priority
+   values. If using Kubernetes, the opposite is true; experiments with higher priorites are
+   scheduled before those with lower priorities. Refer to :ref:`scheduling` for more information.
 
 ``resource_pool``
    The resource pool where this experiment will be scheduled. If no resource pool is specified,

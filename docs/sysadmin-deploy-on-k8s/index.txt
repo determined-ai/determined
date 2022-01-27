@@ -27,6 +27,11 @@ Kubernetes cluster to execute those workloads. Users of Determined shouldn't nee
 Kubernetes directly after installation, as Determined handles all the necessary interaction with the
 Kubernetes cluster.
 
+It is also important to note that when running Determined on Kubernetes, a higher priority value
+means a higher priority (e.g. a priority 50 task will run before a priority 40 task). This is
+different from priority scheduling in non-Kubernetes deployments, where lower priority values mean a
+higher priority (e.g. a priority 40 task will run before a priority 50 task).
+
 .. _limitations-on-kubernetes:
 
 *****************************************
