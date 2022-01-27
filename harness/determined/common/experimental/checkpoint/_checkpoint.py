@@ -152,8 +152,7 @@ class Checkpoint(object):
 
                 manager.download(self.uuid, str(local_ckpt_dir))
 
-        if not local_ckpt_dir.joinpath("metadata.json").exists():
-            self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
+        self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
 
         return str(local_ckpt_dir)
 
