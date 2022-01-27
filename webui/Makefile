@@ -4,7 +4,7 @@ all:
 	$(MAKE) build
 
 .PHONY: clean
-clean: clean-react clean-tests
+clean: clean-react
 .PHONY: clean-%
 clean-%:
 	$(MAKE) -C $* clean
@@ -30,7 +30,7 @@ build:
 	$(MAKE) -C react build
 
 .PHONY: test
-test: test-react test-tests
+test: test-react
 .PHONY: test-%
 test-%:
 	$(MAKE) -C $* test
