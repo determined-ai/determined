@@ -284,8 +284,15 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
-		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
-			ctx.Log().Error(err)
+		if e.State != model.CompletedState {
+			setProgress := 1.0
+			if err := e.db.SaveExperimentProgress(e.ID, &setProgress); err != nil {
+				ctx.Log().Error(err)
+			}
+		} else {
+			if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
+				ctx.Log().Error(err)
+			}
 		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
