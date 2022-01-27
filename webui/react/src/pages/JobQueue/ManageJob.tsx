@@ -4,7 +4,7 @@ import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import * as api from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
+import { updateJobQueue } from 'services/api';
 import { Job, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
@@ -98,7 +98,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
     async () => {
       try{
         const update = formValuesToQUpdate(formRef);
-        if (update) await detApi.Internal.updateJobQueue({ updates: [ update ] });
+        if (update) await updateJobQueue({ updates: [ update ] });
       } catch (e) {
         handleError(e, {
           isUserTriggered: true,
