@@ -173,6 +173,9 @@ To enable gang scheduling with commands or CPU experiments, enable the coschedul
 
 You can also use ``schedulerName: default-scheduler`` to use the default Kubernetes scheduler.
 
+Additionally, please note that when running Determined on Kubernetes, a higher priority value means
+a higher priority (e.g. a priority 50 task will run before a priority 40 task).
+
 .. _priority-scheduling-on-kubernetes:
 
 ***************************************************
@@ -194,7 +197,8 @@ Determined provides a default priority class, ``determined-medium-priority`` tha
 ``50`` and is used for all tasks. If users want to set a different priority level for an experiment,
 they may either specify a priority in the ``resources`` field of the experiment config or create a
 priorityClass and specify it in the ``pod_spec`` of the config. If both are specified, the specified
-priorityClass will take precedence over the priority field.
+priorityClass will take precedence over the priority field. In Kubernetes, a higher priority value
+means a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 
 Additionally, if using a cluster with tainted nodes or labels, users must specify the tolerations or
 node selectors in the ``pod_spec``. We recommend using both tolerations and node selectors to better
