@@ -737,37 +737,6 @@ commands:
           release-name: "ci"
           namespace: "default"
 
-  install-webui-test-deps:
-    steps:
-      - run: |
-          . /opt/circleci/.nvm/nvm.sh
-          nvm install v12
-          nvm alias default v12
-          make -C webui/tests get-deps
-      - run: docker pull determinedai/gauge-taiko-ts
-
-  dump-local-cluster-logs:
-    steps:
-      - run:
-          name: Dump det deploy logs
-          when: always
-          command: det deploy local logs --no-follow
-
-  run-e2e-webui-tests:
-    steps:
-      - run: python webui/tests/bin/createUserAndExperiments.py
-      - run: |
-          mkdir -p webui/tests/reports/logs
-          mkdir -p webui/tests/reports/videos
-          docker run \
-            --name e2e_gauge \
-            --mount type=bind,source=$(pwd)/webui,target=/webui \
-            -w /webui/tests \
-            --add-host=determined-master:host-gateway \
-            --env DET_MASTER=determined-master:8080 \
-            determinedai/gauge-taiko-ts
-          rm -f webui/tests/reports/videos/*.jpeg
-
   generate-tls-cert:
     steps:
       - run: |
@@ -1167,35 +1136,6 @@ jobs:
       - run: sudo systemctl restart determined-agent
       - run: ./.circleci/scripts/sanity.sh
 
-  test-e2e-webui:
-    machine:
-      image: <<pipeline.parameters.machine-image>>
-    resource_class: medium
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-
-      - reinstall-go
-
-      - install-webui-test-deps
-      - setup-python-venv:
-          determined: true
-          extra-requirements-file: "webui/tests/requirements.txt"
-          executor: <<pipeline.parameters.machine-image>>
-
-      - run: make -C master get-deps
-      - install-devcluster
-      - start-devcluster
-      - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
-
-      - run-e2e-webui-tests
-      - dump-local-cluster-logs
-      - store_test_results:
-          path: webui/tests/reports/xml-report/
-      - store_artifacts:
-          path: webui/tests/reports/
-
   lint-react:
     docker:
       - image: cimg/node:14.16
@@ -1203,14 +1143,6 @@ jobs:
       - checkout
       - react-get-deps
       - run: make -C webui/react check
-
-  lint-webui-tests:
-    docker:
-      - image: cimg/node:14.16
-    steps:
-      - checkout
-      - run: make -C webui/tests get-deps
-      - run: make -C webui/tests check
 
   build-react:
     parameters:
@@ -1893,7 +1825,6 @@ workflows:
       - lint-python
       - lint-go
       - lint-react
-      - lint-webui-tests
       - lint-secrets
 
   test-cli:
@@ -2001,11 +1932,6 @@ workflows:
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
-
-      - test-e2e-webui:
-          requires:
-            - build-react
-            - build-go
 
       - deploy:
           enable-cors: true
