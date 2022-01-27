@@ -102,14 +102,14 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       } catch (e) {
         handleError(e, {
           isUserTriggered: true,
-          publicMessage: `Failed to update job ${job.jobId}`,
-          publicSubject: 'Failed to update job queue',
+          publicSubject: 'Failed to update the job',
+          silent: false,
           type: ErrorType.Api,
         });
       }
       onFinish?.();
     },
-    [ formRef, onFinish, formValuesToQUpdate, job.jobId ],
+    [ formRef, onFinish, formValuesToQUpdate ],
   );
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
