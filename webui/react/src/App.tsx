@@ -10,6 +10,7 @@ import Spinner from 'components/Spinner';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import usePageVisibility from 'hooks/usePageVisibility';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -37,6 +38,7 @@ const AppView: React.FC = () => {
   const fetchInfo = useFetchInfo(canceler);
 
   useKeyTracker();
+  usePageVisibility();
   useRouteTracker();
 
   // Poll every 10 minutes
@@ -68,6 +70,7 @@ const AppView: React.FC = () => {
     }
   }, [ info ]);
 
+  // Detect telemetry settings changes and update telemetry library.
   useEffect(() => {
     updateTelemetry(auth, info);
   }, [ auth, info, updateTelemetry ]);
@@ -79,10 +82,12 @@ const AppView: React.FC = () => {
     }
   }, [ info.checked, info.branding, setThemeId ]);
 
+  // Abort cancel signal when app unmounts.
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  // Detect and handle key events.
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
       if (e.code === KeyCode.Space && e.ctrlKey) {

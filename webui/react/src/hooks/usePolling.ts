@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 
+import { useStore } from 'contexts/Store';
+
 type PollingFn = (() => Promise<void>) | (() => void);
 
 interface PollingHooks {
@@ -39,6 +41,8 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
   const pollingOptions = useRef<PollingOptions>({ ...DEFAULT_OPTIONS, ...options });
   const timer = useRef<NodeJS.Timeout>();
   const isPolling = useRef(false);
+  const isPollingBeforeHidden = useRef(false);
+  const { ui } = useStore();
 
   const clearTimer = useCallback(() => {
     if (timer.current) {
@@ -78,6 +82,24 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
     startPolling();
     return () => stopPolling();
   }, [ startPolling, stopPolling ]);
+
+  useEffect(() => {
+    if (ui.isPageHidden) {
+      // Save the state of whether polling was active before page is hidden.
+      isPollingBeforeHidden.current = isPolling.current;
+
+      // Stop polling if currently active.
+      if (isPolling.current) stopPolling();
+    } else {
+      /**
+       * Start polling again if everything below is true.
+       *  - the page is visible
+       *  - currently not polling
+       *  - was polling previously before page became hidden
+       */
+      if (!isPolling.current && isPollingBeforeHidden.current) startPolling();
+    }
+  }, [ startPolling, stopPolling, ui.isPageHidden ]);
 
   return { isPolling: isPolling.current, startPolling, stopPolling };
 };
