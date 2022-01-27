@@ -12,7 +12,7 @@ import { isString } from './data';
 
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
-  isUserTriggered?: boolean; // whether the error was caused by an active interaction.
+  isUserTriggered?: boolean; // whether the error was triggered by an active interaction.
   level?: ErrorLevel;
   logger?: LoggerInterface;
   payload?: unknown;
@@ -34,7 +34,7 @@ export enum ErrorType {
   Unknown = 'unknown',
   Ui = 'ui',
   Input = 'input',
-  ApiBadResponse = 'apiBadResponse',
+  ApiBadResponse = 'apiBadResponse', // unexpected response structure.
   Api = 'api', // third-party api
 }
 
@@ -50,6 +50,8 @@ export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
 };
 
+// An expected Error with supplemental information on
+// how it should be handled.
 export class DetError extends Error {
   id?: string;
   isUserTriggered: boolean;
@@ -60,6 +62,7 @@ export class DetError extends Error {
   publicSubject?: string;
   silent: boolean;
   type: ErrorType;
+  isHandled: boolean;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
     const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
@@ -76,6 +79,7 @@ export class DetError extends Error {
     this.publicSubject = options.publicSubject || detError?.publicSubject || undefined;
     this.silent = options.silent || detError?.silent || false;
     this.type = options.type || detError?.type || ErrorType.Unknown;
+    this.isHandled = false;
   }
 }
 
@@ -102,21 +106,26 @@ const log = (e: DetError) => {
   e.logger[key](e);
 };
 
-const handleError = (error: unknown, options?: DetErrorOptions): void => {
-  if (!isError(error) && !isDetError(error)) return;
-
-  // Normalize error as DetError.
-  const e = isError(error) ? new DetError(error, options) : error;
-
+// Handle an error at the point that you'd want to stop bubbling it up. Avoid handling
+// and re-throwing.
+const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
   // Ignore request cancellation errors.
-  if (isAborted(e)) return;
+  if (isAborted(error)) return;
+  const e = isDetError(error) ? error : new DetError(error, options);
+  if (e.isHandled) {
+    if (process.env.IS_DEV) {
+      console.warn(`Error "${e.message}" is handled twice.`);
+    }
+    return;
+  }
+  e.isHandled = true;
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (e.type === ErrorType.Auth) {
     history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
   }
 
-  // TODO add support and checking for saving and dismissing class of errors as user preference
+  // TODO add support for checking, saving, and dismissing class of errors as a user preference
   // using id.
   const skipNotification = e.silent || (e.level === ErrorLevel.Warn && !e.publicMessage);
   if (!skipNotification) openNotification(e);

@@ -8,6 +8,7 @@ import useJupyterLab from 'hooks/useJupyterLab';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
+import handleError from 'utils/error';
 
 import css from './JupyterLabModal.module.scss';
 import Link from './Link';
@@ -163,7 +164,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = (
     try {
       const configString = allFields[0].value;
       onChange?.(configString);
-    } catch (e) {}
+    } catch (e) { handleError(e); }
   }, [ onChange ]);
 
   useEffect(() => {
@@ -243,13 +244,13 @@ const JupyterLabForm: React.FC<FormProps> = (
   const fetchResourcePools = useCallback(async () => {
     try {
       setResourcePools(await getResourcePools({}));
-    } catch {}
+    } catch (e) { handleError(e); }
   }, []);
 
   const fetchTemplates = useCallback(async () => {
     try {
       setTemplates(await getTaskTemplates({}));
-    } catch {}
+    } catch (e) { handleError(e); }
   }, []);
 
   useEffect(() => {

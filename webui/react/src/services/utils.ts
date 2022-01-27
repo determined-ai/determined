@@ -4,7 +4,7 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
-import handleError, { DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
+import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
 import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 
@@ -25,6 +25,10 @@ export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
   const authFailureStatuses = [ 401 ];
   if (supportExternalAuth) authFailureStatuses.push(500);
   return authFailureStatuses.includes(status);
+};
+
+const isApiResponse = (o: unknown): o is Response => {
+  return o instanceof Response;
 };
 
 /*
@@ -53,14 +57,14 @@ export const isAborted = (e: any): boolean => {
 
 export const http = axios.create({ responseType: 'json', withCredentials: false });
 
-export const processApiError = (name: string, e: unknown): void => {
+/* Fits API errors into a DetError. */
+export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
   const isAuthError = isAuthFailure(e);
   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
-  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   const options: DetErrorOptions = {
     level: ErrorLevel.Error,
     publicSubject: `Request ${name} failed.`,
-    silent,
+    silent: !process.env.IS_DEV || isAuthError || isAborted(e),
     type: ErrorType.Server,
   };
 
@@ -72,7 +76,15 @@ export const processApiError = (name: string, e: unknown): void => {
     options.publicSubject = `Failed in decoding ${name} API response.`;
   }
 
-  handleError(e, options);
+  if (isApiResponse(e)) {
+    try {
+      const response = await e.json();
+      options.publicMessage = response.error?.error || response.message;
+    } catch (err) {
+      options.payload = err;
+    }
+  }
+  return new DetError(e, options);
 };
 
 export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
@@ -98,8 +110,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      processApiError(api.name, e);
-      throw e;
+      throw (await processApiError(api.name, e));
     }
   };
 }
@@ -111,8 +122,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
         api.stubbedResponse : await api.request(params, options);
       return api.postProcess(response);
     } catch (e) {
-      processApiError(api.name, e);
-      throw e;
+      throw (await processApiError(api.name, e));
     }
   };
 }
@@ -166,8 +176,8 @@ export const consumeStream = async <T = unknown>(
       }
     }
   } catch (e) {
-    processApiError(fetchArgs.url, e);
-    if (!isAborted(e)) throw e;
+    const err = await processApiError(fetchArgs.url, e);
+    if (!isAborted(e)) throw err;
   }
 };
 

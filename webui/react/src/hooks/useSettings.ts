@@ -4,6 +4,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 
 import { Primitive, RecordKey } from 'types';
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber, isString } from 'utils/data';
+import handleError, { ErrorType } from 'utils/error';
 import { Storage } from 'utils/storage';
 
 import usePrevious from './usePrevious';
@@ -129,7 +130,9 @@ export const queryToSettings = <T>(config: SettingsConfig, query: string): T => 
         ? [ queryValue ] : queryValue;
 
       if (normalizedValue !== undefined) acc[prop.key] = normalizedValue;
-    } catch (e) {}
+    } catch (e) {
+      handleError(e, { silent: true, type: ErrorType.Ui });
+    }
 
     return acc;
   }, {} as GenericSettings) as unknown as T;
