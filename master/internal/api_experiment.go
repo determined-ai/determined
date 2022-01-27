@@ -544,7 +544,8 @@ func (a *apiServer) PatchExperiment(
 	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value {
 		madeChanges = true
 		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "`name` must not be an empty or whitespace string.")
+			return nil, status.Errorf(codes.InvalidArgument,
+				"`name` must not be an empty or whitespace string.")
 		}
 		exp.Name = req.Experiment.Name.Value
 	}
