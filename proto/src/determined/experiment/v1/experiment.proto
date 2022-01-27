@@ -91,7 +91,7 @@ message Experiment {
   google.protobuf.Int32Value forked_from = 16;
 }
 
-// PatchModel is a partial update to an experiment with only id required.
+// PatchExperiment is a partial update to an experiment with only id required.
 message PatchExperiment {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
@@ -106,8 +106,6 @@ message PatchExperiment {
   google.protobuf.StringValue name = 4;
   // The experiment notes.
   google.protobuf.StringValue notes = 5;
-  // Original id of a forked or continued experiment.
-  google.protobuf.Int32Value forked_from = 6;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

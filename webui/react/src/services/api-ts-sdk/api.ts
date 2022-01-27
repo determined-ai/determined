@@ -3612,7 +3612,7 @@ export interface V1PaginationRequest {
 }
 
 /**
- * PatchModel is a partial update to an experiment with only id required.
+ * PatchExperiment is a partial update to an experiment with only id required.
  * @export
  * @interface V1PatchExperiment
  */
@@ -3647,12 +3647,6 @@ export interface V1PatchExperiment {
      * @memberof V1PatchExperiment
      */
     notes?: string;
-    /**
-     * Original id of a forked or continued experiment.
-     * @type {number}
-     * @memberof V1PatchExperiment
-     */
-    forkedFrom?: number;
 }
 
 /**
