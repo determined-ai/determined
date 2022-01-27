@@ -738,6 +738,16 @@ export const getJobQueueStats: Service.DetApi<
   request: ({ resourcePools }) => detApi.Internal.getJobQueueStats(resourcePools),
 };
 
+export const updateJobQueue: Service.DetApi<
+  Api.V1UpdateJobQueueRequest,
+  Api.V1UpdateJobQueueResponse,
+  Api.V1UpdateJobQueueResponse
+> = {
+  name: 'updateJobQueue',
+  postProcess: identity,
+  request: (params: Api.V1UpdateJobQueueRequest) => detApi.Internal.updateJobQueue(params),
+};
+
 /* Logs */
 
 const buildQuery = (params: Service.LogsParams): string => {
