@@ -1,28 +1,31 @@
-import useModal from "./useModal";
-import UserSettings from "components/UserSettings";
-import css from "./useModalUserSettings.module.scss";
-import { useStore } from "contexts/Store";
+import React from 'react';
 
-const useModalUserSettings = () => {
-  const { modalOpen } = useModal();
+import UserSettings from 'components/UserSettings';
+import { useStore } from 'contexts/Store';
+
+import useModal, { ModalHooks } from './useModal';
+import css from './useModalUserSettings.module.scss';
+
+const useModalUserSettings = (): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const { auth } = useStore();
-  const username = auth.user?.username || "Anonymous";
+  const username = auth.user?.username || 'Anonymous';
 
   const getModalContent = () => {
     return <UserSettings username={username} />;
   };
 
-  const openUserSettingsModal = () => {
-    modalOpen({
-      content: getModalContent(),
-      icon: null,
+  const modalOpen = () => {
+    openOrUpdate({
       className: css.noFooter,
       closable: true,
-      title: "Account",
+      content: getModalContent(),
+      icon: null,
+      title: 'Account',
     });
   };
 
-  return { openUserSettingsModal };
+  return { modalClose, modalOpen, modalRef };
 };
 
 export default useModalUserSettings;

@@ -1,5 +1,8 @@
-import Avatar from "components/Avatar";
-import css from "./UserSettings.module.scss";
+import React from 'react';
+
+import Avatar from 'components/Avatar';
+
+import css from './UserSettings.module.scss';
 
 interface Props {
   username: string;
@@ -11,7 +14,7 @@ const UserSettings: React.FC<Props> = ({ username }: Props) => {
       <div className={css.field}>
         <span className={css.label}>Avatar</span>
         <span className={css.value}>
-          <Avatar large hideTooltip name={username} />
+          <Avatar hideTooltip large name={username} />
         </span>
       </div>
       <div className={css.field}>

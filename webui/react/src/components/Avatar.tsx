@@ -8,8 +8,8 @@ import css from './Avatar.module.scss';
 
 interface Props {
   hideTooltip?: boolean;
-  name: string;
   large?: boolean;
+  name: string;
 }
 
 const getInitials = (name = ''): string => {
@@ -31,7 +31,13 @@ const getColor = (name = ''): string => {
 
 const Avatar: React.FC<Props> = ({ hideTooltip, name, large }: Props) => {
   const style = { backgroundColor: getColor(name) };
-  const avatar = <div className={large ? css.large : css.base} id="avatar" style={style}>{getInitials(name)}</div>;
+  const classes = [ css.base ];
+  if (large) classes.push(css.large);
+  const avatar = (
+    <div className={classes.join(' ')} id="avatar" style={style}>
+      {getInitials(name)}
+    </div>
+  );
   return hideTooltip ? avatar : <Tooltip placement="right" title={name}>{avatar}</Tooltip>;
 };
 

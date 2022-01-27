@@ -9,10 +9,8 @@
   justify-content: center;
   width: var(--theme-sizes-layout-enormous);
 }
-
 .large {
-  composes: base;
+  font-size: 24px;
   height: 64px;
   width: 64px;
-  font-size: 24px;
 }
