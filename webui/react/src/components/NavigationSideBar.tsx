@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import { useStore } from 'contexts/Store';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import useModalUserSettings from 'hooks/useModal/useModalUserSettings';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
@@ -92,6 +93,7 @@ const NavigationSideBar: React.FC = () => {
   const { auth, cluster: overview, ui, resourcePools } = useStore();
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const { openUserSettingsModal } = useModalUserSettings();
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -137,6 +139,9 @@ const NavigationSideBar: React.FC = () => {
           <Dropdown
             content={(
               <Menu>
+                <Menu.Item key="settings" onClick={() => openUserSettingsModal()}>
+                  Settings
+                </Menu.Item>
                 <Menu.Item key="sign-out">
                   <Link path={paths.logout()}>Sign Out</Link>
                 </Menu.Item>
