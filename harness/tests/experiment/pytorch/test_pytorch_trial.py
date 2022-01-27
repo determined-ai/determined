@@ -331,6 +331,9 @@ class TestPyTorchTrial:
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
             }
+            assert controller.trial.legacy_counter.__dict__ == {
+                "legacy_on_training_epochs_start_calls": 2
+            }
 
             yield workload.validation_workload(), workload.ignore_workload_response
             assert controller.trial.counter.__dict__ == {
@@ -340,6 +343,9 @@ class TestPyTorchTrial:
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+            }
+            assert controller.trial.legacy_counter.__dict__ == {
+                "legacy_on_training_epochs_start_calls": 2
             }
 
             interceptor = workload.WorkloadResponseInterceptor()
@@ -354,6 +360,9 @@ class TestPyTorchTrial:
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+            }
+            assert controller.trial.legacy_counter.__dict__ == {
+                "legacy_on_training_epochs_start_calls": 2
             }
 
         hparams1 = dict(self.hparams)
@@ -387,6 +396,10 @@ class TestPyTorchTrial:
             "training_started_times": 2,
             "training_epochs_started": 3,
             "training_epochs_ended": 3,
+        }
+        # a stateless callback will not remember
+        assert controller.trial.legacy_counter.__dict__ == {
+            "legacy_on_training_epochs_start_calls": 1
         }
 
     def test_context(self) -> None:

@@ -329,15 +329,31 @@ class Counter(det.pytorch.PyTorchCallback):
         self.__dict__ = state_dict
 
 
+class EphemeralLegacyCallbackCounter(det.pytorch.PyTorchCallback):
+    """
+    Callback with legacy signature for on_training_epoch_start
+    that takes no arguments. It is ephemeral: it does not implement
+    state_dict and load_state_dict.
+    """
+
+    def __init__(self) -> None:
+        self.legacy_on_training_epochs_start_calls = 0
+
+    def on_training_epoch_start(self) -> None:
+        logging.debug(f"calling {__name__} without arguments")
+        self.legacy_on_training_epochs_start_calls += 1
+
+
 class XORTrialCallbacks(XORTrialMulti):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
 
         self.context = context
         self.counter = Counter()
+        self.legacy_counter = EphemeralLegacyCallbackCounter()
 
     def build_callbacks(self) -> Dict[str, det.pytorch.PyTorchCallback]:
-        return {"counter": self.counter}
+        return {"counter": self.counter, "legacyCounter": self.legacy_counter}
 
 
 class XORTrialAccessContext(BaseXORTrial):
