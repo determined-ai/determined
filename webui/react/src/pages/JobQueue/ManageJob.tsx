@@ -3,8 +3,8 @@ import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { columns } from 'pages/JobQueue/JobQueue.table';
-import * as api from 'services/api-ts-sdk';
 import { updateJobQueue } from 'services/api';
+import * as api from 'services/api-ts-sdk';
 import { Job, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
