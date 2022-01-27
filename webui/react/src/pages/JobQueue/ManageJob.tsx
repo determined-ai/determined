@@ -102,7 +102,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       } catch (e) {
         handleError(e, {
           isUserTriggered: true,
-          publicSubject: 'Failed to update the job',
+          publicSubject: 'Failed to update the job.',
           silent: false,
           type: ErrorType.Api,
         });
