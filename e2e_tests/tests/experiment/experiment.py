@@ -512,7 +512,9 @@ def verify_completed_experiment_metadata(
 
         if len(trial["steps"]) == 0:
             print_trial_logs(trial["id"])
-            assert False, f"trial {trial['id']} is in {trial['state']} state but has 0 steps"
+            raise AssertionError(
+                f"trial {trial['id']} is in {trial['state']} state but has 0 steps"
+            )
 
         # Check that batches appear in increasing order.
         batch_ids = [s["total_batches"] for s in trial["steps"]]
