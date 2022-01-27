@@ -397,7 +397,6 @@ class TestPyTorchTrial:
             "training_epochs_started": 3,
             "training_epochs_ended": 3,
         }
-        # a stateless callback will not remember
         assert controller.trial.legacy_counter.__dict__ == {
             "legacy_on_training_epochs_start_calls": 1
         }
