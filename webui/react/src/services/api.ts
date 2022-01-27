@@ -77,6 +77,12 @@ export const getJobQStats = generateDetApi<
   Api.V1GetJobQueueStatsResponse
 >(Config.getJobQueueStats);
 
+export const updateJobQueue = generateDetApi<
+  Api.V1UpdateJobQueueRequest,
+  Api.V1UpdateJobQueueResponse,
+  Api.V1UpdateJobQueueResponse
+>(Config.updateJobQueue);
+
 /* Experiments */
 
 export const getExperiments = generateDetApi<

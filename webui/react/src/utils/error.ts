@@ -50,9 +50,17 @@ export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
 };
 
+const defaultErrOptions: DetErrorOptions = {
+  isUserTriggered: false,
+  level: ErrorLevel.Error,
+  logger: DEFAULT_LOGGER,
+  silent: false,
+  type: ErrorType.Unknown,
+};
+
 // An expected Error with supplemental information on
 // how it should be handled.
-export class DetError extends Error {
+export class DetError extends Error implements DetErrorOptions {
   id?: string;
   isUserTriggered: boolean;
   level: ErrorLevel;
@@ -69,17 +77,24 @@ export class DetError extends Error {
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
-    const detError = isDetError(e) ? e : undefined;
-    this.id = options.id || detError?.id || undefined;
-    this.isUserTriggered = options.isUserTriggered || detError?.isUserTriggered || false;
-    this.level = options.level || detError?.level || ErrorLevel.Error;
-    this.logger = options.logger || detError?.logger || DEFAULT_LOGGER;
-    this.payload = options.payload || detError?.payload || undefined;
-    this.publicMessage = options.publicMessage || detError?.publicMessage || undefined;
-    this.publicSubject = options.publicSubject || detError?.publicSubject || undefined;
-    this.silent = options.silent || detError?.silent || false;
-    this.type = options.type || detError?.type || ErrorType.Unknown;
+    const eOpts: DetErrorOptions = isDetError(e) ? {
+      id: e.id,
+      isUserTriggered: e.isUserTriggered,
+      level: e.level,
+      logger: e.logger,
+      payload: e.payload,
+      publicMessage: e.publicMessage,
+      publicSubject: e.publicSubject,
+      silent: e.silent,
+      type: e.type,
+    } : {};
+
+    this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
     this.isHandled = false;
+  }
+
+  loadOptions(options: DetErrorOptions): void {
+    Object.assign(this, options);
   }
 }
 
@@ -111,7 +126,15 @@ const log = (e: DetError) => {
 const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
   // Ignore request cancellation errors.
   if (isAborted(error)) return;
-  const e = isDetError(error) ? error : new DetError(error, options);
+
+  let e: DetError | undefined;
+  if (isDetError(error)) {
+    e = error;
+    if (options) e.loadOptions(options);
+  } else {
+    e = new DetError(error, options);
+  }
+
   if (e.isHandled) {
     if (process.env.IS_DEV) {
       console.warn(`Error "${e.message}" is handled twice.`);

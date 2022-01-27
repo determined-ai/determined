@@ -3,8 +3,8 @@ import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { columns } from 'pages/JobQueue/JobQueue.table';
+import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
 import { Job, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
@@ -98,18 +98,18 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
     async () => {
       try{
         const update = formValuesToQUpdate(formRef);
-        if (update) await detApi.Internal.updateJobQueue({ updates: [ update ] });
+        if (update) await updateJobQueue({ updates: [ update ] });
       } catch (e) {
         handleError(e, {
           isUserTriggered: true,
-          publicMessage: `Failed to update job ${job.jobId}`,
-          publicSubject: 'Failed to update job queue',
+          publicSubject: 'Failed to update the job.',
+          silent: false,
           type: ErrorType.Api,
         });
       }
       onFinish?.();
     },
-    [ formRef, onFinish, formValuesToQUpdate, job.jobId ],
+    [ formRef, onFinish, formValuesToQUpdate ],
   );
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
