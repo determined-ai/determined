@@ -91,9 +91,15 @@ class PyTorchCallback:
         """
         pass
 
-    def on_training_epoch_start(self) -> None:
+    def on_training_epoch_start(self, epoch_idx: int) -> None:
         """
         Run on start of a new training epoch
+        """
+        pass
+
+    def on_training_epoch_end(self, epoch_idx: int) -> None:
+        """
+        Run on end of a training epoch
         """
         pass
 

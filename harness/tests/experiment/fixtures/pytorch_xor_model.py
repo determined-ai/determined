@@ -1,4 +1,5 @@
 # type: ignore
+import logging
 from typing import Any, Dict, cast
 
 import numpy as np
@@ -296,6 +297,9 @@ class Counter(det.pytorch.PyTorchCallback):
         self.validation_steps_started = 0
         self.validation_steps_ended = 0
         self.checkpoints_ended = 0
+        self.training_started_times = 0
+        self.training_epochs_started = 0
+        self.training_epochs_ended = 0
 
     def on_validation_start(self) -> None:
         self.validation_steps_started += 1
@@ -306,11 +310,38 @@ class Counter(det.pytorch.PyTorchCallback):
     def on_checkpoint_end(self, checkpoint_dir: str):
         self.checkpoints_ended += 1
 
+    def on_training_start(self) -> None:
+        logging.debug("starting training")
+        self.training_started_times += 1
+
+    def on_training_epoch_start(self, epoch_idx) -> None:
+        logging.debug(f"starting epoch {epoch_idx}")
+        self.training_epochs_started += 1
+
+    def on_training_epoch_end(self, epoch_idx: int) -> None:
+        logging.debug(f"end of epoch {epoch_idx}")
+        self.training_epochs_ended += 1
+
     def state_dict(self) -> Dict[str, Any]:
         return self.__dict__
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         self.__dict__ = state_dict
+
+
+class EphemeralLegacyCallbackCounter(det.pytorch.PyTorchCallback):
+    """
+    Callback with legacy signature for on_training_epoch_start
+    that takes no arguments. It is ephemeral: it does not implement
+    state_dict and load_state_dict.
+    """
+
+    def __init__(self) -> None:
+        self.legacy_on_training_epochs_start_calls = 0
+
+    def on_training_epoch_start(self) -> None:
+        logging.debug(f"calling {__name__} without arguments")
+        self.legacy_on_training_epochs_start_calls += 1
 
 
 class XORTrialCallbacks(XORTrialMulti):
@@ -319,9 +350,10 @@ class XORTrialCallbacks(XORTrialMulti):
 
         self.context = context
         self.counter = Counter()
+        self.legacy_counter = EphemeralLegacyCallbackCounter()
 
     def build_callbacks(self) -> Dict[str, det.pytorch.PyTorchCallback]:
-        return {"counter": self.counter}
+        return {"counter": self.counter, "legacyCounter": self.legacy_counter}
 
 
 class XORTrialAccessContext(BaseXORTrial):

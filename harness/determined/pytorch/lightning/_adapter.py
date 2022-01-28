@@ -40,7 +40,6 @@ def check_compatibility(lm: pl.LightningModule) -> None:
         "on_test_batch_start",
         "on_test_epoch_end",
         "on_test_epoch_start",
-        "on_train_epoch_end",
         "optimizer_step",
         "optimizer_zero_grad",
         "setup",
@@ -215,10 +214,13 @@ class LightningAdapter(PyTorchTrial):
         lm = self._pls.lm
 
         class LightningAdapterCallback(PyTorchCallback):
-            def on_training_epoch_start(self) -> None:
+            def on_training_epoch_start(self, epoch_idx: int) -> None:
                 if context._current_batch_idx is not None:
                     type(lm).current_epoch = context.current_train_epoch()  # type: ignore
                 lm.on_train_epoch_start()
+
+            def on_training_epoch_end(self, epoch_idx: int) -> None:
+                lm.on_train_epoch_end()
 
             def on_validation_epoch_start(self) -> None:
                 lm.on_validation_epoch_start()

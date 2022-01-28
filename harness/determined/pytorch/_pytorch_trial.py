@@ -4,6 +4,7 @@ import pickle
 import random
 import time
 from abc import abstractmethod
+from inspect import signature
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
@@ -382,12 +383,22 @@ class PyTorchTrialController(det.TrialController):
                     batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
+            epoch_idx = self.get_epoch_idx(batch_idx)
             if self.context.is_epoch_start():
                 for callback in self.callbacks.values():
                     with self.prof.record_timing(
                         f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
                     ):
-                        callback.on_training_epoch_start()
+                        sig = signature(callback.on_training_epoch_start)
+                        if sig.parameters:
+                            callback.on_training_epoch_start(epoch_idx)
+                        else:
+                            logging.warning(
+                                "on_training_epoch_start() without parameters is deprecated"
+                                " since 0.17.8. Please add epoch_idx parameter."
+                            )
+                            callback.on_training_epoch_start()  # type: ignore[call-arg]
+
             self.context._loss_ids = {}
 
             with self.prof.record_timing("train_batch", requires_sync=False):
@@ -395,14 +406,14 @@ class PyTorchTrialController(det.TrialController):
                     with self.context.profiler as torch_profiler:
                         tr_metrics = self.trial.train_batch(
                             batch=batch,
-                            epoch_idx=self.get_epoch_idx(batch_idx),
+                            epoch_idx=epoch_idx,
                             batch_idx=batch_idx,
                         )
                         torch_profiler.step()
                 else:
                     tr_metrics = self.trial.train_batch(
                         batch=batch,
-                        epoch_idx=self.get_epoch_idx(batch_idx),
+                        epoch_idx=epoch_idx,
                         batch_idx=batch_idx,
                     )
             if self._should_update_scaler():
@@ -435,6 +446,13 @@ class PyTorchTrialController(det.TrialController):
             samples_per_second *= self.context.distributed.size
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
+
+            if self.context.is_epoch_end():
+                for callback in self.callbacks.values():
+                    with self.prof.record_timing(
+                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_end"
+                    ):
+                        callback.on_training_epoch_end(epoch_idx)
 
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1 and self.context._average_training_metrics:
