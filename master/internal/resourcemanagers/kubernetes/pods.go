@@ -53,6 +53,7 @@ type pods struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     PodSlotResourceRequests
+	fluentConfig             FluentConfig
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -92,6 +93,7 @@ func Initialize(
 	scheduler string,
 	slotType device.Type,
 	slotResourceRequests PodSlotResourceRequests,
+	fluentConfig FluentConfig,
 ) *actor.Ref {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -114,6 +116,7 @@ func Initialize(
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
+		fluentConfig:                 fluentConfig,
 		currentNodes:                 make(map[string]*k8sV1.Node),
 		nodeToSystemResourceRequests: make(map[string]int64),
 	})
@@ -321,7 +324,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
 		p.resourceRequestQueue, p.leaveKubernetesResources,
-		p.slotType, p.slotResourceRequests, p.scheduler,
+		p.slotType, p.slotResourceRequests, p.scheduler, p.fluentConfig,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
