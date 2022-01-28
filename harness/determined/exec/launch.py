@@ -71,15 +71,15 @@ if __name__ == "__main__":
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    logging.info(
-        f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
-        + json.dumps(mask_config_dict(info.trial._config))
-    )
-
     # Hack: read the full config.  The experiment config is not a stable API!
     experiment_config = det.ExperimentConfig(info.trial._config)
 
     determined.common.set_logger(experiment_config.debug_enabled())
+
+    logging.info(
+        f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
+        + json.dumps(mask_config_dict(info.trial._config))
+    )
 
     # Perform validations
     try:
