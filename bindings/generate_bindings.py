@@ -281,10 +281,12 @@ class Class(TypeDef):
         for k, v in self.params.items():
             if v.type.need_parse():
                 parsed = v.type.load(f'obj["{k}"]')
-            else:
+                if not v.required:
+                    parsed = parsed + f' if obj.get("{k}", None) is not None else None'
+            elif v.required:
                 parsed = f'obj["{k}"]'
-            if not v.required:
-                parsed = parsed + f' if obj.get("{k}", None) is not None else None'
+            else:
+                parsed = f'obj.get("{k}", None)'
             out.append(f"""            {k}={parsed},""")
         out += ["        )"]
         out += [""]
