@@ -1,7 +1,5 @@
 import contextlib
-import json
 import logging
-import os
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 import determined as det
@@ -62,9 +60,6 @@ class Checkpointing:
 
         with self._storage_manager.store_path() as (uuid, path):
             yield uuid, path
-            # XXX: Do we break the format of metadata.json now?  Or later?
-            with open(os.path.join(path, "metadata.json"), "w") as f:
-                json.dump(metadata, f)
             resources = storage.StorageManager._list_directory(path)
         self._report_checkpoint(uuid, resources, metadata)
 
