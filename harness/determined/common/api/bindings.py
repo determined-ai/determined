@@ -4124,7 +4124,7 @@ class v1RunnableOperation:
     def from_json(cls, obj: Json) -> "v1RunnableOperation":
         return cls(
             type=v1RunnableType(obj["type"]) if obj.get("type", None) is not None else None,
-            length=obj["length"] if obj.get("length", None) is not None else None,
+            length=obj.get("length", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4951,7 +4951,7 @@ class v1ValidateAfterOperation:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidateAfterOperation":
         return cls(
-            length=obj["length"] if obj.get("length", None) is not None else None,
+            length=obj.get("length", None),
         )
 
     def to_json(self) -> typing.Any:
