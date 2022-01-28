@@ -304,13 +304,22 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
 // out). Eventually, Allocations should just be started with their TaskSpec.
 func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
+	if a.state != model.AllocationStatePending {
+		// If we have moved on from the pending state, these must be stale (and we must have
+		// already released them, just the scheduler hasn't gotten word yet).
+		return ErrStaleResourcesReceived{}
+	}
+
 	a.state = model.AllocationStateAssigned
 	a.reservations.append(msg.Reservations)
 
 	// Get the task spec first, so the trial/task table is populated before allocations.
 	resp := ctx.Ask(ctx.Self().Parent(), BuildTaskSpec{})
-	if err := resp.Error(); err != nil {
+	switch ok, err := resp.ErrorOrTimeout(time.Hour); {
+	case err != nil:
 		return errors.Wrapf(err, "could not get task spec")
+	case !ok:
+		return errors.Wrapf(err, "timeout getting task spec, likely a deadlock")
 	}
 	spec := resp.Get().(tasks.TaskSpec)
 
@@ -499,6 +508,7 @@ func (a *Allocation) Kill(ctx *actor.Context) {
 
 // Error closes the allocation due to an error, beginning the kill flow.
 func (a *Allocation) Error(ctx *actor.Context, err error) {
+	ctx.Log().WithError(err).Errorf("allocation encountered fatal error")
 	if a.exitReason == nil {
 		a.exitReason = err
 	}
