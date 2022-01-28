@@ -51,13 +51,14 @@ const getExperimentName = (config: RawJson) => {
   return config.name || '';
 };
 
+// For unitless searchers, this will return undefined.
 const getMaxLengthType = (config: RawJson) => {
   return (Object.keys(config.searcher?.max_length || {}) || [])[0];
 };
 
 const getMaxLengthValue = (config: RawJson) => {
   const value = (Object.keys(config.searcher?.max_length || {}) || [])[1];
-  return value ? parseInt(value) : undefined;
+  return value ? parseInt(value) : parseInt(config.searcher?.max_length);
 };
 
 const trialContinueConfig = (
@@ -169,7 +170,12 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     }
     if (formValues.maxLength) {
       const maxLengthType = getMaxLengthType(newConfig);
-      newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+      if (maxLengthType === undefined) {
+        // Unitless searcher config.
+        newConfig.searcher.max_length = parseInt(formValues.maxLength);
+      } else {
+        newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+      }
     }
 
     return yaml.dump(newConfig);
@@ -257,7 +263,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
           </Form.Item>
           {!isFork && (
             <Form.Item
-              label={`Max ${getMaxLengthType(config)}`}
+              label={`Max ${getMaxLengthType(config) || 'length'}`}
               name="maxLength"
               rules={[ { message: 'Please provide a max length.', required: true } ]}>
               <Input type="number" />

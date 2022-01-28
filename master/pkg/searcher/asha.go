@@ -40,10 +40,10 @@ type (
 
 	// rung describes a set of trials that are to be trained for the same number of units.
 	rung struct {
-		UnitsNeeded   expconf.Length `json:"units_needed"`
-		Metrics       []trialMetric  `json:"metrics"`
-		StartTrials   int            `json:"start_trials"`
-		PromoteTrials int            `json:"promote_trials"`
+		UnitsNeeded   uint64        `json:"units_needed"`
+		Metrics       []trialMetric `json:"metrics"`
+		StartTrials   int           `json:"start_trials"`
+		PromoteTrials int           `json:"promote_trials"`
 		// field below used by asha.go.
 		OutstandingTrials int `json:"outstanding_trials"`
 	}
@@ -53,13 +53,13 @@ const ashaExitedMetricValue = math.MaxFloat64
 
 func newAsyncHalvingSearch(config expconf.AsyncHalvingConfig, smallerIsBetter bool) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs())
-	unitsNeeded := 0
+	var unitsNeeded uint64
 	for id := 0; id < config.NumRungs(); id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor(), float64(config.NumRungs()-id-1))
-		unitsNeeded += max(int(float64(config.MaxLength().Units)/downsamplingRate), 1)
-		rungs = append(rungs, &rung{UnitsNeeded: expconf.NewLength(config.Unit(), unitsNeeded)})
+		unitsNeeded += u64max(uint64(float64(config.MaxLength().Units)/downsamplingRate), 1)
+		rungs = append(rungs, &rung{UnitsNeeded: unitsNeeded})
 	}
 
 	return &asyncHalvingSearch{
@@ -215,8 +215,8 @@ func (s *asyncHalvingSearch) promoteAsync(
 			s.TrialRungs[promotionID] = rungIndex + 1
 			nextRung.OutstandingTrials++
 			if !s.EarlyExitTrials[promotionID] {
-				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
-				ops = append(ops, NewValidateAfter(promotionID, expconf.NewLength(s.Unit(), unitsNeeded)))
+				unitsNeeded := u64max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
+				ops = append(ops, NewValidateAfter(promotionID, unitsNeeded))
 				addedTrainWorkload = true
 				s.PendingTrials++
 			} else {

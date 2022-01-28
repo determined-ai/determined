@@ -39,7 +39,7 @@ func TestTrial(t *testing.T) {
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
-			Length:    expconf.NewLengthInBatches(10),
+			Length:    10,
 		},
 		Complete: false,
 		Closed:   true,
@@ -62,7 +62,7 @@ func TestTrial(t *testing.T) {
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
-			Length:    expconf.NewLengthInBatches(10),
+			Length:    10,
 		},
 		Complete: true,
 		Closed:   true,
@@ -90,7 +90,7 @@ func TestTrialRestarts(t *testing.T) {
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
-			Length:    expconf.NewLengthInBatches(10),
+			Length:    10,
 		},
 		Complete: false,
 		Closed:   true,
@@ -141,7 +141,7 @@ func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
-			Length:    expconf.NewLengthInBatches(10),
+			Length:    10,
 		},
 		Complete: false,
 		Closed:   true,

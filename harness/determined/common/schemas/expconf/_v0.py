@@ -153,6 +153,15 @@ class LengthV0(schemas.SchemaBase):
         return {"batches": None}
 
 
+def _parse_length_or_int(value: Any, prevalidated: bool) -> Any:
+    if isinstance(value, int):
+        return value
+    return LengthV0.from_dict(value, prevalidated)
+
+
+schemas.register_custom_parser(Union[int, LengthV0], _parse_length_or_int)
+
+
 class DataLayerConfigV0(schemas.UnionBase):
     _id = "http://determined.ai/schemas/expconf/v0/data-layer.json"
     _union_key = "type"
@@ -464,7 +473,7 @@ class SearcherConfigV0(schemas.UnionBase):
 @SearcherConfigV0.member("single")
 class SingleConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-single.json"
-    max_length: LengthV0
+    max_length: Union[int, LengthV0]
     metric: str
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
@@ -473,7 +482,7 @@ class SingleConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        max_length: LengthV0,
+        max_length: Union[int, LengthV0],
         metric: str,
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
@@ -485,7 +494,7 @@ class SingleConfigV0(schemas.SchemaBase):
 @SearcherConfigV0.member("random")
 class RandomConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-random.json"
-    max_length: LengthV0
+    max_length: Union[int, LengthV0]
     max_trials: int
     metric: str
     max_concurrent_trials: Optional[int] = None
@@ -496,7 +505,7 @@ class RandomConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        max_length: LengthV0,
+        max_length: Union[int, LengthV0],
         max_trials: int,
         metric: str,
         max_concurrent_trials: Optional[int] = None,
@@ -510,7 +519,7 @@ class RandomConfigV0(schemas.SchemaBase):
 @SearcherConfigV0.member("grid")
 class GridConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
-    max_length: LengthV0
+    max_length: Union[int, LengthV0]
     metric: str
     max_concurrent_trials: Optional[int] = None
     smaller_is_better: Optional[bool] = None
@@ -520,7 +529,7 @@ class GridConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        max_length: LengthV0,
+        max_length: Union[int, LengthV0],
         metric: str,
         max_concurrent_trials: Optional[int] = None,
         smaller_is_better: Optional[bool] = None,
@@ -533,7 +542,7 @@ class GridConfigV0(schemas.SchemaBase):
 @SearcherConfigV0.member("async_halving")
 class AsyncHalvingConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
-    max_length: LengthV0
+    max_length: Union[int, LengthV0]
     max_trials: int
     metric: str
     num_rungs: int
@@ -547,7 +556,7 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        max_length: LengthV0,
+        max_length: Union[int, LengthV0],
         max_trials: int,
         metric: str,
         num_rungs: int,
@@ -564,7 +573,7 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
 @SearcherConfigV0.member("adaptive_asha")
 class AdaptiveASHAConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
-    max_length: LengthV0
+    max_length: Union[int, LengthV0]
     max_trials: int
     metric: str
     bracket_rungs: Optional[List[int]] = None
@@ -580,7 +589,7 @@ class AdaptiveASHAConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        max_length: LengthV0,
+        max_length: Union[int, LengthV0],
         max_trials: int,
         metric: str,
         bracket_rungs: Optional[List[int]] = None,
@@ -623,7 +632,7 @@ class PBTExploreConfig(schemas.SchemaBase):
 @SearcherConfigV0.member("pbt")
 class PBTConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-    length_per_round: LengthV0
+    length_per_round: Union[int, LengthV0]
     metric: str
     num_rounds: int
     population_size: int
@@ -636,7 +645,7 @@ class PBTConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        length_per_round: LengthV0,
+        length_per_round: Union[int, LengthV0],
         metric: str,
         num_rounds: int,
         population_size: int,
@@ -890,6 +899,14 @@ CheckpointStorageConfigV0_Type = Union[
     SharedFSConfigV0, HDFSConfigV0, S3ConfigV0, GCSConfigV0, AzureConfigV0
 ]
 CheckpointStorageConfigV0.finalize(CheckpointStorageConfigV0_Type)
+
+
+def _parse_entrypoint(value: Any, prevalidated: bool) -> Any:
+    return value
+
+
+schemas.register_known_type(Union[str, List[str]])
+schemas.register_custom_parser(Union[str, List[str]], _parse_entrypoint)
 
 
 class ExperimentConfigV0(schemas.SchemaBase):

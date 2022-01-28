@@ -104,12 +104,6 @@ class GetTrialResponseWorkloadContainer:
             "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
         }
 
-class TrainingLengthUnit(enum.Enum):
-    UNIT_UNSPECIFIED = "UNIT_UNSPECIFIED"
-    UNIT_RECORDS = "UNIT_RECORDS"
-    UNIT_BATCHES = "UNIT_BATCHES"
-    UNIT_EPOCHS = "UNIT_EPOCHS"
-
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -4120,7 +4114,7 @@ class v1ResourcePoolType(enum.Enum):
 class v1RunnableOperation:
     def __init__(
         self,
-        length: "typing.Optional[v1TrainingLength]" = None,
+        length: "typing.Optional[str]" = None,
         type: "typing.Optional[v1RunnableType]" = None,
     ):
         self.type = type
@@ -4130,13 +4124,13 @@ class v1RunnableOperation:
     def from_json(cls, obj: Json) -> "v1RunnableOperation":
         return cls(
             type=v1RunnableType(obj["type"]) if obj.get("type", None) is not None else None,
-            length=v1TrainingLength.from_json(obj["length"]) if obj.get("length", None) is not None else None,
+            length=obj["length"] if obj.get("length", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "type": self.type.value if self.type is not None else None,
-            "length": self.length.to_json() if self.length is not None else None,
+            "length": self.length if self.length is not None else None,
         }
 
 class v1RunnableType(enum.Enum):
@@ -4575,28 +4569,6 @@ class v1Tensorboard:
             "jobId": self.jobId,
         }
 
-class v1TrainingLength:
-    def __init__(
-        self,
-        length: int,
-        unit: "TrainingLengthUnit",
-    ):
-        self.unit = unit
-        self.length = length
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrainingLength":
-        return cls(
-            unit=TrainingLengthUnit(obj["unit"]),
-            length=obj["length"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "unit": self.unit.value,
-            "length": self.length,
-        }
-
 class v1TrialEarlyExit:
     def __init__(
         self,
@@ -4972,19 +4944,19 @@ class v1User:
 class v1ValidateAfterOperation:
     def __init__(
         self,
-        length: "typing.Optional[v1TrainingLength]" = None,
+        length: "typing.Optional[str]" = None,
     ):
         self.length = length
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidateAfterOperation":
         return cls(
-            length=v1TrainingLength.from_json(obj["length"]) if obj.get("length", None) is not None else None,
+            length=obj["length"] if obj.get("length", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "length": self.length.to_json() if self.length is not None else None,
+            "length": self.length if self.length is not None else None,
         }
 
 class v1ValidationHistoryEntry:

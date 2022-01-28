@@ -27,15 +27,15 @@ func newAsyncHalvingStoppingSearch(
 	config expconf.AsyncHalvingConfig, smallerIsBetter bool,
 ) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs())
-	unitsNeeded := 0
+	var unitsNeeded uint64
 	for id := 0; id < config.NumRungs(); id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor(), float64(config.NumRungs()-id-1))
-		unitsNeeded += max(int(float64(config.MaxLength().Units)/downsamplingRate), 1)
+		unitsNeeded += u64max(uint64(float64(config.MaxLength().Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
-				UnitsNeeded:       expconf.NewLength(config.Unit(), unitsNeeded),
+				UnitsNeeded:       unitsNeeded,
 				OutstandingTrials: 0,
 			})
 	}
@@ -180,8 +180,8 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 			if promoteTrial {
 				s.TrialRungs[requestID] = rungIndex + 1
 				nextRung.OutstandingTrials++
-				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
-				ops = append(ops, NewValidateAfter(requestID, expconf.NewLength(s.Unit(), unitsNeeded)))
+				unitsNeeded := u64max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
+				ops = append(ops, NewValidateAfter(requestID, unitsNeeded))
 				addedTrainWorkload = true
 			} else {
 				ops = append(ops, NewClose(requestID))

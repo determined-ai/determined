@@ -2225,10 +2225,11 @@ var (
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "stop_once": {
             "type": [
@@ -2270,7 +2271,7 @@ var (
 `)
 	textAdaptiveSimpleConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$comment": "this is EOL searcher, not to be used in new experiments",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
     "title": "AdaptiveSimpleConfig",
     "type": "object",
@@ -2593,10 +2594,11 @@ var (
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [
@@ -2626,6 +2628,26 @@ var (
             ],
             "default": null
         }
+    }
+}
+`)
+	textSearcherLengthV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-length.json",
+    "title": "SearcherLength",
+    "$comment": "SearcherLength is either a positive Length or a positive integer",
+    "union": {
+        "items": [
+            {
+                "unionKey": "not:type:object",
+                "type": "integer",
+                "minimum": 0
+            },
+            {
+                "unionKey": "always",
+                "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            }
+        ]
     }
 }
 `)
@@ -2661,10 +2683,11 @@ var (
         "length_per_round": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "num_rounds": {
             "type": [
@@ -2808,10 +2831,11 @@ var (
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [
@@ -2864,10 +2888,11 @@ var (
         "max_length": {
             "type": [
                 "object",
+                "integer",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [
@@ -3487,6 +3512,8 @@ var (
 	schemaAsyncHalvingConfigV0 interface{}
 
 	schemaGridConfigV0 interface{}
+
+	schemaSearcherLengthV0 interface{}
 
 	schemaPBTConfigV0 interface{}
 
@@ -4421,6 +4448,26 @@ func ParsedGridConfigV0() interface{} {
 	return schemaGridConfigV0
 }
 
+func ParsedSearcherLengthV0() interface{} {
+	cacheLock.RLock()
+	if schemaSearcherLengthV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSearcherLengthV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaSearcherLengthV0 != nil {
+		return schemaSearcherLengthV0
+	}
+	err := json.Unmarshal(textSearcherLengthV0, &schemaSearcherLengthV0)
+	if err != nil {
+		panic("invalid embedded json for SearcherLengthV0")
+	}
+	return schemaSearcherLengthV0
+}
+
 func ParsedPBTConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaPBTConfigV0 != nil {
@@ -4786,6 +4833,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textAsyncHalvingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
 	cachedSchemaBytesMap[url] = textGridConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/searcher-length.json"
+	cachedSchemaBytesMap[url] = textSearcherLengthV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
 	cachedSchemaBytesMap[url] = textPBTConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-random.json"

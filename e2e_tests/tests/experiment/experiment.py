@@ -251,10 +251,10 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
 
     trials = experiment_trials(experiment_id)
     if should_have_trial or len(trials) > 0:
-        assert len(trials) == 1
+        assert len(trials) == 1, len(trials)
 
         trial = trials[0]
-        assert trial["state"] == "CANCELED"
+        assert trial["state"] == "CANCELED", trial["state"]
 
 
 def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> None:
@@ -262,10 +262,10 @@ def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> Non
 
     trials = experiment_trials(experiment_id)
     if should_have_trial or len(trials) > 0:
-        assert len(trials) == 1
+        assert len(trials) == 1, len(trials)
 
         trial = trials[0]
-        assert trial["state"] == "CANCELED"
+        assert trial["state"] == "CANCELED", trial["state"]
 
 
 def is_terminal_state(state: str) -> bool:

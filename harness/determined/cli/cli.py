@@ -61,16 +61,21 @@ def preview_search(args: Namespace) -> None:
     j = r.json()
 
     def to_full_name(kind: str) -> str:
+        try:
+            # The unitless searcher case, for masters newer than 0.17.6.
+            length = int(kind)
+            return f"train for {length}"
+        except ValueError:
+            pass
         if kind[-1] == "R":
             return "train {} records".format(kind[:-1])
         if kind[-1] == "B":
             return "train {} batch(es)".format(kind[:-1])
         if kind[-1] == "E":
             return "train {} epoch(s)".format(kind[:-1])
-        elif kind == "V":
+        if kind == "V":
             return "validation"
-        else:
-            raise ValueError("unexpected kind: {}".format(kind))
+        raise ValueError("unexpected kind: {}".format(kind))
 
     def render_sequence(sequence: List[str]) -> str:
         if not sequence:

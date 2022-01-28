@@ -155,6 +155,16 @@ func max(initial int, values ...int) int {
 	return maxValue
 }
 
+func u64max(initial uint64, values ...uint64) uint64 {
+	maxValue := initial
+	for _, value := range values {
+		if value > maxValue {
+			maxValue = value
+		}
+	}
+	return maxValue
+}
+
 func min(initial int, values ...int) int {
 	minValue := initial
 	for _, value := range values {

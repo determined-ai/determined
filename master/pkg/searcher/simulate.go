@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.
@@ -39,14 +38,7 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	for _, ops := range s {
 		var keyParts []string
 		for _, op := range ops {
-			switch op.Length.Unit {
-			case expconf.Records:
-				keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
-			case expconf.Batches:
-				keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
-			case expconf.Epochs:
-				keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
-			}
+			keyParts = append(keyParts, fmt.Sprintf("%d", op.Length))
 		}
 		summary[strings.Join(keyParts, " ")]++
 	}
@@ -122,7 +114,7 @@ func Simulate(
 			nextTrialID++
 		case ValidateAfter:
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
-			s.SetTrialProgress(requestID, PartialUnits(operation.Length.Units))
+			s.SetTrialProgress(requestID, PartialUnits(operation.Length))
 
 			metric := valFunc(random, trialIDs[requestID], trialOpIdxs[requestID])
 			ops, err := s.ValidationCompleted(requestID, metric, operation)

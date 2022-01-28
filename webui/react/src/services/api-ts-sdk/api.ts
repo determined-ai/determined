@@ -578,18 +578,6 @@ export interface StreamResultOfV1TrialsSnapshotResponse {
 }
 
 /**
- * The units for the training length.   - UNIT_UNSPECIFIED: Zero-value (not allowed).  - UNIT_RECORDS: Indicates a training length is specified in records, samples or another synonymous unit.  - UNIT_BATCHES: Indicates a training length is specified in batches.  - UNIT_EPOCHS: Indicates a training length is specified in epochs.
- * @export
- * @enum {string}
- */
-export enum TrainingLengthUnit {
-    UNSPECIFIED = <any> 'UNIT_UNSPECIFIED',
-    RECORDS = <any> 'UNIT_RECORDS',
-    BATCHES = <any> 'UNIT_BATCHES',
-    EPOCHS = <any> 'UNIT_EPOCHS'
-}
-
-/**
  * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
  * @export
  * @enum {string}
@@ -4877,10 +4865,10 @@ export interface V1RunnableOperation {
     type?: V1RunnableType;
     /**
      * 
-     * @type {V1TrainingLength}
+     * @type {string}
      * @memberof V1RunnableOperation
      */
-    length?: V1TrainingLength;
+    length?: string;
 }
 
 /**
@@ -5336,26 +5324,6 @@ export interface V1Tensorboard {
 }
 
 /**
- * The representation for an amount of training.
- * @export
- * @interface V1TrainingLength
- */
-export interface V1TrainingLength {
-    /**
-     * The units the training length is in terms of.
-     * @type {TrainingLengthUnit}
-     * @memberof V1TrainingLength
-     */
-    unit: TrainingLengthUnit;
-    /**
-     * The value for the training length.
-     * @type {number}
-     * @memberof V1TrainingLength
-     */
-    length: number;
-}
-
-/**
  * Signals to the experiment the trial early exited.
  * @export
  * @interface V1TrialEarlyExit
@@ -5763,10 +5731,10 @@ export interface V1User {
 export interface V1ValidateAfterOperation {
     /**
      * The length to train before reporting a validation.
-     * @type {V1TrainingLength}
+     * @type {string}
      * @memberof V1ValidateAfterOperation
      */
-    length?: V1TrainingLength;
+    length?: string;
 }
 
 /**

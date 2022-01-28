@@ -54,7 +54,7 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
@@ -84,7 +84,7 @@ func (s *gridSearch) progress(
 			unitsCompleted += float64(v)
 		}
 	}
-	unitsExpected := s.MaxLength().Units * s.trials
+	unitsExpected := s.MaxLength().Units * uint64(s.trials)
 	return unitsCompleted / float64(unitsExpected)
 }
 
@@ -100,7 +100,7 @@ func (s *gridSearch) trialExitedEarly(
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
@@ -115,7 +115,7 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}

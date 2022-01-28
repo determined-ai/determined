@@ -97,6 +97,17 @@ class WorkloadSequencer(workload.Source):
         self._allocation_id = env.allocation_id
         self._exp_id = int(env.det_experiment_id)
 
+        unit = self.core_context.searcher.get_configured_units()
+        if unit is None:
+            logging.warning(
+                "The searcher configuration provided was configured without units, but the "
+                "training loop you are using (one of the Trial APIs) requires a searcher "
+                "configured with units.  Proceeding anyway, and assuming that the lengths "
+                "configured in the searcher are in terms of epochs."
+            )
+            unit = _core.Unit.EPOCHS
+        self._unit = unit
+
         self.val_from_previous_run = self.core_context.training.get_last_validation()
 
         self.want_initial_val = self.env.experiment_config.get("perform_initial_validation", False)
@@ -198,14 +209,14 @@ class WorkloadSequencer(workload.Source):
         )
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.
-        if op.unit == _core.Unit.BATCHES:
+        if self._unit == _core.Unit.BATCHES:
             op.report_progress(self.state.latest_batch)
-        elif op.unit == _core.Unit.RECORDS:
+        elif self._unit == _core.Unit.RECORDS:
             op.report_progress(self.global_batch_size * self.state.latest_batch)
-        elif op.unit == _core.Unit.EPOCHS:
+        elif self._unit == _core.Unit.EPOCHS:
             op.report_progress(self.state.latest_batch / self.as_batches(epochs=1))
         else:
-            raise ValueError(f"unrecognized searcher op unit: {op.unit}")
+            raise ValueError(f"unrecognized searcher op unit: {self._unit}")
 
         if response.get("stop_requested"):
             # Exit after reporting metrics.
@@ -348,9 +359,9 @@ class WorkloadSequencer(workload.Source):
     def batches_until_op_complete(self, op: _core.SearcherOp) -> int:
         return (
             self.as_batches(
-                batches=op.length if op.unit == _core.Unit.BATCHES else None,
-                records=op.length if op.unit == _core.Unit.RECORDS else None,
-                epochs=op.length if op.unit == _core.Unit.EPOCHS else None,
+                batches=op.length if self._unit == _core.Unit.BATCHES else None,
+                records=op.length if self._unit == _core.Unit.RECORDS else None,
+                epochs=op.length if self._unit == _core.Unit.EPOCHS else None,
             )
             - self.state.latest_batch
         )
