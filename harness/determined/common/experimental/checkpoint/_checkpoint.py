@@ -105,6 +105,12 @@ class Checkpoint(object):
         """
         Download checkpoint to local storage.
 
+        See also:
+
+          - :func:`determined.pytorch.load_trial_from_checkpoint_path`
+          - :func:`determined.keras.load_model_from_checkpoint_path`
+          - :func:`determined.estimator.load_estimator_from_checkpoint_path`
+
         Arguments:
             path (string, optional): Top level directory to place the
                 checkpoint under. If this parameter is not set, the checkpoint will

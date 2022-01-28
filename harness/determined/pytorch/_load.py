@@ -10,6 +10,20 @@ from determined import errors, pytorch, util
 
 
 def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorchTrial:
+    """
+    Loads a checkpoint written by a PyTorchTrial.
+
+    You should have already downloaded the checkpoint files, likely with
+    :meth:`Checkpoint.download() <determined.experimental.client.Checkpoint.download()>`.
+
+    The return value will be a restored instance of the subclass PyTorchTrial you used for training.
+
+    Arguments:
+        path (string): Top level directory to load the checkpoint from.
+        kwargs (optional): Any keyword arguments will be applied to ``torch.load``. See
+            documentation for `torch.load
+            <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
+    """
     ckpt_dir = pathlib.Path(path)
     load_data_path = ckpt_dir.joinpath("load_data.json")
     metadata_path = ckpt_dir.joinpath("metadata.json")

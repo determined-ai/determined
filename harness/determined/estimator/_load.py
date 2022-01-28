@@ -10,6 +10,21 @@ from tensorflow.python.training.tracking.tracking import AutoTrackable
 def load_estimator_from_checkpoint_path(
     path: str, tags: Optional[List[str]] = None
 ) -> AutoTrackable:
+    """
+    Loads a checkpoint written by an EstimatorTrial.
+
+    You should have already downloaded the checkpoint files, likely with
+    :meth:`Checkpoint.download() <determined.experimental.client.Checkpoint.download()>`.
+
+    The return type is a TensorFlow AutoTrackable object.
+
+    Arguments:
+        path (string): Top level directory to load the checkpoint from.
+        tags (list string, optional): Specifies which tags are loaded from
+            the TensorFlow SavedModel. See documentation for `tf.compat.v1.saved_model.load_v2
+            <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
+    """
+
     ckpt_dir = pathlib.Path(path)
     load_data_path = ckpt_dir.joinpath("load_data.json")
     metadata_path = ckpt_dir.joinpath("metadata.json")

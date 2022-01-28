@@ -88,3 +88,10 @@
 ***************************************************************
 
 .. autoclass:: determined.tensorboard.metric_writers.pytorch.TorchWriter
+
+********************************************************
+ ``determined.pytorch.load_trial_from_checkpoint_path``
+********************************************************
+
+.. autoclass:: determined.pytorch.load_trial_from_checkpoint_path
+   :members:
