@@ -9,7 +9,7 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone, isEqual } from 'utils/data';
-import handleError, { DetError, isDetError } from 'utils/error';
+import handleError, { DetError, isDetError, isError } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
@@ -115,8 +115,9 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       // Validate the yaml syntax by attempting to load it.
       try {
         yaml.load(newConfigString);
+        newModalState.configError = undefined;
       } catch (e) {
-        newModalState.configError = e.message;
+        if (isError(e)) newModalState.configError = e.message;
       }
 
       return newModalState;
@@ -197,7 +198,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
-      if (e.name === 'YAMLException') {
+      if (isError(e) && e.name === 'YAMLException') {
         errorMessage = e.message;
       } else if (isDetError(e)) {
         errorMessage = e.publicMessage || e.message;
