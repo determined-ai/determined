@@ -2,9 +2,9 @@ name: imagenet_byol_distributed
 entrypoint: model_def:BYOLTrial
 records_per_epoch: 1271158
 resources:
-  slots_per_trial: 8
+  slots_per_trial: 32
 min_validation_period:
-  epochs: 2
+  epochs: 100
 
 profiling:
   begin_on_batch: 0
@@ -56,7 +56,7 @@ data:
 
 hyperparameters:
   backbone_name: resnet50
-  global_batch_size: 512
+  global_batch_size: 4096
   # Moving average decay increases to 1.0 over training as described in section 3.3 of BYOL paper.
   classifier:
     learning_rates: [0.4, 0.3, 0.2, 0.1, 0.05]
@@ -68,7 +68,7 @@ hyperparameters:
       alpha: 20
     logit_regularization_beta: 1e-2
     momentum: 0.9
-    train_epochs: 2
+    train_epochs: 80
   self_supervised:
     # lars_eta and momentum not specified in the paper, copied from JAX implementation.
     lars_eta: 0.001
@@ -79,13 +79,13 @@ hyperparameters:
       # Learning rate scales linearly with batch size, is equal to base when global_batch_size==base_batch_size.
       base: 0.2
       base_batch_size: 256
-      warmup_epochs: 1
+      warmup_epochs: 10
 
 searcher:
   name: single
   metric: test_accuracy
   max_length:
-    epochs: 2
+    epochs: 1000
 
 bind_mounts:
   - host_path: /mnt/shared_fs
