@@ -1,6 +1,6 @@
 import React from 'react';
 
-import UserSettings from 'components/UserSettings';
+import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
 
 import useModal, { ModalHooks } from './useModal';
@@ -12,7 +12,20 @@ const useModalUserSettings = (): ModalHooks => {
   const username = auth.user?.username || 'Anonymous';
 
   const getModalContent = () => {
-    return <UserSettings username={username} />;
+    return (
+      <div className={css.base}>
+        <div className={css.field}>
+          <span className={css.label}>Avatar</span>
+          <span className={css.value}>
+            <Avatar hideTooltip large name={username} />
+          </span>
+        </div>
+        <div className={css.field}>
+          <span className={css.label}>Username</span>
+          <span className={css.value}>{username}</span>
+        </div>
+      </div>
+    );
   };
 
   const modalOpen = () => {
