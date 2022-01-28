@@ -2,6 +2,8 @@ package resourcemanagers
 
 import (
 	"fmt"
+	"math"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -68,7 +70,9 @@ func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 }
 
 // TODO add a comment.
+// adjust in place.
 func adjustPriorities(positions *jobSortState) {
+	// max available space: 0 to current time.
 	// prev := float64(0)
 	// i := 0
 
@@ -113,11 +117,21 @@ func adjustPriorities(positions *jobSortState) {
 	// }
 }
 
+// could be swapped for another job order representation
+// 0 or nonexisting keys mean that it needs to initialize.
 type jobSortState = map[model.JobID]float64
 
-func computeNewJobPos(msg job.MoveJob, jobQ job.AQueue, qPositions jobSortState) (float64, error) {
-	if msg.Anchor == msg.ID {
-		return 0, fmt.Errorf("cannot move job relative to itself")
+func initalizeJobSortState() jobSortState {
+	state := make(jobSortState)
+	state[job.HeadAnchor] = 0
+	// FIXME this can't go over the current time. job.TailAnchor
+	state[job.TailAnchor] = math.MaxFloat64
+	return state
+}
+
+func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (float64, bool, error) {
+	if msg.Anchor1 == msg.ID || msg.Anchor2 == msg.ID {
+		return 0, false, fmt.Errorf("cannot move job relative to itself")
 	}
 	// find what that position of the anchor job is
 	// anchorInfo, ok := jobQ[msg.Anchor]
@@ -126,28 +140,34 @@ func computeNewJobPos(msg job.MoveJob, jobQ job.AQueue, qPositions jobSortState)
 	// }
 
 	// get q positions for anchor, anchor.next or before
-	qPos1, ok := qPositions[msg.Anchor]
+	qPos1, ok := qPositions[msg.Anchor1]
 	if !ok {
-		return 0, fmt.Errorf("could not find anchor job %s", msg.Anchor)
+		return 0, false, fmt.Errorf("could not find anchor job %s", msg.Anchor1)
 	}
 
-	/*
-		consider:
-			- moving to ahead of the first job
-			- movingto behind of the last job
-				WARN consider a job initialized at current time as the upper bound of qposValue
-	*/
-
-	// qPos2 := rp.queuePositions[nextOrBefore]
-
-	// find the mid point and update the id's qPosition.
-
-	// FIXME
-	epsilon := 1.0
-	if msg.AheadOf {
-		epsilon *= -1
+	// FIXME this can't go over the current time. job.TailAnchor
+	qPos2, ok := qPositions[msg.Anchor2]
+	if !ok {
+		return 0, false, fmt.Errorf("could not find anchor job %s", msg.Anchor2)
 	}
-	newPos := qPos1 + epsilon
 
-	return newPos, nil
+	newPos := (qPos1 + qPos2) / 2
+
+	return newPos, false, nil
+}
+
+func initalizeQueuePosition(aTime time.Time) float64 {
+	// we could shift this back and forth to give us more more.
+	return float64(aTime.UnixMicro())
+}
+
+// we might RMs to have easier/faster access to this information than this.
+func getJobSubmissionTime(taskList *taskList, jobID model.JobID) (time.Time, error) {
+	for it := taskList.iterator(); it.next(); {
+		req := it.value()
+		if req.JobID == jobID {
+			return req.JobSubmissionTime, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("could not find an active job with id %s", jobID)
 }
