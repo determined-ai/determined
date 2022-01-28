@@ -6,7 +6,7 @@ import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
-import { Job, RPStats } from 'types';
+import { Job, JobType, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
@@ -115,7 +115,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
   const curRP = resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
   const RPDetails = (
     <div>
-      <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable}
+      <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable} (used / total)
         <br />
         Jobs in queue:
         {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
@@ -205,7 +205,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
           extra={RPDetails}
           label="Resource Pool"
           name="resourcePool">
-          <Select>
+          <Select disabled={job.type !== JobType.EXPERIMENT}>
             {resourcePools.map(rp => (
               <Option key={rp.name} value={rp.name}>{rp.name}</Option>
             ))}

@@ -117,7 +117,7 @@ const JobQueue: React.FC = () => {
         }
       },
     };
-    if (isJobOrderAvailable && job.summary.jobsAhead > 0) {
+    if (isJobOrderAvailable && job.summary.jobsAhead > 0 && canManageJob(job, selectedRp)) {
       triggers[JobAction.MoveToTop] = () => moveJobToPosition(jobs, job.jobId, 1);
     }
 
