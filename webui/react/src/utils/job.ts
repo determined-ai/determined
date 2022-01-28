@@ -1,7 +1,7 @@
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import { CommandType, Job, JobState, JobType, ResourcePool } from 'types';
-import handleError, { DetError, DetErrorOptions, ErrorType, isDetError } from 'utils/error';
+import handleError, { DetError, DetErrorOptions, ErrorType } from 'utils/error';
 
 import { capitalize } from './string';
 
