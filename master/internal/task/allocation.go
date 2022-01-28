@@ -508,6 +508,7 @@ func (a *Allocation) Kill(ctx *actor.Context) {
 
 // Error closes the allocation due to an error, beginning the kill flow.
 func (a *Allocation) Error(ctx *actor.Context, err error) {
+	ctx.Log().WithError(err).Errorf("allocation encountered fatal error")
 	if a.exitReason == nil {
 		a.exitReason = err
 	}
