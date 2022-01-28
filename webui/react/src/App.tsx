@@ -56,7 +56,7 @@ const AppView: React.FC = () => {
         <div>
           WebUI version <b>v{info.version}</b> is available.
           Check out what&apos;s new in our
-          <Link external path={paths.docs('/release-notes.html')}>release notes</Link>.
+          <Link external path={paths.docs('/release-notes.html')}> release notes</Link>.
         </div>
       );
       notification.warn({
