@@ -39,7 +39,7 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
         hparams = load_data["hparams"]
         trial_cls_spec = load_data["trial_cls_spec"]
     elif metadata_path.exists():
-        # Old checkpoints (<=0.17.6) used to depend on metadata coming from the master in
+        # Old checkpoints (<=0.17.7) used to depend on metadata coming from the master in
         # Checkpoint.download().
         with metadata_path.open() as f:
             metadata = json.load(f)
@@ -59,7 +59,7 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
     else:
         raise AssertionError(
             "Checkpoint does not have either load_data.json or metadata.json.  Checkpoints written "
-            "by Determined 0.17.6 and earlier did not save enough information to be loaded "
+            "by Determined 0.17.7 and earlier did not save enough information to be loaded "
             "directly from the files in the checkpoint.  Instead, a metadata.json was written "
             "during the call to Checkpoint.download().  If you are reading an old checkpoint "
             "directly from checkpoint storage, you can either use Checkpoint.download() instead or "
