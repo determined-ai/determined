@@ -172,7 +172,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		} else {
 			ctx.Respond(errors.New(fmt.Sprintf("unknown container %s", msg.ContainerID)))
 		}
-	case sproto.ReleaseResources:
+	case sproto.ReleaseResources, sproto.ChangeRP:
 		a.Terminate(ctx)
 	case actor.PostStop:
 		a.Cleanup(ctx)

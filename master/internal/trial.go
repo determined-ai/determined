@@ -143,7 +143,11 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			return t.patchState(ctx, model.StoppingCompletedState)
 		}
 		return nil
-
+	case sproto.ChangeRP:
+		resources := t.config.Resources()
+		resources.SetResourcePool(msg.ResourcePool)
+		t.config.SetResources(resources)
+		ctx.Tell(t.allocation, msg)
 	case task.BuildTaskSpec:
 		if spec, err := t.buildTaskSpec(ctx); err != nil {
 			ctx.Respond(err)

@@ -87,7 +87,12 @@ def ls(args: Namespace) -> None:
 
 @authentication.required
 def update(args: Namespace) -> None:
-    update = bindings.v1QueueControl(jobId=args.job_id, priority=args.priority, weight=args.weight)
+    update = bindings.v1QueueControl(
+        jobId=args.job_id,
+        priority=args.priority,
+        weight=args.weight,
+        resourcePool=args.resource_pool,
+    )
     bindings.post_UpdateJobQueue(
         setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
     )
@@ -141,6 +146,11 @@ args_description = [
                             "--weight",
                             type=float,
                             help="The new weight. Exclusive to fair_share scheduler.",
+                        ),
+                        Arg(
+                            "--resource-pool",
+                            type=str,
+                            help="The target resource pool to move the job to.",
                         ),
                     ),
                 ],
