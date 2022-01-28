@@ -59,13 +59,17 @@ export const moveJobToPositionUpdate = (
       { ...errOpts, type: ErrorType.Input },
     );
   }
-  // what has the same position as the job we want to move?
   const anchorJob = jobs.find(job => job.summary.jobsAhead === position - 1);
+
   if (!anchorJob) {
     // job view is out of sync.
-    // FIXME what's the remedy? They need to retry.
-    throw new DetError('Job view is out of sync.', { ...errOpts, type: ErrorType.Ui });
+    throw new DetError('Job view is out of sync.', {
+      ...errOpts,
+      publicMessage: 'Please retry.',
+      type: ErrorType.Ui,
+    });
   }
+
   if (anchorJob.jobId === jobId) {
     return;
   }
@@ -92,9 +96,6 @@ export const moveJobToPosition = async (
     const update = moveJobToPositionUpdate(jobs, jobId, position);
     if (update) await updateJobQueue({ updates: [ update ] });
   } catch (e) {
-    if (isDetError(e)) {
-      e.publicMessage = `Failed to move job to position ${position}`;
-    }
     handleError(e);
   }
 };
