@@ -314,8 +314,8 @@ class Counter(det.pytorch.PyTorchCallback):
         logging.debug("starting training")
         self.training_started_times += 1
 
-    def on_training_epoch_start(self) -> None:
-        logging.debug("starting epoch")
+    def on_training_epoch_start(self, epoch_idx) -> None:
+        logging.debug(f"starting epoch {epoch_idx}")
         self.training_epochs_started += 1
 
     def on_training_epoch_end(self, epoch_idx: int) -> None:
