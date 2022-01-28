@@ -34,6 +34,14 @@ func (e ErrAllocationUnfulfilled) Error() string {
 	return fmt.Sprintf("%s not valid without active allocation", e.Action)
 }
 
+// ErrStaleResourcesReceived is returned the scheduler gives an allocation resources between
+// when it requests them and it deciding, for some reason or another, they are not needed.
+type ErrStaleResourcesReceived struct{}
+
+func (e ErrStaleResourcesReceived) Error() string {
+	return "allocation no longer needs these resources"
+}
+
 // ErrStaleAllocation is returned when an operation was attempted by a stale task.
 type ErrStaleAllocation struct {
 	Received, Actual model.AllocationID

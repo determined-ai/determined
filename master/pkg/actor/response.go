@@ -27,6 +27,9 @@ type Response interface {
 	Empty() (empty bool)
 	// Error returns the error if the actor returned an error response and nil otherwise.
 	Error() (err error)
+	// ErrorOrTimeout returns the error, or nil if there is none, if the actor returned an error
+	// response within the deadline. If the deadline is exceeded, the bool returned false.
+	ErrorOrTimeout(timeout time.Duration) (error, bool)
 }
 
 type response struct {
@@ -105,6 +108,18 @@ func (r *response) Error() error {
 		return nil
 	}
 	return err
+}
+
+func (r *response) ErrorOrTimeout(timeout time.Duration) (error, bool) {
+	msg, ok := r.GetOrElseTimeout(nil, timeout)
+	if !ok {
+		return nil, false
+	}
+	err, ok := msg.(error)
+	if r.Empty() || !ok {
+		return nil, true
+	}
+	return err, true
 }
 
 func (r *response) MarshalJSON() ([]byte, error) {
