@@ -238,7 +238,8 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
-	ExternalSessions model.ExternalSessions `json:"external_sessions"`
+	AuditLoggingEnabled bool                   `json:"audit_logging_enabled"`
+	ExternalSessions    model.ExternalSessions `json:"external_sessions"`
 }
 
 // ObservabilityConfig is the configuration for observability metrics.

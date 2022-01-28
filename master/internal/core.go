@@ -66,6 +66,13 @@ const (
 	webuiBaseRoute        = "/det"
 )
 
+// staticWebDirectoryPaths are the locations of static files that comprise the webui.
+var staticWebDirectoryPaths = map[string]bool{
+	"/docs":          true,
+	webuiBaseRoute:   true,
+	"/docs/rest-api": true,
+}
+
 // Master manages the Determined master state.
 type Master struct {
 	ClusterID string
@@ -710,14 +717,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	// Used to decide whether we add trailing slash to the paths or not affecting
-	// relative links in web pages hosted under these routes.
-	staticWebDirectoryPaths := map[string]bool{
-		"/docs":          true,
-		webuiBaseRoute:   true,
-		"/docs/rest-api": true,
-	}
-
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
@@ -769,6 +768,10 @@ func (m *Master) Run(ctx context.Context) error {
 	})
 
 	m.echo.Use(convertDBErrorsToNotFound)
+
+	if m.config.InternalConfig.AuditLoggingEnabled {
+		m.echo.Use(auditLogMiddleware())
+	}
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
