@@ -47,10 +47,10 @@ export const moveJobToPositionUpdate = (
   jobs: Job[],
   jobId: string,
   position: number,
-): Api.V1QueueControl => {
+): Api.V1QueueControl | undefined => {
   const errOpts: DetErrorOptions = {
-    publicMessage: `Failed to move job to position ${position}`,
-    publicSubject: 'TITLE',
+    publicMessage: `Failed to move job to position ${position}.`,
+    publicSubject: 'Moving job failed.',
     silent: false,
   };
   if (position < 1 || position % 1 !== 0) {
@@ -65,6 +65,9 @@ export const moveJobToPositionUpdate = (
     // job view is out of sync.
     // FIXME what's the remedy? They need to retry.
     throw new DetError('Job view is out of sync.', { ...errOpts, type: ErrorType.Ui });
+  }
+  if (anchorJob.jobId === jobId) {
+    return;
   }
 
   const isLastJob = jobs.length === position;
@@ -86,9 +89,8 @@ export const moveJobToPosition = async (
   position: number,
 ): Promise<void> => {
   try {
-    await updateJobQueue(
-      { updates: [ moveJobToPositionUpdate(jobs, jobId, position) ] },
-    );
+    const update = moveJobToPositionUpdate(jobs, jobId, position);
+    if (update) await updateJobQueue({ updates: [ update ] });
   } catch (e) {
     if (isDetError(e)) {
       e.publicMessage = `Failed to move job to position ${position}`;
