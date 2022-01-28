@@ -88,6 +88,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.DefaultScheduler,
 			k.config.SlotType,
 			kubernetes.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
+			k.config.Fluent,
 		)
 		k.agent = &agentState{
 			handler:            podsActor,
