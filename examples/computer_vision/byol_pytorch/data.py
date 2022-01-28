@@ -72,12 +72,7 @@ class DoubleTransformDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, int]:
         sample, target = self.dataset[idx]
-        a, b, c = self.transform1(sample), self.transform2(sample), target
-        if torch.any(torch.isnan(b)):
-            print(f"NaN detected.  Original sample idx {idx}.")
-            print("Sample:")
-            print(sample)
-        return a, b, c
+        return self.transform1(sample), self.transform2(sample), target
 
     def __len__(self) -> int:
         return len(self.dataset)
@@ -172,7 +167,6 @@ def build_evaluation_transform(
     mean: Tuple[float, float, float],
     std: Tuple[float, float, float],
 ) -> nn.Module:
-    # TODO: Add resize and center crop for ImageNet.
     return T.Compose(
         [
             T.Resize(settings.resize_short_edge),
@@ -199,8 +193,8 @@ def split_supervised_dataset(
         DatasetSplit.CLS_VALIDATION,
     ]:
         train_dataset = build_train()
-        random.seed(0)
         indices = list(range(len(train_dataset)))
+        random.seed(0)
         random.shuffle(indices)
         val_size = data_config.validation_subset_size
         val_indices = indices[:val_size]
@@ -258,8 +252,8 @@ def download_and_build_stl10(
         return STL10(download_dir, split="train", download=True)
     else:
         test_dataset = STL10(download_dir, split="test", download=True)
-        random.seed(0)
         indices = list(range(len(test_dataset)))
+        random.seed(0)
         random.shuffle(indices)
         val_size = data_config.validation_subset_size
         val_indices = indices[:val_size]
@@ -286,7 +280,7 @@ def build_dataset(
     """
     Returns specified Dataset object.
 
-    Downloads CIFAR10 / STL10 if necessary.  Relies on pre-downloaded ImageNet specified on disk.
+    Downloads CIFAR10 / STL10 if necessary.  Will not download ImageNet -- assumed to be on disk.
     """
     name = data_config.dataset_name
     if name in DATASET_BUILD_MAP:

@@ -37,7 +37,6 @@ def build_byol_optimizer(hparams: AttrDict, model: nn.Module) -> Optimizer:
     for name, parameter in model.named_parameters():
         if parameter.requires_grad is False:
             continue
-        # TODO: Double-check this naming is correct.
         if any(x in name for x in [".bn", ".bias"]):
             excluded_parameters.append(parameter)
         else:

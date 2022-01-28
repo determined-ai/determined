@@ -3,20 +3,18 @@ import math
 import os
 from typing import Any, cast, Dict, Sequence, Union
 
-from byol_pytorch import BYOL
 from determined.pytorch import (
     PyTorchCallback,
     PyTorchTrial,
     PyTorchTrialContext,
     DataLoader,
 )
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Optimizer
 
 from backbone import BACKBONE_METADATA_BY_NAME
+from byol_pytorch import BYOL
 from data import (
     build_dataset,
     build_evaluation_transform,
@@ -68,6 +66,9 @@ def set_learning_rate_warmup_cosine_anneal(
 def set_ema_beta_cosine_anneal(
     hparams: AttrDict, byol_model: BYOL, batch_idx: int, batches_per_epoch: int
 ) -> None:
+    """
+    Anneals the exponential moving average coefficient, as described in the BYOL paper.
+    """
     fractional_epoch = batch_idx / batches_per_epoch
     # 1 − (1 − τbase) · (cos(πk/K) + 1)/2
     progress = fractional_epoch / hparams.total_epochs
@@ -106,7 +107,6 @@ class BYOLTrial(PyTorchTrial):
             "max_length"
         ]["epochs"]
         self.rank = self.context.distributed.get_rank()
-        self.logger = TorchWriter()
         if self.data_config.use_rank_for_download_dir:
             # Avoid process contention when downloading data inside each process.
             self.download_dir = os.path.join(
@@ -137,7 +137,6 @@ class BYOLTrial(PyTorchTrial):
         mean = dataset_metadata.mean
         std = dataset_metadata.std
         # BYOL paper uses two different distributions for training transforms.
-        # For some reason, byol-pytorch wraps its transforms in nn.Sequential.
         self.data_config.train_transform_fn1 = build_training_transform(
             self.data_config.train_transform1, mean, std
         )
@@ -182,7 +181,6 @@ class BYOLTrial(PyTorchTrial):
         assert len(self.hparams.classifier.learning_rates) == len(
             set(self.hparams.classifier.learning_rates)
         )
-        self.cls_criterion = nn.CrossEntropyLoss()
         self.cls_models = [
             self.context.wrap_model(
                 torch.nn.Linear(

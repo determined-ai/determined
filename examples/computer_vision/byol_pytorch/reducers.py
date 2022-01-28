@@ -57,8 +57,6 @@ class ValidatedAccuracyReducer(MetricReducer):
         return self.val_correct_by_param, self.test_correct_by_param, self.test_ct
 
     def cross_slot_reduce(self, per_slot_metrics: List) -> Any:
-        # per_slot_metrics is a list of (sum, counts) tuples
-        # returned by the self.pre_slot_reduce() on each slot
         val_correct_by_param, test_correct_by_param, test_ct = zip(*per_slot_metrics)
         val_correct_by_param = reduce(
             lambda x, y: merge_dicts(x, y, lambda a, b: a + b), val_correct_by_param
