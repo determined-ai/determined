@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -51,7 +52,7 @@ func (g groupState) String() string {
 
 func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	defer f.updateJobs(rp)
-	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+	return fairshareSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (f *fairShare) createJobQInfo(
@@ -83,7 +84,7 @@ func (f *fairShare) updateJobs(rp *ResourcePool) {
 func fairshareSchedule(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	allToAllocate := make([]*sproto.AllocateRequest, 0)
@@ -123,11 +124,11 @@ func fairshareSchedule(
 	return allToAllocate, allToRelease
 }
 
-func capacityByAgentLabel(agents map[*actor.Ref]*agentState) map[string]int {
+func capacityByAgentLabel(agents map[*actor.Ref]*agent.AgentState) map[string]int {
 	agentCap := map[string]int{}
 
 	for _, agent := range agents {
-		agentCap[agent.label] += agent.numSlots()
+		agentCap[agent.Label] += agent.NumSlots()
 	}
 
 	return agentCap
@@ -319,7 +320,7 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 }
 
 func assignTasks(
-	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
+	agents map[*actor.Ref]*agent.AgentState, states []*groupState, fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)

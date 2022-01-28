@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -33,8 +32,7 @@ type kubernetesResourceManager struct {
 	containerIDtoAddr map[string]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
-	// Represent all pods as a single agent.
-	agent *agentState
+	podsActor *actor.Ref
 
 	reschedule bool
 
@@ -90,15 +88,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			kubernetes.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 			k.config.Fluent,
 		)
-		k.agent = &agentState{
-			handler:            podsActor,
-			devices:            make(map[device.Device]*cproto.ID),
-			zeroSlotContainers: make(map[cproto.ID]bool),
-			// Expose a fake number here just to signal to the UI
-			// that this RP does support the aux containers.
-			maxZeroSlotContainers: 1,
-			enabled:               true,
-		}
+		// Expose a fake number of zero slots here just to signal to the UI
+		// that this RP does support the aux containers.
+		k.podsActor = podsActor
 
 	case
 		groupActorStopped,
@@ -160,7 +152,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 	case *apiv1.GetAgentsRequest:
-		resp := ctx.Ask(k.agent.handler, msg)
+		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
 	default:
 		reschedule = false
@@ -192,15 +184,15 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		SlotType:                     k.config.SlotType.Proto(),
 		SlotsAvailable:               int32(pods.SlotsAvailable),
 		SlotsUsed:                    int32(slotsUsed),
-		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
-		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),
+		AuxContainerCapacity:         int32(1),
+		AuxContainersRunning:         int32(0),
 		DefaultComputePool:           true,
 		DefaultAuxPool:               true,
 		Preemptible:                  k.config.GetPreemption(),
 		MinAgents:                    0,
 		MaxAgents:                    0,
 		SlotsPerAgent:                int32(k.config.MaxSlotsPerPod),
-		AuxContainerCapacityPerAgent: int32(k.agent.maxZeroSlotContainers),
+		AuxContainerCapacityPerAgent: int32(1),
 		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
 		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
 		Location:                     "kubernetes",
@@ -213,7 +205,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 func (k *kubernetesResourceManager) summarizePods(
 	ctx *actor.Context,
 ) (*kubernetes.PodsInfo, error) {
-	resp := ctx.Ask(k.agent.handler, kubernetes.SummarizeResources{})
+	resp := ctx.Ask(k.podsActor, kubernetes.SummarizeResources{})
 	if err := resp.Error(); err != nil {
 		return nil, err
 	}
@@ -244,7 +236,7 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			if it.value().Group == msg.Handler {
 				taskActor := it.value().TaskActor
 				if id, ok := k.addrToContainerID[taskActor]; ok {
-					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
+					ctx.Tell(k.podsActor, kubernetes.ChangePriority{PodID: id})
 					delete(k.addrToContainerID, taskActor)
 				}
 			}
@@ -370,7 +362,7 @@ func (k *kubernetesResourceManager) assignResources(
 		container := newContainer(req, slotsPerPod)
 		allocations = append(allocations, &k8sPodReservation{
 			req:       req,
-			agent:     k.agent,
+			podsActor: k.podsActor,
 			container: container,
 			group:     k.groups[req.Group],
 		})
@@ -449,7 +441,7 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 type k8sPodReservation struct {
 	req       *sproto.AllocateRequest
 	container *container
-	agent     *agentState
+	podsActor *actor.Ref
 	group     *group
 }
 
@@ -458,7 +450,7 @@ func (p k8sPodReservation) Summary() sproto.ContainerSummary {
 	return sproto.ContainerSummary{
 		AllocationID: p.req.AllocationID,
 		ID:           p.container.id,
-		Agent:        p.agent.handler.Address().Local(),
+		Agent:        p.podsActor.Address().Local(),
 	}
 }
 
@@ -466,7 +458,6 @@ func (p k8sPodReservation) Summary() sproto.ContainerSummary {
 func (p k8sPodReservation) Start(
 	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
 ) {
-	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.AllocationID = string(p.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
@@ -478,7 +469,7 @@ func (p k8sPodReservation) Start(
 	}
 	spec.LoggingFields["allocation_id"] = spec.AllocationID
 	spec.LoggingFields["task_id"] = spec.TaskID
-	ctx.Tell(handler, kubernetes.StartTaskPod{
+	ctx.Tell(p.podsActor, kubernetes.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,
 		Slots:     p.container.slots,
@@ -488,8 +479,7 @@ func (p k8sPodReservation) Start(
 
 // Kill notifies the pods actor that it should stop the pod.
 func (p k8sPodReservation) Kill(ctx *actor.Context) {
-	handler := p.agent.handler
-	ctx.Tell(handler, kubernetes.KillTaskPod{
+	ctx.Tell(p.podsActor, kubernetes.KillTaskPod{
 		PodID: p.container.id,
 	})
 }

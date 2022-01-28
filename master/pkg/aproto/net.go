@@ -22,6 +22,7 @@ type GetRPConfig struct{}
 
 // GetRPResponse is a response to the previous request.
 type GetRPResponse struct {
-	AgentReconnectWait   model.Duration
-	AgentReattachEnabled bool
+	AgentReconnectWait    model.Duration
+	AgentReattachEnabled  bool
+	MaxZeroSlotContainers int
 }

@@ -7,6 +7,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -329,7 +330,7 @@ func TestFindFits(t *testing.T) {
 
 		t.Run(tc.Name, func(t *testing.T) {
 			system := actor.NewSystem(t.Name())
-			agents := []*agentState{}
+			agents := []*agent.AgentState{}
 			for _, agent := range tc.Agents {
 				agents = append(agents, newFakeAgentState(
 					t,
@@ -403,13 +404,13 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 		tc := testCases[idx]
 
 		t.Run(tc.Name, func(t *testing.T) {
-			var index []*agentState
+			var index []*agent.AgentState
 			for i, capacity := range tc.AgentCapacities {
 				index = append(index,
 					newFakeAgentState(t, system, fmt.Sprintf("%s-agent-%d", tc.Name, i), "", capacity, 0, 100, 0))
 			}
 			agents, index := byHandler(index...)
-			agentIndex := make(map[*agentState]int)
+			agentIndex := make(map[*agent.AgentState]int)
 			for idx, agent := range index {
 				agentIndex[agent] = idx
 			}
@@ -440,11 +441,12 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 	}
 }
 
-func byHandler(handlers ...*agentState) (map[*actor.Ref]*agentState, []*agentState) {
-	agents := make(map[*actor.Ref]*agentState)
-	index := make([]*agentState, 0, len(handlers))
+func byHandler(
+	handlers ...*agent.AgentState) (map[*actor.Ref]*agent.AgentState, []*agent.AgentState) {
+	agents := make(map[*actor.Ref]*agent.AgentState)
+	index := make([]*agent.AgentState, 0, len(handlers))
 	for _, agent := range handlers {
-		agents[agent.handler] = agent
+		agents[agent.Handler] = agent
 		index = append(index, agent)
 	}
 	return agents, index
