@@ -383,8 +383,8 @@ class PyTorchTrialController(det.TrialController):
                     batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
+            epoch_idx = self.get_epoch_idx(batch_idx)
             if self.context.is_epoch_start():
-                epoch_idx = self.get_epoch_idx(batch_idx)
                 for callback in self.callbacks.values():
                     with self.prof.record_timing(
                         f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
@@ -400,7 +400,6 @@ class PyTorchTrialController(det.TrialController):
                             callback.on_training_epoch_start()  # type: ignore[call-arg]
 
             self.context._loss_ids = {}
-            epoch_idx = self.get_epoch_idx(batch_idx)
 
             with self.prof.record_timing("train_batch", requires_sync=False):
                 if self.context.profiler:
