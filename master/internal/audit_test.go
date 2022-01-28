@@ -55,7 +55,7 @@ func TestAuditLogMiddleware(t *testing.T) {
 		return echo.NewHTTPError(http.StatusUnauthorized)
 	}))
 	go func() {
-		if err := e.Start(url); err != nil {
+		if err := e.Start(url); err != nil && err != http.ErrServerClosed {
 			t.Logf("failed to start server: %s", err)
 		}
 	}()
