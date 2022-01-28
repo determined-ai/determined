@@ -315,7 +315,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 	// Get the task spec first, so the trial/task table is populated before allocations.
 	resp := ctx.Ask(ctx.Self().Parent(), BuildTaskSpec{})
-	switch err, ok := resp.ErrorOrTimeout(time.Hour); {
+	switch ok, err := resp.ErrorOrTimeout(time.Hour); {
 	case err != nil:
 		return errors.Wrapf(err, "could not get task spec")
 	case !ok:
