@@ -33,7 +33,7 @@ export enum ErrorType {
   Auth = 'auth',
   Unknown = 'unknown',
   Ui = 'ui',
-  Input = 'input',
+  Input = 'input', // the issue is caused by unexpected/invalid user input.
   ApiBadResponse = 'apiBadResponse', // unexpected response structure.
   Api = 'api', // third-party api
 }

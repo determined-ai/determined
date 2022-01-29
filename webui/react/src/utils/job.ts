@@ -49,6 +49,7 @@ export const moveJobToPositionUpdate = (
   position: number,
 ): Api.V1QueueControl | undefined => {
   const errOpts: DetErrorOptions = {
+    isUserTriggered: true,
     publicMessage: `Failed to move job to position ${position}.`,
     publicSubject: 'Moving job failed.',
     silent: false,
@@ -60,8 +61,9 @@ export const moveJobToPositionUpdate = (
     );
   }
   const anchorJob = jobs.find(job => job.summary.jobsAhead === position - 1);
+  const job = jobs.find(job => job.jobId === jobId);
 
-  if (!anchorJob) {
+  if (!anchorJob || !job) {
     // job view is out of sync.
     throw new DetError('Job view is out of sync.', {
       ...errOpts,
@@ -70,21 +72,22 @@ export const moveJobToPositionUpdate = (
     });
   }
 
-  if (anchorJob.jobId === jobId) {
-    return;
+  if (anchorJob.jobId === jobId || job.summary.jobsAhead === position - 1) {
+    return; // no op
   }
 
-  const isLastJob = jobs.length === position;
-  if (isLastJob) {
+  const isMovingAhead = job.summary.jobsAhead >= position;
+  if (isMovingAhead) {
+    return {
+      aheadOf: anchorJob.jobId,
+      jobId,
+    };
+  } else {
     return {
       behindOf: anchorJob.jobId,
       jobId,
     };
   }
-  return {
-    aheadOf: anchorJob.jobId,
-    jobId,
-  };
 };
 
 export const moveJobToPosition = async (
