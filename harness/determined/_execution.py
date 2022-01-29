@@ -3,10 +3,10 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 import determined as det
-from determined import _core, constants, gpu
+from determined import _core, constants, gpu, load
 from determined.common import api
 
 
@@ -162,3 +162,23 @@ def _local_execution_manager(context_dir: pathlib.Path) -> Iterator:
     finally:
         os.chdir(current_directory)
         sys.path[0] = current_path
+
+
+def _load_trial_for_checkpoint_export(
+    context_dir: pathlib.Path,
+    managed_training: bool,
+    trial_cls_spec: str,
+    config: Dict[str, Any],
+    hparams: Dict[str, Any],
+) -> Tuple[Type[det.Trial], det.TrialContext]:
+    with _local_execution_manager(context_dir):
+        trial_class = load.trial_class_from_entrypoint(trial_cls_spec)
+        core_context, env = _make_local_execution_env(
+            managed_training=managed_training,
+            test_mode=False,
+            config=config,
+            checkpoint_dir="/tmp",
+            hparams=hparams,
+        )
+        trial_context = trial_class.trial_context_class(core_context, env)
+    return trial_class, trial_context

@@ -1,4 +1,5 @@
 import functools
+import json
 import logging
 import numbers
 import os
@@ -222,6 +223,11 @@ class DeterminedControlHook(estimator.RunHook):
         if self.estimator_trial_controller.wlsq is not None:
             with checkpoint_path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.estimator_trial_controller.wlsq.get_state(), f)
+
+        # Because of how estimator checkpoints are loaded, we only need to record the trial type so
+        # that the loading API can confirm this was an EstimatorTrial.
+        with checkpoint_path.joinpath("load_data.json").open("w") as f2:
+            json.dump({"trial_type": "EstimatorTrial"}, f2)
 
     def _save_model(self) -> None:
         # Only save when we have performed training since the last time we saved.

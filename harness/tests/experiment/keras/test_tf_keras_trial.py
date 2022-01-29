@@ -1,4 +1,5 @@
 # type: ignore
+import os
 import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
@@ -8,7 +9,7 @@ import tensorflow as tf
 from packaging import version
 
 import determined as det
-from determined import workload
+from determined import keras, workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import (  # noqa: I100
     ancient_keras_ckpt,
@@ -256,6 +257,11 @@ class TestKerasTrial:
         )
         controller.run()
 
+        # Verify that we can load the model from a checkpoint dir
+        ckpt_path = str(tmp_path / "checkpoint" / latest_checkpoint)
+        model = keras.load_model_from_checkpoint_path(ckpt_path)
+        assert isinstance(model, tf.keras.models.Model), type(model)
+
     def test_optimizer_state(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
         def make_trial_controller_fn(
             workloads: workload.Stream,
@@ -351,6 +357,13 @@ class TestKerasTrial:
             latest_batch=1,
         )
         controller.run()
+
+
+@pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
+def test_checkpoint_loading(ckpt_ver):
+    checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-keras")
+    model = keras.load_model_from_checkpoint_path(checkpoint_dir)
+    assert isinstance(model, tf.keras.models.Model), type(model)
 
 
 def test_surface_native_error():

@@ -15,7 +15,6 @@ from .experiment import (
     experiment_json,
     experiment_state,
     experiment_trials,
-    export_and_load_model,
     get_experiment_durations,
     get_flat_metrics,
     get_validation_metric_from_last_step,

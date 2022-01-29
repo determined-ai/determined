@@ -1,9 +1,35 @@
+import multiprocessing
 from typing import Callable, Dict
 
 import pytest
 
+from determined import keras
+from determined.experimental import client
 from tests import config as conf
 from tests import experiment as exp
+
+
+def _export_and_load_model(experiment_id: int, master_url: str) -> None:
+    # Normally verifying that we can load a model would be a good unit test, but making this an e2e
+    # test ensures that our model saving and loading works with all the versions of tf that we test.
+    ckpt = client.Determined(master_url).get_experiment(experiment_id).top_checkpoint()
+    _ = keras.load_model_from_checkpoint_path(ckpt.download())
+
+
+def export_and_load_model(experiment_id: int) -> None:
+    # We run this in a subprocess to avoid module name collisions
+    # when performing checkpoint export of different models.
+    ctx = multiprocessing.get_context("spawn")
+    p = ctx.Process(
+        target=_export_and_load_model,
+        args=(
+            experiment_id,
+            conf.make_master_url(),
+        ),
+    )
+    p.start()
+    p.join()
+    assert p.exitcode == 0, p.exitcode
 
 
 @pytest.mark.tensorflow2
@@ -72,7 +98,7 @@ def test_tf_keras_parallel(
     assert len(trials) == 1
 
     # Test exporting a checkpoint.
-    exp.export_and_load_model(experiment_id)
+    export_and_load_model(experiment_id)
     collect_trial_profiles(trials[0]["id"])
 
 
@@ -93,7 +119,7 @@ def test_tf_keras_single_gpu(tf2: bool, collect_trial_profiles: Callable[[int], 
     assert len(trials) == 1
 
     # Test exporting a checkpoint.
-    exp.export_and_load_model(experiment_id)
+    export_and_load_model(experiment_id)
     collect_trial_profiles(trials[0]["id"])
 
 
@@ -127,7 +153,7 @@ def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) ->
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
-    exp.export_and_load_model(experiment_id)
+    export_and_load_model(experiment_id)
     collect_trial_profiles(trials[0]["id"])
 
 

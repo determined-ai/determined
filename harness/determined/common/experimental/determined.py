@@ -131,7 +131,7 @@ class Determined:
         checkpoint with the provided UUID.
         """
         r = self._session.get("/api/v1/checkpoints/{}".format(uuid)).json()
-        return checkpoint.Checkpoint.from_json(r["checkpoint"], self._session)
+        return checkpoint.Checkpoint._from_json(r["checkpoint"], self._session)
 
     def create_model(
         self,
@@ -153,7 +153,7 @@ class Determined:
             json={"description": description, "metadata": metadata, "name": name, "labels": labels},
         )
 
-        return model.Model.from_json(r.json().get("model"), self._session)
+        return model.Model._from_json(r.json().get("model"), self._session)
 
     def get_model(self, name: str) -> model.Model:
         """
@@ -162,7 +162,7 @@ class Determined:
         an exception is raised.
         """
         r = self._session.get("/api/v1/models/{}".format(name))
-        return model.Model.from_json(r.json().get("model"), self._session)
+        return model.Model._from_json(r.json().get("model"), self._session)
 
     def get_model_by_id(self, model_id: int) -> model.Model:
         """
@@ -173,7 +173,7 @@ class Determined:
         r = self._session.get("/api/v1/models?id={}".format(model_id))
         models = r.json().get("models")
         assert len(models) == 1
-        return model.Model.from_json(models[0], self._session)
+        return model.Model._from_json(models[0], self._session)
 
     def get_models(
         self,
@@ -209,7 +209,7 @@ class Determined:
         )
 
         models = r.json().get("models")
-        return [model.Model.from_json(m, self._session) for m in models]
+        return [model.Model._from_json(m, self._session) for m in models]
 
     def get_model_labels(self) -> List[str]:
         """

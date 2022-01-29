@@ -58,3 +58,10 @@
 .. autoclass:: determined.keras.callbacks.ReduceLROnPlateau
 
 .. autoclass:: determined.keras.callbacks.TensorBoard
+
+******************************************************
+ ``determined.keras.load_model_from_checkpoint_path``
+******************************************************
+
+.. autoclass:: determined.keras.load_model_from_checkpoint_path
+   :members:

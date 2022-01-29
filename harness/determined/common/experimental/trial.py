@@ -101,7 +101,7 @@ class TrialReference:
 
         if uuid:
             resp = self._session.get("/api/v1/checkpoints/{}".format(uuid))
-            return checkpoint.Checkpoint.from_json(resp.json()["checkpoint"], self._session)
+            return checkpoint.Checkpoint._from_json(resp.json()["checkpoint"], self._session)
 
         r = self._session.get(
             "/api/v1/trials/{}/checkpoints".format(self.id),
@@ -115,7 +115,7 @@ class TrialReference:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if latest:
-            return checkpoint.Checkpoint.from_json(checkpoints[0], self._session)
+            return checkpoint.Checkpoint._from_json(checkpoints[0], self._session)
 
         if not sort_by:
             sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
@@ -123,7 +123,7 @@ class TrialReference:
 
         best_checkpoint_func = min if smaller_is_better else max
         key: Callable[[Dict], Any] = lambda x: x["metrics"]["validationMetrics"][sort_by]
-        return checkpoint.Checkpoint.from_json(
+        return checkpoint.Checkpoint._from_json(
             best_checkpoint_func(
                 [c for c in checkpoints if c["metrics"] is not None],
                 key=key,

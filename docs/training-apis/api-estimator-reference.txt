@@ -61,3 +61,10 @@
 
 .. autoclass:: determined.estimator.RunHook
    :members: on_checkpoint_load, on_checkpoint_end, on_trial_close
+
+**************************************************************
+ ``determined.estimator.load_estimator_from_checkpoint_path``
+**************************************************************
+
+.. autoclass:: determined.estimator.load_estimator_from_checkpoint_path
+   :members:
