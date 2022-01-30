@@ -5,9 +5,7 @@ import { useHistory, useParams } from 'react-router';
 import Page from 'components/Page';
 import { paths } from 'routes/utils';
 
-import ClusterHistoricalUsage from './Clusters/ClusterHistoricalUsage';
 import ClusterLogs from './Clusters/ClusterLogs';
-import ClusterOverview from './Clusters/ClusterOverview';
 
 const { TabPane } = Tabs;
 
@@ -37,12 +35,6 @@ const Clusters: React.FC = () => {
   return (
     <Page id="cluster" stickyHeader title="Cluster">
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
-        <TabPane key="overview" tab="Overview">
-          <ClusterOverview />
-        </TabPane>
-        <TabPane key="historical-usage" tab="Historical Usage">
-          <ClusterHistoricalUsage />
-        </TabPane>
         <TabPane key="logs" tab="Master Logs">
           <ClusterLogs />
         </TabPane>
