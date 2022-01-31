@@ -132,8 +132,17 @@ const JobQueue: React.FC = () => {
       triggers[JobAction.ManageJob] = () => setManagingJob(job);
     }
 
+    Object.keys(triggers).forEach(key => {
+      const action = key as JobAction;
+      const fn = triggers[action];
+      if (!fn) return;
+      triggers[action] = async () => {
+        await fn();
+        await fetchAll();
+      };
+    });
     return triggers;
-  }, [ isJobOrderAvailable, jobs, selectedRp ]);
+  }, [ isJobOrderAvailable, jobs, selectedRp, fetchAll ]);
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
