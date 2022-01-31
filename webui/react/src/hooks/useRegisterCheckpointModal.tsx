@@ -208,7 +208,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
           <Select
             optionFilterProp="label"
             options={modelOptions.map(option => (
-              { label: option.name, value: option.id }))}
+              { label: option.name, value: option.name }))}
             placeholder="Select a model..."
             showSearch
             style={{ width: '100%' }}
