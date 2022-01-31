@@ -22,6 +22,13 @@ interface Props {
   selectedRPStats: RPStats;
 }
 
+/*
+FormValues capture different adjustable parameters for a job.
+position: The position of the job in the queue. (1-based)
+resourcePool: The resource pool to run the job on.
+priority: The desired priority of the job.
+weight: The desired weight of the job.
+*/
 interface FormValues {
   position: string;
   priority?: string;
@@ -161,9 +168,9 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
       <h6>
         Queue Settings
       </h6>
-      <Form
+      <Form<FormValues>
         initialValues={{
-          position: job.summary.jobsAhead + 1,
+          position: (job.summary.jobsAhead + 1),
           priority: job.priority,
           resourcePool: selectedRPStats.resourcePool,
           weight: job.weight,
