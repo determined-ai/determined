@@ -43,6 +43,10 @@ export const orderedSchedulers = new Set(
   [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
 );
 
+/**
+ * Create the update request based on a given position for a job.
+ * @throws {DetError}
+ */
 export const moveJobToPositionUpdate = (
   jobs: Job[],
   jobId: string,
