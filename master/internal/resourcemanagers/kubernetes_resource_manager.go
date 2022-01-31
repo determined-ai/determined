@@ -176,11 +176,14 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		slotsUsed += slotsUsedByGroup
 	}
 
+	resp := ctx.Ask(k.agent.handler, kubernetes.ResourceSummarize{}).Get().(kubernetes.PodsInfo)
+
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
-		NumAgents:                    1,
+		NumAgents:                    int32(resp.NumAgents),
+		NumSlots:                     int32(resp.NumSlots),
 		SlotType:                     k.config.SlotType.Proto(),
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),

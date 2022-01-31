@@ -3768,6 +3768,7 @@ class v1ResourcePool:
         minAgents: int,
         name: str,
         numAgents: int,
+        numSlots: int,
         preemptible: bool,
         schedulerFittingPolicy: "v1FittingPolicy",
         schedulerType: "v1SchedulerType",
@@ -3782,6 +3783,7 @@ class v1ResourcePool:
         self.description = description
         self.type = type
         self.numAgents = numAgents
+        self.numSlots = numSlots
         self.slotsAvailable = slotsAvailable
         self.slotsUsed = slotsUsed
         self.slotType = slotType
@@ -3818,6 +3820,7 @@ class v1ResourcePool:
             description=obj["description"],
             type=v1ResourcePoolType(obj["type"]),
             numAgents=obj["numAgents"],
+            numSlots=obj["numSlots"],
             slotsAvailable=obj["slotsAvailable"],
             slotsUsed=obj["slotsUsed"],
             slotType=determineddevicev1Type(obj["slotType"]),
@@ -3854,6 +3857,7 @@ class v1ResourcePool:
             "description": self.description,
             "type": self.type.value,
             "numAgents": self.numAgents,
+            "numSlots": self.numSlots,
             "slotsAvailable": self.slotsAvailable,
             "slotsUsed": self.slotsUsed,
             "slotType": self.slotType.value,
