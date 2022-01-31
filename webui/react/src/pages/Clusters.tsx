@@ -5,7 +5,7 @@ import { useHistory, useParams } from 'react-router';
 import Page from 'components/Page';
 import { paths } from 'routes/utils';
 
-import ClusterLogs from './Clusters/ClusterLogs';
+import ClusterLogs from './ClusterLogs';
 
 const { TabPane } = Tabs;
 
@@ -36,7 +36,7 @@ const Clusters: React.FC = () => {
     <Page id="cluster" stickyHeader title="Cluster">
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="logs" tab="Master Logs">
-          <ClusterLogs />
+          <ClusterLogs className="pageFullHeight" />
         </TabPane>
       </Tabs>
     </Page>
