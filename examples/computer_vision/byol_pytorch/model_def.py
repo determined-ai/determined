@@ -30,6 +30,7 @@ from optim import (
     reset_sgd_optimizer,
 )
 from reducers import AvgReducer, ValidatedAccuracyReducer
+from utils import LambdaModule
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -167,6 +168,10 @@ class BYOLTrial(PyTorchTrial):
             BYOL,
             self.context.wrap_model(BYOL(net, image_size)),
         )
+        # Trick to support passing in pair of augmented images to byol_pytorch.
+        # Normally, byol_pytorch does augmentations inside its forward pass, which is slow.
+        self.byol_model.augment1 = LambdaModule(lambda x: x.first)
+        self.byol_model.augment2 = LambdaModule(lambda x: x.second)
         self.byol_opt = self.context.wrap_optimizer(
             build_byol_optimizer(self.hparams, self.byol_model)
         )
@@ -288,7 +293,9 @@ class BYOLTrial(PyTorchTrial):
             batch_idx,
             cast(int, self.context._epoch_len),
         )
-        loss = self.byol_model.forward(imgs1, imgs2)
+        # Dummy shape needed to bypass check inside byol_model.forward.
+        x = AttrDict({"first": imgs1, "second": imgs2, "shape": [len(imgs1)]})
+        loss = self.byol_model.forward(x)
         self.context.backward(loss)
         self.context.step_optimizer(self.byol_opt)
         set_ema_beta_cosine_anneal(
@@ -348,7 +355,7 @@ class ClassifierTrainCallback(PyTorchCallback):
                 imgs, labels = batch
                 imgs = imgs.cuda()
                 labels = labels.cuda()
-                embeddings = trial.byol_model(
+                embeddings = trial.byol_model.forward(
                     imgs, return_embedding=True, return_projection=False
                 ).detach()
                 for lr_idx, lr in enumerate(trial.hparams.classifier.learning_rates):
@@ -365,3 +372,4 @@ class ClassifierTrainCallback(PyTorchCallback):
         # Set models back to eval mode.
         for lr_idx in range(len(trial.hparams.classifier.learning_rates)):
             trial.cls_models[lr_idx].eval()
+        print("Done training classifier heads.")
