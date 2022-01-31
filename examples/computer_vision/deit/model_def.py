@@ -98,6 +98,7 @@ class DeitTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
 
         self.context = context
+        self.context.experimental.use_amp()
 
         # Create a unique download directory for each rank so they don't overwrite each
         # other when doing distributed training.
@@ -135,15 +136,13 @@ class DeitTrial(PyTorchTrial):
         
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
         samples, targets = batch
-        with torch.cuda.amp.autocast():
-            outputs = self.model(samples)
-            loss = self.criterion(samples, outputs, targets)
 
-        loss_scaler = NativeScaler()
+        outputs = self.model(samples)
+        loss = self.criterion(samples, outputs, targets)
+
         is_second_order = hasattr(self.optimizer, 'is_second_order') and self.optimizer.is_second_order
-        loss_scaler(loss, self.optimizer, clip_grad=0,
-                    parameters=self.model.parameters(), create_graph=is_second_order)
-        # self.context.backward(loss)
+
+        self.context.backward(loss, create_graph=is_second_order)
         self.context.step_optimizer(self.optimizer)
         return {"loss": loss.item()}
 
