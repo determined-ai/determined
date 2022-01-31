@@ -1021,7 +1021,6 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
-        self.progress = progress
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1029,6 +1028,7 @@ class v1Experiment:
         self.notes = notes
         self.jobId = jobId
         self.forkedFrom = forkedFrom
+        self.progress = progress
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1041,7 +1041,6 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
-            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1049,6 +1048,7 @@ class v1Experiment:
             notes=obj.get("notes", None),
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
+            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -1061,7 +1061,6 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
-            "progress": dump_float(self.progress) if self.progress is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -1069,6 +1068,7 @@ class v1Experiment:
             "notes": self.notes if self.notes is not None else None,
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
+            "progress": dump_float(self.progress) if self.progress is not None else None,
         }
 
 class v1ExperimentSimulation:
