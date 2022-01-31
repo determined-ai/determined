@@ -49,9 +49,8 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     modalRef.current = undefined;
   }, []);
 
-  const handleCancel = useCallback((state: ModalState) => {
+  const handleCancel = useCallback(() => {
     if (!modalRef.current) return;
-    setVisibleColumns(state.initialVisibleColumns);
     closeModal();
   }, [ closeModal ]);
 
@@ -66,8 +65,7 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   }, []);
 
   const hiddenColumns = useMemo(() => {
-    return modalState.columns.filter(column =>
-      !visibleColumns.includes(column));
+    return modalState.columns.filter(column => !visibleColumns.includes(column));
   }, [ modalState.columns, visibleColumns ]);
 
   const filteredHiddenColumns = useMemo(() => {
@@ -92,6 +90,10 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     } else {
       setVisibleColumns(prev => [ ...prev, transfer ]);
     }
+  }, []);
+
+  const resetColumns = useCallback((state: ModalState) => {
+    setVisibleColumns(state.defaultVisibleColumns);
   }, []);
 
   const renderColumnName = useCallback((columnName:string) => {
@@ -149,7 +151,7 @@ const useCustomizeColumnsModal = (): ModalHooks => {
       icon: null,
       maskClosable: true,
       okText: 'Save',
-      onCancel: () => handleCancel(state),
+      onCancel: handleCancel,
       onOk: () => handleSave(state),
       title: 'Customize Columns',
     };
