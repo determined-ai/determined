@@ -10,6 +10,7 @@ interface ModalState {
   columns: string[];
   defaultVisibleColumns: string[];
   initialVisibleColumns: string[];
+  onSave?: (columns: string[]) => void;
   visible: boolean;
 }
 
@@ -17,6 +18,7 @@ export interface ShowModalProps {
   columns: string[];
   defaultVisibleColumns: string[];
   initialVisibleColumns: string[];
+  onSave?: (columns: string[]) => void;
 }
 
 interface ModalHooks {
@@ -35,9 +37,9 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   const [ visibleColumns, setVisibleColumns ] = useState<string[]>([]);
 
   const showModal = useCallback((
-    { columns, initialVisibleColumns, defaultVisibleColumns }: ShowModalProps,
+    { columns, initialVisibleColumns, defaultVisibleColumns, onSave }: ShowModalProps,
   ) => {
-    setModalState({ columns, defaultVisibleColumns, initialVisibleColumns, visible: true });
+    setModalState({ columns, defaultVisibleColumns, initialVisibleColumns, onSave, visible: true });
     setVisibleColumns(initialVisibleColumns);
   }, []);
 
@@ -47,15 +49,17 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     modalRef.current = undefined;
   }, []);
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = useCallback((state: ModalState) => {
     if (!modalRef.current) return;
+    setVisibleColumns(state.initialVisibleColumns);
     closeModal();
   }, [ closeModal ]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback((state: ModalState) => {
     if (!modalRef.current) return;
+    state.onSave?.(visibleColumns);
     closeModal();
-  }, [ closeModal ]);
+  }, [ closeModal, visibleColumns ]);
 
   const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value.toLowerCase());
@@ -109,7 +113,9 @@ const useCustomizeColumnsModal = (): ModalHooks => {
                 </li>
               ))}
             </ul>
-            <Button type="link">Add All</Button>
+            <Button type="link" onClick={() => makeVisible(filteredHiddenColumns)}>
+              Add All
+            </Button>
           </div>
           <div className={css.column}>
             <h2>Visible</h2>
@@ -120,7 +126,9 @@ const useCustomizeColumnsModal = (): ModalHooks => {
                 </li>
               ))}
             </ul>
-            <Button type="link">Remove All</Button>
+            <Button type="link" onClick={() => makeHidden(filteredVisibleColumns)}>
+              Remove All
+            </Button>
           </div>
         </div>
       </div>
@@ -141,8 +149,8 @@ const useCustomizeColumnsModal = (): ModalHooks => {
       icon: null,
       maskClosable: true,
       okText: 'Save',
-      onCancel: handleCancel,
-      onOk: () => handleSave(),
+      onCancel: () => handleCancel(state),
+      onOk: () => handleSave(state),
       title: 'Customize Columns',
     };
 
