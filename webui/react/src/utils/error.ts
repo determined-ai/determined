@@ -82,6 +82,7 @@ export class DetError extends Error implements DetErrorOptions {
     // Maintains proper stack trace for where our error was thrown.
     if (Error.captureStackTrace) Error.captureStackTrace(this, DetError);
 
+    // Override DetError defaults with options.
     Object.assign(this, { ...defaultErrorOptions, ...options });
 
     // Save original error being passed in.
@@ -105,7 +106,7 @@ const openNotification = (e: DetError) => {
 
   notification?.({
     description: e.publicMessage || '',
-    message: e.publicSubject || listToStr([ e.type, e.level ]),
+    message: e.publicSubject || e.message || listToStr([ e.type, e.level ]),
   });
 };
 
