@@ -284,7 +284,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
-		if e.State != model.CompletedState {
+		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
 			setProgress := 1.0
 			if err := e.db.SaveExperimentProgress(e.ID, &setProgress); err != nil {
 				ctx.Log().Error(err)
