@@ -141,14 +141,12 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): void
 
   // TODO add support for checking, saving, and dismissing class of errors as a user preference
   // using id.
-  const skipNotification = e.silent || (e.level === ErrorLevel.Warn && !e.publicMessage);
-  if (!skipNotification) openNotification(e);
+  if (!e.silent) openNotification(e);
+
+  // Log the error.
+  log(e);
 
   // TODO generate stack trace if error is missing? http://www.stacktracejs.com/
-
-  // Log the error if needed.
-  if (!e.silent) log(e);
-
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
 
   // Report to segment.
