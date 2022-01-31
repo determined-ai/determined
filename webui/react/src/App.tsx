@@ -8,6 +8,7 @@ import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import Spinner from 'components/Spinner';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import useErrorBoundary from 'hooks/useErrorBoundary';
 import { useFetchInfo } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -40,6 +41,7 @@ const AppView: React.FC = () => {
   useKeyTracker();
   usePageVisibility();
   useRouteTracker();
+  useErrorBoundary();
 
   // Poll every 10 minutes
   usePolling(fetchInfo, { interval: 600000 });
