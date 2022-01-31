@@ -83,6 +83,7 @@ if __name__ == "__main__":
 
     # Perform validations
     try:
+        logging.info("Validating checkpoint storage ...")
         storage.validate_config(
             experiment_config.get_checkpoint_storage(),
             container_path=constants.SHARED_FS_CONTAINER_PATH,
