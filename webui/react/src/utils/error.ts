@@ -11,10 +11,11 @@ import { listToStr } from 'utils/string';
 import { isString } from './data';
 
 export interface DetErrorOptions {
-  id?: string; // slug unique to each place in the codebase that we will use this.
-  isUserTriggered?: boolean; // whether the error was triggered by an active interaction.
+  id?: string;                // slug unique to each place in the codebase that we will use this.
+  isUserTriggered?: boolean;  // whether the error was triggered by an active interaction.
   level?: ErrorLevel;
   logger?: LoggerInterface;
+  name?: string;
   payload?: unknown;
   publicMessage?: string;
   publicSubject?: string;
@@ -50,7 +51,7 @@ export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
 };
 
-const defaultErrOptions: DetErrorOptions = {
+const defaultErrorOptions: DetErrorOptions = {
   isUserTriggered: false,
   level: ErrorLevel.Error,
   logger: DEFAULT_LOGGER,
@@ -62,39 +63,33 @@ const defaultErrOptions: DetErrorOptions = {
 // how it should be handled.
 export class DetError extends Error implements DetErrorOptions {
   id?: string;
+  isHandled: boolean;
   isUserTriggered: boolean;
   level: ErrorLevel;
   logger: LoggerInterface;
+  original?: unknown;
   payload?: unknown;
   publicMessage?: string;
   publicSubject?: string;
   silent: boolean;
   type: ErrorType;
-  isHandled: boolean;
 
   constructor(e?: unknown, options: DetErrorOptions = {}) {
     const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
-    const eOpts: DetErrorOptions = isDetError(e) ? {
-      id: e.id,
-      isUserTriggered: e.isUserTriggered,
-      level: e.level,
-      logger: e.logger,
-      payload: e.payload,
-      publicMessage: e.publicMessage,
-      publicSubject: e.publicSubject,
-      silent: e.silent,
-      type: e.type,
-    } : {};
+    // Maintains proper stack trace for where our error was thrown.
+    if (Error.captureStackTrace) Error.captureStackTrace(this, DetError);
 
-    this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
+    Object.assign(this, { ...defaultErrorOptions, ...options });
+
+    // Save original error being passed in.
+    this.original = e;
+    this.name = e instanceof Error ? e.name : 'Error';
+
+    // Flag indicating whether this error has previously been handled by `handleError`.
     this.isHandled = false;
-  }
-
-  loadOptions(options: DetErrorOptions): void {
-    Object.assign(this, options);
   }
 }
 
@@ -124,17 +119,13 @@ const log = (e: DetError) => {
 // Handle an error at the point that you'd want to stop bubbling it up. Avoid handling
 // and re-throwing.
 const handleError = (error: DetError | unknown, options?: DetErrorOptions): void => {
+  // Wrap existing error with more info via `options`.
+  const e: DetError = new DetError(error, options);
+
   // Ignore request cancellation errors.
-  if (isAborted(error)) return;
+  if (isAborted(e)) return;
 
-  let e: DetError | undefined;
-  if (isDetError(error)) {
-    e = error;
-    if (options) e.loadOptions(options);
-  } else {
-    e = new DetError(error, options);
-  }
-
+  // Ensure `handleError` doesn't handle the same exact error more than once.
   if (e.isHandled) {
     if (process.env.IS_DEV) {
       console.warn(`Error "${e.message}" is handled twice.`);
