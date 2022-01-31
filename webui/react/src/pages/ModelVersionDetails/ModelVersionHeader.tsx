@@ -127,10 +127,11 @@ const ModelVersionHeader: React.FC<Props> = (
   }, [ isDeletable, showConfirmDelete ]);
 
   const referenceText = useMemo(() => {
+    const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     return (
       `from determined.experimental import Determined
 client = Determined()
-model_entry = client.get_model("${modelVersion.model.name}")
+model_entry = client.get_model("${escapedModelName}")
 version = model_entry.get_version(${modelVersion.version})
 ckpt = version.checkpoint
 
