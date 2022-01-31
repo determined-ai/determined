@@ -547,13 +547,18 @@ const ExperimentList: React.FC = () => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
+  const handleUpdateColumns = useCallback((columns: string[]) => {
+    updateSettings({ columns });
+  }, [ updateSettings ]);
+
   const openModal = useCallback(() => {
     showModal({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns ?? [],
+      initialVisibleColumns: settings.columns ?? DEFAULT_COLUMNS,
+      onSave: handleUpdateColumns,
     });
-  }, [ transferColumns, settings.columns, showModal ]);
+  }, [ handleUpdateColumns, transferColumns, settings.columns, showModal ]);
 
   const switchShowArchived = useCallback((newState: boolean) => {
     updateSettings({ archived: newState, row: undefined });
