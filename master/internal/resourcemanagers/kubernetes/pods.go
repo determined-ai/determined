@@ -80,11 +80,13 @@ type pods struct {
 	configMapInterface typedV1.ConfigMapInterface
 }
 
+// PodsInfo contains information for pods
 type PodsInfo struct {
 	NumAgents int
 	NumSlots  int
 }
 
+// ResourceSummarize summerize pods resource
 type ResourceSummarize struct{}
 
 // Initialize creates a new global agent actor.
