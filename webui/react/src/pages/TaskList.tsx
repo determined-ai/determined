@@ -135,9 +135,8 @@ const TaskList: React.FC = () => {
     }
   }, [ canceler ]);
 
-  const fetchAll = useCallback((): void => {
-    fetchUsers();
-    fetchTasks();
+  const fetchAll = useCallback(async () => {
+    await Promise.allSettled([ fetchUsers(), fetchTasks() ]);
   }, [ fetchTasks, fetchUsers ]);
 
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
