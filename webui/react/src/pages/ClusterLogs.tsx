@@ -7,7 +7,11 @@ import { jsonToClusterLog } from 'services/decoder';
 
 import css from './ClusterLogs.module.scss';
 
-const ClusterLogs: React.FC = () => {
+interface Props {
+  className?: string
+}
+
+const ClusterLogs: React.FC<Props> = ({ className }: Props) => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
 
@@ -32,7 +36,7 @@ const ClusterLogs: React.FC = () => {
   }, []);
 
   return (
-    <Page bodyNoPadding id="master-logs">
+    <Page bodyNoPadding className={className} id="master-logs">
       <LogViewerCore
         decoder={jsonToClusterLog}
         sortKey="id"
