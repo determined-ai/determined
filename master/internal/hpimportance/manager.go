@@ -92,7 +92,7 @@ func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, ma
 		resolvedPath, pathErr := exec.LookPath(growforestBin)
 		if pathErr != nil {
 			return nil, fmt.Errorf("failed to find 'growforest' binary. Install it with " +
-				"'go install github.com/ryanbressler/CloudForest/growforest'")
+				"'go install github.com/ryanbressler/CloudForest/growforest@v0.0.0-20161201194407-d014dc32840a'") //nolint:lll
 		}
 		growforest = resolvedPath
 	}
