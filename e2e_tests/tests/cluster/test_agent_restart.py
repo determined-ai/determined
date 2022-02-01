@@ -23,9 +23,6 @@ DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 def _get_agent_data(master_url: str) -> List[bindings.v1Agent]:
     r = bindings.get_GetAgents(mock_session(master_url))
-    # command = ["det", "-m", master_url, "agent", "list", "--json"]
-    # output = subprocess.check_output(command).decode()
-    # agent_data = cast(List[Dict[str, Any]], json.loads(output))
     return r.agents or []
 
 
