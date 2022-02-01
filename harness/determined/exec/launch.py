@@ -92,4 +92,4 @@ if __name__ == "__main__":
         logging.error("Checkpoint storage validation failed: {}".format(e))
         sys.exit(1)
 
-    launch(experiment_config)
+    sys.exit(launch(experiment_config))
