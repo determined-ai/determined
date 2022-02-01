@@ -505,7 +505,7 @@ class v1AllocationReadyRequest:
     @classmethod
     def from_json(cls, obj: Json) -> "v1AllocationReadyRequest":
         return cls(
-            allocationId=obj["allocationId"] if obj.get("allocationId", None) is not None else None,
+            allocationId=obj.get("allocationId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4535,12 +4535,12 @@ class v1TaskLogsFieldsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TaskLogsFieldsResponse":
         return cls(
-            allocationIds=obj["allocationIds"] if obj.get("allocationIds", None) is not None else None,
-            agentIds=obj["agentIds"] if obj.get("agentIds", None) is not None else None,
-            containerIds=obj["containerIds"] if obj.get("containerIds", None) is not None else None,
-            rankIds=obj["rankIds"] if obj.get("rankIds", None) is not None else None,
-            stdtypes=obj["stdtypes"] if obj.get("stdtypes", None) is not None else None,
-            sources=obj["sources"] if obj.get("sources", None) is not None else None,
+            allocationIds=obj.get("allocationIds", None),
+            agentIds=obj.get("agentIds", None),
+            containerIds=obj.get("containerIds", None),
+            rankIds=obj.get("rankIds", None),
+            stdtypes=obj.get("stdtypes", None),
+            sources=obj.get("sources", None),
         )
 
     def to_json(self) -> typing.Any:
