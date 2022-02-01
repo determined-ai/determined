@@ -458,7 +458,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		sidecars = append(sidecars, k8sV1.Container{
 			Name:            model.DeterminedK8FluentContainerName,
 			Command:         fluentArgs,
-			Image:           "fluent/fluent-bit:1.6",
+			Image:           p.fluentConfig.Image,
 			ImagePullPolicy: configureImagePullPolicy(spec.Environment),
 			SecurityContext: fluentSecCtx,
 			VolumeMounts:    loggingMounts,

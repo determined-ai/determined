@@ -6,9 +6,10 @@ from typing import Any, Callable, Dict, Optional
 
 import pytest
 import tensorflow as tf
+from tensorflow.python.training.tracking import tracking
 
 import determined as det
-from determined import workload
+from determined import estimator, workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import estimator_linear_model, estimator_xor_model
 
@@ -342,6 +343,15 @@ class TestLinearTrial:
             trial_seed=0,
         )
         controller.run()
+
+
+@pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
+def test_checkpoint_loading(ckpt_ver):
+    checkpoint_dir = os.path.join(
+        utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-estimator"
+    )
+    estm = estimator.load_estimator_from_checkpoint_path(checkpoint_dir)
+    assert isinstance(estm, tracking.AutoTrackable), type(estm)
 
 
 def test_create_trial_instance() -> None:

@@ -1,0 +1,21 @@
+:orphan:
+
+**New Features**
+
+-  There are new methods for loading checkpoints, which are framework specific:
+      -  :meth:`det.pytorch.load_trial_from_checkpoint_dir()`
+      -  :meth:`det.keras.load_model_from_checkpoint_dir()`
+      -  :meth:`det.estimator.load_estimator_from_checkpoint_dir()`
+
+   These new methods are part of a larger effort to support more frameworks.
+
+**Deprecations**
+
+-  ``Checkpoint.load()`` is deprecated. You should instead combine ``Checkpoint.download()`` with
+   one of the new framework-specific functions.
+
+-  The following methods on objects in ``determined.experimental.client`` are formally deprecated
+   (even though they were not technically public methods previously): - ``Model.from_json`` -
+   ``Checkpoint.from_json`` - ``Checkpoint.parse_metadata`` - ``Checkpoint.get_type``
+
+   These methods will be removed in a future version.

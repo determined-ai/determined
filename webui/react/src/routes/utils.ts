@@ -193,6 +193,9 @@ export const paths = {
   clusterLogs: (): string => {
     return '/logs';
   },
+  clusters: (): string => {
+    return '/clusters';
+  },
   dashboard: (): string => {
     return '/dashboard';
   },

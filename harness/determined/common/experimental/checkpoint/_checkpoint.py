@@ -2,6 +2,7 @@ import enum
 import json
 import pathlib
 import shutil
+import warnings
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import constants, storage
@@ -104,6 +105,12 @@ class Checkpoint(object):
         """
         Download checkpoint to local storage.
 
+        See also:
+
+          - :func:`determined.pytorch.load_trial_from_checkpoint_path`
+          - :func:`determined.keras.load_model_from_checkpoint_path`
+          - :func:`determined.estimator.load_estimator_from_checkpoint_path`
+
         Arguments:
             path (string, optional): Top level directory to place the
                 checkpoint under. If this parameter is not set, the checkpoint will
@@ -151,29 +158,38 @@ class Checkpoint(object):
 
                 manager.download(self.uuid, str(local_ckpt_dir))
 
-        if not local_ckpt_dir.joinpath("metadata.json").exists():
-            with open(local_ckpt_dir.joinpath("metadata.json"), "w") as f:
-                json.dump(
-                    {
-                        "determined_version": self.determined_version,
-                        "framework": self.framework,
-                        "format": self.format,
-                        "experiment_id": self.experiment_id,
-                        "trial_id": self.trial_id,
-                        "hparams": self.hparams,
-                        "experiment_config": self.experiment_config,
-                        "metadata": self.metadata,
-                    },
-                    f,
-                    indent=2,
-                )
+        self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
 
         return str(local_ckpt_dir)
+
+    def write_metadata_file(self, path: str) -> None:
+        """
+        Write a file with this Checkpoint's metadata inside of it.
+
+        This is normally executed as part of Checkpoint.download().  However, in the special case
+        where you are accessing the checkpoint files directly (not via Checkpoint.download) you may
+        use this method directly to obtain the latest metadata.
+        """
+        with open(path, "w") as f:
+            json.dump(
+                {
+                    "determined_version": self.determined_version,
+                    "framework": self.framework,
+                    "format": self.format,
+                    "experiment_id": self.experiment_id,
+                    "trial_id": self.trial_id,
+                    "hparams": self.hparams,
+                    "experiment_config": self.experiment_config,
+                    "metadata": self.metadata,
+                },
+                f,
+                indent=2,
+            )
 
     def load(
         self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
     ) -> Any:
-        """Loads a Determiend checkpoint into memory.
+        """Loads a Determined checkpoint into memory.
 
         If the checkpoint is not present on disk it will be downloaded from persistent storage.
         The behavior here is different for TensorFlow and PyTorch checkpoints.
@@ -195,7 +211,25 @@ class Checkpoint(object):
             kwargs: Only relevant for PyTorch checkpoints. The keyword arguments
                 will be applied to ``torch.load``. See documentation for `torch.load
                 <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
+
+        .. warning::
+
+           Checkpoint.load() has been deprecated and will be removed in a future version.
+
+           Please combine Checkpoint.download() with one of the following instead:
+             - ``det.pytorch.load_trial_from_checkpoint()``
+             - ``det.keras.load_trial_from_checkpoint()``
+             - ``det.estimator.load_trial_from_checkpoint()``
         """
+        warnings.warn(
+            "Checkpoint.load() has been deprecated and will be removed in a future version.\n"
+            "\n"
+            "Please combine Checkpoint.download() with one of the following instead:\n"
+            "  - det.pytorch.load_trial_from_checkpoint_path()\n"
+            "  - det.keras.load_model_from_checkpoint_path()\n"
+            "  - det.estimator.load_estimator_from_checkpoint_path()\n",
+            FutureWarning,
+        )
         ckpt_path = self.download(path)
         return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
 
@@ -252,29 +286,55 @@ class Checkpoint(object):
                 the TensorFlow SavedModel. See documentation for
                 `tf.compat.v1.saved_model.load_v2
                 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
+
+        .. warning::
+
+           Checkpoint.load_from_path() has been deprecated and will be removed in a future version.
+
+           Please use one of the following instead to load your checkpoint:
+             - ``det.pytorch.load_trial_from_checkpoint_path()``
+             - ``det.keras.load_model_from_checkpoint_path()``
+             - ``det.estimator.load_estimator_from_checkpoint_path()``
         """
+        warnings.warn(
+            "Checkpoint.load_from_path() has been deprecated and will be removed in a future "
+            "version.\n"
+            "\n"
+            "Please use one of the following instead to load your checkpoint:\n"
+            "  - det.pytorch.load_trial_from_checkpoint_path()\n"
+            "  - det.keras.load_model_from_checkpoint_path()\n"
+            "  - det.estimator.load_estimator_from_checkpoint_path()\n",
+            FutureWarning,
+        )
         checkpoint_dir = pathlib.Path(path)
-        metadata = Checkpoint.parse_metadata(checkpoint_dir)
-        checkpoint_type = Checkpoint.get_type(metadata)
+        metadata = Checkpoint._parse_metadata(checkpoint_dir)
+        checkpoint_type = Checkpoint._get_type(metadata)
 
         if checkpoint_type == ModelFramework.PYTORCH:
-            import determined.common.experimental.checkpoint._torch
+            from determined import pytorch
 
-            return determined.common.experimental.checkpoint._torch.load_model(
-                checkpoint_dir, metadata, **kwargs
-            )
+            return pytorch.load_trial_from_checkpoint_path(path, **kwargs)
 
-        elif checkpoint_type == ModelFramework.TENSORFLOW:
-            import determined.common.experimental.checkpoint._tf
+        if checkpoint_type == ModelFramework.TENSORFLOW:
+            save_format = metadata.get("format", "saved_model")
 
-            return determined.common.experimental.checkpoint._tf.load_model(
-                checkpoint_dir, metadata, tags=tags
-            )
+            # For tf.estimators we save the entire model using the saved_model format.
+            # For tf.keras we save only the weights also using the saved_model format,
+            # which we call saved_weights.
+            if cast(str, save_format) == "saved_model":
+                from determined import estimator
 
-        raise AssertionError("Unknown checkpoint format at {}".format(checkpoint_dir))
+                return estimator.load_estimator_from_checkpoint_path(path, tags)
+
+            if save_format in ("saved_weights", "h5"):
+                from determined import keras
+
+                return keras.load_model_from_checkpoint_path(path, tags)
+
+        raise AssertionError("Unknown checkpoint format at {}".format(path))
 
     @staticmethod
-    def parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
+    def _parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
         metadata_path = directory.joinpath("metadata.json")
         with metadata_path.open() as f:
             metadata = json.load(f)
@@ -282,7 +342,16 @@ class Checkpoint(object):
         return cast(Dict[str, Any], metadata)
 
     @staticmethod
-    def get_type(metadata: Dict[str, Any]) -> ModelFramework:
+    def parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
+        warnings.warn(
+            "Checkpoint.parse_metadata() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return Checkpoint._parse_metadata(directory)
+
+    @staticmethod
+    def _get_type(metadata: Dict[str, Any]) -> ModelFramework:
         if "framework" in metadata:
             if metadata["framework"].startswith("torch"):
                 return ModelFramework.PYTORCH
@@ -300,6 +369,15 @@ class Checkpoint(object):
 
         raise AssertionError("Unknown checkpoint format")
 
+    @staticmethod
+    def get_type(metadata: Dict[str, Any]) -> ModelFramework:
+        warnings.warn(
+            "Checkpoint.get_type() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return Checkpoint._get_type(metadata)
+
     def __repr__(self) -> str:
         if self.model_id is not None:
             return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
@@ -307,14 +385,14 @@ class Checkpoint(object):
             )
         return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
 
-    @staticmethod
-    def from_json(data: Dict[str, Any], session: session.Session) -> "Checkpoint":
+    @classmethod
+    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
         validation = {
             "metrics": data.get("metrics", {}),
             "state": data.get("validation_state", None),
         }
 
-        return Checkpoint(
+        return cls(
             session,
             data["uuid"],
             data.get("experiment_config", data.get("experimentConfig")),
@@ -333,3 +411,12 @@ class Checkpoint(object):
             determined_version=data.get("determined_version", data.get("determinedVersion")),
             model_version=data.get("model_version"),
         )
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
+        warnings.warn(
+            "Checkpoint.from_json() is deprecated and will be removed from the public API "
+            "in a future version",
+            FutureWarning,
+        )
+        return cls._from_json(data, session)

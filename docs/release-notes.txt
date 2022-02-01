@@ -8,6 +8,39 @@
  Version 0.17
 **************
 
+Version 0.17.7
+==============
+
+**Release Date:** January 26, 2022
+
+**Breaking Changes**
+
+-  API: Routes with `/api/v1/models/:id/*` are replaced by `/api/v1/models/:name/*`. Spaces and
+   special characters in a name must be URI-encoded. You can get a model by ID with
+   `/api/v1/models?id=`.
+
+-  API: On the list of models (`/api/v1/models`) the optional name parameter is now a case-sensitive
+   match, unless you add the parameter `name_case_insensitive=true`.
+
+-  Client: `get_model(int: id)` is removed - use `get_model(name: string)` or `get_model_by_id(int:
+   id)`.
+
+-  Model Registry: New model names must not be blank, have a slash, have multiple spaces, only
+   numbers, or be case-insensitive matches to an existing model name.
+
+-  Model Registry: Model names with a forward slash will replace the slash in the name with '--'.
+
+**Bug Fixes**
+
+-  Master: Fix a bug in the priority scheduler where jobs with equal priority would be scheduled or
+   preempted in an order not correctly respecting job submission time.
+
+**Removed Features**
+
+-  Master: removes /experiment-list, /experiment-summaries, and /:experiment_id/kill endpoints from
+   the legacy API. These functions are now replaced by the GRPC API (/api/v1/experiments) in the Web
+   UI, CLI, and tests.
+
 Version 0.17.6
 ==============
 

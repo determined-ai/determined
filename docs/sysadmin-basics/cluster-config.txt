@@ -360,6 +360,10 @@ The master supports the following configuration settings:
       -  ``master_service_name``: The service account Determined uses to interact with the
          Kubernetes API.
 
+      -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
+
+            -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.6``.
+
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
    the job is submitted. Refer to the documentation on :ref:`resource-pools` for more information.

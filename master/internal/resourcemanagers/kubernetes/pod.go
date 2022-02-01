@@ -53,6 +53,7 @@ type pod struct {
 	scheduler                string
 	slotType                 device.Type
 	slotResourceRequests     PodSlotResourceRequests
+	fluentConfig             FluentConfig
 
 	pod              *k8sV1.Pod
 	podName          string
@@ -68,6 +69,16 @@ type pod struct {
 // PodSlotResourceRequests contains the per-slot container requests.
 type PodSlotResourceRequests struct {
 	CPU float32 `json:"cpu"`
+}
+
+// FluentConfig stores k8s-configurable Fluent Bit-related options.
+type FluentConfig struct {
+	Image string `json:"image"`
+}
+
+// DefaultFluentConfig stores defaults for k8s-configurable Fluent Bit-related options.
+var DefaultFluentConfig = FluentConfig{
+	Image: "fluent/fluent-bit:1.6",
 }
 
 type getPodNodeInfo struct{}
@@ -97,6 +108,7 @@ func newPod(
 	slotType device.Type,
 	slotResourceRequests PodSlotResourceRequests,
 	scheduler string,
+	fluentConfig FluentConfig,
 ) *pod {
 	podContainer := cproto.Container{
 		Parent: msg.TaskActor.Address(),
@@ -133,6 +145,7 @@ func newPod(
 		scheduler:                scheduler,
 		slotType:                 slotType,
 		slotResourceRequests:     slotResourceRequests,
+		fluentConfig:             fluentConfig,
 	}
 }
 

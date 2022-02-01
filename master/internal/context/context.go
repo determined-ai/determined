@@ -22,6 +22,16 @@ func (c *DetContext) SetUserSession(session model.UserSession) {
 	c.Set("user-session", session)
 }
 
+// GetUsername returns the username for the relevant echo request context, or unknown.
+func (c *DetContext) GetUsername() string {
+	user := c.Get("user")
+	if user != nil {
+		return user.(model.User).Username
+	}
+	// Could try to fallback to body for logins, but eh.
+	return "unknown"
+}
+
 // MustGetUser returns the user for the relevant echo request context. Panics if the user has not
 // been set, so this method should only be used inside handlers that _require_ authentication.
 func (c *DetContext) MustGetUser() model.User {

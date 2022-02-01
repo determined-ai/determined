@@ -250,10 +250,16 @@ memory.
    specific_version = model.get_version(3)
    latest_version = model.get_version()
 
-   # Depending on the framework used to create the checkpoint, calling
-   # load() on a model version (checkpoint) will return either a TensorFlow or
-   # PyTorch object representing the trained model.
-   tf_or_torch_model = latest_version.load()
+   # Depending on the framework used to create the checkpoint, loading from
+   # the checkpoint may return either a PyTorchTrial instance or a TensorFlow
+   # object representing the trained model.
+   path = latest_version.checkpoint.download()
+
+   from determined import pytorch
+   my_pytorch_trial = pytorch.load_trial_from_checkpoint_path(path)
+
+   from determined import keras
+   my_keras_model = keras.load_model_from_checkpoint_path(path)
 
 The following example lists all the versions of a model. By default, model versions are returned in
 descending order such that the most recent versions are returned first.

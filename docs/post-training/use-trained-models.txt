@@ -138,9 +138,11 @@ the ``model`` attribute of the ``Trial`` object, as shown in the following snipp
 .. code:: python
 
    from determined.experimental import client
+   from determined import pytorch
 
    checkpoint = client.get_experiment(id).top_checkpoint()
-   trial = checkpoint.load()
+   path = checkpoint.download()
+   trial = pytorch.load_trial_from_checkpoint_path(path)
    model = trial.model
 
    predictions = model(samples)
@@ -161,9 +163,11 @@ predictions as shown in the following snippet.
 .. code:: python
 
    from determined.experimental import client
+   from determined import keras
 
    checkpoint = client.get_experiment(id).top_checkpoint()
-   model = checkpoint.load()
+   path = checkpoint.download()
+   model = keras.load_model_from_checkpoint_path(path)
 
    predictions = model(samples)
 

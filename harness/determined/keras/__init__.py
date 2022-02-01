@@ -18,3 +18,4 @@ from determined.keras._tf_keras_multi_gpu import (
     _check_if_aggregation_frequency_will_work,
 )
 from determined.keras._tf_keras_trial import TFKerasTrial, TFKerasTrialController
+from determined.keras._load import load_model_from_checkpoint_path

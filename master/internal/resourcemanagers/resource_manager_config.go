@@ -102,10 +102,12 @@ type KubernetesResourceManagerConfig struct {
 	DefaultScheduler         string                             `json:"default_scheduler"`
 	SlotType                 device.Type                        `json:"slot_type"`
 	SlotResourceRequests     kubernetes.PodSlotResourceRequests `json:"slot_resource_requests"`
+	Fluent                   kubernetes.FluentConfig            `json:"fluent"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
 	SlotType: device.CUDA, // default to CUDA-backed slots.
+	Fluent:   kubernetes.DefaultFluentConfig,
 }
 
 // GetPreemption returns whether the RM is set to preempt.
