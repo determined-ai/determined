@@ -548,7 +548,7 @@ const ExperimentList: React.FC = () => {
   }, [ resetSettings ]);
 
   const handleUpdateColumns = useCallback((columns: string[]) => {
-    updateSettings({ columns });
+    updateSettings({ columns: columns.length === 0 ? [ 'name' ] : columns });
   }, [ updateSettings ]);
 
   const openModal = useCallback(() => {
