@@ -579,6 +579,9 @@ func checkpointFromTrialIDOrUUID(
 }
 
 func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
+	if priority == nil {
+		return nil
+	}
 	oldPriority := resourcemanagers.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.Config.Resources()
