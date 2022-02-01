@@ -1,3 +1,6 @@
+# STL-10 hyperparameters inspired by this blog post:
+# https://generallyintelligent.ai/blog/2020-08-24-understanding-self-supervised-contrastive-learning/
+
 name: stl10_pytorch_const
 entrypoint: model_def:BYOLTrial
 records_per_epoch: 105000
@@ -11,8 +14,6 @@ data:
   download_dir: /data
   num_workers: 8
   validation_subset_size: 4000
-  # For STL-10, we use transform settings from this blog post:
-  # https://generallyintelligent.ai/blog/2020-08-24-understanding-self-supervised-contrastive-learning/
   eval_transform:
     resize_short_edge: 96
     center_crop_size: 96
@@ -73,7 +74,7 @@ searcher:
   metric: test_accuracy
   smaller_is_better: false
   max_length:
-    epochs: 30
+    epochs: 100
 
 bind_mounts:
   - host_path: /tmp
