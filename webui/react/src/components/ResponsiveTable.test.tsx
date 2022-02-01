@@ -250,9 +250,11 @@ describe('ResponsiveTable', () => {
     expect(dropdown).not.toHaveStyle({ opacity: 0, pointerEvents: 'none' });
 
     // Randomly pick an ID and type it into filter search, to select the ID filter option.
-    const idSearchList = [];
+    const idSearchList: string[] = [];
     for (let i = 0; i < PICK_COUNT; i++) {
-      const id = data.random().id;
+      // Ensure a unique id is picked to avoid conflicts in `idSearchList`.
+      let id = data.random().id;
+      while (idSearchList.includes(id)) id = data.random().id;
       idSearchList.push(id);
 
       const filterInput = screen.getByLabelText(ARIA_LABEL_INPUT);
