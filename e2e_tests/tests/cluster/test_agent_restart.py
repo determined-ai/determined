@@ -123,7 +123,7 @@ class ManagedCluster:
     def fetch_config(self) -> Dict:
         master_config = json.loads(
             subprocess.run(
-                ["det", "-m", self.master_url, "master", "config", "-o", "json"],
+                ["det", "-m", self.master_url, "master", "config", "--json"],
                 stdout=subprocess.PIPE,
                 check=True,
             ).stdout.decode()
