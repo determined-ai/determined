@@ -38,13 +38,8 @@ type DB interface {
 	CheckExperimentExists(id int) (bool, error)
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
-	ExperimentCheckpointsRaw(id int, numBest *int) ([]byte, error)
 	ExperimentConfigRaw(id int) ([]byte, error)
 	ExperimentConfigByTrialsRaw(trialIDs []int) ([]byte, error)
-	ExperimentRaw(id int) ([]byte, error)
-	ExperimentListRaw(
-		skipArchived bool, username string, limit, offset int,
-	) ([]byte, error)
 	ExperimentDescriptorsRaw(skipArchived, skipInactive bool) ([]byte, error)
 	ExperimentDescriptorsRawForUser(skipArchived, skipInactive bool,
 		username string) ([]byte, error)

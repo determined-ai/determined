@@ -527,29 +527,6 @@ func (_m *DB) ExperimentByTrialID(id int) (*model.Experiment, error) {
 	return r0, r1
 }
 
-// ExperimentCheckpointsRaw provides a mock function with given fields: id, numBest
-func (_m *DB) ExperimentCheckpointsRaw(id int, numBest *int) ([]byte, error) {
-	ret := _m.Called(id, numBest)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int, *int) []byte); ok {
-		r0 = rf(id, numBest)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int, *int) error); ok {
-		r1 = rf(id, numBest)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ExperimentCheckpointsToGCRaw provides a mock function with given fields: id, experimentBest, trialBest, trialLatest, delete
 func (_m *DB) ExperimentCheckpointsToGCRaw(id int, experimentBest int, trialBest int, trialLatest int, delete bool) ([]byte, error) {
 	ret := _m.Called(id, experimentBest, trialBest, trialLatest, delete)
@@ -751,29 +728,6 @@ func (_m *DB) ExperimentLabelUsage() (map[string]int, error) {
 	return r0, r1
 }
 
-// ExperimentListRaw provides a mock function with given fields: skipArchived, username, limit, offset
-func (_m *DB) ExperimentListRaw(skipArchived bool, username string, limit int, offset int) ([]byte, error) {
-	ret := _m.Called(skipArchived, username, limit, offset)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(bool, string, int, int) []byte); ok {
-		r0 = rf(skipArchived, username, limit, offset)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(bool, string, int, int) error); ok {
-		r1 = rf(skipArchived, username, limit, offset)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ExperimentModelDefinitionRaw provides a mock function with given fields: id
 func (_m *DB) ExperimentModelDefinitionRaw(id int) ([]byte, error) {
 	ret := _m.Called(id)
@@ -827,29 +781,6 @@ func (_m *DB) ExperimentNumTrials(id int) (int64, error) {
 		r0 = rf(id)
 	} else {
 		r0 = ret.Get(0).(int64)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ExperimentRaw provides a mock function with given fields: id
-func (_m *DB) ExperimentRaw(id int) ([]byte, error) {
-	ret := _m.Called(id)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int) []byte); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
 	}
 
 	var r1 error
