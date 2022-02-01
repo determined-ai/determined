@@ -38,9 +38,6 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
 @pytest.mark.e2e_cpu
 def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_slots_per_trial(config, 1)
-    config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
         config, "python3 -m nonexistent_launch_module model_def:CIFARTrial"
     )
