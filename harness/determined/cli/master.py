@@ -16,6 +16,8 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 @authentication.required
 def config(args: Namespace) -> None:
     response = api.get(args.master, "config")
+    if args.output is not None:
+        raise DeprecationWarning(f"--output is deprecated. Use --{args.output} instead.")
     if args.json:
         print(json.dumps(response.json(), indent=4))
     else:
@@ -70,7 +72,8 @@ def logs(args: Namespace) -> None:
 args_description = [
     Cmd("m|aster", None, "manage master", [
         Cmd("config", config, "fetch master config", [
-            Group(format_args["json"], format_args["yaml"])
+            Group(format_args["json"], format_args["yaml"]),
+            Arg("-o", "--output", type=str, help="[Deprecated] Output format, one of json|yaml")
         ]),
         Cmd("info", get_master, "fetch master info", [
             Group(format_args["json"], format_args["yaml"])
