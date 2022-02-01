@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList as List } from 'react-window';
 
 import { isEqual } from 'utils/data';
-import { camelCaseToSentence, sentenceToCamelCase } from 'utils/string';
+import { camelCaseToSentence } from 'utils/string';
 
 import css from './useCustomizeColumnsModal.module.scss';
 
@@ -71,11 +71,13 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   }, [ modalState.columns, visibleColumns ]);
 
   const filteredHiddenColumns = useMemo(() => {
-    return hiddenColumns.filter(column => column.toLowerCase().includes(searchTerm));
+    const regex = RegExp(searchTerm, 'i');
+    return hiddenColumns.filter(column => regex.test(camelCaseToSentence(column)));
   }, [ hiddenColumns, searchTerm ]);
 
   const filteredVisibleColumns = useMemo(() => {
-    return visibleColumns.filter(column => column.toLowerCase().includes(searchTerm));
+    const regex = RegExp(searchTerm, 'i');
+    return visibleColumns.filter(column => regex.test(camelCaseToSentence(column)));
   }, [ visibleColumns, searchTerm ]);
 
   const makeHidden = useCallback((transfer: string | string[]) => {
@@ -98,9 +100,20 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     setVisibleColumns(state.defaultVisibleColumns);
   }, []);
 
-  const renderColumnName = useCallback((columnName:string) => {
-    return columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
-  }, []);
+  const renderColumnName = useCallback((columnName: string) => {
+    const sentenceColumnName = columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
+    const regex = new RegExp(searchTerm, 'i');
+    if (searchTerm === '' || !regex.test(sentenceColumnName)){
+      return <span>{sentenceColumnName}</span>;
+    }
+    const searchIndex = sentenceColumnName.search(regex);
+    return (
+      <span>{sentenceColumnName.slice(0, searchIndex)}
+        <mark>{sentenceColumnName.match(regex)?.[0]}</mark>
+        {sentenceColumnName.slice(searchIndex + searchTerm.length)}
+      </span>
+    );
+  }, [ searchTerm ]);
 
   const renderRow = useCallback((row, style, handleClick) => {
     return (

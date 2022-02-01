@@ -41,6 +41,10 @@
             &:hover {
               background-color: var(--theme-colors-monochrome-16);
             }
+            mark {
+              background-color: #faed27;
+              padding: 0;
+            }
           }
         }
       }
