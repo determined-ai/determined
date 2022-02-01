@@ -119,7 +119,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
 
 		ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-			Priority: c.Config.Resources.Priority,
+			Priority: *c.Config.Resources.Priority,
 			Handler:  ctx.Self(),
 		})
 
@@ -313,11 +313,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case job.SetGroupPriority:
-		if msg.Priority != nil {
-			err := c.setPriority(ctx, *msg.Priority)
-			if err != nil {
-				ctx.Respond(err)
-			}
+		err := c.setPriority(ctx, msg.Priority)
+		if err != nil {
+			ctx.Respond(err)
 		}
 
 	default:
@@ -333,7 +331,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int) error {
 	}
 	c.Config.Resources.Priority = &priority
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-		Priority: &priority,
+		Priority: priority,
 		Handler:  ctx.Self(),
 	})
 	return nil

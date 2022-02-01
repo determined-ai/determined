@@ -376,9 +376,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 	case job.SetGroupPriority:
 		g := rp.getOrCreateGroup(ctx, msg.Handler)
-		if msg.Priority != nil {
-			g.priority = msg.Priority
-		}
+		g.priority = &msg.Priority
 
 		if rp.config.Scheduler.Priority != nil {
 			ctx.Log().Infof("setting priority for group of %s to %d",
