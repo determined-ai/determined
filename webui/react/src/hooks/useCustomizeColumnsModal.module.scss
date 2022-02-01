@@ -11,6 +11,17 @@
     .column {
       flex-basis: 50%;
 
+      .visibleTitleRow {
+        display: flex;
+        justify-content: space-between;
+
+        & > * {
+          align-self: start;
+          border: 0;
+          height: 100%;
+          padding: 0;
+        }
+      }
       ul {
         border: 1px solid var(--theme-colors-monochrome-10);
         border-radius: var(--theme-sizes-border-radius);

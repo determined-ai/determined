@@ -2,6 +2,7 @@ import { Button, Input, Modal, ModalFuncProps } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { isEqual } from 'utils/data';
 import { camelCaseToSentence, sentenceToCamelCase } from 'utils/string';
 
 import css from './useCustomizeColumnsModal.module.scss';
@@ -120,7 +121,14 @@ const useCustomizeColumnsModal = (): ModalHooks => {
             </Button>
           </div>
           <div className={css.column}>
-            <h2>Visible</h2>
+            <div className={css.visibleTitleRow}>
+              <h2>Visible</h2>
+              {!isEqual(state.defaultVisibleColumns, visibleColumns) && (
+                <Button type="link" onClick={() => resetColumns(state)}>
+                  Reset
+                </Button>
+              )}
+            </div>
             <ul>
               {filteredVisibleColumns.map(column => (
                 <li key={column} onClick={() => makeHidden(column)}>
@@ -137,9 +145,11 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     );
   }, [ handleSearch,
     filteredHiddenColumns,
+    visibleColumns,
     filteredVisibleColumns,
     renderColumnName,
     makeVisible,
+    resetColumns,
     makeHidden ]);
 
   const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
