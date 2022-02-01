@@ -22,22 +22,25 @@
           padding: 0;
         }
       }
-      ul {
+      .listContainer {
         border: 1px solid var(--theme-colors-monochrome-10);
         border-radius: var(--theme-sizes-border-radius);
-        height: 200px;
-        list-style-type: none;
-        margin-bottom: 0;
-        overflow-y: auto;
-        padding-left: 0;
-        padding-top: var(--theme-sizes-layout-small);
+          
+        ul {
+          height: 200px;
+          list-style-type: none;
+          margin-bottom: 0;
+          overflow-y: auto;
+          padding-left: 0;
+          padding-top: var(--theme-sizes-layout-small);
 
-        li {
-          cursor: pointer;
-          padding-left: var(--theme-sizes-layout-small);
+          li {
+            cursor: pointer;
+            padding-left: var(--theme-sizes-layout-small);
 
-          &:hover {
-            background-color: var(--theme-colors-monochrome-16);
+            &:hover {
+              background-color: var(--theme-colors-monochrome-16);
+            }
           }
         }
       }

@@ -1,6 +1,7 @@
 import { Button, Input, Modal, ModalFuncProps } from 'antd';
 import { ModalFunc } from 'antd/es/modal/confirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
 
 import { isEqual } from 'utils/data';
 import { camelCaseToSentence, sentenceToCamelCase } from 'utils/string';
@@ -101,6 +102,24 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     return columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
   }, []);
 
+  const renderRow = useCallback((row, style, handleClick) => {
+    return (
+      <li style={style} onClick={handleClick}>
+        {renderColumnName(row)}
+      </li>
+    );
+  }, [ renderColumnName ]);
+
+  const renderHiddenRow = useCallback(({ index, style }) => {
+    const row = filteredHiddenColumns[index];
+    return renderRow(row, style, () => makeVisible(row));
+  }, [ filteredHiddenColumns, makeVisible, renderRow ]);
+
+  const renderVisibleRow = useCallback(({ index, style }) => {
+    const row = filteredVisibleColumns[index];
+    return renderRow(row, style, () => makeHidden(row));
+  }, [ filteredVisibleColumns, makeHidden, renderRow ]);
+
   const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
@@ -109,13 +128,15 @@ const useCustomizeColumnsModal = (): ModalHooks => {
         <div className={css.columns}>
           <div className={css.column}>
             <h2>Hidden</h2>
-            <ul>
-              {filteredHiddenColumns.map(column => (
-                <li key={column} onClick={() => makeVisible(column)}>
-                  {renderColumnName(column)}
-                </li>
-              ))}
-            </ul>
+            <List
+              className={css.listContainer}
+              height={200}
+              innerElementType="ul"
+              itemCount={filteredHiddenColumns.length}
+              itemSize={24}
+              width="100%">
+              {renderHiddenRow}
+            </List>
             <Button type="link" onClick={() => makeVisible(filteredHiddenColumns)}>
               Add All
             </Button>
@@ -129,13 +150,15 @@ const useCustomizeColumnsModal = (): ModalHooks => {
                 </Button>
               )}
             </div>
-            <ul>
-              {filteredVisibleColumns.map(column => (
-                <li key={column} onClick={() => makeHidden(column)}>
-                  {renderColumnName(column)}
-                </li>
-              ))}
-            </ul>
+            <List
+              className={css.listContainer}
+              height={200}
+              innerElementType="ul"
+              itemCount={filteredVisibleColumns.length}
+              itemSize={24}
+              width="100%">
+              {renderVisibleRow}
+            </List>
             <Button type="link" onClick={() => makeHidden(filteredVisibleColumns)}>
               Remove All
             </Button>
@@ -145,9 +168,10 @@ const useCustomizeColumnsModal = (): ModalHooks => {
     );
   }, [ handleSearch,
     filteredHiddenColumns,
+    renderHiddenRow,
     visibleColumns,
     filteredVisibleColumns,
-    renderColumnName,
+    renderVisibleRow,
     makeVisible,
     resetColumns,
     makeHidden ]);
