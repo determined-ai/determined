@@ -527,40 +527,44 @@ def pause(args: Namespace) -> None:
 @authentication.required
 def set_description(args: Namespace) -> None:
     session = setup_session(args)
-    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    experiment.description = args.description
-    bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
+    exp = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
+    exp_patch.description = args.description
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
 
 
 @authentication.required
 def set_name(args: Namespace) -> None:
     session = setup_session(args)
-    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    experiment.name = args.name
-    bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
+    exp = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
+    exp_patch.name = args.name
+    bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
 
 
 @authentication.required
 def add_label(args: Namespace) -> None:
     session = setup_session(args)
-    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    if experiment.labels is None:
-        experiment.labels = []
-    if args.label not in experiment.labels:
-        experiment.labels = list(experiment.labels) + [args.label]
-        bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
+    exp = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
+    if exp_patch.labels is None:
+        exp_patch.labels = []
+    if args.label not in exp_patch.labels:
+        exp_patch.labels = list(exp_patch.labels) + [args.label]
+        bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
 
 
 @authentication.required
 def remove_label(args: Namespace) -> None:
     session = setup_session(args)
-    experiment = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    if (experiment.labels is not None) and (args.label in experiment.labels):
-        experiment.labels = [label for label in experiment.labels if label != args.label]
-        bindings.patch_PatchExperiment(session, body=experiment, experiment_id=args.experiment_id)
+    exp = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
+    exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
+    if (exp_patch.labels is not None) and (args.label in exp_patch.labels):
+        exp_patch.labels = [label for label in exp_patch.labels if label != args.label]
+        bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
 
 
