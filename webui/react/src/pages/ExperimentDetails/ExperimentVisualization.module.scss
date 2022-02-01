@@ -15,5 +15,12 @@
   }
 }
 .alert {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: var(--theme-sizes-layout-big);
+
+  & > *:nth-child(2) {
+    flex-grow: 1;
+  }
 }
