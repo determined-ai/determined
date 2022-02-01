@@ -36,11 +36,12 @@ const useModalChangePassword = (): ModalHooks => {
               {
                 message: 'Incorrect password',
                 validator: async (rule, value) => {
-                  if (!value) return false;
-                  return await login({
-                    password: value || '',
-                    username: username || '',
-                  });
+                  if (value) {
+                    return await login({
+                      password: value || '',
+                      username: username || '',
+                    });
+                  }
                 },
               },
             ]}
@@ -89,7 +90,7 @@ const useModalChangePassword = (): ModalHooks => {
           </Form.Item>
           <Form.Item>
             <div className={css.buttons}>
-              <Button onClick={() => modalClose()}>Cancel</Button>
+              <Button onClick={() => onCancel()}>Cancel</Button>
               <Button htmlType="submit" type="primary">
                 Change Password
               </Button>
@@ -100,12 +101,18 @@ const useModalChangePassword = (): ModalHooks => {
     );
   };
 
+  const onCancel = () => {
+    form.resetFields();
+    modalClose();
+  };
+
   const modalOpen = () => {
     openOrUpdate({
       className: css.noFooter,
       closable: true,
       content: getModalContent(),
       icon: null,
+      onCancel,
       title: 'Change Password',
     });
   };
