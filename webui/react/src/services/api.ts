@@ -39,6 +39,10 @@ export const getUsers = generateDetApi<
   Service.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
 >(Config.getUsers);
 
+export const setUserPassword = generateDetApi<
+  Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
+>(Config.setUserPassword);
+
 /* Info */
 
 export const getInfo = generateDetApi<
