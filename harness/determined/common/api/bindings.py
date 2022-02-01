@@ -220,24 +220,6 @@ class protobufAny:
             "value": self.value if self.value is not None else None,
         }
 
-class protobufFieldMask:
-    def __init__(
-        self,
-        paths: "typing.Optional[typing.Sequence[str]]" = None,
-    ):
-        self.paths = paths
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "protobufFieldMask":
-        return cls(
-            paths=obj.get("paths", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "paths": self.paths if self.paths is not None else None,
-        }
-
 class protobufNullValue(enum.Enum):
     NULL_VALUE = "NULL_VALUE"
 
@@ -1039,6 +1021,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.progress = progress
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1046,7 +1029,6 @@ class v1Experiment:
         self.notes = notes
         self.jobId = jobId
         self.forkedFrom = forkedFrom
-        self.progress = progress
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1059,6 +1041,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1066,7 +1049,6 @@ class v1Experiment:
             notes=obj.get("notes", None),
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
-            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -1079,6 +1061,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "progress": dump_float(self.progress) if self.progress is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -1086,7 +1069,6 @@ class v1Experiment:
             "notes": self.notes if self.notes is not None else None,
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
-            "progress": dump_float(self.progress) if self.progress is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -3061,6 +3043,40 @@ class v1PaginationRequest:
         return {
             "offset": self.offset if self.offset is not None else None,
             "limit": self.limit if self.limit is not None else None,
+        }
+
+class v1PatchExperiment:
+    def __init__(
+        self,
+        id: int,
+        description: "typing.Optional[str]" = None,
+        labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+        name: "typing.Optional[str]" = None,
+        notes: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.description = description
+        self.labels = labels
+        self.name = name
+        self.notes = notes
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchExperiment":
+        return cls(
+            id=obj["id"],
+            description=obj.get("description", None),
+            labels=obj.get("labels", None),
+            name=obj.get("name", None),
+            notes=obj.get("notes", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id,
+            "description": self.description if self.description is not None else None,
+            "labels": self.labels if self.labels is not None else None,
+            "name": self.name if self.name is not None else None,
+            "notes": self.notes if self.notes is not None else None,
         }
 
 class v1PatchExperimentResponse:
@@ -6536,7 +6552,7 @@ def post_MarkAllocationReservationDaemon(
 def patch_PatchExperiment(
     session: "client.Session",
     *,
-    body: "v1Experiment",
+    body: "v1PatchExperiment",
     experiment_id: int,
 ) -> "v1PatchExperimentResponse":
     _params = None
