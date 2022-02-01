@@ -28,20 +28,15 @@ const useModalChangePassword = (): ModalHooks => {
           <Form.Item
             label="Old Password"
             name="oldPassword"
+            required
             rules={[
-              {
-                message: 'You must enter your current password',
-                required: true,
-              },
               {
                 message: 'Incorrect password',
                 validator: async (rule, value) => {
-                  if (value) {
-                    return await login({
-                      password: value || '',
-                      username: username || '',
-                    });
-                  }
+                  return await login({
+                    password: value || '',
+                    username: username || '',
+                  });
                 },
               },
             ]}
@@ -61,6 +56,10 @@ const useModalChangePassword = (): ModalHooks => {
               {
                 message: 'Your new password must include a lowercase',
                 pattern: /[a-z]+/,
+              },
+              {
+                message: 'Your new password must include a number',
+                pattern: /\d/,
               },
             ]}>
             <Input.Password />
