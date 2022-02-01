@@ -3,6 +3,8 @@ entrypoint: model_def:BYOLTrial
 records_per_epoch: 1271158
 resources:
   slots_per_trial: 32
+min_checkpoint_period:
+  epochs: 1
 min_validation_period:
   epochs: 100
 
@@ -16,7 +18,6 @@ data:
   dataset_name: imagenet
   # Change to location of preloaded ImageNet.
   download_dir: /mnt/shared_fs/imagenet
-  use_rank_for_download_dir: false
   num_workers: 8
   # Classifier LR is selected using a subset of the training dataset before reporting on the test dataset.
   validation_subset_size: 10009
@@ -84,6 +85,7 @@ hyperparameters:
 searcher:
   name: single
   metric: test_accuracy
+  smaller_is_better: false
   max_length:
     epochs: 1000
 

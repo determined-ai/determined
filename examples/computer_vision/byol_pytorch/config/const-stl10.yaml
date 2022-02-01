@@ -9,7 +9,6 @@ min_validation_period:
 data:
   dataset_name: stl10
   download_dir: /data
-  use_rank_for_download_dir: true
   num_workers: 8
   validation_subset_size: 4000
   # For STL-10, we use transform settings from this blog post:
@@ -72,6 +71,7 @@ hyperparameters:
 searcher:
   name: single
   metric: test_accuracy
+  smaller_is_better: false
   max_length:
     epochs: 30
 

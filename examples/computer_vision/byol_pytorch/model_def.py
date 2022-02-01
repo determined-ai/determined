@@ -1,6 +1,5 @@
 from attrdict import AttrDict
 import math
-import os
 from typing import Any, cast, Dict, Sequence, Union
 
 from determined.pytorch import (
@@ -108,13 +107,6 @@ class BYOLTrial(PyTorchTrial):
             "max_length"
         ]["epochs"]
         self.rank = self.context.distributed.get_rank()
-        if self.data_config.use_rank_for_download_dir:
-            # Avoid process contention when downloading data inside each process.
-            self.download_dir = os.path.join(
-                self.data_config.download_dir, str(self.rank)
-            )
-        else:
-            self.download_dir = self.data_config.download_dir
         self._init_transforms()
         self._init_self_supervised()
         self._init_classifiers()
@@ -222,9 +214,7 @@ class BYOLTrial(PyTorchTrial):
         return {"classifier_train": ClassifierTrainCallback(trial=self)}
 
     def build_training_data_loader(self) -> DataLoader:
-        train_dataset = build_dataset(
-            self.data_config, self.download_dir, split=DatasetSplit.TRAIN
-        )
+        train_dataset = build_dataset(self.data_config, split=DatasetSplit.TRAIN)
         # In order to ensure distributed training shards correctly, we round the dataset size
         # down to be a multiple of the global batch size.
         # See comment here for more details:
@@ -243,9 +233,7 @@ class BYOLTrial(PyTorchTrial):
         )
 
     def _build_cls_training_data_loader(self) -> DataLoader:
-        cls_train_dataset = build_dataset(
-            self.data_config, self.download_dir, DatasetSplit.CLS_TRAIN
-        )
+        cls_train_dataset = build_dataset(self.data_config, DatasetSplit.CLS_TRAIN)
         rounded_length = (
             len(cls_train_dataset) // self.context.get_global_batch_size()
         ) * self.context.get_global_batch_size()
@@ -268,12 +256,9 @@ class BYOLTrial(PyTorchTrial):
         # We combine these two datasets, and then use a custom reducer to calculate the final result.
         lr_val_dataset = build_dataset(
             self.data_config,
-            self.download_dir,
             DatasetSplit.CLS_VALIDATION,
         )
-        test_dataset = build_dataset(
-            self.data_config, self.download_dir, DatasetSplit.TEST
-        )
+        test_dataset = build_dataset(self.data_config, DatasetSplit.TEST)
         combined = JointDataset([lr_val_dataset, test_dataset], ["lr_val", "test"])
         return DataLoader(
             combined,

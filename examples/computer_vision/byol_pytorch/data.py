@@ -5,6 +5,7 @@ import os
 import random
 from typing import Callable, List, Tuple
 
+from filelock import FileLock
 import torch
 import torch.nn as nn
 from torchvision.datasets import CIFAR10, ImageFolder, STL10
@@ -274,17 +275,18 @@ DATASET_BUILD_MAP = {
 }
 
 
-def build_dataset(
-    data_config: AttrDict, download_dir: str, split: DatasetSplit
-) -> Dataset:
+def build_dataset(data_config: AttrDict, split: DatasetSplit) -> Dataset:
     """
     Returns specified Dataset object.
 
     Downloads CIFAR10 / STL10 if necessary.  Will not download ImageNet -- assumed to be on disk.
     """
     name = data_config.dataset_name
+    download_dir = data_config.download_dir
     if name in DATASET_BUILD_MAP:
-        dataset = DATASET_BUILD_MAP[name](data_config, download_dir, split)
+        # Lock so that only one process attempts download at a time.
+        with FileLock(os.path.join(download_dir, "download.lock")):
+            dataset = DATASET_BUILD_MAP[name](data_config, download_dir, split)
         if split == DatasetSplit.TRAIN:
             return DoubleTransformDataset(
                 dataset,

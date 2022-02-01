@@ -9,7 +9,6 @@ min_validation_period:
 data:
   dataset_name: cifar10
   download_dir: /data
-  use_rank_for_download_dir: true
   num_workers: 8
   validation_subset_size: 5000
   eval_transform:
@@ -70,6 +69,7 @@ hyperparameters:
 searcher:
   name: single
   metric: test_accuracy
+  smaller_is_better: false
   max_length:
     epochs: 30
 
