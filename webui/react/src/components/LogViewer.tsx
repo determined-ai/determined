@@ -269,7 +269,9 @@ const LogViewer: React.FC<Props> = forwardRef((
       if (!size) return false;
       const top = size.top;
       const bottom = size.top + size.height;
-      return (top > viewTop && top < viewBottom) || (bottom > viewTop && bottom < viewBottom);
+      return (top > viewTop && top < viewBottom)
+        || (bottom > viewTop && bottom < viewBottom)
+        || (top < viewTop && bottom > viewBottom);
     });
   }, [ config, logs, scroll ]);
 
