@@ -1,7 +1,7 @@
 py_bindings_dest=determined/common/api/bindings.py
 
 .PHONY: build
-build: gen $(py_bindings_dest)
+build: gen
 	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
 
 .PHONY: publish
@@ -43,7 +43,6 @@ clean: ungen
 	rm -rf pip-wheel-metadata/
 	rm -rf dist/
 	rm -rf build/
-	rm $(py_bindings_dest)
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
 AWS_TEMPLATES_PATH := determined/deploy/aws/templates
