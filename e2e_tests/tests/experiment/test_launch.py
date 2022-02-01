@@ -49,7 +49,7 @@ def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> Non
         config, conf.cv_examples_path("cifar10_pytorch")
     )
     trials = exp.experiment_trials(experiment_id)
-    (Determined(conf.make_master_url()).get_trial(trials[0]["id"]))
+    Determined(conf.make_master_url()).get_trial(trials[0]["id"])
 
     collect_trial_profiles(trials[0]["id"])
 

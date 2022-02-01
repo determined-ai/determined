@@ -668,8 +668,7 @@ def run_failure_test_with_temp_config(
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
-        experiment_id = run_failure_test(tf.name, model_def_path, error_str=error_str)
-    return experiment_id
+        return run_failure_test(tf.name, model_def_path, error_str=error_str)
 
 
 def shared_fs_checkpoint_config() -> Dict[str, str]:
