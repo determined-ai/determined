@@ -15,3 +15,7 @@ def setup_session(args: Namespace) -> session.Session:
     )
 
     return session.Session(master, args.user, authentication.cli_auth, cert)
+
+def mock_session(master_url: str) -> session.Session:
+    return session.Session(master_url, user=None, auth=None, cert=None)
+

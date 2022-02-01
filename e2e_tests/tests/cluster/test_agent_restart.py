@@ -5,6 +5,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union, cast
+from determined.common.api import bindings
+from determined.cli.session import mock_session
 
 import pytest
 
@@ -19,11 +21,12 @@ DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reatt
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 
-def _get_agent_data(master_url: str) -> List[Dict[str, Any]]:
-    command = ["det", "-m", master_url, "agent", "list", "--json"]
-    output = subprocess.check_output(command).decode()
-    agent_data = cast(List[Dict[str, Any]], json.loads(output))
-    return agent_data
+def _get_agent_data(master_url: str) -> List[bindings.v1Agent]:
+    r = bindings.get_GetAgents(mock_session(master_url))
+    # command = ["det", "-m", master_url, "agent", "list", "--json"]
+    # output = subprocess.check_output(command).decode()
+    # agent_data = cast(List[Dict[str, Any]], json.loads(output))
+    return r.agents or []
 
 
 class ManagedCluster:
@@ -59,7 +62,7 @@ class ManagedCluster:
             agent_data = _get_agent_data(self.master_url)
             if len(agent_data) == 0:
                 break
-            if len(agent_data) == 1 and agent_data[0]["draining"] is True:
+            if len(agent_data) == 1 and agent_data[0].draining is True:
                 break
             time.sleep(1)
         else:
@@ -67,7 +70,7 @@ class ManagedCluster:
 
     def restart_agent(self, wait_for_amnesia: bool = True) -> None:
         agent_data = _get_agent_data(self.master_url)
-        if len(agent_data) == 1 and agent_data[0]["enabled"]:
+        if len(agent_data) == 1 and agent_data[0].enabled:
             return
 
         if wait_for_amnesia:
@@ -88,8 +91,8 @@ class ManagedCluster:
             agent_data = _get_agent_data(self.master_url)
             if (
                 len(agent_data) == 1
-                and agent_data[0]["enabled"] is True
-                and agent_data[0]["draining"] is False
+                and agent_data[0].enabled is True
+                and agent_data[0].draining is False
             ):
                 break
             time.sleep(1)
@@ -106,8 +109,8 @@ class ManagedCluster:
                 agent_data = _get_agent_data(self.master_url)
                 if (
                     len(agent_data) == 1
-                    and agent_data[0]["enabled"] is True
-                    and agent_data[0]["draining"] is False
+                    and agent_data[0].enabled is True
+                    and agent_data[0].draining is False
                 ):
                     break
                 time.sleep(1)
@@ -117,18 +120,11 @@ class ManagedCluster:
     def ensure_agent_ok(self) -> None:
         agent_data = _get_agent_data(self.master_url)
         assert len(agent_data) == 1
-        assert agent_data[0]["enabled"] is True
-        assert agent_data[0]["draining"] is False
+        assert agent_data[0].enabled is True
+        assert agent_data[0].draining is False
 
     def fetch_config(self) -> Dict:
-        master_config = json.loads(
-            subprocess.run(
-                ["det", "-m", self.master_url, "master", "config", "-o", "json"],
-                stdout=subprocess.PIPE,
-                check=True,
-            ).stdout.decode()
-        )
-        return cast(Dict, master_config)
+        return bindings.get_GetMasterConfig(mock_session(self.master_url)).config
 
     def fetch_config_reattach_wait(self) -> float:
         s = self.fetch_config()["resource_pools"][0]["agent_reconnect_wait"]
