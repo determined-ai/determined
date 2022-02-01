@@ -35,7 +35,7 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
     )
 
 
-@pytest.mark.parallel
+@pytest.mark.e2e_cpu
 def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
