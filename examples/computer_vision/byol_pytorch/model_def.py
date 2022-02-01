@@ -1,5 +1,4 @@
 from attrdict import AttrDict
-import math
 from typing import Any, cast, Dict, Sequence, Union
 
 from determined.pytorch import (
@@ -10,7 +9,6 @@ from determined.pytorch import (
 )
 import torch
 import torch.nn.functional as F
-from torch.optim import Optimizer
 
 from backbone import BACKBONE_METADATA_BY_NAME
 from byol_pytorch import BYOL
@@ -27,57 +25,13 @@ from optim import (
     build_cls_optimizer,
     reset_model_parameters,
     reset_sgd_optimizer,
+    set_learning_rate_warmup_cosine_anneal,
+    set_ema_beta_cosine_anneal,
 )
 from reducers import AvgReducer, ValidatedAccuracyReducer
 from utils import LambdaModule
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
-
-
-def set_learning_rate_warmup_cosine_anneal(
-    hparams: AttrDict,
-    optimizer: Optimizer,
-    global_batch_size: int,
-    batch_idx: int,
-    batches_per_epoch: int,
-) -> None:
-    """
-    Cosine annealing with warmup, as described in BYOL paper.
-    """
-    # Learning rate scales linearly with batch size, is equal to base when global_batch_size==base_batch_size.
-    p = hparams.self_supervised.learning_rate
-    assert hparams.total_epochs > p.warmup_epochs
-    base_lr = p.base * (global_batch_size / p.base_batch_size)
-    fractional_epoch = batch_idx / batches_per_epoch
-    if fractional_epoch <= p.warmup_epochs:
-        # Warmup domain.
-        adjusted_lr = base_lr * (fractional_epoch / p.warmup_epochs)
-    else:
-        # Cosine annealing domain.
-        cosine_progress = (fractional_epoch - p.warmup_epochs) / (
-            hparams.total_epochs - p.warmup_epochs
-        )
-        cosine_multiplier = 1 + math.cos(math.pi * cosine_progress)
-        adjusted_lr = base_lr * cosine_multiplier
-    for param_group in optimizer.param_groups:
-        param_group["lr"] = adjusted_lr
-
-
-def set_ema_beta_cosine_anneal(
-    hparams: AttrDict, byol_model: BYOL, batch_idx: int, batches_per_epoch: int
-) -> None:
-    """
-    Anneals the exponential moving average coefficient, as described in the BYOL paper.
-    """
-    fractional_epoch = batch_idx / batches_per_epoch
-    # 1 − (1 − τbase) · (cos(πk/K) + 1)/2
-    progress = fractional_epoch / hparams.total_epochs
-    ema_beta = 1 - (
-        (1 - hparams.self_supervised.moving_average_decay_base)
-        * (math.cos(math.pi * progress) + 1)
-        / 2
-    )
-    byol_model.target_ema_updater.beta = ema_beta
 
 
 def classifier_loss(
