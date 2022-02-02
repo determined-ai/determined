@@ -17,6 +17,10 @@ official_examples = [
         "tutorials/imagenet_pytorch/const_cifar.yaml",
     ),
     (
+        "computer_vision/byol_pytorch",
+        "computer_vision/byol_pytorch/const-cifar10.yaml",
+    ),
+    (
         "computer_vision/cifar10_pytorch",
         "computer_vision/cifar10_pytorch/const.yaml",
     ),
