@@ -12,9 +12,16 @@ interface Props extends Omit<SpinProps, 'size'>, SpinState {
   size?: IconSize;
 }
 
-const Spinner: React.FC<Props> = ({ center, size, tip, ...props }: PropsWithChildren<Props>) => {
+const Spinner: React.FC<Props> = ({
+  center,
+  className,
+  size,
+  tip,
+  ...props
+}: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
 
+  if (className) classes.push(className);
   if (center || tip) classes.push(css.center);
 
   return (
