@@ -2,8 +2,9 @@ import json
 from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
+from determined.cli.session import setup_session
 from determined.common import api, constants, experimental
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Determined
 
@@ -62,16 +63,13 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
 @authentication.required
 def list_checkpoints(args: Namespace) -> None:
-    params = {}
-    if args.best is not None:
-        if args.best < 0:
-            raise AssertionError("--best must be a non-negative integer")
-        params["best"] = args.best
-
-    r = api.get(
-        args.master, "experiments/{}/checkpoints".format(args.experiment_id), params=params
-    ).json()
-    searcher_metric = r["metric_name"]
+    r = bindings.get_GetExperimentCheckpoints(
+        setup_session(args), id=args.experiment_id, limit=args.best
+    )
+    checkpoints = r.checkpoints
+    searcher_metric = None
+    if len(checkpoints) > 0:
+        searcher_metric = checkpoints[0].experimentConfig["searcher"]["metric"]
 
     headers = [
         "Trial ID",
@@ -84,15 +82,15 @@ def list_checkpoints(args: Namespace) -> None:
     ]
     values = [
         [
-            c["trial_id"],
-            c["step"]["total_batches"],
-            c["state"],
-            api.metric.get_validation_metric(searcher_metric, c["step"]["validation"]),
-            c["uuid"],
-            render.format_resources(c["resources"]),
-            render.format_resource_sizes(c["resources"]),
+            c.trialId,
+            c.batchNumber,
+            c.state.value.replace("STATE_", ""),
+            c.metrics.validationMetrics[searcher_metric],
+            c.uuid,
+            render.format_resources(c.resources),
+            render.format_resource_sizes(c.resources),
         ]
-        for c in r["checkpoints"]
+        for c in checkpoints
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)

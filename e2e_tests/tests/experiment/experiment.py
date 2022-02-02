@@ -12,8 +12,10 @@ import dateutil.parser
 import pytest
 import requests
 
-from determined.common import api, yaml
-from determined.common.api import authentication, certs
+from determined.cli.session import setup_session
+from determined.common import api, util, yaml
+from determined.common.api import authentication, bindings, certs
+from determined.common.experimental import session
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
 
@@ -214,16 +216,23 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     if not any(trials):
         return False
 
-    return any(any(s["state"] == "COMPLETED" for s in t["workloads"]) for t in trials)
+    for t in trials:
+        for s in t["workloads"]:
+            if ("training" in s and s["training"]["state"] == "STATE_COMPLETED") or (
+                "validation" in s and s["validation"]["state"] == "STATE_COMPLETED"
+            ):
+                return True
+    return False
 
 
 def experiment_json(experiment_id: int) -> Dict[str, Any]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "/api/v1/experiments/{}".format(experiment_id))
-    assert r.status_code == requests.codes.ok, r.text
-    json = r.json()["experiment"]  # type: Dict[str, Any]
-    return json
+    murl = conf.make_master_url()
+    certs.cli_cert = certs.default_load(murl)
+    authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
+    sess = session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    r = bindings.get_GetExperiment(sess, experimentId=experiment_id)
+    return r.experiment.to_json()
+
 
 def trial_json(trial_id: int) -> Dict[str, Any]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
@@ -253,7 +262,7 @@ def experiment_trials(experiment_id: int) -> List[Dict[str, Any]]:
     trials = []
     for trial in src_trials:
         trials.append(trial_json(trial["id"]))
-    return trials        # type: List[Dict[str, Any]]
+    return trials  # type: List[Dict[str, Any]]
 
 
 def num_experiments() -> int:
@@ -294,7 +303,9 @@ def trial_metrics(trial_id: int) -> Dict[str, Any]:
 
 def get_flat_metrics(trial_id: int, metric: str) -> List:
     full_trial_metrics = trial_metrics(trial_id)
-    metrics = [m for step in full_trial_metrics["workloads"] for m in step["metrics"]["batch_metrics"]]
+    metrics = [
+        m for step in full_trial_metrics["workloads"] for m in step["metrics"]["batch_metrics"]
+    ]
     return [v[metric] for v in metrics]
 
 
@@ -303,15 +314,24 @@ def num_trials(experiment_id: int) -> int:
 
 
 def num_active_trials(experiment_id: int) -> int:
-    return sum(1 if t["trial"]["state"].replace("STATE_", "") == "ACTIVE" else 0 for t in experiment_trials(experiment_id))
+    return sum(
+        1 if t["trial"]["state"].replace("STATE_", "") == "ACTIVE" else 0
+        for t in experiment_trials(experiment_id)
+    )
 
 
 def num_completed_trials(experiment_id: int) -> int:
-    return sum(1 if t["trial"]["state"].replace("STATE_", "") == "COMPLETED" else 0 for t in experiment_trials(experiment_id))
+    return sum(
+        1 if t["trial"]["state"].replace("STATE_", "") == "COMPLETED" else 0
+        for t in experiment_trials(experiment_id)
+    )
 
 
 def num_error_trials(experiment_id: int) -> int:
-    return sum(1 if t["trial"]["state"].replace("STATE_", "") == "ERROR" else 0 for t in experiment_trials(experiment_id))
+    return sum(
+        1 if t["trial"]["state"].replace("STATE_", "") == "ERROR" else 0
+        for t in experiment_trials(experiment_id)
+    )
 
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
@@ -387,17 +407,30 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     assert zeroth_step["validation"]["state"].replace("STATE_", "") == "COMPLETED"
 
 
+def last_workload_matches_last_checkpoint(workloads: List[Dict[str, Any]]) -> None:
+    assert len(workloads) > 0
+    last_workload = workloads[-1]
+    if "training" in last_workload:
+        last_workload_detail = last_workload["training"]
+    elif "checkpoint" in last_workload:
+        last_workload_detail = last_workload["checkpoint"]
+    elif "validation" in last_workload:
+        last_workload_detail = last_workload["validation"]
+
+    checkpoint_workloads = list(filter(lambda s: "checkpoint" in s, workloads))
+    assert len(checkpoint_workloads) > 0
+    last_checkpoint = checkpoint_workloads[-1]
+
+    # though the last workload and last checkpoint may be different objects, they should be the same 'step'
+    assert last_workload_detail["totalBatches"] == last_checkpoint["checkpoint"]["totalBatches"]
+    assert last_workload_detail["state"] == "STATE_COMPLETED"
+    assert last_checkpoint["checkpoint"]["state"] == "STATE_COMPLETED"
+
+
 def assert_performed_final_checkpoint(exp_id: int) -> None:
     trials = experiment_trials(exp_id)
-
     assert len(trials) > 0
-    steps = trials[0]["workloads"]
-
-    assert len(steps) > 0
-    last_step = steps[-1]
-
-    assert last_step["checkpoint"] is not None
-    assert last_step["checkpoint"]["state"].replace("STATE_", "") == "COMPLETED"
+    last_workload_matches_last_checkpoint(trials[0]["workloads"])
 
 
 def run_describe_cli_tests(experiment_id: int) -> None:
@@ -568,20 +601,19 @@ def verify_completed_experiment_metadata(
                 internal_step = step["validation"]
             elif "checkpoint" in step:
                 internal_step = step["checkpoint"]
-            assert internal_step["state"] == "STATE_COMPLETED"     
+            assert internal_step["state"] == "STATE_COMPLETED"
 
-            if step["validation"]:
+            if "validation" in step:
                 validation = step["validation"]
                 assert validation["state"] == "STATE_COMPLETED"
 
-            if step["checkpoint"]:
+            if "checkpoint" in step:
                 checkpoint = step["checkpoint"]
                 assert checkpoint["state"] in {"STATE_COMPLETED", "STATE_DELETED"}
 
-    # The last step of every trial should have a checkpoint.
-    for trial in trials:
-        last_step = t["workloads"][-1]
-        assert last_step["checkpoint"]
+    # The last step of every trial should be the same batch number as the last checkpoint.
+    for t in trials:
+        last_workload_matches_last_checkpoint(t["workloads"])
 
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might

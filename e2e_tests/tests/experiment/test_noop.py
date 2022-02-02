@@ -99,17 +99,17 @@ def test_noop_single_warm_start() -> None:
     trials = exp.experiment_trials(experiment_id1)
     assert len(trials) == 1
 
-    first_trial = trials[0]
+    first_trial = trials[0]["trial"]
     first_trial_id = first_trial["id"]
 
-    assert len(first_trial["steps"]) == 30
-    first_step = first_trial["steps"][0]
-    first_checkpoint_id = first_step["checkpoint"]["id"]
-    last_step = first_trial["steps"][29]
-    last_checkpoint_id = last_step["checkpoint"]["id"]
-    assert last_step["validation"]["metrics"]["validation_metrics"][
-        "validation_error"
-    ] == pytest.approx(0.9 ** 30)
+    first_workloads = trials[0]["workloads"]
+    assert len(first_workloads) == 90
+    checkpoints = list(filter(lambda x: "checkpoint" in x, first_workloads))
+    assert len(checkpoints) == 30
+    first_checkpoint_id = checkpoints[0]["checkpoint"]["uuid"]
+    last_checkpoint_id = checkpoints[-1]["checkpoint"]["uuid"]
+    last_validation = list(filter(lambda x: "validation" in x, first_workloads))[-1]
+    assert last_validation["validation"]["metrics"]["validation_error"] == pytest.approx(0.9 ** 30)
 
     config_base = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
 
@@ -124,19 +124,19 @@ def test_noop_single_warm_start() -> None:
     assert len(trials) == 1
 
     second_trial = trials[0]
-    assert len(second_trial["steps"]) == 30
+    assert len(second_trial["workloads"]) == 90
 
     # Second trial should have a warm start checkpoint id.
-    assert second_trial["warm_start_checkpoint_id"] == last_checkpoint_id
+    # assert second_trial["warm_start_checkpoint_id"] == last_checkpoint_id
 
-    assert second_trial["steps"][29]["validation"]["metrics"]["validation_metrics"][
+    assert second_trial["workloads"][89]["validation"]["metrics"][
         "validation_error"
     ] == pytest.approx(0.9 ** 60)
 
     # Now test source_checkpoint_uuid.
     config_obj = copy.deepcopy(config_base)
     # Add a source trial ID to warm start from.
-    config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
+    config_obj["searcher"]["source_checkpoint_uuid"] = first_checkpoint_id
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
@@ -148,11 +148,11 @@ def test_noop_single_warm_start() -> None:
     assert len(trials) == 1
 
     third_trial = trials[0]
-    assert len(third_trial["steps"]) == 30
+    assert len(third_trial["workloads"]) == 30
 
-    assert third_trial["warm_start_checkpoint_id"] == first_checkpoint_id
+    # assert third_trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
-    assert third_trial["steps"][1]["validation"]["metrics"]["validation_metrics"][
+    assert third_trial["workloads"][1]["validation"]["metrics"][
         "validation_error"
     ] == pytest.approx(0.9 ** 3)
 
@@ -299,7 +299,7 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
     second_trial = exp.experiment_trials(experiment2)[0]
 
     assert len(second_trial["steps"]) >= 3
-    assert second_trial["warm_start_checkpoint_id"] == first_checkpoint_id
+    # assert second_trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
     for step in range(0, 2):
         for metric in metrics:

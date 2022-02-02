@@ -97,7 +97,8 @@ def format_resource_sizes(resources: Optional[Dict[str, int]]) -> str:
     if resources is None:
         return ""
     else:
-        return util.sizeof_fmt(sum(resources.values()))
+        sizes = map(float, resources.values())
+        return util.sizeof_fmt(sum(sizes))
 
 
 def format_resources(resources: Optional[Dict[str, int]]) -> str:
