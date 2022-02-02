@@ -340,11 +340,11 @@ def describe(args: Namespace) -> None:
         + v_metrics_headers
     )
 
-    values = []
     for doc in docs:
         for trial in trials_for_experiment[doc.id]:
-            steps = bindings.get_GetTrial(session, trialId=trial.id).workloads
-            for step in steps:
+            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads
+            step_output = {}
+            for step in workloads:
                 t_metrics_fields = []
                 step_detail = None
                 if step.training is not None:
@@ -354,6 +354,8 @@ def describe(args: Namespace) -> None:
                             t_metrics_fields.append(step_detail.metrics[name])
                         else:
                             t_metrics_fields.append(None)
+                else:
+                    t_metrics_fields = [None for name in t_metrics_names]
 
                 if step.checkpoint is not None:
                     step_detail = step.checkpoint
@@ -376,30 +378,52 @@ def describe(args: Namespace) -> None:
                 else:
                     validation_state = None
                     validation_end_time = None
+                    v_metrics_fields = [None for name in v_metrics_names]
 
-                row = (
-                    [
-                        trial.id,
-                        step_detail.totalBatches,
-                        step_detail.state.value.replace("STATE_", ""),
-                        render.format_time(step_detail.endTime),
-                    ]
-                    + t_metrics_fields
-                    + [
-                        checkpoint_state,
-                        render.format_time(checkpoint_end_time),
-                        validation_state,
-                        render.format_time(validation_end_time),
-                    ]
-                    + v_metrics_fields
-                )
-                values.append(row)
+                if step_detail.totalBatches in step_output:
+                    # condense training, checkpoints, validation workloads into one 'step' row
+                    # for compatibility with previous versions of describe
+                    merge_row = step_output[step_detail.totalBatches]
+                    merge_row[3] = max(merge_row[3], render.format_time(step_detail.endTime))
+                    for idx, tfield in enumerate(t_metrics_fields):
+                        if tfield is not None and merge_row[4 + idx] is None:
+                            merge_row[4 + idx] = tfield
+                    start_checkpoint = 4 + len(t_metrics_fields)
+                    if checkpoint_state is not None:
+                        merge_row[start_checkpoint] = checkpoint_state
+                        merge_row[start_checkpoint + 1] = render.format_time(checkpoint_end_time)
+                    if validation_end_time is not None:
+                        merge_row[start_checkpoint + 3] = render.format_time(validation_end_time)
+                    if validation_state is not None:
+                        merge_row[start_checkpoint + 2] = validation_state
+                    for idx, vfield in enumerate(v_metrics_fields):
+                        if vfield is not None and merge_row[start_checkpoint + idx + 4] is None:
+                            merge_row[start_checkpoint + idx + 4] = vfield
+                else:
+                    row = (
+                        [
+                            trial.id,
+                            step_detail.totalBatches,
+                            step_detail.state.value.replace("STATE_", ""),
+                            render.format_time(step_detail.endTime),
+                        ]
+                        + t_metrics_fields
+                        + [
+                            checkpoint_state,
+                            render.format_time(checkpoint_end_time),
+                            validation_state,
+                            render.format_time(validation_end_time),
+                        ]
+                        + v_metrics_fields
+                    )
+                    step_output[step_detail.totalBatches] = row
 
     if not args.outdir:
         outfile = None
         print("\nWorkloads:")
     else:
         outfile = args.outdir.joinpath("workloads.csv")
+    values = sorted(list(step_output.values()), key=lambda a: a[1])
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
