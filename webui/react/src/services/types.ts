@@ -267,6 +267,6 @@ export interface GetJobQStatsParams extends FetchOptions {
 }
 
 export interface SetUserPasswordParams {
-  password: string,
-  username: string
+  password: string;
+  username: string;
 }

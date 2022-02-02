@@ -1,8 +1,9 @@
-import { Button, Form, Input } from 'antd';
-import React from 'react';
+import { Form, Input } from 'antd';
+import React, { useCallback } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { login, setUserPassword } from 'services/api';
+import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from './useModal';
 import css from './useModalChangePassword.module.scss';
@@ -13,18 +14,27 @@ const useModalChangePassword = (): ModalHooks => {
   const username = auth.user?.username || 'Anonymous';
   const [ form ] = Form.useForm();
 
-  const getModalContent = () => {
-    const submitForm = async (): Promise<void> => {
+  const onCancel = useCallback(() => {
+    form.resetFields();
+    modalClose();
+  }, [ form, modalClose ]);
+
+  const onOk = useCallback(async () => {
+    try {
       await setUserPassword({
         password: form.getFieldValue('newPassword'),
         username,
       });
       modalClose();
-    };
+    } catch (e) {
+      handleError(e);
+    }
+  }, [ modalClose, form, username ]);
 
+  const getModalContent = useCallback(() => {
     return (
       <div className={css.base}>
-        <Form form={form} layout="vertical" onFinish={submitForm}>
+        <Form form={form} layout="vertical">
           <Form.Item
             label="Old Password"
             name="oldPassword"
@@ -35,7 +45,7 @@ const useModalChangePassword = (): ModalHooks => {
                 validator: async (rule, value) => {
                   return await login({
                     password: value || '',
-                    username: username || '',
+                    username,
                   });
                 },
               },
@@ -83,38 +93,26 @@ const useModalChangePassword = (): ModalHooks => {
           </Form.Item>
           <Form.Item>
             <span>
-              Password must be at least 8 charactes and contain one uppercase,
-              lowercase.
+              Password must be at least 8 characters
+              and contain at least one uppercase and one lowercase character.
             </span>
-          </Form.Item>
-          <Form.Item>
-            <div className={css.buttons}>
-              <Button onClick={() => onCancel()}>Cancel</Button>
-              <Button htmlType="submit" type="primary">
-                Change Password
-              </Button>
-            </div>
           </Form.Item>
         </Form>
       </div>
     );
-  };
+  }, [ form, username ]);
 
-  const onCancel = () => {
-    form.resetFields();
-    modalClose();
-  };
-
-  const modalOpen = () => {
+  const modalOpen = useCallback(() => {
     openOrUpdate({
-      className: css.noFooter,
       closable: true,
       content: getModalContent(),
       icon: null,
+      okText: 'Change Password',
       onCancel,
+      onOk,
       title: 'Change Password',
     });
-  };
+  }, [ getModalContent, onCancel, onOk, openOrUpdate ]);
 
   return { modalClose, modalOpen, modalRef };
 };

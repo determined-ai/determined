@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
@@ -14,6 +14,10 @@ const useModalUserSettings = (): ModalHooks => {
   const username = auth.user?.username || 'Anonymous';
 
   const { modalOpen: openChangePasswordModal } = useModalChangePassword();
+
+  const handlePasswordClick = useCallback(() => {
+    openChangePasswordModal();
+  }, [ openChangePasswordModal ]);
 
   const getModalContent = () => {
     return (
@@ -31,7 +35,7 @@ const useModalUserSettings = (): ModalHooks => {
         <div className={css.field}>
           <span className={css.label}>Password</span>
           <span className={css.value}>
-            <Button onClick={() => openChangePasswordModal()}>Change password</Button>
+            <Button onClick={handlePasswordClick}>Change password</Button>
           </span>
         </div>
       </div>
