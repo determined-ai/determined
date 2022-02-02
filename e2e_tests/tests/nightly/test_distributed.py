@@ -86,7 +86,7 @@ def test_unets_tf_keras_distributed() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         copy_destination = os.path.join(tmpdir, "example")
         shutil.copytree(conf.cv_examples_path("unets_tf_keras"), copy_destination)
-        with open(os.path.join(tmpdir, "startup-hook.sh"), "a") as f:
+        with open(os.path.join(copy_destination, "startup-hook.sh"), "a") as f:
             f.write("\n")
             f.write(f"wget -O /tmp/data.tar.gz {url}\n")
             f.write(f"mkdir {download_dir}\n")
