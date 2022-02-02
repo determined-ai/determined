@@ -81,7 +81,7 @@ def test_unets_tf_keras_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("unets_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     download_dir = "/tmp/data"
-    url = "https://s3-us-west-2.amazonaws.com/determined-ai-datasets/oxford_iiit_pet/oxford_iiit_pet.tar.gz"
+    url = "https://s3-us-west-2.amazonaws.com/determined-ai-datasets/oxford_iiit_pet/oxford_iiit_pet.tar.gz"  # noqa
 
     with tempfile.TemporaryDirectory() as tmpdir:
         copy_destination = os.path.join(tmpdir, "example")
