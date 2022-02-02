@@ -61,7 +61,7 @@ class UNetsTrial(TFKerasTrial):
         weights_dir = self.download_directory + '/weights/'
         data_file = self.context.get_data_config()['data_file']
         mobilenet_link = 'https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/' + data_file
-        os.mkdir(weights_dir)
+        os.makedirs(weights_dir, exist_ok=True)
 
         with filelock.FileLock(os.path.join(weights_dir, "download.lock")):
             urllib.request.urlretrieve(mobilenet_link, weights_dir + data_file)
@@ -111,6 +111,7 @@ class UNetsTrial(TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
+        os.makedirs(self.download_directory, exist_ok=True)
         with filelock.FileLock(os.path.join(self.download_directory, "download.lock")):
             dataset = tfds.load(
                 'oxford_iiit_pet:3.*.*',
@@ -139,6 +140,7 @@ class UNetsTrial(TFKerasTrial):
         return train_dataset
 
     def build_validation_data_loader(self):
+        os.makedirs(self.download_directory, exist_ok=True)
         with filelock.FileLock(os.path.join(self.download_directory, "download.lock")):
             dataset, info = tfds.load(
                 'oxford_iiit_pet:3.*.*',
