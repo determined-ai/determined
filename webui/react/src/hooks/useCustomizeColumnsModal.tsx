@@ -67,7 +67,8 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   }, []);
 
   const hiddenColumns = useMemo(() => {
-    return modalState.columns.filter(column => !visibleColumns.includes(column));
+    const visibleColumnsSet = new Set(visibleColumns);
+    return modalState.columns.filter((column) => !visibleColumnsSet.has(column));
   }, [ modalState.columns, visibleColumns ]);
 
   const filteredHiddenColumns = useMemo(() => {
@@ -82,7 +83,8 @@ const useCustomizeColumnsModal = (): ModalHooks => {
 
   const makeHidden = useCallback((transfer: string | string[]) => {
     if (Array.isArray(transfer)) {
-      setVisibleColumns(prev => prev.filter(column => !transfer.includes(column)));
+      const transferSet = new Set(transfer);
+      setVisibleColumns(prev => prev.filter(column => !transferSet.has(column)));
     } else {
       setVisibleColumns(prev => prev.filter(column => transfer !== column));
     }
@@ -209,7 +211,6 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   // Detect modal state change and update.
   useEffect(() => {
     if (!modalState.visible) return;
-
     const modalProps = generateModalProps(modalState);
     if (modalRef.current) {
       modalRef.current.update(prev => ({ ...prev, ...modalProps }));
