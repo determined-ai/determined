@@ -36,6 +36,8 @@ searcher:
   max_length:
     epochs: 300
 entrypoint: model_def:DeitTrial
+resources:
+  slots_per_trial: 2
 min_validation_period:
   epochs: 1
 bind_mounts:
