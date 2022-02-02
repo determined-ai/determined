@@ -289,10 +289,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			if err := e.db.SaveExperimentProgress(e.ID, &setProgress); err != nil {
 				ctx.Log().Error(err)
 			}
-		} else {
-			if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
-				ctx.Log().Error(err)
-			}
 		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
