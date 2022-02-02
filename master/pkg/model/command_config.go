@@ -46,6 +46,7 @@ type CommandConfig struct {
 	IdleTimeout      *Duration        `json:"idle_timeout"`
 	NotebookIdleType string           `json:"notebook_idle_type"`
 	WorkDir          *string          `json:"work_dir"`
+	Debug            bool             `json:"debug"`
 }
 
 // Validate implements the check.Validatable interface.

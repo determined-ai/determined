@@ -153,6 +153,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				UseProxyState:   c.WatchProxyIdleTimeout,
 				UseRunnerState:  c.WatchRunnerIdleTimeout,
 				TimeoutDuration: time.Duration(*c.Config.IdleTimeout),
+				Debug:           c.Config.Debug,
 			}
 		}
 
