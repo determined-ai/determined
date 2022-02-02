@@ -45,10 +45,13 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
 
 
 def _run_and_verify_failure(args: List[str], message: str, **kwargs: Any) -> None:
+    print("entered run function")
     output = subprocess.check_output(args, **kwargs)
+    print("checked output")
     if re.search(message.encode(), output):
+        print("Raising error")
         raise subprocess.CalledProcessError(1, " ".join(args), output=output)
-
+    print("returning")
 
 def _run_cmd_with_config_expecting_success(
     cmd: str, config: Dict[str, Any], context_path: Optional[str] = None
@@ -409,11 +412,18 @@ def test_k8_mount(using_k8s: bool, sidecar: bool) -> None:
 
     mount_path = "/ci/"
 
+    print("MOUNT PATH:", mount_path)
+    subprocess.run(["rm", "-rf", "/ci/"])
+
+    print("running subprocess now")
+
     with pytest.raises(subprocess.CalledProcessError):
         _run_and_verify_failure(
             ["det", "-m", conf.make_master_url(), "cmd", "run", f"sleep 3; touch {mount_path}"],
             "No such file or directory",
         )
+
+    print("RAN COMMAND WITHOUT PROBLEM")
 
     config = {
         "environment": {
