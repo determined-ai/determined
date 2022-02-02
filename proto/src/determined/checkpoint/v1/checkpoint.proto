@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/checkpointv1"
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Metrics calculated during validation.
@@ -69,5 +70,5 @@ message Checkpoint {
   // The state of the checkpoint.
   State state = 16;
   // The value of the metric specified by `searcher.metric` for this metric.
-  float searcher_metric = 17;
+  google.protobuf.DoubleValue searcher_metric = 17;
 }

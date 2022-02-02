@@ -4,15 +4,11 @@
 package db
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -27,14 +23,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	// Add a mock user.
-	user := model.User{
-		Username:     uuid.NewString(),
-		PasswordHash: null.NewString("", false),
-		Admin:        false,
-		Active:       true,
-	}
-	err := db.AddUser(&user, nil)
-	require.NoError(t, err, "failed to add user")
+	user := requireMockUser(t, db)
 
 	// Add a job.
 	jID := model.NewJobID()
@@ -43,7 +32,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		JobType: model.JobTypeExperiment,
 		OwnerID: &user.ID,
 	}
-	err = db.AddJob(jIn)
+	err := db.AddJob(jIn)
 	require.NoError(t, err, "failed to add job")
 
 	// Retrieve it back and make sure the mapping is exhaustive.
@@ -104,8 +93,4 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	aOut, err = db.AllocationByID(aIn.AllocationID)
 	require.NoError(t, err, "failed to re-retrieve allocation")
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
-}
-
-func pprintedExpect(expected, got interface{}) string {
-	return fmt.Sprintf("expected \n\t%s\ngot\n\t%s", spew.Sdump(expected), spew.Sdump(got))
 }
