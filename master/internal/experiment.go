@@ -627,10 +627,13 @@ func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 	}
 
 	resources := e.Config.Resources()
+	oldRP := resources.ResourcePool()
 	resources.SetResourcePool(msg.ResourcePool)
 	e.Config.SetResources(resources)
 
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		resources.SetResourcePool(oldRP)
+		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, msg.ResourcePool)
 	}
 	ctx.TellAll(sproto.ChangeRP{ResourcePool: msg.ResourcePool}, ctx.Children()...)
