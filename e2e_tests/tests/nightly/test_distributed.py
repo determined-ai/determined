@@ -83,14 +83,15 @@ def test_unets_tf_keras_distributed() -> None:
     download_dir = "/tmp/data"
     url = "https://s3-us-west-2.amazonaws.com/determined-ai-datasets/oxford_iiit_pet/oxford_iiit_pet.tar.gz"
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        shutil.copytree(conf.cv_examples_path("unets_tf_keras"), tmpdirname)
-        with open(os.path.join(tmpdirname, "startup-hook.sh"), "a") as f:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        copy_destination = os.path.join(tmpdir, "example")
+        shutil.copytree(conf.cv_examples_path("unets_tf_keras"), copy_destination)
+        with open(os.path.join(tmpdir, "startup-hook.sh"), "a") as f:
             f.write("\n")
             f.write(f"wget -O /tmp/data.tar.gz {url}\n")
             f.write(f"mkdir {download_dir}\n")
             f.write(f"tar -xzvf /tmp/data.tar.gz -C {download_dir}\n")
-        exp.run_basic_test_with_temp_config(config, tmpdirname, 1)
+        exp.run_basic_test_with_temp_config(config, copy_destination, 1)
 
 
 @pytest.mark.distributed
