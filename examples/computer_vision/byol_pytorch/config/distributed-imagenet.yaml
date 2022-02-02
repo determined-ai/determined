@@ -2,7 +2,7 @@ name: imagenet_byol_distributed
 entrypoint: model_def:BYOLTrial
 records_per_epoch: 1271158
 resources:
-  slots_per_trial: 32
+  slots_per_trial: 64
 min_checkpoint_period:
   epochs: 1
 min_validation_period:
@@ -16,8 +16,12 @@ profiling:
 
 data:
   dataset_name: imagenet
-  # Change to location of preloaded ImageNet.
-  download_dir: /mnt/shared_fs/imagenet
+  gcs_bucket: determined-ai-datasets
+  # Path to files inside the above bucket that contain newline separated list of all image blob paths.
+  # Generate using generate_blob_list.py.
+  gcs_train_blob_list_path: imagenet/imagenet/train-blob-list.txt
+  gcs_validation_blob_list_path: imagenet/imagenet/validation-blob-list.txt
+  download_dir: /data
   num_workers: 8
   # Classifier LR is selected using a subset of the training dataset before reporting on the test dataset.
   validation_subset_size: 10009
@@ -88,7 +92,3 @@ searcher:
   smaller_is_better: false
   max_length:
     epochs: 1000
-
-bind_mounts:
-  - host_path: /mnt/shared_fs
-    container_path: /mnt/shared_fs

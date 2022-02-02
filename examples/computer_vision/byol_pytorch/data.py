@@ -1,16 +1,27 @@
 from attrdict import AttrDict
 from dataclasses import dataclass
 from enum import auto, Enum
+from io import BytesIO, StringIO
 import os
 import random
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
+from determined.util import download_gcs_blob_with_backoff
 from filelock import FileLock
+from google.cloud import storage
+from PIL import Image as PILImage
 import torch
 import torch.nn as nn
-from torchvision.datasets import CIFAR10, ImageFolder, STL10
+from torchvision.datasets import CIFAR10, STL10
 import torchvision.transforms as T
 from torch.utils.data import Dataset
+
+
+def load_image(path: str) -> PILImage.Image:
+    # Helper function from https://pytorch.org/docs/stable/_modules/torchvision/datasets/folder.html#ImageFolder
+    with open(path, "rb") as f:
+        img = PILImage.open(f)
+        return img.convert("RGB")
 
 
 class JointDataset(Dataset):
@@ -77,6 +88,84 @@ class DoubleTransformDataset(Dataset):
 
     def __len__(self) -> int:
         return len(self.dataset)
+
+
+class GCSImageFolder(Dataset):
+    """
+    Stream an image dataset from Google Cloud Storage, stored in torch ImageFolder format.
+    Adapted from gaea_pytorch example.
+    """
+
+    def __init__(
+        self,
+        bucket_name: str,
+        blob_list_path: str,
+        streaming: bool = True,
+        data_download_dir: str = None,
+    ) -> None:
+        """
+        Args:
+            bucket_name: GCS bucket name, without gs:// prefix.
+            blob_list_path: Path within the bucket to a file containing a newline separated list of blob locations.
+                            Generate using the generate_blob_list.py script and upload to bucket.
+            streaming: Flag for whether to always stream data. If False, will pull data once and then store on disk.
+            data_download_dir: Location to store data if streaming is False.
+        """
+        self._bucket_name = bucket_name
+        self._target_dir = data_download_dir
+        # Streaming always downloads image from GCP regardless of whether it
+        # has been downloaded before.
+        # When streaming is false, we will save the downloaded image to disk and
+        # check whether the image is available before sending a download request
+        # to the GCP bucket.
+        self._streaming = streaming
+        self._storage_client = storage.Client()
+        self._bucket = self._storage_client.bucket(bucket_name)
+        # When the dataset is first initialized, we'll loop through to catalogue the classes (subdirectories)
+        # This step might take a long time.
+        self._imgs_paths = []
+        self._labels = []
+        self._subdir_to_class: Dict[str, int] = {}
+        class_count = 0
+        blob_list_blob = self._bucket.blob(blob_list_path)
+        blob_list_io = StringIO(
+            download_gcs_blob_with_backoff(blob_list_blob).decode("utf-8")
+        )
+        blob_list = [s.strip() for s in blob_list_io.readlines()]
+        for path in blob_list:
+            self._imgs_paths.append(path)
+            sub_dir = path.split("/")[-2]
+            if sub_dir not in self._subdir_to_class:
+                self._subdir_to_class[sub_dir] = class_count
+                class_count += 1
+            self._labels.append(self._subdir_to_class[sub_dir])
+        print("There are {} records in dataset.".format(len(self._imgs_paths)))
+
+    def __len__(self) -> int:
+        return len(self._imgs_paths)
+
+    def __getitem__(self, idx: int) -> Tuple[PILImage.Image, int]:
+        img_path = self._imgs_paths[idx]
+        blob = self._bucket.blob(img_path)
+        if self._streaming:
+            img_str = download_gcs_blob_with_backoff(blob)
+        else:
+            assert (
+                self._target_dir is not None
+            ), "Must pass download directory if not streaming."
+            target_path = os.path.join(self._target_dir, img_path)
+            if not os.path.exists(target_path):
+                os.makedirs(target_path, exist_ok=True)
+                img_str = download_gcs_blob_with_backoff(blob)
+                with open(target_path, "wb") as f:
+                    f.write(img_str)
+            else:
+                with open(target_path, "rb") as f:
+                    img_str = f.read()
+        img_bytes = BytesIO(img_str)
+        img = PILImage.open(img_bytes)
+        img = img.convert("RGB")
+        return img, self._labels[idx]
 
 
 class DatasetSplit(Enum):
@@ -219,10 +308,19 @@ def build_imagenet(
 ) -> Dataset:
     # We assume ImageNet is already on disk, as e.g. a mounted NFS drive.
     def build_train() -> Dataset:
-        return ImageFolder(os.path.join(download_dir, "train"))
+        # return ImageFolder(os.path.join(download_dir, "train"))
+        return GCSImageFolder(
+            data_config.gcs_bucket,
+            data_config.gcs_train_blob_list_path,
+            streaming=True,
+        )
 
     def build_val() -> Dataset:
-        return ImageFolder(os.path.join(download_dir, "validation"))
+        return GCSImageFolder(
+            data_config.gcs_bucket,
+            data_config.gcs_validation_blob_list_path,
+            streaming=True,
+        )
 
     return split_supervised_dataset(data_config, split, build_train, build_val)
 
@@ -285,6 +383,7 @@ def build_dataset(data_config: AttrDict, split: DatasetSplit) -> Dataset:
     download_dir = data_config.download_dir
     if name in DATASET_BUILD_MAP:
         # Lock so that only one process attempts download at a time.
+        os.makedirs(download_dir, exist_ok=True)
         with FileLock(os.path.join(download_dir, "download.lock")):
             dataset = DATASET_BUILD_MAP[name](data_config, download_dir, split)
         if split == DatasetSplit.TRAIN:
