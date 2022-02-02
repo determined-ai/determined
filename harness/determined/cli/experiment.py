@@ -363,6 +363,7 @@ def describe(args: Namespace) -> None:
                     checkpoint_state = None
                     checkpoint_end_time = None
 
+                v_metrics_fields = []
                 if step.validation is not None:
                     step_detail = step.validation
                     validation_state = step_detail.state.value.replace("STATE_", "")
@@ -375,7 +376,6 @@ def describe(args: Namespace) -> None:
                 else:
                     validation_state = None
                     validation_end_time = None
-                    v_metrics_fields = []
 
                 row = (
                     [

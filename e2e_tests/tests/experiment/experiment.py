@@ -197,7 +197,7 @@ def wait_for_experiment_workload_progress(
         trials = experiment_trials(experiment_id)
         if len(trials) > 0:
             only_trial = trials[0]
-            if len(only_trial["steps"]) > 1:
+            if len(only_trial["workloads"]) > 1:
                 return
         time.sleep(1)
 
@@ -214,26 +214,46 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     if not any(trials):
         return False
 
-    return any(any(s["state"] == "COMPLETED" for s in t["steps"]) for t in trials)
+    return any(any(s["state"] == "COMPLETED" for s in t["workloads"]) for t in trials)
 
 
 def experiment_json(experiment_id: int) -> Dict[str, Any]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "experiments/{}".format(experiment_id))
+    r = api.get(conf.make_master_url(), "/api/v1/experiments/{}".format(experiment_id))
+    assert r.status_code == requests.codes.ok, r.text
+    json = r.json()["experiment"]  # type: Dict[str, Any]
+    return json
+
+def trial_json(trial_id: int) -> Dict[str, Any]:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    r = api.get(conf.make_master_url(), "/api/v1/trials/{}".format(trial_id))
+    assert r.status_code == requests.codes.ok, r.text
+    json = r.json()  # type: Dict[str, Any]
+    return json
+
+
+def experiment_trials_json(experiment_id: int) -> Dict[str, Any]:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    r = api.get(conf.make_master_url(), "/api/v1/experiments/{}/trials".format(experiment_id))
     assert r.status_code == requests.codes.ok, r.text
     json = r.json()  # type: Dict[str, Any]
     return json
 
 
 def experiment_state(experiment_id: int) -> str:
-    state = experiment_json(experiment_id)["state"]  # type: str
+    state = experiment_json(experiment_id)["state"].replace("STATE_", "")  # type: str
     return state
 
 
 def experiment_trials(experiment_id: int) -> List[Dict[str, Any]]:
-    trials = experiment_json(experiment_id)["trials"]  # type: List[Dict[str, Any]]
-    return trials
+    src_trials = experiment_trials_json(experiment_id)["trials"]
+    trials = []
+    for trial in src_trials:
+        trials.append(trial_json(trial["id"]))
+    return trials        # type: List[Dict[str, Any]]
 
 
 def num_experiments() -> int:
@@ -245,14 +265,7 @@ def num_experiments() -> int:
 
 
 def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
-    cancel_experiment(experiment_id)
-
-    trials = experiment_trials(experiment_id)
-    if should_have_trial or len(trials) > 0:
-        assert len(trials) == 1, len(trials)
-
-        trial = trials[0]
-        assert trial["state"] == "CANCELED", trial["state"]
+    return cancel_single_v1(experiment_id, should_have_trial)
 
 
 def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> None:
@@ -262,8 +275,8 @@ def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> Non
     if should_have_trial or len(trials) > 0:
         assert len(trials) == 1, len(trials)
 
-        trial = trials[0]
-        assert trial["state"] == "CANCELED", trial["state"]
+        trial = trials[0]["trial"]
+        assert trial["state"].replace("STATE_", "") == "CANCELED", trial["state"]
 
 
 def is_terminal_state(state: str) -> bool:
@@ -281,7 +294,7 @@ def trial_metrics(trial_id: int) -> Dict[str, Any]:
 
 def get_flat_metrics(trial_id: int, metric: str) -> List:
     full_trial_metrics = trial_metrics(trial_id)
-    metrics = [m for step in full_trial_metrics["steps"] for m in step["metrics"]["batch_metrics"]]
+    metrics = [m for step in full_trial_metrics["workloads"] for m in step["metrics"]["batch_metrics"]]
     return [v[metric] for v in metrics]
 
 
@@ -290,15 +303,15 @@ def num_trials(experiment_id: int) -> int:
 
 
 def num_active_trials(experiment_id: int) -> int:
-    return sum(1 if t["state"] == "ACTIVE" else 0 for t in experiment_trials(experiment_id))
+    return sum(1 if t["trial"]["state"].replace("STATE_", "") == "ACTIVE" else 0 for t in experiment_trials(experiment_id))
 
 
 def num_completed_trials(experiment_id: int) -> int:
-    return sum(1 if t["state"] == "COMPLETED" else 0 for t in experiment_trials(experiment_id))
+    return sum(1 if t["trial"]["state"].replace("STATE_", "") == "COMPLETED" else 0 for t in experiment_trials(experiment_id))
 
 
 def num_error_trials(experiment_id: int) -> int:
-    return sum(1 if t["state"] == "ERROR" else 0 for t in experiment_trials(experiment_id))
+    return sum(1 if t["trial"]["state"].replace("STATE_", "") == "ERROR" else 0 for t in experiment_trials(experiment_id))
 
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
@@ -342,8 +355,8 @@ def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> N
     full_trial_metrics1 = trial_metrics(A)
     full_trial_metrics2 = trial_metrics(B)
 
-    assert len(full_trial_metrics1["steps"]) == len(full_trial_metrics2["steps"])
-    for step1, step2 in zip(full_trial_metrics1["steps"], full_trial_metrics2["steps"]):
+    assert len(full_trial_metrics1["workloads"]) == len(full_trial_metrics2["workloads"])
+    for step1, step2 in zip(full_trial_metrics1["workloads"], full_trial_metrics2["workloads"]):
         metric1 = step1["metrics"]["batch_metrics"]
         metric2 = step2["metrics"]["batch_metrics"]
         for batch1, batch2 in zip(metric1, metric2):
@@ -364,27 +377,27 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     trials = experiment_trials(exp_id)
 
     assert len(trials) > 0
-    steps = trials[0]["steps"]
+    steps = trials[0]["workloads"]
 
     assert len(steps) > 0
     zeroth_step = steps[0]
 
     assert zeroth_step["validation"] is not None
     assert zeroth_step["validation"]["total_batches"] == 0
-    assert zeroth_step["validation"]["state"] == "COMPLETED"
+    assert zeroth_step["validation"]["state"].replace("STATE_", "") == "COMPLETED"
 
 
 def assert_performed_final_checkpoint(exp_id: int) -> None:
     trials = experiment_trials(exp_id)
 
     assert len(trials) > 0
-    steps = trials[0]["steps"]
+    steps = trials[0]["workloads"]
 
     assert len(steps) > 0
     last_step = steps[-1]
 
     assert last_step["checkpoint"] is not None
-    assert last_step["checkpoint"]["state"] == "COMPLETED"
+    assert last_step["checkpoint"]["state"].replace("STATE_", "") == "COMPLETED"
 
 
 def run_describe_cli_tests(experiment_id: int) -> None:
@@ -462,15 +475,15 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t["state"] == "ACTIVE")
-    paused = sum(1 for t in trials if t["state"] == "PAUSED")
-    stopping_completed = sum(1 for t in trials if t["state"] == "STOPPING_COMPLETED")
-    stopping_canceled = sum(1 for t in trials if t["state"] == "STOPPING_CANCELED")
-    stopping_error = sum(1 for t in trials if t["state"] == "STOPPING_ERROR")
-    completed = sum(1 for t in trials if t["state"] == "COMPLETED")
-    canceled = sum(1 for t in trials if t["state"] == "CANCELED")
-    errored = sum(1 for t in trials if t["state"] == "ERROR")
-    stopping_killed = sum(1 for t in trials if t["state"] == "STOPPING_KILLED")
+    active = sum(1 for t in trials if t["trial"]["state"] == "STATE_ACTIVE")
+    paused = sum(1 for t in trials if t["trial"]["state"] == "STATE_PAUSED")
+    stopping_completed = sum(1 for t in trials if t["trial"]["state"] == "STATE_STOPPING_COMPLETED")
+    stopping_canceled = sum(1 for t in trials if t["trial"]["state"] == "STATE_STOPPING_CANCELED")
+    stopping_error = sum(1 for t in trials if t["trial"]["state"] == "STATE_STOPPING_ERROR")
+    completed = sum(1 for t in trials if t["trial"]["state"] == "STATE_COMPLETED")
+    canceled = sum(1 for t in trials if t["trial"]["state"] == "STATE_CANCELED")
+    errored = sum(1 for t in trials if t["trial"]["state"] == "STATE_ERROR")
+    stopping_killed = sum(1 for t in trials if t["trial"]["state"] == "STATE_STOPPING_KILLED")
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
@@ -525,35 +538,49 @@ def verify_completed_experiment_metadata(
     trials = experiment_trials(experiment_id)
     assert len(trials) > 0
 
-    for trial in trials:
-        if trial["state"] != "COMPLETED":
-            report_failed_trial(trial["id"], trial["state"])
-            pytest.fail(f"Trial {trial['id']} was not COMPLETED but {trial['state']}")
+    for t in trials:
+        trial = t["trial"]
+        if trial["state"] != "STATE_COMPLETED":
+            report_failed_trial(trial["id"], trial["state"].replace("STATE_", ""))
+            pytest.fail(f"Trial {trial['id']} was not STATE_COMPLETED but {trial['state']}")
 
-        if len(trial["steps"]) == 0:
+        if len(t["workloads"]) == 0:
             print_trial_logs(trial["id"])
             raise AssertionError(
-                f"trial {trial['id']} is in {trial['state']} state but has 0 steps"
+                f"trial {trial['id']} is in {trial['state']} state but has 0 steps/workloads"
             )
 
         # Check that batches appear in increasing order.
-        batch_ids = [s["total_batches"] for s in trial["steps"]]
+        batch_ids = []
+        for s in t["workloads"]:
+            if "training" in s:
+                batch_ids.append(s["training"]["totalBatches"])
+            if "validation" in s:
+                batch_ids.append(s["validation"]["totalBatches"])
+            if "checkpoint" in s:
+                batch_ids.append(s["checkpoint"]["totalBatches"])
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
-        for step in trial["steps"]:
-            assert step["state"] == "COMPLETED"
+        for step in t["workloads"]:
+            if "training" in step:
+                internal_step = step["training"]
+            elif "validation" in step:
+                internal_step = step["validation"]
+            elif "checkpoint" in step:
+                internal_step = step["checkpoint"]
+            assert internal_step["state"] == "STATE_COMPLETED"     
 
             if step["validation"]:
                 validation = step["validation"]
-                assert validation["state"] == "COMPLETED"
+                assert validation["state"] == "STATE_COMPLETED"
 
             if step["checkpoint"]:
                 checkpoint = step["checkpoint"]
-                assert checkpoint["state"] in {"COMPLETED", "DELETED"}
+                assert checkpoint["state"] in {"STATE_COMPLETED", "STATE_DELETED"}
 
     # The last step of every trial should have a checkpoint.
     for trial in trials:
-        last_step = trial["steps"][-1]
+        last_step = t["workloads"][-1]
         assert last_step["checkpoint"]
 
     # When the experiment completes, all slots should now be free. This
@@ -595,7 +622,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     # For each failed trial, check for the expected error in the logs.
     trials = experiment_trials(experiment_id)
     for t in trials:
-        if t["state"] != "ERROR":
+        if t["state"].replace("STATE_", "") != "ERROR":
             continue
 
         trial_id = t["id"]
@@ -610,7 +637,7 @@ def get_validation_metric_from_last_step(
     experiment_id: int, trial_id: int, validation_metric_name: str
 ) -> float:
     trial = experiment_trials(experiment_id)[trial_id]
-    last_validation = trial["steps"][len(trial["steps"]) - 1]["validation"]
+    last_validation = trial["workloads"][len(trial["workloads"]) - 1]["validation"]
     return last_validation["metrics"]["validation_metrics"][validation_metric_name]  # type: ignore
 
 
@@ -645,7 +672,7 @@ def get_experiment_durations(experiment_id: int, trial_idx: int) -> ExperimentDu
     training_duration = datetime.timedelta(seconds=0)
     validation_duration = datetime.timedelta(seconds=0)
     checkpoint_duration = datetime.timedelta(seconds=0)
-    for step in experiment_metadata["trials"][trial_idx]["steps"]:
+    for step in experiment_metadata["trials"][trial_idx]["workloads"]:
         end_time = dateutil.parser.parse(step["end_time"])
         start_time = dateutil.parser.parse(step["start_time"])
         training_duration += end_time - start_time
