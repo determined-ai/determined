@@ -12,22 +12,24 @@ Code and configuration details also sourced from the following BYOL implementati
 # Files
 * [backbone.py](backbone.py): Backbone registry.
 * [data.py](data.py): Dataset downloading and metadata registry.
+* [generate_blob_list.py](generate_blob_list.py): Script to generate a blob list from a GCS bucket + prefix.  Used to support GCS streaming for ImageNet dataset.
 * [model_def.py](model_def.py): Core trial and callback definitions.  This is the entrypoint for trials.
 * [optim.py](optim.py): Optimizer definitions and utilities.
 * [reducers.py](reducers.py): Custom reducers used for evaluation metrics.
 * [startup-hook.sh](startup-hook.sh): This script will automatically be run by Determined during startup of every container launched for this experiment.  This script installs some additional dependencies.
-* **utils.py**: Simple utility functions and classes.
+* [utils.py](utils.py): Simple utility functions and classes.
 
 # Configuration Files
-* **const-cifar10.yaml**: Train with CIFAR-10 on a single GPU with constant hyperparameter values.
-* **const-stl10.yaml**: Train with STL-10 on a single GPU with constant hyperparameter values
-* **distributed-imagenet.yaml**: Train with ImageNet using 64 GPU distributed training with constant hyperparameter values.
+* [const-cifar10.yaml](const-cifar10.yaml): Train with CIFAR-10 on a single GPU with constant hyperparameter values.
+* [const-stl10.yaml](const-stl10.yaml): Train with STL-10 on a single GPU with constant hyperparameter values.
+* [distributed-stl10.yaml](distributed-stl10.yaml): Same as above, but distributed over 4 GPUs.
+* [distributed-imagenet.yaml](distributed-imagenet.yaml): Train with ImageNet using 64 GPU distributed training with constant hyperparameter values.
 
 # Data
 This repo uses three datasets:
 - CIFAR-10 (32x32, 10 classes), automatically downloaded via torchvision.
 - STL-10 (96x96, 10 classes), automatically downloaded via torchvision.
-- ImageNet-1k (1000 classes), which must be downloaded and [made available to each trial container](https://docs.determined.ai/latest/training-apis/experiment-config.html?highlight=bind#bind-mounts).  Information on downloading ImageNet-1k is available at the [ImageNet website](https://image-net.org/download.php).
+- ImageNet-1k (1000 classes), which must stored in a GCS bucket, along with.  Information on downloading ImageNet-1k is available at the [ImageNet website](https://image-net.org/download.php).
 
 # To Run
 If you have not yet installed Determined, installation instructions can be found under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html

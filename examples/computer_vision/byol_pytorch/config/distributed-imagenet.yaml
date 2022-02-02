@@ -6,7 +6,7 @@ resources:
 min_checkpoint_period:
   epochs: 1
 min_validation_period:
-  epochs: 100
+  epochs: 200
 
 profiling:
   begin_on_batch: 0
@@ -16,11 +16,12 @@ profiling:
 
 data:
   dataset_name: imagenet
-  gcs_bucket: determined-ai-datasets
-  # Path to files inside the above bucket that contain newline separated list of all image blob paths.
+  # TODO: Change this to the name of your bucket.
+  gcs_bucket: bucket-name-here
+  #TODO: Path to files inside the above bucket that contain newline separated list of all image blob paths.
   # Generate using generate_blob_list.py.
-  gcs_train_blob_list_path: imagenet/imagenet/train-blob-list.txt
-  gcs_validation_blob_list_path: imagenet/imagenet/validation-blob-list.txt
+  gcs_train_blob_list_path: imagenet/train-blob-list.txt
+  gcs_validation_blob_list_path: imagenet/validation-blob-list.txt
   download_dir: /data
   num_workers: 8
   # Classifier LR is selected using a subset of the training dataset before reporting on the test dataset.
