@@ -118,10 +118,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
 
-		ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-			Priority: *c.Config.Resources.Priority,
-			Handler:  ctx.Self(),
-		})
+		if c.Config.Resources.Priority != nil {
+			ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+				Priority: *c.Config.Resources.Priority,
+				Handler:  ctx.Self(),
+			})
+		}
 
 		var portProxyConf *sproto.PortProxyConfig
 		if c.GenericCommandSpec.Port != nil {
