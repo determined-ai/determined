@@ -22,14 +22,14 @@ Code and configuration details also sourced from the following BYOL implementati
 # Configuration Files
 * [const-cifar10.yaml](const-cifar10.yaml): Train with CIFAR-10 on a single GPU with constant hyperparameter values.
 * [const-stl10.yaml](const-stl10.yaml): Train with STL-10 on a single GPU with constant hyperparameter values.
-* [distributed-stl10.yaml](distributed-stl10.yaml): Same as above, but distributed over 4 GPUs.
+* [distributed-stl10.yaml](distributed-stl10.yaml): Same as above, but distributed over 8 GPUs.
 * [distributed-imagenet.yaml](distributed-imagenet.yaml): Train with ImageNet using 64 GPU distributed training with constant hyperparameter values.
 
 # Data
 This repo uses three datasets:
 - CIFAR-10 (32x32, 10 classes), automatically downloaded via torchvision.
 - STL-10 (96x96, 10 classes), automatically downloaded via torchvision.
-- ImageNet-1k (1000 classes), which must stored in a GCS bucket, along with.  Information on downloading ImageNet-1k is available at the [ImageNet website](https://image-net.org/download.php).
+- ImageNet-1k (1000 classes), which must stored in a GCS bucket along with a blob index.  Information on downloading ImageNet-1k is available at the [ImageNet website](https://image-net.org/download.php).  See `distributed-imagenet.yaml` for an example bucket configuration, and `generate_blob_list.py` for a script to generate the blob list.
 
 # To Run
 If you have not yet installed Determined, installation instructions can be found under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
