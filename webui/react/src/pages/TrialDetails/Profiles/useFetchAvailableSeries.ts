@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { useStore } from 'contexts/Store';
 import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -7,9 +8,12 @@ import { consumeStream } from 'services/utils';
 import { AvailableSeries } from './types';
 
 export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
+  const { ui } = useStore();
   const [ availableSeries, setAvailableSeries ] = useState<AvailableSeries>({});
 
   useEffect(() => {
+    if (ui.isPageHidden) return;
+
     const canceler = new AbortController();
 
     consumeStream(
@@ -45,7 +49,7 @@ export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
     );
 
     return () => canceler.abort();
-  }, [ trialId ]);
+  }, [ trialId, ui.isPageHidden ]);
 
   return availableSeries;
 };

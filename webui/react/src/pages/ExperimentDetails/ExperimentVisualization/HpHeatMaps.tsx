@@ -11,6 +11,7 @@ import Spinner from 'components/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -73,6 +74,7 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedMetric,
   selectedView,
 }: Props) => {
+  const { ui } = useStore();
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
   const [ hasLoaded, setHasLoaded ] = useState(false);
@@ -207,6 +209,8 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [ selectedHParams ]);
 
   useEffect(() => {
+    if (ui.isPageHidden) return;
+
     const canceler = new AbortController();
     const trialIds: number[] = [];
     const hpMetricMap: Record<number, Record<string, number>> = {};
@@ -308,7 +312,14 @@ const HpHeatMaps: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment, fullHParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
+  }, [
+    experiment,
+    fullHParams,
+    selectedBatch,
+    selectedBatchMargin,
+    selectedMetric,
+    ui.isPageHidden,
+  ]);
 
   useEffect(() => setGalleryHeight(resize.height), [ resize ]);
 
