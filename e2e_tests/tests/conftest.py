@@ -143,8 +143,7 @@ def using_k8s(request: SubRequest) -> bool:
         config.make_master_url(),
         "master",
         "config",
-        "-o",
-        "json",
+        "--json",
     ]
 
     output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
