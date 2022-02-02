@@ -4,6 +4,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -133,7 +136,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
 	case *apiv1.GetResourcePoolsRequest:
-		resourcePoolSummary := k.summarizeDummyResourcePool(ctx)
+		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
+		if err != nil {
+			return err
+		}
 		resp := &apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary},
 		}
@@ -170,20 +176,27 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	ctx *actor.Context,
-) *resourcepoolv1.ResourcePool {
+) (*resourcepoolv1.ResourcePool, error) {
 	slotsUsed := 0
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
 	}
 
-	resp := ctx.Ask(k.agent.handler, kubernetes.ResourceSummarize{}).Get().(*kubernetes.PodsInfo)
+	resp := ctx.Ask(k.agent.handler, kubernetes.ResourceSummarize{})
+	if err := resp.Error(); err != nil {
+		return nil, err
+	}
+	pods, ok := resp.Get().(*kubernetes.PodsInfo)
+	if !ok {
+		return nil, status.Error(codes.Internal, "unexpected response from actor")
+	}
 
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
-		NumAgents:                    int32(resp.NumAgents),
-		NumSlots:                     int32(resp.NumSlots),
+		NumAgents:                    int32(pods.NumAgents),
+		NumSlots:                     int32(pods.NumSlots),
 		SlotType:                     k.config.SlotType.Proto(),
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
@@ -202,7 +215,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		ImageId:                      "",
 		InstanceType:                 "kubernetes",
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
-	}
+	}, nil
 }
 
 func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {
