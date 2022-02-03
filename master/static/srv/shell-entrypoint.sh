@@ -17,7 +17,9 @@ fi
 # modified in this entrypoint because the HOME in the user's ssh session is set
 # by sshd at a later time.
 
-"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+if [ "$DET_SKIP_WHEEL_INSTALL" -ne 1 ]; then
+	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources
 

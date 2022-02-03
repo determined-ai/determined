@@ -14,7 +14,9 @@ if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1 ; then
     exit 1
 fi
 
-"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+if [ "$DET_SKIP_WHEEL_INSTALL" -ne 1 ]; then
+	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container
 
