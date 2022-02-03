@@ -17,7 +17,7 @@ Once users' model code are ported to Determined's APIs, they can use an :doc:`ex
 configuration </training-apis/experiment-config>` to configure how Determined should train the model
 - e.g. multi-GPU, hyperparameter search, etc.
 
-If you have existing model code that you'd like to run on Determined, continue to one of the API
+If you have existing model code that you'd like to train with Determined, continue to one of the API
 docs below depending on your ML Framework.
 
 -  :doc:`/training-apis/api-pytorch`
@@ -30,7 +30,7 @@ docs below depending on your ML Framework.
    If you'd like a review of implementing the Determined APIs on example models, please take a look
    at our :doc:`Tutorials </tutorials/index>`. Or, if you'd like to build off of an existing model
    that already runs on Determined, take a look at our :doc:`examples </examples>` to see if the
-   model you'd like to run is already available.
+   model you'd like to train is already available.
 
 *********
  Support
