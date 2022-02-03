@@ -86,8 +86,8 @@ type PodsInfo struct {
 	NumSlots  int
 }
 
-// ResourceSummarize summerize pods resource.
-type ResourceSummarize struct{}
+// SummarizeResources summerize pods resource.
+type SummarizeResources struct{}
 
 // Initialize creates a new global agent actor.
 func Initialize(
@@ -183,7 +183,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case KillTaskPod:
 		p.receiveKillPod(ctx, msg)
 
-	case ResourceSummarize:
+	case SummarizeResources:
 		p.receiveResourceSummarize(ctx, msg)
 
 	case resourceDeletionFailed:
@@ -412,7 +412,7 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg ResourceSummarize) {
+func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
 	summary := p.summarize(ctx)
 	slots := 0
 	for _, node := range summary {

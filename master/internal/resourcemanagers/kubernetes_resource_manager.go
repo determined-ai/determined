@@ -182,7 +182,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		slotsUsed += slotsUsedByGroup
 	}
 
-	resp := ctx.Ask(k.agent.handler, kubernetes.ResourceSummarize{})
+	resp := ctx.Ask(k.agent.handler, kubernetes.SummarizeResources{})
 	if err := resp.Error(); err != nil {
 		return nil, err
 	}
