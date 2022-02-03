@@ -82,8 +82,8 @@ type pods struct {
 
 // PodsInfo contains information for pods.
 type PodsInfo struct {
-	NumAgents int
-	NumSlots  int
+	NumAgents      int
+	SlotsAvailable int
 }
 
 // SummarizeResources summerize pods resource.
@@ -418,7 +418,7 @@ func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResourc
 	for _, node := range summary {
 		slots += len(node.Slots)
 	}
-	ctx.Respond(&PodsInfo{NumAgents: len(summary), NumSlots: slots})
+	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
 }
 
 func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {

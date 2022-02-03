@@ -4,9 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -182,13 +179,9 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		slotsUsed += slotsUsedByGroup
 	}
 
-	resp := ctx.Ask(k.agent.handler, kubernetes.SummarizeResources{})
-	if err := resp.Error(); err != nil {
+	pods, err := k.summerizePods(ctx)
+	if err != nil {
 		return nil, err
-	}
-	pods, ok := resp.Get().(*kubernetes.PodsInfo)
-	if !ok {
-		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
 
 	return &resourcepoolv1.ResourcePool{
@@ -197,7 +190,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    int32(pods.NumAgents),
 		SlotType:                     k.config.SlotType.Proto(),
-		SlotsAvailable:               int32(pods.NumSlots),
+		SlotsAvailable:               int32(pods.SlotsAvailable),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
 		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),
@@ -215,6 +208,20 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		InstanceType:                 "kubernetes",
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 	}, nil
+}
+
+func (k *kubernetesResourceManager) summerizePods(
+	ctx *actor.Context,
+) (*kubernetes.PodsInfo, error) {
+	resp := ctx.Ask(k.agent.handler, kubernetes.SummarizeResources{})
+	if err := resp.Error(); err != nil {
+		return nil, err
+	}
+	pods, ok := resp.Get().(*kubernetes.PodsInfo)
+	if !ok {
+		return nil, actor.ErrUnexpectedMessage(ctx)
+	}
+	return pods, nil
 }
 
 func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {
