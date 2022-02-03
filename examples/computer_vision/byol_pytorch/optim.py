@@ -97,7 +97,6 @@ def set_learning_rate_warmup_cosine_anneal(
     """
     # Learning rate scales linearly with batch size, is equal to base when global_batch_size==base_batch_size.
     p = hparams.self_supervised.learning_rate
-    assert hparams.total_epochs > p.warmup_epochs
     base_lr = p.base * (global_batch_size / p.base_batch_size)
     fractional_epoch = batch_idx / batches_per_epoch
     if fractional_epoch <= p.warmup_epochs:

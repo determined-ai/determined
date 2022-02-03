@@ -12,6 +12,7 @@ Code and configuration details also sourced from the following BYOL implementati
 # Files
 * [backbone.py](backbone.py): Backbone registry.
 * [data.py](data.py): Dataset downloading and metadata registry.
+* [evaluate_result.py](evaluate_result.py): Kicks off an evaluation run, for longer training of classifier heads.
 * [generate_blob_list.py](generate_blob_list.py): Script to generate a blob list from a GCS bucket + prefix.  Used to support GCS streaming for ImageNet dataset.
 * [model_def.py](model_def.py): Core trial and callback definitions.  This is the entrypoint for trials.
 * [optim.py](optim.py): Optimizer definitions and utilities.
@@ -34,7 +35,9 @@ This repo uses three datasets:
 # To Run
 If you have not yet installed Determined, installation instructions can be found under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-Run the following command: `det -m <master host:port> experiment create -f config/const-cifar10.yaml .`
+Run the following command to kick off self-supervised training: `det -m <master host:port> experiment create -f config/const-cifar10.yaml .`
+
+To run a more extensive validation with longer classifier training, first find the experiment ID of your self-supervised training.  Then run `python evaluate_result.py --experiment-id=<id> --classifier-train-epochs=<number>`.
 
 The other configurations can be run by specifying the appropriate configuration file in place of `const-cifar10.yaml`.
 

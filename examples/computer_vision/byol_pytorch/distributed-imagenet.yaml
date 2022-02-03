@@ -6,7 +6,7 @@ resources:
 min_checkpoint_period:
   epochs: 1
 min_validation_period:
-  epochs: 200
+  epochs: 20
 
 profiling:
   begin_on_batch: 0
@@ -61,6 +61,7 @@ data:
     solarization_prob: 0.2
 
 hyperparameters:
+  training_mode: SELF_SUPERVISED
   backbone_name: resnet50
   global_batch_size: 4096
   # Moving average decay increases to 1.0 over training as described in section 3.3 of BYOL paper.
@@ -74,7 +75,7 @@ hyperparameters:
       alpha: 20
     logit_regularization_beta: 1e-2
     momentum: 0.9
-    train_epochs: 80
+    train_epochs: 4
   self_supervised:
     # lars_eta and momentum not specified in the paper, copied from JAX implementation.
     lars_eta: 0.001

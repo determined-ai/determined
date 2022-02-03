@@ -49,6 +49,7 @@ data:
     solarization_prob: 0.0
 
 hyperparameters:
+  training_mode: SELF_SUPERVISED
   backbone_name: resnet18
   global_batch_size: 2048
   classifier:

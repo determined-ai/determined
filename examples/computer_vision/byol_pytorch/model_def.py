@@ -1,4 +1,5 @@
 from attrdict import AttrDict
+from enum import auto, Enum
 from typing import Any, cast, Dict, Sequence, Union
 
 from determined.pytorch import (
@@ -34,6 +35,16 @@ from utils import LambdaModule
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
+class TrainingMode(Enum):
+    """
+    SELF_SUPERVISED: Primary training mode, for training the self-supervised feature network.
+    CLASSIFIER: Trains a classifier on the frozen self-supervised network for validation purposes.
+    """
+
+    SELF_SUPERVISED = auto()
+    CLASSIFIER_ONLY = auto()
+
+
 def classifier_loss(
     hparams: AttrDict, input_logits: torch.Tensor, target: torch.Tensor
 ) -> torch.Tensor:
@@ -61,20 +72,28 @@ class BYOLTrial(PyTorchTrial):
             "max_length"
         ]["epochs"]
         self.rank = self.context.distributed.get_rank()
+        try:
+            self.training_mode = TrainingMode[self.hparams.training_mode]
+        except ValueError:
+            print(
+                f"Training mode {self.hparams.training_mode} not supported: use one of {TrainingMode._member_names_}"
+            )
+        print(f"Training in mode {self.training_mode}")
         self._init_transforms()
         self._init_self_supervised()
         self._init_classifiers()
         self._init_reducers()
-        # Create a separate dataloader for training the classifier.
-        # With distributed training, calling get_data_loader on the Determined dataloader will automatically
-        # shard the dataset.
-        self.train_cls_dataloader = (
-            self._build_cls_training_data_loader().get_data_loader(
-                repeat=False,
-                num_replicas=self.context.distributed.get_size(),
-                rank=self.rank,
+        if self.training_mode == TrainingMode.SELF_SUPERVISED:
+            # Create a separate dataloader for training the classifier during validation.
+            # With distributed training, calling get_data_loader on the Determined dataloader will automatically
+            # shard the dataset.
+            self.train_cls_dataloader = (
+                self._build_cls_training_data_loader().get_data_loader(
+                    repeat=False,
+                    num_replicas=self.context.distributed.get_size(),
+                    rank=self.rank,
+                )
             )
-        )
 
     def _init_transforms(self) -> None:
         """
@@ -154,21 +173,26 @@ class BYOLTrial(PyTorchTrial):
                 ValidatedAccuracyReducer(), "test_accuracy", for_training=False
             ),
         )
-        self.cls_loss_reducers = [
-            cast(
-                AvgReducer,
-                self.context.wrap_reducer(
-                    AvgReducer(), f"cls_loss_{i}", for_training=False
-                ),
-            )
-            for i in range(len(self.hparams.classifier.learning_rates))
-        ]
+        if self.training_mode == TrainingMode.SELF_SUPERVISED:
+            self.cls_loss_reducers = [
+                cast(
+                    AvgReducer,
+                    self.context.wrap_reducer(
+                        AvgReducer(), f"cls_loss_{i}", for_training=False
+                    ),
+                )
+                for i in range(len(self.hparams.classifier.learning_rates))
+            ]
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         return {"classifier_train": ClassifierTrainCallback(trial=self)}
 
     def build_training_data_loader(self) -> DataLoader:
-        train_dataset = build_dataset(self.data_config, split=DatasetSplit.TRAIN)
+        if self.training_mode == TrainingMode.SELF_SUPERVISED:
+            split = DatasetSplit.TRAIN
+        elif self.training_mode == TrainingMode.CLASSIFIER_ONLY:
+            split = DatasetSplit.CLS_TRAIN
+        train_dataset = build_dataset(self.data_config, split=split)
         # In order to ensure distributed training shards correctly, we round the dataset size
         # down to be a multiple of the global batch size.
         # See comment here for more details:
@@ -224,6 +248,17 @@ class BYOLTrial(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
+        if self.training_mode == TrainingMode.SELF_SUPERVISED:
+            return self._train_self_supervised_batch(batch, epoch_idx, batch_idx)
+        elif self.training_mode == TrainingMode.CLASSIFIER_ONLY:
+            return self._train_classifier_batch(batch, epoch_idx, batch_idx)
+        else:
+            # Should be unreachable.
+            raise Exception(f"Unknown TrainingMode {self.training_mode}.")
+
+    def _train_self_supervised_batch(
+        self, batch: TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
         imgs1, imgs2, _ = batch
         set_learning_rate_warmup_cosine_anneal(
             self.hparams,
@@ -244,6 +279,26 @@ class BYOLTrial(PyTorchTrial):
         # across processes at this point.
         self.byol_model.update_moving_average()
         return {"loss": loss}
+
+    def _train_classifier_batch(
+        self, batch: TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        imgs, labels = batch
+        embeddings = self.byol_model.forward(
+            imgs, return_embedding=True, return_projection=False
+        ).detach()
+        # May be called from validation, so need to enable gradients.
+        losses = {}
+        with torch.enable_grad():
+            for lr_idx, lr in enumerate(self.hparams.classifier.learning_rates):
+                model = self.cls_models[lr_idx]
+                opt = self.cls_opts[lr_idx]
+                logits = cast(torch.Tensor, model(embeddings))
+                cls_loss = classifier_loss(self.hparams, logits, labels)
+                losses[f"cls_loss_{lr_idx}"] = cls_loss.item()
+                self.context.backward(cls_loss)
+                self.context.step_optimizer(opt)
+        return losses
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         # Evaluation batches run simultaneously over LR validation subset and test dataset (using JointDataset)
@@ -271,7 +326,11 @@ class BYOLTrial(PyTorchTrial):
 
 class ClassifierTrainCallback(PyTorchCallback):
     """
-    Performs classifier head training on frozen self-supervised network before each validation epoch.
+    When training self-supervised part of the network, performs classifier head training on frozen
+    network before each validation epoch.  This classifier is needed to provide validation statistics.
+
+    Number of classifier training epochs should be kept short in self-supervised training mode, since
+    there is no checkpointing within this training loop.
     """
 
     def __init__(self, trial: BYOLTrial):
@@ -279,6 +338,9 @@ class ClassifierTrainCallback(PyTorchCallback):
 
     def on_validation_start(self) -> None:
         trial = self.trial
+        # Only perform classifier training here to give validation stats
+        if trial.training_mode != TrainingMode.SELF_SUPERVISED:
+            return
         # Reset models and optimization before each validation epoch -- want them trained from
         # the most recent frozen model.
         for lr_idx in range(len(trial.hparams.classifier.learning_rates)):
@@ -288,26 +350,20 @@ class ClassifierTrainCallback(PyTorchCallback):
         print(
             f"Training classifier heads for {trial.hparams.classifier.train_epochs} epochs..."
         )
-        for e in range(trial.hparams.classifier.train_epochs):
-            print(f"Training epoch {e}")
-            for batch in trial.train_cls_dataloader:
+        for epoch_idx in range(trial.hparams.classifier.train_epochs):
+            print(f"Training epoch {epoch_idx}")
+            for batch_idx, batch in enumerate(trial.train_cls_dataloader):
                 imgs, labels = batch
                 imgs = imgs.cuda()
                 labels = labels.cuda()
-                embeddings = trial.byol_model.forward(
-                    imgs, return_embedding=True, return_projection=False
-                ).detach()
-                for lr_idx, lr in enumerate(trial.hparams.classifier.learning_rates):
-                    with torch.enable_grad():
-                        model = trial.cls_models[lr_idx]
-                        opt = trial.cls_opts[lr_idx]
-                        logits = cast(torch.Tensor, model(embeddings))
-                        cls_loss = classifier_loss(trial.hparams, logits, labels)
-                        # Record avg loss over last epoch.
-                        if e == trial.hparams.classifier.train_epochs - 1:
-                            trial.cls_loss_reducers[lr_idx].update(cls_loss.item())
-                        trial.context.backward(cls_loss)
-                        trial.context.step_optimizer(opt)
+                losses = trial._train_classifier_batch(
+                    (imgs, labels), epoch_idx, batch_idx
+                )
+                # Record avg loss over last epoch.
+                if epoch_idx == trial.hparams.classifier.train_epochs - 1:
+                    for cls_loss_key, cls_loss in losses.items():
+                        idx = int(cls_loss_key.split("_")[-1])
+                        trial.cls_loss_reducers[idx].update(cls_loss)
         # Set models back to eval mode.
         for lr_idx in range(len(trial.hparams.classifier.learning_rates)):
             trial.cls_models[lr_idx].eval()
