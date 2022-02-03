@@ -261,7 +261,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Priority != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupPriority{Priority: patch.Resources.Priority})
+				job.SetGroupPriority{Priority: *patch.Resources.Priority})
 		}
 	}
 

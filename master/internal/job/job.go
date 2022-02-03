@@ -50,7 +50,7 @@ type (
 	}
 	// SetGroupPriority sets the priority of the group in the priority scheduler.
 	SetGroupPriority struct {
-		Priority     *int
+		Priority     int
 		ResourcePool string
 		Handler      *actor.Ref
 	}
@@ -189,7 +189,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					continue
 				}
 				resp := ctx.Ask(jobActor, SetGroupPriority{
-					Priority: &priority,
+					Priority: priority,
 				})
 				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())

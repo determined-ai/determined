@@ -216,9 +216,7 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case job.SetGroupPriority:
 		group := k.getOrCreateGroup(ctx, msg.Handler)
-		if msg.Priority != nil {
-			group.priority = msg.Priority
-		}
+		group.priority = &msg.Priority
 
 		for it := k.reqList.iterator(); it.next(); {
 			if it.value().Group == msg.Handler {
