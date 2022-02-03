@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -285,8 +286,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
-			setProgress := 1.0
-			if err := e.db.SaveExperimentProgress(e.ID, &setProgress); err != nil {
+			if err := e.db.SaveExperimentProgress(e.ID, ptrs.Float64Ptr(1.0)); err != nil {
 				ctx.Log().Error(err)
 			}
 		}
