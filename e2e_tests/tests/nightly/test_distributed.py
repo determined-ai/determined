@@ -1,3 +1,7 @@
+import os
+import shutil
+import tempfile
+
 import pytest
 
 from tests import config as conf
@@ -76,8 +80,18 @@ def test_iris_tf_keras_distributed() -> None:
 def test_unets_tf_keras_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("unets_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+    download_dir = "/tmp/data"
+    url = "https://s3-us-west-2.amazonaws.com/determined-ai-datasets/oxford_iiit_pet/oxford_iiit_pet.tar.gz"  # noqa
 
-    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("unets_tf_keras"), 1)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        copy_destination = os.path.join(tmpdir, "example")
+        shutil.copytree(conf.cv_examples_path("unets_tf_keras"), copy_destination)
+        with open(os.path.join(copy_destination, "startup-hook.sh"), "a") as f:
+            f.write("\n")
+            f.write(f"wget -O /tmp/data.tar.gz {url}\n")
+            f.write(f"mkdir {download_dir}\n")
+            f.write(f"tar -xzvf /tmp/data.tar.gz -C {download_dir}\n")
+        exp.run_basic_test_with_temp_config(config, copy_destination, 1)
 
 
 @pytest.mark.distributed
