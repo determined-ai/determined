@@ -4395,12 +4395,6 @@ export interface V1ResourcePool {
      * @type {number}
      * @memberof V1ResourcePool
      */
-    numSlots?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof V1ResourcePool
-     */
     slotsAvailable: number;
     /**
      * 

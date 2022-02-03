@@ -138,7 +138,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
 		if err != nil {
-			return err
+			ctx.Respond(err)
 		}
 		resp := &apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary},
@@ -196,9 +196,8 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    int32(pods.NumAgents),
-		NumSlots:                     int32(pods.NumSlots),
 		SlotType:                     k.config.SlotType.Proto(),
-		SlotsAvailable:               int32(k.agent.numSlots()),
+		SlotsAvailable:               int32(pods.NumSlots),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
 		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),

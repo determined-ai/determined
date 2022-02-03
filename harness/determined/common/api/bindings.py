@@ -3776,14 +3776,12 @@ class v1ResourcePool:
         slotsUsed: int,
         startupScript: str,
         type: "v1ResourcePoolType",
-        numSlots: "typing.Optional[int]" = None,
         slotsPerAgent: "typing.Optional[int]" = None,
     ):
         self.name = name
         self.description = description
         self.type = type
         self.numAgents = numAgents
-        self.numSlots = numSlots
         self.slotsAvailable = slotsAvailable
         self.slotsUsed = slotsUsed
         self.slotType = slotType
@@ -3820,7 +3818,6 @@ class v1ResourcePool:
             description=obj["description"],
             type=v1ResourcePoolType(obj["type"]),
             numAgents=obj["numAgents"],
-            numSlots=obj.get("numSlots", None),
             slotsAvailable=obj["slotsAvailable"],
             slotsUsed=obj["slotsUsed"],
             slotType=determineddevicev1Type(obj["slotType"]),
@@ -3857,7 +3854,6 @@ class v1ResourcePool:
             "description": self.description,
             "type": self.type.value,
             "numAgents": self.numAgents,
-            "numSlots": self.numSlots if self.numSlots is not None else None,
             "slotsAvailable": self.slotsAvailable,
             "slotsUsed": self.slotsUsed,
             "slotType": self.slotType.value,

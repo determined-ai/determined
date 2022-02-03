@@ -98,8 +98,6 @@ message ResourcePool {
   ResourcePoolType type = 3;
   // The number of agents running in the resource pool
   int32 num_agents = 4;
-  // The number of slots in the resource pool
-  int32 num_slots = 33;
   // The total number of slots that exist in the resource pool
   int32 slots_available = 5;
   // The number of slots that are actively running workloads
