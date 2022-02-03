@@ -6,7 +6,8 @@
  Use Checkpoints
 *****************
 
-You can use the checkpoints outside Determined for any purposes. See
+When a model is trained with Determined, checkpoints are automatically saved to external storage.
+These checkpoints can then be exported for use outside Determined. See
 :doc:`/post-training/use-trained-models` for details.
 
 *********************
@@ -37,8 +38,8 @@ experiment, run:
  Manage Trained Models
 ***********************
 
-Determined builds the :doc:`/post-training/model-registry` to help manage trained models and their
-respective versions.
+Determined includes a built-in :doc:`model registry </post-training/model-registry>` to manage
+trained models and their respective versions.
 
 .. toctree::
    :maxdepth: 1
