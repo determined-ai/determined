@@ -8,6 +8,16 @@
  Version 0.17
 **************
 
+Version 0.17.8
+==============
+
+**Release Date:** February 3, 2022
+
+**Bug Fixes**
+
+-  Distributed Training: Fix a bug that shows experiments in a COMPLETED state even if they errored
+   out. We recommend that users of distributed training update to 0.17.8 or later.
+
 Version 0.17.7
 ==============
 
