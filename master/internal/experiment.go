@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -284,8 +285,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
-		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
-			ctx.Log().Error(err)
+		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
+			if err := e.db.SaveExperimentProgress(e.ID, ptrs.Float64Ptr(1.0)); err != nil {
+				ctx.Log().Error(err)
+			}
 		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{

@@ -246,7 +246,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "progress",
+		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "COALESCE(progress, 0)",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
