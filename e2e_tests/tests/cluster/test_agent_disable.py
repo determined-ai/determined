@@ -151,11 +151,11 @@ def test_drain_agent() -> None:
             trials = exp.experiment_trials(experiment_id_no_start)
             assert len(trials) == 0
 
-        # Ensure the first one has finished with the correct number of steps.
+        # Ensure the first one has finished with the correct number of workloads.
         exp.wait_for_experiment_state(experiment_id, "COMPLETED")
         trials = exp.experiment_trials(experiment_id)
         assert len(trials) == 1
-        assert len(trials[0]["steps"]) == 5
+        assert len(trials[0]["workloads"]) == 7
 
         # Ensure the slot is empty.
         slots = _fetch_slots()
@@ -224,7 +224,7 @@ def test_drain_agent_sched() -> None:
         trials1 = exp.experiment_trials(exp_id1)
         trials2 = exp.experiment_trials(exp_id2)
         assert len(trials1) == len(trials2) == 1
-        assert len(trials1[0]["steps"]) == len(trials2[0]["steps"]) == 5
+        assert len(trials1[0]["workloads"]) == len(trials2[0]["workloads"]) == 7
 
 
 def _task_data(task_id: str) -> Optional[Dict[str, Any]]:

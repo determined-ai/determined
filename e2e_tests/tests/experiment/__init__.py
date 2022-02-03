@@ -13,6 +13,7 @@ from .experiment import (
     experiment_has_completed_workload,
     wait_for_experiment_active_workload,
     wait_for_experiment_workload_progress,
+    experiment_config_json,
     experiment_json,
     experiment_state,
     experiment_trials,

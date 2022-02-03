@@ -225,6 +225,15 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     return False
 
 
+def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
+    murl = conf.make_master_url()
+    certs.cli_cert = certs.default_load(murl)
+    authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
+    sess = session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    r = bindings.get_GetExperiment(sess, experimentId=experiment_id)
+    return r.config
+
+
 def experiment_json(experiment_id: int) -> Dict[str, Any]:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
@@ -527,7 +536,7 @@ def report_failed_experiment(experiment_id: int) -> None:
     )
 
     for trial in trials:
-        print_trial_logs(trial["id"])
+        print_trial_logs(trial["trial"]["id"])
 
 
 def report_failed_trial(trial_id: int, state: str) -> None:
@@ -596,20 +605,11 @@ def verify_completed_experiment_metadata(
 
         for step in t["workloads"]:
             if "training" in step:
-                internal_step = step["training"]
+                assert step["training"]["state"] == "STATE_COMPLETED"
             elif "validation" in step:
-                internal_step = step["validation"]
+                assert step["validation"]["state"] == "STATE_COMPLETED"
             elif "checkpoint" in step:
-                internal_step = step["checkpoint"]
-            assert internal_step["state"] == "STATE_COMPLETED"
-
-            if "validation" in step:
-                validation = step["validation"]
-                assert validation["state"] == "STATE_COMPLETED"
-
-            if "checkpoint" in step:
-                checkpoint = step["checkpoint"]
-                assert checkpoint["state"] in {"STATE_COMPLETED", "STATE_DELETED"}
+                assert step["checkpoint"]["state"] in {"STATE_COMPLETED", "STATE_DELETED"}
 
     # The last step of every trial should be the same batch number as the last checkpoint.
     for t in trials:
@@ -654,7 +654,8 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     # For each failed trial, check for the expected error in the logs.
     trials = experiment_trials(experiment_id)
     for t in trials:
-        if t["state"].replace("STATE_", "") != "ERROR":
+        trial = t["trial"]
+        if trial["state"] != "STATE_ERROR":
             continue
 
         trial_id = t["id"]

@@ -50,11 +50,11 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     fixtures = [
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
-            {"COMPLETED": {800, 900, 1000}, "DELETED": {100, 200, 300, 400, 500, 600, 700}},
+            {"STATE_COMPLETED": {800, 900, 1000}, "STATE_DELETED": {100, 200, 300, 400, 500, 600, 700}},
         ),
         (
             conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
-            {"COMPLETED": {100, 200, 300, 900, 1000}, "DELETED": {400, 500, 600, 700, 800}},
+            {"STATE_COMPLETED": {100, 200, 300, 900, 1000}, "STATE_DELETED": {400, 500, 600, 700, 800}},
         ),
     ]
 
@@ -81,14 +81,15 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             trials = exp.experiment_trials(experiment_id)
             assert len(trials) == 1
 
+            checkpoints = list(filter(lambda w: "checkpoint" in w, trials[0]["workloads"]))
             checkpoints = sorted(
-                (step["checkpoint"] for step in trials[0]["steps"]),
-                key=operator.itemgetter("total_batches"),
+                (workload["checkpoint"] for workload in checkpoints),
+                key=operator.itemgetter("totalBatches"),
             )
             assert len(checkpoints) == 10
             by_state = {}  # type: Dict[str, Set[int]]
             for checkpoint in checkpoints:
-                by_state.setdefault(checkpoint["state"], set()).add(checkpoint["total_batches"])
+                by_state.setdefault(checkpoint["state"], set()).add(checkpoint["totalBatches"])
 
             if by_state == result:
                 all_checkpoints.append((config, checkpoints))
