@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  Web: Adds a column picker to the Experiment List page to allow users to choose which table
+   columns to display.
