@@ -62,14 +62,12 @@ const InlineEditor: React.FC<Props> = ({
 
   const save = useCallback(async (newValue: string) => {
     if (onSave) {
-      try {
-        setIsSaving(true);
-        await onSave(newValue);
-      } catch (e) {
+      setIsSaving(true);
+      const err = await onSave(newValue);
+      if (err !== null) {
         updateEditorValue(value);
-      } finally {
-        setIsSaving(false);
       }
+      setIsSaving(false);
     }
   }, [ onSave, updateEditorValue, value ]);
 
