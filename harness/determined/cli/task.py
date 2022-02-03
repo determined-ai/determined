@@ -172,7 +172,10 @@ args_description: List[Any] = [
             ),
             Cmd(
                 "logs",
-                logs,
+                # Since declarative argparse tries to attach the help_str to the func itself:
+                # ./harness/determined/common/declarative_argparse.py#L57
+                # Each func must be unique.
+                lambda *args, **kwargs: logs(*args, **kwargs),
                 "fetch task logs",
                 [
                     Arg("task_id", help="task ID"),

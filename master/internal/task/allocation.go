@@ -185,7 +185,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		a.Cleanup(ctx)
 	case sproto.ContainerLog:
-		a.sendEvent(ctx, sproto.Event{LogEvent: ptrs.StringPtr(msg.String())})
+		a.sendEvent(ctx, msg.ToEvent())
 
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
@@ -659,7 +659,7 @@ const killedLogSubstr = "exit code 137"
 func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
 
-	if log.Timestamp == nil || *log.Timestamp == (time.Time{}) {
+	if log.Timestamp == nil || log.Timestamp.IsZero() {
 		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
 	}
 
@@ -691,10 +691,14 @@ func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
 
 func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Event {
 	ev.ParentID = ctx.Self().Parent().Address().Local()
-	ev.State = a.state.String()
-	ev.IsReady = coalesce(a.model.IsReady, false)
-	ev.Time = time.Now().UTC()
 	ev.Description = a.req.Name
+	ev.IsReady = coalesce(a.model.IsReady, false)
+	if ev.State == "" {
+		ev.State = a.state.String()
+	}
+	if ev.Time.IsZero() {
+		ev.Time = time.Now().UTC()
+	}
 	return ev
 }
 

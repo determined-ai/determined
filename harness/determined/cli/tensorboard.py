@@ -102,7 +102,8 @@ args_description = [
             "open existing TensorBoard instance", [
                 Arg("tensorboard_id", help="TensorBoard ID")
             ]),
-        Cmd("logs", task.logs, "fetch TensorBoard instance logs", [
+        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs),
+            "fetch TensorBoard instance logs", [
             Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
             *task.common_log_options,
         ]),

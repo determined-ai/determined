@@ -84,16 +84,26 @@ func (c ContainerLog) String() string {
 	if len(c.Container.ID) >= 8 {
 		shortID = c.Container.ID[:8].String()
 	}
-	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
+	timestamp := c.Timestamp.UTC().Format(time.RFC3339Nano)
 	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, c.Message())
+}
+
+// ToEvent converts a container log to a container event.
+func (c ContainerLog) ToEvent() Event {
+	return Event{
+		State:       string(c.Container.State),
+		ContainerID: string(c.Container.ID),
+		Time:        c.Timestamp.UTC(),
+		LogEvent:    ptrs.StringPtr(c.Message()),
+	}
 }
 
 // ToTaskLog converts a container log to a task log.
 func (c ContainerLog) ToTaskLog() model.TaskLog {
 	return model.TaskLog{
 		ContainerID: ptrs.StringPtr(string(c.Container.ID)),
-		Log:         c.Message(),
 		Level:       c.Level,
 		Timestamp:   ptrs.TimePtr(c.Timestamp.UTC()),
+		Log:         c.Message(),
 	}
 }

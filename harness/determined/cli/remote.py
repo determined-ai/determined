@@ -60,7 +60,7 @@ args_description = [
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
-        Cmd("logs", task.logs, "fetch command logs", [
+        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs), "fetch command logs", [
             Arg("task_id", help="command ID", metavar="command_id"),
             *task.common_log_options,
         ]),

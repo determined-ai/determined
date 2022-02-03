@@ -211,7 +211,8 @@ args_description = [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
-        Cmd("logs", task.logs, "fetch shell logs", [
+        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs),
+            "fetch shell logs", [
             Arg("task_id", help="shell ID", metavar="shell_id"),
             *task.common_log_options
         ]),
