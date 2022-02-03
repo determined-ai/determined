@@ -54,7 +54,6 @@ def main(train_entrypoint: Optional[str]) -> int:
         master_cert_file=info.master_cert_file,
         master_cert_name=info.master_cert_name,
         experiment_config=info.trial._config,
-        container_id=info.container_id,
         hparams=info.trial.hparams,
         latest_checkpoint=info.latest_checkpoint,
         latest_batch=info.trial._latest_batch,

@@ -24,6 +24,10 @@ def main(train_entrypoint: str) -> int:
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
+    # Hack: get the container id from the environment.
+    container_id = os.environ.get("DET_CONTAINER_ID")
+    assert container_id is not None, "Unable to run with DET_CONTAINER_ID unset"
+
     # Hack: read the full config.  The experiment config is not a stable API!
     experiment_config = info.trial._config
 
@@ -48,7 +52,7 @@ def main(train_entrypoint: str) -> int:
         # contiainers (horovodrun, in this case) have exited.
         api.post(
             info.master_url,
-            path=f"/api/v1/allocations/{info.allocation_id}/containers/{info.container_id}/daemon",
+            path=f"/api/v1/allocations/{info.allocation_id}/containers/{container_id}/daemon",
             cert=cert,
         )
 

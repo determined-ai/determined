@@ -178,7 +178,6 @@ class ClusterInfo:
         master_url: str,
         cluster_id: str,
         agent_id: str,
-        container_id: str,
         slot_ids: List[int],
         task_id: str,
         allocation_id: str,
@@ -196,7 +195,6 @@ class ClusterInfo:
         self.master_url = master_url
         self.cluster_id = cluster_id
         self.agent_id = agent_id
-        self.container_id = container_id
         self.slot_ids = slot_ids
         self.task_id = task_id
         self.allocation_id = allocation_id
@@ -217,7 +215,6 @@ class ClusterInfo:
             "DET_MASTER",
             "DET_CLUSTER_ID",
             "DET_AGENT_ID",
-            "DET_CONTAINER_ID",
             "DET_SLOT_IDS",
             "DET_TASK_ID",
             "DET_ALLOCATION_ID",
@@ -233,7 +230,6 @@ class ClusterInfo:
             master_url=os.environ["DET_MASTER"],
             cluster_id=os.environ["DET_CLUSTER_ID"],
             agent_id=os.environ["DET_AGENT_ID"],
-            container_id=os.environ["DET_CONTAINER_ID"],
             slot_ids=json.loads(os.environ["DET_SLOT_IDS"]),
             task_id=os.environ["DET_TASK_ID"],
             allocation_id=os.environ["DET_ALLOCATION_ID"],
