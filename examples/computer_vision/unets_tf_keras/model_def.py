@@ -5,7 +5,6 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/tensorflow/docs/blob/master/site/en/tutorials/images/segmentation.ipynb
 """
-import filelock
 import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
 import tensorflow_datasets as tfds
@@ -21,7 +20,11 @@ from tensorflow import keras
 class UNetsTrial(TFKerasTrial):
     def __init__(self, context):
         self.context = context
-        self.download_directory = "/tmp/data"
+
+        # Create a unique download directory for each rank so they don't overwrite each
+        # other when doing distributed training.
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+        self.data_downloaded = False
 
     def normalize(self, input_image, input_mask):
         input_image = tf.cast(input_image, tf.float32) / 255.0
@@ -57,11 +60,9 @@ class UNetsTrial(TFKerasTrial):
         weights_dir = self.download_directory + '/weights/'
         data_file = self.context.get_data_config()['data_file']
         mobilenet_link = 'https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/' + data_file
-        os.makedirs(weights_dir, exist_ok=True)
+        os.mkdir(weights_dir)
 
-        # Use a file lock so only one worker on each node does the download
-        with filelock.FileLock(os.path.join(weights_dir, "download.lock")):
-            urllib.request.urlretrieve(mobilenet_link, weights_dir + data_file)
+        urllib.request.urlretrieve(mobilenet_link,weights_dir + data_file)
         return weights_dir + data_file
 
     def build_model(self):
@@ -108,16 +109,13 @@ class UNetsTrial(TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
-        os.makedirs(self.download_directory, exist_ok=True)
-
-        # Use a file lock so only one worker on each node does the download
-        with filelock.FileLock(os.path.join(self.download_directory, "download.lock")):
-            dataset = tfds.load(
-                'oxford_iiit_pet:3.*.*',
-                split="train",
-                with_info=False,
-                data_dir=self.download_directory,
-            )
+        dataset = tfds.load(
+            'oxford_iiit_pet:3.*.*',
+            split="train",
+            with_info=False,
+            data_dir=self.download_directory,
+            download=not self.data_downloaded,
+        )
 
         def load_image_train(datapoint):
             input_image = tf.image.resize(datapoint['image'], (128, 128))
@@ -138,17 +136,13 @@ class UNetsTrial(TFKerasTrial):
         return train_dataset
 
     def build_validation_data_loader(self):
-        os.makedirs(self.download_directory, exist_ok=True)
-
-        # Use a file lock so only one worker on each node does the download
-        with filelock.FileLock(os.path.join(self.download_directory, "download.lock")):
-            dataset = tfds.load(
-                'oxford_iiit_pet:3.*.*',
-                split="test",
-                with_info=False,
-                data_dir=self.download_directory,
-            )
-
+        dataset, info = tfds.load(
+            'oxford_iiit_pet:3.*.*',
+            split="test",
+            with_info=True,
+            data_dir=self.download_directory,
+            download=not self.data_downloaded,
+        )
         def load_image_test(datapoint):
             input_image = tf.image.resize(datapoint['image'], (128, 128))
             input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
