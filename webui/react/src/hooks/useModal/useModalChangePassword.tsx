@@ -94,7 +94,7 @@ const useModalChangePassword = (): ModalHooks => {
           <Form.Item>
             <span>
               Password must be at least 8 characters
-              and contain at least one uppercase and one lowercase character.
+              and contain an uppercase letter, a lowercase letter, and a number.
             </span>
           </Form.Item>
         </Form>
