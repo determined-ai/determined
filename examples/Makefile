@@ -19,17 +19,17 @@ META_LEARNING_EXAMPLES_DIRS := $(patsubst meta_learning/%/., build/%.tgz, $(META
 GAN_EXAMPLES := $(wildcard gan/*/.)
 GAN_EXAMPLES_DIRS := $(patsubst gan/%/., build/%.tgz, $(GAN_EXAMPLES))
 
+GRAPHS_EXAMPLES := $(wildcard graphs/*/.)
+GRAPHS_EXAMPLES_DIRS := $(patsubst graphs/%/., build/%.tgz, $(GRAPHS_EXAMPLES))
+
 DT_EXAMPLES := $(wildcard decision_trees/*/.)
 DT_EXAMPLES_DIRS := $(patsubst decision_trees/%/., build/%.tgz, $(DT_EXAMPLES))
 
 FEATURES_EXAMPLES := $(wildcard features/*/.)
 FEATURES_EXAMPLES_DIRS := $(patsubst features/%/., build/%.tgz, $(FEATURES_EXAMPLES))
 
-GRAPHS_EXAMPLES := $(wildcard graphs/*/.)
-GRAPHS_EXAMPLES_DIRS := $(patsubst graphs/%/., build/%.tgz, $(GRAPHS_EXAMPLES))
-
 .PHONY: build
-build: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(NAS_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(GAN_EXAMPLES_DIRS) $(DT_EXAMPLES_DIRS) $(FEATURES_EXAMPLES_DIRS)
+build: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(NAS_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(GAN_EXAMPLES_DIRS) $(GRAPHS_EXAMPLES_DIRS) $(DT_EXAMPLES_DIRS) $(FEATURES_EXAMPLES_DIRS)
 
 .PHONY: clean
 clean:

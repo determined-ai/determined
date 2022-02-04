@@ -1,7 +1,9 @@
 # PyTorch Geometric - proteins_topk_pool example
 
-This example demonstrates the usage of `pytorch_geometric` library. It was adapted from
-the [protein_topk_pool example](https://github.com/rusty1s/pytorch_geometric/blob/master/examples/proteins_topk_pool.py).
+This example demonstrates how to use the [PyTorch
+Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) library with
+Determined. It was adapted from the [protein_topk_pool
+example](https://github.com/rusty1s/pytorch_geometric/blob/master/examples/proteins_topk_pool.py).
 
 The key parts of this example are contained in the following functions in `model_def.py`:
 - `build_training_data_loader`, `build_validation_data_loader`:
@@ -15,10 +17,10 @@ The key parts of this example are contained in the following functions in `model
 Also, this example has a few extra dependencies installed via `startup-hook.sh`,
 specifically `torch_sparse` and `torch_scatter`.
 Building these packages with CUDA support (i.e. in GPU environments) may take
-significant amount of time (30-40 minutes), so our code pins them to specific
-PyTorch & CUDA version instead, and uses prebuilt upstream python wheels.
+a significant amount of time (30-40 minutes), so our code pins them to specific
+PyTorch & CUDA version instead, and uses prebuilt upstream Python wheels.
 Make sure to change the pinned version appropriately if you're planning to use
-different PyTorch or CUDA versions.
+a different version of PyTorch or CUDA.
 
 ## Files
 * **model_def.py**: Model and trial definition.
