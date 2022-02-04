@@ -55,7 +55,7 @@ if [ "$HOME" = "/" ] ; then
     export HOME
 fi
 
-if [ -z "$DET_SKIP_WHEEL_INSTALL" ]; then
+if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
     "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 fi
 

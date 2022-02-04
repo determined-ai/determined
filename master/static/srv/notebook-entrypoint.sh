@@ -28,7 +28,7 @@ fi
 SHELL="$(set -o pipefail; getent passwd "$(whoami)" | cut -d: -f7)" || SHELL="/bin/bash"
 export SHELL
 
-if [ -z "$DET_SKIP_WHEEL_INSTALL" ]; then
+if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
 	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 fi
 
