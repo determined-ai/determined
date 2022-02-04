@@ -432,7 +432,7 @@ def describe(args: Namespace) -> None:
         print("\nWorkloads:")
     else:
         outfile = args.outdir.joinpath("workloads.csv")
-    values = sorted(step_output.values(), key=lambda a: a[1])
+    values = sorted(step_output.values(), key=lambda a: int(a[1]))
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 

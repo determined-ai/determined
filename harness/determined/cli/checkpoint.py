@@ -73,14 +73,14 @@ def list_checkpoints(args: Namespace) -> None:
         if "searcher" in config and "metric" in config["searcher"]:
             searcher_metric = config["searcher"]["metric"]
 
-    def get_validation_metric(c, metric):
+    def get_validation_metric(c: bindings.v1Checkpoint, metric: str) -> str:
         if (
             c.metrics
             and c.metrics.validationMetrics
             and c.metrics.validationMetrics[searcher_metric]
         ):
             return c.metrics.validationMetrics[searcher_metric]
-        return None
+        return ""
 
     headers = [
         "Trial ID",
