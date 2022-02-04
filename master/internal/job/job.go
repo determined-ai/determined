@@ -2,9 +2,13 @@ package job
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -13,6 +17,10 @@ import (
 var (
 	// JobsActorAddr is the address of the jobs actor.
 	JobsActorAddr = actor.Addr("jobs")
+	// HeadAnchor is an internal anchor for the head of the job queue.
+	HeadAnchor = model.JobID("INTERNAL-head")
+	// TailAnchor is an internal anchor for the tail of the job queue.
+	TailAnchor = model.JobID("INTERNAL-tail")
 )
 
 // RMJobInfo packs information available only to the RM that updates frequently.
@@ -44,13 +52,13 @@ type (
 	// SetGroupWeight sets the weight of a group in the fair share scheduler.
 	SetGroupWeight struct {
 		Weight       float64
-		ResourcePool string
+		ResourcePool string // TODO are we using this?
 		Handler      *actor.Ref
 	}
 	// SetGroupPriority sets the priority of the group in the priority scheduler.
 	SetGroupPriority struct {
 		Priority     int
-		ResourcePool string
+		ResourcePool string // TODO are we using this?
 		Handler      *actor.Ref
 	}
 	// SetResourcePool switches the resource pool that the job belongs to.
@@ -61,8 +69,8 @@ type (
 	// MoveJob requests the job to be moved within a priority queue relative to another job.
 	MoveJob struct {
 		ID      model.JobID
-		Anchor  model.JobID
-		AheadOf bool
+		Anchor1 model.JobID
+		Anchor2 model.JobID
 	}
 )
 
@@ -133,6 +141,206 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, er
 	return jobQ, nil
 }
 
+// figure out what changes are needed to move the job to the desired position.
+// Later we can support cross RP moving this way as well.
+func moveJobMessages(
+	jobs []*jobv1.Job,
+	target *jobv1.Job,
+	anchor *jobv1.Job,
+	anchorIdx int,
+	aheadOf bool,
+) (*SetGroupPriority, *MoveJob, error) {
+	// validate anchorIdx
+	if anchorIdx < 0 || anchorIdx > len(jobs) {
+		return nil, nil, fmt.Errorf("invalid anchor index %d", anchorIdx)
+	}
+	// validate anchor and target
+	if anchor == nil {
+		return nil, nil, fmt.Errorf("missing anchor job")
+	}
+	if target == nil {
+		return nil, nil, fmt.Errorf("missing target job")
+	}
+	if target.JobId == anchor.JobId {
+		return nil, nil, fmt.Errorf("target and anchor jobs are the same")
+	}
+
+	// sanity check
+	lastJob := int32(-1)
+	for _, job := range jobs {
+		check.Panic(check.GreaterThanOrEqualTo(job.Summary.JobsAhead, lastJob))
+		lastJob = job.Summary.JobsAhead
+	}
+
+	var priorityMsg *SetGroupPriority
+	if target.Priority != anchor.Priority {
+		priorityMsg = &SetGroupPriority{
+			Priority: int(anchor.Priority),
+		}
+	}
+
+	var moveMsg *MoveJob
+	// find the next or previous job based on aheadOf in the same priority lane
+	var secondAnchor model.JobID
+	if aheadOf {
+		for idx := anchorIdx - 1; idx >= 0; idx-- {
+			if jobs[idx].Priority == anchor.Priority {
+				secondAnchor = model.JobID(jobs[idx].JobId)
+				break
+			}
+		}
+		if secondAnchor == model.JobID("") {
+			secondAnchor = HeadAnchor
+		}
+	} else {
+		for idx := anchorIdx + 1; idx < len(jobs); idx++ {
+			if jobs[idx].Priority == anchor.Priority {
+				secondAnchor = model.JobID(jobs[idx].JobId)
+				break
+			}
+		}
+		if secondAnchor == model.JobID("") {
+			secondAnchor = TailAnchor
+		}
+	}
+
+	check.Panic(check.True(secondAnchor != model.JobID("")))
+	if secondAnchor.String() != target.JobId {
+		moveMsg = &MoveJob{
+			ID:      model.JobID(target.JobId),
+			Anchor1: model.JobID(anchor.JobId),
+			Anchor2: secondAnchor,
+		}
+	}
+
+	return priorityMsg, moveMsg, nil
+}
+
+func (j *Jobs) moveJob(
+	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+) error {
+	if anchorID == jobID {
+		return nil
+	}
+	// find the job resource pool
+	aResp := ctx.Ask(j.actorByID[jobID], GetJob{})
+	if err := aResp.Error(); err != nil {
+		return err
+	}
+	targetJob, ok := aResp.Get().(*jobv1.Job)
+	if !ok {
+		return fmt.Errorf("unexpected response type: %T", aResp.Get())
+	}
+	jobs, err := j.getJobs(ctx, targetJob.ResourcePool, false)
+	if err != nil {
+		return err
+	}
+	// WARN assuming all job rp and priority changes goes through jobsActor
+	// and thus is synchoronzed here.
+
+	// find anchorJob by matching ID
+	var anchorJob *jobv1.Job
+	anchorIdx := -1
+	for idx, job := range jobs {
+		if job.JobId == anchorID.String() {
+			anchorJob = job
+			anchorIdx = idx
+			break
+		}
+	}
+	if anchorJob == nil || anchorIdx == -1 {
+		return errJobNotFound(anchorID)
+	}
+
+	// we might wanna limit the scope of this to just generating the moveJob message.
+	prioChange, moveJob, err := moveJobMessages(
+		jobs,
+		targetJob,
+		anchorJob,
+		anchorIdx,
+		aheadOf,
+	)
+
+	if prioChange != nil {
+		err = j.setJobPriority(ctx, jobID, prioChange.Priority)
+		if err != nil {
+			return err
+		}
+
+		// FIXME after this priority change we could be in the situation
+		// where the job is placed in the correct position as is. Right now
+		// the RM checks and handles this case as a no op.
+	}
+
+	if moveJob != nil {
+		resp := ctx.Ask(j.RMRef, *moveJob)
+		err = resp.Error()
+	}
+
+	return err
+}
+
+func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*jobv1.Job, error) {
+	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get jobs from the job actors.
+	jobRefs := make([]*actor.Ref, 0)
+	for jID := range jobQ {
+		jobRef, ok := j.actorByID[jID]
+		if ok {
+			jobRefs = append(jobRefs, jobRef)
+		}
+	}
+	jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
+	if err != nil {
+		ctx.Log().WithError(err).Error("parsing responses from job actors")
+		return nil, err
+	}
+
+	// Merge the results.
+	jobsInRM := make([]*jobv1.Job, 0)
+	for jID, jRMInfo := range jobQ {
+		v1Job, ok := jobs[jID]
+		if ok {
+			UpdateJobQInfo(v1Job, jRMInfo)
+			jobsInRM = append(jobsInRM, v1Job)
+		}
+	}
+
+	// order by jobsAhead first and JobId second.
+	sort.SliceStable(jobsInRM, func(i, j int) bool {
+		if desc {
+			i, j = j, i
+		}
+		if jobsInRM[i].Summary == nil || jobsInRM[j].Summary == nil {
+			return false
+		}
+		if jobsInRM[i].Summary.JobsAhead < jobsInRM[j].Summary.JobsAhead {
+			return true
+		}
+		if jobsInRM[i].Summary.JobsAhead > jobsInRM[j].Summary.JobsAhead {
+			return false
+		}
+		return jobsInRM[i].JobId < jobsInRM[j].JobId
+	})
+
+	return jobsInRM, nil
+}
+
+func (j *Jobs) setJobPriority(ctx *actor.Context, jobID model.JobID, priority int) error {
+	if priority < 1 || priority > 99 {
+		return errors.New("priority must be between 1 and 99")
+	}
+	jobActor := j.actorByID[jobID]
+	resp := ctx.Ask(jobActor, SetGroupPriority{
+		Priority: priority,
+	})
+	return resp.Error()
+}
+
 // Receive implements the actor.Actor interface.
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -145,37 +353,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		jobQ, err := j.jobQSnapshot(ctx, msg.ResourcePool)
+		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC)
 		if err != nil {
 			ctx.Respond(err)
-			return nil
 		}
-
-		// Get jobs from the job actors.
-		jobRefs := make([]*actor.Ref, 0)
-		for jID := range jobQ {
-			jobRef, ok := j.actorByID[jID]
-			if ok {
-				jobRefs = append(jobRefs, jobRef)
-			}
-		}
-		jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
-		if err != nil {
-			ctx.Log().WithError(err).Error("parsing responses from job actors")
-			ctx.Respond(err)
-			return nil
-		}
-
-		// Merge the results.
-		jobsInRM := make([]*jobv1.Job, 0)
-		for jID, jRMInfo := range jobQ {
-			v1Job, ok := jobs[jID]
-			if ok {
-				UpdateJobQInfo(v1Job, jRMInfo)
-				jobsInRM = append(jobsInRM, v1Job)
-			}
-		}
-		ctx.Respond(jobsInRM)
+		ctx.Respond(jobs)
 
 	case *apiv1.UpdateJobQueueRequest:
 		errors := make([]string, 0)
@@ -189,14 +371,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
-				if priority < 1 || priority > 99 {
-					errors = append(errors, "priority must be between 1 and 99")
-					continue
-				}
-				resp := ctx.Ask(jobActor, SetGroupPriority{
-					Priority: priority,
-				})
-				if err := resp.Error(); err != nil {
+				if err := j.setJobPriority(ctx, jobID, priority); err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_Weight:
@@ -214,6 +389,8 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				if action.ResourcePool == "" {
 					errors = append(errors, "resource pool must be set")
 				}
+				// TODO tell whoever keeping track of the qposition for this job
+				// to forget it. (depends..)
 				resp := ctx.Ask(jobActor, SetResourcePool{
 					ResourcePool: action.ResourcePool,
 				})
@@ -221,21 +398,13 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_AheadOf:
-				resp := ctx.Ask(j.RMRef, MoveJob{
-					ID:      jobID,
-					Anchor:  model.JobID(action.AheadOf),
-					AheadOf: true,
-				})
-				if err := resp.Error(); err != nil {
+				err := j.moveJob(ctx, jobID, model.JobID(action.AheadOf), true)
+				if err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_BehindOf:
-				resp := ctx.Ask(j.RMRef, MoveJob{
-					ID:      jobID,
-					Anchor:  model.JobID(action.BehindOf),
-					AheadOf: false,
-				})
-				if err := resp.Error(); err != nil {
+				err := j.moveJob(ctx, jobID, model.JobID(action.BehindOf), false)
+				if err != nil {
 					errors = append(errors, err.Error())
 				}
 			default:

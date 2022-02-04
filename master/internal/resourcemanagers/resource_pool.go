@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -63,11 +64,11 @@ func NewResourcePool(
 
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
-
+		
 		agents:      make(map[*actor.Ref]bool),
 		taskList:    newTaskList(),
 		groups:      make(map[*actor.Ref]*group),
-		queuePositions: make(jobSortState),
+		queuePositions: initalizeJobSortState(),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
 		scalingInfo: &sproto.ScalingInfo{},
 
@@ -114,7 +115,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
-			rp.queuePositions[msg.JobID] = msg.InitialQueuePosition()
+			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
 			if err := rp.persist(); err != nil {
 				ctx.Log().Errorf("error persisting queue positions: %s", err)
 				// CHECK: fail?
@@ -381,16 +382,18 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
-	// find out what is the job before or after the anchor
-	queueInfo := rp.scheduler.JobQInfo(rp)
-
-	newPos, err := computeNewJobPos(msg, queueInfo, rp.queuePositions)
+	// REMOVEME
+	fmt.Println(rp.config.PoolName, "moveJob: ", msg)
+	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now())
+	newPos, rebalance, err := computeNewJobPos(msg, rp.queuePositions)
 	if err != nil {
 		return err
 	}
 	rp.queuePositions[msg.ID] = newPos
 	// condiontally check if rebalancing is needed.
-	adjustPriorities(&rp.queuePositions)
+	if rebalance {
+		adjustPriorities(&rp.queuePositions)
+	}
 
 	if err := rp.persist(); err != nil {
 		return err
@@ -413,12 +416,24 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 
 	case job.SetGroupPriority:
 		g := rp.getOrCreateGroup(ctx, msg.Handler)
-		g.priority = &msg.Priority
-
-		if rp.config.Scheduler.Priority != nil {
-			ctx.Log().Infof("setting priority for group of %s to %d",
-				msg.Handler.Address().String(), *g.priority)
+		if (g.priority != nil && *g.priority == msg.Priority) ||
+			rp.config.Scheduler.Priority == nil {
+			return nil
 		}
+		ctx.Log().Infof("setting priority for group of %s to %d",
+			msg.Handler.Address().String(), msg.Priority)
+		g.priority = &msg.Priority
+		jobID, ok := rp.groupActorToID[msg.Handler]
+		if ok {
+			time, err := getJobSubmissionTime(rp.taskList, jobID)
+			if err != nil {
+				ctx.Log().Errorf("failed to get job submission time: %s", err)
+				return nil
+			}
+			rp.queuePositions[jobID] = initalizeQueuePosition(time)
+		}
+		// if !ok: we haven't seen the job yet or this group is not IsUserVisible
+		// thus no need to reinitialize its queue position.
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -427,6 +442,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) persist() error {
+	// exlude head and tail?
 	fmt.Println("TODO persist rp", rp.config.PoolName)
 	return nil // TODO
 }

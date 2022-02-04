@@ -56,7 +56,7 @@ func newKubernetesResourceManager(
 		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
-		queuePositions:    make(jobSortState),
+		queuePositions:    initalizeJobSortState(),
 
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
