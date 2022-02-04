@@ -133,7 +133,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
 	case *apiv1.GetResourcePoolsRequest:
-		resourcePoolSummary := k.summarizeDummyResourcePool(ctx)
+		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
+		if err != nil {
+			ctx.Respond(err)
+		}
 		resp := &apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary},
 		}
@@ -170,19 +173,24 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	ctx *actor.Context,
-) *resourcepoolv1.ResourcePool {
+) (*resourcepoolv1.ResourcePool, error) {
 	slotsUsed := 0
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
+	}
+
+	pods, err := k.summarizePods(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
-		NumAgents:                    1,
+		NumAgents:                    int32(pods.NumAgents),
 		SlotType:                     k.config.SlotType.Proto(),
-		SlotsAvailable:               int32(k.agent.numSlots()),
+		SlotsAvailable:               int32(pods.SlotsAvailable),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
 		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),
@@ -199,7 +207,21 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		ImageId:                      "",
 		InstanceType:                 "kubernetes",
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
+	}, nil
+}
+
+func (k *kubernetesResourceManager) summarizePods(
+	ctx *actor.Context,
+) (*kubernetes.PodsInfo, error) {
+	resp := ctx.Ask(k.agent.handler, kubernetes.SummarizeResources{})
+	if err := resp.Error(); err != nil {
+		return nil, err
 	}
+	pods, ok := resp.Get().(*kubernetes.PodsInfo)
+	if !ok {
+		return nil, actor.ErrUnexpectedMessage(ctx)
+	}
+	return pods, nil
 }
 
 func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {

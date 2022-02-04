@@ -80,6 +80,15 @@ type pods struct {
 	configMapInterface typedV1.ConfigMapInterface
 }
 
+// PodsInfo contains information for pods.
+type PodsInfo struct {
+	NumAgents      int
+	SlotsAvailable int
+}
+
+// SummarizeResources summerize pods resource.
+type SummarizeResources struct{}
+
 // Initialize creates a new global agent actor.
 func Initialize(
 	s *actor.System,
@@ -173,6 +182,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case KillTaskPod:
 		p.receiveKillPod(ctx, msg)
+
+	case SummarizeResources:
+		p.receiveResourceSummarize(ctx, msg)
 
 	case resourceDeletionFailed:
 		if msg.err != nil {
@@ -398,6 +410,15 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	}
 
 	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receiveResourceSummarize(ctx *actor.Context, msg SummarizeResources) {
+	summary := p.summarize(ctx)
+	slots := 0
+	for _, node := range summary {
+		slots += len(node.Slots)
+	}
+	ctx.Respond(&PodsInfo{NumAgents: len(summary), SlotsAvailable: slots})
 }
 
 func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {
