@@ -50,11 +50,17 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     fixtures = [
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
-            {"STATE_COMPLETED": {800, 900, 1000}, "STATE_DELETED": {100, 200, 300, 400, 500, 600, 700}},
+            {
+                "STATE_COMPLETED": {800, 900, 1000},
+                "STATE_DELETED": {100, 200, 300, 400, 500, 600, 700},
+            },
         ),
         (
             conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
-            {"STATE_COMPLETED": {100, 200, 300, 900, 1000}, "STATE_DELETED": {400, 500, 600, 700, 800}},
+            {
+                "STATE_COMPLETED": {100, 200, 300, 900, 1000},
+                "STATE_DELETED": {400, 500, 600, 700, 800},
+            },
         ),
     ]
 

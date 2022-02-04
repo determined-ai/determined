@@ -3,7 +3,7 @@ from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
 from determined.cli.session import setup_session
-from determined.common import api, constants, experimental
+from determined.common import constants, experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Determined
