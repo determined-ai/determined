@@ -600,11 +600,17 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: *priority,
 		Handler:  ctx.Self(),
 	})
-	return nil
+	err := resp.Error()
+	if err != nil {
+		resources.SetPriority(oldPriorityPtr)
+		e.Config.SetResources(resources)
+		err = errors.Wrapf(err, "setting experiment %d priority", e.ID)
+	}
+	return err
 }
 
 func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
@@ -617,11 +623,17 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d weight", e.ID)
 	}
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
-	return nil
+	err := resp.Error()
+	if err != nil {
+		resources.SetWeight(oldWeight)
+		e.Config.SetResources(resources)
+		err = errors.Wrapf(err, "setting experiment %d weight", e.ID)
+	}
+	return err
 }
 
 func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
@@ -643,6 +655,8 @@ func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, msg.ResourcePool)
 	}
+	// TODO revert the change like the other setters
+	// also change to ask all?
 	ctx.TellAll(sproto.ChangeRP{ResourcePool: msg.ResourcePool}, ctx.Children()...)
 
 	return nil
@@ -660,7 +674,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Name:           e.Config.Name().String(),
 	}
 
-	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) // && true
+	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
 	job.UpdateJobQInfo(&j, e.rmJobInfo)

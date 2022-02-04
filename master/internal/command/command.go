@@ -120,11 +120,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
 
-		if c.Config.Resources.Priority != nil {
-			ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-				Priority: *c.Config.Resources.Priority,
-				Handler:  ctx.Self(),
-			})
+		priority := c.Config.Resources.Priority
+		if priority != nil {
+			if err := c.setPriority(ctx, *priority); err != nil {
+				return err
+			}
 		}
 
 		var portProxyConf *sproto.PortProxyConfig
@@ -312,16 +312,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupWeight:
-		err := c.setWeight(ctx, msg.Weight)
-		if err != nil {
-			ctx.Respond(err)
-		}
+		ctx.Respond(c.setWeight(ctx, msg.Weight))
 
 	case job.SetGroupPriority:
-		err := c.setPriority(ctx, msg.Priority)
-		if err != nil {
-			ctx.Respond(err)
-		}
+		ctx.Respond(c.setPriority(ctx, msg.Priority))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -335,11 +329,12 @@ func (c *command) setPriority(ctx *actor.Context, priority int) error {
 			c.jobType)
 	}
 	c.Config.Resources.Priority = &priority
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: priority,
 		Handler:  ctx.Self(),
 	})
-	return nil
+	// TODO revert in case of error
+	return resp.Error()
 }
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {
@@ -348,11 +343,12 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 			c.jobType)
 	}
 	c.Config.Resources.Weight = weight
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
-	return nil
+	// TODO revert in case of error
+	return resp.Error()
 }
 
 func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
@@ -463,7 +459,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		Name:           c.Config.Description,
 	}
 
-	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) && false
+	j.IsPreemptible = false
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
 
