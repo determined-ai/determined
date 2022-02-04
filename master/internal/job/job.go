@@ -215,10 +215,6 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())
 				}
-			case *jobv1.QueueControl_QueuePosition:
-				// REMOVEME: keep this until ahead_of and behind_of are implemented
-				ctx.Respond(api.ErrNotImplemented)
-				return nil
 			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
 				ctx.Respond(api.ErrNotImplemented)
 				return nil
