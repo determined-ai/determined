@@ -183,8 +183,6 @@ func moveJobMessages(
 	// find the next or previous job based on aheadOf in the same priority lane
 	var secondAnchor model.JobID
 	if aheadOf {
-		// TODO check for first job in the queue edge case
-		// headanchor
 		for idx := anchorIdx - 1; idx >= 0; idx-- {
 			if jobs[idx].Priority == anchor.Priority {
 				secondAnchor = model.JobID(jobs[idx].JobId)
@@ -195,8 +193,6 @@ func moveJobMessages(
 			secondAnchor = HeadAnchor
 		}
 	} else {
-		// TODO check for first last in the queue edge case
-		// tailanchor
 		for idx := anchorIdx + 1; idx < len(jobs); idx++ {
 			if jobs[idx].Priority == anchor.Priority {
 				secondAnchor = model.JobID(jobs[idx].JobId)
@@ -240,6 +236,7 @@ func (j *Jobs) moveJob(
 		return err
 	}
 	// WARN assuming all job rp and priority changes goes through jobsActor
+	// and thus is synchoronzed here.
 
 	// find anchorJob by matching ID
 	var anchorJob *jobv1.Job
@@ -255,13 +252,6 @@ func (j *Jobs) moveJob(
 		return errJobNotFound(anchorID)
 	}
 
-	// if targetJob.Priority != anchorJob.Priority {
-	// 	err = j.setJobPriority(ctx, model.JobID(targetJob.JobId), int(anchorJob.Priority))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
 	// we might wanna limit the scope of this to just generating the moveJob message.
 	prioChange, moveJob, err := moveJobMessages(
 		jobs,
@@ -271,13 +261,15 @@ func (j *Jobs) moveJob(
 		aheadOf,
 	)
 
-	// FIXME what if just priority change put the job in the correct spot?
-	// write a test for it.
 	if prioChange != nil {
 		err = j.setJobPriority(ctx, jobID, prioChange.Priority)
 		if err != nil {
 			return err
 		}
+
+		// FIXME after this priority change we could be in the situation
+		// where the job is placed in the correct position as is. Right now
+		// the RM checks and handles this case as a no op.
 	}
 
 	if moveJob != nil {
@@ -342,7 +334,6 @@ func (j *Jobs) setJobPriority(ctx *actor.Context, jobID model.JobID, priority in
 	if priority < 1 || priority > 99 {
 		return errors.New("priority must be between 1 and 99")
 	}
-	// TODO will need to reset the qpos
 	jobActor := j.actorByID[jobID]
 	resp := ctx.Ask(jobActor, SetGroupPriority{
 		Priority: priority,

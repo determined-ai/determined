@@ -603,7 +603,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 	})
 	err := resp.Error()
 	if err != nil {
-		resources.SetPriority(&oldPriority)
+		resources.SetPriority(oldPriorityPtr)
 		e.Config.SetResources(resources)
 		err = errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}

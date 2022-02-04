@@ -77,6 +77,8 @@ func adjustPriorities(positions *jobSortState) {
 	// i := 0
 
 	// TODO make sure the highest qposition doesn't increase.. even when moving jobs
+	// the highest value should never go over initalizeQueuePosition(currentTime) for new
+	// jobs to get placed correctly.
 
 	// for i < len(reqs) {
 	// 	if groups[reqs[i].Group].qPosition == -1 {
@@ -124,8 +126,7 @@ type jobSortState = map[model.JobID]float64
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
 	state[job.HeadAnchor] = 0
-	// FIXME this can't go over the current time. job.TailAnchor
-	state[job.TailAnchor] = math.MaxFloat64
+	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	return state
 }
 
@@ -133,22 +134,27 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (float64, bool, 
 	if msg.Anchor1 == msg.ID || msg.Anchor2 == msg.ID {
 		return 0, false, fmt.Errorf("cannot move job relative to itself")
 	}
-	// find what that position of the anchor job is
-	// anchorInfo, ok := jobQ[msg.Anchor]
-	// if !ok {
-	// 	return 0, fmt.Errorf("could not find anchor job %s", msg.Anchor)
-	// }
 
-	// get q positions for anchor, anchor.next or before
 	qPos1, ok := qPositions[msg.Anchor1]
 	if !ok {
 		return 0, false, fmt.Errorf("could not find anchor job %s", msg.Anchor1)
 	}
 
-	// FIXME this can't go over the current time. job.TailAnchor
 	qPos2, ok := qPositions[msg.Anchor2]
 	if !ok {
 		return 0, false, fmt.Errorf("could not find anchor job %s", msg.Anchor2)
+	}
+
+	qPos3, ok := qPositions[msg.ID]
+	if !ok {
+		return 0, false, fmt.Errorf("could not find job %s", msg.ID)
+	}
+
+	// check if qPos3 is between qPos1 and qPos2
+	smallPos := math.Min(qPos1, qPos2)
+	bigPos := math.Max(qPos1, qPos2)
+	if qPos3 > smallPos && qPos3 < bigPos {
+		return 0, false, nil // no op. Job is already in the correct position.
 	}
 
 	newPos := (qPos1 + qPos2) / 2
