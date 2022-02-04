@@ -7,7 +7,7 @@ records_per_epoch: 105000
 resources:
   slots_per_trial: 8
 min_validation_period:
-  epochs: 1
+  epochs: 2
 
 data:
   dataset_name: stl10
@@ -50,6 +50,7 @@ data:
 
 hyperparameters:
   training_mode: SELF_SUPERVISED
+  validate_with_classifier: true
   backbone_name: resnet18
   global_batch_size: 2048
   classifier:

@@ -12,8 +12,12 @@ if __name__ == "__main__":
     exp = client.get_experiment(args.experiment_id)
     config = dict(exp.get_config())
     print(sorted(list(config.keys())))
+    config["name"] = config["name"] + "_evaluation"
     config["min_validation_period"] = {"epochs": args.classifier_train_epochs}
     config["searcher"]["max_length"]["epochs"] = args.classifier_train_epochs
     config["hyperparameters"]["training_mode"] = "CLASSIFIER_ONLY"
+    config["hyperparameters"]["validate_with_classifier"] = True
     config["searcher"]["source_checkpoint_uuid"] = exp.top_checkpoint().uuid
+    config["searcher"]["metric"] = "test_accuracy"
+    config["searcher"]["smaller_is_better"] = False
     client.create_experiment(config, ".")

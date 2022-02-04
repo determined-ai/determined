@@ -4,7 +4,7 @@ records_per_epoch: 45000
 resources:
   slots_per_trial: 1
 min_validation_period:
-  epochs: 1
+  epochs: 2
 
 data:
   dataset_name: cifar10
@@ -47,6 +47,7 @@ data:
 
 hyperparameters:
   training_mode: SELF_SUPERVISED
+  validate_with_classifier: true
   backbone_name: resnet18
   global_batch_size: 256
   classifier:

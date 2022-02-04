@@ -78,12 +78,16 @@ class BYOLTrial(PyTorchTrial):
             print(
                 f"Training mode {self.hparams.training_mode} not supported: use one of {TrainingMode._member_names_}"
             )
+        if self.training_mode == TrainingMode.CLASSIFIER_ONLY:
+            assert (
+                self.hparams.validate_with_classifier
+            ), "Must set validate_with_classifier==true during CLASSIFIER_ONLY training."
         print(f"Training in mode {self.training_mode}")
         self._init_transforms()
         self._init_self_supervised()
         self._init_classifiers()
         self._init_reducers()
-        if self.training_mode == TrainingMode.SELF_SUPERVISED:
+        if self._should_train_classifier_before_validation():
             # Create a separate dataloader for training the classifier during validation.
             # With distributed training, calling get_data_loader on the Determined dataloader will automatically
             # shard the dataset.
@@ -94,6 +98,27 @@ class BYOLTrial(PyTorchTrial):
                     rank=self.rank,
                 )
             )
+
+    def _should_train_classifier_before_validation(self) -> bool:
+        """
+        When in SELF_SUPERVISED training mode, can train a classifier in on_validation_epoch_start before evaluating.
+        Returns true if this should happen.
+        """
+        return (
+            self.training_mode == TrainingMode.SELF_SUPERVISED
+            and self.hparams.validate_with_classifier
+        )
+
+    def _should_evaluate_classifier(self) -> bool:
+        """
+        Can evaluate with either classifier accuracy or self-supervised loss.
+        Returns true if a classifier is available, either because TrainingMode == CLASSIFER_ONLY or
+        hparams.validate_with_classifier is set.
+        """
+        return (
+            self.training_mode == TrainingMode.CLASSIFIER_ONLY
+            or self.hparams.validate_with_classifier
+        )
 
     def _init_transforms(self) -> None:
         """
@@ -167,13 +192,14 @@ class BYOLTrial(PyTorchTrial):
         ]
 
     def _init_reducers(self) -> None:
-        self.final_acc_reducer = cast(
-            ValidatedAccuracyReducer,
-            self.context.wrap_reducer(
-                ValidatedAccuracyReducer(), "test_accuracy", for_training=False
-            ),
-        )
-        if self.training_mode == TrainingMode.SELF_SUPERVISED:
+        if self._should_evaluate_classifier():
+            self.final_acc_reducer = cast(
+                ValidatedAccuracyReducer,
+                self.context.wrap_reducer(
+                    ValidatedAccuracyReducer(), "test_accuracy", for_training=False
+                ),
+            )
+        if self._should_train_classifier_before_validation():
             self.cls_loss_reducers = [
                 cast(
                     AvgReducer,
@@ -211,6 +237,9 @@ class BYOLTrial(PyTorchTrial):
         )
 
     def _build_cls_training_data_loader(self) -> DataLoader:
+        """
+        Builds data loader for the on_validation_epoch_start classifier training when enabled.
+        """
         cls_train_dataset = build_dataset(self.data_config, DatasetSplit.CLS_TRAIN)
         rounded_length = (
             len(cls_train_dataset) // self.context.get_global_batch_size()
@@ -228,18 +257,25 @@ class BYOLTrial(PyTorchTrial):
         )
 
     def build_validation_data_loader(self) -> DataLoader:
-        # BYOL performs validation in two steps:
-        # - A subset of the training data is used to select an optimal LR for the classifier.
-        # - Final results are reported on the test / validation data.
-        # We combine these two datasets, and then use a custom reducer to calculate the final result.
-        lr_val_dataset = build_dataset(
-            self.data_config,
-            DatasetSplit.CLS_VALIDATION,
-        )
-        test_dataset = build_dataset(self.data_config, DatasetSplit.TEST)
-        combined = JointDataset([lr_val_dataset, test_dataset], ["lr_val", "test"])
+        if self._should_evaluate_classifier():
+            # The BYOL paper performs validation in two steps:
+            # - A subset of the training data (CLS_VALIDATION) is used to select an optimal LR for the classifier.
+            # - Final results are reported on the test / validation data (TEST).
+            # We combine these two datasets, and then use a custom reducer to calculate the final result.
+            cls_val_dataset = build_dataset(
+                self.data_config,
+                DatasetSplit.CLS_VALIDATION,
+            )
+            test_dataset = build_dataset(self.data_config, DatasetSplit.TEST)
+            dataset = JointDataset([cls_val_dataset, test_dataset], ["lr_val", "test"])
+        else:
+            # When only reporting self-supervised loss, we just use CLS_VALIDATION.
+            dataset = build_dataset(
+                self.data_config,
+                DatasetSplit.CLS_VALIDATION,
+            )
         return DataLoader(
-            combined,
+            dataset,
             batch_size=self.context.get_per_slot_batch_size(),
             pin_memory=True,
             num_workers=self.data_config.num_workers,
@@ -301,6 +337,14 @@ class BYOLTrial(PyTorchTrial):
         return losses
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
+        if self._should_evaluate_classifier():
+            return self._evaluate_classifier_batch(batch, batch_idx)
+        else:
+            return self._evaluate_self_supervised_batch(batch, batch_idx)
+
+    def _evaluate_classifier_batch(
+        self, batch: TorchData, batch_idx: int
+    ) -> Dict[str, Any]:
         # Evaluation batches run simultaneously over LR validation subset and test dataset (using JointDataset)
         # We use a custom reducer to report test performance on the best validated LR.
         imgs, labels, d_idx = batch
@@ -323,6 +367,15 @@ class BYOLTrial(PyTorchTrial):
         self.final_acc_reducer.update(correct_cts_val, correct_cts_test, test_ct)
         return {}
 
+    def _evaluate_self_supervised_batch(
+        self, batch: TorchData, batch_idx: int
+    ) -> Dict[str, Any]:
+        imgs, labels = batch
+        # During evaluation, we use the same transformed image for both inputs.
+        x = AttrDict({"first": imgs, "second": imgs, "shape": [len(imgs)]})
+        loss = self.byol_model.forward(x)
+        return {"validation_loss": loss}
+
 
 class ClassifierTrainCallback(PyTorchCallback):
     """
@@ -339,7 +392,7 @@ class ClassifierTrainCallback(PyTorchCallback):
     def on_validation_start(self) -> None:
         trial = self.trial
         # Only perform classifier training here to give validation stats
-        if trial.training_mode != TrainingMode.SELF_SUPERVISED:
+        if not (trial._should_train_classifier_before_validation()):
             return
         # Reset models and optimization before each validation epoch -- want them trained from
         # the most recent frozen model.
