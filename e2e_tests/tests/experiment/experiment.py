@@ -412,8 +412,8 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     zeroth_step = steps[0]
 
     assert zeroth_step["validation"] is not None
-    assert zeroth_step["validation"]["total_batches"] == 0
-    assert zeroth_step["validation"]["state"].replace("STATE_", "") == "COMPLETED"
+    assert zeroth_step["validation"]["totalBatches"] == 0
+    assert zeroth_step["validation"]["state"] == "STATE_COMPLETED"
 
 
 def last_workload_matches_last_checkpoint(workloads: List[Dict[str, Any]]) -> None:
@@ -658,7 +658,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
         if trial["state"] != "STATE_ERROR":
             continue
 
-        trial_id = t["id"]
+        trial_id = trial["id"]
         logs = trial_logs(trial_id)
         if error_str is not None:
             assert any(error_str in line for line in logs)

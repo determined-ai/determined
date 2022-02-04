@@ -889,7 +889,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
-	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)

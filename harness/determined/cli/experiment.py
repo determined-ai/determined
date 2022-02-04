@@ -358,10 +358,12 @@ def describe(args: Namespace) -> None:
                     t_metrics_fields = [None for name in t_metrics_names]
 
                 if step.checkpoint:
-                    step_detail = bindings.v1MetricsWorkload.from_json(step.checkpoint.to_json())
+                    ckpt = step.checkpoint.to_json()
+                    ckpt["numInputs"] = 0
+                    step_detail = bindings.v1MetricsWorkload.from_json(ckpt)
 
                 if step.checkpoint and step_detail:
-                    checkpoint_state = step_detail.state.value.replace("STATE_", "")
+                    checkpoint_state = step_detail.state.value
                     checkpoint_end_time = step_detail.endTime
                 else:
                     checkpoint_state = ""
@@ -370,7 +372,7 @@ def describe(args: Namespace) -> None:
                 v_metrics_fields = []
                 if step.validation:
                     step_detail = step.validation
-                    validation_state = step_detail.state.value.replace("STATE_", "")
+                    validation_state = step_detail.state.value
                     validation_end_time = step_detail.endTime
                     for name in v_metrics_names:
                         if step_detail.metrics and (name in step_detail.metrics):
@@ -393,7 +395,7 @@ def describe(args: Namespace) -> None:
                                 merge_row[4 + idx] = tfield
                         start_checkpoint = 4 + len(t_metrics_fields)
                         if checkpoint_state:
-                            merge_row[start_checkpoint] = checkpoint_state
+                            merge_row[start_checkpoint] = checkpoint_state.replace("STATE_", "")
                             merge_row[start_checkpoint + 1] = render.format_time(
                                 checkpoint_end_time
                             )
@@ -402,7 +404,7 @@ def describe(args: Namespace) -> None:
                                 validation_end_time
                             )
                         if validation_state:
-                            merge_row[start_checkpoint + 2] = validation_state
+                            merge_row[start_checkpoint + 2] = validation_state.replace("STATE_", "")
                         for idx, vfield in enumerate(v_metrics_fields):
                             if vfield and merge_row[start_checkpoint + idx + 4] is None:
                                 merge_row[start_checkpoint + idx + 4] = vfield
