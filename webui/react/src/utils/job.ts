@@ -1,7 +1,7 @@
+import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
 import { CommandType, Job, JobType, ResourcePool } from 'types';
-import { DetError, ErrorType } from 'utils/error';
+import handleError, { DetError, DetErrorOptions, ErrorType } from 'utils/error';
 
 import { capitalize } from './string';
 
@@ -37,18 +37,68 @@ export const orderedSchedulers = new Set(
   [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
 );
 
-export const moveJobToPositionUpdate = (jobId: string, position: number): Api.V1QueueControl => {
-  if (position < 1 || position % 1 !== 0) {
-    throw new DetError(`Invalid queue position: ${position}.`, { type: ErrorType.Input });
-  }
-  return {
-    jobId,
-    queuePosition: position - 1,
+/**
+ * Create the update request based on a given position for a job.
+ * @throws {DetError}
+ */
+export const moveJobToPositionUpdate = (
+  jobs: Job[],
+  jobId: string,
+  position: number,
+): Api.V1QueueControl | undefined => {
+  const errOpts: DetErrorOptions = {
+    isUserTriggered: true,
+    publicMessage: `Failed to move job to position ${position}.`,
+    publicSubject: 'Moving job failed.',
+    silent: false,
   };
+  if (position < 1 || position % 1 !== 0) {
+    throw new DetError(
+      `Invalid queue position: ${position}.`,
+      { ...errOpts, type: ErrorType.Input },
+    );
+  }
+  const anchorJob = jobs.find(job => job.summary.jobsAhead === position - 1);
+  const job = jobs.find(job => job.jobId === jobId);
+
+  if (!anchorJob || !job) {
+    // job view is out of sync.
+    throw new DetError('Job view is out of sync.', {
+      ...errOpts,
+      publicMessage: 'Please retry.',
+      type: ErrorType.Ui,
+    });
+  }
+
+  if (anchorJob.jobId === jobId || job.summary.jobsAhead === position - 1) {
+    return; // no op
+  }
+
+  const isMovingAhead = job.summary.jobsAhead >= position;
+  if (isMovingAhead) {
+    return {
+      aheadOf: anchorJob.jobId,
+      jobId,
+    };
+  } else {
+    return {
+      behindOf: anchorJob.jobId,
+      jobId,
+    };
+  }
 };
 
-export const moveJobToPosition = async (jobId: string, position: number): Promise<void> => {
-  await detApi.Internal.updateJobQueue({ updates: [ moveJobToPositionUpdate(jobId, position) ] });
+export const moveJobToPosition = async (
+  jobs: Job[],
+  jobId: string,
+  position: number,
+): Promise<void> => {
+  try {
+    const update = moveJobToPositionUpdate(jobs, jobId, position);
+    if (update) await updateJobQueue({ updates: [ update ] });
+  } catch (e) {
+    handleError(e);
+  }
 };
 
 /*
