@@ -6,6 +6,7 @@ import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import {
@@ -73,6 +74,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   experiment,
   type,
 }: Props) => {
+  const { ui } = useStore();
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
@@ -154,7 +156,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics.
   useEffect(() => {
-    if (!isSupported) return;
+    if (!isSupported || ui.isPageHidden) return;
 
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
@@ -205,11 +207,11 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, filters?.metric, isSupported ]);
+  }, [ experiment.id, filters?.metric, isSupported, ui.isPageHidden ]);
 
   // Stream available batches.
   useEffect(() => {
-    if (!isSupported) return;
+    if (!isSupported || ui.isPageHidden) return;
 
     const canceler = new AbortController();
     const metricTypeParam = activeMetric.type === MetricType.Training
@@ -235,7 +237,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ activeMetric, experiment.id, filters.batch, isSupported ]);
+  }, [ activeMetric, experiment.id, filters.batch, isSupported, ui.isPageHidden ]);
 
   // Set the default filter batch.
   useEffect(() => {

@@ -7,6 +7,7 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -42,6 +43,7 @@ const LearningCurve: React.FC<Props> = ({
   selectedMaxTrial,
   selectedMetric,
 }: Props) => {
+  const { ui } = useStore();
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
@@ -85,6 +87,8 @@ const LearningCurve: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
+    if (ui.isPageHidden) return;
+
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
     const trialDataMap: Record<number, number[]> = {};
@@ -160,7 +164,7 @@ const LearningCurve: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedMaxTrial, selectedMetric ]);
+  }, [ experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden ]);
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {

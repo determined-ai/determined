@@ -9,6 +9,7 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -55,6 +56,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
 }: Props) => {
+  const { ui } = useStore();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const trialIdRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
@@ -148,6 +150,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
+    if (ui.isPageHidden) return;
+
     const canceler = new AbortController();
     const trialMetricsMap: Record<number, number> = {};
     const trialHpTableMap: Record<number, TrialHParams> = {};
@@ -224,7 +228,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedBatch, selectedBatchMargin, selectedMetric ]);
+  }, [ experiment.id, selectedBatch, selectedBatchMargin, selectedMetric, ui.isPageHidden ]);
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {

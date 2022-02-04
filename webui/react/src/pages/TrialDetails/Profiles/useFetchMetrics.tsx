@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { terminalRunStates } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import { V1GetTrialProfilerMetricsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -24,9 +25,12 @@ export const useFetchMetrics = (
   labelsAgentId: string|undefined = undefined,
   labelsGpuUuid: string|undefined = undefined,
 ): MetricsAggregateInterface => {
+  const { ui } = useStore();
   const [ data, setData ] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
 
   useEffect(() => {
+    if (ui.isPageHidden) return;
+
     setData(clone(DEFAULT_DATA));
 
     const canceler = new AbortController();
@@ -71,7 +75,15 @@ export const useFetchMetrics = (
     });
 
     return () => canceler.abort();
-  }, [ labelsAgentId, labelsGpuUuid, labelsMetricType, labelsName, trialId, trialState ]);
+  }, [
+    labelsAgentId,
+    labelsGpuUuid,
+    labelsMetricType,
+    labelsName,
+    trialId,
+    trialState,
+    ui.isPageHidden,
+  ]);
 
   return data;
 };

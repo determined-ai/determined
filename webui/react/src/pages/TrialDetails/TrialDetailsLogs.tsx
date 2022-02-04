@@ -3,6 +3,7 @@ import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { serverAddress } from 'routes/utils';
@@ -24,6 +25,7 @@ export interface Props {
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
+  const { ui } = useStore();
   const [ filterOptions, setFilterOptions ] = useState<Filters>({});
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
 
@@ -133,6 +135,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [ settings, trial.id ]);
 
   useEffect(() => {
+    if (ui.isPageHidden) return;
+
     const canceler = new AbortController();
 
     consumeStream(
@@ -145,7 +149,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     );
 
     return () => canceler.abort();
-  }, [ trial.id ]);
+  }, [ trial.id, ui.isPageHidden ]);
 
   const trialLogFilters = (
     <div className={css.filters}>
