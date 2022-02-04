@@ -22,8 +22,7 @@ Code and configuration details also sourced from the following BYOL implementati
 
 # Configuration Files
 * [const-cifar10.yaml](const-cifar10.yaml): Train with CIFAR-10 on a single GPU with constant hyperparameter values.
-* [const-stl10.yaml](const-stl10.yaml): Train with STL-10 on a single GPU with constant hyperparameter values.
-* [distributed-stl10.yaml](distributed-stl10.yaml): Same as above, but distributed over 8 GPUs.
+* [distributed-stl10.yaml](distributed-stl10.yaml): Train with STL-10 using 8 GPU distributed training with constant hyperparameter values.
 * [distributed-imagenet.yaml](distributed-imagenet.yaml): Train with ImageNet using 64 GPU distributed training with constant hyperparameter values.
 
 # Data
@@ -46,4 +45,4 @@ The other configurations can be run by specifying the appropriate configuration 
 | Config file | Test Accuracy (%) |
 | ----------- | ------------- |
 | const-cifar10.yaml | 74.91 |
-| const-stl10.yaml | 88.47 |
+| distributed-stl10.yaml | 91.10 |
