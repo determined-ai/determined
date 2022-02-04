@@ -380,6 +380,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
 		}
 
+	case job.SetResourcePool:
+		ctx.Respond(fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType))
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
