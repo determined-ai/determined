@@ -1,6 +1,6 @@
 import * as Api from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { CommandType, Job, JobState, JobType, ResourcePool } from 'types';
+import { CommandType, Job, JobType, ResourcePool } from 'types';
 import { DetError, ErrorType } from 'utils/error';
 
 import { capitalize } from './string';
@@ -31,12 +31,6 @@ export const jobTypeToCommandType = (
     default:
       return undefined;
   }
-};
-
-export const jobStateToLabel: {[key in JobState]: string} = {
-  [JobState.SCHEDULED]: 'Scheduled',
-  [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
-  [JobState.QUEUED]: 'Queued',
 };
 
 export const orderedSchedulers = new Set(

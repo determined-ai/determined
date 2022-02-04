@@ -4,8 +4,6 @@ import React, { PropsWithChildren } from 'react';
 import Badge, { BadgeProps } from './Badge';
 import css from './BadgeTag.module.scss';
 
-export { BadgeType } from './Badge';
-
 interface Props extends BadgeProps {
   label?: React.ReactNode;
   preLabel?: React.ReactNode;
