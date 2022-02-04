@@ -1,16 +1,18 @@
-import { Form, FormInstance, Input, List, Modal, Typography } from 'antd';
+import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd';
 import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
-import { Job, RPStats } from 'types';
+import { Job, JobType, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
+const { Option } = Select;
 
 interface Props {
   job: Job;
@@ -20,16 +22,55 @@ interface Props {
   selectedRPStats: RPStats;
 }
 
+/*
+FormValues capture different adjustable parameters for a job.
+position: The position of the job in the queue. (1-based)
+resourcePool: The resource pool to run the job on.
+priority: The desired priority of the job.
+weight: The desired weight of the job.
+*/
 interface FormValues {
-  position?: string;
+  position: string;
   priority?: string;
-  resourcePool?: string;
+  resourcePool: string;
   weight?: string;
 }
 
-const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerType }) => {
+const formValuesToUpdate = (
+  values: FormValues,
+  job: Job,
+  jobs: Job[],
+): api.V1QueueControl | undefined => {
+  const { position, resourcePool } = {
+    position: parseInt(values.position, 10),
+    resourcePool: values.resourcePool,
+  };
+  const update: api.V1QueueControl = { jobId: job.jobId };
+
+  if (resourcePool !== job.resourcePool) {
+    return { ...update, resourcePool };
+  }
+  if (position !== job.summary.jobsAhead + 1) {
+    return moveJobToPositionUpdate(jobs, job.jobId, position);
+  }
+  if (values.priority !== undefined) {
+    const priority = parseInt(values.priority, 10);
+    if (priority !== job.priority) {
+      return { ...update, priority };
+    }
+  }
+  if (values.weight !== undefined) {
+    const weight = parseFloat(values.weight);
+    if (weight !== job.weight) {
+      return { ...update, weight };
+    }
+  }
+};
+
+const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, schedulerType }) => {
   const formRef = useRef <FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
+  const { resourcePools } = useStore();
 
   const details = useMemo(() => {
     interface Item {
@@ -78,26 +119,30 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
 
   }, [ job, isOrderedQ ]);
 
-  const formValuesToQUpdate = useCallback((
-    formRef: React.RefObject<FormInstance<FormValues>>,
-  ): api.V1QueueControl | undefined => {
-    if (!formRef.current) return;
-    const formValues = formRef.current.getFieldsValue();
-    if (formValues.position !== undefined
-      && parseInt(formValues.position, 10) - 1 !== job.summary.jobsAhead) {
-      return moveJobToPositionUpdate(job.jobId, parseInt(formValues.position, 10));
-    } else if (formValues.priority !== undefined
-      && parseInt(formValues.priority) !== job.priority) {
-      return { jobId: job.jobId, priority: parseInt(formValues.priority) };
-    } else if (formValues.weight !== undefined && parseFloat(formValues.weight) !== job.weight) {
-      return { jobId: job.jobId, weight: parseFloat(formValues.weight) };
-    }
-  }, [ job ]);
+  const currentPool = useMemo(() => {
+    return resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
+  }, [ resourcePools, selectedRPStats.resourcePool ]);
+
+  const poolDetails = useMemo(() => {
+    return (
+      <div>
+        <p>Current slot allocation:{' '}
+          {currentPool?.slotsUsed} / {currentPool?.slotsAvailable} (used / total)
+          <br />
+          Jobs in queue:
+          {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
+          <br />
+          Spot instance pool: {!!currentPool?.details.aws?.spotEnabled + ''}
+        </p>
+      </div>
+    );
+  }, [ currentPool, selectedRPStats ]);
 
   const onOk = useCallback(
     async () => {
       try{
-        const update = formValuesToQUpdate(formRef);
+        const update = formRef.current &&
+          formValuesToUpdate(formRef.current.getFieldsValue(), job, jobs);
         if (update) await updateJobQueue({ updates: [ update ] });
       } catch (e) {
         handleError(e, {
@@ -109,7 +154,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       }
       onFinish?.();
     },
-    [ formRef, onFinish, formValuesToQUpdate ],
+    [ formRef, onFinish, job, jobs ],
   );
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
@@ -129,7 +174,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
       <h6>
         Queue Settings
       </h6>
-      <Form
+      <Form<FormValues>
         initialValues={{
           position: job.summary.jobsAhead + 1,
           priority: job.priority,
@@ -140,12 +185,26 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
         name="form basic"
         ref={formRef}>
         {schedulerType === api.V1SchedulerType.PRIORITY && (
-          <Form.Item
-            extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
-            label="Priority"
-            name="priority">
-            <Input addonAfter="out of 99" max={99} min={1} type="number" />
-          </Form.Item>
+          <>
+            <Form.Item
+              extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
+              label="Priority"
+              name="priority">
+              <Input addonAfter="out of 99" max={99} min={1} type="number" />
+            </Form.Item>
+            {process.env.IS_DEV && (
+              <Form.Item
+                label="Position in Queue"
+                name="position">
+                <Input
+                  addonAfter={`out of ${jobs.length}`}
+                  max={jobs.length}
+                  min={1}
+                  type="number"
+                />
+              </Form.Item>
+            )}
+          </>
         )}
         {schedulerType === api.V1SchedulerType.KUBERNETES && (
           <Form.Item
@@ -162,6 +221,16 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, schedulerT
             <Input min={0} type="number" />
           </Form.Item>
         )}
+        <Form.Item
+          extra={poolDetails}
+          label="Resource Pool"
+          name="resourcePool">
+          <Select disabled={job.type !== JobType.EXPERIMENT}>
+            {resourcePools.map(rp => (
+              <Option key={rp.name} value={rp.name}>{rp.name}</Option>
+            ))}
+          </Select>
+        </Form.Item>
       </Form>
       <h6>
         Job Details

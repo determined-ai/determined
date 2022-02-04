@@ -21,7 +21,7 @@ import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { canManageJob, orderedSchedulers } from 'utils/job';
+import { canManageJob, moveJobToPosition, orderedSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -117,6 +117,10 @@ const JobQueue: React.FC = () => {
         }
       },
     };
+    if (process.env.IS_DEV && isJobOrderAvailable &&
+        job.summary.jobsAhead > 0 && canManageJob(job, selectedRp)) {
+      triggers[JobAction.MoveToTop] = () => moveJobToPosition(jobs, job.jobId, 1);
+    }
 
     // if job is an experiment type add action to kill it
     if (job.type === JobType.EXPERIMENT) {
@@ -129,10 +133,22 @@ const JobQueue: React.FC = () => {
       triggers[JobAction.ManageJob] = () => setManagingJob(job);
     }
 
+    Object.keys(triggers).forEach(key => {
+      const action = key as JobAction;
+      const fn = triggers[action];
+      if (!fn) return;
+      triggers[action] = async () => {
+        await fn();
+        await fetchAll();
+      };
+    });
     return triggers;
-  }, [ selectedRp ]);
+  }, [ isJobOrderAvailable, jobs, selectedRp, fetchAll ]);
 
-  const hideModal = useCallback(() => setManagingJob(undefined), []);
+  const onModalClose = useCallback(() => {
+    setManagingJob(undefined);
+    fetchAll();
+  }, [ fetchAll ]);
 
   const columns = useMemo(() => {
     return defaultColumns.map(col => {
@@ -326,7 +342,7 @@ const JobQueue: React.FC = () => {
           jobs={jobs}
           schedulerType={selectedRp.schedulerType}
           selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
-          onFinish={hideModal}
+          onFinish={onModalClose}
         />
       )}
 
