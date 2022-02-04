@@ -3,6 +3,8 @@ package task
 import (
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/determined-ai/determined/master/internal/proxy"
@@ -28,6 +30,7 @@ type IdleTimeoutWatcher struct {
 	ServiceID      string
 	UseProxy       bool
 	UseRunnerState bool
+	Debug          bool
 	Action         func(ctx *actor.Context)
 
 	lastExplicitActivity *time.Time
@@ -41,6 +44,7 @@ func NewIdleTimeoutWatcher(name string, cfg *sproto.IdleTimeoutConfig) *IdleTime
 		UseProxy:       cfg.UseProxyState,
 		UseRunnerState: cfg.UseRunnerState,
 		ServiceID:      cfg.ServiceID,
+		Debug:          cfg.Debug,
 		Action: func(ctx *actor.Context) {
 			ctx.Log().Infof("killing %s due to inactivity", name)
 			ctx.Tell(ctx.Self(), Terminate)
@@ -73,6 +77,13 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 				p.lastExplicitActivity != nil && p.lastExplicitActivity.After(*lastActivity) {
 				lastActivity = p.lastExplicitActivity
 			}
+		}
+
+		if p.Debug {
+			ctx.Log().WithFields(log.Fields{
+				"lastActivity": lastActivity.Format(time.RFC3339),
+				"timeout":      lastActivity.Add(p.Timeout).Format(time.RFC3339),
+			}).Infof("idle timeout watcher ticked")
 		}
 
 		if lastActivity == nil {

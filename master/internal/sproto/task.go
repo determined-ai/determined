@@ -49,6 +49,7 @@ type (
 		UseProxyState   bool
 		UseRunnerState  bool
 		TimeoutDuration time.Duration
+		Debug           bool
 	}
 
 	// PortProxyConfig configures a proxy the allocation should start.
