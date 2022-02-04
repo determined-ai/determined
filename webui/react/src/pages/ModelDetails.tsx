@@ -19,6 +19,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
   patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -292,13 +293,14 @@ const ModelDetails: React.FC = () => {
         body: { name: editedName },
         modelName,
       });
+      routeToReactUrl(paths.modelDetails(editedName));
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save name.',
         silent: true,
         type: ErrorType.Api,
       });
-      throw Error('Revert name change');
+      return e;
     }
   }, [ modelName ]);
 
