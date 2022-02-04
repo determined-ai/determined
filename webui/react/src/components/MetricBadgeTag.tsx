@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { MetricName } from 'types';
-import { capitalize } from 'utils/string';
 
 import BadgeTag from './BadgeTag';
 
@@ -11,7 +10,9 @@ interface Props {
 
 const MetricBadgeTag: React.FC<Props> = ({ metric }: Props) => {
   return (
-    <BadgeTag label={metric.name} tooltip={metric.type}>{capitalize(metric.type)}</BadgeTag>
+    <BadgeTag label={metric.name} tooltip={metric.type}>
+      {metric.type.substring(0, 1).toUpperCase()}
+    </BadgeTag>
   );
 };
 
