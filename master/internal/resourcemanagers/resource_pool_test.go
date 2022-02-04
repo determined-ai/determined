@@ -197,7 +197,7 @@ func TestSettingGroupPriority(t *testing.T) {
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
 	assert.Assert(t, created)
 	updatedPriority := 22
-	system.Tell(ref, job.SetGroupPriority{Priority: updatedPriority, Handler: groupRefOne})
+	system.Ask(ref, job.SetGroupPriority{Priority: updatedPriority, Handler: groupRefOne})
 
 	for _, n := range rp.notifications {
 		<-n
