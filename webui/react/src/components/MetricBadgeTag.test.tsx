@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
+
+import { MetricName } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
 
@@ -7,7 +10,7 @@ jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
 
   /** mocking Tooltip based on Avatar test */
-  const Tooltip = (props) => {
+  const Tooltip = (props: TooltipProps) => {
     return (
       <antd.Tooltip
         {...props}
@@ -24,7 +27,7 @@ jest.mock('antd', () => {
   };
 });
 
-const setup = (metric) => {
+const setup = (metric: MetricName) => {
   const handleOnChange = jest.fn();
   const view = render(
     <MetricBadgeTag metric={metric} />,
