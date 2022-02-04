@@ -161,8 +161,8 @@ option:
 
 See :ref:`command-notebook-configuration` for details on the supported configuration options.
 
-Finally, to configure notebooks to run a predefined set of commands at startup, you can include
-a :ref:`startup hook <startup-hooks>` in a directory specified with the ``--context`` option:
+Finally, to configure notebooks to run a predefined set of commands at startup, you can include a
+:ref:`startup hook <startup-hooks>` in a directory specified with the ``--context`` option:
 
 .. code::
 
