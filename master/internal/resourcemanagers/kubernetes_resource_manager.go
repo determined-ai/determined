@@ -179,7 +179,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		slotsUsed += slotsUsedByGroup
 	}
 
-	pods, err := k.summerizePods(ctx)
+	pods, err := k.summarizePods(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	}, nil
 }
 
-func (k *kubernetesResourceManager) summerizePods(
+func (k *kubernetesResourceManager) summarizePods(
 	ctx *actor.Context,
 ) (*kubernetes.PodsInfo, error) {
 	resp := ctx.Ask(k.agent.handler, kubernetes.SummarizeResources{})
