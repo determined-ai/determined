@@ -186,11 +186,18 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
               name="priority">
               <Input addonAfter="out of 99" max={99} min={1} type="number" />
             </Form.Item>
-            <Form.Item
-              label="Position in Queue"
-              name="position">
-              <Input addonAfter={`out of ${jobs.length}`} max={jobs.length} min={1} type="number" />
-            </Form.Item>
+            {process.env.IS_DEV && (
+              <Form.Item
+                label="Position in Queue"
+                name="position">
+                <Input
+                  addonAfter={`out of ${jobs.length}`}
+                  max={jobs.length}
+                  min={1}
+                  type="number"
+                />
+              </Form.Item>
+            )}
           </>
         )}
         {schedulerType === api.V1SchedulerType.KUBERNETES && (
