@@ -66,10 +66,21 @@ def list_checkpoints(args: Namespace) -> None:
     r = bindings.get_GetExperimentCheckpoints(
         setup_session(args), id=args.experiment_id, limit=args.best
     )
-    checkpoints = r.checkpoints
+    checkpoints = r.checkpoints or []
     searcher_metric = None
     if len(checkpoints) > 0:
-        searcher_metric = checkpoints[0].experimentConfig["searcher"]["metric"]
+        config = checkpoints[0].experimentConfig or {}
+        if "searcher" in config and "metric" in config["searcher"]:
+            searcher_metric = config["searcher"]["metric"]
+
+    def get_validation_metric(c, metric):
+        if (
+            c.metrics
+            and c.metrics.validationMetrics
+            and c.metrics.validationMetrics[searcher_metric]
+        ):
+            return c.metrics.validationMetrics[searcher_metric]
+        return None
 
     headers = [
         "Trial ID",
@@ -85,7 +96,7 @@ def list_checkpoints(args: Namespace) -> None:
             c.trialId,
             c.batchNumber,
             c.state.value.replace("STATE_", ""),
-            c.metrics.validationMetrics[searcher_metric],
+            get_validation_metric(c, searcher_metric),
             c.uuid,
             render.format_resources(c.resources),
             render.format_resource_sizes(c.resources),

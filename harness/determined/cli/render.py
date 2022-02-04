@@ -93,7 +93,7 @@ def format_percent(f: Optional[float]) -> Optional[str]:
     return "{:.1%}".format(f)
 
 
-def format_resource_sizes(resources: Optional[Dict[str, int]]) -> str:
+def format_resource_sizes(resources: Optional[Dict[str, str]]) -> str:
     if resources is None:
         return ""
     else:
@@ -101,7 +101,7 @@ def format_resource_sizes(resources: Optional[Dict[str, int]]) -> str:
         return util.sizeof_fmt(sum(sizes))
 
 
-def format_resources(resources: Optional[Dict[str, int]]) -> str:
+def format_resources(resources: Optional[Dict[str, str]]) -> str:
     if resources is None:
         return ""
     else:

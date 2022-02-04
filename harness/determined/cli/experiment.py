@@ -311,10 +311,10 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display step-related information.
-    t_metrics_headers = []
-    t_metrics_names = []
-    v_metrics_headers = []
-    v_metrics_names = []
+    t_metrics_headers: List[str] = []
+    t_metrics_names: List[str] = []
+    v_metrics_headers: List[str] = []
+    v_metrics_names: List[str] = []
     if args.metrics:
         # Accumulate the scalar training and validation metric names from all provided experiments.
         for doc in docs:
@@ -342,81 +342,88 @@ def describe(args: Namespace) -> None:
 
     for doc in docs:
         for trial in trials_for_experiment[doc.id]:
-            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads
-            step_output = {}
+            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
+            step_output: Dict[int, List[Any]] = {}
             for step in workloads:
                 t_metrics_fields = []
                 step_detail = None
-                if step.training is not None:
+                if step.training:
                     step_detail = step.training
                     for name in t_metrics_names:
-                        if name in step_detail.metrics:
+                        if step_detail.metrics and (name in step_detail.metrics):
                             t_metrics_fields.append(step_detail.metrics[name])
                         else:
                             t_metrics_fields.append(None)
                 else:
                     t_metrics_fields = [None for name in t_metrics_names]
 
-                if step.checkpoint is not None:
-                    step_detail = step.checkpoint
+                if step.checkpoint:
+                    step_detail = bindings.v1MetricsWorkload.from_json(step.checkpoint.to_json())
+
+                if step.checkpoint and step_detail:
                     checkpoint_state = step_detail.state.value.replace("STATE_", "")
                     checkpoint_end_time = step_detail.endTime
                 else:
-                    checkpoint_state = None
+                    checkpoint_state = ""
                     checkpoint_end_time = None
 
                 v_metrics_fields = []
-                if step.validation is not None:
+                if step.validation:
                     step_detail = step.validation
                     validation_state = step_detail.state.value.replace("STATE_", "")
                     validation_end_time = step_detail.endTime
                     for name in v_metrics_names:
-                        if name in step_detail.metrics:
+                        if step_detail.metrics and (name in step_detail.metrics):
                             v_metrics_fields.append(step_detail.metrics[name])
                         else:
                             v_metrics_fields.append(None)
                 else:
-                    validation_state = None
+                    validation_state = ""
                     validation_end_time = None
                     v_metrics_fields = [None for name in v_metrics_names]
 
-                if step_detail.totalBatches in step_output:
-                    # condense training, checkpoints, validation workloads into one 'step' row
-                    # for compatibility with previous versions of describe
-                    merge_row = step_output[step_detail.totalBatches]
-                    merge_row[3] = max(merge_row[3], render.format_time(step_detail.endTime))
-                    for idx, tfield in enumerate(t_metrics_fields):
-                        if tfield is not None and merge_row[4 + idx] is None:
-                            merge_row[4 + idx] = tfield
-                    start_checkpoint = 4 + len(t_metrics_fields)
-                    if checkpoint_state is not None:
-                        merge_row[start_checkpoint] = checkpoint_state
-                        merge_row[start_checkpoint + 1] = render.format_time(checkpoint_end_time)
-                    if validation_end_time is not None:
-                        merge_row[start_checkpoint + 3] = render.format_time(validation_end_time)
-                    if validation_state is not None:
-                        merge_row[start_checkpoint + 2] = validation_state
-                    for idx, vfield in enumerate(v_metrics_fields):
-                        if vfield is not None and merge_row[start_checkpoint + idx + 4] is None:
-                            merge_row[start_checkpoint + idx + 4] = vfield
-                else:
-                    row = (
-                        [
-                            trial.id,
-                            step_detail.totalBatches,
-                            step_detail.state.value.replace("STATE_", ""),
-                            render.format_time(step_detail.endTime),
-                        ]
-                        + t_metrics_fields
-                        + [
-                            checkpoint_state,
-                            render.format_time(checkpoint_end_time),
-                            validation_state,
-                            render.format_time(validation_end_time),
-                        ]
-                        + v_metrics_fields
-                    )
-                    step_output[step_detail.totalBatches] = row
+                if step_detail:
+                    if step_detail.totalBatches in step_output:
+                        # condense training, checkpoints, validation workloads into one 'step' row
+                        # for compatibility with previous versions of describe
+                        merge_row = step_output[step_detail.totalBatches]
+                        merge_row[3] = max(merge_row[3], render.format_time(step_detail.endTime))
+                        for idx, tfield in enumerate(t_metrics_fields):
+                            if tfield and merge_row[4 + idx] is None:
+                                merge_row[4 + idx] = tfield
+                        start_checkpoint = 4 + len(t_metrics_fields)
+                        if checkpoint_state:
+                            merge_row[start_checkpoint] = checkpoint_state
+                            merge_row[start_checkpoint + 1] = render.format_time(
+                                checkpoint_end_time
+                            )
+                        if validation_end_time:
+                            merge_row[start_checkpoint + 3] = render.format_time(
+                                validation_end_time
+                            )
+                        if validation_state:
+                            merge_row[start_checkpoint + 2] = validation_state
+                        for idx, vfield in enumerate(v_metrics_fields):
+                            if vfield and merge_row[start_checkpoint + idx + 4] is None:
+                                merge_row[start_checkpoint + idx + 4] = vfield
+                    else:
+                        row = (
+                            [
+                                trial.id,
+                                step_detail.totalBatches,
+                                step_detail.state.value.replace("STATE_", ""),
+                                render.format_time(step_detail.endTime),
+                            ]
+                            + t_metrics_fields
+                            + [
+                                checkpoint_state,
+                                render.format_time(checkpoint_end_time),
+                                validation_state,
+                                render.format_time(validation_end_time),
+                            ]
+                            + v_metrics_fields
+                        )
+                        step_output[step_detail.totalBatches] = row
 
     if not args.outdir:
         outfile = None
@@ -538,7 +545,7 @@ def is_number(value: Any) -> bool:
 
 
 def scalar_training_metrics_names(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
 ) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
@@ -548,8 +555,8 @@ def scalar_training_metrics_names(
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
     """
-    for step in workloads:
-        if step.training is not None:
+    for step in workloads or []:
+        if step.training:
             metrics = step.training.metrics
             if not metrics:
                 continue
@@ -559,10 +566,10 @@ def scalar_training_metrics_names(
 
 
 def scalar_validation_metrics_names(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
 ) -> Set[str]:
-    for step in workloads:
-        if step.validation is not None:
+    for step in workloads or []:
+        if step.validation:
             metrics = step.validation.metrics
             if not metrics:
                 continue
@@ -642,7 +649,7 @@ def remove_label(args: Namespace) -> None:
     session = setup_session(args)
     exp = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
-    if (exp_patch.labels is not None) and (args.label in exp_patch.labels):
+    if (exp_patch.labels) and (args.label in exp_patch.labels):
         exp_patch.labels = [label for label in exp_patch.labels if label != args.label]
         bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
@@ -700,7 +707,7 @@ def set_gc_policy(args: Namespace) -> None:
                 render.format_resources(c["resources"]),
             ]
             for c in sorted(checkpoints, key=lambda c: (c["trial_id"], c["end_time"]))
-            if "step" in c and c["step"].get("validation") is not None
+            if "step" in c and c["step"].get("validation")
         ]
 
         if len(values) != 0:
