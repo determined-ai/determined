@@ -265,3 +265,8 @@ export interface GetJobsResponse extends Api.V1GetJobsResponse {
 export interface GetJobQStatsParams extends FetchOptions {
   resourcePools?: string[];
 }
+
+export interface SetUserPasswordParams {
+  password: string;
+  username: string;
+}

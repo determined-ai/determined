@@ -117,6 +117,17 @@ export const getUsers: Service.DetApi<
   request: (options) => detApi.Users.getUsers(options),
 };
 
+export const setUserPassword: Service.DetApi<
+  Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
+> = {
+  name: 'setUserPassword',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.setUserPassword(
+    params.username,
+    params.password,
+  ),
+};
+
 /* Info */
 
 export const getInfo: Service.DetApi<
