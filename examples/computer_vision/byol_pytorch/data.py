@@ -129,7 +129,9 @@ class GCSImageFolder(Dataset):
         class_count = 0
         blob_list_blob = self._bucket.blob(blob_list_path)
         blob_list_io = StringIO(
-            download_gcs_blob_with_backoff(blob_list_blob).decode("utf-8")
+            download_gcs_blob_with_backoff(
+                blob_list_blob, n_retries=4, max_backoff=2
+            ).decode("utf-8")
         )
         blob_list = [s.strip() for s in blob_list_io.readlines()]
         for path in blob_list:
