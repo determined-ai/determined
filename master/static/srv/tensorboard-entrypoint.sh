@@ -14,15 +14,16 @@ if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1 ; then
     exit 1
 fi
 
-"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
+	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+
+	# Install tensorboard if not already installed (for custom PyTorch images)
+	"$DET_PYTHON_EXECUTABLE" -m pip install tensorboard tensorboard-plugin-profile
+fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container
 
-# Install tensorboard if not already installed (for custom PyTorch images)
-"$DET_PYTHON_EXECUTABLE" -m pip install tensorboard
-"$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
-
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
-TENSORBOARD_VERSION=$(pip show tensorboard | grep Version | sed "s/[^:]*: *//")
+TENSORBOARD_VERSION=$("$DET_PYTHON_EXECUTABLE" -c "import tensorboard; print(tensorboard.__version__)")
 exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@"
