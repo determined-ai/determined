@@ -13,7 +13,7 @@ if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1 ; then
 fi
 
 
-if [ "$DET_SKIP_WHEEL_INSTALL" -ne 1 ]; then
+if [ -z "$DET_SKIP_WHEEL_INSTALL" ]; then
 	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 fi
 

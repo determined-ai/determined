@@ -17,7 +17,7 @@ fi
 # modified in this entrypoint because the HOME in the user's ssh session is set
 # by sshd at a later time.
 
-if [ "$DET_SKIP_WHEEL_INSTALL" -ne 1 ]; then
+if [ -z "$DET_SKIP_WHEEL_INSTALL" ]; then
 	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 fi
 
