@@ -584,14 +584,16 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 		return nil
 	}
 	oldPriority := resourcemanagers.DefaultSchedulingPriority
+	var oldPriorityPtr *int
 	resources := e.Config.Resources()
 	if resources.Priority() != nil {
 		oldPriority = *resources.Priority()
+		oldPriorityPtr = &oldPriority
 	}
 	resources.SetPriority(priority)
 	e.Config.SetResources(resources)
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
-		resources.SetPriority(&oldPriority)
+		resources.SetPriority(oldPriorityPtr)
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}

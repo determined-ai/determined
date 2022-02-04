@@ -311,8 +311,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupWeight:
-		err := c.setWeight(ctx, msg.Weight)
-		ctx.Respond(err)
+		ctx.Respond(c.setWeight(ctx, msg.Weight))
 
 	case job.SetGroupPriority:
 		ctx.Respond(c.setPriority(ctx, msg.Priority))
@@ -333,11 +332,8 @@ func (c *command) setPriority(ctx *actor.Context, priority int) error {
 		Priority: priority,
 		Handler:  ctx.Self(),
 	})
-	err := resp.Error()
-	if err != nil {
-		err = errors.Wrapf(err, "setting %s priority", c.jobType)
-	}
-	return err
+	// TODO revert in case of error
+	return resp.Error()
 }
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {
@@ -346,11 +342,11 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 			c.jobType)
 	}
 	c.Config.Resources.Weight = weight
-	// TODO ditto
 	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
+	// TODO revert in case of error
 	return resp.Error()
 }
 

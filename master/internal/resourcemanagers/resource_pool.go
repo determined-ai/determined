@@ -380,6 +380,7 @@ func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
 	// find out what is the job before or after the anchor
 	// queueInfo := rp.scheduler.JobQInfo(rp)
 
+	// REMOVEME
 	fmt.Println(rp.config.PoolName, "moveJob: ", msg)
 	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now()) // x
 	newPos, rebalance, err := computeNewJobPos(msg, rp.queuePositions)

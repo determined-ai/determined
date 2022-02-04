@@ -116,7 +116,7 @@ func TestMoveMessagesSameJobID(t *testing.T) {
 	aheadOf := true
 	prioMsg, moveMsg, err := moveJobMessages(jobs, jobs[targetIdx], jobs[anchorIdx],
 		anchorIdx, aheadOf)
-	assert.NilError(t, err)
+	assert.Assert(t, err != nil, "moveJobMessages should return an error")
 	assert.Assert(t, prioMsg == nil, "moveJobMessages should not return a priority message")
 	assert.Assert(t, moveMsg == nil, "moveJobMessages should not return a move message")
 }

@@ -162,7 +162,7 @@ func moveJobMessages(
 		return nil, nil, fmt.Errorf("missing target job")
 	}
 	if target.JobId == anchor.JobId {
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("target and anchor jobs are the same")
 	}
 
 	// sanity check
@@ -255,13 +255,14 @@ func (j *Jobs) moveJob(
 		return errJobNotFound(anchorID)
 	}
 
-	if targetJob.Priority != anchorJob.Priority {
-		err = j.setJobPriority(ctx, model.JobID(targetJob.JobId), int(anchorJob.Priority))
-		if err != nil {
-			return err
-		}
-	}
+	// if targetJob.Priority != anchorJob.Priority {
+	// 	err = j.setJobPriority(ctx, model.JobID(targetJob.JobId), int(anchorJob.Priority))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
+	// we might wanna limit the scope of this to just generating the moveJob message.
 	prioChange, moveJob, err := moveJobMessages(
 		jobs,
 		targetJob,
@@ -270,6 +271,8 @@ func (j *Jobs) moveJob(
 		aheadOf,
 	)
 
+	// FIXME what if just priority change put the job in the correct spot?
+	// write a test for it.
 	if prioChange != nil {
 		err = j.setJobPriority(ctx, jobID, prioChange.Priority)
 		if err != nil {
