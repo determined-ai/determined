@@ -119,18 +119,23 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
 
   }, [ job, isOrderedQ ]);
 
-  const curRP = resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
-  const RPDetails = (
-    <div>
-      <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable} (used / total)
-        <br />
-        Jobs in queue:
-        {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
-        <br />
-        Spot instance pool: {!!curRP?.details.aws?.spotEnabled + ''}
-      </p>
-    </div>
-  );
+  const curRP = useMemo(() => {
+    return resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
+  }, [ resourcePools, selectedRPStats.resourcePool ]);
+
+  const RPDetails = useMemo(() => {
+    return (
+      <div>
+        <p>Current slot allocation: {curRP?.slotsUsed} / {curRP?.slotsAvailable} (used / total)
+          <br />
+          Jobs in queue:
+          {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
+          <br />
+          Spot instance pool: {!!curRP?.details.aws?.spotEnabled + ''}
+        </p>
+      </div>
+    );
+  }, [ curRP, selectedRPStats ]);
 
   const onOk = useCallback(
     async () => {
@@ -170,7 +175,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
       </h6>
       <Form<FormValues>
         initialValues={{
-          position: (job.summary.jobsAhead + 1),
+          position: job.summary.jobsAhead + 1,
           priority: job.priority,
           resourcePool: selectedRPStats.resourcePool,
           weight: job.weight,
