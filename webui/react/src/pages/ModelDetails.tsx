@@ -19,7 +19,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { paths } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
   patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -293,7 +293,7 @@ const ModelDetails: React.FC = () => {
         body: { name: editedName },
         modelName,
       });
-      window.location.href = `/det${paths.modelDetails(editedName)}`;
+      routeToReactUrl(paths.modelDetails(editedName));
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save name.',
@@ -302,7 +302,6 @@ const ModelDetails: React.FC = () => {
       });
       return e;
     }
-    return null;
   }, [ modelName ]);
 
   const saveNotes = useCallback(async (editedNotes: string) => {
