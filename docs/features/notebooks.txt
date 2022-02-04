@@ -136,15 +136,15 @@ click the dropdown arrow and select "Launch CPU-only Notebook".
  Notebook Configuration
 ************************
 
-Notebooks may be supplied an optional *notebook configuration* to control aspects of the notebook's
+Notebooks can be passed a notebook configuration option to control the notebook
 environment. For example, to launch a notebook that uses two GPUs:
 
 .. code::
 
    $ det notebook start --config resources.slots=2
 
-In addition to the ``--config`` flag, configuration may also be supplied via a YAML file
-(``--config-file``):
+Alternatively, a YAML file can also be used to configure the notebook, using the
+``--config-file`` option:
 
 .. code::
 
@@ -161,8 +161,8 @@ In addition to the ``--config`` flag, configuration may also be supplied via a Y
 
 See :ref:`command-notebook-configuration` for details on the supported configuration options.
 
-Finally, to configure notebooks to run a predefined set of commands at startup, you can use a
-:ref:`startup hook <startup-hooks>` along with the ``--context`` option:
+Finally, to configure notebooks to run a predefined set of commands at startup, you can specify
+a :ref:`startup hook <startup-hooks>` with the ``--context`` option:
 
 .. code::
 
