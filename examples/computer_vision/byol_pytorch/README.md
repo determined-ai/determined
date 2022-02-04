@@ -36,9 +36,16 @@ If you have not yet installed Determined, installation instructions can be found
 
 Run the following command to kick off self-supervised training: `det -m <master host:port> experiment create -f config/const-cifar10.yaml .`
 
-To run a more extensive validation with longer classifier training, first find the experiment ID of your self-supervised training.  Then run `python evaluate_result.py --experiment-id=<id> --classifier-train-epochs=<number>`.
-
 The other configurations can be run by specifying the appropriate configuration file in place of `const-cifar10.yaml`.
+
+
+To run classifier training and validation on a completed self-supervised training:
+
+1. Find the experiment ID of your self-supervised training.
+2. Run `python evaluate_result.py --experiment-id=<id> --classifier-train-epochs=<number>`
+
+This is necessary for ImageNet, where `hyperparameters.validate_with_classifier` is set to `false` during self-supervised training due to the time it takes to train the classifier.  Other configs have `hyperparameters.validate_with_classifier` set to true to collect `test_accuracy` during the self-supervised training.
+
 
 ## Results
 
