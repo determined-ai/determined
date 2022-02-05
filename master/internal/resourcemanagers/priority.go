@@ -168,7 +168,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 				}
 
 				taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
-					taskList, prioritizedAllocation, priority, fittingMethod, localAgentsState,
+					taskList, prioritizedAllocation, priority, jobPositions, fittingMethod, localAgentsState,
 					priorityToScheduledTaskMap, toRelease, filter)
 
 				if taskPlaced {
@@ -196,6 +196,7 @@ func trySchedulingTaskViaPreemption(
 	taskList *taskList,
 	allocationRequest *sproto.AllocateRequest,
 	allocationPriority int,
+	jobPositions jobSortState,
 	fittingMethod SoftConstraint,
 	agents map[*actor.Ref]*agentState,
 	priorityToScheduledTaskMap map[int][]*sproto.AllocateRequest,
@@ -206,8 +207,13 @@ func trySchedulingTaskViaPreemption(
 	preemptedTasks := make(map[*actor.Ref]bool)
 	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
 
-	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
+	for priority := model.MaxUserSchedulingPriority; priority >= allocationPriority; priority-- {
 		for i := len(priorityToScheduledTaskMap[priority]) - 1; i >= 0; i-- {
+			allocationJobID := allocationRequest.JobID
+			candidateJobID := priorityToScheduledTaskMap[priority][i].JobID
+			if priority == allocationPriority && jobPositions[allocationJobID] >= jobPositions[candidateJobID] {
+				break
+			}
 			preemptionCandidate := priorityToScheduledTaskMap[priority][i]
 			if !preemptionCandidate.Preemptible || !filter(preemptionCandidate) {
 				continue
