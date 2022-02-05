@@ -3,35 +3,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-0e07ebe171b2a7d79
-      Agent: ami-0ec5dad90b885bed8
+      Agent: ami-03b80eacf3305c601
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-0e9dbc02ff361d8fa
-    #   Agent: ami-03adbd686bb35fb76
+    #   Agent: ami-0a3d87d63ed933b0b
     # ap-southeast-1:
     #   Master: ami-064ec47318a869dda
-    #   Agent: ami-079c8f7ca0fc82874
+    #   Agent: ami-05f8039f689f80f4b
     # ap-southeast-2:
     #   Master: ami-0a00eef8760c6eddc
-    #   Agent: ami-087cbf382968546f7
+    #   Agent: ami-09f00318b97cb29eb
     eu-central-1:
       Master: ami-05e155ca52886ffe4
-      Agent: ami-02f29c896544f91c5
+      Agent: ami-0f7e9c214e817afee
     eu-west-1:
       Master: ami-04db604073d3d5ce2
-      Agent: ami-0429c2523f8549bf5
+      Agent: ami-0442842086ac82892
     # eu-west-2:
     #   Master: ami-0ac10f53765369588
-    #   Agent: ami-08990535ebb32c777
+    #   Agent: ami-0f6cb4aeb92ea010f
     us-east-1:
       Master: ami-06992628e0a8e044c
-      Agent: ami-000d9598b1970babe
+      Agent: ami-0659aa87733a519b9
     us-east-2:
       Master: ami-02bd262766f4f24c2
-      Agent: ami-0f9d9d838cc5694d8
+      Agent: ami-09cd056b4d5dab37f
     us-west-2:
       Master: ami-0ac79214f93af0a57
-      Agent: ami-0c310907c6b5692e5
+      Agent: ami-0b2bc4b9da954145d
 
 Parameters:
   VpcCIDR:
