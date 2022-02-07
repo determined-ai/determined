@@ -12,8 +12,6 @@ export default {
 };
 
 export const Default = (): React.ReactNode => {
-  const { showModal } = useModalCustomizeColumns();
-
   const columns = useMemo(() => {
     const arr = [ ...DEFAULT_COLUMNS ];
     for (let i = 0; i < 50; i++) {
@@ -22,13 +20,14 @@ export const Default = (): React.ReactNode => {
     return arr;
   }, []);
 
+  const { modalOpen } = useModalCustomizeColumns({
+    columns,
+    defaultVisibleColumns: DEFAULT_COLUMNS,
+  });
+
   const openModal = useCallback(() => {
-    showModal({
-      columns: columns,
-      defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: DEFAULT_COLUMNS,
-    });
-  }, [ columns, showModal ]);
+    modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
+  }, [ modalOpen ]);
 
   return (
     <Button onClick={openModal}>Columns</Button>
@@ -36,8 +35,6 @@ export const Default = (): React.ReactNode => {
 };
 
 export const LongList = (): React.ReactNode => {
-  const { showModal } = useModalCustomizeColumns();
-
   const columns = useMemo(() => {
     const arr = [ ...DEFAULT_COLUMNS ];
     for (let i = 0; i < 50000; i++) {
@@ -46,13 +43,14 @@ export const LongList = (): React.ReactNode => {
     return arr;
   }, []);
 
+  const { modalOpen } = useModalCustomizeColumns({
+    columns,
+    defaultVisibleColumns: DEFAULT_COLUMNS,
+  });
+
   const openModal = useCallback(() => {
-    showModal({
-      columns: columns,
-      defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: DEFAULT_COLUMNS,
-    });
-  }, [ columns, showModal ]);
+    modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
+  }, [ modalOpen ]);
 
   return (
     <Button onClick={openModal}>Columns</Button>

@@ -1,75 +1,50 @@
-import { Button, Input, Modal, ModalFuncProps } from 'antd';
-import { ModalFunc } from 'antd/es/modal/confirm';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Input, ModalFuncProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { isEqual } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
+import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalCustomizeColumns.module.scss';
 
-interface ModalState {
+interface Props {
   columns: string[];
   defaultVisibleColumns: string[];
-  initialVisibleColumns: string[];
   onSave?: (columns: string[]) => void;
-  visible: boolean;
 }
 
 export interface ShowModalProps {
-  columns: string[];
-  defaultVisibleColumns: string[];
-  initialVisibleColumns: string[];
-  onSave?: (columns: string[]) => void;
+  initialModalProps?: ModalFuncProps;
+  initialVisibleColumns?: string[];
 }
 
-interface ModalHooks {
-  showModal: (props: ShowModalProps) => void;
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalCustomizeColumns = (): ModalHooks => {
-  const modalRef = useRef<ReturnType<ModalFunc>>();
-  const [ modalState, setModalState ] = useState<ModalState>({
-    columns: [],
-    defaultVisibleColumns: [],
-    initialVisibleColumns: [],
-    visible: false,
-  });
+const useModalCustomizeColumns = ({
+  columns,
+  defaultVisibleColumns,
+  onSave,
+}: Props): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+  const [ columnList ] = useState(columns); //this is only to prevent rerendering
   const [ searchTerm, setSearchTerm ] = useState('');
   const [ visibleColumns, setVisibleColumns ] = useState<string[]>([]);
 
-  const showModal = useCallback((
-    { columns, initialVisibleColumns, defaultVisibleColumns, onSave }: ShowModalProps,
-  ) => {
-    setModalState({ columns, defaultVisibleColumns, initialVisibleColumns, onSave, visible: true });
-    setVisibleColumns(initialVisibleColumns);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    if (!modalRef.current) return;
-    modalRef.current.destroy();
-    modalRef.current = undefined;
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    if (!modalRef.current) return;
-    closeModal();
-  }, [ closeModal ]);
-
-  const handleSave = useCallback((state: ModalState) => {
-    if (!modalRef.current) return;
-    state.onSave?.(visibleColumns);
-    closeModal();
-  }, [ closeModal, visibleColumns ]);
+  const handleSave = useCallback(() => {
+    onSave?.(visibleColumns);
+  }, [ onSave, visibleColumns ]);
 
   const handleSearch = useCallback((e) => {
-    setSearchTerm(e.target.value.toLowerCase());
+    setSearchTerm(e.target.value);
   }, []);
 
   const hiddenColumns = useMemo(() => {
     const visibleColumnsSet = new Set(visibleColumns);
-    return modalState.columns.filter((column) => !visibleColumnsSet.has(column));
-  }, [ modalState.columns, visibleColumns ]);
+    return columnList.filter((column) => !visibleColumnsSet.has(column));
+  }, [ columnList, visibleColumns ]);
 
   const filteredHiddenColumns = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
@@ -98,9 +73,9 @@ const useModalCustomizeColumns = (): ModalHooks => {
     }
   }, []);
 
-  const resetColumns = useCallback((state: ModalState) => {
-    setVisibleColumns(state.defaultVisibleColumns);
-  }, []);
+  const resetColumns = useCallback(() => {
+    setVisibleColumns(defaultVisibleColumns);
+  }, [ defaultVisibleColumns ]);
 
   const renderColumnName = useCallback((columnName: string) => {
     const sentenceColumnName = columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
@@ -135,7 +110,7 @@ const useModalCustomizeColumns = (): ModalHooks => {
     return renderRow(row, style, () => makeHidden(row));
   }, [ filteredVisibleColumns, makeHidden, renderRow ]);
 
-  const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
+  const modalContent = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
@@ -159,8 +134,8 @@ const useModalCustomizeColumns = (): ModalHooks => {
           <div className={css.column}>
             <div className={css.visibleTitleRow}>
               <h2>Visible</h2>
-              {!isEqual(state.defaultVisibleColumns, visibleColumns) && (
-                <Button type="link" onClick={() => resetColumns(state)}>
+              {!isEqual(defaultVisibleColumns, visibleColumns) && (
+                <Button type="link" onClick={resetColumns}>
                   Reset
                 </Button>
               )}
@@ -181,7 +156,8 @@ const useModalCustomizeColumns = (): ModalHooks => {
         </div>
       </div>
     );
-  }, [ handleSearch,
+  }, [ defaultVisibleColumns,
+    handleSearch,
     filteredHiddenColumns,
     renderHiddenRow,
     visibleColumns,
@@ -191,44 +167,34 @@ const useModalCustomizeColumns = (): ModalHooks => {
     resetColumns,
     makeHidden ]);
 
-  const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
-    const modalProps: Partial<ModalFuncProps> = {
+  const modalProps: Partial<ModalFuncProps> = useMemo(() => {
+    return {
       bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
-      content: generateModalContent(state),
+      content: modalContent,
       icon: null,
       maskClosable: true,
       okText: 'Save',
-      onCancel: handleCancel,
-      onOk: () => handleSave(state),
+      onOk: handleSave,
       title: 'Customize Columns',
     };
+  }, [ modalContent, handleSave ]);
 
-    return modalProps;
-  }, [ generateModalContent, handleCancel, handleSave ]);
+  const modalOpen = useCallback(({ initialVisibleColumns, initialModalProps }: ShowModalProps) => {
+    setVisibleColumns(initialVisibleColumns ?? defaultVisibleColumns);
+    openOrUpdate({ ...modalProps, ...initialModalProps });
+  }, [ defaultVisibleColumns, modalProps, openOrUpdate ]);
 
-  // Detect modal state change and update.
+  /*
+   * When modal props changes are detected, such as modal content
+   * title, and buttons, update the modal
+   */
   useEffect(() => {
-    if (!modalState.visible) return;
-    const modalProps = generateModalProps(modalState);
-    if (modalRef.current) {
-      modalRef.current.update(prev => ({ ...prev, ...modalProps }));
-    } else {
-      modalRef.current = Modal.confirm(modalProps);
-    }
-  }, [ generateModalProps, modalState ]);
+    if (modalRef.current) openOrUpdate(modalProps);
+  }, [ modalProps, modalRef, openOrUpdate ]);
 
-  // When the component using the hook unmounts, remove the modal automatically.
-  useEffect(() => {
-    return () => {
-      if (!modalRef.current) return;
-      modalRef.current.destroy();
-      modalRef.current = undefined;
-    };
-  }, []);
-
-  return { showModal };
+  return { modalClose, modalOpen, modalRef };
 };
 
 export default useModalCustomizeColumns;

@@ -6,7 +6,7 @@ import React, { useCallback, useMemo } from 'react';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { camelCaseToSentence, generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
 
-import useCustomizeColumnsModal from './useModalCustomizeColumns';
+import useModalCustomizeColumns from './useModalCustomizeColumns';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 50000;
@@ -16,8 +16,6 @@ const camelCaseToListItem = (columnName: string) => {
 };
 
 const ColumnsButton: React.FC = () => {
-  const { showModal } = useCustomizeColumnsModal();
-
   const columns = useMemo(() => {
     const arr = [ ...DEFAULT_COLUMNS ];
     for (let i = 0; i < NUM_GENERATED_COLUMNS; i++) {
@@ -26,13 +24,14 @@ const ColumnsButton: React.FC = () => {
     return arr;
   }, []);
 
+  const { modalOpen } = useModalCustomizeColumns({
+    columns,
+    defaultVisibleColumns: DEFAULT_COLUMNS,
+  });
+
   const openModal = useCallback(() => {
-    showModal({
-      columns: columns,
-      defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: DEFAULT_COLUMNS,
-    });
-  }, [ columns, showModal ]);
+    modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
+  }, [ modalOpen ]);
 
   return (
     <Button onClick={openModal}>{BUTTON_TEXT}</Button>

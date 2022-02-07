@@ -60,7 +60,6 @@ const ExperimentList: React.FC = () => {
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
-  const { showModal } = useModalCustomizeColumns();
 
   const {
     activeSettings,
@@ -551,14 +550,15 @@ const ExperimentList: React.FC = () => {
     updateSettings({ columns: columns.length === 0 ? [ 'name' ] : columns });
   }, [ updateSettings ]);
 
+  const { modalOpen } = useModalCustomizeColumns({
+    columns: transferColumns,
+    defaultVisibleColumns: DEFAULT_COLUMNS,
+    onSave: handleUpdateColumns,
+  });
+
   const openModal = useCallback(() => {
-    showModal({
-      columns: transferColumns,
-      defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns ?? DEFAULT_COLUMNS,
-      onSave: handleUpdateColumns,
-    });
-  }, [ handleUpdateColumns, transferColumns, settings.columns, showModal ]);
+    modalOpen({ initialVisibleColumns: settings.columns });
+  }, [ settings.columns, modalOpen ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     updateSettings({ archived: showArchived, row: undefined });
