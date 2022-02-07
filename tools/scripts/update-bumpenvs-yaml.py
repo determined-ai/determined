@@ -45,6 +45,8 @@ JOB_SUFFIXES = [
     "tf26-gpu",
     "tf27-gpu",
     "pytorch19-tf25-rocm",
+    "deepspeed-gpu",
+    "gpt-neox-deepspeed-gpu"
 ]
 
 EXPECT_JOBS = {
@@ -105,6 +107,13 @@ def get_all_builds(commit: str) -> Dict[str, Build]:
             builds[build.job_name] = build
 
     found = set(builds.keys())
+    expected_found = EXPECT_JOBS.difference(found)
+    found_expected = found.difference(EXPECT_JOBS)
+    if expected_found:
+        print(f"Expected {expected_found} jobs not found")
+    if found_expected:
+        print(f"Found {found_expected} jobs not expected")
+
     assert EXPECT_JOBS == found, f"expected jobs ({EXPECT_JOBS}) but found ({found})"
 
     return builds
