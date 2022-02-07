@@ -79,10 +79,6 @@ func TestModels(t *testing.T) {
 			err = db.AddCheckpointMetadata(context.TODO(), ckpt)
 			require.NoError(t, err)
 
-			var retCkpt checkpointv1.Checkpoint
-			err = db.QueryProto("get_checkpoint", &retCkpt, ckpt.Uuid)
-			require.NoError(t, err)
-
 			// Which maybe has some metrics.
 			var m *trialv1.TrialMetrics
 			const metricValue = 1.0
@@ -105,18 +101,25 @@ func TestModels(t *testing.T) {
 				require.NoError(t, err)
 			}
 
+			var retCkpt checkpointv1.Checkpoint
+			err = db.QueryProto("get_checkpoint", &retCkpt, ckpt.Uuid)
+			require.NoError(t, err)
+
 			requireModelVersionOK := func(expected, actual modelv1.ModelVersion) {
 				require.Equal(t, expected.Name, actual.Name)
 				require.Equal(t, expected.Model.Name, actual.Model.Name)
+				require.Equal(t, expected.Checkpoint.Uuid, actual.Checkpoint.Uuid)
 				if tt.hasValidation {
-					require.Equal(t, metricValue, actual.Checkpoint.SearcherMetric.Value)
 					require.Equal(t,
-						checkpointv1.State_STATE_COMPLETED, actual.Checkpoint.ValidationState)
+						expected.Checkpoint.SearcherMetric.Value,
+						actual.Checkpoint.SearcherMetric.Value)
+					require.Equal(t,
+						expected.Checkpoint.ValidationState, actual.Checkpoint.ValidationState)
 					require.NotNil(t, actual.Checkpoint.Metrics)
 				} else {
 					require.Nil(t, actual.Checkpoint.SearcherMetric)
 					require.Equal(t,
-						checkpointv1.State_STATE_UNSPECIFIED, actual.Checkpoint.ValidationState)
+						expected.Checkpoint.ValidationState, actual.Checkpoint.ValidationState)
 					require.Nil(t, actual.Checkpoint.Metrics)
 				}
 			}
