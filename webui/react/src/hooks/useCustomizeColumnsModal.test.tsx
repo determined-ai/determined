@@ -66,7 +66,7 @@ describe('useCustomizeColumnsModal', () => {
     });
   });
 
-  it('lists render', async () => {
+  it('renders lists', async () => {
     const { view } = await setup();
 
     //waiting for modal to render
@@ -83,7 +83,7 @@ describe('useCustomizeColumnsModal', () => {
       .toContain(camelCaseToListItem(DEFAULT_COLUMNS[0]));
   });
 
-  it('searching', async () => {
+  it('searches', async () => {
     const { view } = await setup();
     const searchTerm = DEFAULT_COLUMNS[1];
 
@@ -102,7 +102,7 @@ describe('useCustomizeColumnsModal', () => {
     });
   });
 
-  it('hide column', async () => {
+  it('hides column', async () => {
     const { view } = await setup();
 
     //waiting for modal to render
@@ -121,7 +121,7 @@ describe('useCustomizeColumnsModal', () => {
     });
   });
 
-  it('show column', async () => {
+  it('shows column', async () => {
     const { view } = await setup();
 
     //waiting for modal to render
@@ -174,7 +174,7 @@ describe('useCustomizeColumnsModal', () => {
     expect(resetButton).not.toBeInTheDocument();
   });
 
-  it('add all', async () => {
+  it('adds all', async () => {
     const { view } = await setup();
 
     //waiting for modal to render
@@ -192,7 +192,7 @@ describe('useCustomizeColumnsModal', () => {
     });
   });
 
-  it('remove all', async () => {
+  it('removes all', async () => {
     const { view } = await setup();
 
     //waiting for modal to render

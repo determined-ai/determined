@@ -560,8 +560,8 @@ const ExperimentList: React.FC = () => {
     });
   }, [ handleUpdateColumns, transferColumns, settings.columns, showModal ]);
 
-  const switchShowArchived = useCallback((newState: boolean) => {
-    updateSettings({ archived: newState, row: undefined });
+  const switchShowArchived = useCallback((showArchived: boolean) => {
+    updateSettings({ archived: showArchived, row: undefined });
   }, [ updateSettings ]);
 
   /*
