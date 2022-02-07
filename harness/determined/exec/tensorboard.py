@@ -1,11 +1,25 @@
+import json
+import logging
 import os
 import subprocess
 import sys
+import tempfile
 import time
-from typing import Callable, List, Tuple
+from typing import Any, Dict, List
 
 import boto3
 import requests
+from packaging import version
+
+import determined.common
+from determined.tensorboard import fetchers
+
+TENSORBOARD_TRIGGER_READY_MSG = "TensorBoard contains metrics"
+FETCH_INTERVAL = 1
+MAX_WAIT_TIME = 600
+
+
+logger = logging.getLogger("determined.exec.tensorboard")
 
 
 def set_s3_region() -> None:
@@ -13,11 +27,11 @@ def set_s3_region() -> None:
     if bucket is None:
         return
 
-    endpoint_url = os.environ.get("DET_S3_ENDPOINT_URL", None)
+    endpoint_url = os.environ.get("DET_S3_ENDPOINT_URL")
     client = boto3.client("s3", endpoint_url=endpoint_url)
-    bucketLocation = client.get_bucket_location(Bucket=bucket)
+    bucket_location = client.get_bucket_location(Bucket=bucket)
 
-    region = bucketLocation["LocationConstraint"]
+    region = bucket_location["LocationConstraint"]
 
     if region is not None:
         # We have observed that in US-EAST-1 the region comes back as None
@@ -26,121 +40,123 @@ def set_s3_region() -> None:
         os.environ["AWS_REGION"] = str(region)
 
 
-def wait_for_tensorboard(max_seconds: float, url: str, still_alive_fn: Callable[[], bool]) -> bool:
-    """Return True if the process successfully comes up before a deadline."""
+def get_tensorboard_args(tb_version: str, tfevents_dir: str, add_args: List[str]) -> List[str]:
+    """Build tensorboard startup args.
 
-    deadline = time.time() + max_seconds
-
-    while True:
-        if time.time() > deadline:
-            print(f"TensorBoard did not find metrics within {max_seconds} seconds", file=sys.stderr)
-            return False
-
-        if not still_alive_fn():
-            print("TensorBoard process died before reporting metrics", file=sys.stderr)
-            return False
-
-        time.sleep(1)
-
-        try:
-            res = requests.get(url)
-            res.raise_for_status()
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
-            continue
-
-        try:
-            tags = res.json()
-        except ValueError:
-            continue
-
-        # TensorBoard will return { trial/<id> : { tag: value } } when data is present.
-        if len(tags) == 0:
-            print("TensorBoard is awaiting metrics...")
-            continue
-
-        for val in tags.values():
-            if len(val):
-                print("TensorBoard contains metrics")
-                return True
-
-
-def get_tensorboard_version(version: str) -> Tuple[str, str]:
-    """
-    Gets the version of the tensorboard package currently installed. Used
-    by downstream processes to determine args passed in.
-    :return: version in the form of (major, minor) tuple
-    """
-
-    major, minor, _ = version.split(".")
-
-    return major, minor
-
-
-def get_tensorboard_args(args: List[str]) -> List[str]:
-    """
-    Builds tensorboard startup args from args passed in from tensorboard-entrypoint.sh
     Args are added and deprecated at the mercy of tensorboard; all of the below are necessary to
     support versions 1.14, 2.4, and 2.5
 
-    - If multiple directories are specified and the tensorboard version is > 1,
-    use legacy logdir_spec behavior
-
     - Tensorboard 2+ no longer exposes all ports. Must pass in "--bind_all" to expose localhost
-
     - Tensorboard 2.5.0 introduces an experimental feature (default load_fast=true)
     which prevents multiple plugins from loading correctly.
     """
     task_id = os.environ["DET_TASK_ID"]
     port = os.environ["TENSORBOARD_PORT"]
 
-    version = args.pop(0)
-
-    # logdir is the second argument passed in from tensorboard_manager.go. If multiple directories
-    # are specified and the tensorboard version is > 1, use legacy logdir_spec behavior. NOTE:
-    # legacy logdir_spec behavior is not supported by many tensorboard plugins
-    logdir = args.pop(0)
-
     tensorboard_args = [
         "tensorboard",
         f"--port={port}",
         f"--path_prefix=/proxy/{task_id}",
-        *args,
+        *add_args,
     ]
 
-    major, minor = get_tensorboard_version(version)
-
-    if major == "2":
+    # Version dependant args
+    if version.parse(tb_version) >= version.parse("2"):
         tensorboard_args.append("--bind_all")
-        if minor >= "5":
-            tensorboard_args.append("--load_fast=false")
-        if len(logdir.split(",")) > 1:
-            tensorboard_args.append(f"--logdir_spec={logdir}")
-            return tensorboard_args
+    if version.parse(tb_version) >= version.parse("2.5"):
+        tensorboard_args.append("--load_fast=false")
 
-    tensorboard_args.append(f"--logdir={logdir}")
+    tensorboard_args.append(f"--logdir={tfevents_dir}")
+
     return tensorboard_args
 
 
-def main(args: List[str]) -> int:
-    set_s3_region()
-
+def get_tensorboard_url() -> str:
     task_id = os.environ["DET_TASK_ID"]
     port = os.environ["TENSORBOARD_PORT"]
     tensorboard_addr = f"http://localhost:{port}/proxy/{task_id}"
-    url = f"{tensorboard_addr}/data/plugin/scalars/tags"
-    tensorboard_args = get_tensorboard_args(args)
+    return tensorboard_addr
 
-    print(f"Running: {tensorboard_args}")
-    p = subprocess.Popen(tensorboard_args)
 
-    def still_alive() -> bool:
-        return p.poll() is None
+def check_tensorboard_responsive() -> bool:
+    # Ensure Tensorboard is responding to HTTP request to prevent 502 from master.
+    tensorboard_url = get_tensorboard_url()
+    try:
+        # Attempt HTTP request to Tensorboard.
+        res = requests.get(tensorboard_url)
+        res.raise_for_status()
+        return True
 
-    if not wait_for_tensorboard(600, url, still_alive):
-        p.kill()
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, ValueError) as exp:
+        logger.warning(f"Tensorboard not responding to HTTP: {exp}")
 
-    return p.wait()
+    return False
+
+
+def start_tensorboard(
+    config: Dict[str, Any],
+    tb_version: str,
+    storage_paths: List[str],
+    add_tb_args: List[str],
+) -> int:
+    """Start Tensorboard and look for new files."""
+
+    stop_time = time.time() + MAX_WAIT_TIME
+    triggered = False
+    responsive = False
+
+    with tempfile.TemporaryDirectory() as local_dir:
+
+        # Get fetcher and perform initial fetch
+        fetcher = fetchers.build(config, storage_paths, local_dir)
+        num_fetched_files = fetcher.fetch_new()
+
+        # Build Tensorboard args and launch process.
+        tb_args = get_tensorboard_args(tb_version, local_dir, add_tb_args)
+        logger.debug(f"tensorboard args: {tb_args}")
+        tensorboard_process = subprocess.Popen(tb_args)
+
+        try:
+            while True:
+                ret_code = tensorboard_process.poll()
+                if ret_code is not None:
+                    raise RuntimeError(f"Tensorboard process died, exit code({ret_code}).")
+
+                # Check if we have reached a timeout without receiving metrics
+                if num_fetched_files == 0 and time.time() > stop_time:
+                    raise RuntimeError("No new files were fetched before the timeout.")
+
+                if not responsive:
+                    if time.time() > stop_time:
+                        raise RuntimeError("Tensorboard wasn't responsive before the timeout.")
+                    responsive = check_tensorboard_responsive()
+
+                if responsive and not triggered and num_fetched_files > 0:
+                    print(TENSORBOARD_TRIGGER_READY_MSG)
+                    triggered = True
+
+                time.sleep(FETCH_INTERVAL)
+                num_fetched_files += fetcher.fetch_new()
+
+        finally:
+            if tensorboard_process.poll() is None:
+                logger.info("Killing tensorboard process")
+                tensorboard_process.kill()
+
+        return tensorboard_process.wait()
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    tb_version = sys.argv[1]
+    config_path = sys.argv[2]
+    storage_paths = sys.argv[3].split(",")
+    additional_tb_args = sys.argv[4:]
+
+    config = {}
+    with open(config_path) as config_file:
+        config = json.load(config_file)
+
+    determined.common.set_logger(determined.common.util.debug_mode())
+
+    ret = start_tensorboard(config, tb_version, storage_paths, additional_tb_args)
+    sys.exit(ret)

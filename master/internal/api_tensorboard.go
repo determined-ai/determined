@@ -41,6 +41,7 @@ const (
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/tensorboard/tensorboard-entrypoint.sh"
+	expConfPath               = "/run/determined/tensorboard/experiment_config.json"
 )
 
 var tensorboardReadinessPattern = regexp.MustCompile("TensorBoard contains metrics")
@@ -160,6 +161,10 @@ func (a *apiServer) LaunchTensorboard(
 		"DET_TASK_TYPE":        model.TaskTypeTensorboard,
 	}
 
+	if spec.Config.Debug {
+		uniqEnvVars["DET_DEBUG"] = "true"
+	}
+
 	for _, exp := range exps {
 		var logBasePath string
 
@@ -260,7 +265,7 @@ func (a *apiServer) LaunchTensorboard(
 	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
 	spec.Config.Entrypoint = append(
-		[]string{tensorboardEntrypointFile, strings.Join(logDirs, ",")},
+		[]string{tensorboardEntrypointFile, expConfPath, strings.Join(logDirs, ",")},
 		spec.Config.TensorBoardArgs...)
 
 	spec.Base.ExtraEnvVars = uniqEnvVars
@@ -287,6 +292,7 @@ func (a *apiServer) LaunchTensorboard(
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
 		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg),
 	}
 
 	if err = check.Validate(req.Config); err != nil {
