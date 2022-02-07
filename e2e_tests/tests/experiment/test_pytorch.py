@@ -165,6 +165,14 @@ def test_pytorch_native_api() -> None:
     exp.wait_for_experiment_state(exp_id, "COMPLETED")
 
 
+@pytest.mark.e2e_cpu
+def test_pytorch_gradient_aggregation() -> None:
+    config = conf.load_config(conf.fixtures_path("pytorch_identity/const.yaml"))
+    config = conf.set_tf2_image(config)
+
+    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
+
+
 @pytest.mark.parallel
 def test_pytorch_parallel() -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
