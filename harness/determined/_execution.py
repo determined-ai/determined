@@ -107,7 +107,6 @@ def _make_local_execution_env(
         master_url="",
         master_cert_file=None,
         master_cert_name=None,
-        container_id="",
         experiment_config=config,
         hparams=hparams,
         latest_checkpoint=None,

@@ -135,7 +135,6 @@ def make_default_env_context(
         master_url="",
         master_cert_file=None,
         master_cert_name=None,
-        container_id="",
         hparams=hparams,
         latest_checkpoint=latest_checkpoint,
         latest_batch=latest_batch,
