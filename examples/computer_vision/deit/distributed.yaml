@@ -32,7 +32,7 @@ hyperparameters:
 records_per_epoch: 118287
 searcher:
   name: single
-  metric: val_loss
+  metric: loss
   max_length:
     epochs: 300
 entrypoint: model_def:DeitTrial
