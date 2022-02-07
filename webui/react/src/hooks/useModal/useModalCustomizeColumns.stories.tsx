@@ -4,15 +4,15 @@ import React, { useCallback, useMemo } from 'react';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { generateAlphaNumeric } from 'utils/string';
 
-import useCustomizeColumnsModal from './useCustomizeColumnsModal';
+import useModalCustomizeColumns from './useModalCustomizeColumns';
 
 export default {
-  component: useCustomizeColumnsModal,
+  component: useModalCustomizeColumns,
   title: 'CustomizeColumnModal',
 };
 
 export const Default = (): React.ReactNode => {
-  const { showModal } = useCustomizeColumnsModal();
+  const { showModal } = useModalCustomizeColumns();
 
   const columns = useMemo(() => {
     const arr = [ ...DEFAULT_COLUMNS ];
@@ -36,7 +36,7 @@ export const Default = (): React.ReactNode => {
 };
 
 export const LongList = (): React.ReactNode => {
-  const { showModal } = useCustomizeColumnsModal();
+  const { showModal } = useModalCustomizeColumns();
 
   const columns = useMemo(() => {
     const arr = [ ...DEFAULT_COLUMNS ];

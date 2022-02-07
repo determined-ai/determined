@@ -25,9 +25,9 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import useCustomizeColumnsModal from 'hooks/useCustomizeColumnsModal';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -60,7 +60,7 @@ const ExperimentList: React.FC = () => {
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
-  const { showModal } = useCustomizeColumnsModal();
+  const { showModal } = useModalCustomizeColumns();
 
   const {
     activeSettings,

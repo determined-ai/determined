@@ -6,7 +6,7 @@ import React, { useCallback, useMemo } from 'react';
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { camelCaseToSentence, generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
 
-import useCustomizeColumnsModal from './useCustomizeColumnsModal';
+import useCustomizeColumnsModal from './useModalCustomizeColumns';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 50000;

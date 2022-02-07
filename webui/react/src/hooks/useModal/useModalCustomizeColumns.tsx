@@ -6,7 +6,7 @@ import { FixedSizeList as List } from 'react-window';
 import { isEqual } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
-import css from './useCustomizeColumnsModal.module.scss';
+import css from './useModalCustomizeColumns.module.scss';
 
 interface ModalState {
   columns: string[];
@@ -27,7 +27,7 @@ interface ModalHooks {
   showModal: (props: ShowModalProps) => void;
 }
 
-const useCustomizeColumnsModal = (): ModalHooks => {
+const useModalCustomizeColumns = (): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const [ modalState, setModalState ] = useState<ModalState>({
     columns: [],
@@ -231,4 +231,4 @@ const useCustomizeColumnsModal = (): ModalHooks => {
   return { showModal };
 };
 
-export default useCustomizeColumnsModal;
+export default useModalCustomizeColumns;
