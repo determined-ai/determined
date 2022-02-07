@@ -81,4 +81,4 @@ def test_keras_from_config() -> None:
     # Simluate validation loss.
     sim_loss = trial.calc_loss(weight, range(data_len))
 
-    assert pytest.approx(sim_loss, eval_loss)
+    assert sim_loss == pytest.approx(eval_loss)
