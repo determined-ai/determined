@@ -609,6 +609,7 @@ class PIDServer:
                 return
             elif data[-1:] == b"q":
                 # Graceful shutdown code.
+                logging.debug(f"pid {pid} shutdown gracefully")
                 self.graceful_shutdowns.append(pid)
             else:
                 raise ValueError("invalid message from pid_client:", data)
@@ -626,6 +627,7 @@ class PIDServer:
         """
         Any PIDs which exited without a graceful exit message indicates a crashed worker.
         """
+        logging.debug(f"num of pids: {len(self.pids)}")
         for pid in self.pids:
             if pid not in self.graceful_shutdowns:
                 pid_ok = False
@@ -637,6 +639,7 @@ class PIDServer:
                     ):
                         pid_ok = True
                 except psutil.NoSuchProcess:
+                    logging.debug(f"pids does not exist: {pid}")
                     pass
                 if not pid_ok:
                     raise det.errors.WorkerError("Detected that worker process died.")
@@ -671,6 +674,7 @@ class PIDServer:
         cmd: List[str],
         on_fail: Optional[signal.Signals] = None,
         on_exit: Optional[signal.Signals] = None,
+        return_one_on_worker_error: bool = False,
         grace_period: int = 3,
     ) -> int:
         p = subprocess.Popen(cmd)
@@ -688,20 +692,22 @@ class PIDServer:
         try:
             self.run(health_check)
         except HealthCheckFail as e:
+            logging.debug("failed health check")
             return e.exit_code
         except det.errors.WorkerError:
             # Worker failed.
+            logging.debug("encountered worker error")
             if on_fail is not None:
                 # Let things finish logging, exiting on their own, etc.
                 time.sleep(grace_period)
                 p.send_signal(on_fail)
                 if on_fail != signal.SIGKILL:
                     try:
-                        return p.wait(timeout=10)
+                        return p.wait(timeout=10) if not return_one_on_worker_error else 1
                     except subprocess.TimeoutExpired:
                         logging.error(f"killing worker which didn't exit after {on_fail.name}")
                         p.send_signal(signal.SIGKILL)
-            return p.wait()
+            return p.wait() if not return_one_on_worker_error else 1
 
         # All workers exited normally.
         if on_exit is not None:
@@ -713,7 +719,9 @@ class PIDServer:
                 except subprocess.TimeoutExpired:
                     logging.error(f"killing worker which didn't exit after {on_exit.name}")
                     p.send_signal(signal.SIGKILL)
-        return p.wait()
+        exit_code = p.wait()
+        logging.debug(f"exit_code: {exit_code}")
+        return exit_code
 
 
 class PIDClient:
