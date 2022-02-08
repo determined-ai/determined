@@ -67,19 +67,19 @@ def list_checkpoints(args: Namespace) -> None:
         setup_session(args), id=args.experiment_id, limit=args.best
     )
     checkpoints = r.checkpoints or []
-    searcher_metric = None
+    searcher_metric = ""
     if len(checkpoints) > 0:
         config = checkpoints[0].experimentConfig or {}
         if "searcher" in config and "metric" in config["searcher"]:
-            searcher_metric = config["searcher"]["metric"]
+            searcher_metric = str(config["searcher"]["metric"])
 
     def get_validation_metric(c: bindings.v1Checkpoint, metric: str) -> str:
         if (
             c.metrics
             and c.metrics.validationMetrics
-            and c.metrics.validationMetrics[searcher_metric]
+            and searcher_metric in c.metrics.validationMetrics
         ):
-            return c.metrics.validationMetrics[searcher_metric]
+            return str(c.metrics.validationMetrics[searcher_metric])
         return ""
 
     headers = [

@@ -4,9 +4,9 @@
 
 -  Master: removes endpoints (/:experiment_id, /:experiment_id/checkpoints, /:experiment_id/config,
    /:experiment_id/model_def, /:experiment_id/preview_gc, /:experiment_id/summary, and
-   /:experiment_id/metrics/summary) from the legacy API. This data is available in the GRPC API
+   /:experiment_id/metrics/summary) from the legacy API. This data is available in the REST API
    (/api/v1/experiments) in the Web UI, CLI, and tests.
 
 -  Master: removed two endpoints (/:trial_id/details, /:trial_id/metrics) from the legacy API. This
-   data is available in the GRPC API (/api/v1/experiments/:experiment_id/trials,
+   data is available in the REST API (/api/v1/experiments/:experiment_id/trials,
    /api/v1/experiments/:experiment_id/checkpoints, and /api/v1/trials).

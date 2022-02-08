@@ -284,7 +284,7 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display trial-related information.
-    trials_for_experiment = {}
+    trials_for_experiment: Dict[str, Sequence[bindings.trialv1Trial]] = {}
     for doc in docs:
         trials_for_experiment[doc.id] = bindings.get_GetExperimentTrials(
             session, experimentId=doc.id
@@ -395,7 +395,7 @@ def describe(args: Namespace) -> None:
                                 merge_row[4 + idx] = tfield
                         start_checkpoint = 4 + len(t_metrics_fields)
                         if checkpoint_state:
-                            merge_row[start_checkpoint] = checkpoint_state.replace("STATE_", "")
+                            merge_row[start_checkpoint] = checkpoint_state.value.replace("STATE_", "")
                             merge_row[start_checkpoint + 1] = render.format_time(
                                 checkpoint_end_time
                             )
@@ -404,7 +404,7 @@ def describe(args: Namespace) -> None:
                                 validation_end_time
                             )
                         if validation_state:
-                            merge_row[start_checkpoint + 2] = validation_state.replace("STATE_", "")
+                            merge_row[start_checkpoint + 2] = validation_state.value.replace("STATE_", "")
                         for idx, vfield in enumerate(v_metrics_fields):
                             if vfield and merge_row[start_checkpoint + idx + 4] is None:
                                 merge_row[start_checkpoint + idx + 4] = vfield
