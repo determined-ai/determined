@@ -244,6 +244,10 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	case err = <-eerr:
 		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))
 	case exit := <-exit:
+		if exit.Error != nil {
+			sendErr(ctx, fmt.Errorf("error receiving container exit: %s", exit.Error.Message))
+			return
+		}
 		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
 	}
 }
