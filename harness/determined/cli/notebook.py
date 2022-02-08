@@ -9,6 +9,7 @@ from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.check import check_eq
+from determined.common.context import Context
 from determined.common.declarative_argparse import Arg, Cmd
 
 from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config, render_event_stream
@@ -18,7 +19,22 @@ from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config, rende
 def start_notebook(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)
 
-    body = bindings.v1LaunchNotebookRequest(config, preview=False)
+    files = None
+    if args.context is not None:
+        context = Context.from_local(args.context)
+        files = [
+            bindings.v1File(
+                content=e.content.decode("utf-8"),
+                gid=e.gid,
+                mode=e.mode,
+                mtime=e.mtime,
+                path=e.path,
+                type=e.type,
+                uid=e.uid,
+            )
+            for e in context.entries
+        ]
+    body = bindings.v1LaunchNotebookRequest(config, files=files, preview=False)
     resp = bindings.post_LaunchNotebook(setup_session(args), body=body)
 
     if args.preview:
