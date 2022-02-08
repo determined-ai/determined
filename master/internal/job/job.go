@@ -223,7 +223,9 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				return nil
 			}
 		}
-		if len(errors) > 0 {
+		if len(errors) == 1 {
+			ctx.Respond(errors[0])
+		} else if len(errors) > 1 {
 			ctx.Respond(fmt.Errorf("encountered the following errors: %s", strings.Join(errors, ", ")))
 		}
 	default:
