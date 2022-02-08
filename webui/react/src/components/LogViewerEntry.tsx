@@ -48,12 +48,14 @@ const LogViewerEntry: React.FC<Prop> = ({
 
   return (
     <div className={classes.join(' ')} style={style}>
-      {logLevel ? <Tooltip placement="top" title={`Level: ${capitalize(logLevel)}`}>
-        <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
-          <div className={css.levelLabel}>&lt;[{logLevel}]&gt;</div>
-          <Icon name={logLevel} size="small" />
-        </div>
-      </Tooltip> : <div style={{ width: ICON_WIDTH }} /> }
+      {logLevel ? (
+        <Tooltip placement="top" title={`Level: ${capitalize(logLevel)}`}>
+          <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
+            <div className={css.levelLabel}>&lt;[{logLevel}]&gt;</div>
+            <Icon name={logLevel} size="small" />
+          </div>
+        </Tooltip>
+      ) : <div style={{ width: ICON_WIDTH }} /> }
       <div className={css.time} style={timeStyle}>{formattedTime}</div>
       <div
         className={messageClasses.join(' ')}
