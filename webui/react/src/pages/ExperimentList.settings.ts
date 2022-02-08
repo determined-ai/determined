@@ -3,8 +3,20 @@ import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
 
+export const DEFAULT_COLUMNS = [
+  'id',
+  'name',
+  'description',
+  'tags',
+  'startTime',
+  'state',
+  'searcherType',
+  'user',
+];
+
 export interface Settings {
   archived?: boolean;
+  columns?: string[];
   label?: string[];
   row?: number[];
   search?: string;
@@ -19,9 +31,19 @@ export interface Settings {
 const config: SettingsConfig = {
   settings: [
     {
+      defaultValue: false,
       key: 'archived',
       storageKey: 'archived',
       type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS,
+      key: 'columns',
+      storageKey: 'columns',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
     },
     {
       key: 'label',
