@@ -1,5 +1,3 @@
-py_bindings_dest=determined/common/api/bindings.py
-
 .PHONY: build
 build: gen
 	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
@@ -11,12 +9,12 @@ publish:
 .PHONY: fmt
 fmt:
 	isort .
-	black . --exclude $(py_bindings_dest)
+	black .
 
 .PHONY: check
 check: check-gen
 	isort . --check-only
-	black . --exclude $(py_bindings_dest) --check
+	black . --check
 	flake8
 	mypy .
 
@@ -28,7 +26,7 @@ test: gen
 test-tf2:
 	pip freeze | grep "tensorflow==2.*"
 	pytest -v --runslow --durations=0 tests/experiment/tensorflow
-	# We must run these tests separately becuase estimators need to disable v2
+	# We must run these tests separately because estimators need to disable v2
 	# behavior (a global operation). We are explicitly testing eager execution
 	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
 	# anywhere but the "start" of your program. See:

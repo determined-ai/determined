@@ -1,4 +1,4 @@
 [tool.black]
 line-length = 100
-exclude = '(_gen.py|determined/_swagger/client/*)'
+extend-exclude = '(_gen.py|determined/_swagger/client/*|determined/common/api/bindings.py)'
 
