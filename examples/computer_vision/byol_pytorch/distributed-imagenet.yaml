@@ -18,7 +18,7 @@ data:
   dataset_name: imagenet
   # TODO: Change this to the name of your bucket.
   gcs_bucket: bucket-name-here
-  #TODO: Path to files inside the above bucket that contain newline separated list of all image blob paths.
+  # TODO: Path to files inside the above bucket that contain newline separated list of all image blob paths.
   # Generate using generate_blob_list.py.
   gcs_train_blob_list_path: imagenet/train-blob-list.txt
   gcs_validation_blob_list_path: imagenet/validation-blob-list.txt
@@ -94,4 +94,5 @@ searcher:
   metric: validation_loss
   smaller_is_better: true
   max_length:
-    epochs: 1000
+    # Note: BYOL paper trains for 1000 epochs for full convergence.
+    epochs: 20

@@ -49,7 +49,10 @@ This is necessary for ImageNet, where `hyperparameters.validate_with_classifier`
 
 ## Results
 
+For `const-cifar10.yaml` and `distributed-stl10.yaml`, results were taken from best `test_accuracy` achieved over the self-supervised training duration.  For `distributed-imagenet.yaml`, result was taken from running `evaluate_result.py` for 80 classifier training epochs.
+
 | Config file | Test Accuracy (%) |
 | ----------- | ------------- |
 | const-cifar10.yaml | 74.91 |
 | distributed-stl10.yaml | 91.10 |
+| distributed-imagenet.yaml | 71.37 |
