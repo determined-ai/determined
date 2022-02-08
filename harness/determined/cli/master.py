@@ -68,7 +68,7 @@ def logs(args: Namespace) -> None:
 # fmt: off
 
 args_description = [
-    Cmd("m|aster", None, "manage master", [
+    Cmd("master", None, "manage master", [
         Cmd("config", config, "fetch master config", [
             Group(format_args["json"], format_args["yaml"])
         ]),
