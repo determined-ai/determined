@@ -173,7 +173,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		ctx.Respond(jobsInRM)
 
 	case *apiv1.UpdateJobQueueRequest:
-		errors := make([]string, 0)
+		errors := make([]error, 0)
 		for _, update := range msg.Updates {
 			jobID := model.JobID(update.JobId)
 			jobActor := j.actorByID[jobID]
@@ -185,35 +185,35 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
 				if priority < 1 || priority > 99 {
-					errors = append(errors, "priority must be between 1 and 99")
+					errors = append(errors, fmt.Errorf("priority must be between 1 and 99"))
 					continue
 				}
 				resp := ctx.Ask(jobActor, SetGroupPriority{
 					Priority: priority,
 				})
 				if err := resp.Error(); err != nil {
-					errors = append(errors, err.Error())
+					errors = append(errors, err)
 				}
 			case *jobv1.QueueControl_Weight:
 				if action.Weight <= 0 {
-					errors = append(errors, "weight must be greater than 0")
+					errors = append(errors, fmt.Errorf("weight must be greater than 0"))
 					continue
 				}
 				resp := ctx.Ask(jobActor, SetGroupWeight{
 					Weight: float64(action.Weight),
 				})
 				if err := resp.Error(); err != nil {
-					errors = append(errors, err.Error())
+					errors = append(errors, err)
 				}
 			case *jobv1.QueueControl_ResourcePool:
 				if action.ResourcePool == "" {
-					errors = append(errors, "resource pool must be set")
+					errors = append(errors, fmt.Errorf("resource pool must be set"))
 				}
 				resp := ctx.Ask(jobActor, SetResourcePool{
 					ResourcePool: action.ResourcePool,
 				})
 				if err := resp.Error(); err != nil {
-					errors = append(errors, err.Error())
+					errors = append(errors, err)
 				}
 			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
 				ctx.Respond(api.ErrNotImplemented)
@@ -226,7 +226,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		if len(errors) == 1 {
 			ctx.Respond(errors[0])
 		} else if len(errors) > 1 {
-			ctx.Respond(fmt.Errorf("encountered the following errors: %s", strings.Join(errors, ", ")))
+			msgs := make([]string, 0)
+			for _, err := range errors {
+				msgs = append(msgs, err.Error())
+			}
+			ctx.Respond(fmt.Errorf("encountered the following errors: %s", strings.Join(msgs, ", ")))
 		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
