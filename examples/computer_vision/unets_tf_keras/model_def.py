@@ -61,7 +61,8 @@ class UNetsTrial(TFKerasTrial):
 
         # Use a file lock so only one worker on each node does the download
         with filelock.FileLock(os.path.join(weights_dir, "download.lock")):
-            urllib.request.urlretrieve(mobilenet_link, weights_dir + data_file)
+            if not os.path.exists(weights_dir + data_file):
+                urllib.request.urlretrieve(mobilenet_link, weights_dir + data_file)
         return weights_dir + data_file
 
     def build_model(self):
