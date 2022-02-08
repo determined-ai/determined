@@ -46,7 +46,7 @@ JOB_SUFFIXES = [
     "tf27-gpu",
     "pytorch19-tf25-rocm",
     "deepspeed-gpu",
-    "gpt-neox-deepspeed-gpu"
+    "gpt-neox-deepspeed-gpu",
 ]
 
 EXPECT_JOBS = {
