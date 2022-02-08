@@ -306,6 +306,33 @@ class TestPIDServer:
 
             assert len(pid_server.graceful_shutdowns) == 0
 
+    def test_return_one_on_worker_error(self) -> None:
+        with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
+            assert pid_server.listener
+            _, port = pid_server.listener.getsockname()
+
+            # Enforce that the crashed worker causes the exit before the other worker exits.
+            procs = [
+                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False, 20)),
+                multiprocessing.Process(
+                    target=TestPIDServer._worker_proc, args=(port, False, 0.5, 1, True)
+                ),
+            ]
+
+            for p in procs:
+                p.start()
+
+            error_code = pid_server.run_subprocess(
+                ["sleep", "30"],
+                return_one_on_worker_error=True,
+            )
+
+            assert error_code == 1
+
+            for p in procs:
+                p.terminate()
+                p.join()
+
     def test_health_check_pre_connect(self) -> None:
         with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
             assert pid_server.listener
