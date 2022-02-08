@@ -176,6 +176,23 @@ def test_pytorch_parallel() -> None:
     exp_id = exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
     exp.assert_performed_initial_validation(exp_id)
 
+    # Check on record/batch counts we emitted in logs.
+    validation_size = 10000
+    global_batch_size = config["hyperparameters"]["global_batch_size"]
+    num_workers = config.get("resources", {}).get("slots_per_trial", 1)
+    global_batch_size = config["hyperparameters"]["global_batch_size"]
+    scheduling_unit = config.get("scheduling_unit", 100)
+    per_slot_batch_size = global_batch_size // num_workers
+    exp_val_batches = (validation_size + (per_slot_batch_size - 1)) // per_slot_batch_size
+    patterns = [
+        # Expect two copies of matching training reports.
+        f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
+        f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
+        f"validated: {validation_size} records.*in {exp_val_batches} batches",
+    ]
+    trial_id = exp.experiment_trials(exp_id)[0]["id"]
+    exp.assert_patterns_in_trial_logs(trial_id, patterns)
+
 
 @pytest.mark.parallel
 def test_distributed_logging() -> None:

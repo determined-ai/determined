@@ -228,3 +228,25 @@ def deprecated(msg: str) -> Callable[[T], T]:
         return cast(T, wrapper)
 
     return make_wrapper
+
+
+def humanize_float(n: float) -> float:
+    """
+    Take a float and convert it to a more human-friendly float.
+    """
+    if n == 0 or not math.isfinite(n):
+        return n
+    digits = int(math.ceil(math.log10(abs(n))))
+    # Since we don't do scientific notation, we only round decimal parts, not integer parts.
+    # That is, 1.3 seconds instead of 1.3333333 is ok but 3000 seconds instead of 3333 is less so.
+    sigfigs = max(digits, 4)
+    return round(n, sigfigs - digits)
+
+
+def make_timing_log(verb: str, duration: float, num_inputs: int, num_batches: int) -> str:
+    rps = humanize_float(num_inputs / duration if duration else math.inf)
+    bps = humanize_float(num_batches / duration if duration else math.inf)
+    return (
+        f"{verb}: {num_inputs} records in {humanize_float(duration)}s ({rps} records/s), "
+        f"in {num_batches} batches ({bps} batches/s)"
+    )

@@ -357,6 +357,7 @@ class PyTorchTrialController(det.TrialController):
     ) -> workload.Response:
         self.prof.set_training(True)
         check.gt(step_id, 0)
+        step_start_time = time.time()
         self.context.reset_reducers()
 
         # Set the behavior of certain layers (e.g., dropout) that are different
@@ -473,8 +474,8 @@ class PyTorchTrialController(det.TrialController):
             # The training metrics are reported only in the chief process.
             return {}
 
-        logging.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
-        self.prof.set_training(False)
+        step_duration = time.time() - step_start_time
+        logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
 
         return metrics
 
@@ -494,6 +495,8 @@ class PyTorchTrialController(det.TrialController):
         # different between training and inference.
         for model in self.context.models:
             model.eval()
+
+        step_start_time = time.time()
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
@@ -556,7 +559,12 @@ class PyTorchTrialController(det.TrialController):
                 metrics_reducers=self._prepare_metrics_reducers(keys=keys),
             )
 
-            num_inputs *= self.context.distributed.size
+            # Gather a list of per-worker (num_inputs, num_batches) tuples.
+            input_counts = self.context.distributed._zmq_gather((num_inputs, idx + 1))
+            if self.context.distributed.rank == 0:
+                assert input_counts is not None
+                # Reshape and sum.
+                num_inputs, num_batches = [sum(n) for n in zip(*input_counts)]
 
         else:
             check.true(self._evaluate_full_dataset_defined())
@@ -569,7 +577,8 @@ class PyTorchTrialController(det.TrialController):
                 )
 
                 metrics = self._convert_metrics_to_numpy(metrics)
-                num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
+                num_batches = len(self.validation_loader)
+                num_inputs = self.context.get_per_slot_batch_size() * num_batches
 
         metrics.update(
             self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
@@ -600,6 +609,9 @@ class PyTorchTrialController(det.TrialController):
 
         if not self.is_chief:
             return {}
+
+        step_duration = time.time() - step_start_time
+        logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
