@@ -39,8 +39,10 @@ type (
 		// The state of the allocation, just informational.
 		state model.AllocationState
 
-		// State of all our reservations
+		// State of all our reservations.
 		reservations reservations
+		// Separates the existence of reservations from us having started them.
+		reservationsStarted bool
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
 		exitReason error
 		// Marks that we intentionally killed the allocation so we can know to
@@ -353,6 +355,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			IsMultiAgent: len(a.reservations) > 1,
 		})
 	}
+	a.reservationsStarted = true
 	if a.req.StreamEvents != nil {
 		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
 			State:         a.state.String(),
@@ -467,6 +470,9 @@ func (a *Allocation) TaskContainerStateChanged(
 // Exit attempts to exit an allocation while not killing or preempting it.
 func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 	switch {
+	case !a.reservationsStarted:
+		a.terminated(ctx)
+		return true
 	case len(a.reservations) == len(a.reservations.exited()):
 		a.terminated(ctx)
 		return true
