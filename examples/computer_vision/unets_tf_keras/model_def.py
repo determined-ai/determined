@@ -5,6 +5,8 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/tensorflow/docs/blob/master/site/en/tutorials/images/segmentation.ipynb
 """
+import tempfile
+
 import filelock
 import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
@@ -61,9 +63,12 @@ class UNetsTrial(TFKerasTrial):
 
         # Use a file lock so only one worker on each node does the download
         with filelock.FileLock(os.path.join(weights_dir, "download.lock")):
-            if not os.path.exists(weights_dir + data_file):
-                urllib.request.urlretrieve(mobilenet_link, weights_dir + data_file)
-        return weights_dir + data_file
+            full_weights_path = weights_dir + data_file
+            if not os.path.exists(full_weights_path):
+                with tempfile.NamedTemporaryFile(delete=False) as ntf:
+                    urllib.request.urlretrieve(mobilenet_link, ntf.name)
+                    os.rename(ntf.name, full_weights_path)
+        return full_weights_path
 
     def build_model(self):
         model_weights_loc =  self.download_weights()
