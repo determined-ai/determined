@@ -657,7 +657,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 				ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
 				exit.Err = err
 				return
-			case aproto.TaskAborted:
+			case aproto.TaskAborted, aproto.ContainerAborted:
 				ctx.Log().WithError(err).Debugf("allocation aborted (%s)", err.FailureType)
 				exit.Err = err
 				return

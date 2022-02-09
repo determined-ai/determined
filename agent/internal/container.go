@@ -122,9 +122,11 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		case cproto.Assigned, cproto.Pulling:
 			switch msg.Signal {
 			case syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL:
-				ctx.Log().Infof("attempting to stop container while in [%s] state", c.State)
+				msg := "attempting to stop container while in [%s] state"
+				ctx.Log().Infof(msg, c.State)
 				ctx.Self().Stop()
-				c.containerStopped(ctx, aproto.ContainerStopped{})
+				c.containerStopped(ctx,
+					aproto.ContainerError(aproto.ContainerAborted, fmt.Errorf(msg, c.State)))
 			default:
 				ctx.Log().Warnf(
 					"ignoring signal, signal not supported while container in [%s] state", c.State)
