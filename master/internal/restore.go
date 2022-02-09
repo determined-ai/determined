@@ -19,7 +19,7 @@ import (
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 4
+const experimentSnapshotVersion = 5
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -197,6 +197,7 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	0: shimExperimentSnapshotV0,
 	1: shimExperimentSnapshotV1,
 	2: shimExperimentSnapshotV2,
+	4: shimExperimentSnapshotV4,
 }
 
 // shimExperimentSnapshot shims an experiment snapshot to the version required by the master,
@@ -339,4 +340,63 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 	searcherState["trial_operations"] = newOperationsList
 
 	return json.Marshal(experimentSnapshotV2)
+}
+
+// Version 3 => 4 had no shim, it was breaking.
+
+// Version 4 => 5 shims
+
+// ExperimentSnapshotShimError describes an error encountered while shimming.
+type ExperimentSnapshotShimError struct {
+	Message string
+}
+
+func (e ExperimentSnapshotShimError) Error() string {
+	return e.Message
+}
+
+// shimExperimentSnapshotV4 shims a v4 snapshot to a v4 snapshot. From v4 to v5,
+// Length lost its units and became just an int again.
+func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
+	var experimentSnapshotV4 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &experimentSnapshotV4); err != nil {
+		return nil, err
+	}
+
+	trialSearcherState := experimentSnapshotV4["trial_searcher_state"].(map[string]interface{})
+	for _, state := range trialSearcherState {
+		mState, ok := state.(map[string]interface{})
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "state was not a map"}
+		}
+
+		op, ok := mState["Op"]
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "missing expected key Op"}
+		}
+		mOp, ok := op.(map[string]interface{})
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "Op was not a map"}
+		}
+
+		length, ok := mOp["Length"]
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "missing expected key Length"}
+		}
+		mLength, ok := length.(map[string]interface{})
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "Length was not a map"}
+		}
+		if len(mLength) != 1 {
+			return nil, ExperimentSnapshotShimError{Message: fmt.Sprintf("bad length: %v", length)}
+		}
+
+		var units interface{}
+		for _, u := range mLength {
+			units = u
+		}
+		mOp["Length"] = units
+	}
+
+	return json.Marshal(experimentSnapshotV4)
 }
