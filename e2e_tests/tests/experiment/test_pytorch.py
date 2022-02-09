@@ -171,7 +171,9 @@ def test_pytorch_gradient_aggregation() -> None:
     base_config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
 
     def run_and_check(config: Any, expected_steps: int) -> List[float]:
-        exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
+        exp_id = exp.run_basic_test_with_temp_config(
+            config, conf.fixtures_path("pytorch_identity"), 1
+        )
         trials = exp.experiment_trials(exp_id)
         assert len(trials) == 1
         assert len(trials[0]["steps"]) == expected_steps
@@ -179,14 +181,14 @@ def test_pytorch_gradient_aggregation() -> None:
         return [step["validation"]["metrics"]["validation_metrics"]["val_loss"] for step in steps]
 
     loss_without_aggregation = run_and_check(base_config, 40)
-    
+
     config_with_grad_agg = copy.deepcopy(base_config)
     config_with_grad_agg["hyperparameters"]["global_batch_size"] = 4
     config_with_grad_agg["optimizations"]["aggregation_frequency"] = 2
     loss_with_aggregation = run_and_check(config_with_grad_agg, 80)
 
-    assert (
-        loss_with_aggregation[-1] == pytest.approx(loss_without_aggregation[-1], 1e-4)
+    assert loss_with_aggregation[-1] == pytest.approx(
+        loss_without_aggregation[-1], 1e-4
     ), f"{loss_with_aggregation}!={loss_without_aggregation}"
     assert loss_with_aggregation[-1] == pytest.approx(0.852, 1e-4)
 

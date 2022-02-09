@@ -1,4 +1,4 @@
-from typing import Tuple, Dict, Any
+from typing import Any, Dict, Tuple
 
 import torch.utils.data
 
@@ -18,7 +18,6 @@ class IdentityDataset(torch.utils.data.Dataset):
 
 
 class IdentityPyTorchTrial(pytorch.PyTorchTrial):
-
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
@@ -31,7 +30,7 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         optimizer = torch.optim.SGD(self.model.parameters(), self.lr)
         self.opt = context.wrap_optimizer(optimizer)
 
-        self.loss_fn = torch.nn.MSELoss(reduction='mean')
+        self.loss_fn = torch.nn.MSELoss(reduction="mean")
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
@@ -56,12 +55,10 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
         return pytorch.DataLoader(
-            IdentityDataset(),
-            batch_size=self.context.get_per_slot_batch_size()
+            IdentityDataset(), batch_size=self.context.get_per_slot_batch_size()
         )
 
     def build_validation_data_loader(self) -> pytorch.DataLoader:
         return pytorch.DataLoader(
-            IdentityDataset(20),
-            batch_size=self.context.get_per_slot_batch_size()
+            IdentityDataset(20), batch_size=self.context.get_per_slot_batch_size()
         )
