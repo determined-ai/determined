@@ -191,7 +191,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		NumAgents:                    int32(pods.NumAgents),
 		SlotType:                     k.config.SlotType.Proto(),
 		SlotsAvailable:               int32(pods.SlotsAvailable),
-		SlotsUsed:                    int32(k.agent.numUsedSlots()),
+		SlotsUsed:                    int32(slotsUsed),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
 		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),
 		DefaultComputePool:           true,
