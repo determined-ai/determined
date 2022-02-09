@@ -211,7 +211,8 @@ func trySchedulingTaskViaPreemption(
 		for i := len(priorityToScheduledTaskMap[priority]) - 1; i >= 0; i-- {
 			allocationJobID := allocationRequest.JobID
 			candidateJobID := priorityToScheduledTaskMap[priority][i].JobID
-			if priority == allocationPriority && jobPositions[allocationJobID] >= jobPositions[candidateJobID] {
+			if priority == allocationPriority &&
+				jobPositions[allocationJobID] >= jobPositions[candidateJobID] {
 				break
 			}
 			preemptionCandidate := priorityToScheduledTaskMap[priority][i]
