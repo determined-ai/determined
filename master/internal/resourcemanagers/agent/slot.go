@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -112,18 +113,16 @@ func (s *slot) patch(ctx *actor.Context) {
 		}
 		ctx.Tell(s.resourcePool, add)
 	} else if !s.enabled.Enabled() {
-		agentRef := ctx.Self().Parent().Parent()
-
 		if !s.enabled.draining && s.enabled.deviceAdded {
 			s.enabled.deviceAdded = false
 			remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
 			ctx.Tell(s.resourcePool, remove)
 		}
 
-		// On `PostStop`, draining will be already set to false, and we'll kill the container
+		// On `PostStop`, draining will be already set to false, and we'll kill any task on the slot
 		// whether we have the device or not.
 		if !s.enabled.draining && s.container != nil {
-			ctx.Tell(agentRef, sproto.KillTaskContainer{ContainerID: s.container.ID})
+			ctx.Self().System().TellAt(s.container.Parent, task.Kill)
 		}
 	}
 }
