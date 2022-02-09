@@ -49,7 +49,8 @@ const useModalChangePassword = (): ModalHooks => {
                   });
                 },
               },
-            ]}>
+            ]}
+            validateTrigger={["onBlur", "onSubmit"]}>
             <Input.Password />
           </Form.Item>
           <Form.Item
