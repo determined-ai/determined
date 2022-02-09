@@ -1,4 +1,4 @@
-import { Form, Input } from 'antd';
+import { Button, Form, Input } from 'antd';
 import React, { useCallback } from 'react';
 
 import { useStore } from 'contexts/Store';
@@ -14,12 +14,12 @@ const useModalChangePassword = (): ModalHooks => {
   const username = auth.user?.username || 'Anonymous';
   const [ form ] = Form.useForm();
 
-  const onCancel = useCallback(() => {
+  const handleFormCancel = useCallback(() => {
     form.resetFields();
     modalClose();
   }, [ form, modalClose ]);
 
-  const onOk = useCallback(async () => {
+  const handleFormSubmit = useCallback(async () => {
     try {
       await setUserPassword({
         password: form.getFieldValue('newPassword'),
@@ -29,12 +29,12 @@ const useModalChangePassword = (): ModalHooks => {
     } catch (e) {
       handleError(e);
     }
-  }, [ modalClose, form, username ]);
+  }, [ form, modalClose, username ]);
 
   const getModalContent = useCallback(() => {
     return (
       <div className={css.base}>
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
           <Form.Item
             label="Old Password"
             name="oldPassword"
@@ -50,7 +50,7 @@ const useModalChangePassword = (): ModalHooks => {
                 },
               },
             ]}
-            validateTrigger="onSubmit">
+            validateTrigger={[ 'onBlur', 'onSubmit' ]}>
             <Input.Password />
           </Form.Item>
           <Form.Item
@@ -97,22 +97,31 @@ const useModalChangePassword = (): ModalHooks => {
               and contain an uppercase letter, a lowercase letter, and a number.
             </span>
           </Form.Item>
+          <Form.Item>
+            {/* override modal buttons with form buttons
+            to ensure form validation works as intended */}
+            <div className={css.buttons}>
+              <Button onClick={handleFormCancel}>Cancel</Button>
+              <Button htmlType="submit" type="primary">
+                Change Password
+              </Button>
+            </div>
+          </Form.Item>
         </Form>
       </div>
     );
-  }, [ form, username ]);
+  }, [ form, username, handleFormSubmit, handleFormCancel ]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
+      className: css.noFooter,
       closable: true,
       content: getModalContent(),
       icon: null,
       okText: 'Change Password',
-      onCancel,
-      onOk,
       title: 'Change Password',
     });
-  }, [ getModalContent, onCancel, onOk, openOrUpdate ]);
+  }, [ getModalContent, openOrUpdate ]);
 
   return { modalClose, modalOpen, modalRef };
 };
