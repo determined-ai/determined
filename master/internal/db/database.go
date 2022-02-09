@@ -33,16 +33,10 @@ type DB interface {
 	Migrate(migrationURL string, actions []string) error
 	Close() error
 	GetOrCreateClusterID() (string, error)
-	ExperimentWithTrialSummariesRaw(id int) ([]byte, error)
-	ExperimentWithSummaryMetricsRaw(id int) ([]byte, error)
 	CheckExperimentExists(id int) (bool, error)
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
 	ExperimentConfigRaw(id int) ([]byte, error)
-	ExperimentConfigByTrialsRaw(trialIDs []int) ([]byte, error)
-	ExperimentDescriptorsRaw(skipArchived, skipInactive bool) ([]byte, error)
-	ExperimentDescriptorsRawForUser(skipArchived, skipInactive bool,
-		username string) ([]byte, error)
 	AddExperiment(experiment *model.Experiment) error
 	ExperimentByID(id int) (*model.Experiment, error)
 	LegacyExperimentConfigByID(
@@ -50,7 +44,6 @@ type DB interface {
 	) (expconf.LegacyConfig, error)
 	ExperimentWithoutConfigByID(id int) (*model.Experiment, error)
 	ExperimentIDByTrialID(trialID int) (int, error)
-	ExperimentByTrialID(id int) (*model.Experiment, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)
 	TerminateExperimentInRestart(id int, state model.State) error
 	SaveExperimentConfig(experiment *model.Experiment) error

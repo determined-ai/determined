@@ -504,29 +504,6 @@ func (_m *DB) ExperimentByID(id int) (*model.Experiment, error) {
 	return r0, r1
 }
 
-// ExperimentByTrialID provides a mock function with given fields: id
-func (_m *DB) ExperimentByTrialID(id int) (*model.Experiment, error) {
-	ret := _m.Called(id)
-
-	var r0 *model.Experiment
-	if rf, ok := ret.Get(0).(func(int) *model.Experiment); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Experiment)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ExperimentCheckpointsToGCRaw provides a mock function with given fields: id, experimentBest, trialBest, trialLatest, delete
 func (_m *DB) ExperimentCheckpointsToGCRaw(id int, experimentBest int, trialBest int, trialLatest int, delete bool) ([]byte, error) {
 	ret := _m.Called(id, experimentBest, trialBest, trialLatest, delete)
@@ -571,29 +548,6 @@ func (_m *DB) ExperimentConfig(id int) (expconf.ExperimentConfigV0, error) {
 	return r0, r1
 }
 
-// ExperimentConfigByTrialsRaw provides a mock function with given fields: trialIDs
-func (_m *DB) ExperimentConfigByTrialsRaw(trialIDs []int) ([]byte, error) {
-	ret := _m.Called(trialIDs)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func([]int) []byte); ok {
-		r0 = rf(trialIDs)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func([]int) error); ok {
-		r1 = rf(trialIDs)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // ExperimentConfigRaw provides a mock function with given fields: id
 func (_m *DB) ExperimentConfigRaw(id int) ([]byte, error) {
 	ret := _m.Called(id)
@@ -610,52 +564,6 @@ func (_m *DB) ExperimentConfigRaw(id int) ([]byte, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ExperimentDescriptorsRaw provides a mock function with given fields: skipArchived, skipInactive
-func (_m *DB) ExperimentDescriptorsRaw(skipArchived bool, skipInactive bool) ([]byte, error) {
-	ret := _m.Called(skipArchived, skipInactive)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(bool, bool) []byte); ok {
-		r0 = rf(skipArchived, skipInactive)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(bool, bool) error); ok {
-		r1 = rf(skipArchived, skipInactive)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ExperimentDescriptorsRawForUser provides a mock function with given fields: skipArchived, skipInactive, username
-func (_m *DB) ExperimentDescriptorsRawForUser(skipArchived bool, skipInactive bool, username string) ([]byte, error) {
-	ret := _m.Called(skipArchived, skipInactive, username)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(bool, bool, string) []byte); ok {
-		r0 = rf(skipArchived, skipInactive, username)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(bool, bool, string) error); ok {
-		r1 = rf(skipArchived, skipInactive, username)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -892,52 +800,6 @@ func (_m *DB) ExperimentTrialIDs(expID int) ([]int, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(expID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ExperimentWithSummaryMetricsRaw provides a mock function with given fields: id
-func (_m *DB) ExperimentWithSummaryMetricsRaw(id int) ([]byte, error) {
-	ret := _m.Called(id)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int) []byte); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ExperimentWithTrialSummariesRaw provides a mock function with given fields: id
-func (_m *DB) ExperimentWithTrialSummariesRaw(id int) ([]byte, error) {
-	ret := _m.Called(id)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int) []byte); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
