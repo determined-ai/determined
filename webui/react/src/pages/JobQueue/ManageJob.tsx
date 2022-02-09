@@ -184,43 +184,37 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
         labelCol={{ span: 6 }}
         name="form basic"
         ref={formRef}>
-        {schedulerType === api.V1SchedulerType.PRIORITY && (
-          <>
-            <Form.Item
-              extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
-              label="Priority"
-              name="priority">
-              <Input addonAfter="out of 99" max={99} min={1} type="number" />
-            </Form.Item>
-            {process.env.IS_DEV && (
-              <Form.Item
-                label="Position in Queue"
-                name="position">
-                <Input
-                  addonAfter={`out of ${jobs.length}`}
-                  max={jobs.length}
-                  min={1}
-                  type="number"
-                />
-              </Form.Item>
-            )}
-          </>
-        )}
-        {schedulerType === api.V1SchedulerType.KUBERNETES && (
-          <Form.Item
-            extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority."
-            label="Priority"
-            name="priority">
-            <Input max={99} min={1} type="number" />
-          </Form.Item>
-        )}
-        {schedulerType === api.V1SchedulerType.FAIRSHARE && (
-          <Form.Item
-            label="Weight"
-            name="weight">
-            <Input min={0} type="number" />
-          </Form.Item>
-        )}
+        <Form.Item
+          extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
+          hidden={schedulerType !== api.V1SchedulerType.PRIORITY}
+          label="Priority"
+          name="priority">
+          <Input addonAfter="out of 99" max={99} min={1} type="number" />
+        </Form.Item>
+        <Form.Item
+          extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority."
+          hidden={schedulerType !== api.V1SchedulerType.KUBERNETES}
+          label="Priority"
+          name="priority">
+          <Input max={99} min={1} type="number" />
+        </Form.Item>
+        <Form.Item
+          hidden={!process.env.IS_DEV || schedulerType === api.V1SchedulerType.FAIRSHARE}
+          label="Position in Queue"
+          name="position">
+          <Input
+            addonAfter={`out of ${jobs.length}`}
+            max={jobs.length}
+            min={1}
+            type="number"
+          />
+        </Form.Item>
+        <Form.Item
+          hidden={schedulerType !== api.V1SchedulerType.FAIRSHARE}
+          label="Weight"
+          name="weight">
+          <Input min={0} type="number" />
+        </Form.Item>
         <Form.Item
           extra={poolDetails}
           label="Resource Pool"

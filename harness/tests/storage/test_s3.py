@@ -1,13 +1,20 @@
 import io
+import os
+import uuid
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 import botocore.exceptions
 import pytest
 
 from determined.common import storage
 from determined.common.storage.s3 import normalize_prefix
+from determined.tensorboard.fetchers.s3 import S3Fetcher
 from tests.storage import util
+
+BUCKET_NAME = "storage-unit-tests"
+CHECK_ACCESS_KEY = "check-access"
+CHECK_KEY_CONTENT = b"yo, you have access"
 
 
 def get_live_manager(
@@ -29,22 +36,21 @@ def get_live_manager(
     try:
         # AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are read from the environment automatically.
         manager = storage.S3StorageManager(
-            bucket="storage-unit-tests",
+            bucket=BUCKET_NAME,
             access_key=None,
             secret_key=None,
             prefix=prefix,
             temp_dir=str(tmp_path),
         )
         out = io.BytesIO()
-        manager.bucket.download_fileobj("check-access", out)
-        assert out.getvalue() == b"yo, you have access"
+        manager.bucket.download_fileobj(CHECK_ACCESS_KEY, out)
+        assert out.getvalue() == CHECK_KEY_CONTENT
+        return manager
     except (botocore.exceptions.NoCredentialsError, botocore.exceptions.PartialCredentialsError):
         # No access detected.
         if require_secrets:
             raise
         pytest.skip("No S3 access")
-
-    return manager
 
 
 @pytest.mark.cloud
@@ -97,3 +103,46 @@ def test_live_s3_lifecycle(require_secrets: bool, tmp_path: Path, prefix: Option
             raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")
 
     util.run_storage_lifecycle_test(live_manager, post_delete_cb)
+
+
+def get_tensorboard_fetcher_s3(
+    require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
+) -> S3Fetcher:
+
+    storage_config = {"bucket": BUCKET_NAME}
+
+    try:
+        fetcher = S3Fetcher(storage_config, paths_to_sync, local_sync_dir)
+
+        out = io.BytesIO()
+        fetcher.client.download_fileobj(BUCKET_NAME, CHECK_ACCESS_KEY, out)
+        assert out.getvalue() == CHECK_KEY_CONTENT
+
+        return fetcher
+
+    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.PartialCredentialsError):
+        # No access detected.
+        if require_secrets:
+            raise
+        pytest.skip("No S3 access")
+
+
+@pytest.mark.cloud
+def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: Path) -> None:
+    local_sync_dir = os.path.join(tmp_path, "sync_dir")
+    storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)
+
+    # Create two paths as multi-trial sync could happen.
+    paths_to_sync = [os.path.join("test_dir", str(uuid.uuid4()), "subdir") for _ in range(2)]
+
+    fetcher = get_tensorboard_fetcher_s3(require_secrets, local_sync_dir, paths_to_sync)
+
+    def put_files(files: Dict[str, bytes]) -> None:
+        for path, filebytes in files.items():
+            fetcher.client.put_object(Bucket=BUCKET_NAME, Key=path, Body=filebytes)
+
+    def rm_files(files: List[str]) -> None:
+        for path in files:
+            fetcher.client.delete_object(Bucket=BUCKET_NAME, Key=path)
+
+    util.run_tensorboard_fetcher_test(local_sync_dir, fetcher, storage_relpath, put_files, rm_files)

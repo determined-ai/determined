@@ -54,6 +54,7 @@ c AS (
     COALESCE(c.framework, '') as framework,
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
+    (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
     v.metrics AS metrics,
     'STATE_' || v.state AS validation_state,
     'STATE_' || c.state AS state

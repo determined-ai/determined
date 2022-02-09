@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -7,6 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
@@ -26,6 +27,7 @@ import { cancellableRunStates, deletableRunStates, pausableRunStates,
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -38,18 +40,18 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentItem, RecordKey, RunState,
+  ExperimentAction as Action, CommandTask, ExperimentItem, RecordKey, RunState,
 } from 'types';
-import { isBoolean, isEqual } from 'utils/data';
+import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { capitalize } from 'utils/string';
+import { sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { openCommand } from 'wait';
 
-import settingsConfig, { Settings } from './ExperimentList.settings';
+import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
 
-const filterKeys: Array<keyof Settings> = [ 'archived', 'label', 'search', 'state', 'user' ];
+const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -121,7 +123,7 @@ const ExperimentList: React.FC = () => {
       const states = (settings.state || []).map(state => encodeExperimentState(state as RunState));
       const response = await getExperiments(
         {
-          archived: settings.archived,
+          archived: settings.archived ? undefined : false,
           labels: settings.label,
           limit: settings.tableLimit,
           name: settings.search,
@@ -171,27 +173,6 @@ const ExperimentList: React.FC = () => {
   const experimentTags = useExperimentTags(fetchAll);
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
-
-  const handleArchiveFilterApply = useCallback((archived: string[]) => {
-    const archivedFilter = archived.length === 1
-      ? archived[0] === ArchiveFilter.Archived : undefined;
-    updateSettings({ archived: archivedFilter, row: undefined });
-  }, [ updateSettings ]);
-
-  const handleArchiveFilterReset = useCallback(() => {
-    updateSettings({ archived: undefined, row: undefined });
-  }, [ updateSettings ]);
-
-  const archiveFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      values={isBoolean(settings.archived)
-        ? [ settings.archived ? ArchiveFilter.Archived : ArchiveFilter.Unarchived ]
-        : undefined}
-      onFilter={handleArchiveFilterApply}
-      onReset={handleArchiveFilterReset}
-    />
-  ), [ handleArchiveFilterApply, handleArchiveFilterReset, settings.archived ]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
@@ -412,13 +393,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'archived',
-        filterDropdown: archiveFilterDropdown,
-        filters: [
-          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
-          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
-        ],
         key: 'archived',
-        onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: checkmarkRenderer,
         title: 'Archived',
       },
@@ -457,7 +432,6 @@ const ExperimentList: React.FC = () => {
     });
   }, [
     user,
-    archiveFilterDropdown,
     handleActionComplete,
     experimentTags,
     labelFilterDropdown,
@@ -470,6 +444,19 @@ const ExperimentList: React.FC = () => {
     userFilterDropdown,
     users,
   ]);
+
+  const visibleColumns = useMemo(() => {
+    return columns.filter(column => {
+      if (column.key === 'action') return true;
+      if (column.key === 'archived') return settings.archived;
+      return settings.columns?.includes(sentenceToCamelCase(column.title as string));
+    });
+  }, [ columns, settings.archived, settings.columns ]);
+
+  const transferColumns = useMemo(() => {
+    return columns.filter(column => column.title !== '' && column.title !== 'Archived')
+      .map(column => sentenceToCamelCase(column.title as string));
+  }, [ columns ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
@@ -559,6 +546,24 @@ const ExperimentList: React.FC = () => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
+  const handleUpdateColumns = useCallback((columns: string[]) => {
+    updateSettings({ columns: columns.length === 0 ? [ 'name' ] : columns });
+  }, [ updateSettings ]);
+
+  const { modalOpen } = useModalCustomizeColumns({
+    columns: transferColumns,
+    defaultVisibleColumns: DEFAULT_COLUMNS,
+    onSave: handleUpdateColumns,
+  });
+
+  const openModal = useCallback(() => {
+    modalOpen({ initialVisibleColumns: settings.columns });
+  }, [ settings.columns, modalOpen ]);
+
+  const switchShowArchived = useCallback((showArchived: boolean) => {
+    updateSettings({ archived: showArchived, row: undefined });
+  }, [ updateSettings ]);
+
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -586,7 +591,14 @@ const ExperimentList: React.FC = () => {
   return (
     <Page
       id="experiments"
-      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
+      options={(
+        <Space>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Button onClick={openModal}>Columns</Button>
+          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+        </Space>
+      )}
       title="Experiments">
       <TableBatch
         actions={[
@@ -604,7 +616,7 @@ const ExperimentList: React.FC = () => {
         onClear={clearSelected}
       />
       <ResponsiveTable<ExperimentItem>
-        columns={columns}
+        columns={visibleColumns}
         dataSource={experiments}
         loading={isLoading}
         pagination={getFullPaginationConfig({
