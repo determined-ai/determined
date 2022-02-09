@@ -12,8 +12,7 @@ import dateutil.parser
 import pytest
 import requests
 
-from determined.cli.session import setup_session
-from determined.common import api, util, yaml
+from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import config as conf
@@ -430,7 +429,8 @@ def last_workload_matches_last_checkpoint(workloads: List[Dict[str, Any]]) -> No
     assert len(checkpoint_workloads) > 0
     last_checkpoint = checkpoint_workloads[-1]
 
-    # though the last workload and last checkpoint may be different objects, they should be the same 'step'
+    # though the last workload and checkpoint may be different objects
+    # they are consolidated to the same 'step'
     assert last_workload_detail["totalBatches"] == last_checkpoint["checkpoint"]["totalBatches"]
     assert last_workload_detail["state"] == "STATE_COMPLETED"
     assert last_checkpoint["checkpoint"]["state"] == "STATE_COMPLETED"

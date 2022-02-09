@@ -181,7 +181,7 @@ def test_create_test_mode() -> None:
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     ]
-    sleep(0.25)
+    sleep(1)
     output = subprocess.check_output(command, universal_newlines=True)
     assert "Model definition test succeeded" in output
 
@@ -250,6 +250,7 @@ def test_end_to_end_adaptive() -> None:
         conf.tutorials_path("mnist_pytorch"),
         None,
     )
+    sleep(1)
 
     # Check that validation accuracy look sane (more than 93% on MNIST).
     trials = exp.experiment_trials(exp_id)

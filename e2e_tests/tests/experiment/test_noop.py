@@ -107,7 +107,7 @@ def test_noop_single_warm_start() -> None:
     checkpoints = list(filter(lambda x: "checkpoint" in x, first_workloads))
     assert len(checkpoints) == 30
     first_checkpoint_id = checkpoints[0]["checkpoint"]["uuid"]
-    last_checkpoint_id = checkpoints[-1]["checkpoint"]["uuid"]
+    # last_checkpoint_id = checkpoints[-1]["checkpoint"]["uuid"]
     last_validation = list(filter(lambda x: "validation" in x, first_workloads))[-1]
     assert last_validation["validation"]["metrics"]["validation_error"] == pytest.approx(0.9 ** 30)
 
@@ -235,7 +235,7 @@ def test_cancel_ten_paused_experiments() -> None:
         )
         for _ in range(10)
     ]
-    time.sleep(0.25)
+    time.sleep(1)
 
     for experiment_id in experiment_ids:
         exp.cancel_single(experiment_id)
@@ -287,7 +287,7 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
     assert len(first_trial["workloads"]) >= 4
 
     first_checkpoint = list(filter(lambda w: "checkpoint" in w, first_trial["workloads"]))[0]
-    first_checkpoint_id = first_checkpoint["checkpoint"]["uuid"]
+    # first_checkpoint_id = first_checkpoint["checkpoint"]["uuid"]
 
     config = copy.deepcopy(config_base)
     if tf2 is not None:
