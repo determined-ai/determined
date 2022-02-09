@@ -31,34 +31,21 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         optimizer = torch.optim.SGD(self.model.parameters(), self.lr)
         self.opt = context.wrap_optimizer(optimizer)
 
-        self.loss_fn = torch.nn.MSELoss()
+        self.loss_fn = torch.nn.MSELoss(reduction='mean')
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         data, label = batch
-        # Measure the weight right now.
-        w_before = self.model.weight.data.item()
-
-        # Calculate expected values for loss (eq 1) and weight (eq 4).
-        loss_exp = (label[0] - data[0] * w_before) ** 2
-        w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
 
         loss = self.loss_fn(self.model(data), label)
 
         self.context.backward(loss)
+
         self.context.step_optimizer(self.opt)
 
-        # Measure the weight after the update.
-        w_after = self.model.weight.data.item()
-
-        # Return values that we can compare as part of the tests.
         return {
             "loss": loss,
-            "loss_exp": loss_exp,
-            "w_before": w_before,
-            "w_after": w_after,
-            "w_exp": w_exp,
         }
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
