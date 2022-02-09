@@ -8,10 +8,10 @@ import { RunState, SlotState } from 'types';
 import css from './Badge.module.scss';
 
 export enum BadgeType {
-  Default,
-  Header,
-  Id,
-  State,
+  Default = 'Default',
+  Header = 'Header',
+  Id = 'Id',
+  State = 'State',
 }
 
 export interface BadgeProps {

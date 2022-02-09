@@ -190,3 +190,8 @@ telemetry:
 ## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
 ## scheduling with preemption
 # defaultScheduler: preemption
+
+## Configure settings about how Determined launches the Fluentbit sidecar.
+# fluent:
+#   image: fluent/fluent-bit:1.6
+

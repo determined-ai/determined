@@ -106,6 +106,13 @@ const useModal = (
     }
   }, [ extendEventHandler, modalProps, options, prevModalProps ]);
 
+  // When the component using the hook unmounts, remove the modal automatically.
+  useEffect(() => {
+    return () => {
+      modalClose();
+    };
+  }, [ modalClose ]);
+
   return { modalClose, modalOpen, modalRef };
 };
 

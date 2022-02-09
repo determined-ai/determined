@@ -197,12 +197,7 @@ func TestSettingGroupPriority(t *testing.T) {
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
 	assert.Assert(t, created)
 	updatedPriority := 22
-	system.Tell(ref, job.SetGroupPriority{Priority: &updatedPriority, Handler: groupRefOne})
-
-	// Test leaving the default priority for a group.
-	groupRefTwo, created := system.ActorOf(actor.Addr("group2"), &mockGroup{})
-	assert.Assert(t, created)
-	system.Tell(ref, job.SetGroupPriority{Priority: nil, Handler: groupRefTwo})
+	system.Tell(ref, job.SetGroupPriority{Priority: updatedPriority, Handler: groupRefOne})
 
 	for _, n := range rp.notifications {
 		<-n
@@ -210,5 +205,4 @@ func TestSettingGroupPriority(t *testing.T) {
 
 	assert.NilError(t, ref.StopAndAwaitTermination())
 	assert.Equal(t, *rp.groups[groupRefOne].priority, updatedPriority)
-	assert.Equal(t, *rp.groups[groupRefTwo].priority, defaultPriority)
 }

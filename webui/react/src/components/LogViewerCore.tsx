@@ -117,7 +117,8 @@ const LogViewerCore: React.FC<Props> = ({
     if (!log) return charMeasures.height;
 
     const lineCount = log.message
-      .split('\n')
+      .replace(/(\r\n?)/g, '\n')
+      .split(/\n/g)
       .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
       .reduce((acc, count) => acc + count, 0);
     const itemHeight = lineCount * charMeasures.height;

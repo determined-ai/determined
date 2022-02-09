@@ -196,7 +196,8 @@ const LogViewer: React.FC<Props> = forwardRef((
     measure.current.style.width = `${messageWidth}px`;
     logs.forEach((log: ViewerLog) => {
       const lineCount = log.message
-        .split('\n')
+        .replace(/(\r\n?)/g, '\n')
+        .split(/\n/g)
         .map(line => line.length > messageCharCount ? Math.ceil(line.length / messageCharCount) : 1)
         .reduce((acc, count) => acc + count, 0);
       const height = lineCount * charRect.height;
@@ -268,7 +269,9 @@ const LogViewer: React.FC<Props> = forwardRef((
       if (!size) return false;
       const top = size.top;
       const bottom = size.top + size.height;
-      return (top > viewTop && top < viewBottom) || (bottom > viewTop && bottom < viewBottom);
+      return (top > viewTop && top < viewBottom)
+        || (bottom > viewTop && bottom < viewBottom)
+        || (top < viewTop && bottom > viewBottom);
     });
   }, [ config, logs, scroll ]);
 

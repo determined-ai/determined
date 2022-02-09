@@ -28,8 +28,8 @@ const Message: React.FC<Props> = ({
   return (
     <div className={css.base} style={style}>
       {type === MessageType.Empty && Empty.PRESENTED_IMAGE_SIMPLE}
-      {type === MessageType.Alert && <img src={iconAlert} />}
-      {type === MessageType.Warning && <img src={iconWarning} />}
+      {type === MessageType.Alert && <img alt={MessageType.Alert} src={iconAlert} />}
+      {type === MessageType.Warning && <img alt={MessageType.Warning} src={iconWarning} />}
       <div className={css.title}>{title}</div>
       {message && <span>{message}</span>}
     </div>

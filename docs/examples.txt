@@ -19,7 +19,8 @@ of hyperparameters:
    cd mnist_pytorch
    det experiment create const.yaml .
 
-For an introduction to using the training API, refer to the :doc:`/training-apis/index`.
+For an introduction to using the training API, please see the documentation on how to
+:doc:`/training-apis/index`.
 
 *****************
  Computer Vision
@@ -210,6 +211,21 @@ For an introduction to using the training API, refer to the :doc:`/training-apis
    -  -  TensorFlow (tf.keras)
       -  MNIST
       -  :download:`dcgan_tf_keras.tgz </examples/dcgan_tf_keras.tgz>`
+
+********
+ Graphs
+********
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  PROTEINS
+      -  :download:`proteins_pytorch_geometric.tgz </examples/proteins_pytorch_geometric.tgz>`
 
 ****************
  Decision Trees

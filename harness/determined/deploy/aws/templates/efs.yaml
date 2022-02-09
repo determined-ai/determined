@@ -3,36 +3,36 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0e07ebe171b2a7d79
-      Agent: ami-0ec5dad90b885bed8
+      Master: ami-0ec4d40472158dbd2
+      Agent: ami-014b8b959da9982b5
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-0e9dbc02ff361d8fa
-    #   Agent: ami-03adbd686bb35fb76
+    #   Master: ami-077c1171fcf5593ec
+    #   Agent: ami-08d7deb502fbfe673
     # ap-southeast-1:
-    #   Master: ami-064ec47318a869dda
-    #   Agent: ami-079c8f7ca0fc82874
+    #   Master: ami-042f884c037e74d76
+    #   Agent: ami-0a4955b2726efd1f7
     # ap-southeast-2:
-    #   Master: ami-0a00eef8760c6eddc
-    #   Agent: ami-087cbf382968546f7
+    #   Master: ami-0154c902f0267d0ce
+    #   Agent: ami-0841ddeb3ecea4006
     eu-central-1:
-      Master: ami-05e155ca52886ffe4
-      Agent: ami-02f29c896544f91c5
+      Master: ami-05b308c240ae70bb6
+      Agent: ami-02f9944c92cd21ea7
     eu-west-1:
-      Master: ami-04db604073d3d5ce2
-      Agent: ami-0429c2523f8549bf5
+      Master: ami-081ff4b9aa4e81a08
+      Agent: ami-09214a3b873e9f4b1
     # eu-west-2:
-    #   Master: ami-0ac10f53765369588
-    #   Agent: ami-08990535ebb32c777
+    #   Master: ami-0d19fa6f37a659a28
+    #   Agent: ami-025a3a7a86ceab355
     us-east-1:
-      Master: ami-06992628e0a8e044c
-      Agent: ami-000d9598b1970babe
+      Master: ami-01b996646377b6619
+      Agent: ami-03d3d7321736277fa
     us-east-2:
-      Master: ami-02bd262766f4f24c2
-      Agent: ami-0f9d9d838cc5694d8
+      Master: ami-039af3bfc52681cd5
+      Agent: ami-0499217851510b78d
     us-west-2:
-      Master: ami-0ac79214f93af0a57
-      Agent: ami-0c310907c6b5692e5
+      Master: ami-0637e7dc7fcc9a2d9
+      Agent: ami-0101d47a7f7ed48f0
 
 Parameters:
   VpcCIDR:
@@ -82,7 +82,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.17.8-dev0
+    Default: 0.17.9-dev0
 
   DBPassword:
     Type: String

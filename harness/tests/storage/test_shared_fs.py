@@ -1,11 +1,14 @@
 import os
 import unittest.mock
+import uuid
 from pathlib import Path
+from typing import Dict, List
 
 import pytest
 
 from determined.common import check, storage
 from determined.common.storage import shared
+from determined.tensorboard.fetchers.shared import SharedFSFetcher
 from tests.storage import util
 
 
@@ -68,3 +71,32 @@ def test_validate_read_only_dir(manager: storage.SharedFSStorageManager) -> None
         with pytest.raises(PermissionError, match="Permission denied"):
             storage.validate_manager(manager)
         assert len(os.listdir(manager._base_path)) == 1
+
+
+@pytest.mark.cloud
+def test_tensorboard_fetcher_shared(require_secrets: bool, tmp_path: Path) -> None:
+
+    local_sync_dir = os.path.join(tmp_path, "sync_dir")
+    storage_dir = os.path.join(tmp_path, "storage_dir")
+    storage_relpath = local_sync_dir
+
+    # Create two paths as multi-trial sync could happen.
+    paths_to_sync = [
+        os.path.join(storage_dir, "test_dir", str(uuid.uuid4()), "subdir") for _ in range(2)
+    ]
+
+    fetcher = SharedFSFetcher({}, paths_to_sync, local_sync_dir)
+
+    def put_files(filepath_content: Dict[str, bytes]) -> None:
+        for filepath, content in filepath_content.items():
+            full_path = os.path.join(storage_dir, filepath)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "wb") as f:
+                f.write(content)
+
+    def rm_files(filepaths: List[str]) -> None:
+        for filepath in filepaths:
+            full_path = os.path.join(storage_dir, filepath)
+            os.remove(full_path)
+
+    util.run_tensorboard_fetcher_test(local_sync_dir, fetcher, storage_relpath, put_files, rm_files)

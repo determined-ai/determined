@@ -9,6 +9,14 @@ describe('String Utilities', () => {
     });
   });
 
+  describe('sentenceToCamelCase', () => {
+    it('should convert camel case to a sentence', () => {
+      expect(utils.sentenceToCamelCase('Hello')).toBe('hello');
+      expect(utils.sentenceToCamelCase('Camel Case')).toBe('camelCase');
+      expect(utils.sentenceToCamelCase(' Car Jump Start ')).toBe('carJumpStart');
+    });
+  });
+
   describe('capitalize', () => {
     it('should capitalize all words in a string', () => {
       const tests = [

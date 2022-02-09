@@ -15,8 +15,9 @@ Determined Notebooks have the following benefits:
    master proxy from and to the container.
 
 -  Jupyter Notebooks are automatically terminated if they are idle for a configurable duration to
-   release resources. Notebooks are considered busy when there are running terminals and kernels and
-   active HTTP traffic.
+   release resources. A notebook instance is considered to be idle if it is not receiving any HTTP
+   traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in the
+   :ref:`task configuration <command-notebook-configuration>`).
 
 .. warning::
 

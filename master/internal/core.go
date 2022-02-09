@@ -877,19 +877,10 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
-	searcherGroup := m.echo.Group("/searcher", authFuncs...)
-	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
-
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
-
-	checkpointsGroup := m.echo.Group("/checkpoints", authFuncs...)
-	checkpointsGroup.GET("", api.Route(m.getCheckpoints))
-	checkpointsGroup.GET("/:checkpoint_uuid", api.Route(m.getCheckpoint))
-	checkpointsGroup.POST("/:checkpoint_uuid/metadata", api.Route(m.addCheckpointMetadata))
-	checkpointsGroup.DELETE("/:checkpoint_uuid/metadata", api.Route(m.deleteCheckpointMetadata))
 
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)

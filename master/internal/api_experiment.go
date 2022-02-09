@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/prom"
 
 	"github.com/google/uuid"
@@ -39,6 +38,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
+
+	structpb "github.com/golang/protobuf/ptypes/struct"
 )
 
 var experimentsAddr = actor.Addr("experiments")
@@ -245,7 +246,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "progress",
+		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "COALESCE(progress, 0)",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
@@ -539,46 +540,43 @@ func (a *apiServer) PatchExperiment(
 		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", req.Experiment.Id)
 	}
 
-	paths := req.UpdateMask.GetPaths()
-	shouldUpdateNotes := false
-	shouldUpdateConfig := false
-	for _, path := range paths {
-		switch {
-		case path == "name":
-			if len(strings.TrimSpace(req.Experiment.Name)) == 0 {
-				return nil, status.Errorf(codes.InvalidArgument, "`name` is required.")
+	madeChanges := false
+	if req.Experiment.Name != nil && exp.Name != req.Experiment.Name.Value {
+		madeChanges = true
+		if len(strings.TrimSpace(req.Experiment.Name.Value)) == 0 {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"`name` must not be an empty or whitespace string.")
+		}
+		exp.Name = req.Experiment.Name.Value
+	}
+
+	if req.Experiment.Notes != nil && exp.Notes != req.Experiment.Notes.Value {
+		madeChanges = true
+		exp.Notes = req.Experiment.Notes.Value
+	}
+
+	if req.Experiment.Description != nil && exp.Description != req.Experiment.Description.Value {
+		madeChanges = true
+		exp.Description = req.Experiment.Description.Value
+	}
+
+	if req.Experiment.Labels != nil {
+		var reqLabelList []string
+		for _, el := range req.Experiment.Labels.Values {
+			if _, ok := el.GetKind().(*structpb.Value_StringValue); ok {
+				reqLabelList = append(reqLabelList, el.GetStringValue())
 			}
-			exp.Name = req.Experiment.Name
-			patch := config.ExperimentConfigPatch{
-				Name: &req.Experiment.Name,
-			}
-			a.m.system.TellAt(actor.Addr("experiments", req.Experiment.Id), patch)
-		case path == "notes":
-			shouldUpdateNotes = true
-			exp.Notes = req.Experiment.Notes
-		case path == "labels":
-			exp.Labels = req.Experiment.Labels
+		}
+		reqLabels := strings.Join(reqLabelList, ",")
+		if strings.Join(exp.Labels, ",") != reqLabels {
+			madeChanges = true
+			exp.Labels = reqLabelList
 			prom.AssociateExperimentIDLabels(strconv.Itoa(int(req.Experiment.Id)),
-				req.Experiment.Labels)
-		case path == "description":
-			exp.Description = req.Experiment.Description
-		}
-	}
-	shouldUpdateConfig = (shouldUpdateNotes && len(paths) > 1) ||
-		(!shouldUpdateNotes && len(paths) > 0)
-
-	if shouldUpdateNotes {
-		_, err := a.m.db.RawQuery(
-			"patch_experiment_notes",
-			req.Experiment.Id,
-			req.Experiment.Notes,
-		)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to update experiment")
+				exp.Labels)
 		}
 	}
 
-	if shouldUpdateConfig {
+	if madeChanges {
 		type experimentPatch struct {
 			Labels      []string `json:"labels"`
 			Description string   `json:"description"`
@@ -593,13 +591,11 @@ func (a *apiServer) PatchExperiment(
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
 		}
+
 		_, err = a.m.db.RawQuery(
-			"patch_experiment_config",
-			req.Experiment.Id,
-			marshalledPatches,
-		)
+			"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to update experiment")
+			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 		}
 	}
 

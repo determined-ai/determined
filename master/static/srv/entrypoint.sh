@@ -55,7 +55,9 @@ if [ "$HOME" = "/" ] ; then
     export HOME
 fi
 
-"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
+    "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --trial --resources
 

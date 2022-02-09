@@ -147,8 +147,8 @@ const NavigationSideBar: React.FC = () => {
                 </Menu.Item>
               </Menu>
             )}
-            offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
-            placement={settings.navbarCollapsed ? Placement.Right : Placement.BottomLeft}>
+            offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
+            placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <div className={css.user}>
               <Avatar hideTooltip name={username} />
               <span>{username}</span>

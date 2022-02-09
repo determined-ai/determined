@@ -4,7 +4,6 @@ import {
   CheckpointState, CommandState, CommandType, CompoundRunState, JobState, ResourceState, RunState,
   SlotState,
 } from 'types';
-import { jobStateToLabel } from 'utils/job';
 
 export const activeCommandStates = [
   CommandState.Assigned,
@@ -111,12 +110,6 @@ export const commandStateToLabel: { [key in CommandState]: string } = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const slotStateToLabel: { [key in SlotState]: string } = {
-  [SlotState.Pending]: 'Pending',
-  [SlotState.Running]: 'Running',
-  [SlotState.Free]: 'Free',
-};
-
 export const checkpointStateToLabel: { [key in CheckpointState]: string } = {
   [CheckpointState.Active]: 'Active',
   [CheckpointState.Completed]: 'Completed',
@@ -141,13 +134,26 @@ export const commandTypeToLabel: { [key in CommandType]: string } = {
   [CommandType.TensorBoard]: 'TensorBoard',
 };
 
+export const jobStateToLabel: { [key in JobState]: string } = {
+  [JobState.SCHEDULED]: 'Scheduled',
+  [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
+  [JobState.QUEUED]: 'Queued',
+};
+
+export const slotStateToLabel: { [key in SlotState]: string } = {
+  [SlotState.Pending]: 'Pending',
+  [SlotState.Running]: 'Running',
+  [SlotState.Free]: 'Free',
+};
+
 export function stateToLabel(
   state: StateOfUnion,
 ): string {
   return runStateToLabel[state as RunState]
-  || commandStateToLabel[state as CommandState]
-  || resourceStateToLabel[state as ResourceState]
-  || checkpointStateToLabel[state as CheckpointState]
-  || jobStateToLabel[state as JobState]
-  || slotStateToLabel[state as SlotState];
+    || commandStateToLabel[state as CommandState]
+    || resourceStateToLabel[state as ResourceState]
+    || checkpointStateToLabel[state as CheckpointState]
+    || jobStateToLabel[state as JobState]
+    || slotStateToLabel[state as SlotState]
+    || state as string;
 }

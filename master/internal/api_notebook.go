@@ -152,9 +152,10 @@ func (a *apiServer) LaunchNotebook(
 		return nil, status.Errorf(codes.Internal, "cannot marshal notebook config: %s", err.Error())
 	}
 	spec.Base.ExtraEnvVars = map[string]string{
-		"NOTEBOOK_PORT":   strconv.Itoa(port),
-		"NOTEBOOK_CONFIG": string(configBytes),
-		"DET_TASK_TYPE":   model.TaskTypeNotebook,
+		"NOTEBOOK_PORT":      strconv.Itoa(port),
+		"NOTEBOOK_CONFIG":    string(configBytes),
+		"NOTEBOOK_IDLE_TYPE": spec.Config.NotebookIdleType,
+		"DET_TASK_TYPE":      model.TaskTypeNotebook,
 	}
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}

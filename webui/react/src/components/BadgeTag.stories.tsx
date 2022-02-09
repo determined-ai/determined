@@ -4,7 +4,8 @@ import React from 'react';
 import { enumToOptions } from 'storybook/utils';
 import { CommandState } from 'types';
 
-import BadgeTag, { BadgeType } from './BadgeTag';
+import { BadgeType } from './Badge';
+import BadgeTag from './BadgeTag';
 
 export default {
   component: BadgeTag,

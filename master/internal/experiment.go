@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -264,7 +265,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
-		if err := e.setPriority(ctx, msg.Priority); err != nil {
+		if err := e.setPriority(ctx, &msg.Priority); err != nil {
 			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
@@ -284,8 +285,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
-		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
-			ctx.Log().Error(err)
+		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {
+			if err := e.db.SaveExperimentProgress(e.ID, ptrs.Float64Ptr(1.0)); err != nil {
+				ctx.Log().Error(err)
+			}
 		}
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
@@ -579,6 +582,9 @@ func checkpointFromTrialIDOrUUID(
 }
 
 func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
+	if priority == nil {
+		return nil
+	}
 	oldPriority := resourcemanagers.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.Config.Resources()
@@ -594,7 +600,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
 	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-		Priority: priority,
+		Priority: *priority,
 		Handler:  ctx.Self(),
 	})
 	return nil
@@ -627,10 +633,13 @@ func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 	}
 
 	resources := e.Config.Resources()
+	oldRP := resources.ResourcePool()
 	resources.SetResourcePool(msg.ResourcePool)
 	e.Config.SetResources(resources)
 
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
+		resources.SetResourcePool(oldRP)
+		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, msg.ResourcePool)
 	}
 	ctx.TellAll(sproto.ChangeRP{ResourcePool: msg.ResourcePool}, ctx.Children()...)

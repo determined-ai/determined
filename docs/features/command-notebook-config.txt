@@ -47,10 +47,10 @@ The following configuration settings are supported:
       different container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6),
       CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.6`` for
+      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9`` for
          NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.6`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.6`` for CPUs.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.9`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.9`` for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.
@@ -141,10 +141,25 @@ The following configuration settings are supported:
 -  ``tensorboard_args``: Lists optional arguments for launching TensorBoard. Each element of the
    list should be a string of the form ``NAME=VALUE``.
 
--  ``idle_timeout``: Specifies the duration before idle instances are
-      automatically terminated. This string is a sequence of decimal numbers, each with optional
-      fraction and a unit suffix, such as "30s", "1h", or "1m30s". Valid time units are "s", "m",
-      "h". The default value is ``20m``. This is only used by TensorBoard and Notebook instances. A
-      TensorBoard instance is considered to be idle if it does not receive any HTTP traffic. A
-      Notebook instance is considered to be idle if it does not receive any HTTP traffic and no
-      kernels and terminals are running. The default timeout for TensorBoard is ``5m`` (5 minutes).
+-  ``idle_timeout``: Specifies the duration before idle instances are automatically terminated. This
+   string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as
+   "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value is ``20m``. This
+   is only used by TensorBoard and notebook instances. A TensorBoard instance is considered to be
+   idle if it does not receive any HTTP traffic. A notebook instance is considered to be idle if it
+   is not receiving any HTTP traffic and it is not otherwise active (as defined by the
+   ``notebook_idle_type`` option). The default timeout for TensorBoard is ``5m`` (5 minutes).
+
+-  ``notebook_idle_type``: Specifies how to decide whether a notebook is idle or active. Valid
+   values are:
+
+   -  ``kernels_or_terminals`` (default): The notebook is considered active if any kernels or
+      terminals are running.
+
+   -  ``kernel_connections``: The notebook is considered active if there are any open connections
+      from any web connections to any kernels. (JupyterLab does not report connections to terminals,
+      so they cannot be counted.)
+
+   -  ``activity``: The notebook is considered active if any kernel is executing a command or any
+      terminal that is currently being viewed in JupyterLab is inputting or outputting any data. (A
+      terminal that is running a command but not being viewed or running a command with no output is
+      treated as idle, since JupyterLab does not provide activity information for those case.)

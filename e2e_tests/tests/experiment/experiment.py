@@ -552,9 +552,7 @@ def verify_completed_experiment_metadata(
 
 
 # Use Determined to run an experiment that we expect to fail.
-def run_failure_test(
-    config_file: str, model_def_file: str, error_str: Optional[str] = None
-) -> None:
+def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[str] = None) -> int:
     experiment_id = create_experiment(config_file, model_def_file)
 
     wait_for_experiment_state(experiment_id, "ERROR")
@@ -582,6 +580,8 @@ def run_failure_test(
         logs = trial_logs(trial_id)
         if error_str is not None:
             assert any(error_str in line for line in logs)
+
+    return experiment_id
 
 
 def get_validation_metric_from_last_step(
@@ -664,11 +664,11 @@ def run_failure_test_with_temp_config(
     config: Dict[Any, Any],
     model_def_path: str,
     error_str: Optional[str] = None,
-) -> None:
+) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
-        run_failure_test(tf.name, model_def_path, error_str=error_str)
+        return run_failure_test(tf.name, model_def_path, error_str=error_str)
 
 
 def shared_fs_checkpoint_config() -> Dict[str, str]:

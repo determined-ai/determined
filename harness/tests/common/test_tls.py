@@ -10,7 +10,7 @@ import requests
 
 from determined.common.api import certs, request
 
-TRUSTED_DOMAIN = "https://example.com"
+TRUSTED_DOMAIN = "https://google.com"
 UNTRUSTED_DIR = os.path.join(os.path.dirname(__file__), "untrusted-root")
 UNTRUSTED_CA = os.path.join(UNTRUSTED_DIR, "127.0.0.1-ca.crt")
 UNTRUSTED_KEY = os.path.join(UNTRUSTED_DIR, "127.0.0.1-key.pem")

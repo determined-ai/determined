@@ -114,8 +114,6 @@ message QueueControl {
     int32 priority = 5;
     // The desired job weight in fairshare scheduler.
     float weight = 6;
-    // DEV: the desired job position in queue.
-    float queue_position = 7;
   }
 }
 

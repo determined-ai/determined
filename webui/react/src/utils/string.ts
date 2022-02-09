@@ -10,6 +10,13 @@ export const camelCaseToSentence = (text: string): string => {
   return result.charAt(0).toUpperCase() + result.slice(1);
 };
 
+export const sentenceToCamelCase = (text: string): string => {
+  const result = text.trim().split(' ').map((word, idx) => (
+    idx === 0 ? word.toLowerCase() : capitalizeWord(word)
+  ));
+  return result.join('');
+};
+
 export const capitalize = (str: string): string => {
   return str.split(/\s+/).map(part => capitalizeWord(part)).join(' ');
 };
