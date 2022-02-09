@@ -10,6 +10,27 @@ const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
 
+jest.mock('antd', () => {
+  const antd = jest.requireActual('antd');
+
+  /** We need to mock Tooltip in order to set mouseEnterDelay to 0
+   */
+  const Tooltip = (props: unknown) => {
+    return (
+      <antd.Tooltip
+        {...props}
+        mouseEnterDelay={0}
+      />
+    );
+  };
+
+  return {
+    __esModule: true,
+    ...antd,
+    Tooltip,
+  };
+});
+
 const setup = ({ labelAfter = true }) => {
   const view = render(
     <BadgeTag
@@ -38,9 +59,11 @@ describe('BadgeTag', () => {
     const { view } = setup({});
 
     userEvent.hover(view.getByText(LABEL));
-    await waitFor(() => {
-      expect(view.getByRole('tooltip').textContent).toEqual(LABEL);
-    });
+    // await waitFor(() => {
+    //   expect(view.getByRole('tooltip').textContent).toEqual(LABEL);
+    // });
+    //await view.findByRole('tooltip');
+    expect((await view.findByRole('tooltip')).textContent).toEqual(LABEL);
   });
 
   it('content displays tooltip on hover', async () => {
