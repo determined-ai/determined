@@ -64,7 +64,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     first_trial = trials[0]
     first_trial_id = first_trial["trial"]["id"]
 
-    assert len(first_trial["workloads"]) == 1
+    assert len(first_trial["workloads"]) == 3
     # first_checkpoint_id = first_trial["workloads"][0]["checkpoint"]["uuid"]
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))

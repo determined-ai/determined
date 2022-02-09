@@ -181,7 +181,6 @@ def test_create_test_mode() -> None:
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     ]
-    sleep(1)
     output = subprocess.check_output(command, universal_newlines=True)
     assert "Model definition test succeeded" in output
 

@@ -129,9 +129,10 @@ def test_noop_single_warm_start() -> None:
     # Second trial should have a warm start checkpoint id.
     # assert second_trial["warm_start_checkpoint_id"] == last_checkpoint_id
 
-    assert second_trial["workloads"][89]["validation"]["metrics"][
-        "validation_error"
-    ] == pytest.approx(0.9 ** 60)
+    val_workloads = list(filter(lambda w: "validation" in w, second_trial["workloads"]))
+    assert val_workloads[-1]["validation"]["metrics"]["validation_error"] == pytest.approx(
+        0.9 ** 60
+    )
 
     # Now test source_checkpoint_uuid.
     config_obj = copy.deepcopy(config_base)
@@ -206,7 +207,7 @@ def test_cancel_one_paused_experiment() -> None:
         conf.fixtures_path("no_op"),
         ["--paused"],
     )
-
+    time.sleep(0.25)
     exp.cancel_single(experiment_id)
 
 
@@ -219,8 +220,6 @@ def test_cancel_ten_experiments() -> None:
         )
         for _ in range(10)
     ]
-    time.sleep(0.25)
-
     for experiment_id in experiment_ids:
         exp.cancel_single(experiment_id)
 
@@ -235,7 +234,7 @@ def test_cancel_ten_paused_experiments() -> None:
         )
         for _ in range(10)
     ]
-    time.sleep(1)
+    time.sleep(0.25)
 
     for experiment_id in experiment_ids:
         exp.cancel_single(experiment_id)

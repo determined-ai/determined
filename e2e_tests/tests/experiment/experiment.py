@@ -135,6 +135,13 @@ def wait_for_experiment_state(
             )
             time.sleep(1)
             continue
+        except api.errors.NotFoundException:
+            logging.warning(
+                "Experiment not yet available to check state: "
+                "experiment {}".format(experiment_id)
+            )
+            time.sleep(0.25)
+            continue
 
         if state == target_state:
             return
@@ -288,8 +295,8 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
 def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> None:
     cancel_experiment_v1(experiment_id)
 
-    trials = experiment_trials(experiment_id)
-    if should_have_trial or len(trials) > 0:
+    if should_have_trial:
+        trials = experiment_trials(experiment_id)
         assert len(trials) == 1, len(trials)
 
         trial = trials[0]["trial"]

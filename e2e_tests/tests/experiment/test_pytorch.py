@@ -78,7 +78,7 @@ def test_pytorch_const_warm_start() -> None:
     first_trial_id = first_trial["trial"]["id"]
 
     assert len(first_trial["workloads"]) == 4
-    checkpoints = list(filter(lambda w: "checkpoint" in w, first_trial["workloads"]))
+    # checkpoints = list(filter(lambda w: "checkpoint" in w, first_trial["workloads"]))
     # first_checkpoint_id = checkpoints[-1]["checkpoint"]["uuid"]
 
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))

@@ -8,8 +8,9 @@ from typing import Any, Dict, Optional
 from termcolor import colored
 
 from determined.common import api, constants, context, yaml
-from determined.common.api import logs
+from determined.common.api import authentication, bindings, certs
 from determined.common.api import request as req
+from determined.common.experimental import session
 
 
 def patch_experiment_v1(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
@@ -74,19 +75,24 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
             else:
                 print(", ", end="")
 
+    certs.cli_cert = certs.default_load(master_url)
+    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
+    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
     while True:
-        r = api.get(master_url, f"experiments/{exp_id}").json()
+        r = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
+        trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
 
         # Wait for experiment to start and initialize a trial.
-        if len(r["trials"]) < 1:
+        if len(trials) < 1:
             t = {}
         else:
-            trial_id = r["trials"][0]["id"]
+            trial_id = trials[0].id
             t = api.get(master_url, f"trials/{trial_id}").json()
 
         # Update the active_stage by examining the result from master
-        # /experiments/<experiment-id> endpoint.
-        if r["state"] == constants.COMPLETED:
+        # /api/v1/experiments/<experiment-id> endpoint.
+        exp_state = r.state.value.replace("STATE_", "")
+        if exp_state == constants.COMPLETED:
             active_stage = 4
         elif t.get("runner_state") == "checkpointing":
             active_stage = 3
@@ -99,11 +105,11 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
 
         # If the experiment is in a terminal state, output the appropriate
         # message and exit. Otherwise, sleep and repeat.
-        if r["state"] == constants.COMPLETED:
+        if exp_state == constants.COMPLETED:
             print_progress(active_stage, ended=True)
             print(colored("Model definition test succeeded! 🎉", "green"))
             return
-        elif r["state"] == constants.CANCELED:
+        elif exp_state == constants.CANCELED:
             print_progress(active_stage, ended=True)
             print(
                 colored(
@@ -114,10 +120,10 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
                 )
             )
             sys.exit(1)
-        elif r["state"] == constants.ERROR:
+        elif exp_state == constants.ERROR:
             print_progress(active_stage, ended=True)
-            trial_id = r["trials"][0]["id"]
-            logs.pprint_trial_logs(master_url, trial_id)
+            trial_id = trials[0].id
+            print_trial_logs(master_url, trial_id)
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)
