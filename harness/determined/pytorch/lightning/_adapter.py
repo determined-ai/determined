@@ -4,7 +4,10 @@ from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
+from pytorch_lightning.trainer.optimizers import (
+    TrainerOptimizersMixin,
+    _validate_scheduler_optimizer,
+)
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
@@ -243,12 +246,11 @@ class LightningAdapter(PyTorchTrial):
         work with Determined.
         Return: Wrapped `optimizers`, and `lr_schedulers` in a tuple
         """
-        optimizers, lr_scheduler_dicts, _ = TrainerOptimizersMixin().init_optimizers(
-            self._pls.lm,
-        )
+
+        optimizers, lr_schedulers = self._init_optimizers()
 
         optimizers = cast(List[Optimizer], optimizers)
-        lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
+        lr_scheduler_dicts = cast(List[dict], lr_schedulers)
 
         ordered_optimizers = []
         optimizers_dict: Dict[Optimizer, Optimizer] = {}
@@ -315,6 +317,23 @@ class LightningAdapter(PyTorchTrial):
 
         return ordered_optimizers, lr_schedulers
 
+    def _init_optimizers(self) -> Tuple[List, List]:
+        """
+        Configure and validate optimizers and schedulers in pytorch lightning.
+        This implements the functionality of
+        pytorch_lightning.trainer.optimizers.TrainerOptimizersMixin but circumvents the Trainer
+        initialization requirement.
+        """
+        optimizer_conf = self._pls.lm.configure_optimizers()
+        optimizers, lr_schedulers, _, monitor = TrainerOptimizersMixin._configure_optimizers(
+            optimizer_conf
+        )
+        lr_schedulers = TrainerOptimizersMixin._configure_schedulers(
+            lr_schedulers, monitor, not self._pls.lm.automatic_optimization
+        )
+        _validate_scheduler_optimizer(optimizers, lr_schedulers)
+        return optimizers, lr_schedulers
+
     def _build_train_args(self, batch: TorchData, batch_idx: int, opt_idx: int) -> List[Any]:
         # taken from pytorch_lightning
         args = [batch, batch_idx]
@@ -372,7 +391,7 @@ class LightningAdapter(PyTorchTrial):
             ):
                 self._pls.lm.untoggle_optimizer(opt_idx)
 
-        self._pls.lm.on_train_batch_end(metrics, batch, batch_idx, dataloader_idx=0)
+        self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
         # report metrics accounting for duplicate metric names
         # across multiple optimizers
