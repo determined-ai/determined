@@ -27,6 +27,8 @@ def run_all(ts: List[threading.Thread]) -> None:
 
 def main() -> int:
     rank = os.environ.get("HOROVOD_RANK")
+    if rank is None:
+        rank = os.environ.get("RANK")
     proc = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with open(constants.CONTAINER_STDOUT, "w") as cstdout, open(
         constants.CONTAINER_STDERR, "w"

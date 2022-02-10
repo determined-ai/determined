@@ -140,7 +140,7 @@ def create_run_command(
         "-np",
         str(num_proc_total),
         "-p",
-        str(constants.HOROVOD_SSH_PORT),
+        str(constants.DTRAIN_SSH_PORT),
         "-H",
         create_hostlist_arg(num_proc_per_machine, ip_addresses),
         "--start-timeout",

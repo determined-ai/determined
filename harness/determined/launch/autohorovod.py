@@ -16,7 +16,7 @@ import determined as det
 from determined import horovod
 from determined.common import api
 from determined.common.api import certs
-from determined.constants import HOROVOD_SSH_PORT
+from determined.constants import DTRAIN_SSH_PORT
 
 
 def main(train_entrypoint: str) -> int:
@@ -76,7 +76,7 @@ def main(train_entrypoint: str) -> int:
         run_sshd_command = [
             "/usr/sbin/sshd",
             "-p",
-            str(HOROVOD_SSH_PORT),
+            str(DTRAIN_SSH_PORT),
             "-f",
             "/run/determined/ssh/sshd_config",
             "-D",
@@ -97,7 +97,7 @@ def main(train_entrypoint: str) -> int:
                 sock.settimeout(1)
                 try:
                     # Connect to a socket to ensure sshd is listening.
-                    sock.connect((peer, HOROVOD_SSH_PORT))
+                    sock.connect((peer, DTRAIN_SSH_PORT))
                     # The ssh protocol requires the server to serve an initial greeting.
                     # Receive part of that greeting to know that sshd is accepting/responding.
                     data = sock.recv(1)
@@ -109,7 +109,7 @@ def main(train_entrypoint: str) -> int:
                     if time.time() > deadline:
                         raise ValueError(
                             f"Chief machine was unable to connect to sshd on peer machine at "
-                            f"{peer}:{HOROVOD_SSH_PORT}"
+                            f"{peer}:{DTRAIN_SSH_PORT}"
                         )
                     time.sleep(0.1)
 

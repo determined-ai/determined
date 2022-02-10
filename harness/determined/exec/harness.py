@@ -4,7 +4,7 @@ import faulthandler
 import logging
 import os
 import sys
-from typing import Iterator, Optional
+from typing import Iterator, Optional, cast
 
 import determined as det
 from determined import _core, horovod, load
@@ -108,6 +108,19 @@ def main(train_entrypoint: Optional[str]) -> int:
                 local_size=horovod.hvd.local_size(),
                 cross_rank=horovod.hvd.cross_rank(),
                 cross_size=horovod.hvd.cross_size(),
+                chief_ip=chief_ip,
+                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
+            )
+        elif distributed_backend.use_deepspeed():
+            # World size and rank information set as environment variables in deepspeed launcher.
+            # We pull the relevant fields here and pass them to create the DistributedContext.
+            distributed = _core.DistributedContext(
+                rank=int(cast(str, os.environ.get("RANK"))),
+                size=int(cast(str, os.environ.get("WORLD_SIZE"))),
+                local_rank=int(cast(str, os.environ.get("LOCAL_RANK"))),
+                local_size=int(cast(str, os.environ.get("LOCAL_SIZE"))),
+                cross_rank=int(cast(str, os.environ.get("CROSS_RANK"))),
+                cross_size=int(cast(str, os.environ.get("CROSS_SIZE"))),
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )

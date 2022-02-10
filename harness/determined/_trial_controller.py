@@ -15,9 +15,13 @@ class _DistributedBackend:
     """
 
     HOROVOD = "USE_HOROVOD"
+    DEEPSPEED = "USE_DEEPSPEED"
 
     def use_horovod(self) -> bool:
         return bool(os.environ.get(self.HOROVOD, None))
+
+    def use_deepspeed(self) -> bool:
+        return bool(os.environ.get(self.DEEPSPEED, None))
 
 
 class TrialController(metaclass=abc.ABCMeta):
