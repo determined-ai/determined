@@ -342,10 +342,6 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 	return json.Marshal(experimentSnapshotV2)
 }
 
-// Version 3 => 4 had no shim, it was breaking.
-
-// Version 4 => 5 shims
-
 // ExperimentSnapshotShimError describes an error encountered while shimming.
 type ExperimentSnapshotShimError struct {
 	Message string
