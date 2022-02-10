@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
@@ -228,8 +229,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
 			for cid := range a.containers {
-				// TODO(DET-5916): This kill should not count towards max_restarts.
-				ctx.Tell(ctx.Self(), sproto.KillTaskContainer{ContainerID: cid})
+				ctx.Tell(a.containers[cid], task.Kill)
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})

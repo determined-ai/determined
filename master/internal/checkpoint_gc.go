@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -62,7 +63,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			AgentRank:    0,
 			IsMultiAgent: false,
 		})
-	case sproto.ReleaseResources:
+	case sproto.ReleaseResources, task.AllocationSignal:
 		// Ignore the release resource message and wait for the GC job to finish.
 
 	case sproto.TaskContainerStateChanged:
