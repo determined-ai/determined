@@ -99,7 +99,7 @@ class GAN(pl.LightningModule):
         **kwargs
     ):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters("channels", "width", "height", "latent_dim", "lr", "b1", "b2", "batch_size")
 
         # networks
         data_shape = (channels, width, height)
