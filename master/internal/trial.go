@@ -147,7 +147,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		resources := t.config.Resources()
 		resources.SetResourcePool(msg.ResourcePool)
 		t.config.SetResources(resources)
-		ctx.Tell(t.allocation, msg)
+		if t.allocation != nil {
+			ctx.Tell(t.allocation, msg)
+		}
 	case task.BuildTaskSpec:
 		if spec, err := t.buildTaskSpec(ctx); err != nil {
 			ctx.Respond(err)
