@@ -359,7 +359,7 @@ class LightningAdapter(PyTorchTrial):
 
         """
         type(self._pls.lm).global_step = batch_idx  # type: ignore
-        self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
+        self._pls.lm.on_train_batch_start(batch, batch_idx)
 
         Metric = Dict[str, Any]
 
@@ -391,7 +391,7 @@ class LightningAdapter(PyTorchTrial):
             ):
                 self._pls.lm.untoggle_optimizer(opt_idx)
 
-        self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
+        self._pls.lm.on_train_batch_start(batch, batch_idx)
 
         # report metrics accounting for duplicate metric names
         # across multiple optimizers
