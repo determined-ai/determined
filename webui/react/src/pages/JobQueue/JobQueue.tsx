@@ -338,10 +338,11 @@ const JobQueue: React.FC = () => {
       </Section>
       {!!managingJob && !!selectedRp && (
         <ManageJob
+          initialPool={selectedRp.name}
           job={managingJob}
           jobs={jobs}
+          rpStats={rpStats}
           schedulerType={selectedRp.schedulerType}
-          selectedRPStats={rpStats.find(rp => rp.resourcePool === selectedRp.name) as RPStats}
           onFinish={onModalClose}
         />
       )}
