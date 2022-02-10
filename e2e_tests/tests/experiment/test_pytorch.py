@@ -166,7 +166,7 @@ def test_pytorch_native_api() -> None:
     exp.wait_for_experiment_state(exp_id, "COMPLETED")
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.parallel
 def test_pytorch_gradient_aggregation() -> None:
     base_config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
 
