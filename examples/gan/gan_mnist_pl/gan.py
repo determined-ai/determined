@@ -113,7 +113,8 @@ class GAN(pl.LightningModule):
     def forward(self, z):
         return self.generator(z)
 
-    def adversarial_loss(self, y_hat, y):
+    @staticmethod
+    def adversarial_loss(y_hat, y):
         return F.binary_cross_entropy(y_hat, y)
 
     def training_step(self, batch, batch_idx, optimizer_idx):
