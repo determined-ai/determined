@@ -262,10 +262,11 @@ const ModelRegistry: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save model description.',
-        silent: true,
+        silent: false,
         type: ErrorType.Api,
       });
       setIsLoading(false);
+      return e;
     }
   }, [ ]);
 

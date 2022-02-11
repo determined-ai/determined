@@ -143,6 +143,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         silent: false,
         type: ErrorType.Server,
       });
+      return e;
     }
   }, [ experiment.id, fetchExperimentDetails ]);
 
@@ -158,6 +159,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         silent: false,
         type: ErrorType.Server,
       });
+      return e;
     }
   }, [ experiment.id, fetchExperimentDetails ]);
 
