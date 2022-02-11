@@ -173,11 +173,9 @@ def test_pytorch_gradient_aggregation() -> None:
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
     steps = trials[0]["steps"]
-    print(steps[0])
     actual_weights = [
         step["validation"]["metrics"]["validation_metrics"]["weight"] for step in steps
     ]
-    # [step["validation"]["metrics"]["validation_metrics"]["val_loss"] for step in steps]
 
     # independently compute expected metrics
     batch_size = 4
@@ -195,7 +193,6 @@ def test_pytorch_gradient_aggregation() -> None:
 
     def compute_expected_weight(data: List[float], label: List[float], w: float) -> float:
         n = len(data)
-        # expected_loss = sum(((l - d * w) ** 2 for d, l in zip(data, label))) / n
         expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
         return w + expected_step
 
