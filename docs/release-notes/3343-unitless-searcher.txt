@@ -1,4 +1,0 @@
-:orphan:
-
--  **Breaking Change** the `/api/v1/preview-hp-search` endpoint can return a different type of
-   response.

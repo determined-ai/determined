@@ -1,8 +1,0 @@
-:orphan:
-
-**New Features**
-
--  API: Add ``on_training_epoch_end`` to PytorchCallback. Add ``epoch_idx`` argument to
-   ``on_training_epoch_start``. Overriding ``on_training_epoch_start`` without ``epoch_idx``
-   argument is still supported for backwards compatibility but using this outdated signature is
-   discouraged.

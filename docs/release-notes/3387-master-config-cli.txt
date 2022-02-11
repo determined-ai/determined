@@ -1,6 +1,0 @@
-:orphan:
-
-**Breaking Change**
-
--  CLI: The `output` option in `det master config` is replaced with different flags to configure the
-   output format such as `--json`, and `--yaml`.
