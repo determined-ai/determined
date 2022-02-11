@@ -6,14 +6,14 @@ from determined import pytorch
 
 
 class IdentityDataset(torch.utils.data.Dataset):
-    def __init__(self, initial_value: int = 0):
+    def __init__(self, initial_value: int = 1):
         self.initial_value = initial_value
 
     def __len__(self) -> int:
         return 64
 
     def __getitem__(self, index: int) -> Tuple:
-        v = 1  # float(self.initial_value + index)
+        v = float(self.initial_value + 0.1 * index)
         return torch.Tensor([v]), torch.Tensor([v])
 
 
@@ -36,22 +36,40 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         data, label = batch
+        w_before = self.model.weight.data.item()
+
+        n = len(data)
+        print(f"n={n}, data={torch.flatten(data)}, label={torch.flatten(label)}")
+        loss_exp = sum(((l - d * w_before) ** 2 for d, l in zip(data, label))) / n
+        step_exp = 2.0 * self.lr * sum((d * (l - d * w_before) for d, l in zip(data, label))) / n
+        w_exp = w_before + step_exp
 
         loss = self.loss_fn(self.model(data), label)
 
         self.context.backward(loss)
 
+        gradient = next(self.model.parameters()).grad.item()
+
         self.context.step_optimizer(self.opt)
+
+        w_after = self.model.weight.data.item()
 
         return {
             "loss": loss,
+            "loss_exp": loss_exp,
+            "step_exp": step_exp,
+            "gradient": gradient,
+            "w_before": w_before,
+            "w_after": w_after,
+            "w_exp": w_exp,
         }
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, label = batch
 
         loss = self.loss_fn(self.model(data), label)
-        return {"val_loss": loss}
+        weight = self.model.weight.data.item()
+        return {"val_loss": loss, "weight": weight}
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
         return pytorch.DataLoader(

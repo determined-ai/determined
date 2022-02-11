@@ -168,33 +168,52 @@ def test_pytorch_native_api() -> None:
 
 @pytest.mark.parallel
 def test_pytorch_gradient_aggregation() -> None:
-    base_config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
+    config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
 
-    def run_and_check(config: Any, expected_steps: int) -> List[float]:
-        exp_id = exp.run_basic_test_with_temp_config(
-            config, conf.fixtures_path("pytorch_identity"), 1
+    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
+    trials = exp.experiment_trials(exp_id)
+    assert len(trials) == 1
+    steps = trials[0]["steps"]
+    print(steps[0])
+    actual_weights = [step["validation"]["metrics"]["validation_metrics"]["weight"] for step in steps]
+    # [step["validation"]["metrics"]["validation_metrics"]["val_loss"] for step in steps]
+
+    # independently compute expected metrics
+    batch_size = 4
+    epoch_size = 64
+    num_epochs = 3
+    batches = [
+            (v[:], v[:]) for v in (
+            [x * 0.1 + 1.0 for x in range(y, y + batch_size)]
+            for y in (z % epoch_size for z in range(0, epoch_size * num_epochs, batch_size))
         )
-        trials = exp.experiment_trials(exp_id)
-        assert len(trials) == 1
-        assert len(trials[0]["steps"]) == expected_steps
-        steps = trials[0]["steps"]
-        return [step["validation"]["metrics"]["validation_metrics"]["val_loss"] for step in steps]
+    ]
 
-    loss_without_aggregation = run_and_check(base_config, 40)
+    lr = 0.001
+    def compute_expected_weight(data, label, w):
+        n = len(data)
+        # expected_loss = sum(((l - d * w) ** 2 for d, l in zip(data, label))) / n
+        expected_step = 2.0 * lr * sum((d * (l - d * w) for d, l in zip(data, label))) / n
+        return w + expected_step
 
-    config_with_grad_agg = copy.deepcopy(base_config)
-    config_with_grad_agg["hyperparameters"]["global_batch_size"] = 4
-    config_with_grad_agg["optimizations"]["aggregation_frequency"] = 2
-    loss_with_aggregation = run_and_check(config_with_grad_agg, 80)
+    expected_weights = []
+    expected_losses = []
+    weight = 0.0
+    data = []
+    label = []
+    for i, batch in enumerate(batches):
+        if i % 2 == 0:
+            # for even-numbered batches the optimizer step is a no-op:
+            # the weights don't change
+            data, label = batch
+        else:
+            additional_data, additional_label = batch
+            data += additional_data
+            label += additional_label
+            weight = compute_expected_weight(data, label, weight)
+        expected_weights.append(weight)
 
-    assert loss_with_aggregation[-1] == pytest.approx(
-        loss_without_aggregation[-1], 1e-4
-    ), f"{loss_with_aggregation}!={loss_without_aggregation}"
-    assert loss_with_aggregation[-1] == pytest.approx(0.852, 1e-4)
-
-    # only odd-numbered steps with gradient aggregation change the loss
-    odd_numbered_loss = [a for i, a in enumerate(loss_with_aggregation) if i % 2 == 1]
-    assert odd_numbered_loss == pytest.approx(loss_without_aggregation)
+    assert actual_weights == pytest.approx(expected_weights), f"{actual_weights} != {expected_weights}"
 
 
 @pytest.mark.parallel
