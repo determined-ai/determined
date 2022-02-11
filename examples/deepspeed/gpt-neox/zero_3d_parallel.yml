@@ -1,0 +1,45 @@
+name: gpt-neox-zero-3d-parallel
+debug: false
+profiling:
+    enabled: false
+    begin_on_batch: 50
+    end_after_batch: 100
+    sync_timings: true
+hyperparameters:
+  search_world_size: false
+  global_batch_size: 128 # this should be data_parallel_world_size * gradient_accumulation_steps * micro_batch_size
+  data_parallel_world_size: 4
+  conf_dir: /run/determined/workdir/configs
+  conf_file:
+      - medium.yml
+      - determined_cluster.yml
+  overwrite_values:
+     train_micro_batch_size_per_gpu: 2
+     pipe_parallel_size: 2
+     model_parallel_size: 2
+     partition_activations: false
+  wandb_group: null
+  wandb_team: null
+  user_script: null
+  eval_tasks: null
+environment:
+    force_pull_image: true
+    image:
+        #gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpt-neox-deepspeed-gpu-0.17.9
+        gpu: liamdetermined/development:gpt-neox
+resources:
+  slots_per_trial: 16
+searcher:
+  name: single
+  metric: lm_loss
+  smaller_is_better: false
+  max_length:
+    batches: 100
+min_validation_period:
+    batches: 5000
+max_restarts: 0
+entrypoint: 
+  - python3
+  - -m
+  - determined.launch.autodeepspeed
+  - gpt2_trial:GPT2Trial

@@ -1,0 +1,58 @@
+name: gpt-neox-zero-hp-search
+debug: false
+hyperparameters:
+  search_world_size: true
+  global_batch_size: 128 # this should be data_parallel_world_size * gradient_accumulation_steps * micro_batch_size
+  data_parallel_world_size: 
+    type:  categorical
+    vals:
+        - 2
+        - 4
+        - 8
+  deepspeed: true
+  conf_dir: /run/determined/workdir/configs
+  conf_file:
+      - 2-7B.yml
+      - determined_cluster.yml
+  overwrite_values:
+    log_interval: 10
+    pipe_parallel_size: 
+      type:  categorical
+      vals:
+        - 2
+        - 4
+        - 8
+    train_micro_batch_size_per_gpu:
+      type:  categorical
+      vals:
+        - 2
+        - 4
+        - 8
+    partition_activations: false
+  wandb_group: null
+  wandb_team: null
+  user_script: null
+  eval_tasks: null
+environment:
+    #force_pull_image: true
+    image:
+        gpu: liamdetermined/development:gpt-neox
+resources:
+  slots_per_trial: 16 
+searcher:
+  name: grid
+  metric: tflops
+  smaller_is_better: false
+  max_length:
+    batches: 100
+  max_concurrent_trials: 2
+min_validation_period:
+    batches: 10
+# Disabling checkpointing so that interval time is correct.
+checkpoint_policy: none
+max_restarts: 1
+entrypoint: 
+  - python3
+  - -m
+  - determined.launch.autodeepspeed
+  - gpt2_trial:GPT2Trial
