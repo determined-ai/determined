@@ -12,7 +12,7 @@ hyperparameters:
   deepspeed: true
   conf_dir: /run/determined/workdir/configs
   conf_file:
-      - 2-7B.yml
+      - large.yml
       - determined_cluster.yml
   overwrite_values:
     log_interval: 10
@@ -50,7 +50,7 @@ min_validation_period:
     batches: 10
 # Disabling checkpointing so that interval time is correct.
 checkpoint_policy: none
-max_restarts: 1
+max_restarts: 0
 entrypoint: 
   - python3
   - -m

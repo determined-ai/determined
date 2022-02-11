@@ -1,7 +1,9 @@
 export PYTHONPATH=$PYTHONPATH:/gpt-neox
 
-python /gpt-neox/prepare_data.py -d /run/determined/workdir/shared_fs/data
+cd /gpt-neox
+python prepare_data.py -d /run/determined/workdir/shared_fs/data
 
+cd /run/determined/workdir
 mkdir -p /tmp/checkpoints
 mkdir -p /tmp/logs
 

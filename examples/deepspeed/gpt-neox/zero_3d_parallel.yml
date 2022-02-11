@@ -34,7 +34,7 @@ searcher:
   metric: lm_loss
   smaller_is_better: false
   max_length:
-    batches: 100
+    batches: 500
 min_validation_period:
     batches: 5000
 max_restarts: 0

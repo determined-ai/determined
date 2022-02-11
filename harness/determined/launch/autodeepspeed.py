@@ -112,11 +112,30 @@ def main(train_entrypoint: str) -> int:
             cert=cert,
         )
 
+        # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
+        # This is useful for deepspeed which does not have good error handling for remote processes
+        # spun up by pdsh.
+        pid_server_cmd = [
+            "python3",
+            "-m",
+            "determined.exec.pid_server",
+            "--on-fail",
+            "SIGTERM",
+            "--on-exit",
+            "SIGTERM",
+            "--grace-period",
+            "3",
+            "--return-one-on-worker-error",
+            f"/tmp/pid_server-{info.allocation_id}",
+            str(len(info.slot_ids)),
+            "--",
+        ]
+
         logging.debug(
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
-        return subprocess.Popen(run_sshd_command).wait()
+        return subprocess.Popen(pid_server_cmd + run_sshd_command).wait()
 
     # Chief machine waits for every worker's sshd to be available.  All machines should be pretty
     # close to in-step by now because all machines just finished synchronizing rendezvous info.
@@ -144,12 +163,39 @@ def main(train_entrypoint: str) -> int:
                     time.sleep(0.1)
 
     # The chief has several layers of wrapper processes:
-    # - deepspeed, which launches $slots_per_trial copies of the following layers using pdsh:
+    # - a top-level pid_server, which causes the whole container to exit if any local worker dies.
+    # - deepspeed, which launches $slots_per_trial copies of the following layers:
+    #     - a pid_client process to contact the local pid_server
     #     - worker_process_wrapper, which redirects stdin/stdout to the local container
     #     - harness.py, which actually does the training for the worker
+
+    pid_server_cmd = [
+        "python3",
+        "-m",
+        "determined.exec.pid_server",
+        "--on-fail",
+        "SIGTERM",
+        "--on-exit",
+        "SIGTERM",
+        "--grace-period",
+        "5",
+        "--return-one-on-worker-error",
+        f"/tmp/pid_server-{info.allocation_id}",
+        str(len(info.slot_ids)),
+        "--",
+    ]
+
     cmd = create_run_command(
         num_proc_per_machine=len(info.slot_ids), ip_addresses=info.container_addrs
     )
+
+    pid_client_cmd = [
+        "python3",
+        "-m",
+        "determined.exec.pid_client",
+        f"/tmp/pid_server-{info.allocation_id}",
+        "--",
+    ]
 
     log_redirect_cmd = [
         "python3",
@@ -167,7 +213,7 @@ def main(train_entrypoint: str) -> int:
 
     logging.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
 
-    full_cmd = cmd + log_redirect_cmd + harness_cmd
+    full_cmd = pid_server_cmd + cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
     os.environ["USE_DEEPSPEED"] = "1"
     if len(info.container_addrs) > 1:
