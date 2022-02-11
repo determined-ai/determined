@@ -100,7 +100,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to update notes.',
-        silent: false,
+        silent: true,
         type: ErrorType.Api,
       });
     }
