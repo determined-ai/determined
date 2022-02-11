@@ -1,7 +1,0 @@
-:orphan:
-
-**API Change**
-
--  The `PATCH /api/v1/experiments/:id` route no longer uses a field mask.
-      When you include a field in the body (e.g. notes or labels) that field will be updated, if it
-      is excluded then it will remain unchanged.

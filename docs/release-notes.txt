@@ -8,6 +8,87 @@
  Version 0.17
 **************
 
+Version 0.17.9
+==============
+
+**Release Date:** February 11, 2022
+
+**New Features**
+
+-  Python API: Add new framework-specific methods for loading checkpoints:
+
+   -  :meth:`determined.pytorch.load_trial_from_checkpoint_path`
+   -  :meth:`determined.keras.load_model_from_checkpoint_path`
+   -  :meth:`determined.estimator.load_estimator_from_checkpoint_path`
+
+   These new methods are part of a larger effort to support more frameworks.
+
+-  Python API: Add :meth:`~determined.pytorch.PyTorchCallback.on_training_epoch_end` method to
+   :class:`~determined.pytorch.PyTorchCallback`. Add ``epoch_idx`` argument to
+   :meth:`~determined.pytorch.PyTorchCallback.on_training_epoch_start`. Overriding
+   ``on_training_epoch_start`` without the ``epoch_idx`` argument is still supported for backward
+   compatibility, but doing so is discouraged.
+
+-  Web: Add a column picker to the experiment list page to allow users to choose which table columns
+   to display.
+
+   .. image:: https://user-images.githubusercontent.com/15078396/152874244-51e0d84a-3678-4427-b082-ccc0c865200f.png
+
+   .. image:: https://user-images.githubusercontent.com/15078396/152874240-6365b276-3f3e-4fb6-aa2b-0cedc7451b12.png
+
+-  Notebooks: Add a config field ``notebook_idle_type`` that changes how the idleness of a notebook
+   is determined for the idle timeout feature. If the value is different from the default, users do
+   not need to manually shut down kernels to allow the idle timeout to take effect. See :ref:`the
+   documentation <command-notebook-configuration>` for more information.
+
+-  Web: Use the `Page Visiblity API
+   <https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API>`__ to detect changes in
+   page visibility and avoid unnecessary polling, which can be expensive. While the user is not
+   actively focused on the page, all polling is stopped; if the page becomes visible again, any
+   previously active polling is restarted.
+
+**Improvements**
+
+-  **Breaking Change:** CLI: The ``det master config`` command now takes the ``--json`` and
+   ``--yaml`` options to configure its output format, rather than ``-o <output>``.
+
+-  **Breaking Change**: API: The ``/api/v1/preview-hp-search`` endpoint no longer includes units
+   (epochs/records/batches) in its response.
+
+-  API: The ``PATCH /api/v1/experiments/:id`` route no longer uses a field mask. When you include a
+   field in the body (e.g., notes or labels) that field will be updated, if it is excluded then it
+   will remain unchanged.
+
+-  API: When an experiment successfully completes, its progress value will be set to 100% instead of
+   0% or null; when an experiment fails, its progress value will stay the same instead of being
+   reset to 0% or null.
+
+-  API: Calls to ``/api/v1/experiments`` and ``/api/v1/experiments/:id`` will return a progress
+   value of null instead of 0 in cases where the progress has not been recorded or was reset to
+   null.
+
+**Deprecations**
+
+-  Python API: ``Checkpoint.load`` is deprecated. It should be replaced by
+   :meth:`determined.experimental.client.Checkpoint.download` along with the appropriate one of the
+   new framework-specific functions for loading checkpoints.
+
+-  Python API: The following methods on objects in :mod:`determined.experimental.client` are
+   formally deprecated (even though they were not technically public methods previously):
+
+   -  ``Model.from_json``
+   -  ``Checkpoint.from_json``
+   -  ``Checkpoint.parse_metadata``
+   -  ``Checkpoint.get_type``
+
+   These methods will be removed in a future version.
+
+**Removed Features**
+
+-  API: Remove ``/searcher/preview``, ``/checkpoints``, and ``/checkpoints/:checkpoint_id/*``
+   endpoints from the legacy API. These functions were already replaced by the gRPC API
+   (``/api/v1/preview-hp-search`` and ``/api/v1/checkpoints``) in the web UI, CLI, and tests.
+
 Version 0.17.8
 ==============
 
@@ -25,15 +106,16 @@ Version 0.17.7
 
 **Breaking Changes**
 
--  API: Routes with `/api/v1/models/:id/*` are replaced by `/api/v1/models/:name/*`. Spaces and
+-  API: Routes with ``/api/v1/models/:id/*`` are replaced by ``/api/v1/models/:name/*``. Spaces and
    special characters in a name must be URI-encoded. You can get a model by ID with
-   `/api/v1/models?id=`.
+   ``/api/v1/models?id=<id>``.
 
--  API: On the list of models (`/api/v1/models`) the optional name parameter is now a case-sensitive
-   match, unless you add the parameter `name_case_insensitive=true`.
+-  API: On the list of models (``/api/v1/models``) the optional name parameter is now a
+   case-sensitive match, unless you add the parameter ``name_case_insensitive=true``.
 
--  Client: `get_model(int: id)` is removed - use `get_model(name: string)` or `get_model_by_id(int:
-   id)`.
+-  Python API: :meth:`determined.experimental.client.Determined.get_model` now takes a name rather
+   than an ID. Use :meth:`determined.experimental.client.Determined.get_model_by_id` to get a model
+   from its ID.
 
 -  Model Registry: New model names must not be blank, have a slash, have multiple spaces, only
    numbers, or be case-insensitive matches to an existing model name.
@@ -47,9 +129,9 @@ Version 0.17.7
 
 **Removed Features**
 
--  Master: removes /experiment-list, /experiment-summaries, and /:experiment_id/kill endpoints from
-   the legacy API. These functions are now replaced by the GRPC API (/api/v1/experiments) in the Web
-   UI, CLI, and tests.
+-  API: remove ``/experiment-list``, ``/experiment-summaries``, and ``/:experiment_id/kill``
+   endpoints from the legacy API. These functions are now replaced by the gRPC API
+   (``/api/v1/experiments``) in the web UI, CLI, and tests.
 
 Version 0.17.6
 ==============
@@ -197,7 +279,7 @@ Version 0.17.2
 -  Model Registry APIs: Add new APIs to create a model with labels and to update the labels of an
    existing model.
 
-**Improvement**
+**Improvements**
 
 -  **Breaking Change:** Deploy: ``det deploy`` now uses cloud images that use the NVIDIA Container
    Toolkit on agent hosts instead of relying on an older NVIDIA runtime, and custom images should be
