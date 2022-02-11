@@ -27,8 +27,9 @@ type (
 	// Allocation encapsulates all the state of a single allocation.
 	Allocation struct {
 		// System dependencies.
-		db db.DB
-		rm *actor.Ref
+		db     db.DB
+		rm     *actor.Ref
+		logger *Logger
 
 		// The request to create the allocation, essentially our configuration.
 		req sproto.AllocateRequest
@@ -68,8 +69,6 @@ type (
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
-		// log-based readiness state
-		logBasedReadinessPassed bool
 	}
 
 	// MarkReservationDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -100,6 +99,10 @@ type (
 		Addresses  map[cproto.ID][]cproto.Address
 		Ready      bool
 	}
+	// AllocationReady marks an allocation as ready.
+	AllocationReady struct {
+		Message string
+	}
 )
 
 const (
@@ -116,10 +119,13 @@ const (
 )
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
-func NewAllocation(req sproto.AllocateRequest, db db.DB, rm *actor.Ref) actor.Actor {
+func NewAllocation(
+	req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
+) actor.Actor {
 	return &Allocation{
-		db: db,
-		rm: rm,
+		db:     db,
+		rm:     rm,
+		logger: logger,
 
 		req: req,
 		model: model.Allocation{
@@ -179,32 +185,17 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		a.Cleanup(ctx)
 	case sproto.ContainerLog:
-		if a.req.StreamEvents != nil {
-			ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-				State:    a.state.String(),
-				IsReady:  a.logBasedReadinessPassed,
-				LogEvent: ptrs.StringPtr(msg.String()),
-			})
-			if rc := a.req.LogBasedReady; rc != nil && !a.logBasedReadinessPassed {
-				if rc.Pattern.MatchString(msg.String()) {
-					a.logBasedReadinessPassed = true
-					ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-						State:             a.state.String(),
-						IsReady:           a.logBasedReadinessPassed,
-						ServiceReadyEvent: &msg,
-					})
-					a.model.State = &a.state
-					a.model.IsReady = &a.logBasedReadinessPassed
-					if err := a.db.UpdateAllocationState(a.model); err != nil {
-						a.Error(ctx, err)
-					}
-				}
-			}
-		}
-		ctx.Tell(ctx.Self().Parent(), a.enrichLog(msg))
+		a.sendEvent(ctx, msg.ToEvent())
 
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
+	case AllocationReady:
+		a.model.State = &a.state // TODO(Brad): Consolidate where state is store else bugs.
+		a.model.IsReady = ptrs.BoolPtr(true)
+		if err := a.db.UpdateAllocationState(a.model); err != nil {
+			a.Error(ctx, err)
+		}
+		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.BoolPtr(true)})
 	case MarkReservationDaemon:
 		a.SetReservationAsDaemon(ctx, msg.AllocationID, msg.ContainerID)
 	case AllocationSignal:
@@ -221,7 +212,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if err := a.rendezvous.ReceiveMsg(ctx); err != nil {
-			ctx.Tell(ctx.Self(), sproto.ContainerLog{AuxMessage: ptrs.StringPtr(err.Error())})
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
@@ -232,7 +223,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if err := a.preemption.ReceiveMsg(ctx); err != nil {
-			ctx.Tell(ctx.Self(), sproto.ContainerLog{AuxMessage: ptrs.StringPtr(err.Error())})
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
 		}
 	case IdleTimeoutWatcherTick, IdleWatcherNoteActivity:
@@ -259,32 +250,20 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 	if err := ctx.Ask(a.rm, a.req).Error(); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
 	}
-	if a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-			State:          a.state.String(),
-			IsReady:        a.logBasedReadinessPassed,
-			ScheduledEvent: &a.model.AllocationID,
-		})
-	}
+	a.sendEvent(ctx, sproto.Event{ScheduledEvent: &a.model.AllocationID})
 	return nil
 }
 
 // Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
 func (a *Allocation) Cleanup(ctx *actor.Context) {
-	if a.req.StreamEvents != nil {
-		// This message must be sent when the actor is closing since it closes all
-		// websockets listening for these events.
-		exitReason := okExitMessage
-		if a.exitReason != nil {
-			exitReason = a.exitReason.Error()
-		}
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-			State:       a.state.String(),
-			IsReady:     a.logBasedReadinessPassed,
-			ExitedEvent: &exitReason,
-		})
+	// This message must be sent when the actor is closing since it closes all
+	// websockets listening for these events.
+	exitReason := okExitMessage
+	if a.exitReason != nil {
+		exitReason = a.exitReason.Error()
 	}
+	a.sendEvent(ctx, sproto.Event{ExitedEvent: &exitReason})
 	// Just in-case code.
 	if !a.exited {
 		ctx.Log().Info("exit did not run properly")
@@ -356,13 +335,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		})
 	}
 	a.reservationsStarted = true
-	if a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-			State:         a.state.String(),
-			IsReady:       a.logBasedReadinessPassed,
-			AssignedEvent: &msg,
-		})
-	}
+	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
 }
 
@@ -425,13 +398,11 @@ func (a *Allocation) TaskContainerStateChanged(
 		if a.req.ProxyPort != nil {
 			a.registerProxies(ctx, msg)
 		}
-		if a.req.StreamEvents != nil {
-			ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-				State:                 a.state.String(),
-				IsReady:               a.logBasedReadinessPassed,
-				ContainerStartedEvent: msg.ContainerStarted,
-			})
-		}
+
+		a.sendEvent(ctx, sproto.Event{
+			ContainerID:           string(msg.Container.ID),
+			ContainerStartedEvent: msg.ContainerStarted,
+		})
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
 			a.req.TaskActor.Address())
@@ -440,10 +411,10 @@ func (a *Allocation) TaskContainerStateChanged(
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
 		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
-		ctx.Tell(ctx.Self(), sproto.ContainerLog{
-			AuxMessage: ptrs.StringPtr(msg.ContainerStopped.String()),
-			Container:  msg.Container,
-		})
+		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			ContainerID: ptrs.StringPtr(msg.Container.ID.String()),
+			Log:         msg.ContainerStopped.String(),
+		}))
 		switch {
 		case msg.ContainerStopped.Failure != nil:
 			a.Error(ctx, *msg.ContainerStopped.Failure)
@@ -460,7 +431,6 @@ func (a *Allocation) TaskContainerStateChanged(
 	}
 
 	a.model.State = &a.state
-	a.model.IsReady = &a.logBasedReadinessPassed
 	err := a.db.UpdateAllocationState(a.model)
 	if err != nil {
 		ctx.Log().Error(err)
@@ -485,12 +455,8 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 
 // Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
 func (a *Allocation) Terminate(ctx *actor.Context) {
-	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok && a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-			State:                 a.state.String(),
-			IsReady:               a.logBasedReadinessPassed,
-			TerminateRequestEvent: &msg,
-		})
+	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok {
+		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
 	}
 
 	if exited := a.Exit(ctx); exited {
@@ -690,12 +656,50 @@ func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 
 const killedLogSubstr = "exit code 137"
 
-func (a *Allocation) enrichLog(l sproto.ContainerLog) sproto.ContainerLog {
-	killLog := l.RunMessage != nil && strings.Contains(l.RunMessage.Value, killedLogSubstr)
-	if a.killedDaemons && killLog {
-		l.Level = ptrs.StringPtr("DEBUG")
+func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
+	log.TaskID = string(a.req.TaskID)
+
+	if log.Timestamp == nil || log.Timestamp.IsZero() {
+		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
 	}
-	return l
+
+	if a.killedDaemons && strings.Contains(log.Log, killedLogSubstr) {
+		log.Level = ptrs.StringPtr(model.LogLevelDebug)
+	} else if log.Level == nil {
+		log.Level = ptrs.StringPtr(model.LogLevelInfo)
+	}
+
+	if log.Source == nil {
+		log.Source = ptrs.StringPtr("master")
+	}
+
+	if log.StdType == nil {
+		log.StdType = ptrs.StringPtr("stdout")
+	}
+
+	log.Log += "\n"
+	return log
+}
+
+func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
+	ev = a.enrichEvent(ctx, ev)
+	a.logger.Insert(ctx, a.enrichLog(ev.ToTaskLog()))
+	if a.req.StreamEvents != nil {
+		ctx.Tell(a.req.StreamEvents.To, ev)
+	}
+}
+
+func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Event {
+	ev.ParentID = ctx.Self().Parent().Address().Local()
+	ev.Description = a.req.Name
+	ev.IsReady = coalesce(a.model.IsReady, false)
+	if ev.State == "" {
+		ev.State = a.state.String()
+	}
+	if ev.Time.IsZero() {
+		ev.Time = time.Now().UTC()
+	}
+	return ev
 }
 
 // State returns a deepcopy of our state.
@@ -733,7 +737,7 @@ func (a *Allocation) State() AllocationState {
 		State:      a.state,
 		Containers: containers,
 		Addresses:  addresses,
-		Ready:      a.req.DoRendezvous && a.rendezvous.ready() || a.logBasedReadinessPassed,
+		Ready:      a.req.DoRendezvous && a.rendezvous.ready() || coalesce(a.model.IsReady, false),
 	}
 }
 
@@ -749,7 +753,7 @@ func (a *AllocationExited) String() string {
 }
 
 // FirstContainer returns the first container in the allocation state.
-func (a *AllocationState) FirstContainer() *cproto.Container {
+func (a AllocationState) FirstContainer() *cproto.Container {
 	for _, c := range a.Containers {
 		return &c
 	}
@@ -767,9 +771,16 @@ func (a AllocationState) FirstDevice() *device.Device {
 }
 
 // FirstContainerAddresses returns the first container's addresses in the allocation state.
-func (a *AllocationState) FirstContainerAddresses() []cproto.Address {
+func (a AllocationState) FirstContainerAddresses() []cproto.Address {
 	for _, ca := range a.Addresses {
 		return ca
 	}
 	return nil
+}
+
+func coalesce(x *bool, fallback bool) bool {
+	if x == nil {
+		return fallback
+	}
+	return *x
 }

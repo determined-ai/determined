@@ -42,6 +42,7 @@ def is_idle(request_address, mode):
         return no_busy_kernels and (last_activity == old_last_activity)
 
 
+
 def main():
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]

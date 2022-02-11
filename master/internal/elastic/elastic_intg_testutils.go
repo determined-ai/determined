@@ -14,15 +14,15 @@ import (
 )
 
 const (
-	refreshWaitFor        = "wait_for"
-	trialLogsTemplateName = "determined-triallogs-template"
-	trialLogsIndexPattern = "determined-triallogs-*"
+	refreshWaitFor       = "wait_for"
+	taskLogsTemplateName = "determined-tasklogs-template"
+	taskLogsIndexPattern = "determined-tasklogs-*"
 )
 
 func (e *Elastic) WaitForIngest(index string) error {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
-	if err := enc.Encode(model.TrialLog{}); err != nil {
+	if err := enc.Encode(model.TaskLog{}); err != nil {
 		return errors.Wrap(err, "failed to make index request body")
 	}
 	res, err := e.client.Index(index, &buf,
@@ -43,7 +43,7 @@ func (e *Elastic) AddDateNanosTemplate() error {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(jsonObj{
-		"index_patterns": []string{trialLogsIndexPattern},
+		"index_patterns": []string{taskLogsIndexPattern},
 		"mappings": jsonObj{
 			"properties": jsonObj{
 				"timestamp": jsonObj{
@@ -54,7 +54,7 @@ func (e *Elastic) AddDateNanosTemplate() error {
 	}); err != nil {
 		return errors.Wrap(err, "failed to make put index template request body")
 	}
-	res, err := e.client.Indices.PutTemplate(trialLogsTemplateName, &buf)
+	res, err := e.client.Indices.PutTemplate(taskLogsTemplateName, &buf)
 	if err != nil {
 		return errors.Wrapf(err, "failed to put index template")
 	}

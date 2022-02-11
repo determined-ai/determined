@@ -59,6 +59,99 @@ def list_tasks(args: Namespace) -> None:
     render_tasks(args, tasks)
 
 
+@authentication.required
+def logs(args: Namespace) -> None:
+    api.pprint_task_logs(
+        args.master,
+        args.task_id,
+        head=args.head,
+        tail=args.tail,
+        follow=args.follow,
+        agent_ids=args.agent_ids,
+        container_ids=args.container_ids,
+        rank_ids=args.rank_ids,
+        sources=args.sources,
+        stdtypes=args.stdtypes,
+        level_above=args.level,
+        timestamp_before=args.timestamp_before,
+        timestamp_after=args.timestamp_after,
+    )
+
+
+common_log_options = [
+    Arg(
+        "-f",
+        "--follow",
+        action="store_true",
+        help="follow the logs of a running task, similar to tail -f",
+    ),
+    Group(
+        Arg(
+            "--head",
+            type=int,
+            help="number of lines to show, counting from the beginning of the log",
+        ),
+        Arg(
+            "--tail",
+            type=int,
+            help="number of lines to show, counting from the end of the log",
+        ),
+    ),
+    Arg(
+        "--allocation-id",
+        dest="allocation_ids",
+        action="append",
+        help="allocations to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--agent-id",
+        dest="agent_ids",
+        action="append",
+        help="agents to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--container-id",
+        dest="container_ids",
+        action="append",
+        help="containers to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--rank-id",
+        dest="rank_ids",
+        type=int,
+        action="append",
+        help="containers to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--timestamp-before",
+        help="show logs only from before (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
+    ),
+    Arg(
+        "--timestamp-after",
+        help="show logs only from after (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
+    ),
+    Arg(
+        "--level",
+        dest="level",
+        help="show logs with this level or higher "
+        + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    ),
+    Arg(
+        "--source",
+        dest="sources",
+        action="append",
+        help="sources to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--stdtype",
+        dest="stdtypes",
+        action="append",
+        help="output stream to show logs from (repeat for multiple values)",
+    ),
+]
+
+
 args_description: List[Any] = [
     Cmd(
         "task",
@@ -76,6 +169,18 @@ args_description: List[Any] = [
                     )
                 ],
                 is_default=True,
+            ),
+            Cmd(
+                "logs",
+                # Since declarative argparse tries to attach the help_str to the func itself:
+                # ./harness/determined/common/declarative_argparse.py#L57
+                # Each func must be unique.
+                lambda *args, **kwargs: logs(*args, **kwargs),
+                "fetch task logs",
+                [
+                    Arg("task_id", help="task ID"),
+                    *common_log_options,
+                ],
             ),
         ],
     ),

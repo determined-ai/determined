@@ -430,7 +430,7 @@ type TrialLog struct {
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
 	// StringID doesn't have serialization tags because it is not part of
-	// _source and populated from from _id.
+	// _source and populated from _id.
 	StringID *string `json:"-"`
 
 	TrialID int    `db:"trial_id" json:"trial_id"`
@@ -468,17 +468,17 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 	} else {
 		switch *t.Level {
-		case "TRACE":
+		case LogLevelTrace:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_TRACE
-		case "DEBUG":
+		case LogLevelDebug:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_DEBUG
-		case "INFO":
+		case LogLevelInfo:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
-		case "WARNING":
+		case LogLevelWarn:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_WARNING
-		case "ERROR":
+		case LogLevelError:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_ERROR
-		case "CRITICAL":
+		case LogLevelCritical:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_CRITICAL
 		default:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
@@ -490,11 +490,15 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 
 // Resolve resolves the legacy Message field from the others provided.
 func (t *TrialLog) Resolve() {
+	if t.Message != "" {
+		return
+	}
+
 	var timestamp string
 	if t.Timestamp != nil {
 		timestamp = t.Timestamp.Format(time.RFC3339Nano)
 	} else {
-		timestamp = "UNKNOWN TIME"
+		timestamp = defaultTaskLogTime
 	}
 
 	// This is just to match postgres.
@@ -506,7 +510,7 @@ func (t *TrialLog) Resolve() {
 			containerID = containerID[:containerIDMaxLength]
 		}
 	} else {
-		containerID = "UNKNOWN CONTAINER"
+		containerID = defaultTaskLogContainer
 	}
 
 	var rankID string

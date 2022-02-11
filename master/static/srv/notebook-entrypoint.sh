@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source /run/determined/task-logging-setup.sh
+
 set -e
 
 STARTUP_HOOK="startup-hook.sh"
@@ -36,8 +38,9 @@ fi
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
-exec "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
+"$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
 
+READINESS_REGEX='^.*Jupyter Server .* is running.*$'
 exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.allow_origin="*" \
                  --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
@@ -45,4 +48,6 @@ exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.ip="0.0.0.0" \
                  --ServerApp.open_browser=False \
                  --ServerApp.token="" \
-                 --ServerApp.trust_xheaders=True
+                 --ServerApp.trust_xheaders=True \
+    2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "${READINESS_REGEX}") >&2)
+

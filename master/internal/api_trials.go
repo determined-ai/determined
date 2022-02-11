@@ -2,43 +2,33 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/task"
-
-	"github.com/determined-ai/determined/master/internal/sproto"
-
-	"github.com/determined-ai/determined/master/pkg/cproto"
-
-	"github.com/determined-ai/determined/master/pkg/protoutils"
-
-	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-
 	"github.com/google/uuid"
-
 	"github.com/hashicorp/go-multierror"
-
-	"google.golang.org/protobuf/encoding/protojson"
-
-	"github.com/determined-ai/determined/proto/pkg/logv1"
-
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/pkg/errors"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -48,10 +38,7 @@ const (
 )
 
 var (
-	masterLogsBatchMissWaitTime = time.Second
-
 	trialLogsBatchMissWaitTime = time.Second
-	trialLogsTerminationDelay  = 5 * time.Second
 
 	distinctFieldBatchWaitTime = 5 * time.Second
 
@@ -65,36 +52,106 @@ var (
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
-// must support to provide the features surfaced in API.
+// must support to provide the features surfaced in API. This is deprecated, note it
+// no longer supports adding logs in favor of unified logs.
 type TrialLogBackend interface {
 	TrialLogs(
 		trialID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
 	) ([]*model.TrialLog, interface{}, error)
-	AddTrialLogs([]*model.TrialLog) error
 	TrialLogsCount(trialID int, filters []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 	DeleteTrialLogs(trialIDs []int) error
 }
 
 func (a *apiServer) TrialLogs(
-	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
+	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
+) error {
+	var taskID model.TaskID
+	switch t, err := a.m.db.TrialByID(int(req.TrialId)); {
+	case errors.Is(err, sql.ErrNoRows), errors.Is(err, db.ErrNotFound):
+		return trialNotFound
+	case err != nil:
+		return err
+	default:
+		taskID = t.TaskID
+	}
+
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
+
+	switch t, err := a.m.db.TaskByID(taskID); {
+	case errors.Is(err, sql.ErrNoRows):
+		// This indicates the trial is existed before the task logs table, and has version 0.
+		fallthrough
+	case t.LogVersion == model.TaskLogVersion0:
+		// First stream the legacy logs.
+		res := make(chan api.BatchResult, taskLogsChanBuffer)
+		go a.legacyTrialLogs(ctx, req, res)
+		if err := processBatches(res, func(b api.Batch) error {
+			return b.ForEach(func(i interface{}) error {
+				l, err := i.(*model.TrialLog).Proto()
+				if err != nil {
+					return err
+				}
+				return resp.Send(l)
+			})
+		}); err != nil {
+			return err
+		}
+		// Then fallthrough and stream the remaining logs, in the event the trial spanned an
+		// upgrade. In the event it did not, this should return quickly anyway.
+		fallthrough
+	case t.LogVersion == model.TaskLogVersion1:
+		// Translate the request.
+		res := make(chan api.BatchResult, taskLogsChanBuffer)
+		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
+			TaskId:          string(taskID),
+			Limit:           req.Limit,
+			Follow:          req.Follow,
+			AllocationIds:   nil,
+			ContainerIds:    req.ContainerIds,
+			RankIds:         req.RankIds,
+			Levels:          req.Levels,
+			Stdtypes:        req.Stdtypes,
+			Sources:         req.Sources,
+			TimestampBefore: req.TimestampBefore,
+			TimestampAfter:  req.TimestampAfter,
+			OrderBy:         req.OrderBy,
+		}, res)
+		return processBatches(res, func(b api.Batch) error {
+			return b.ForEach(func(i interface{}) error {
+				l, err := i.(*model.TaskLog).Proto()
+				if err != nil {
+					return err
+				}
+				return resp.Send(&apiv1.TrialLogsResponse{
+					Id:        l.Id,
+					Timestamp: l.Timestamp,
+					Message:   l.Message,
+					Level:     l.Level,
+				})
+			})
+		})
+	default:
+		panic(fmt.Errorf("unknown task log version: %d, please report this bug", t.LogVersion))
+	}
+}
+
+func (a *apiServer) legacyTrialLogs(
+	ctx context.Context, req *apiv1.TrialLogsRequest, res chan api.BatchResult,
+) {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
-		return err
-	}
-
-	switch exists, err := a.m.db.CheckTrialExists(int(req.TrialId)); {
-	case err != nil:
-		return err
-	case !exists:
-		return status.Error(codes.NotFound, "trial not found")
+		res <- api.ErrBatchResult(err)
+		return
 	}
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
-		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		res <- api.ErrBatchResult(errors.Wrap(err, "unsupported filter"))
+		return
 	}
 
 	var followState interface{}
@@ -116,31 +173,21 @@ func (a *apiServer) TrialLogs(
 		return model.TrialLogBatch(b), nil
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			pl, pErr := r.(*model.TrialLog).Proto()
-			if pErr != nil {
-				return pErr
-			}
-			return resp.Send(pl)
-		})
-	}
-
 	total, err := a.m.trialLogBackend.TrialLogsCount(int(req.TrialId), filters)
 	if err != nil {
-		return fmt.Errorf("failed to get trial count from backend: %w", err)
+		res <- api.ErrBatchResult(fmt.Errorf("failed to get trial count from backend: %w", err))
+		return
 	}
 	effectiveLimit := api.EffectiveLimit(int(req.Limit), 0, total)
 
-	return api.NewBatchStreamProcessor(
+	api.NewBatchStreamProcessor(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
-		onBatch,
-		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
+		a.isTrialTerminalFunc(int(req.TrialId), a.m.taskLogBackend.MaxTerminationDelay()),
 		false,
 		nil,
 		&trialLogsBatchMissWaitTime,
-	).Run(resp.Context())
+	).Run(ctx, res)
 }
 
 func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error) {
@@ -164,22 +211,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 	addInFilter("level", func() interface{} {
 		var levels []string
 		for _, l := range req.Levels {
-			switch l {
-			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
-				levels = append(levels, "DEBUG")
-			case logv1.LogLevel_LOG_LEVEL_TRACE:
-				levels = append(levels, "TRACE")
-			case logv1.LogLevel_LOG_LEVEL_DEBUG:
-				levels = append(levels, "DEBUG")
-			case logv1.LogLevel_LOG_LEVEL_INFO:
-				levels = append(levels, "INFO")
-			case logv1.LogLevel_LOG_LEVEL_WARNING:
-				levels = append(levels, "WARNING")
-			case logv1.LogLevel_LOG_LEVEL_ERROR:
-				levels = append(levels, "ERROR")
-			case logv1.LogLevel_LOG_LEVEL_CRITICAL:
-				levels = append(levels, "CRITICAL")
-			}
+			levels = append(levels, model.TaskLogLevelFromProto(l))
 		}
 		return levels
 	}(), len(req.Levels))
@@ -215,22 +247,24 @@ func (a *apiServer) TrialLogsFields(
 		return api.ToBatchOfOne(fields), err
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return resp.Send(
-				r.(*apiv1.TrialLogsFieldsResponse))
-		})
-	}
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
 
-	return api.NewBatchStreamProcessor(
+	res := make(chan api.BatchResult)
+	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		onBatch,
-		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
+		a.isTrialTerminalFunc(int(req.TrialId), a.m.taskLogBackend.MaxTerminationDelay()),
 		true,
 		&distinctFieldBatchWaitTime,
 		&distinctFieldBatchWaitTime,
-	).Run(resp.Context())
+	).Run(ctx, res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(r.(*apiv1.TrialLogsFieldsResponse))
+		})
+	})
 }
 
 func (a *apiServer) GetTrialCheckpoints(
@@ -447,23 +481,26 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		return a.m.db.GetTrialProfilerMetricsBatches(labelsJSON, lr.Offset, lr.Limit)
 	}
 
-	onBatch := func(b api.Batch) error {
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
+
+	res := make(chan api.BatchResult)
+	go api.NewBatchStreamProcessor(
+		api.BatchRequest{Limit: math.MaxInt32, Follow: req.Follow},
+		fetch,
+		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
+		false,
+		nil,
+		&trialProfilerMetricsBatchMissWaitTime,
+	).Run(ctx, res)
+
+	return processBatches(res, func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			return resp.Send(&apiv1.GetTrialProfilerMetricsResponse{
 				Batch: r.(*trialv1.TrialProfilerMetricsBatch),
 			})
 		})
-	}
-
-	return api.NewBatchStreamProcessor(
-		api.BatchRequest{Limit: math.MaxInt32, Follow: req.Follow},
-		fetch,
-		onBatch,
-		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
-		false,
-		nil,
-		&trialProfilerMetricsBatchMissWaitTime,
-	).Run(resp.Context())
+	})
 }
 
 func (a *apiServer) GetTrialProfilerAvailableSeries(
@@ -485,21 +522,24 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		)
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return resp.Send(r.(*apiv1.GetTrialProfilerAvailableSeriesResponse))
-		})
-	}
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
 
-	return api.NewBatchStreamProcessor(
+	res := make(chan api.BatchResult)
+	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), -1),
 		true,
 		&TrialAvailableSeriesBatchWaitTime,
 		&TrialAvailableSeriesBatchWaitTime,
-	).Run(resp.Context())
+	).Run(ctx, res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(r.(*apiv1.GetTrialProfilerAvailableSeriesResponse))
+		})
+	})
 }
 
 func (a *apiServer) PostTrialProfilerMetricsBatch(

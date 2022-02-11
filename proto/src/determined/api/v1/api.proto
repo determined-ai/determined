@@ -454,6 +454,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Experiments", "Trials" ]
     };
+    option deprecated = true;
   }
   // Stream trial log fields.
   rpc TrialLogsFields(TrialLogsFieldsRequest)
@@ -463,6 +464,37 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Experiments", "Trials" ]
+    };
+    option deprecated = true;
+  }
+  // Set allocation to ready state.
+  rpc AllocationReady(AllocationReadyRequest)
+      returns (AllocationReadyResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/ready"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Stream task logs.
+  rpc TaskLogs(TaskLogsRequest) returns (stream TaskLogsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/logs"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Jobs", "Tasks" ]
+    };
+  }
+  // Stream task log fields.
+  rpc TaskLogsFields(TaskLogsFieldsRequest)
+      returns (stream TaskLogsFieldsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/logs/fields"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Jobs", "Tasks" ]
     };
   }
   // Stream trial profiler metrics.
