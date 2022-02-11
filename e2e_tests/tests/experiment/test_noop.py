@@ -104,7 +104,7 @@ def test_noop_single_warm_start() -> None:
 
     first_workloads = trials[0].workloads
     assert len(first_workloads) == 90
-    checkpoints = list(filter(lambda x: "checkpoint" in x, first_workloads))
+    checkpoints = list(filter(lambda w: w.checkpoint, first_workloads))
     assert len(checkpoints) == 30
     first_checkpoint_id = checkpoints[0].checkpoint.uuid
     # last_checkpoint_id = checkpoints[-1].checkpoint.uuid
@@ -178,7 +178,7 @@ def test_cancel_one_active_experiment_unready() -> None:
     else:
         raise AssertionError("no workload active after 15 seconds")
 
-    exp.cancel_single_v1(experiment_id, should_have_trial=True)
+    exp.cancel_single(experiment_id, should_have_trial=True)
 
 
 @pytest.mark.e2e_cpu
@@ -194,7 +194,7 @@ def test_cancel_one_active_experiment_ready() -> None:
             break
         time.sleep(1)
 
-    exp.cancel_single_v1(experiment_id, should_have_trial=True)
+    exp.cancel_single(experiment_id, should_have_trial=True)
     exp.assert_performed_final_checkpoint(experiment_id)
 
 

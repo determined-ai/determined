@@ -202,8 +202,8 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
 
     for t in trials:
         for s in t.workloads:
-            if ("training" in s and s.training.state == "STATE_COMPLETED") or (
-                "validation" in s and s.validation.state == "STATE_COMPLETED"
+            if ("training" in s and s.training.state.value == "STATE_COMPLETED") or (
+                "validation" in s and s.validation.state.value == "STATE_COMPLETED"
             ):
                 return True
     return False
@@ -370,7 +370,7 @@ def assert_performed_initial_validation(exp_id: int) -> None:
 
     assert zeroth_step.validation
     assert zeroth_step.validation.totalBatches == 0
-    assert zeroth_step.validation.state == "STATE_COMPLETED"
+    assert zeroth_step.validation.state.value == "STATE_COMPLETED"
 
 
 def last_workload_matches_last_checkpoint(workloads: List[Dict[str, Any]]) -> None:
