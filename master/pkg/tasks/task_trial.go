@@ -108,7 +108,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		"DET_HPARAMS":            jsonify(s.HParams),
 		"DET_LATEST_BATCH":       strconv.Itoa(s.LatestBatch),
 		"DET_UNIQUE_PORT_OFFSET": strconv.Itoa(trialUniquePortOffset(s.Base.Devices)),
-		"DET_TASK_TYPE":          model.TaskTypeTrial,
+		"DET_TASK_TYPE":          string(model.TaskTypeTrial),
 	}
 	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
 		envVars["DET_LATEST_CHECKPOINT"] = *s.LatestCheckpoint.UUID

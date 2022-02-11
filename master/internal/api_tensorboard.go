@@ -153,7 +153,7 @@ func (a *apiServer) LaunchTensorboard(
 	uniqEnvVars := map[string]string{
 		"TENSORBOARD_PORT":     strconv.Itoa(port),
 		"TF_CPP_MIN_LOG_LEVEL": "3",
-		"DET_TASK_TYPE":        model.TaskTypeTensorboard,
+		"DET_TASK_TYPE":        string(model.TaskTypeTensorboard),
 	}
 
 	if spec.Config.Debug {
