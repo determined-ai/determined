@@ -11,11 +11,30 @@ def test_launch_native(mock_harness: MagicMock, mock_subprocess: MagicMock) -> N
     entrypoint: None
     Native enabled -> launch harness.py
     """
-    native = {"internal": {"native": {"command": ["script.py"]}}}
+    native = {
+        "internal": {"native": {"command": ["script.py"]}}, "resources": {"slots_per_trial": 1}
+    }
 
     launch.launch(det.ExperimentConfig(native))
     mock_harness.assert_called_once_with(train_entrypoint=None)
     mock_subprocess.assert_not_called()
+
+
+@patch("subprocess.Popen")
+@patch("determined.exec.harness.main")
+def test_launch_native_parallel(mock_harness: MagicMock, mock_subprocess: MagicMock) -> None:
+    """
+    entrypoint: None
+    Native enabled -> launch harness.py
+    """
+    native = {
+        "internal": {"native": {"command": ["script.py"]}}, "resources": {"slots_per_trial": 4}
+    }
+
+    launch.launch(det.ExperimentConfig(native))
+    mock_harness.assert_not_called()
+    entrypoint_list = ["python3", "-m", "determined.launch.autohorovod", "__NATIVE__"]
+    mock_subprocess.assert_called_once_with(entrypoint_list)
 
 
 @patch("subprocess.Popen")
