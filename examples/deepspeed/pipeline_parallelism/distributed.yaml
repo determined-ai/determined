@@ -7,7 +7,9 @@ hyperparameters:
   part: parameters
   overwrite_deepspeed_args:
     train_micro_batch_size_per_gpu: 4
-    optimizer.params.lr: 0.0001
+    optimizer:
+        params:
+            lr: 0.0001
 bind_mounts:
   - host_path: /tmp
     container_path: /data
@@ -37,3 +39,5 @@ entrypoint:
 min_validation_period:
   batches: 10
 max_restarts: 1
+reproducibility:
+  experiment_seed: 1644568430

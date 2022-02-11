@@ -6,13 +6,14 @@ It launches the entrypoint script using DeepSpeed's launch process.
 import argparse
 import logging
 import os
+import pathlib
 import socket
 import subprocess
 import sys
 import time
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, cast
 
-from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
+from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME, DLTS_HOSTFILE
 
 import determined as det
 from determined import constants
@@ -20,38 +21,33 @@ from determined.common import api
 from determined.common.api import certs
 
 
-def create_hostlist_file(num_proc_per_machine: int, ip_addresses: List[str]) -> Tuple:
+def create_hostlist_file(num_proc_per_machine: int, ip_addresses: List[str]) -> str:
     trial_runner_hosts = ip_addresses.copy()
     if len(ip_addresses) == 1:
         trial_runner_hosts[0] = "localhost"
-    filename = "/tmp/hostfile.txt"
-    with open(filename, "w") as hostfile:
+
+    hostfile_path = pathlib.Path(DLTS_HOSTFILE)
+    os.makedirs(hostfile_path.parent, exist_ok=True)
+    with open(hostfile_path, "w") as hostfile:
         lines = [f"{host} slots={num_proc_per_machine}\n" for host in trial_runner_hosts]
         hostfile.writelines(lines)
-    return trial_runner_hosts[0], filename
+    return trial_runner_hosts[0]
 
 
 def create_deepspeed_env_file() -> None:
     """Create an env var export file to pass Determined vars to the deepspeed launcher.
 
-    There are certain environment variables set by Determined that need to be passed to
-    the harness launched on every slot. The deepspeed launcher filters to a set vars with
-    certain prefixes so we need to bypass the filter with env vars in a file.
+    By default, the deepspeed launcher only keeps env vars that start with one of the following
+    ["NCCL", "PYTHON", "MV2", "UCX"].
+
+    There are certain variables that we need to be set that we can pass to deepspeed using
+    a custom env vars file.
     """
-    EXPORT_ENVS = ["PATH", "DET"]
-    INCLUDE = ["USE_DEEPSPEED"]
-    # We exclude these env vars since they differ per agent. We cannot just read it from
-    # the container environment since processes launched via ssh. This is true for both
-    # deepspeed and horovod. The horovod launcher currently sets them to be the same as
-    # that of the chief agent.
-    # TODO: (liam) pass these env vars correctly
-    EXCLUDES = ["DET_AGENT_ID", "DET_CONTAINER_ID"]
+    INCLUDE = ["PATH", "USE_DEEPSPEED", "DET_CHIEF_IP"]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = cast(Dict, os.environ.copy())
         for k, v in environ.items():
-            if k in INCLUDE or (
-                any([k.startswith(name) for name in EXPORT_ENVS]) and k not in EXCLUDES
-            ):
+            if k in INCLUDE:
                 f.write(f"{k}={v}\n")
 
 
@@ -60,11 +56,11 @@ def create_run_command(
     ip_addresses: List[str],
 ) -> List[str]:
     # Construct the deepspeed command.
-    master_address, hostfile_path = create_hostlist_file(num_proc_per_machine, ip_addresses)
+    master_address = create_hostlist_file(num_proc_per_machine, ip_addresses)
     deepspeed_process_cmd = [
         "deepspeed",
         "-H",
-        hostfile_path,
+        DLTS_HOSTFILE,
         "--master_addr",
         master_address,
         "--no_python",
@@ -180,15 +176,14 @@ def main(train_entrypoint: str) -> int:
         # Set custom PDSH args:
         # * bypass strict host checking
         # * -p our custom port
-        # * -S report largest error code across slots
-        # * other args are default args for pdsh
+        # * other args are default ssh args for pdsh
         os.environ["PDSH_SSH_ARGS"] = (
             "-o PasswordAuthentication=no -o StrictHostKeyChecking=no "
-            + f"-p {constants.DTRAIN_SSH_PORT} -S -2 -a -x %h"
+            f"-p {constants.DTRAIN_SSH_PORT} -2 -a -x %h"
         )
         subprocess.Popen(run_sshd_command)
 
-    return subprocess.Popen(full_cmd, env=os.environ.copy()).wait()
+    return subprocess.Popen(full_cmd).wait()
 
 
 if __name__ == "__main__":

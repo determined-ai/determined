@@ -130,18 +130,6 @@ class PyTorchTrialController(det.TrialController):
         nreplicas = self.context.distributed.size
         rank = self.context.distributed.rank
 
-        def _dataset_repro_warning(fn: str, data_obj: Any) -> str:
-            return (
-                f"{fn}() returned an instance of {type(data_obj).__name__}, which is not a "
-                "subclass of det.pytorch.DataLoader.  For most non-Iterable DataSets, "
-                "det.pytorch.DataLoader is a drop-in replacement for torch.utils.data.DataLoader "
-                "but which offers easy and transparent reproducibility in Determined experiments. "
-                "It is highly recommended that you use det.pytorch.DataLoader if possible.  If "
-                "not, you can disable this check by calling "
-                "context.experimental.disable_dataset_reproducibility_checks() at some point in "
-                "your trial's __init__() method."
-            )
-
         train_data = self.trial.build_training_data_loader()
         if isinstance(train_data, pytorch.DataLoader):
             self.training_loader = train_data.get_data_loader(
@@ -150,7 +138,9 @@ class PyTorchTrialController(det.TrialController):
         else:
             # Non-determined DataLoader; ensure the user meant to do this.
             if not self.context.experimental._data_repro_checks_disabled:
-                raise RuntimeError(_dataset_repro_warning("build_training_data_loader", train_data))
+                raise RuntimeError(
+                    pytorch._data._dataset_repro_warning("build_training_data_loader", train_data)
+                )
             self.training_loader = train_data
 
         self.context._epoch_len = len(self.training_loader)
@@ -168,7 +158,9 @@ class PyTorchTrialController(det.TrialController):
                 # Non-determined DataLoader; ensure the user meant to do this.
                 if not self.context.experimental._data_repro_checks_disabled:
                     raise RuntimeError(
-                        _dataset_repro_warning("build_validation_data_loader", validation_data)
+                        pytorch._data._dataset_repro_warning(
+                            "build_validation_data_loader", validation_data
+                        )
                     )
                 self.validation_loader = validation_data
         elif self.is_chief:
@@ -180,7 +172,9 @@ class PyTorchTrialController(det.TrialController):
                 # Non-determined DataLoader; ensure the user meant to do this.
                 if not self.context.experimental._data_repro_checks_disabled:
                     raise RuntimeError(
-                        _dataset_repro_warning("build_validation_data_loader", validation_data)
+                        pytorch._data._dataset_repro_warning(
+                            "build_validation_data_loader", validation_data
+                        )
                     )
                 self.validation_loader = validation_data
 

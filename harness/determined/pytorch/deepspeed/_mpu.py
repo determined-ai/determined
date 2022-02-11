@@ -1,27 +1,54 @@
+import abc
 from typing import cast
 
-from deepspeed.runtime.pipe.topology import PipelineParallelGrid
+from deepspeed.runtime.pipe import topology
 
-from determined._core._distributed import DistributedContext
+from determined import _core
 
 
 class ModelParallelUnit:
     """
-    This class contains the functions we expect in order to
-    accurately carry out parallel training.  The base class
-    returns information for just data parallel training.
-    You need to subclass and override the functions for custom
-    model parallel training and pass it to the pytorch context
-    by calling context.wrap_mpu(mpu).
-    The class is modeled after the methods expected from
-    a model parallel unit by deepspeed.
+    This class contains the functions we expect in order to accurately carry out parallel training.
+    For custom model parallel training, you need to subclass and override the functions before
+    passing it to the :class:`~determined.pytorch.deepspeed.DeepSpeedTrialContext` by calling
+    ``context.wrap_mpu(mpu)``.
     """
 
-    def __init__(self, dist_context: DistributedContext):
-        self.dist_context = dist_context
+    @abc.abstractmethod
+    def __init__(self) -> None:
+        pass
 
-    def get_global_rank(self) -> int:
-        return self.dist_context.get_rank()
+    @abc.abstractmethod
+    def get_data_parallel_rank(self) -> int:
+        pass
+
+    @abc.abstractmethod
+    def get_data_parallel_world_size(self) -> int:
+        pass
+
+    @abc.abstractmethod
+    def should_report_metrics(self) -> bool:
+        # Whether the rank should return metrics from training and evaluation steps.
+        # This is usually true for ranks in the last stage of pipeline parallel or
+        # model parallel training.
+        pass
+
+    @abc.abstractmethod
+    def should_build_data_loader(self) -> bool:
+        # Whether the rank should build a data loader.
+        # This is usually true for ranks in the first or last stage of
+        # pipeline parallel or model parallel training.
+        pass
+
+
+class DeterminedModelParallelUnit(ModelParallelUnit):
+    """
+    ModelParallelUnit for standard data parallel training.  Data parallel information derived from
+    Determined's :class:`~determined._core.DistributedContext`.
+    """
+
+    def __init__(self, dist_context: _core.DistributedContext):
+        self.dist_context = dist_context
 
     def get_data_parallel_rank(self) -> int:
         # Which pipeline this rank resides in.
@@ -45,11 +72,13 @@ class ModelParallelUnit:
 
 
 class DeepSpeedMPU(ModelParallelUnit):
-    def __init__(self, mpu: PipelineParallelGrid) -> None:
-        self.mpu = mpu
+    """
+    ModelParallelUnit for pipeline parallelism when using DeepSpeed's PipelineEngine.
+    Data and model parallel information derived from the model engine's mpu.
+    """
 
-    def get_global_rank(self) -> int:
-        return cast(int, self.mpu.get_global_rank())
+    def __init__(self, mpu: topology.PipelineParallelGrid) -> None:
+        self.mpu = mpu
 
     def get_data_parallel_rank(self) -> int:
         return cast(int, self.mpu.get_data_parallel_rank())

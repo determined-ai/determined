@@ -5,16 +5,53 @@ import logging
 import os
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Type, Union, cast
 
+import deepspeed
 import torch
 import torch.nn as nn
-from deepspeed import PipelineEngine
-from deepspeed.runtime.config_utils import dict_raise_error_on_duplicate_keys
+from deepspeed.runtime import config_utils
 
 import determined as det
 from determined import profiler, pytorch
-from determined.common import check
 from determined.pytorch import deepspeed as det_ds
-from determined.tensorboard import get_base_path
+
+
+def merge_dicts(base_dict: Dict[str, Any], source_dict: Dict[str, Any]) -> Dict[str, Any]:
+    for key, value in source_dict.items():
+        if key in base_dict:
+            if isinstance(value, dict):
+                base_dict[key] = merge_dicts(base_dict[key], value)
+            else:
+                base_dict[key] = value
+        else:
+            base_dict[key] = value
+    return base_dict
+
+
+def overwrite_deepspeed_config(
+    base_ds_config: Union[str, Dict], source_ds_dict: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Overwrite a base_ds_config with values from a source_ds_dict.
+
+    You can use source_ds_dict to overwrite leaf nodes of the base_ds_config.
+    More precisely, we will iterate depth first into source_ds_dict and if a node corresponds to
+    a leaf node of base_ds_config, we copy the node value over to base_ds_config.
+
+    Arguments:
+        base_ds_config (str or Dict): either a path to a DeepSpeed config file or a dictionary.
+        source_ds_dict (Dict): dictionary with fields that we want to copy to base_ds_config
+    Returns:
+        The resulting dictionary whe base_ds_config is overwritten with source_ds_dict.
+    """
+    if isinstance(base_ds_config, str):
+        base_ds_config = json.load(
+            open(base_ds_config, "r"),
+            object_pairs_hook=config_utils.dict_raise_error_on_duplicate_keys,
+        )
+    else:
+        if not isinstance(base_ds_config, dict):
+            raise TypeError("Expected string or dict for base_ds_config argument.")
+
+    return merge_dicts(cast(Dict[str, Any], base_ds_config), source_ds_dict)
 
 
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
@@ -29,12 +66,12 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
        passed to the DeepSpeed initialize function (see
        https://www.deepspeed.ai/getting-started/#writing-deepspeed-models) when building the
        model engine.
-    2. Wrap a custom model parallel configure that should subclass
-       :class:`determined.pytorch.ModelParallelUnit`.  We will automatically set mpu for
+    2. Overwrite a deepspeed config file or dictionary with values from Determined's
+       experiment config to ensure consistency in batch size and support hyperparameter tuning.
+    3. Wrap a custom model parallel configure that should subclass
+       :class:`determined.pytorch.deepspeed.ModelParallelUnit`.  We will automatically set mpu for
        data parallel and standard pipeline parallel training.  This should only needed if there
        is additional model parallelism outside of DeepSpeed's supported methods.
-    3. Overwrite a deepspeed config file or dictionary with values from Determined's
-       experiment config to ensure consistency in batch size and support hyperparameter tuning.
     4. Functionalities inherited from :class:`determined.TrialContext`, including getting
        the runtime information and properly handling training data in distributed training.
     """
@@ -62,19 +99,19 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self.profiler = None  # type: Any
         self._epoch_len = None  # type: Optional[int]
 
-        self._scaler = None
-        self._use_apex = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
         self._last_backward_batch_idx = None  # type: Optional[int]
         self._current_batch_idx = None  # type: Optional[int]
 
-        self._reducers = pytorch._PyTorchReducerContext()
         self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
-        self._mpu = det_ds.ModelParallelUnit(self.distributed)
+        self._mpu = det_ds.DeterminedModelParallelUnit(
+            self.distributed
+        )  # type: det_ds.ModelParallelUnit
         self._called_wrap_mpu = False
         self._train_micro_batch_size_per_gpu = None  # type: Optional[int]
         self._num_micro_batches_per_slot = None  # type: Optional[int]
         self._use_pipeline_parallel = False
+        self._data_repro_checks_disabled = False
         self._manual_grad_accumulation = False
 
         self._check_experiment_config()
@@ -91,21 +128,17 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             )
         self._average_training_metrics = True
         mixed_precision_val = optimizations_config.get("mixed_precision", "O0")
-        logging.debug(f"optimization.mixed_precision: {mixed_precision_val}")
-        check.eq(
-            mixed_precision_val,
-            "O0",
-            "Mixed precision is specified through the deepspeed config instead of the "
-            "Determined experiment config.",
-        )
+        if mixed_precision_val != "O0":
+            raise det.errors.InvalidExperimentException(
+                "Mixed precision is specified through the deepspeed config instead of the "
+                "Determined experiment config.",
+            )
         aggregation_frequency = optimizations_config.get("aggregation_frequency", 1)
-        logging.debug(f"optimization.aggregation_frequency: {aggregation_frequency}")
-        check.eq(
-            aggregation_frequency,
-            1,
-            "Gradient aggregation is specified through the deepspeed config instead of the "
-            "Determined experiment config.",
-        )
+        if aggregation_frequency > 1:
+            raise det.errors.InvalidExperimentException(
+                "Gradient aggregation is specified through the deepspeed config instead of the "
+                "Determined experiment config.",
+            )
 
     def wrap_mpu(self, mpu: det_ds.ModelParallelUnit) -> det_ds.ModelParallelUnit:
         if self._called_wrap_mpu:
@@ -144,7 +177,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             model = model.to(self.device)
 
         # Pipeline parallel model engine has its own MPU that we will use here.
-        if isinstance(model, PipelineEngine):
+        if isinstance(model, deepspeed.PipelineEngine):
             self._use_pipeline_parallel = True
             self._mpu = det_ds.DeepSpeedMPU(model.mpu)
 
@@ -156,7 +189,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             logging.warning(
                 f"Setting global batch size to {model.train_batch_size()} to match the "
                 "deepspeed config.  To prevent this from happening, you can call "
-                "self.context.overwrite_deepspeed_config(ds_config) to get a consistent"
+                "self.context.overwrite_deepspeed_config(base_ds_config) to get a consistent"
                 "deepspeed config dict which you can pass to the config field when calling"
                 "deepspeed.initialize to build the model engine."
             )
@@ -189,6 +222,9 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         expected per slot batch size.
         """
         self._manual_grad_accumulation = True
+
+    def disable_dataset_reproducibility_checks(self) -> None:
+        self._data_repro_checks_disabled = True
 
     @property
     def use_pipeline_parallel(self) -> bool:
@@ -232,17 +268,6 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             )
         return self._num_micro_batches_per_slot
 
-    def set_profiler(self, *args: List[str], **kwargs: Any) -> None:
-        """
-        Sets a torch profiler instance on the trial context to be called in _pytorch_trial
-        when training.
-        """
-        self.profiler = torch.profiler.profile(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(str(get_base_path({}))),
-            *args,
-            **kwargs,
-        )
-
     def _set_determined_profiler(self, prof: profiler.ProfilerAgent) -> None:
         self._determined_profiler = prof
 
@@ -268,7 +293,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             self.device = torch.device("cuda", 0)
         else:
             self.device = torch.device("cpu")
-        check.is_not_none(self.device)
+        assert self.device is not None, "Error setting torch device."
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map data to the device allocated by the Determined cluster.
@@ -320,67 +345,3 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
-
-    def overwrite_deepspeed_config(self, ds_config: Union[str, Dict]) -> Dict[str, Any]:
-        """Overwrite a DeepSpeed config with values from Determined's experiment config.
-
-        For fields that overlap like batch size, we will overwrite the DeepSpeed config in favor
-        of the value specified in Determined's experiment config.
-
-        Users can specify additional DeepSpeed config values to overwrite using a field under
-        hyperparameters called `overwrite_deepspeed_args`.
-
-        You can speicify nested DeepSpeed config fields using `.` as a separator between keys.
-        For example:
-        .. code-bloack:: yaml
-            hyperparameters:
-              deepspeed_config: ds_config.json
-              ...
-              overwrite_deepspeed_args:
-                train_micro_batch_size_per_gpu: 4
-                optimizer.params.lr: 0.0001
-
-        This can be used in conjunction with hyperparameter search to pass different values
-        to a DeepSpeed config.  For example:
-        .. code-bloack:: yaml
-            hyperparameters:
-              deepspeed_config: ds_config.json
-              ...
-              overwrite_deepspeed_args:
-                optimizer.params.lr:
-                  type: log
-                  minval: -5
-                  maxval: -3
-                  base: 10
-
-        Arguments:
-            ds_config (str or Dict): either a path to a DeepSpeed config file or a dictionary.
-        Returns:
-            A dictionary with DeepSpeed args overwritten with values specified in Determined's
-            experiment config.
-        """
-        if isinstance(ds_config, str):
-            assert os.path.exists(ds_config)
-            ds_config = json.load(
-                open(ds_config, "r"), object_pairs_hook=dict_raise_error_on_duplicate_keys
-            )
-        ds_config = cast(dict, ds_config)
-
-        # Overwrite ds_config with overlapping values from Determined's experiment config.
-        if "train_batch_size" in ds_config:
-            ds_config["train_batch_size"] = self.get_global_batch_size()
-
-        # Overwrite ds_config with fields specified in overwrite_deepspeed_args.
-        hparams = self.get_hparams()
-        if "overwrite_deepspeed_args" in hparams:
-            for k, v in hparams["overwrite_deepspeed_args"].items():
-                nested_keys = k.split(".")
-                index_dict = ds_config
-                for nk in nested_keys[:-1]:
-                    if nk in index_dict:
-                        index_dict = index_dict[nk]
-                    else:
-                        raise KeyError(f"Error indexing {k} in ds_config.")
-                assert nested_keys[-1] in index_dict, f"Error indexing {k} in ds_config."
-                index_dict[nested_keys[-1]] = v
-        return ds_config

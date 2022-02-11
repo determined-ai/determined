@@ -14,6 +14,7 @@ from determined.pytorch.deepspeed import (
     DeepSpeedMPU,
     DeepSpeedTrial,
     DeepSpeedTrialContext,
+    overwrite_deepspeed_config
 )
 
 
@@ -43,7 +44,6 @@ class CIFARTrial(DeepSpeedTrial):
     def __init__(self, context: DeepSpeedTrialContext) -> None:
         self.context = context
         self.args = AttrDict(self.context.get_hparams())
-        deepspeed.init_distributed()
         model = AlexNet(10)
         model = PipelineModule(
             layers=join_layers(model),
@@ -53,7 +53,10 @@ class CIFARTrial(DeepSpeedTrial):
             activation_checkpoint_interval=0,
         )
 
-        ds_config = self.context.overwrite_deepspeed_config(self.args.deepspeed_config)
+        ds_config = overwrite_deepspeed_config(
+            self.args.deepspeed_config, 
+            self.args.get("overwrite_deepspeed_args", {})
+        )
         model_engine, optimizer, _, _ = deepspeed.initialize(
             args=self.args,
             model=model,
