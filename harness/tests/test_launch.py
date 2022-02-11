@@ -12,7 +12,8 @@ def test_launch_native(mock_harness: MagicMock, mock_subprocess: MagicMock) -> N
     Native enabled -> launch harness.py
     """
     native = {
-        "internal": {"native": {"command": ["script.py"]}}, "resources": {"slots_per_trial": 1}
+        "internal": {"native": {"command": ["script.py"]}},
+        "resources": {"slots_per_trial": 1},
     }
 
     launch.launch(det.ExperimentConfig(native))
@@ -28,7 +29,8 @@ def test_launch_native_parallel(mock_harness: MagicMock, mock_subprocess: MagicM
     Native enabled -> launch harness.py
     """
     native = {
-        "internal": {"native": {"command": ["script.py"]}}, "resources": {"slots_per_trial": 4}
+        "internal": {"native": {"command": ["script.py"]}},
+        "resources": {"slots_per_trial": 4},
     }
 
     launch.launch(det.ExperimentConfig(native))
