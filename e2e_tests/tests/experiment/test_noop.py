@@ -99,17 +99,17 @@ def test_noop_single_warm_start() -> None:
     trials = exp.experiment_trials(experiment_id1)
     assert len(trials) == 1
 
-    first_trial = trials[0]["trial"]
-    first_trial_id = first_trial["id"]
+    first_trial = trials[0].trial
+    first_trial_id = first_trial.id
 
-    first_workloads = trials[0]["workloads"]
+    first_workloads = trials[0].workloads
     assert len(first_workloads) == 90
     checkpoints = list(filter(lambda x: "checkpoint" in x, first_workloads))
     assert len(checkpoints) == 30
-    first_checkpoint_id = checkpoints[0]["checkpoint"]["uuid"]
-    # last_checkpoint_id = checkpoints[-1]["checkpoint"]["uuid"]
+    first_checkpoint_id = checkpoints[0].checkpoint.uuid
+    # last_checkpoint_id = checkpoints[-1].checkpoint.uuid
     last_validation = list(filter(lambda x: "validation" in x, first_workloads))[-1]
-    assert last_validation["validation"]["metrics"]["validation_error"] == pytest.approx(0.9 ** 30)
+    assert last_validation.validation.metrics["validation_error"] == pytest.approx(0.9 ** 30)
 
     config_base = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
 
@@ -124,15 +124,13 @@ def test_noop_single_warm_start() -> None:
     assert len(trials) == 1
 
     second_trial = trials[0]
-    assert len(second_trial["workloads"]) == 90
+    assert len(second_trial.workloads) == 90
 
     # Second trial should have a warm start checkpoint id.
     # assert second_trial["warm_start_checkpoint_id"] == last_checkpoint_id
 
-    val_workloads = list(filter(lambda w: "validation" in w, second_trial["workloads"]))
-    assert val_workloads[-1]["validation"]["metrics"]["validation_error"] == pytest.approx(
-        0.9 ** 60
-    )
+    val_workloads = list(filter(lambda w: w.validation, second_trial.workloads))
+    assert val_workloads[-1].validation.metrics["validation_error"] == pytest.approx(0.9 ** 60)
 
     # Now test source_checkpoint_uuid.
     config_obj = copy.deepcopy(config_base)
@@ -149,11 +147,11 @@ def test_noop_single_warm_start() -> None:
     assert len(trials) == 1
 
     third_trial = trials[0]
-    assert len(third_trial["workloads"]) == 90
+    assert len(third_trial.workloads) == 90
 
     # assert third_trial["warm_start_checkpoint_id"] == first_checkpoint_id
-    validations = list(filter(lambda w: "validation" in w, third_trial["workloads"]))
-    assert validations[1]["validation"]["metrics"]["validation_error"] == pytest.approx(0.9 ** 3)
+    validations = list(filter(lambda w: w.validation, third_trial.workloads))
+    assert validations[1].validation.metrics["validation_error"] == pytest.approx(0.9 ** 3)
 
 
 @pytest.mark.e2e_cpu
@@ -283,29 +281,29 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
 
     first_trial = exp.experiment_trials(experiment)[0]
 
-    assert len(first_trial["workloads"]) >= 4
+    assert len(first_trial.workloads) >= 4
 
-    first_checkpoint = list(filter(lambda w: "checkpoint" in w, first_trial["workloads"]))[0]
-    # first_checkpoint_id = first_checkpoint["checkpoint"]["uuid"]
+    first_checkpoint = list(filter(lambda w: w.checkpoint, first_trial.workloads))[0]
+    # first_checkpoint_id = first_checkpoint.checkpoint.uuid
 
     config = copy.deepcopy(config_base)
     if tf2 is not None:
         config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    config["searcher"]["source_checkpoint_uuid"] = first_checkpoint["checkpoint"]["uuid"]
+    config["searcher"]["source_checkpoint_uuid"] = first_checkpoint.checkpoint.uuid
 
     experiment2 = exp.run_basic_test_with_temp_config(config, conf.fixtures_path(fixture), 1)
 
     second_trial = exp.experiment_trials(experiment2)[0]
 
-    assert len(second_trial["workloads"]) >= 4
+    assert len(second_trial.workloads) >= 4
     # assert second_trial["warm_start_checkpoint_id"] == first_checkpoint_id
-    first_trial_validations = list(filter(lambda w: "validation" in w, first_trial["workloads"]))
-    second_trial_validations = list(filter(lambda w: "validation" in w, second_trial["workloads"]))
+    first_trial_validations = list(filter(lambda w: w.validation, first_trial.workloads))
+    second_trial_validations = list(filter(lambda w: w.validation, second_trial.workloads))
 
     for step in range(0, 2):
         for metric in metrics:
-            first_metric = first_trial_validations[step + 1]["validation"]["metrics"][metric]
-            second_metric = second_trial_validations[step]["validation"]["metrics"][metric]
+            first_metric = first_trial_validations[step + 1].validation.metrics[metric]
+            second_metric = second_trial_validations[step].validation.metrics[metric]
             assert (
                 first_metric == second_metric
             ), f"failures on iteration: {step} with metric: {metric}"

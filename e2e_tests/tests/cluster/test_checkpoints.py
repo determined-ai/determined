@@ -87,15 +87,17 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             trials = exp.experiment_trials(experiment_id)
             assert len(trials) == 1
 
-            checkpoints = list(filter(lambda w: "checkpoint" in w, trials[0]["workloads"]))
+            checkpoints = list(
+                map(lambda w: w.checkpoint, filter(lambda w: w.checkpoint, trials[0].workloads))
+            )
             checkpoints = sorted(
-                (workload["checkpoint"] for workload in checkpoints),
-                key=operator.itemgetter("totalBatches"),
+                checkpoints,
+                key=lambda ckpt: ckpt.totalBatches,
             )
             assert len(checkpoints) == 10
             by_state = {}  # type: Dict[str, Set[int]]
             for checkpoint in checkpoints:
-                by_state.setdefault(checkpoint["state"], set()).add(checkpoint["totalBatches"])
+                by_state.setdefault(checkpoint.state.value, set()).add(checkpoint.totalBatches)
 
             if by_state == result:
                 all_checkpoints.append((config, checkpoints))
@@ -120,16 +122,16 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
-                    storage_id = checkpoint["uuid"]
+                    storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
-                    if checkpoint["state"] == "COMPLETED":
+                    if checkpoint.state == "STATE_COMPLETED":
                         storage_state[storage_id]["found"] = False
                         try:
                             with storage_manager.restore_path(storage_id):
                                 storage_state[storage_id]["found"] = True
                         except errors.CheckpointNotFound:
                             pass
-                    elif checkpoint["state"] == "DELETED":
+                    elif checkpoint.state == "STATE_DELETED":
                         storage_state[storage_id] = {"deleted": False, "checkpoint": checkpoint}
                         try:
                             with storage_manager.restore_path(storage_id):

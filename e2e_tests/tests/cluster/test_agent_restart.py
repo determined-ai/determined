@@ -375,7 +375,8 @@ def test_agent_restart_recover_experiment(managed_cluster: ManagedCluster, downt
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
-        assert len(trials[0]["workloads"]) > 1  # == 5
+        train_wls = list(filter(lambda w: w.training, trials[0].workloads))
+        assert len(train_wls) == 5
     except Exception:
         managed_cluster.restart_agent()
         raise
@@ -401,7 +402,8 @@ def test_agent_reconnect_keep_experiment(managed_cluster: ManagedCluster) -> Non
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
-        assert len(trials[0]["workloads"]) > 1  # == 5
+        train_wls = list(filter(lambda w: w.training, trials[0].workloads))
+        assert len(train_wls) == 5
     except Exception:
         managed_cluster.restart_proxy(wait_for_reconnect=False)
         managed_cluster.restart_agent()

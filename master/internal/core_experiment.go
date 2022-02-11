@@ -86,7 +86,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
 	patch := struct {
-		State     *model.State `json:"state"`
 		Resources *struct {
 			MaxSlots api.MaybeInt `json:"max_slots"`
 			Weight   *float64     `json:"weight"`
@@ -144,10 +143,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 	if err := m.db.SaveExperimentConfig(dbExp); err != nil {
 		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
-	}
-
-	if patch.State != nil {
-		m.system.TellAt(actor.Addr("experiments", args.ExperimentID), *patch.State)
 	}
 
 	if patch.Resources != nil {

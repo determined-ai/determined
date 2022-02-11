@@ -58,11 +58,11 @@ def test_tf_keras_const_warm_start(
     assert len(trials) == 1
 
     first_trial = trials[0]
-    first_trial_id = first_trial["trial"]["id"]
+    first_trial_id = first_trial.trial.id
 
-    assert len(first_trial["workloads"]) == 4
-    # checkpoints = list(filter(lambda w: "checkpoint" in w, first_trial["workloads"]))
-    # first_checkpoint_id = checkpoints[0]["checkpoint"]["uuid"]
+    assert len(first_trial.workloads) == 4
+    # checkpoints = list(filter(lambda w: w.checkpoint, first_trial.workloads))
+    # first_checkpoint_id = checkpoints[0].checkpoint.uuid
 
     # Add a source trial ID to warm start from.
     config["searcher"]["source_trial_id"] = first_trial_id
@@ -76,7 +76,7 @@ def test_tf_keras_const_warm_start(
     assert len(trials) == 1
     # for trial in trials:
     # assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
-    trial_id = trials[0]["trial"]["id"]
+    trial_id = trials[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -103,7 +103,7 @@ def test_tf_keras_parallel(
 
     # Test exporting a checkpoint.
     export_and_load_model(experiment_id)
-    collect_trial_profiles(trials[0]["trial"]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
     # Check on record/batch counts we emitted in logs.
     validation_size = 10000
@@ -140,7 +140,7 @@ def test_tf_keras_single_gpu(tf2: bool, collect_trial_profiles: Callable[[int], 
 
     # Test exporting a checkpoint.
     export_and_load_model(experiment_id)
-    collect_trial_profiles(trials[0]["trial"]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
 
 @pytest.mark.parallel
@@ -156,7 +156,7 @@ def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) 
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
-    collect_trial_profiles(trials[0]["trial"]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
 
 @pytest.mark.tensorflow2_cpu
@@ -174,7 +174,7 @@ def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) ->
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
     export_and_load_model(experiment_id)
-    collect_trial_profiles(trials[0]["trial"]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
 
 @pytest.mark.tensorflow2
@@ -186,7 +186,7 @@ def test_tf_keras_mnist_data_layer_lfs(
     tf2: bool, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     exp_id = run_tf_keras_mnist_data_layer_test(tf2, "lfs")
-    trial_id = exp.experiment_trials(exp_id)[0]["trial"]["id"]
+    trial_id = exp.experiment_trials(exp_id)[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -201,7 +201,7 @@ def test_tf_keras_mnist_data_layer_s3(
     collect_trial_profiles: Callable[[int], None],
 ) -> None:
     exp_id = run_tf_keras_mnist_data_layer_test(tf2, storage_type)
-    trial_id = exp.experiment_trials(exp_id)[0]["trial"]["id"]
+    trial_id = exp.experiment_trials(exp_id)[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -247,7 +247,7 @@ def test_tf_keras_mnist_data_layer_parallel(
         config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
     )
 
-    trial_id = exp.experiment_trials(exp_id)[0]["trial"]["id"]
+    trial_id = exp.experiment_trials(exp_id)[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -264,5 +264,5 @@ def run_tf_keras_dcgan_example(collect_trial_profiles: Callable[[int], None]) ->
     exp_id = exp.run_basic_test_with_temp_config(
         config, conf.gan_examples_path("dcgan_tf_keras"), 1
     )
-    trial_id = exp.experiment_trials(exp_id)[0]["trial"]["id"]
+    trial_id = exp.experiment_trials(exp_id)[0].trial.id
     collect_trial_profiles(trial_id)
