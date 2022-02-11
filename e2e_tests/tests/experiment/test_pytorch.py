@@ -242,3 +242,12 @@ def test_distributed_logging() -> None:
         assert exp.check_if_string_present_in_trial_logs(
             t_id, "finished train_batch for rank {}".format(i)
         )
+
+
+@pytest.mark.parallel
+def test_pytorch_native_api_parallel() -> None:
+    exp_id = exp.create_native_experiment(
+        conf.fixtures_path("pytorch_no_op"),
+        [sys.executable, "model_def.py", "--slots-per-trial", "8"],
+    )
+    exp.wait_for_experiment_state(exp_id, "COMPLETED")
