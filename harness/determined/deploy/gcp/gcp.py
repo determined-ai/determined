@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import googleapiclient.discovery
@@ -16,6 +17,14 @@ from .preflight import check_quota
 
 TF_VARS_FILE = "terraform.tfvars.json"
 TF_STATE_FILE = "terraform.tfstate"
+TF_GCS_CONFIG = """
+terraform {
+  backend "gcs" {
+    bucket = "%s"
+    prefix = "%s"
+  }
+}
+"""
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool = False) -> None:
@@ -96,12 +105,18 @@ def terraform_init(configs: Dict, env: Dict) -> None:
         terraform_dir(configs),
     )
 
+    state_bucket = configs.get("tf_state_gcs_bucket_name")
+    if state_bucket:
+        with (Path(terraform_dir(configs)) / "override.tf").open("w") as fout:
+            fout.write(TF_GCS_CONFIG % (state_bucket, configs["cluster_id"]))
+
     command = ["terraform", "init"]
-    command += [
-        "-backend-config=path={}".format(
-            os.path.join(configs["local_state_path"], "terraform.tfstate")
-        )
-    ]
+    if not state_bucket:
+        command += [
+            "-backend-config=path={}".format(
+                os.path.join(configs["local_state_path"], "terraform.tfstate")
+            )
+        ]
 
     run_command(command, env, cwd=terraform_dir(configs))
 
@@ -128,6 +143,16 @@ def terraform_apply(configs: Dict, env: Dict, variables_to_exclude: List) -> Non
 
 
 def terraform_output(configs: Dict, env: Dict, variable_name: str) -> Any:
+    if configs.get("tf_state_gcs_bucket_name"):
+        command = [
+            "terraform",
+            "state",
+            "pull",
+        ]
+        state_data_json = subprocess.check_output(command, env=env, cwd=terraform_dir(configs))
+        state_data = json.loads(state_data_json)
+        return state_data.get("outputs", {}).get(variable_name, {}).get("value")
+
     state_file_path = os.path.join(configs["local_state_path"], TF_STATE_FILE)
     command = [
         "terraform",
