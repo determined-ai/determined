@@ -1,8 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Notebooks: Add a config field ``notebook_idle_type`` that changes how the idleness of a notebook
-   is determined for the idle timeout feature. If the value is different from the default, users do
-   not need to manually shut down kernels to allow the idle timeout to take effect. See :ref:`the
-   documentation <command-notebook-configuration>` for more information.
