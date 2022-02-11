@@ -7,8 +7,6 @@ WITH validations_vt AS (
         v.metrics->'num_inputs' as num_inputs,
         v.metrics->'validation_metrics' as metrics
       FROM validations v
-        INNER JOIN steps s ON v.trial_id = s.trial_id
-        AND v.total_batches = s.total_batches
       WHERE v.trial_id = $1
     ) AS r1
 ),
@@ -33,8 +31,6 @@ checkpoints_vt AS (
         c.total_batches,
         c.resources
       FROM checkpoints c
-        INNER JOIN steps s ON c.trial_id = s.trial_id
-        AND c.total_batches = s.total_batches
       WHERE c.trial_id = $1
     ) AS r1
 )
