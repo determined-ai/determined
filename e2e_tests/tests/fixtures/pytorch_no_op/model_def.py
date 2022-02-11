@@ -69,6 +69,7 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--slots-per-trial", default="1")
     args = parser.parse_args()
