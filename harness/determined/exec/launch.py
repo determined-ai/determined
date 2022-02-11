@@ -20,14 +20,17 @@ def match_legacy_trial_class(arg: str) -> bool:
 
 
 def launch(experiment_config: det.ExperimentConfig) -> int:
+    slots_per_trial = experiment_config.slots_per_trial()
+    entrypoint = experiment_config.get_entrypoint()
+
     # If native is enabled, harness will load from native entrypoint command
     if experiment_config.native_enabled():
-        from determined.exec import harness
+        if slots_per_trial < 2:
+            from determined.exec import harness
 
-        return harness.main(train_entrypoint=None)
-
-    entrypoint = experiment_config.get_entrypoint()
-    slots_per_trial = experiment_config.slots_per_trial()
+            return harness.main(train_entrypoint=None)
+        else:
+            entrypoint = ["python3", "-m", "determined.launch.autohorovod", "__NATIVE__"]
 
     if not entrypoint:
         raise AssertionError("Entrypoint not found in experiment config")
