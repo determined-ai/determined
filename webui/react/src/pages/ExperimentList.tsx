@@ -268,9 +268,10 @@ const ExperimentList: React.FC = () => {
       handleError(e, {
         isUserTriggered: true,
         publicMessage: 'Unable to save experiment description.',
-        silent: true,
+        silent: false,
       });
       setIsLoading(false);
+      return e;
     }
   }, [ ]);
 
