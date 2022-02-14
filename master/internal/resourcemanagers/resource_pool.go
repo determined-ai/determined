@@ -384,7 +384,14 @@ func (rp *ResourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*age
 
 	result := make(map[*actor.Ref]*agent.AgentState, len(rp.agents))
 	for ref, msg := range responses {
-		result[ref] = msg.(*agent.AgentState)
+		switch msg := msg.(type) {
+		case *agent.AgentState:
+			result[ref] = msg
+		case error:
+			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
+		default:
+			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())
+		}
 	}
 
 	return result

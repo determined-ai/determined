@@ -35,7 +35,7 @@ type slot struct {
 
 func (s *slot) summarize() model.SlotSummary {
 	return model.SlotSummary{
-		ID:        strconv.Itoa(s.device.ID),
+		ID:        strconv.Itoa(int(s.device.ID)),
 		Device:    s.device,
 		Enabled:   s.enabled.Enabled(),
 		Container: s.container,
@@ -72,7 +72,7 @@ func NewAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *AgentState {
 		ZeroSlotContainers:    make(map[cproto.ID]bool),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
-		slotStates:            make(map[int]*slot),
+		slotStates:            make(map[device.ID]*slot),
 		containers:            make(map[cproto.ID]*actor.Ref),
 	}
 }
@@ -264,7 +264,7 @@ func (a *AgentState) containerStateChanged(ctx *actor.Context, msg aproto.Contai
 }
 
 func (a *AgentState) startContainer(ctx *actor.Context, msg sproto.StartTaskContainer) error {
-	inner := func(deviceId int) error {
+	inner := func(deviceId device.ID) error {
 		s, ok := a.slotStates[deviceId]
 		if !ok {
 			return errors.New("can't find slot")

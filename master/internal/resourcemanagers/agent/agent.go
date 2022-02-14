@@ -214,6 +214,11 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
+		if !a.started {
+			ctx.Respond(errors.New("can't enable agent: agent not started"))
+			return nil
+		}
+
 		a.agentState.Enable(ctx)
 		a.agentState.patchAllSlotsState(ctx, PatchAllSlotsState{
 			Enabled: &a.agentState.enabled,
@@ -223,6 +228,11 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case *proto.DisableAgentRequest:
 		if a.awaitingReconnect {
 			ctx.Respond(errRecovering)
+			return nil
+		}
+
+		if !a.started {
+			ctx.Respond(errors.New("can't disable agent: agent not started"))
 			return nil
 		}
 
@@ -278,7 +288,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		ctx.Respond(a.agentState)
+		ctx.Respond(a.agentState.DeepCopy())
 	case PatchSlotState:
 		if !a.started {
 			ctx.Respond(errors.New("can't patch slot state: agent not started"))
@@ -288,7 +298,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		result, err := a.agentState.patchSlotState(ctx, msg)
 		if err != nil {
 			ctx.Respond(err)
-			ctx.Log().WithError(err)
+			return nil
 		}
 		ctx.Respond(result)
 	case PatchAllSlotsState:

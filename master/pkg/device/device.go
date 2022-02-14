@@ -37,7 +37,7 @@ func (t Type) Proto() devicev1.Type {
 }
 
 // ID the type of Device.ID.
-type ID = int
+type ID int
 
 // Device represents a single computational device on an agent.
 type Device struct {

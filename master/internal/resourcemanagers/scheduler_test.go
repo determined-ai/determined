@@ -209,7 +209,7 @@ func forceAddAgent(
 	assert.Assert(t, created)
 	state := agent.NewAgentState(sproto.AddAgent{Agent: ref}, 100)
 	for i := 0; i < numSlots; i++ {
-		state.Devices[device.Device{ID: i}] = nil
+		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
 	i := 0
 	for ix := range state.Devices {
@@ -239,7 +239,7 @@ func newFakeAgentState(
 	assert.Assert(t, created)
 	state := agent.NewAgentState(sproto.AddAgent{Agent: ref, Label: label}, maxZeroSlotContainers)
 	for i := 0; i < slots; i++ {
-		state.Devices[device.Device{ID: i}] = nil
+		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
 
 	if slotsUsed > 0 {
@@ -325,7 +325,7 @@ func setupSchedulerStates(
 		}, mockAgent.maxZeroSlotContainers)
 
 		for i := 0; i < mockAgent.slots; i++ {
-			agent.Devices[device.Device{ID: i}] = nil
+			agent.Devices[device.Device{ID: device.ID(i)}] = nil
 		}
 		agents[ref] = agent
 	}

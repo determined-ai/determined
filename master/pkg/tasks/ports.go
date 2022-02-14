@@ -25,7 +25,7 @@ func trialUniquePortOffset(devices []device.Device) int {
 			min = d.ID
 		}
 	}
-	return min
+	return int(min)
 }
 
 func toPortSet(ports map[string]int) nat.PortSet {

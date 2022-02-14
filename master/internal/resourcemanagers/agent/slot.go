@@ -86,6 +86,8 @@ func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 			ctx.Respond(apiCtx.NoContent(http.StatusNoContent))
 		}
 	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
+		if ctx.ExpectingResponse() {
+			ctx.Respond(echo.ErrMethodNotAllowed)
+		}
 	}
 }

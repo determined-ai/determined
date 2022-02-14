@@ -88,8 +88,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			kubernetes.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 			k.config.Fluent,
 		)
-		// Expose a fake number of zero slots here just to signal to the UI
-		// that this RP does support the aux containers.
 		k.podsActor = podsActor
 
 	case
@@ -175,6 +173,9 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	if err != nil {
 		return nil, err
 	}
+
+	// Expose a fake number of zero slots here just to signal to the UI
+	// that this RP does support the aux containers.
 
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
