@@ -1,8 +1,8 @@
-import { commandTypeToLabel } from 'constants/states';
-
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
@@ -20,11 +20,11 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
@@ -55,8 +55,6 @@ interface SourceInfo {
   plural: string;
   sources: TensorBoardSource[];
 }
-
-const TASK_LIMIT_BY_TYPE = 1000;
 
 const filterKeys: Array<keyof Settings> = [ 'search', 'state', 'type', 'user' ];
 
@@ -118,10 +116,10 @@ const TaskList: React.FC = () => {
   const fetchTasks = useCallback(async () => {
     try {
       const [ commands, jupyterLabs, shells, tensorboards ] = await Promise.all([
-        getCommands({ limit: TASK_LIMIT_BY_TYPE, signal: canceler.signal }),
-        getJupyterLabs({ limit: TASK_LIMIT_BY_TYPE, signal: canceler.signal }),
-        getShells({ limit: TASK_LIMIT_BY_TYPE, signal: canceler.signal }),
-        getTensorBoards({ limit: TASK_LIMIT_BY_TYPE, signal: canceler.signal }),
+        getCommands({ signal: canceler.signal }),
+        getJupyterLabs({ signal: canceler.signal }),
+        getShells({ signal: canceler.signal }),
+        getTensorBoards({ signal: canceler.signal }),
       ]);
       const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
       setTasks(prev => {
