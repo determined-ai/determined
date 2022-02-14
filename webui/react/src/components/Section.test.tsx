@@ -3,29 +3,30 @@ import React from 'react';
 
 import Section from './Section';
 
-const setup = ({ 
-    title='', 
-    loading=false,
-    hideTitle=false, 
-    options=<div />, 
-    filters=<div />, 
-    maxHeight=false, 
-    bodyBorder=false, 
-    bodyNoPadding=false,
-    divider=false,
+const setup = ({
+  title = '',
+  loading = false,
+  hideTitle = false,
+  options = <div />,
+  filters = <div />,
+  maxHeight = false,
+  bodyBorder = false,
+  bodyNoPadding = false,
+  divider = false,
 }) => {
   const handleOnChange = jest.fn();
   const view = render(
-    <Section 
-        loading={loading}
-        title={title} 
-        hideTitle={hideTitle} 
-        options={options} 
-        filters={filters} 
-        maxHeight={maxHeight} 
-        bodyBorder={bodyBorder}
-        bodyNoPadding={bodyNoPadding}
-        divider={divider} />,
+    <Section
+      bodyBorder={bodyBorder}
+      bodyNoPadding={bodyNoPadding}
+      divider={divider}
+      filters={filters}
+      hideTitle={hideTitle}
+      loading={loading}
+      maxHeight={maxHeight}
+      options={options}
+      title={title}
+    />,
   );
   return { handleOnChange, view };
 };
@@ -38,8 +39,8 @@ describe('Section', () => {
   });
 
   it('Section hide title', () => {
-    setup({ title: 'title of section', hideTitle: true });
-    expect(screen.queryAllByText('title of section').length == 0);
+    setup({ hideTitle: true, title: 'title of section' });
+    expect(screen.queryAllByText('title of section')).toHaveLength(0);
   });
 
   it('Section in loading state', () => {
@@ -48,23 +49,23 @@ describe('Section', () => {
   });
 
   it('Section with options', () => {
-    setup({ options: <div data-testid='section-option' /> });
+    setup({ options: <div data-testid="section-option" /> });
     expect(screen.getByTestId('section-option')).toBeInTheDocument();
   });
 
   it('Section with filters', () => {
-    setup({ filters: <div data-testid='section-filters' /> });
+    setup({ filters: <div data-testid="section-filters" /> });
     expect(screen.getByTestId('section-filters')).toBeInTheDocument();
   });
 
   it('Section with different styles', () => {
-    setup({ title: 'section-title', maxHeight: true, bodyBorder: true, divider: true });
+    setup({ bodyBorder: true, divider: true, maxHeight: true, title: 'section-title' });
     const section = screen.getByText('section-title') as HTMLElement;
-    expect(section).toHaveStyle({height: 100 });
-    expect(section).toHaveStyle({border: 'solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12)' });
-    expect(section).toHaveStyle({borderTopWidth: 'var(--theme-sizes-border-width)'})
-    // expect(section).toHaveStyle({})
+    expect(section).toHaveStyle({ height: 100 });
+    expect(section).toHaveStyle(
+      { border: 'solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12)' },
+    );
+    expect(section).toHaveStyle({ borderTopWidth: 'var(--theme-sizes-border-width)' });
   });
-
 
 });
