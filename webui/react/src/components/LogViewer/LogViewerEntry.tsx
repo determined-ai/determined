@@ -31,7 +31,7 @@ export const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIM
 export const MAX_DATETIME_LENGTH = 22;
 
 const LogViewerEntry: React.FC<Prop> = ({
-  level,
+  level = LogLevel.None,
   message,
   noWrap = false,
   style,
@@ -40,21 +40,18 @@ const LogViewerEntry: React.FC<Prop> = ({
 }) => {
   const classes = [ css.base ];
   const levelClasses = [ css.level, css[level] ];
-  const messageClasses = [ css.message ];
+  const messageClasses = [ css.message, css[level] ];
 
   if (noWrap) classes.push(css.noWrap);
-  if (level) messageClasses.push(css[level]);
 
   return (
     <div className={classes.join(' ')} style={style}>
-      {level ? (
-        <Tooltip placement="top" title={`Level: ${capitalize(level)}`}>
-          <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
-            <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
-            <Icon name={level} size="small" />
-          </div>
-        </Tooltip>
-      ) : <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }} /> }
+      <Tooltip placement="top" title={`Level: ${capitalize(level)}`}>
+        <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
+          <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
+          <Icon name={level} size="small" />
+        </div>
+      </Tooltip>
       <div className={css.time} style={timeStyle}>{formattedTime}</div>
       <div
         className={messageClasses.join(' ')}
