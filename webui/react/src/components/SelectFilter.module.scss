@@ -26,3 +26,6 @@
   & > *:first-child { margin-bottom: var(--theme-sizes-layout-tiny); }
   & > *:not(:first-child) { margin-left: 0; }
 }
+:global(.ant-select-selection-search-input) {
+  width: auto !important;
+}
