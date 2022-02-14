@@ -99,6 +99,8 @@ class GAN(pl.LightningModule):
         **kwargs
     ):
         super().__init__()
+        # Hyperparameters to be saved must be explicitly specified to due a bug in PTL@1.5.9
+        # which leaks other context variables (https://github.com/PyTorchLightning/pytorch-lightning/issues/11618)
         self.save_hyperparameters("channels", "width", "height", "latent_dim", "lr", "b1", "b2", "batch_size")
 
         # networks
