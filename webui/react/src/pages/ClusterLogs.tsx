@@ -39,7 +39,7 @@ const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
   }, []);
 
   return (
-    <Page bodyNoPadding id="master-logs">
+    <Page bodyNoPadding className={className} id="master-logs">
       <LogViewer
         decoder={jsonToClusterLog}
         hideTitle={hideTitle}
