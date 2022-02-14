@@ -45,7 +45,6 @@ const setup = async () => {
   userEvent.click(await screen.findByText(BUTTON_TEXT));
 };
 
-jest.setTimeout(30000);
 describe('useCustomizeColumnsModal', () => {
   it('opens modal', async () => {
     await setup();
