@@ -419,7 +419,7 @@ args_description = Cmd(
                             type=str,
                             default=None,
                             help="use the GCS bucket to store the terraform state "
-                            "instead of a local directory"
+                            "instead of a local directory",
                         ),
                     ],
                 ),
