@@ -144,3 +144,24 @@ func (a *apiServer) SetUserPassword(
 	fullUser, err := getUser(a.m.db, req.Username)
 	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
 }
+func (a *apiServer) PatchUser(
+	ctx context.Context, req *apiv1.PatchUserRequest) (*apiv1.PatchUserResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if !curUser.Admin && curUser.Username != req.Username {
+		return nil, grpcutil.ErrPermissionDenied
+	}
+	user := &model.User{Username: req.Username}
+	user.DisplayName = req.User.DisplayName
+	switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
+	case err == db.ErrNotFound:
+		return nil, errUserNotFound
+	case err != nil:
+		return nil, err
+	}
+	fullUser, err := getUser(a.m.db, req.Username)
+	return &apiv1.PatchUserResponse{User: fullUser}, err
+}
+

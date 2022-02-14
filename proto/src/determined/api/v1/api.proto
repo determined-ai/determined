@@ -141,7 +141,17 @@ service Determined {
       tags: "Users"
     };
   }
-
+  // Patch a user's fields.
+  rpc PatchUser(PatchUserRequest)
+      returns (PatchUserResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/{username}",
+      body: "user"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
   // Get telemetry information.
   rpc GetTelemetry(GetTelemetryRequest) returns (GetTelemetryResponse) {
     option (google.api.http) = {

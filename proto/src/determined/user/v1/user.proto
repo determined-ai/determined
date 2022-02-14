@@ -20,6 +20,14 @@ message User {
   bool active = 4;
   // The user and group on the agent host machine.
   AgentUserGroup agent_user_group = 5;
+  string display_name = 6;
+}
+
+message PatchUser {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "username" ] }
+  };
+  string display_name = 2;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

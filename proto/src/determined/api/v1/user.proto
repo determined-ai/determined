@@ -49,3 +49,14 @@ message SetUserPasswordResponse {
   // The updated user.
   determined.user.v1.User user = 1;
 }
+
+// Set the requested user's passwords.
+message PatchUserRequest {
+  string username = 1;
+  determined.user.v1.PatchUser user = 2;
+}
+// Response to PatchUserRequest.
+message PatchUserResponse {
+  // The updated user.
+  determined.user.v1.User user = 1;
+}

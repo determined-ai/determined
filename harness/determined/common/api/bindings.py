@@ -3253,6 +3253,42 @@ class v1PatchModelVersionResponse:
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
         }
 
+class v1PatchUser:
+    def __init__(
+        self,
+        displayName: "typing.Optional[str]" = None,
+    ):
+        self.displayName = displayName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchUser":
+        return cls(
+            displayName=obj.get("displayName", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "displayName": self.displayName if self.displayName is not None else None,
+        }
+
+class v1PatchUserResponse:
+    def __init__(
+        self,
+        user: "typing.Optional[v1User]" = None,
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchUserResponse":
+        return cls(
+            user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "user": self.user.to_json() if self.user is not None else None,
+        }
+
 class v1PostCheckpointMetadataRequest:
     def __init__(
         self,
@@ -4927,12 +4963,14 @@ class v1User:
         id: int,
         username: str,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
+        displayName: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.username = username
         self.admin = admin
         self.active = active
         self.agentUserGroup = agentUserGroup
+        self.displayName = displayName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1User":
@@ -4942,6 +4980,7 @@ class v1User:
             admin=obj["admin"],
             active=obj["active"],
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
+            displayName=obj.get("displayName", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4951,6 +4990,7 @@ class v1User:
             "admin": self.admin,
             "active": self.active,
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
         }
 
 class v1ValidateAfterOperation:
@@ -6605,6 +6645,26 @@ def patch_PatchModelVersion(
     if _resp.status_code == 200:
         return v1PatchModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModelVersion", _resp)
+
+def patch_PatchUser(
+    session: "client.Session",
+    *,
+    body: "v1PatchUser",
+    username: str,
+) -> "v1PatchUserResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/users/{username}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PatchUserResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchUser", _resp)
 
 def post_PauseExperiment(
     session: "client.Session",
