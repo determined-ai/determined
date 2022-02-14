@@ -59,20 +59,7 @@ Couple of things to note:
 
 To run unit tests for each of the SPAs issue `make test` in their respective directories.
 
-### End-to-end testing
-
-We use [Gauge](https://gauge.org/) and [Taiko](https://taiko.dev/) for end-to-end testing. To run the tests locally with chromium browser, run `make dev-tests` in the `webui/tests` directory. To run the tests in headless mode, run `make test`.
-
-#### Dependencies
-
-Note that the e2e tests need a functional webserver (master) to serve the UI and potentially a full cluster to be able to run all the tests.
-
-Be sure to activate the python virtual environment if you haven't already then install webui test dependencies before kicking off the tests.
-
-```sh
-# activate python virtual environment
-workon determined # or `pipenv shell`
-
-# install webui test dependencies
-make -C webui/tests get-deps`
 ```
+make -C webui/react test
+```
+

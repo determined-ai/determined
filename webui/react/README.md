@@ -89,10 +89,6 @@ To skip the interactive mode and run all unit tests.
 npm run test -- --watchAll=false
 ```
 
-### End-to-end Testing
-
-Refer to our [/webui/tests/README.md](../tests/README.md) for WebUI e2e testing details.
-
 ### Visual Testing with Storybook
 
 To run a local instance of storybook, run the following command:
