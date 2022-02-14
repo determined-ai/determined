@@ -7,9 +7,11 @@ from determined.pytorch import (
     PyTorchTrial,
     PyTorchTrialContext,
     DataLoader,
+    _SimpleReducer,
 )
 import torch
 import torch.nn.functional as F
+from torch.utils.data import Dataset
 
 from backbone import BACKBONE_METADATA_BY_NAME
 from byol_pytorch import BYOL
@@ -29,7 +31,7 @@ from optim import (
     set_learning_rate_warmup_cosine_anneal,
     set_ema_beta_cosine_anneal,
 )
-from reducers import AvgReducer, ValidatedAccuracyReducer
+from reducers import ValidatedAccuracyReducer
 from utils import LambdaModule
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -59,7 +61,7 @@ def classifier_loss(
         clipped_logits = input_logits
     return (
         F.cross_entropy(clipped_logits, target)
-        + hparams.classifier.logit_regularization_beta * (clipped_logits ** 2).mean()
+        + hparams.classifier.logit_regularization_beta * (clipped_logits**2).mean()
     )
 
 
@@ -202,9 +204,9 @@ class BYOLTrial(PyTorchTrial):
         if self._should_train_classifier_before_validation():
             self.cls_loss_reducers = [
                 cast(
-                    AvgReducer,
+                    _SimpleReducer,
                     self.context.wrap_reducer(
-                        AvgReducer(), f"cls_loss_{i}", for_training=False
+                        lambda x: sum(x) / len(x), f"cls_loss_{i}", for_training=False
                     ),
                 )
                 for i in range(len(self.hparams.classifier.learning_rates))
@@ -267,7 +269,9 @@ class BYOLTrial(PyTorchTrial):
                 DatasetSplit.CLS_VALIDATION,
             )
             test_dataset = build_dataset(self.data_config, DatasetSplit.TEST)
-            dataset = JointDataset([cls_val_dataset, test_dataset], ["lr_val", "test"])
+            dataset: Dataset = JointDataset(
+                [cls_val_dataset, test_dataset], ["lr_val", "test"]
+            )
         else:
             # When only reporting self-supervised loss, we just use CLS_VALIDATION.
             dataset = build_dataset(
@@ -320,20 +324,19 @@ class BYOLTrial(PyTorchTrial):
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         imgs, labels = batch
+        labels = cast(torch.Tensor, labels)
         embeddings = self.byol_model.forward(
             imgs, return_embedding=True, return_projection=False
         ).detach()
-        # May be called from validation, so need to enable gradients.
         losses = {}
-        with torch.enable_grad():
-            for lr_idx, lr in enumerate(self.hparams.classifier.learning_rates):
-                model = self.cls_models[lr_idx]
-                opt = self.cls_opts[lr_idx]
-                logits = cast(torch.Tensor, model(embeddings))
-                cls_loss = classifier_loss(self.hparams, logits, labels)
-                losses[f"cls_loss_{lr_idx}"] = cls_loss.item()
-                self.context.backward(cls_loss)
-                self.context.step_optimizer(opt)
+        for lr_idx, lr in enumerate(self.hparams.classifier.learning_rates):
+            model = self.cls_models[lr_idx]
+            opt = self.cls_opts[lr_idx]
+            logits = cast(torch.Tensor, model(embeddings))
+            cls_loss = classifier_loss(self.hparams, logits, labels)
+            losses[f"cls_loss_{lr_idx}"] = cls_loss
+            self.context.backward(cls_loss)
+            self.context.step_optimizer(opt)
         return losses
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
@@ -403,20 +406,21 @@ class ClassifierTrainCallback(PyTorchCallback):
         print(
             f"Training classifier heads for {trial.hparams.classifier.train_epochs} epochs..."
         )
-        for epoch_idx in range(trial.hparams.classifier.train_epochs):
-            print(f"Training epoch {epoch_idx}")
-            for batch_idx, batch in enumerate(trial.train_cls_dataloader):
-                imgs, labels = batch
-                imgs = imgs.cuda()
-                labels = labels.cuda()
-                losses = trial._train_classifier_batch(
-                    (imgs, labels), epoch_idx, batch_idx
-                )
-                # Record avg loss over last epoch.
-                if epoch_idx == trial.hparams.classifier.train_epochs - 1:
-                    for cls_loss_key, cls_loss in losses.items():
-                        idx = int(cls_loss_key.split("_")[-1])
-                        trial.cls_loss_reducers[idx].update(cls_loss)
+        with torch.enable_grad():
+            for epoch_idx in range(trial.hparams.classifier.train_epochs):
+                print(f"Training epoch {epoch_idx}")
+                for batch_idx, batch in enumerate(trial.train_cls_dataloader):
+                    imgs, labels = batch
+                    imgs = imgs.cuda()
+                    labels = labels.cuda()
+                    losses = trial._train_classifier_batch(
+                        (imgs, labels), epoch_idx, batch_idx
+                    )
+                    # Record avg loss over last epoch.
+                    if epoch_idx == trial.hparams.classifier.train_epochs - 1:
+                        for cls_loss_key, cls_loss in losses.items():
+                            idx = int(cls_loss_key.split("_")[-1])
+                            trial.cls_loss_reducers[idx].update(cls_loss.item())
         # Set models back to eval mode.
         for lr_idx in range(len(trial.hparams.classifier.learning_rates)):
             trial.cls_models[lr_idx].eval()

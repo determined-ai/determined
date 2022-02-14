@@ -49,23 +49,3 @@ class ValidatedAccuracyReducer(MetricReducer):
         test_ct = sum(test_ct)
         max_val_param = max(val_correct_by_param, key=val_correct_by_param.get)
         return test_correct_by_param[max_val_param] / test_ct
-
-
-class AvgReducer(MetricReducer):
-    def __init__(self) -> None:
-        self.reset()
-
-    def reset(self) -> None:
-        self.sum = 0.0
-        self.counts = 0
-
-    def update(self, value: float) -> None:
-        self.sum += value
-        self.counts += 1
-
-    def per_slot_reduce(self) -> Any:
-        return self.sum, self.counts
-
-    def cross_slot_reduce(self, per_slot_metrics: List) -> Any:
-        sums, counts = zip(*per_slot_metrics)
-        return sum(sums) / sum(counts)
