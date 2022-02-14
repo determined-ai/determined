@@ -2,8 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { clone } from 'utils/data';
-
 import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_INPUT, ARIA_LABEL_TRIGGER } from './TagList';
 
 const initTags = [ 'hello', 'world', 'space gap' ].sort();
@@ -32,8 +30,7 @@ describe('TagList', () => {
     const trigger = screen.getByLabelText(ARIA_LABEL_TRIGGER);
     userEvent.click(trigger);
 
-    const input = screen.getByLabelText(ARIA_LABEL_INPUT);
-    userEvent.click(input);
+    const input = screen.getByRole('textbox', { name: ARIA_LABEL_INPUT });
     userEvent.type(input, `${addition}{enter}`);
 
     expect(handleOnChange).toHaveBeenCalledWith([ addition ]);
@@ -66,7 +63,9 @@ describe('TagList', () => {
     const input = screen.getByLabelText(ARIA_LABEL_INPUT);
     userEvent.type(input, `${rename}{enter}`);
 
-    const resultTags = clone(initTags).filter((tag: string) => tag !== renameTag);
+    //screen.debug();
+
+    const resultTags = initTags.filter((tag: string) => tag !== renameTag);
     resultTags.push(rename);
 
     expect(handleOnChange).toHaveBeenCalledWith(resultTags);
