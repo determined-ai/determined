@@ -20,7 +20,7 @@ export const Default = (): React.ReactNode => {
       placeholder={text('Placeholder', 'Pick an option')}>
       {new Array(count).fill(null).map((v, index) => (
         <Option key={index} value={String.fromCharCode(65 + index)}>
-          Option {String.fromCharCode(65 + index)}
+          {'Option ' + String.fromCharCode(65 + index)}
         </Option>
       ))}
     </SelectFilter>
