@@ -60,6 +60,14 @@ db:
   # create a PersistentVolume that will match the PersistentVolumeClaim.
   # storageClassName:
 
+  # ssl_mode and ssl_root_cert configure the TLS connection to the database. Currently, only
+  # verify-ca is supported for ssl_mode. To specify a certificate, add the name of the file (no path)
+  # for ssl_root_cert.
+  # sslMode: verify-ca
+  # sslRootCert: <cert name>
+  # certSecretName:
+
+
 # checkpointStorage controls where checkpoints are stored. Supported types include `shared_fs`,
 # `gcs`, and `s3`.
 checkpointStorage:

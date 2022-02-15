@@ -45,6 +45,12 @@ data:
       {{- end  }}
       port: {{ .Values.db.port }}
       name: {{ .Values.db.name | quote }}
+      {{- if .Values.db.sslMode }}
+      ssl_mode: {{ .Values.db.sslMode }}
+      {{- end }}
+      {{- if .Values.db.sslRootCert }}
+      ssl_root_cert: {{ include "determined.secretPath" . }}{{ .Values.db.sslRootCert }}
+      {{ end }}
 
     {{- if .Values.tlsSecret }}
     security:

@@ -45,6 +45,11 @@ spec:
             mountPath: {{ include "determined.secretPath" . }}
             readOnly: true
           {{ end }}
+          {{- if .Values.db.certSecretName }}
+          - name: database-cert-secret
+            mountPath: {{ include "determined.secretPath" . }}
+            readOnly: true
+          {{ end }}
         resources:
           requests:
             {{- if .Values.masterCpuRequest }}
@@ -65,4 +70,9 @@ spec:
         - name: tls-secret
           secret:
             secretName: {{ .Values.tlsSecret }}
+        {{ end }}
+        {{- if .Values.db.certSecretName }}
+        - name: database-cert-secret
+          secret:
+            secretName: {{ .Values.db.certSecretName }}
         {{ end }}
