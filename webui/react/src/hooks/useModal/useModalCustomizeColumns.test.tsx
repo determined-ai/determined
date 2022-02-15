@@ -49,14 +49,14 @@ describe('useCustomizeColumnsModal', () => {
   it('opens modal', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     expect(await screen.findByText('Customize Columns')).toBeInTheDocument();
   });
 
   it('closes modal', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     userEvent.click(screen.getByRole('button', { name: /cancel/i }));
@@ -69,14 +69,14 @@ describe('useCustomizeColumnsModal', () => {
   it('renders lists', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
     const hidden = lists[0];
     const visible = lists[1];
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -94,12 +94,12 @@ describe('useCustomizeColumnsModal', () => {
     await setup();
     const searchTerm = DEFAULT_COLUMNS[1];
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -116,12 +116,12 @@ describe('useCustomizeColumnsModal', () => {
   it('hides column', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -140,12 +140,12 @@ describe('useCustomizeColumnsModal', () => {
   it('shows column', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -164,12 +164,12 @@ describe('useCustomizeColumnsModal', () => {
   it('resets', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -202,12 +202,12 @@ describe('useCustomizeColumnsModal', () => {
   it('adds all', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -225,12 +225,12 @@ describe('useCustomizeColumnsModal', () => {
   it('removes all', async () => {
     await setup();
 
-    //waiting for modal to render
+    // waiting for modal to render
     await screen.findByText('Customize Columns');
 
     const lists = screen.getAllByRole('list');
 
-    //waiting for list items to render
+    // waiting for list items to render
     expect((await screen.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
