@@ -188,7 +188,6 @@ const LogViewerCore: React.FC<Props> = ({
     if (!local.current.isScrollReady) return;
 
     local.current.isOnTop = visibleStartIndex === 0;
-    // mismatch between visibleStopIndex and logs updates causes flickering and disappearing logs:
     local.current.isOnBottom = visibleStopIndex === logs.length - 1;
 
     setIsTailing(local.current.isOnBottom && isNewestFirst);
