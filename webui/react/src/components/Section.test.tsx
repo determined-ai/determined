@@ -43,11 +43,6 @@ describe('Section', () => {
     expect(screen.queryAllByText('title of section')).toHaveLength(0);
   });
 
-  it('Section in loading state', () => {
-    setup({ loading: true, title: 'section-title' });
-    expect(screen.getByText('section-title')).toBeInTheDocument();
-  });
-
   it('Section with options', () => {
     setup({ options: <div data-testid="section-option" /> });
     expect(screen.getByTestId('section-option')).toBeInTheDocument();
@@ -56,6 +51,16 @@ describe('Section', () => {
   it('Section with filters', () => {
     setup({ filters: <div data-testid="section-filters" /> });
     expect(screen.getByTestId('section-filters')).toBeInTheDocument();
+  });
+
+  it('Section in loading state', () => {
+    const { view: { container } } = setup(
+      { filters: <div data-testid="section-filters" />, loading: true, title: 'section-title' },
+    );
+    // Test that antd spinner is spinning
+    expect(container.getElementsByClassName('ant-spin ant-spin-spinning')).toHaveLength(1);
+    // Test that filter is not showing
+    expect(screen.queryAllByTestId('section-filters')).toHaveLength(0);
   });
 
   it('Section with different styles', () => {
