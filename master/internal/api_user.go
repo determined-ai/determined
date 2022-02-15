@@ -50,12 +50,14 @@ func getUser(d *db.PgDB, username string) (*userv1.User, error) {
 			AgentGid: int32(agentUserGroup.GID),
 		}
 	}
+	displayNameString := user.DisplayName.ValueOrZero()
 	return &userv1.User{
 		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
 		AgentUserGroup: protoAug,
+		DisplayName:    displayNameString,
 	}, err
 }
 
