@@ -1,5 +1,5 @@
 .. toctree::
-   :caption: Quick Start
+   :caption: Getting Started
    :hidden:
    :glob:
 

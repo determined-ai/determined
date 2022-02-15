@@ -1,15 +1,8 @@
-#################
- Getting Started
-#################
+#############
+ Quick Start
+#############
 
 This section walks through the steps to run examples in Determined from zero. You should be able to:
-
-#. Get a light touch with Determined concepts and features;
-#. Install Determined;
-#. Get familiar with the WebUI and the CLI;
-#. Train an example model with a single GPU;
-#. Train an example model with distributed training;
-#. Train an example model with hyperparameter tuning.
 
 *********************
  System Requirements
@@ -31,11 +24,6 @@ Use the following code to install Determined and start a cluster locally.
 
    # Start a cluster.
    det deploy local cluster-up
-
-For detailed instructions on installing Determined in different environments, see
-:doc:`/sysadmin-basics/index`, :doc:`/sysadmin-deploy-on-prem/index`,
-:doc:`/sysadmin-deploy-on-aws/index`, :doc:`/sysadmin-deploy-on-gcp/index`,
-:doc:`/sysadmin-deploy-on-k8s/index`.
 
 *******************
  Explore the WebUI
@@ -293,8 +281,20 @@ the other trials. Due to the notable difference, this trial did not require any 
 .. image:: /assets/images/early-stopping-tensorboard@2x.jpg
    :width: 100%
 
-Interactive Jobs
-----------------
+************
+ Next Steps
+************
 
-For an even faster (but less structured) way to start using a Determined cluster without writing a
-model, see :ref:`commands-and-shells` and :ref:`notebooks`.
+For detailed instructions on installing Determined in different environments, see:
+
+-  :doc:`/sysadmin-basics/index`
+-  :doc:`/sysadmin-deploy-on-prem/index`
+-  :doc:`/sysadmin-deploy-on-aws/index`
+-  :doc:`/sysadmin-deploy-on-gcp/index`
+-  :doc:`/sysadmin-deploy-on-k8s/index`
+
+For a faster but less structured way to working with a Determined cluster and without writing a
+model, see:
+
+-  :ref:`commands-and-shells`
+-  :ref:`notebooks`
