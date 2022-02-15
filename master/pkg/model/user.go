@@ -21,7 +21,7 @@ type User struct {
 	ID           UserID      `db:"id" json:"id"`
 	Username     string      `db:"username" json:"username"`
 	PasswordHash null.String `db:"password_hash" json:"-"`
-	DisplayName  string 		 `db:"display_name" json:"display_name"`
+	DisplayName  null.String `db:"display_name" json:"-"`
 	Admin        bool        `db:"admin" json:"admin"`
 	Active       bool        `db:"active" json:"active"`
 }
