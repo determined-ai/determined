@@ -1171,6 +1171,7 @@ jobs:
       - image: cimg/node:14.16
         environment:
           CI: "true"
+    resource_class: large
     steps:
       - checkout
       - react-get-deps
