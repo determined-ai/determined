@@ -189,7 +189,7 @@ const LogViewerCore: React.FC<Props> = ({
 
     local.current.isOnTop = visibleStartIndex === 0;
     // mismatch between visibleStopIndex and logs updates causes flickering and disappearing logs:
-    local.current.isOnBottom = visibleStopIndex + 1 === logs.length - 1;
+    local.current.isOnBottom = visibleStopIndex === logs.length - 1;
 
     setIsTailing(local.current.isOnBottom && isNewestFirst);
 
@@ -315,7 +315,7 @@ const LogViewerCore: React.FC<Props> = ({
 
         addLogs(logs);
 
-        if (currentIsOnBottom) listRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
+        if (currentIsOnBottom) listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
       }
     };
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
