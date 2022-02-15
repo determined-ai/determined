@@ -85,6 +85,15 @@ type (
 		Enabled *bool
 		Drain   *bool
 	}
+	// AllocateFreeDevices calls agentState.AllocateFreeDevices.
+	AllocateFreeDevices struct {
+		Slots       int
+		ContainerID cproto.ID
+	}
+	// AllocateFreeDevicesResponse is a response to AllocateFreeDevices.
+	AllocateFreeDevicesResponse struct {
+		Devices []device.Device
+	}
 )
 
 var errRecovering = errors.New("agent disconnected, wait for recovery")
@@ -308,6 +317,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Respond(a.agentState.patchAllSlotsState(ctx, msg))
+	case AllocateFreeDevices:
+		if !a.started {
+			ctx.Respond(errors.New("can't allocate free devices: agent not started"))
+			return nil
+		}
+		ctx.Respond(AllocateFreeDevicesResponse{
+			Devices: a.agentState.AllocateFreeDevices(msg.Slots, msg.ContainerID),
+		})
 	case model.SlotsSummary:
 		if !a.started {
 			ctx.Respond(model.SlotsSummary{})
