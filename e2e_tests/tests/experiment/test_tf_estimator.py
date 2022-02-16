@@ -73,7 +73,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
-    assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
+    assert trials[0].warmStartCheckpointId == first_checkpoint_id
 
 
 @pytest.mark.tensorflow2

@@ -73,7 +73,7 @@ def test_tf_keras_const_warm_start(
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
     for trial in trials:
-        assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
+        assert trial.warmStartCheckpointId == first_checkpoint_id
     trial_id = trials[0].trial.id
     collect_trial_profiles(trial_id)
 

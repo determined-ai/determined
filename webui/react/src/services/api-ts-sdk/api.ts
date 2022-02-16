@@ -725,6 +725,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     wallClockTime?: number;
+    /**
+     * UUID of checkpoint that this trial started from.
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    warmStartCheckpointId?: string;
 }
 
 /**

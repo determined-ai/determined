@@ -366,7 +366,7 @@ def describe(args: Namespace) -> None:
                     checkpoint_state = wl_detail.state.value
                     checkpoint_end_time = wl_detail.endTime
                 else:
-                    checkpoint_state = bindings.determinedcheckpointv1State.STATE_UNSPECIFIED
+                    checkpoint_state = ""
                     checkpoint_end_time = None
 
                 v_metrics_fields = []
@@ -380,7 +380,7 @@ def describe(args: Namespace) -> None:
                         else:
                             v_metrics_fields.append(None)
                 else:
-                    validation_state = bindings.determinedexperimentv1State.STATE_UNSPECIFIED
+                    validation_state = ""
                     validation_end_time = None
                     v_metrics_fields = [None for name in v_metrics_names]
 

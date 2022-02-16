@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from termcolor import colored
 
 from determined.common import api, constants, context, yaml
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import authentication, bindings, certs, logs
 from determined.common.api import request as req
 from determined.common.experimental import session
 
@@ -123,7 +123,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         elif exp_state == constants.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = trials[0].id
-            print_trial_logs(master_url, trial_id)
+            logs.pprint_trial_logs(master_url, trial_id)
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)

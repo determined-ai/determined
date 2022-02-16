@@ -8,6 +8,7 @@ from typing import Union
 import pytest
 
 from determined.common import check, yaml
+from determined.common.api import bindings
 from tests import config as conf
 from tests import experiment as exp
 
@@ -84,7 +85,9 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     exp.wait_for_experiment_state(experiment_id, "ACTIVE")
 
     for _ in range(5):
-        assert exp.experiment_state(experiment_id) == "ACTIVE"
+        assert (
+            exp.experiment_state(experiment_id) == bindings.determinedexperimentv1State.STATE_ACTIVE
+        )
         time.sleep(1)
 
     exp.cancel_single(experiment_id)
@@ -127,7 +130,7 @@ def test_noop_single_warm_start() -> None:
     assert len(second_trial.workloads) == 90
 
     # Second trial should have a warm start checkpoint id.
-    assert second_trial["warm_start_checkpoint_id"] == last_checkpoint_id
+    assert second_trial.warmStartCheckpointId == last_checkpoint_id
 
     val_workloads = exp.workloads_for_mode(second_trial.workloads, "validation")
     assert val_workloads[-1].validation.metrics["validation_error"] == pytest.approx(0.9 ** 60)
@@ -149,7 +152,7 @@ def test_noop_single_warm_start() -> None:
     third_trial = trials[0]
     assert len(third_trial.workloads) == 90
 
-    assert third_trial["warm_start_checkpoint_id"] == first_checkpoint_id
+    assert third_trial.warmStartCheckpointId == first_checkpoint_id
     validations = exp.workloads_for_mode(third_trial.workloads, "validation")
     assert validations[1].validation.metrics["validation_error"] == pytest.approx(0.9 ** 3)
 
@@ -295,7 +298,7 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
     second_trial = exp.experiment_trials(experiment2)[0]
 
     assert len(second_trial.workloads) >= 4
-    assert second_trial["warm_start_checkpoint_id"] == first_checkpoint_id
+    assert second_trial.warmStartCheckpointId == first_checkpoint_id
     first_trial_validations = exp.workloads_for_mode(first_trial.workloads, "validation")
     second_trial_validations = exp.workloads_for_mode(second_trial.workloads, "validation")
 

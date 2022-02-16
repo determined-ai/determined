@@ -97,7 +97,7 @@ def test_pytorch_const_warm_start() -> None:
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 3
     for trial in trials:
-        assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
+        assert trial.warmStartCheckpointId == first_checkpoint_id
 
 
 @pytest.mark.e2e_gpu
