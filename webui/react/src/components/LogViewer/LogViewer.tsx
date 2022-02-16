@@ -138,11 +138,8 @@ const LogViewer: React.FC<Props> = ({
       .filter(log => {
         const isDuplicate = map[log.id];
         const isTqdm = log.message.includes('\r');
-        if (!isDuplicate && !isTqdm) {
-          map[log.id] = true;
-          return true;
-        }
-        return false;
+        map[log.id] = true;
+        return !isDuplicate && !isTqdm;
       })
       .map(log => {
         const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';

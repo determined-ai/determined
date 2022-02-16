@@ -623,7 +623,7 @@ export interface Log {
 }
 
 export interface TrialLog {
-  id: number;
+  id: string;
   level?: LogLevel;
   message: string;
   time: string;

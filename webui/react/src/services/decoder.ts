@@ -528,7 +528,7 @@ const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(
 export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   const logData = data as Sdk.V1TrialLogsResponse;
   const log = {
-    id: parseInt(logData.id),
+    id: logData.id,
     level: decodeV1LogLevelToLogLevel(logData.level),
     message: logData.message,
     time: logData.timestamp as unknown as string,
