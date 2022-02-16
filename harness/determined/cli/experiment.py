@@ -343,53 +343,53 @@ def describe(args: Namespace) -> None:
     for doc in docs:
         for trial in trials_for_experiment[doc.id]:
             workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
-            step_output: Dict[int, List[Any]] = {}
-            for step in workloads:
+            wl_output: Dict[int, List[Any]] = {}
+            for workload in workloads:
                 t_metrics_fields = []
-                step_detail = None
-                if step.training:
-                    step_detail = step.training
+                wl_detail = None
+                if workload.training:
+                    wl_detail = workload.training
                     for name in t_metrics_names:
-                        if step_detail.metrics and (name in step_detail.metrics):
-                            t_metrics_fields.append(step_detail.metrics[name])
+                        if wl_detail.metrics and (name in wl_detail.metrics):
+                            t_metrics_fields.append(wl_detail.metrics[name])
                         else:
                             t_metrics_fields.append(None)
                 else:
                     t_metrics_fields = [None for name in t_metrics_names]
 
-                if step.checkpoint:
-                    ckpt = step.checkpoint.to_json()
+                if workload.checkpoint:
+                    ckpt = workload.checkpoint.to_json()
                     ckpt["numInputs"] = 0
-                    step_detail = bindings.v1MetricsWorkload.from_json(ckpt)
+                    wl_detail = bindings.v1MetricsWorkload.from_json(ckpt)
 
-                if step.checkpoint and step_detail:
-                    checkpoint_state = step_detail.state.value
-                    checkpoint_end_time = step_detail.endTime
+                if workload.checkpoint and wl_detail:
+                    checkpoint_state = wl_detail.state.value
+                    checkpoint_end_time = wl_detail.endTime
                 else:
-                    checkpoint_state = ""
+                    checkpoint_state = bindings.determinedcheckpointv1State.STATE_UNSPECIFIED
                     checkpoint_end_time = None
 
                 v_metrics_fields = []
-                if step.validation:
-                    step_detail = step.validation
-                    validation_state = step_detail.state.value
-                    validation_end_time = step_detail.endTime
+                if workload.validation:
+                    wl_detail = workload.validation
+                    validation_state = wl_detail.state.value
+                    validation_end_time = wl_detail.endTime
                     for name in v_metrics_names:
-                        if step_detail.metrics and (name in step_detail.metrics):
-                            v_metrics_fields.append(step_detail.metrics[name])
+                        if wl_detail.metrics and (name in wl_detail.metrics):
+                            v_metrics_fields.append(wl_detail.metrics[name])
                         else:
                             v_metrics_fields.append(None)
                 else:
-                    validation_state = ""
+                    validation_state = bindings.determinedexperimentv1State.STATE_UNSPECIFIED
                     validation_end_time = None
                     v_metrics_fields = [None for name in v_metrics_names]
 
-                if step_detail:
-                    if step_detail.totalBatches in step_output:
-                        # condense training, checkpoints, validation workloads into one 'step' row
-                        # for compatibility with previous versions of describe
-                        merge_row = step_output[step_detail.totalBatches]
-                        merge_row[3] = max(merge_row[3], render.format_time(step_detail.endTime))
+                if wl_detail:
+                    if wl_detail.totalBatches in wl_output:
+                        # condense training, checkpoints, validation workloads into one step-like
+                        # row for compatibility with previous versions of describe
+                        merge_row = wl_output[wl_detail.totalBatches]
+                        merge_row[3] = max(merge_row[3], render.format_time(wl_detail.endTime))
                         for idx, tfield in enumerate(t_metrics_fields):
                             if tfield and merge_row[4 + idx] is None:
                                 merge_row[4 + idx] = tfield
@@ -412,9 +412,9 @@ def describe(args: Namespace) -> None:
                         row = (
                             [
                                 trial.id,
-                                step_detail.totalBatches,
-                                step_detail.state.value.replace("STATE_", ""),
-                                render.format_time(step_detail.endTime),
+                                wl_detail.totalBatches,
+                                wl_detail.state.value.replace("STATE_", ""),
+                                render.format_time(wl_detail.endTime),
                             ]
                             + t_metrics_fields
                             + [
@@ -425,14 +425,14 @@ def describe(args: Namespace) -> None:
                             ]
                             + v_metrics_fields
                         )
-                        step_output[step_detail.totalBatches] = row
+                        wl_output[wl_detail.totalBatches] = row
 
     if not args.outdir:
         outfile = None
         print("\nWorkloads:")
     else:
         outfile = args.outdir.joinpath("workloads.csv")
-    values = sorted(step_output.values(), key=lambda a: int(a[1]))
+    values = sorted(wl_output.values(), key=lambda a: int(a[1]))
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
@@ -557,9 +557,9 @@ def scalar_training_metrics_names(
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
     """
-    for step in workloads or []:
-        if step.training:
-            metrics = step.training.metrics
+    for workload in workloads or []:
+        if workload.training:
+            metrics = workload.training.metrics
             if not metrics:
                 continue
             return set(metrics.keys())
@@ -570,9 +570,9 @@ def scalar_training_metrics_names(
 def scalar_validation_metrics_names(
     workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
 ) -> Set[str]:
-    for step in workloads or []:
-        if step.validation:
-            metrics = step.validation.metrics
+    for workload in workloads or []:
+        if workload.validation:
+            metrics = workload.validation.metrics
             if not metrics:
                 continue
             return set(metrics.keys())

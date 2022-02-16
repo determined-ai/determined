@@ -17,7 +17,6 @@ from .experiment import (
     experiment_trials,
     get_experiment_durations,
     get_flat_metrics,
-    get_validation_metric_from_last_step,
     maybe_create_experiment,
     maybe_create_native_experiment,
     pause_experiment,
@@ -32,6 +31,7 @@ from .experiment import (
     trial_logs,
     trial_metrics,
     wait_for_experiment_state,
+    workloads_for_mode,
 )
 
 from .record_profiling import (

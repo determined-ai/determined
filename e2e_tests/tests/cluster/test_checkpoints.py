@@ -10,7 +10,7 @@ import yaml
 
 from determined import errors
 from determined.common import api, storage
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from tests import config as conf
 from tests import experiment as exp
 
@@ -51,15 +51,35 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
             {
-                "STATE_COMPLETED": {800, 900, 1000},
-                "STATE_DELETED": {100, 200, 300, 400, 500, 600, 700},
+                (bindings.determinedexperimentv1State.STATE_COMPLETED.value): {800, 900, 1000},
+                (bindings.determinedexperimentv1State.STATE_DELETED.value): {
+                    100,
+                    200,
+                    300,
+                    400,
+                    500,
+                    600,
+                    700,
+                },
             },
         ),
         (
             conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
             {
-                "STATE_COMPLETED": {100, 200, 300, 900, 1000},
-                "STATE_DELETED": {400, 500, 600, 700, 800},
+                (bindings.determinedexperimentv1State.STATE_COMPLETED.value): {
+                    100,
+                    200,
+                    300,
+                    900,
+                    1000,
+                },
+                (bindings.determinedexperimentv1State.STATE_DELETED.value): {
+                    400,
+                    500,
+                    600,
+                    700,
+                    800,
+                },
             },
         ),
     ]
@@ -88,7 +108,10 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             assert len(trials) == 1
 
             checkpoints = list(
-                map(lambda w: w.checkpoint, filter(lambda w: w.checkpoint, trials[0].workloads))
+                map(
+                    lambda w: w.checkpoint,
+                    exp.workloads_for_mode(trials[0].workloads, "checkpoint"),
+                )
             )
             checkpoints = sorted(
                 checkpoints,
@@ -124,14 +147,14 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 for checkpoint in checkpoints:
                     storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
-                    if checkpoint.state == "STATE_COMPLETED":
+                    if checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED:
                         storage_state[storage_id]["found"] = False
                         try:
                             with storage_manager.restore_path(storage_id):
                                 storage_state[storage_id]["found"] = True
                         except errors.CheckpointNotFound:
                             pass
-                    elif checkpoint.state == "STATE_DELETED":
+                    elif checkpoint.state == bindings.determinedcheckpointv1State.STATE_DELETED:
                         storage_state[storage_id] = {"deleted": False, "checkpoint": checkpoint}
                         try:
                             with storage_manager.restore_path(storage_id):

@@ -78,8 +78,8 @@ def test_pytorch_const_warm_start() -> None:
     first_trial_id = first_trial.trial.id
 
     assert len(first_trial.workloads) == 4
-    # checkpoints = list(filter(lambda w: w.checkpoint, first_trial.workloads))
-    # first_checkpoint_id = checkpoints[-1].checkpoint.uuid
+    checkpoints = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
+    first_checkpoint_id = checkpoints[-1].checkpoint.uuid
 
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
 
@@ -96,8 +96,8 @@ def test_pytorch_const_warm_start() -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 3
-    # for trial in trials:
-    # assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
+    for trial in trials:
+        assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
 
 @pytest.mark.e2e_gpu

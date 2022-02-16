@@ -102,7 +102,7 @@ def wait_for_experiment_state(
 ) -> None:
     for seconds_waited in range(max_wait_secs):
         try:
-            state = experiment_state(experiment_id)
+            state = experiment_state(experiment_id).value.replace("STATE_", "")
         # Ignore network errors while polling for experiment state to avoid a
         # single network flake to cause a test suite failure. If the master is
         # unreachable multiple times, this test will fail after max_wait_secs.
@@ -202,8 +202,12 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
 
     for t in trials:
         for s in t.workloads:
-            if ("training" in s and s.training.state.value == "STATE_COMPLETED") or (
-                "validation" in s and s.validation.state.value == "STATE_COMPLETED"
+            if (
+                "training" in s
+                and s.training.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+            ) or (
+                "validation" in s
+                and s.validation.state == bindings.determinedexperimentv1State.STATE_COMPLETED
             ):
                 return True
     return False
@@ -226,10 +230,9 @@ def experiment_trials_json(experiment_id: int) -> List[bindings.trialv1Trial]:
     return r.trials
 
 
-def experiment_state(experiment_id: int) -> str:
+def experiment_state(experiment_id: int) -> bindings.determinedexperimentv1State:
     r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
-    state = r.experiment.state.value.replace("STATE_", "")  # type: str
-    return state
+    return r.experiment.state
 
 
 def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
@@ -256,11 +259,15 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state.replace("STATE_", "") == "CANCELED"
+        assert trial.state == bindings.determinedexperimentv1State.STATE_CANCELED
 
 
 def is_terminal_state(state: str) -> bool:
-    return state in ("CANCELED", "COMPLETED", "ERROR")
+    return state in (
+        bindings.determinedexperimentv1State.STATE_CANCELED,
+        bindings.determinedexperimentv1State.STATE_COMPLETED,
+        bindings.determinedexperimentv1State.STATE_ERROR,
+    )
 
 
 def trial_metrics(trial_id: int) -> Dict[str, Any]:
@@ -283,20 +290,22 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state.value == "STATE_ACTIVE" else 0 for t in experiment_trials(experiment_id)
+        1 if t.trial.state == bindings.determinedexperimentv1State.STATE_ACTIVE else 0
+        for t in experiment_trials(experiment_id)
     )
 
 
 def num_completed_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state.value == "STATE_COMPLETED" else 0
+        1 if t.trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_error_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state.value == "STATE_ERROR" else 0 for t in experiment_trials(experiment_id)
+        1 if t.trial.state == bindings.determinedexperimentv1State.STATE_ERROR else 0
+        for t in experiment_trials(experiment_id)
     )
 
 
@@ -304,6 +313,18 @@ def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
+
+
+def workloads_for_mode(workloads: List[bindings.GetTrialResponseWorkloadContainer], mode: str):
+    if mode == "training":
+        selector = lambda w: w.training
+    elif mode == "validation":
+        selector = lambda w: w.validation
+    elif mode == "checkpoint":
+        selector = lambda w: w.checkpoint
+    else:
+        raise "Mode must be one of (training, validation, checkpoint)"
+    return list(filter(selector, workloads))
 
 
 def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> bool:
@@ -370,10 +391,12 @@ def assert_performed_initial_validation(exp_id: int) -> None:
 
     assert zeroth_step.validation
     assert zeroth_step.validation.totalBatches == 0
-    assert zeroth_step.validation.state.value == "STATE_COMPLETED"
+    assert zeroth_step.validation.state == bindings.determinedexperimentv1State.STATE_COMPLETED
 
 
-def last_workload_matches_last_checkpoint(workloads: List[Dict[str, Any]]) -> None:
+def last_workload_matches_last_checkpoint(
+    workloads: List[bindings.GetTrialResponseWorkloadContainer],
+) -> None:
     assert len(workloads) > 0
     last_workload = workloads[-1]
     if last_workload.training:
@@ -383,15 +406,15 @@ def last_workload_matches_last_checkpoint(workloads: List[Dict[str, Any]]) -> No
     elif last_workload.validation:
         last_workload_detail = last_workload.validation
 
-    checkpoint_workloads = list(filter(lambda s: s.checkpoint, workloads))
+    checkpoint_workloads = workloads_for_mode(workloads, "checkpoint")
     assert len(checkpoint_workloads) > 0
     last_checkpoint = checkpoint_workloads[-1]
 
     # though the last workload and checkpoint may be different objects
     # they are consolidated to the same 'step'
     assert last_workload_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
-    assert last_workload_detail.state.value == "STATE_COMPLETED"
-    assert last_checkpoint.checkpoint.state.value == "STATE_COMPLETED"
+    assert last_workload_detail.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+    assert last_checkpoint.checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
 
 
 def assert_performed_final_checkpoint(exp_id: int) -> None:
@@ -540,8 +563,8 @@ def verify_completed_experiment_metadata(
 
     for t in trials:
         trial = t.trial
-        if trial.state.value != "STATE_COMPLETED":
-            report_failed_trial(trial.id, trial.state.value.replace("STATE_", ""))
+        if trial.state != bindings.determinedexperimentv1State.STATE_COMPLETED:
+            report_failed_trial(trial.id, trial.state.value)
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
 
         if len(t.workloads) == 0:
@@ -555,13 +578,16 @@ def verify_completed_experiment_metadata(
         for s in t.workloads:
             if s.training:
                 batch_ids.append(s.training.totalBatches)
-                assert s.training.state.value == "STATE_COMPLETED"
+                assert s.training.state == bindings.determinedexperimentv1State.STATE_COMPLETED
             if s.validation:
                 batch_ids.append(s.validation.totalBatches)
-                assert s.validation.state.value == "STATE_COMPLETED"
+                assert s.validation.state == bindings.determinedexperimentv1State.STATE_COMPLETED
             if s.checkpoint:
                 batch_ids.append(s.checkpoint.totalBatches)
-                assert s.checkpoint.state.value in {"STATE_COMPLETED", "STATE_DELETED"}
+                assert s.checkpoint.state in {
+                    bindings.determinedcheckpointv1State.STATE_COMPLETED,
+                    bindings.determinedcheckpointv1State.STATE_DELETED,
+                }
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
     # The last step of every trial should be the same batch number as the last checkpoint.
@@ -608,7 +634,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     trials = experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state.value != "STATE_ERROR":
+        if trial.state != bindings.determinedexperimentv1State.STATE_ERROR:
             continue
 
         logs = trial_logs(trial.id)
@@ -616,14 +642,6 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
             assert any(error_str in line for line in logs)
 
     return experiment_id
-
-
-def get_validation_metric_from_last_step(
-    experiment_id: int, trial_id: int, validation_metric_name: str
-) -> float:
-    trial = experiment_trials(experiment_id)[trial_id]
-    last_validation = trial["workloads"][len(trial["workloads"]) - 1]["validation"]
-    return last_validation["metrics"]["validation_metrics"][validation_metric_name]  # type: ignore
 
 
 class ExperimentDurations:
