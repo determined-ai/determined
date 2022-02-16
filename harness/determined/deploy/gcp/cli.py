@@ -48,7 +48,11 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     if not os.path.exists(args.local_state_path):
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
-    print("Using local state path:", args.local_state_path)
+
+    if args.tf_state_gcs_bucket_name:
+        print("Using GCS bucket for state:", args.tf_state_gcs_bucket_name)
+    else:
+        print("Using local state path:", args.local_state_path)
 
     # Set the TF_DATA_DIR where Terraform will store its supporting files
     env = os.environ.copy()
@@ -96,6 +100,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "no_wait_for_master",
         "no_prompt",
         "master_config_template_path",
+        "tf_state_gcs_bucket_name",
         "func",
         "_command",
         "_subcommand",
@@ -408,6 +413,13 @@ args_description = Cmd(
                             type=Path,
                             default=None,
                             help="path to master yaml template",
+                        ),
+                        Arg(
+                            "--tf-state-gcs-bucket-name",
+                            type=str,
+                            default=None,
+                            help="use the GCS bucket to store the terraform state "
+                            "instead of a local directory",
                         ),
                     ],
                 ),
