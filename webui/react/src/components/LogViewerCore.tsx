@@ -314,7 +314,7 @@ const LogViewerCore: React.FC<Props> = ({
 
         addLogs(logs);
 
-        if (currentIsOnBottom) listRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
+        if (currentIsOnBottom) listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
       }
     };
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
