@@ -248,13 +248,17 @@ func newFakeAgentState(
 			Preemptible: true,
 		}
 		container := newContainer(req, req.SlotsNeeded)
-		state.AllocateFreeDevices(req.SlotsNeeded, container.id)
+		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, container.id); err != nil {
+			panic(err)
+		}
 	}
 
 	for i := 0; i < zeroSlotContainers; i++ {
 		req := &sproto.AllocateRequest{}
 		container := newContainer(req, req.SlotsNeeded)
-		state.AllocateFreeDevices(req.SlotsNeeded, container.id)
+		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, container.id); err != nil {
+			panic(err)
+		}
 	}
 	return state
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -146,25 +145,31 @@ func (a *AgentState) Idle() bool {
 }
 
 // AllocateFreeDevices allocates devices.
-func (a *AgentState) AllocateFreeDevices(slots int, id cproto.ID) []device.Device {
+func (a *AgentState) AllocateFreeDevices(slots int, id cproto.ID) ([]device.Device, error) {
 	if slots == 0 {
 		a.ZeroSlotContainers[id] = true
-		return nil
+		return nil, nil
 	}
 	cid := id
 	devices := make([]device.Device, 0, slots)
 	for d, dcid := range a.Devices {
 		if dcid == nil {
-			a.Devices[d] = &cid
 			devices = append(devices, d)
 		}
 		if len(devices) == slots {
 			break
 		}
 	}
-	// TODO XXX ERROR OUT CORRECTLY
-	check.Panic(check.True(len(devices) == slots, "not enough devices"))
-	return devices
+
+	if len(devices) != slots {
+		return nil, errors.New("not enough devices")
+	}
+
+	for _, d := range devices {
+		a.Devices[d] = &cid
+	}
+
+	return devices, nil
 }
 
 // DeallocateContainer deallocates containers.

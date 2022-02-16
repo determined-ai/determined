@@ -629,7 +629,10 @@ func AllocateTasks(
 
 		for _, fit := range fits {
 			container := newContainer(req, fit.Slots)
-			devices := fit.Agent.AllocateFreeDevices(fit.Slots, container.id)
+			devices, err := fit.Agent.AllocateFreeDevices(fit.Slots, container.id)
+			if err != nil {
+				panic(err)
+			}
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,
 				Reservations: []sproto.Reservation{

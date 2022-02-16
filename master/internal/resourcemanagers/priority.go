@@ -290,7 +290,9 @@ func deepCopyAgents(agents map[*actor.Ref]*agent.AgentState) map[*actor.Ref]*age
 
 func addTaskToAgents(fits []*fittingState) {
 	for _, fit := range fits {
-		fit.Agent.AllocateFreeDevices(fit.Slots, cproto.NewID())
+		if _, err := fit.Agent.AllocateFreeDevices(fit.Slots, cproto.NewID()); err != nil {
+			panic(err)
+		}
 	}
 }
 

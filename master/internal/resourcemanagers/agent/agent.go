@@ -326,9 +326,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			ctx.Respond(errors.New("can't allocate free devices: agent not started"))
 			return nil
 		}
-		ctx.Respond(AllocateFreeDevicesResponse{
-			Devices: a.agentState.AllocateFreeDevices(msg.Slots, msg.ContainerID),
-		})
+		devices, err := a.agentState.AllocateFreeDevices(msg.Slots, msg.ContainerID)
+		if err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(AllocateFreeDevicesResponse{
+				Devices: devices,
+			})
+		}
 	case DeallocateContainer:
 		if !a.started {
 			ctx.Respond(errors.New("can't deallocate container: agent not started"))

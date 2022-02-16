@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -127,14 +128,27 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		resp := ctx.Ask(fit.Agent.Handler, agent.AllocateFreeDevices{
 			Slots:       fit.Slots,
 			ContainerID: container.id,
-		}).Get().(agent.AllocateFreeDevicesResponse)
-		devices := resp.Devices
-		allocations = append(allocations, &containerReservation{
-			req:       req,
-			agent:     fit.Agent,
-			container: container,
-			devices:   devices,
-		})
+		}).Get()
+		switch resp := resp.(type) {
+		case agent.AllocateFreeDevicesResponse:
+			devices := resp.Devices
+			allocations = append(allocations, &containerReservation{
+				req:       req,
+				agent:     fit.Agent,
+				container: container,
+				devices:   devices,
+			})
+		case error:
+			// Rollback previous allocations.
+			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
+			for _, allocation := range allocations {
+				allocation := allocation.(*containerReservation)
+				ctx.Tell(allocation.agent.Handler,
+					agent.DeallocateContainer{ContainerID: allocation.container.id})
+			}
+		default:
+			panic(fmt.Sprintf("bad AllocateFreeDevices response: %s", resp))
+		}
 	}
 
 	allocated := sproto.ResourcesAllocated{
