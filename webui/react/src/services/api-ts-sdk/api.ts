@@ -731,6 +731,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     warmStartCheckpointId?: string;
+    /**
+     * Id of task associated with this trial.
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    taskId?: string;
 }
 
 /**

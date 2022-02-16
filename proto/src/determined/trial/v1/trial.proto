@@ -86,6 +86,8 @@ message Trial {
   double wall_clock_time = 12;
   // UUID of checkpoint that this trial started from.
   string warm_start_checkpoint_id = 13;
+  // Id of task associated with this trial.
+  string task_id = 14;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

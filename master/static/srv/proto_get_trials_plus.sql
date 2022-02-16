@@ -104,6 +104,7 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   t.end_time,
   t.hparams,
   t.warm_start_checkpoint_id,
+  t.task_id,
   (
     SELECT s.total_batches
     FROM steps s

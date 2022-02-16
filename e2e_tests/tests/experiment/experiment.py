@@ -413,7 +413,10 @@ def last_workload_matches_last_checkpoint(
     # though the last workload and checkpoint may be different objects
     # they are consolidated to the same 'step'
     assert last_workload_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
-    assert last_workload_detail.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+    assert last_workload_detail.state in {
+        bindings.determinedexperimentv1State.STATE_COMPLETED,
+        bindings.determinedcheckpointv1State.STATE_COMPLETED,
+    }
     assert last_checkpoint.checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
 
 

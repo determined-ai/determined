@@ -301,6 +301,7 @@ class trialv1Trial:
         endTime: "typing.Optional[str]" = None,
         latestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         runnerState: "typing.Optional[str]" = None,
+        taskId: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointId: "typing.Optional[str]" = None,
     ):
@@ -317,6 +318,7 @@ class trialv1Trial:
         self.runnerState = runnerState
         self.wallClockTime = wallClockTime
         self.warmStartCheckpointId = warmStartCheckpointId
+        self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -334,6 +336,7 @@ class trialv1Trial:
             runnerState=obj.get("runnerState", None),
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
             warmStartCheckpointId=obj.get("warmStartCheckpointId", None),
+            taskId=obj.get("taskId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -351,6 +354,7 @@ class trialv1Trial:
             "runnerState": self.runnerState if self.runnerState is not None else None,
             "wallClockTime": dump_float(self.wallClockTime) if self.wallClockTime is not None else None,
             "warmStartCheckpointId": self.warmStartCheckpointId if self.warmStartCheckpointId is not None else None,
+            "taskId": self.taskId if self.taskId is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
