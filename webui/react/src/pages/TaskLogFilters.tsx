@@ -60,7 +60,7 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
       <Space>
         {selectOptions?.allocationIds?.length !== 0 && (
           <MultiSelect
-            itemName="Agent"
+            itemName="Allocation"
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
