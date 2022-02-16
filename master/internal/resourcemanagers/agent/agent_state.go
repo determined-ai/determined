@@ -162,6 +162,7 @@ func (a *AgentState) AllocateFreeDevices(slots int, id cproto.ID) []device.Devic
 			break
 		}
 	}
+	// TODO XXX ERROR OUT CORRECTLY
 	check.Panic(check.True(len(devices) == slots, "not enough devices"))
 	return devices
 }

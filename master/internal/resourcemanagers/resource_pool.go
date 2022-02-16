@@ -157,7 +157,7 @@ func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref
 		ctx.Log().Infof("resources are released for %s", handler.Address())
 		for _, allocation := range allocated.Reservations {
 			typed := allocation.(*containerReservation)
-			typed.agent.DeallocateContainer(typed.container.id)
+			ctx.Tell(typed.agent.Handler, agent.DeallocateContainer{ContainerID: typed.container.id})
 		}
 	}
 	rp.taskList.RemoveTaskByHandler(handler)

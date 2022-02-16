@@ -94,6 +94,10 @@ type (
 	AllocateFreeDevicesResponse struct {
 		Devices []device.Device
 	}
+	// DeallocateContainer calls agentState.DeallocateContainer.
+	DeallocateContainer struct {
+		ContainerID cproto.ID
+	}
 )
 
 var errRecovering = errors.New("agent disconnected, wait for recovery")
@@ -325,6 +329,12 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		ctx.Respond(AllocateFreeDevicesResponse{
 			Devices: a.agentState.AllocateFreeDevices(msg.Slots, msg.ContainerID),
 		})
+	case DeallocateContainer:
+		if !a.started {
+			ctx.Respond(errors.New("can't deallocate container: agent not started"))
+			return nil
+		}
+		a.agentState.DeallocateContainer(msg.ContainerID)
 	case model.SlotsSummary:
 		if !a.started {
 			ctx.Respond(model.SlotsSummary{})
