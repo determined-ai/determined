@@ -1,5 +1,4 @@
 import multiprocessing
-from time import sleep
 from typing import Callable, Dict
 
 import pytest
@@ -53,7 +52,6 @@ def test_tf_keras_const_warm_start(
     experiment_id1 = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
-    sleep(0.25)
     trials = exp.experiment_trials(experiment_id1)
     assert len(trials) == 1
 
@@ -97,7 +95,6 @@ def test_tf_keras_parallel(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
-    sleep(0.25)
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
 

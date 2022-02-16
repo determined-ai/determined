@@ -205,7 +205,6 @@ def test_cancel_one_paused_experiment() -> None:
         conf.fixtures_path("no_op"),
         ["--paused"],
     )
-    time.sleep(0.25)
     exp.cancel_single(experiment_id)
 
 
@@ -232,8 +231,6 @@ def test_cancel_ten_paused_experiments() -> None:
         )
         for _ in range(10)
     ]
-    time.sleep(0.25)
-
     for experiment_id in experiment_ids:
         exp.cancel_single(experiment_id)
 

@@ -1,6 +1,5 @@
 import json
 import subprocess
-from time import sleep
 
 import numpy as np
 import pytest
@@ -152,7 +151,6 @@ def test_experiment_archive_unarchive() -> None:
     )
 
     # Check that we can archive and unarchive the experiment and see the expected effects.
-    sleep(0.25)
     subprocess.check_call(
         ["det", "-m", conf.make_master_url(), "experiment", "archive", str(experiment_id)]
     )
@@ -249,7 +247,6 @@ def test_end_to_end_adaptive() -> None:
         conf.tutorials_path("mnist_pytorch"),
         None,
     )
-    sleep(1)
 
     # Check that validation accuracy look sane (more than 93% on MNIST).
     trials = exp.experiment_trials(exp_id)
