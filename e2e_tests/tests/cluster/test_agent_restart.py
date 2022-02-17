@@ -233,7 +233,7 @@ def test_agent_restart_exp_container_failure(managed_cluster: ManagedCluster) ->
         # As soon as the agent is back, the original allocation should be considered dead,
         # but the new one should be allocated.
         state = exp.experiment_state(exp_id)
-        assert state == "ACTIVE"
+        assert state.value == "STATE_ACTIVE"
         tasks_data = _task_list_json(managed_cluster.master_url)
         assert len(tasks_data) == 1
         exp_task_after = list(tasks_data.values())[0]

@@ -59,8 +59,11 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     first_trial = trials[0]
     first_trial_id = first_trial.trial.id
 
-    assert len(first_trial.workloads) == 3
-    first_checkpoint_id = first_trial.workloads[0].checkpoint.uuid
+    assert len(first_trial.workloads or []) == 3
+    checkpoint_workloads = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
+    assert len(checkpoint_workloads)
+    assert checkpoint_workloads[0].checkpoint
+    first_checkpoint_id = checkpoint_workloads[0].checkpoint.uuid
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
 
@@ -73,7 +76,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
-    assert trials[0].warmStartCheckpointId == first_checkpoint_id
+    assert trials[0].trial.warmStartCheckpointId == first_checkpoint_id
 
 
 @pytest.mark.tensorflow2
@@ -103,8 +106,9 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     )
 
     trial = exp.experiment_trials(experiment_id)[0]
-    last_validation = trial["steps"][len(trial["steps"]) - 1]["validation"]
-    metrics = last_validation["metrics"]["validation_metrics"]
+    last_validation = exp.workloads_for_mode(trial.workloads, "validation")[-1].validation
+    assert last_validation and last_validation.metrics
+    metrics = last_validation.metrics
     label_sum = 2 * sum(range(16))
     assert metrics["label_sum_fn"] == label_sum
     assert metrics["label_sum_cls"] == label_sum

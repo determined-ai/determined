@@ -106,23 +106,21 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             trials = exp.experiment_trials(experiment_id)
             assert len(trials) == 1
 
-            checkpoints = list(
-                map(
-                    lambda w: w.checkpoint,
-                    exp.workloads_for_mode(trials[0].workloads, "checkpoint"),
-                )
+            cpoints = []
+            for cpoint in exp.workloads_for_mode(trials[0].workloads, "checkpoint"):
+                if cpoint.checkpoint:
+                    cpoints.append(cpoint.checkpoint)
+            sorted_checkpoints = sorted(
+                cpoints,
+                key=lambda ckp: int(ckp.totalBatches),
             )
-            checkpoints = sorted(
-                checkpoints,
-                key=lambda ckpt: ckpt.totalBatches,
-            )
-            assert len(checkpoints) == 10
+            assert len(sorted_checkpoints) == 10
             by_state = {}  # type: Dict[str, Set[int]]
-            for checkpoint in checkpoints:
-                by_state.setdefault(checkpoint.state.value, set()).add(checkpoint.totalBatches)
+            for ckpt in sorted_checkpoints:
+                by_state.setdefault(ckpt.state.value, set()).add(ckpt.totalBatches)
 
             if by_state == result:
-                all_checkpoints.append((config, checkpoints))
+                all_checkpoints.append((config, sorted_checkpoints))
                 break
 
             if retry + 1 == retries:
@@ -144,6 +142,8 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
+                    if not checkpoint.uuid:
+                        continue
                     storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
                     if checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED:

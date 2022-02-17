@@ -77,9 +77,11 @@ def test_pytorch_const_warm_start() -> None:
     first_trial = trials[0]
     first_trial_id = first_trial.trial.id
 
-    assert len(first_trial.workloads) == 4
+    assert len(first_trial.workloads or []) == 4
     checkpoints = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
-    first_checkpoint_id = checkpoints[-1].checkpoint.uuid
+    first_checkpoint = checkpoints[-1]
+    assert first_checkpoint and first_checkpoint.checkpoint
+    first_checkpoint_id = first_checkpoint.checkpoint.uuid
 
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
 
@@ -96,8 +98,8 @@ def test_pytorch_const_warm_start() -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 3
-    for trial in trials:
-        assert trial.warmStartCheckpointId == first_checkpoint_id
+    for t in trials:
+        assert t.trial.warmStartCheckpointId == first_checkpoint_id
 
 
 @pytest.mark.e2e_gpu
@@ -173,10 +175,11 @@ def test_pytorch_gradient_aggregation() -> None:
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
-    steps = trials[0]["steps"]
-    actual_weights = [
-        step["validation"]["metrics"]["validation_metrics"]["weight"] for step in steps
-    ]
+    workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
+    actual_weights = []
+    for wl in workloads:
+        if wl.validation and wl.validation.metrics:
+            actual_weights.append(wl.validation.metrics["weight"])
 
     # independently compute expected metrics
     batch_size = 4

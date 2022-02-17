@@ -45,7 +45,7 @@ def test_streaming_observability_metrics_apis(
 
     exp.wait_for_experiment_state(experiment_id, "COMPLETED")
     trials = exp.experiment_trials(experiment_id)
-    trial_id = trials[0]["id"]
+    trial_id = trials[0].trial.id
 
     gpu_enabled = conf.GPU_ENABLED
 

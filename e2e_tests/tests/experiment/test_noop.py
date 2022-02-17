@@ -106,12 +106,15 @@ def test_noop_single_warm_start() -> None:
     first_trial_id = first_trial.id
 
     first_workloads = trials[0].workloads
-    assert len(first_workloads) == 90
+    assert len(first_workloads or []) == 90
     checkpoints = exp.workloads_for_mode(first_workloads, "checkpoint")
-    assert len(checkpoints) == 30
+    assert len(checkpoints or []) == 30
+    assert checkpoints[0] and checkpoints[0].checkpoint
     first_checkpoint_id = checkpoints[0].checkpoint.uuid
+    assert checkpoints[-1] and checkpoints[-1].checkpoint
     last_checkpoint_id = checkpoints[-1].checkpoint.uuid
     last_validation = exp.workloads_for_mode(first_workloads, "validation")[-1]
+    assert last_validation and last_validation.validation and last_validation.validation.metrics
     assert last_validation.validation.metrics["validation_error"] == pytest.approx(0.9 ** 30)
 
     config_base = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
@@ -127,12 +130,16 @@ def test_noop_single_warm_start() -> None:
     assert len(trials) == 1
 
     second_trial = trials[0]
-    assert len(second_trial.workloads) == 90
+    assert len(second_trial.workloads or []) == 90
 
     # Second trial should have a warm start checkpoint id.
-    assert second_trial.warmStartCheckpointId == last_checkpoint_id
+    assert second_trial.trial
+    assert second_trial.trial.warmStartCheckpointId == last_checkpoint_id
 
     val_workloads = exp.workloads_for_mode(second_trial.workloads, "validation")
+    assert (
+        val_workloads[-1] and val_workloads[-1].validation and val_workloads[-1].validation.metrics
+    )
     assert val_workloads[-1].validation.metrics["validation_error"] == pytest.approx(0.9 ** 60)
 
     # Now test source_checkpoint_uuid.
@@ -150,10 +157,12 @@ def test_noop_single_warm_start() -> None:
     assert len(trials) == 1
 
     third_trial = trials[0]
-    assert len(third_trial.workloads) == 90
+    assert len(third_trial.workloads or []) == 90
 
-    assert third_trial.warmStartCheckpointId == first_checkpoint_id
+    assert third_trial.trial
+    assert third_trial.trial.warmStartCheckpointId == first_checkpoint_id
     validations = exp.workloads_for_mode(third_trial.workloads, "validation")
+    assert validations[1] and validations[1].validation and validations[1].validation.metrics
     assert validations[1].validation.metrics["validation_error"] == pytest.approx(0.9 ** 3)
 
 
@@ -283,9 +292,10 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
 
     first_trial = exp.experiment_trials(experiment)[0]
 
-    assert len(first_trial.workloads) >= 4
+    assert len(first_trial.workloads or []) >= 4
 
     first_checkpoint = exp.workloads_for_mode(first_trial.workloads, "checkpoint")[0]
+    assert first_checkpoint and first_checkpoint.checkpoint
     first_checkpoint_id = first_checkpoint.checkpoint.uuid
 
     config = copy.deepcopy(config_base)
@@ -297,15 +307,27 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
 
     second_trial = exp.experiment_trials(experiment2)[0]
 
-    assert len(second_trial.workloads) >= 4
-    assert second_trial.warmStartCheckpointId == first_checkpoint_id
+    assert len(second_trial.workloads or []) >= 4
+    assert second_trial.trial.warmStartCheckpointId == first_checkpoint_id
     first_trial_validations = exp.workloads_for_mode(first_trial.workloads, "validation")
     second_trial_validations = exp.workloads_for_mode(second_trial.workloads, "validation")
 
     for wl in range(0, 2):
         for metric in metrics:
-            first_metric = first_trial_validations[wl + 1].validation.metrics[metric]
-            second_metric = second_trial_validations[wl].validation.metrics[metric]
+            first_trial_val = first_trial_validations[wl + 1]
+            assert (
+                first_trial_val
+                and first_trial_val.validation
+                and first_trial_val.validation.metrics
+            )
+            first_metric = first_trial_val.validation.metrics[metric]
+            second_trial_val = second_trial_validations[wl]
+            assert (
+                second_trial_val
+                and second_trial_val.validation
+                and second_trial_val.validation.metrics
+            )
+            second_metric = second_trial_val.validation.metrics[metric]
             assert (
                 first_metric == second_metric
             ), f"failures on iteration: {wl} with metric: {metric}"
