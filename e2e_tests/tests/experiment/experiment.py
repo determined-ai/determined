@@ -397,29 +397,23 @@ def last_workload_matches_last_checkpoint(
     workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
 ) -> None:
     assert (workloads is not None) and len(workloads) > 0
-    last_workload = workloads[-1]
-    last_checkpoint_detail = workloads[-1].checkpoint
-    if last_workload.training:
-        last_workload_detail = last_workload.training
-    elif last_workload.checkpoint:
-        last_checkpoint_detail = last_workload.checkpoint
-    elif last_workload.validation:
-        last_workload_detail = last_workload.validation
 
     checkpoint_workloads = workloads_for_mode(workloads, "checkpoint")
     assert len(checkpoint_workloads) > 0
     last_checkpoint = checkpoint_workloads[-1]
-
-    # though the last workload and checkpoint may be different objects
-    # they are consolidated to the same 'step'
     assert last_checkpoint.checkpoint
-    if last_workload_detail:
+    assert last_checkpoint.checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
+
+    last_workload = workloads[-1]
+    if last_workload.training or last_workload.validation:
+        last_workload_detail = last_workload.training or last_workload.validation
+        assert last_workload_detail
         assert last_workload_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
         assert last_workload_detail.state == bindings.determinedexperimentv1State.STATE_COMPLETED
-    if last_checkpoint_detail:
+    elif last_workload.checkpoint:
+        last_checkpoint_detail = last_workload.checkpoint
         assert last_checkpoint_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
         assert last_checkpoint_detail.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
-    assert last_checkpoint.checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
 
 
 def assert_performed_final_checkpoint(exp_id: int) -> None:
