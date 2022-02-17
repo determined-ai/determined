@@ -40,9 +40,9 @@ const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
     <Page bodyNoPadding className={className} id="master-logs">
       <LogViewerCore
         decoder={jsonToClusterLog}
+        hideTitle={hideTitle}
         sortKey="id"
         title={<div className={css.title}>Cluster Logs</div>}
-        hideTitle={hideTitle}
         onFetch={handleFetch}
       />
     </Page>
