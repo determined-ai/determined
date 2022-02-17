@@ -60,9 +60,10 @@ db:
   # create a PersistentVolume that will match the PersistentVolumeClaim.
   # storageClassName:
 
-  # ssl_mode and ssl_root_cert configure the TLS connection to the database. Currently, only
-  # verify-ca is supported for ssl_mode. To specify a certificate, add the name of the file (no path)
-  # for ssl_root_cert.
+  # ssl_mode and ssl_root_cert configure the TLS connection to the database. Users must first
+  # create a kubernetes secret containing their certificate and specify its name in certSecretName.
+  # For ssl_mode, only verify-ca is currently supported. For sslRootCert, specify the name of the file
+  # only (not path).
   # sslMode: verify-ca
   # sslRootCert: <cert name>
   # certSecretName:
