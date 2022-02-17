@@ -9,9 +9,10 @@ import css from './ClusterLogs.module.scss';
 
 interface Props {
   className?: string
+  hideTitle?: boolean
 }
 
-const ClusterLogs: React.FC<Props> = ({ className }: Props) => {
+const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
 
@@ -41,6 +42,7 @@ const ClusterLogs: React.FC<Props> = ({ className }: Props) => {
         decoder={jsonToClusterLog}
         sortKey="id"
         title={<div className={css.title}>Cluster Logs</div>}
+        hideTitle={hideTitle}
         onFetch={handleFetch}
       />
     </Page>

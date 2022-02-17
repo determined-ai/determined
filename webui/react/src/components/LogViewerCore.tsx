@@ -28,6 +28,7 @@ interface Props {
   onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
   title?: React.ReactNode;
+  hideTitle?:boolean
 }
 
 interface ViewerLog extends Log {
@@ -459,6 +460,7 @@ const LogViewerCore: React.FC<Props> = ({
       divider
       maxHeight
       options={logViewerOptions}
+      hideTitle={props.hideTitle}
       title={props.title}>
       <div className={css.base} ref={baseRef}>
         <div className={css.container} ref={containerRef}>
