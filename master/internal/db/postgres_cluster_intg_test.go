@@ -1,0 +1,82 @@
+//go:build integration
+// +build integration
+
+package db
+
+import (
+	"testing"
+	"time"
+
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/stretchr/testify/require"
+)
+
+func TestClusterAPI(t *testing.T) {
+	etc.SetRootPath(rootFromDB)
+
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, migrationsFromDB)
+
+	_, err := db.GetOrCreateClusterID()
+	require.NoError(t, err, "failed to get or create cluster id")
+
+	currentTime := time.Now().UTC().Truncate(time.Millisecond)
+	db.UpdateClusterHeartBeat(currentTime)
+
+	var clusterHeartbeat time.Time
+	err = db.sql.QueryRow("SELECT cluster_heartbeat FROM cluster_id").Scan(&clusterHeartbeat)
+	require.NoError(t, err, "error reading cluster_heartbeat from cluster_id table")
+
+	require.Equal(t, currentTime, clusterHeartbeat, "Retrieved cluster heartbeat doesn't match the correct time")
+
+	// Add a mock user
+	user := requireMockUser(t, db)
+
+	// Add a job
+	jID := model.NewJobID()
+	jIn := &model.Job{
+		JobID:   jID,
+		JobType: model.JobTypeExperiment,
+		OwnerID: &user.ID,
+	}
+
+	err = db.AddJob(jIn)
+	require.NoError(t, err, "failed to add job")
+
+	// Add a task
+	tID := model.NewTaskID()
+	tIn := &model.Task{
+		TaskID:    tID,
+		JobID:     jID,
+		TaskType:  model.TaskTypeTrial,
+		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+	}
+
+	err = db.AddTask(tIn)
+	require.NoError(t, err, "failed to add task")
+
+	// Add an allocation
+	aID := model.NewAllocationID(string(tID) + "-1")
+	aIn := &model.Allocation{
+		AllocationID: aID,
+		TaskID:       tID,
+		Slots:        8,
+		AgentLabel:   "something",
+		ResourcePool: "somethingelse",
+		StartTime:    time.Now().UTC().Truncate(time.Millisecond),
+	}
+
+	err = db.AddAllocation(aIn)
+	require.NoError(t, err, "failed to add allocation")
+
+	// Don't complete the above allocation and call CloseOpenAllocations
+	db.CloseOpenAllocations()
+
+	// Retrieve the open allocation and check if end time is set to cluster_heartbeat
+	aOut, err := db.AllocationByID(aIn.AllocationID)
+	require.NotNil(t, aOut, "aOut is Nil")
+	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")
+	require.Equal(t, *aOut.EndTime, clusterHeartbeat, "Expected end time of open allocation is = %q but it is = %q instead", clusterHeartbeat.String(), (*aOut.EndTime).String())
+
+}

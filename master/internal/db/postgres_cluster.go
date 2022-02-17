@@ -32,6 +32,12 @@ WHERE NOT EXISTS ( SELECT * FROM cluster_id );
 	return uuidVal[0], nil
 }
 
+// UpdateClusterHeartBeat updates the clusterheartbeat column in the cluster_id table.
+func (db *PgDB) UpdateClusterHeartBeat(currentClusterHeartbeat time.Time) error {
+	_, err := db.sql.Exec(`UPDATE cluster_id SET cluster_heartbeat = $1`, currentClusterHeartbeat)
+	return errors.Wrap(err, "updating cluster heartbeat")
+}
+
 // PeriodicTelemetryInfo returns anonymous information about the usage of the current
 // Determined cluster.
 func (db *PgDB) PeriodicTelemetryInfo() ([]byte, error) {
