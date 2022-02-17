@@ -22,7 +22,7 @@ type slotEnabled struct {
 	draining     bool
 }
 
-func (s slotEnabled) Enabled() bool {
+func (s slotEnabled) enabled() bool {
 	return s.agentEnabled && s.userEnabled
 }
 
@@ -36,7 +36,7 @@ func (s *slot) summarize() model.SlotSummary {
 	return model.SlotSummary{
 		ID:        strconv.Itoa(int(s.device.ID)),
 		Device:    s.device,
-		Enabled:   s.enabled.Enabled(),
+		Enabled:   s.enabled.enabled(),
 		Container: s.container,
 		Draining:  s.enabled.draining,
 	}
@@ -95,7 +95,7 @@ func (a *AgentState) NumSlots() int {
 // NumEmptySlots returns the number of slots that have not been allocated to containers.
 func (a *AgentState) NumEmptySlots() (slots int) {
 	switch {
-	case a.draining || !a.enabled:
+	case a.draining, !a.enabled:
 		return 0
 	default:
 		return a.NumSlots() - a.NumUsedSlots()
@@ -277,7 +277,7 @@ func (a *AgentState) startContainer(ctx *actor.Context, msg sproto.StartTaskCont
 		}
 
 		// TODO(ilia): Potential race condition if slot is disabled in-between scheduling?
-		if !s.enabled.Enabled() {
+		if !s.enabled.enabled() {
 			return errors.New("container allocated but slot is not enabled")
 		}
 		if s.container != nil {
@@ -317,7 +317,7 @@ func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 	}
 
 	// TODO(ilia): Don't materialize `Devices` view on slots.
-	if s.enabled.Enabled() && !s.enabled.deviceAdded {
+	if s.enabled.enabled() && !s.enabled.deviceAdded {
 		s.enabled.deviceAdded = true
 
 		var containerID *cproto.ID
@@ -326,7 +326,7 @@ func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 		}
 
 		a.addDevice(ctx, s.device, containerID)
-	} else if !s.enabled.Enabled() {
+	} else if !s.enabled.enabled() {
 		if !s.enabled.draining && s.enabled.deviceAdded {
 			s.enabled.deviceAdded = false
 			a.removeDevice(ctx, s.device)
@@ -358,7 +358,12 @@ func (a *AgentState) patchAllSlotsState(
 	result := model.SlotsSummary{}
 	for _, slotState := range a.slotStates {
 		summary := a.patchSlotStateInner(
-			ctx, PatchSlotState{ID: -1, Enabled: msg.Enabled, Drain: msg.Drain}, slotState)
+			ctx, PatchSlotState{
+				ID:      slotState.device.ID, // Note: this is effectively unused.
+				Enabled: msg.Enabled,
+				Drain:   msg.Drain,
+			},
+			slotState)
 		result[summary.ID] = summary
 	}
 	return result

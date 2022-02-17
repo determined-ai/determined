@@ -146,6 +146,8 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 				ctx.Tell(allocation.agent.Handler,
 					agent.DeallocateContainer{ContainerID: allocation.container.id})
 			}
+
+			return false
 		default:
 			panic(fmt.Sprintf("bad AllocateFreeDevices response: %s", resp))
 		}
@@ -156,6 +158,16 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
+
+	// Refresh state for the updated agents.
+	allocatedAgents := make([]*actor.Ref, 0, len(allocations))
+	for _, allocation := range allocations {
+		allocation := allocation.(*containerReservation)
+		allocatedAgents = append(allocatedAgents, allocation.agent.Handler)
+	}
+
+	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
+
 	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
 
 	return true
@@ -414,6 +426,23 @@ func (rp *ResourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*age
 	}
 
 	return result
+}
+
+func (rp *ResourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*actor.Ref) {
+	responses := ctx.AskAll(agent.GetAgentState{}, agents...).GetAll()
+
+	for ref, msg := range responses {
+		switch msg := msg.(type) {
+		case *agent.AgentState:
+			rp.agentStatesCache[ref] = msg
+		case error:
+			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
+			delete(rp.agentStatesCache, ref)
+		default:
+			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())
+			delete(rp.agentStatesCache, ref)
+		}
+	}
 }
 
 // containerReservation contains information for tasks have been allocated but not yet started.

@@ -74,7 +74,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
-		podsActor := kubernetes.Initialize(
+		k.podsActor = kubernetes.Initialize(
 			ctx.Self().System(),
 			k.echoRef,
 			ctx.Self(),
@@ -88,7 +88,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			kubernetes.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 			k.config.Fluent,
 		)
-		k.podsActor = podsActor
 
 	case
 		groupActorStopped,
