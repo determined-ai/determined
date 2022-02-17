@@ -324,14 +324,15 @@ class LightningAdapter(PyTorchTrial):
         pytorch_lightning.trainer.optimizers.TrainerOptimizersMixin but circumvents the Trainer
         initialization requirement.
         """
-        optimizer_conf = self._pls.lm.configure_optimizers()
-        optimizers, lr_schedulers, _, monitor = TrainerOptimizersMixin._configure_optimizers(
+        optimizer_conf = self._pls.lm.configure_optimizers()  # type: ignore
+        (optimizers, lr_schedulers, _, monitor) = TrainerOptimizersMixin._configure_optimizers(
             optimizer_conf
         )
+
         lr_schedulers = TrainerOptimizersMixin._configure_schedulers(
             lr_schedulers, monitor, not self._pls.lm.automatic_optimization
         )
-        _validate_scheduler_optimizer(optimizers, lr_schedulers)
+        _validate_scheduler_optimizer(optimizers, lr_schedulers)  # type: ignore
         return optimizers, lr_schedulers
 
     def _build_train_args(self, batch: TorchData, batch_idx: int, opt_idx: int) -> List[Any]:
