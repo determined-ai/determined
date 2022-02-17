@@ -20,9 +20,16 @@ determined-master --config-file /path/to/master.yaml migrate down 20210917133742
 ## Creating new migrations
 
 We use timestamps instead of sequential numbers, standard for `go-pg/migrations`.
-When creating a new migration, either write it manually, or use this script:
+When creating a new migration, either write it manually, or try:
 
 ```bash
+./migration-create.sh my-migration-name
+```
 
-touch $(date +%Y%m%d%H%M%S)_migration_name.{up,down}.sql
+If there is a chance another migration has landed between when you created
+yours and when your PR lands, you should update your filename so the migrations
+land in-order:
+
+```bash
+./migration-move-to-top.sh my-migration-name
 ```
