@@ -127,17 +127,17 @@ tf27_gpu_versioned:
   new: determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.9
   old: determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.7
 tf2_cpu_hashed:
-  new: andazhou/environments:py-3.8-pytorch-1.9-lightning-1.5-tf-2.4-cpu-0.17.7
-  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-9f0cb26
+  new: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-9f0cb26
+  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-f403806
 tf2_cpu_versioned:
-  new: andazhou/environments:py-3.8-pytorch-1.9-lightning-1.5-tf-2.4-cpu-0.17.7
-  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.9
+  new: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.9
+  old: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.7
 tf2_gpu_hashed:
-  new: andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-9f0cb26
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-9f0cb26
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-f403806
 tf2_gpu_versioned:
-  new: andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.7
 us_east_1_agent_ami:
   new: ami-03d3d7321736277fa
   old: ami-0659aa87733a519b9

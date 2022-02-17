@@ -115,7 +115,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull andazhou/environments:py-3.8-pytorch-1.9-lightning-1.5-tf-2.4-cpu-0.17.7
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-9f0cb26
 
   login-docker:
     parameters:
@@ -692,7 +692,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
         type: string
     steps:
       - set-cluster-id:
@@ -1715,7 +1715,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
         type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2238,7 +2238,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2257,7 +2257,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2451,7 +2451,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2466,7 +2466,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - andazhou/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.7
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
