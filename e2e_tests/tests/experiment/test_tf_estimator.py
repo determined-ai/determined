@@ -63,7 +63,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     checkpoint_workloads = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
     assert len(checkpoint_workloads)
     assert checkpoint_workloads[0].checkpoint
-    first_checkpoint_id = checkpoint_workloads[0].checkpoint.uuid
+    first_checkpoint_id = checkpoint_workloads[0].checkpoint.id
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
 

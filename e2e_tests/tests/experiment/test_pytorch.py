@@ -81,7 +81,7 @@ def test_pytorch_const_warm_start() -> None:
     checkpoints = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
     first_checkpoint = checkpoints[-1]
     assert first_checkpoint and first_checkpoint.checkpoint
-    first_checkpoint_id = first_checkpoint.checkpoint.uuid
+    first_checkpoint_id = first_checkpoint.checkpoint.id
 
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
 

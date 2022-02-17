@@ -25,6 +25,8 @@ message CheckpointWorkload {
   map<string, int64> resources = 5;
   // Total number of batches as of this workload's completion.
   int32 total_batches = 8;
+  // Id of the checkpoint in the database.
+  int32 id = 9;
 }
 
 // MetricsWorkload is a workload generating metrics.
@@ -84,8 +86,8 @@ message Trial {
   // The wall clock time is all active time of the cluster for the trial,
   // inclusive of everything (restarts, initiailization, etc), in seconds.
   double wall_clock_time = 12;
-  // UUID of checkpoint that this trial started from.
-  string warm_start_checkpoint_id = 13;
+  // Numeric Id of checkpoint that this trial started from.
+  int32 warm_start_checkpoint_id = 13;
   // Id of task associated with this trial.
   string task_id = 14;
 }

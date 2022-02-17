@@ -110,9 +110,9 @@ def test_noop_single_warm_start() -> None:
     checkpoints = exp.workloads_for_mode(first_workloads, "checkpoint")
     assert len(checkpoints or []) == 30
     assert checkpoints[0] and checkpoints[0].checkpoint
-    first_checkpoint_id = checkpoints[0].checkpoint.uuid
+    first_checkpoint_id = checkpoints[0].checkpoint.id
     assert checkpoints[-1] and checkpoints[-1].checkpoint
-    last_checkpoint_id = checkpoints[-1].checkpoint.uuid
+    last_checkpoint_id = checkpoints[-1].checkpoint.id
     last_validation = exp.workloads_for_mode(first_workloads, "validation")[-1]
     assert last_validation and last_validation.validation and last_validation.validation.metrics
     assert last_validation.validation.metrics["validation_error"] == pytest.approx(0.9 ** 30)
@@ -296,7 +296,7 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
 
     first_checkpoint = exp.workloads_for_mode(first_trial.workloads, "checkpoint")[0]
     assert first_checkpoint and first_checkpoint.checkpoint
-    first_checkpoint_id = first_checkpoint.checkpoint.uuid
+    first_checkpoint_id = first_checkpoint.checkpoint.id
 
     config = copy.deepcopy(config_base)
     if tf2 is not None:

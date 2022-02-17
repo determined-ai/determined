@@ -74,6 +74,7 @@ latest_validation AS (
 ),
 best_checkpoint AS (
   SELECT c.uuid::text AS uuid,
+    c.id,
     c.total_batches,
     c.trial_id,
     c.end_time AS end_time,

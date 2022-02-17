@@ -726,11 +726,11 @@ export interface Trialv1Trial {
      */
     wallClockTime?: number;
     /**
-     * UUID of checkpoint that this trial started from.
-     * @type {string}
+     * Numeric Id of checkpoint that this trial started from.
+     * @type {number}
      * @memberof Trialv1Trial
      */
-    warmStartCheckpointId?: string;
+    warmStartCheckpointId?: number;
     /**
      * Id of task associated with this trial.
      * @type {string}
@@ -1185,6 +1185,12 @@ export interface V1CheckpointWorkload {
      * @memberof V1CheckpointWorkload
      */
     totalBatches: number;
+    /**
+     * Id of the checkpoint in the database.
+     * @type {number}
+     * @memberof V1CheckpointWorkload
+     */
+    id?: number;
 }
 
 /**

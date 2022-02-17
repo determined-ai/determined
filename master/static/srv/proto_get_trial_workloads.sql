@@ -28,6 +28,7 @@ checkpoints_vt AS (
       SELECT 'STATE_' || c.state as state,
         c.end_time,
         c.uuid,
+        c.id,
         c.total_batches,
         c.resources
       FROM checkpoints c
