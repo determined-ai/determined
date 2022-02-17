@@ -68,7 +68,7 @@ func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
 func (c *containerManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		d, err := client.NewClientWithOpts(client.FromEnv)
+		d, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation(), client.FromEnv)
 		if err != nil {
 			return err
 		}
