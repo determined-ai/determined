@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 
 import dateutil.parser
 import pytest
-import requests
 
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
@@ -316,15 +315,9 @@ def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
 
 
 def workloads_for_mode(workloads: List[bindings.GetTrialResponseWorkloadContainer], mode: str):
-    if mode == "training":
-        selector = lambda w: w.training
-    elif mode == "validation":
-        selector = lambda w: w.validation
-    elif mode == "checkpoint":
-        selector = lambda w: w.checkpoint
-    else:
-        raise "Mode must be one of (training, validation, checkpoint)"
-    return list(filter(selector, workloads))
+    if mode not in ["training", "validation", "checkpoint"]:
+        raise Exception("Mode must be one of (training, validation, checkpoint)")
+    return list(filter(lambda w: w.__getattribute__(mode) is not None, workloads))
 
 
 def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> bool:

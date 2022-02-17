@@ -1,5 +1,4 @@
 import json
-import operator
 import sys
 import tempfile
 import time
