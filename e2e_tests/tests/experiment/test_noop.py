@@ -145,7 +145,7 @@ def test_noop_single_warm_start() -> None:
     # Now test source_checkpoint_uuid.
     config_obj = copy.deepcopy(config_base)
     # Add a source trial ID to warm start from.
-    config_obj["searcher"]["source_checkpoint_uuid"] = first_checkpoint_id
+    config_obj["searcher"]["source_checkpoint_uuid"] = checkpoints[0].checkpoint.uuid
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
