@@ -142,8 +142,7 @@ service Determined {
     };
   }
   // Patch a user's fields.
-  rpc PatchUser(PatchUserRequest)
-      returns (PatchUserResponse) {
+  rpc PatchUser(PatchUserRequest) returns (PatchUserResponse) {
     option (google.api.http) = {
       patch: "/api/v1/users/{username}",
       body: "user"
