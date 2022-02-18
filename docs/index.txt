@@ -47,10 +47,15 @@
    sysadmin-deploy-on-k8s/index
 
 .. toctree::
-   :caption: Further
+   :caption: Integrations
    :hidden:
 
    ecosystem-integration
+
+.. toctree::
+   :caption: Further
+   :hidden:
+
    join-community
    attributions
    release-notes
