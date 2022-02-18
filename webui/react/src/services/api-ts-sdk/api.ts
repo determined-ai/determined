@@ -3820,13 +3820,13 @@ export interface V1PatchModelVersionResponse {
 }
 
 /**
- * 
+ * Request to edit fields for a user.
  * @export
  * @interface V1PatchUser
  */
 export interface V1PatchUser {
     /**
-     * 
+     * Name to display in the web UI.
      * @type {string}
      * @memberof V1PatchUser
      */
@@ -5768,7 +5768,7 @@ export interface V1User {
      */
     agentUserGroup?: V1AgentUserGroup;
     /**
-     * 
+     * Name to display in the web UI.
      * @type {string}
      * @memberof V1User
      */
@@ -16644,8 +16644,8 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {string} username 
-         * @param {V1PatchUser} body 
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16822,8 +16822,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {string} username 
-         * @param {V1PatchUser} body 
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16909,8 +16909,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {string} username 
-         * @param {V1PatchUser} body 
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -16974,8 +16974,8 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Patch a user's fields.
-     * @param {string} username 
-     * @param {V1PatchUser} body 
+     * @param {string} username The username of the user.
+     * @param {V1PatchUser} body The updated user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
