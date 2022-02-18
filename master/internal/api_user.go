@@ -159,7 +159,7 @@ func (a *apiServer) PatchUser(
 	user := &model.User{Username: req.Username}
 	// TODO: handle any field name:
 	if req.User.DisplayName != "" {
-		user.DisplayName = null.StringFrom(string(req.User.DisplayName))
+		user.DisplayName = null.StringFrom(req.User.DisplayName)
 		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
 		case err == db.ErrNotFound:
 			return nil, errUserNotFound
