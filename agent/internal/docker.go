@@ -147,9 +147,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 			}
 			d.sendAuxLog(ctx, fmt.Sprintf(
 				"domain '%s' found in 'credHelpers' config. Using credentials helper.", domain))
-		} else {
-			d.sendAuxLog(ctx, fmt.Sprintf(
-				"domain '%s' not found in 'credHelpers' config. Using anonymous credentials.", domain))
 		}
 	}
 
