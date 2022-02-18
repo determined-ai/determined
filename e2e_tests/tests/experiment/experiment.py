@@ -316,6 +316,28 @@ def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> 
     return False
 
 
+def assert_patterns_in_trial_logs(trial_id: int, patterns: List[str]) -> None:
+    """Match each regex pattern in the list to the logs, one-at-a-time, in order."""
+    assert patterns, "must provide at least one pattern"
+    patterns_iter = iter(patterns)
+    p = re.compile(next(patterns_iter))
+    logs = trial_logs(trial_id, follow=True)
+    for log_line in logs:
+        if p.search(log_line) is None:
+            continue
+        # Matched a pattern.
+        try:
+            p = re.compile(next(patterns_iter))
+        except StopIteration:
+            # All patterns have been matched.
+            return
+    # Some patterns were not found.
+    text = '"\n  "'.join([p.pattern, *patterns_iter])
+    raise ValueError(
+        f'the following patterns:\n  "{text}"\nwere not found in the trial logs:\n\n{"".join(logs)}'
+    )
+
+
 def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> None:
     full_trial_metrics1 = trial_metrics(A)
     full_trial_metrics2 = trial_metrics(B)

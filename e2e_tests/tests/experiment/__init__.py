@@ -6,6 +6,7 @@ from .experiment import (
     cancel_single,
     cancel_single_v1,
     check_if_string_present_in_trial_logs,
+    assert_patterns_in_trial_logs,
     create_experiment,
     create_native_experiment,
     experiment_has_active_workload,
