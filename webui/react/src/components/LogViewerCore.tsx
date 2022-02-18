@@ -24,6 +24,7 @@ import css from './LogViewerCore.module.scss';
 
 interface Props {
   decoder: (data: unknown) => Log,
+  hideTitle?:boolean
   onDownload?: () => void;
   onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
@@ -457,6 +458,7 @@ const LogViewerCore: React.FC<Props> = ({
       bodyNoPadding
       bodyScroll
       divider
+      hideTitle={props.hideTitle}
       maxHeight
       options={logViewerOptions}
       title={props.title}>

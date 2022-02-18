@@ -36,7 +36,7 @@ const Clusters: React.FC = () => {
     <Page id="cluster" stickyHeader title="Cluster">
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="logs" tab="Master Logs">
-          <ClusterLogs className="pageFullHeight" />
+          <ClusterLogs className="pageFullHeight" hideTitle={true} />
         </TabPane>
       </Tabs>
     </Page>
