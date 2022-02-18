@@ -24,6 +24,7 @@ message User {
   string display_name = 6;
 }
 
+// Request to edit fields for a user.
 message PatchUser {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "username" ] }

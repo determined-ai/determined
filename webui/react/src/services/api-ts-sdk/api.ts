@@ -3820,13 +3820,13 @@ export interface V1PatchModelVersionResponse {
 }
 
 /**
- * 
+ * Request to edit fields for a User.
  * @export
  * @interface V1PatchUser
  */
 export interface V1PatchUser {
     /**
-     * 
+     * Name to display in the web UI.
      * @type {string}
      * @memberof V1PatchUser
      */
@@ -3844,7 +3844,7 @@ export interface V1PatchUserResponse {
      * @type {V1User}
      * @memberof V1PatchUserResponse
      */
-    user: V1User;
+    user?: V1User;
 }
 
 /**
@@ -5768,7 +5768,7 @@ export interface V1User {
      */
     agentUserGroup?: V1AgentUserGroup;
     /**
-     * 
+     * Name to display in the web UI.
      * @type {string}
      * @memberof V1User
      */
