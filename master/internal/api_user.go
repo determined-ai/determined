@@ -170,4 +170,3 @@ func (a *apiServer) PatchUser(
 	fullUser, err := getUser(a.m.db, req.Username)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
-
