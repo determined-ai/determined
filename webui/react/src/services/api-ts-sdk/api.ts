@@ -3709,6 +3709,24 @@ export interface V1PatchExperiment {
      * @memberof V1PatchExperiment
      */
     notes?: string;
+    /**
+     * The maximum resources in slots.
+     * @type {number}
+     * @memberof V1PatchExperiment
+     */
+    maxSlots?: number;
+    /**
+     * The weight for allocating resources to the experiment.
+     * @type {number}
+     * @memberof V1PatchExperiment
+     */
+    weight?: number;
+    /**
+     * The priority level for the experiment.
+     * @type {number}
+     * @memberof V1PatchExperiment
+     */
+    priority?: number;
 }
 
 /**

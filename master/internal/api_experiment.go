@@ -27,9 +27,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -579,6 +581,37 @@ func (a *apiServer) PatchExperiment(
 				exp.Labels)
 		}
 	}
+
+	if req.Experiment.MaxSlots != nil || req.Experiment.Weight != nil || req.Experiment.Priority != nil {
+		dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
+		resources := dbExp.Config.Resources()
+		if err != nil {
+			return nil, errors.Wrapf(err,
+				"error fetching experiment config from database: %d", req.Experiment.Id)
+		}
+		if req.Experiment.MaxSlots != nil {
+			resources.SetMaxSlots(ptrs.IntPtr(int(req.Experiment.MaxSlots.Value)))
+			a.m.system.TellAt(actor.Addr("experiments", req.Experiment.Id),
+				sproto.SetGroupMaxSlots{MaxSlots: ptrs.IntPtr(int(req.Experiment.MaxSlots.Value))})
+		}
+		if req.Experiment.Weight != nil {
+			resources.SetWeight(float64(req.Experiment.Weight.Value))
+			a.m.system.TellAt(actor.Addr("experiments", req.Experiment.Id),
+				job.SetGroupWeight{Weight: float64(req.Experiment.Weight.Value)})
+		}
+		if req.Experiment.Priority != nil {
+			resources.SetPriority(ptrs.IntPtr(int(req.Experiment.Priority.Value)))
+			a.m.system.TellAt(actor.Addr("experiments", req.Experiment.Id),
+				job.SetGroupPriority{Priority: int(req.Experiment.Priority.Value)})
+		}
+		dbExp.Config.SetResources(resources)
+		a.m.db.SaveExperimentConfig(dbExp)
+	}
+
+	// if req.Experiment.GCPolicy != nil {
+	// 	exp.Resources.GCPolicy = req.Experiment.GCPolicy
+	// 	madeChanges = true
+	// }
 
 	if madeChanges {
 		type experimentPatch struct {

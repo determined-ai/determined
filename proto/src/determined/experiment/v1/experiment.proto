@@ -106,6 +106,12 @@ message PatchExperiment {
   google.protobuf.StringValue name = 4;
   // The experiment notes.
   google.protobuf.StringValue notes = 5;
+  // The maximum resources in slots.
+  google.protobuf.Int32Value max_slots = 6;
+  // The weight for allocating resources to the experiment.
+  google.protobuf.FloatValue weight = 7;
+  // The priority level for the experiment.
+  google.protobuf.Int32Value priority = 8;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

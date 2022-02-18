@@ -3069,14 +3069,20 @@ class v1PatchExperiment:
         id: int,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+        maxSlots: "typing.Optional[int]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
+        priority: "typing.Optional[int]" = None,
+        weight: "typing.Optional[float]" = None,
     ):
         self.id = id
         self.description = description
         self.labels = labels
         self.name = name
         self.notes = notes
+        self.maxSlots = maxSlots
+        self.weight = weight
+        self.priority = priority
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchExperiment":
@@ -3086,6 +3092,9 @@ class v1PatchExperiment:
             labels=obj.get("labels", None),
             name=obj.get("name", None),
             notes=obj.get("notes", None),
+            maxSlots=obj.get("maxSlots", None),
+            weight=float(obj["weight"]) if obj.get("weight", None) is not None else None,
+            priority=obj.get("priority", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -3095,6 +3104,9 @@ class v1PatchExperiment:
             "labels": self.labels if self.labels is not None else None,
             "name": self.name if self.name is not None else None,
             "notes": self.notes if self.notes is not None else None,
+            "maxSlots": self.maxSlots if self.maxSlots is not None else None,
+            "weight": dump_float(self.weight) if self.weight is not None else None,
+            "priority": self.priority if self.priority is not None else None,
         }
 
 class v1PatchExperimentResponse:

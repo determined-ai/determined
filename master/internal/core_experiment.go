@@ -17,7 +17,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -191,12 +190,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
 	patch := struct {
-		State     *model.State `json:"state"`
-		Resources *struct {
-			MaxSlots api.MaybeInt `json:"max_slots"`
-			Weight   *float64     `json:"weight"`
-			Priority *int         `json:"priority"`
-		} `json:"resources"`
+		State             *model.State `json:"state"`
 		CheckpointStorage *struct {
 			SaveExperimentBest int `json:"save_experiment_best"`
 			SaveTrialBest      int `json:"save_trial_best"`
@@ -221,19 +215,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		agentUserGroup = &m.config.Security.DefaultTask
 	}
 
-	if patch.Resources != nil {
-		resources := dbExp.Config.Resources()
-		if patch.Resources.MaxSlots.IsPresent {
-			resources.SetMaxSlots(patch.Resources.MaxSlots.Value)
-		}
-		if patch.Resources.Weight != nil {
-			resources.SetWeight(*patch.Resources.Weight)
-		}
-		if patch.Resources.Priority != nil {
-			resources.SetPriority(patch.Resources.Priority)
-		}
-		dbExp.Config.SetResources(resources)
-	}
 	if patch.CheckpointStorage != nil {
 		storage := dbExp.Config.CheckpointStorage()
 		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
@@ -248,21 +229,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 	if patch.State != nil {
 		m.system.TellAt(actor.Addr("experiments", args.ExperimentID), *patch.State)
-	}
-
-	if patch.Resources != nil {
-		if patch.Resources.MaxSlots.IsPresent {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
-		}
-		if patch.Resources.Weight != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupWeight{Weight: *patch.Resources.Weight})
-		}
-		if patch.Resources.Priority != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupPriority{Priority: *patch.Resources.Priority})
-		}
 	}
 
 	if patch.CheckpointStorage != nil {
