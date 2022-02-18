@@ -3844,7 +3844,7 @@ export interface V1PatchUserResponse {
      * @type {V1User}
      * @memberof V1PatchUserResponse
      */
-    user?: V1User;
+    user: V1User;
 }
 
 /**

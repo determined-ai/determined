@@ -129,10 +129,10 @@ export const setUserPassword: Service.DetApi<
 };
 
 export const patchUser: Service.DetApi<
-  Service.PatchUserParams, Api.V1PatchUserResponse, Api.V1PatchUserResponse
+  Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
 > = {
   name: 'patchUser',
-  postProcess: (response) => response,
+  postProcess: (response) => decoder.mapV1User(response.user),
   request: (params) => detApi.Users.patchUser(
     params.username,
     params.userParams,

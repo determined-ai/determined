@@ -44,7 +44,7 @@ export const setUserPassword = generateDetApi<
 >(Config.setUserPassword);
 
 export const patchUser = generateDetApi<
-  Service.PatchUserParams, Api.V1PatchUserResponse, Api.V1PatchUserResponse
+  Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
 >(Config.patchUser);
 
 /* Info */
