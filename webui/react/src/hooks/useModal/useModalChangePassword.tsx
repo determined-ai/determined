@@ -118,7 +118,6 @@ const useModalChangePassword = (): ModalHooks => {
       closable: true,
       content: getModalContent(),
       icon: null,
-      okText: 'Change Password',
       title: 'Change Password',
     });
   }, [ getModalContent, openOrUpdate ]);
