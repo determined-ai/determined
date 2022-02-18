@@ -426,7 +426,7 @@ def list_experiments(args: Namespace) -> None:
     if not args.all:
         users = [authentication.must_cli_auth().get_session_user()]
 
-    r = bindings.get_GetExperiments(setup_session(args), users=users)
+    r = bindings.get_GetExperiments(setup_session(args), users=users, limit=100_000)
 
     def format_experiment(e: Any) -> List[Any]:
         result = [
@@ -499,7 +499,9 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 
 @authentication.required
 def list_trials(args: Namespace) -> None:
-    r = bindings.get_GetExperimentTrials(setup_session(args), experimentId=args.experiment_id)
+    r = bindings.get_GetExperimentTrials(
+        setup_session(args), experimentId=args.experiment_id, limit=100_000
+    )
     trials = r.trials
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
