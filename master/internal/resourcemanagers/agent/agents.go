@@ -105,12 +105,12 @@ func (a *agents) createAgentActor(
 	resourcePoolRef := sproto.GetRP(ctx.Self().System(), resourcePool)
 	rpConfig := ctx.Ask(resourcePoolRef, aproto.GetRPConfig{}).Get().(aproto.GetRPResponse)
 	ref, ok := ctx.ActorOf(id, &agent{
-		resourcePool:         resourcePoolRef,
-		resourcePoolName:     resourcePool,
-		agentReconnectWait:   time.Duration(rpConfig.AgentReconnectWait),
-		agentReattachEnabled: rpConfig.AgentReattachEnabled,
-		opts:                 opts,
-		enabled:              true,
+		resourcePool:          resourcePoolRef,
+		resourcePoolName:      resourcePool,
+		maxZeroSlotContainers: rpConfig.MaxZeroSlotContainers,
+		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
+		agentReattachEnabled:  rpConfig.AgentReattachEnabled,
+		opts:                  opts,
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

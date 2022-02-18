@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -18,7 +19,7 @@ func NewRoundRobinScheduler() Scheduler {
 }
 
 func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return roundRobinSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+	return roundRobinSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (p *roundRobinScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
@@ -29,7 +30,7 @@ func (p *roundRobinScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RM
 func roundRobinSchedule(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	var states []*groupState

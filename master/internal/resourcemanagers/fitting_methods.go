@@ -3,28 +3,29 @@ package resourcemanagers
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 // Hard Constraints
 
-func slotsSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
-	return req.SlotsNeeded <= agent.numEmptySlots()
+func slotsSatisfied(req *sproto.AllocateRequest, agent *agent.AgentState) bool {
+	return req.SlotsNeeded <= agent.NumEmptySlots()
 }
 
-func labelSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
-	return req.Label == agent.label
+func labelSatisfied(req *sproto.AllocateRequest, agent *agent.AgentState) bool {
+	return req.Label == agent.Label
 }
 
-func maxZeroSlotContainersSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
+func maxZeroSlotContainersSatisfied(req *sproto.AllocateRequest, agent *agent.AgentState) bool {
 	if req.SlotsNeeded == 0 {
-		return agent.numEmptyZeroSlots() > 0
+		return agent.NumEmptyZeroSlots() > 0
 	}
 	return true
 }
 
-func agentSlotUnusedSatisfied(_ *sproto.AllocateRequest, agent *agentState) bool {
-	return agent.numUsedSlots() == 0
+func agentSlotUnusedSatisfied(_ *sproto.AllocateRequest, agent *agent.AgentState) bool {
+	return agent.NumUsedSlots() == 0
 }
 
 // Soft Constraints
@@ -33,33 +34,34 @@ func agentSlotUnusedSatisfied(_ *sproto.AllocateRequest, agent *agentState) bool
 // the agent. This method attempts to allocate tasks to the agent that is both most utilized and
 // offers the fewest slots. This method should be used when the cluster is dominated by multi-slot
 // applications.
-func BestFit(req *sproto.AllocateRequest, agent *agentState) float64 {
+func BestFit(req *sproto.AllocateRequest, agent *agent.AgentState) float64 {
 	switch {
-	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
-		return 1.0 / (1.0 + float64(agent.numEmptySlots()))
-	case agent.numZeroSlots() == 0:
+	case agent.NumUsedSlots() != 0 || req.SlotsNeeded != 0:
+		return 1.0 / (1.0 + float64(agent.NumEmptySlots()))
+	case agent.NumZeroSlots() == 0:
 		return 0.0
 	default:
-		return 1.0 / (1.0 + float64(agent.numEmptyZeroSlots()))
+		return 1.0 / (1.0 + float64(agent.NumEmptyZeroSlots()))
 	}
 }
 
 // WorstFit returns a float affinity score between 0 and 1 for the affinity between the task and
 // the agent. This method attempts to allocate tasks to the agent that is least utilized. This
 // method should be used when the cluster is dominated by single-slot applications.
-func WorstFit(req *sproto.AllocateRequest, agent *agentState) float64 {
+func WorstFit(req *sproto.AllocateRequest, agent *agent.AgentState) float64 {
 	switch {
-	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
-		return float64(agent.numEmptySlots()) / float64(agent.numSlots())
-	case agent.numZeroSlots() == 0:
+	case agent.NumUsedSlots() != 0 || req.SlotsNeeded != 0:
+		return float64(agent.NumEmptySlots()) / float64(agent.NumSlots())
+	case agent.NumZeroSlots() == 0:
 		return 0.0
 	default:
-		return float64(agent.numEmptyZeroSlots()) / float64(agent.numZeroSlots())
+		return float64(agent.NumEmptyZeroSlots()) / float64(agent.NumZeroSlots())
 	}
 }
 
 // MakeFitFunction returns the corresponding fitting function.
-func MakeFitFunction(fittingPolicy string) func(*sproto.AllocateRequest, *agentState) float64 {
+func MakeFitFunction(fittingPolicy string) func(
+	*sproto.AllocateRequest, *agent.AgentState) float64 {
 	switch fittingPolicy {
 	case worst:
 		return WorstFit

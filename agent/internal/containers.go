@@ -290,7 +290,7 @@ func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.Host
 func containerEnvVars(cont cproto.Container) []string {
 	var slotIds []string
 	for _, d := range cont.Devices {
-		slotIds = append(slotIds, strconv.Itoa(d.ID))
+		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
 	}
 	return []string{
 		fmt.Sprintf("DET_CONTAINER_ID=%s", cont.ID),
@@ -420,7 +420,7 @@ func makeContainerDockerLabels(cont cproto.Container) map[string]string {
 	labels[dockerContainerParentLabel] = cont.Parent.String()
 	var slotIds []string
 	for _, d := range cont.Devices {
-		slotIds = append(slotIds, strconv.Itoa(d.ID))
+		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
 	}
 	labels[dockerContainerDevicesLabel] = strings.Join(slotIds, ",")
 

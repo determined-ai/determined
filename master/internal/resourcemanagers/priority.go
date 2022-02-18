@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -28,7 +30,7 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+	return p.prioritySchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group) {
@@ -52,7 +54,7 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 func (p *priorityScheduler) prioritySchedule(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
@@ -83,7 +85,7 @@ func (p *priorityScheduler) prioritySchedule(
 func (p *priorityScheduler) prioritySchedulerWithFilter(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	fittingMethod SoftConstraint,
 	filter func(*sproto.AllocateRequest) bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
@@ -175,11 +177,11 @@ func trySchedulingTaskViaPreemption(
 	allocationRequest *sproto.AllocateRequest,
 	allocationPriority int,
 	fittingMethod SoftConstraint,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	priorityToScheduledTaskMap map[int][]*sproto.AllocateRequest,
 	tasksAlreadyPreempted map[*actor.Ref]bool,
 	filter func(*sproto.AllocateRequest) bool,
-) (bool, map[*actor.Ref]*agentState, map[*actor.Ref]bool) {
+) (bool, map[*actor.Ref]*agent.AgentState, map[*actor.Ref]bool) {
 	localAgentsState := deepCopyAgents(agents)
 	preemptedTasks := make(map[*actor.Ref]bool)
 	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
@@ -214,7 +216,7 @@ func trySchedulingTaskViaPreemption(
 // are listed.
 func trySchedulingPendingTasksInPriority(
 	allocationRequests []*sproto.AllocateRequest,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*sproto.AllocateRequest) {
 	successfulAllocations := make([]*sproto.AllocateRequest, 0)
@@ -279,38 +281,40 @@ func sortTasksByPriorityAndTimestamp(
 	return priorityToPendingTasksMap, priorityToScheduledTaskMap
 }
 
-func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentState {
-	copiedAgents := make(map[*actor.Ref]*agentState)
+func deepCopyAgents(agents map[*actor.Ref]*agent.AgentState) map[*actor.Ref]*agent.AgentState {
+	copiedAgents := make(map[*actor.Ref]*agent.AgentState)
 	for key, agent := range agents {
-		copiedAgents[key] = agent.deepCopy()
+		copiedAgents[key] = agent.DeepCopy()
 	}
 	return copiedAgents
 }
 
 func addTaskToAgents(fits []*fittingState) {
 	for _, fit := range fits {
-		fit.Agent.allocateFreeDevices(fit.Slots, cproto.NewID())
+		if _, err := fit.Agent.AllocateFreeDevices(fit.Slots, cproto.NewID()); err != nil {
+			panic(errors.Wrap(err, "can't add task to agents"))
+		}
 	}
 }
 
 func removeTaskFromAgents(
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	resourcesAllocated *sproto.ResourcesAllocated,
 ) {
 	for _, allocation := range resourcesAllocated.Reservations {
 		allocation := allocation.(*containerReservation)
 		if len(allocation.devices) == 0 {
 			// Handle zero-slot containers.
-			delete(agents[allocation.agent.handler].zeroSlotContainers, allocation.container.id)
+			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.container.id)
 		}
 
 		for _, allocatedDevice := range allocation.devices {
 			// Local devices are a deep copy of the originals so we loop over trying to find
 			// the device that matches. If we assume that we have homogeneous devices we could
 			// just search for the first used device.
-			for localDevice, localContainer := range agents[allocation.agent.handler].devices {
+			for localDevice, localContainer := range agents[allocation.agent.Handler].Devices {
 				if allocatedDevice.ID == localDevice.ID && localContainer != nil {
-					agents[allocation.agent.handler].devices[localDevice] = nil
+					agents[allocation.agent.Handler].Devices[localDevice] = nil
 				}
 			}
 		}
@@ -326,13 +330,14 @@ func getOrderedPriorities(allocationsByPriority map[int][]*sproto.AllocateReques
 	return keys
 }
 
-func splitAgentsByLabel(agents map[*actor.Ref]*agentState) map[string]map[*actor.Ref]*agentState {
-	agentsSplitByLabel := make(map[string]map[*actor.Ref]*agentState)
-	for agentRef, agent := range agents {
-		if _, ok := agentsSplitByLabel[agent.label]; !ok {
-			agentsSplitByLabel[agent.label] = make(map[*actor.Ref]*agentState)
+func splitAgentsByLabel(
+	agents map[*actor.Ref]*agent.AgentState) map[string]map[*actor.Ref]*agent.AgentState {
+	agentsSplitByLabel := make(map[string]map[*actor.Ref]*agent.AgentState)
+	for agentRef, agentState := range agents {
+		if _, ok := agentsSplitByLabel[agentState.Label]; !ok {
+			agentsSplitByLabel[agentState.Label] = make(map[*actor.Ref]*agent.AgentState)
 		}
-		agentsSplitByLabel[agent.label][agentRef] = agent
+		agentsSplitByLabel[agentState.Label][agentRef] = agentState
 	}
 	return agentsSplitByLabel
 }
