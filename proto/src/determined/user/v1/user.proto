@@ -20,6 +20,7 @@ message User {
   bool active = 4;
   // The user and group on the agent host machine.
   AgentUserGroup agent_user_group = 5;
+  // Name to display in the web UI.
   string display_name = 6;
 }
 
@@ -27,6 +28,7 @@ message PatchUser {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "username" ] }
   };
+  // Name to display in the web UI.
   string display_name = 2;
 }
 
