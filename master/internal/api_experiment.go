@@ -582,7 +582,8 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	if req.Experiment.MaxSlots != nil || req.Experiment.Weight != nil || req.Experiment.Priority != nil {
+	if req.Experiment.MaxSlots != nil || req.Experiment.Weight != nil ||
+		req.Experiment.Priority != nil {
 		dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
 		resources := dbExp.Config.Resources()
 		if err != nil {
@@ -605,13 +606,10 @@ func (a *apiServer) PatchExperiment(
 				job.SetGroupPriority{Priority: int(req.Experiment.Priority.Value)})
 		}
 		dbExp.Config.SetResources(resources)
-		a.m.db.SaveExperimentConfig(dbExp)
+		if err = a.m.db.SaveExperimentConfig(dbExp); err != nil {
+			return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
+		}
 	}
-
-	// if req.Experiment.GCPolicy != nil {
-	// 	exp.Resources.GCPolicy = req.Experiment.GCPolicy
-	// 	madeChanges = true
-	// }
 
 	if madeChanges {
 		type experimentPatch struct {
