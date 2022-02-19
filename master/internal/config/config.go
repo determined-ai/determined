@@ -27,10 +27,8 @@ var once sync.Once
 var masterConfig *Config
 
 // KubernetesDefaultPriority is the default K8 resource manager priority.
-// TODO: remove duplicate definition from resourcemanagers
+// TODO: remove duplicate definition from resourcemanagers.
 const KubernetesDefaultPriority = 50
-
-// TODO: remove duplicate definition from db
 const sslModeDisable = "disable"
 
 type (

@@ -3,17 +3,17 @@ package db
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/internal/config"
 )
 
 const maxOpenConns = 48
 
 const (
-	cnxTpl         = "postgres://%s:%s@%s:%s/%s?application_name=determined-master"
-	sslTpl         = "&sslmode=%s&sslrootcert=%s"
-	sslModeDisable = "disable"
+	cnxTpl = "postgres://%s:%s@%s:%s/%s?application_name=determined-master"
+	sslTpl = "&sslmode=%s&sslrootcert=%s"
 )
 
 // Connect connects to the database, but doesn't run migrations & inits.

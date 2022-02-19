@@ -75,8 +75,8 @@ type manager struct {
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB, system *actor.System, config config.HPImportanceConfig, masterRoot string,
-) (actor.Actor, error) {
+func NewManager(db *db.PgDB, system *actor.System,
+	config config.HPImportanceConfig, masterRoot string) (actor.Actor, error) {
 	// growforest should either be installed in PATH (when running from source) or package with the
 	// master (when running from binary packages).
 	growforest := path.Join(masterRoot, growforestBin)

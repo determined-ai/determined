@@ -33,7 +33,8 @@ type agentResourceManager struct {
 	pools map[string]*actor.Ref
 }
 
-func newAgentResourceManager(config *config.ResourceConfig, cert *tls.Certificate) *agentResourceManager {
+func newAgentResourceManager(config *config.ResourceConfig,
+	cert *tls.Certificate) *agentResourceManager {
 	return &agentResourceManager{
 		config:      config.ResourceManager.AgentRM,
 		poolsConfig: config.ResourcePools,
@@ -275,7 +276,8 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 	return summaries
 }
 
-func (a *agentResourceManager) getResourcePoolConfig(poolName string) (config.ResourcePoolConfig, error) {
+func (a *agentResourceManager) getResourcePoolConfig(poolName string) (
+	config.ResourcePoolConfig, error) {
 	for i := range a.poolsConfig {
 		if a.poolsConfig[i].PoolName == poolName {
 			return a.poolsConfig[i], nil
