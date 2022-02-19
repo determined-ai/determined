@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -44,6 +43,14 @@ func DefaultDBConfig() *DBConfig {
 		Migrations: "file://static/migrations",
 		SSLMode:    sslModeDisable,
 	}
+}
+
+// HPImportanceConfig is the configuration in the master for hyperparameter importance.
+type HPImportanceConfig struct {
+	WorkersLimit   uint `json:"workers_limit"`
+	QueueLimit     uint `json:"queue_limit"`
+	CoresPerWorker uint `json:"cores_per_worker"`
+	MaxTrees       uint `json:"max_trees"`
 }
 
 // DBConfig hosts configuration fields of the database.
@@ -91,7 +98,7 @@ func DefaultConfig() *Config {
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
-		HPImportance: hpimportance.HPImportanceConfig{
+		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
 			CoresPerWorker: 1,
@@ -120,7 +127,7 @@ type Config struct {
 	EnableCors            bool                              `json:"enable_cors"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
-	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
+	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	*resourcemanagers.ResourceConfig
 
