@@ -7,6 +7,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -15,33 +16,33 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 
 	// Set up one CPU resource pool and one GPU resource pool.
-	config := &ResourceConfig{
-		ResourceManager: &ResourceManagerConfig{
-			AgentRM: &AgentResourceManagerConfig{
-				Scheduler: &SchedulerConfig{
-					FairShare:     &FairShareSchedulerConfig{},
+	cfg := &config.ResourceConfig{
+		ResourceManager: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Scheduler: &config.SchedulerConfig{
+					FairShare:     &config.FairShareSchedulerConfig{},
 					FittingPolicy: defaultFitPolicy,
 				},
 				DefaultAuxResourcePool:     "cpu-pool",
 				DefaultComputeResourcePool: "gpu-pool",
 			},
 		},
-		ResourcePools: []ResourcePoolConfig{
+		ResourcePools: []config.ResourcePoolConfig{
 			{PoolName: "cpu-pool"},
 			{PoolName: "gpu-pool"},
 		},
 	}
 	_, cpuPoolRef := setupResourcePool(
-		t, system, &ResourcePoolConfig{PoolName: "cpu-pool"},
+		t, system, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
 		nil, nil, []*mockAgent{{id: "agent1", slots: 0}},
 	)
 	_, gpuPoolRef := setupResourcePool(
-		t, system, &ResourcePoolConfig{PoolName: "gpu-pool"},
+		t, system, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
 		nil, nil, []*mockAgent{{id: "agent2", slots: 4}},
 	)
 	agentRM := &agentResourceManager{
-		config:      config.ResourceManager.AgentRM,
-		poolsConfig: config.ResourcePools,
+		config:      cfg.ResourceManager.AgentRM,
+		poolsConfig: cfg.ResourcePools,
 		pools: map[string]*actor.Ref{
 			"cpu-pool": cpuPoolRef,
 			"gpu-pool": gpuPoolRef,

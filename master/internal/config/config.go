@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -26,6 +25,10 @@ var (
 
 var once sync.Once
 var masterConfig *Config
+
+// KubernetesDefaultPriority is the default K8 resource manager priority.
+// TODO: remove duplicate definition from resourcemanagers
+const KubernetesDefaultPriority = 50
 
 // TODO: remove duplicate definition from db
 const sslModeDisable = "disable"
@@ -104,7 +107,7 @@ func DefaultConfig() *Config {
 			CoresPerWorker: 1,
 			MaxTrees:       100,
 		},
-		ResourceConfig: resourcemanagers.DefaultResourceConfig(),
+		ResourceConfig: DefaultResourceConfig(),
 	}
 }
 
@@ -129,7 +132,7 @@ type Config struct {
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
-	*resourcemanagers.ResourceConfig
+	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
@@ -196,7 +199,7 @@ func (c *Config) Resolve() error {
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
 
 	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
-		c.ResourceManager.AgentRM.Scheduler = resourcemanagers.DefaultSchedulerConfig()
+		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
 	if err := c.ResolveResource(); err != nil {
@@ -276,7 +279,7 @@ type ObservabilityConfig struct {
 	EnablePrometheus bool `json:"enable_prometheus"`
 }
 
-func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
+func readPriorityFromScheduler(conf *SchedulerConfig) *int {
 	if conf == nil || conf.Priority == nil {
 		return nil
 	}
@@ -329,7 +332,7 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 		return *prio
 	}
 
-	var schedulerConf *resourcemanagers.SchedulerConfig
+	var schedulerConf *SchedulerConfig
 
 	// if not found, fall back to the resource pools config
 	for _, rpConfig := range config.ResourcePools {
@@ -353,10 +356,10 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 	}
 
 	if config.ResourceManager.KubernetesRM != nil {
-		return resourcemanagers.KubernetesDefaultPriority
+		return KubernetesDefaultPriority
 	}
 
-	return resourcemanagers.DefaultSchedulingPriority
+	return DefaultSchedulingPriority
 }
 
 // ReadWeight resolves the weight value for a job.

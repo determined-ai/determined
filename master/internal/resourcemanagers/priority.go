@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -23,7 +24,7 @@ type priorityScheduler struct {
 type AllocReqs = []*sproto.AllocateRequest
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
-func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
+func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	return &priorityScheduler{
 		preemptionEnabled: config.Priority.Preemption,
 	}

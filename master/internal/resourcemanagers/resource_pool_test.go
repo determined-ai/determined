@@ -9,6 +9,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -183,9 +184,9 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 func TestSettingGroupPriority(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
-	config := ResourcePoolConfig{
-		Scheduler: &SchedulerConfig{
-			Priority: &PrioritySchedulerConfig{
+	config := config.ResourcePoolConfig{
+		Scheduler: &config.SchedulerConfig{
+			Priority: &config.PrioritySchedulerConfig{
 				DefaultPriority: &defaultPriority,
 			},
 			FittingPolicy: best,

@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -24,7 +25,7 @@ const KubernetesDefaultPriority = 50
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
-	config *KubernetesResourceManagerConfig
+	config *config.KubernetesResourceManagerConfig
 
 	reqList           *taskList
 	groups            map[*actor.Ref]*group
@@ -42,7 +43,7 @@ type kubernetesResourceManager struct {
 }
 
 func newKubernetesResourceManager(
-	config *KubernetesResourceManagerConfig,
+	config *config.KubernetesResourceManagerConfig,
 	echoRef *echo.Echo,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,

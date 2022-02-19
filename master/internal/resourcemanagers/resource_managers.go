@@ -3,13 +3,18 @@ package resourcemanagers
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 const (
-	actionCoolDown = 500 * time.Millisecond
+	// DefaultSchedulingPriority is the default resource manager priority.
+	DefaultSchedulingPriority = 42
+
+	actionCoolDown          = 500 * time.Millisecond
+	defaultResourcePoolName = "default"
 )
 
 // schedulerTick periodically triggers the scheduler to act.
@@ -49,7 +54,7 @@ func (rm *ResourceManagers) forward(ctx *actor.Context, msg actor.Message) {
 }
 
 // GetResourceManagerType returns the type of resourceManager being used.
-func GetResourceManagerType(rmConfig *ResourceManagerConfig) string {
+func GetResourceManagerType(rmConfig *config.ResourceManagerConfig) string {
 	switch {
 	case rmConfig.AgentRM != nil:
 		return "agentsRM"
