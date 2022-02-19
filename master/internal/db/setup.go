@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +17,7 @@ const (
 )
 
 // Connect connects to the database, but doesn't run migrations & inits.
-func Connect(opts *Config) (*PgDB, error) {
+func Connect(opts *config.DBConfig) (*PgDB, error) {
 	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
 	dbURL += fmt.Sprintf(sslTpl, opts.SSLMode, opts.SSLRootCert)
 	log.Infof("connecting to database %s:%s", opts.Host, opts.Port)
@@ -31,7 +32,7 @@ func Connect(opts *Config) (*PgDB, error) {
 }
 
 // Setup connects to the database and run any necessary migrations.
-func Setup(opts *Config) (*PgDB, error) {
+func Setup(opts *config.DBConfig) (*PgDB, error) {
 	db, err := Connect(opts)
 	if err != nil {
 		return db, err

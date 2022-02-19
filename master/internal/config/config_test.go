@@ -10,7 +10,6 @@ import (
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -51,7 +50,7 @@ resource_pools:
 			Level: "info",
 			Color: false,
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",
@@ -187,7 +186,7 @@ db:
 			Level: "info",
 			Color: false,
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",
@@ -223,7 +222,7 @@ checkpoint_storage:
 			Level: "info",
 			Color: false,
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",
@@ -274,7 +273,7 @@ telemetry:
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",

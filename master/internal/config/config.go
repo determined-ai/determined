@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/config"
@@ -29,6 +28,9 @@ var (
 var once sync.Once
 var masterConfig *Config
 
+// TODO: remove duplicate definition from db
+const sslModeDisable = "disable"
+
 type (
 	// ExperimentConfigPatch is the updatedble fields for patching an experiment.
 	ExperimentConfigPatch struct {
@@ -36,12 +38,32 @@ type (
 	}
 )
 
+// DefaultDBConfig returns the default configuration of the database.
+func DefaultDBConfig() *DBConfig {
+	return &DBConfig{
+		Migrations: "file://static/migrations",
+		SSLMode:    sslModeDisable,
+	}
+}
+
+// DBConfig hosts configuration fields of the database.
+type DBConfig struct {
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	Migrations  string `json:"migrations"`
+	Host        string `json:"host"`
+	Port        string `json:"port"`
+	Name        string `json:"name"`
+	SSLMode     string `json:"ssl_mode"`
+	SSLRootCert string `json:"ssl_root_cert"`
+}
+
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{
 		ConfigFile:            "",
 		Log:                   *logger.DefaultConfig(),
-		DB:                    *db.DefaultConfig(),
+		DB:                    *DefaultDBConfig(),
 		TaskContainerDefaults: *model.DefaultTaskContainerDefaults(),
 		TensorBoardTimeout:    5 * 60,
 		Security: SecurityConfig{
@@ -86,7 +108,7 @@ func DefaultConfig() *Config {
 type Config struct {
 	ConfigFile            string                            `json:"config_file"`
 	Log                   logger.Config                     `json:"log"`
-	DB                    db.Config                         `json:"db"`
+	DB                    DBConfig                          `json:"db"`
 	TensorBoardTimeout    int                               `json:"tensorboard_timeout"`
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     expconf.CheckpointStorageConfig   `json:"checkpoint_storage"`
