@@ -43,7 +43,11 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 }
 
 // UserByToken returns a user session given an authentication token.
-func (db *PgDB) UserByToken(token string) (*model.User, *model.UserSession, error) {
+func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error) {
+	if ext.JwtKey != "" {
+		return db.UserByExternalToken(token, ext)
+	}
+
 	v2 := paseto.NewV2()
 
 	var session model.UserSession
@@ -77,8 +81,9 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 }
 
 // UserByExternalToken returns a user session derived from an external authentication token.
-func (db *PgDB) UserByExternalToken(tokenText string, tokenKey string) (*model.User,
+func (db *PgDB) UserByExternalToken(tokenText string, ext *model.ExternalSessions) (*model.User,
 	*model.UserSession, error) {
+
 	type externalToken struct {
 		*jwt.StandardClaims
 		Email string
@@ -87,7 +92,7 @@ func (db *PgDB) UserByExternalToken(tokenText string, tokenKey string) (*model.U
 	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
 		func(token *jwt.Token) (interface{}, error) {
 			var publicKey rsa.PublicKey
-			err := json.Unmarshal([]byte(tokenKey), &publicKey)
+			err := json.Unmarshal([]byte(ext.JwtKey), &publicKey)
 			if err != nil {
 				log.Errorf("error parsing JWT key: %s", err.Error())
 				return nil, err
