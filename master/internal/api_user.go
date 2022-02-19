@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -49,12 +50,14 @@ func getUser(d *db.PgDB, username string) (*userv1.User, error) {
 			AgentGid: int32(agentUserGroup.GID),
 		}
 	}
+	displayNameString := user.DisplayName.ValueOrZero()
 	return &userv1.User{
 		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
 		AgentUserGroup: protoAug,
+		DisplayName:    displayNameString,
 	}, err
 }
 
@@ -143,4 +146,27 @@ func (a *apiServer) SetUserPassword(
 	}
 	fullUser, err := getUser(a.m.db, req.Username)
 	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
+}
+func (a *apiServer) PatchUser(
+	ctx context.Context, req *apiv1.PatchUserRequest) (*apiv1.PatchUserResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if !curUser.Admin && curUser.Username != req.Username {
+		return nil, grpcutil.ErrPermissionDenied
+	}
+	user := &model.User{Username: req.Username}
+	// TODO: handle any field name:
+	if req.User.DisplayName != "" {
+		user.DisplayName = null.StringFrom(req.User.DisplayName)
+		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
+		case err == db.ErrNotFound:
+			return nil, errUserNotFound
+		case err != nil:
+			return nil, err
+		}
+	}
+	fullUser, err := getUser(a.m.db, req.Username)
+	return &apiv1.PatchUserResponse{User: fullUser}, err
 }

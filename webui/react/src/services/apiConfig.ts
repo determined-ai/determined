@@ -128,6 +128,17 @@ export const setUserPassword: Service.DetApi<
   ),
 };
 
+export const patchUser: Service.DetApi<
+  Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
+> = {
+  name: 'patchUser',
+  postProcess: (response) => decoder.mapV1User(response.user),
+  request: (params) => detApi.Users.patchUser(
+    params.username,
+    params.userParams,
+  ),
+};
+
 /* Info */
 
 export const getInfo: Service.DetApi<

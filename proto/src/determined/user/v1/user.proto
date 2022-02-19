@@ -20,6 +20,14 @@ message User {
   bool active = 4;
   // The user and group on the agent host machine.
   AgentUserGroup agent_user_group = 5;
+  // Name to display in the web UI.
+  string display_name = 6;
+}
+
+// Request to edit fields for a user.
+message PatchUser {
+  // Name to display in the web UI.
+  string display_name = 2;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

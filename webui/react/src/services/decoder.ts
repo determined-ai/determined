@@ -9,6 +9,7 @@ import * as Sdk from './api-ts-sdk'; // API Bindings
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {
+    displayName: data.displayName,
     id: data.id,
     isActive: data.active,
     isAdmin: data.admin,

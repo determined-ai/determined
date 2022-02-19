@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/user/v1/user.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of users.
 message GetUsersRequest {}
@@ -46,6 +47,22 @@ message SetUserPasswordRequest {
 }
 // Response to SetUserPasswordRequest.
 message SetUserPasswordResponse {
+  // The updated user.
+  determined.user.v1.User user = 1;
+}
+
+// Edit fields for a user.
+message PatchUserRequest {
+  // The username of the user.
+  string username = 1;
+  // The updated user.
+  determined.user.v1.PatchUser user = 2;
+}
+// Response to PatchUserRequest.
+message PatchUserResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
   // The updated user.
   determined.user.v1.User user = 1;
 }

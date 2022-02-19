@@ -270,3 +270,10 @@ export interface SetUserPasswordParams {
   password: string;
   username: string;
 }
+
+export interface PatchUserParams {
+  userParams: {
+    displayName: string;
+  };
+  username: string;
+}

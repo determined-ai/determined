@@ -3882,6 +3882,34 @@ export interface V1PatchModelVersionResponse {
 }
 
 /**
+ * Request to edit fields for a user.
+ * @export
+ * @interface V1PatchUser
+ */
+export interface V1PatchUser {
+    /**
+     * Name to display in the web UI.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    displayName?: string;
+}
+
+/**
+ * Response to PatchUserRequest.
+ * @export
+ * @interface V1PatchUserResponse
+ */
+export interface V1PatchUserResponse {
+    /**
+     * The updated user.
+     * @type {V1User}
+     * @memberof V1PatchUserResponse
+     */
+    user: V1User;
+}
+
+/**
  * Response to PauseExperimentRequest.
  * @export
  * @interface V1PauseExperimentResponse
@@ -5877,6 +5905,12 @@ export interface V1User {
      * @memberof V1User
      */
     agentUserGroup?: V1AgentUserGroup;
+    /**
+     * Name to display in the web UI.
+     * @type {string}
+     * @memberof V1User
+     */
+    displayName?: string;
 }
 
 /**
@@ -17393,6 +17427,52 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch a user's fields.
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUser(username: string, body: V1PatchUser, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling patchUser.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUser.');
+            }
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchUser" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body 
          * @param {*} [options] Override http request option.
@@ -17525,6 +17605,26 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a user's fields.
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUser(username: string, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(username, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body 
          * @param {*} [options] Override http request option.
@@ -17592,6 +17692,17 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Patch a user's fields.
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUser(username: string, body: V1PatchUser, options?: any) {
+            return UsersApiFp(configuration).patchUser(username, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a new user.
          * @param {V1PostUserRequest} body 
          * @param {*} [options] Override http request option.
@@ -17642,6 +17753,19 @@ export class UsersApi extends BaseAPI {
      */
     public getUsers(options?: any) {
         return UsersApiFp(this.configuration).getUsers(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's fields.
+     * @param {string} username The username of the user.
+     * @param {V1PatchUser} body The updated user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public patchUser(username: string, body: V1PatchUser, options?: any) {
+        return UsersApiFp(this.configuration).patchUser(username, body, options)(this.fetch, this.basePath);
     }
 
     /**

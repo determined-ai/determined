@@ -43,6 +43,10 @@ export const setUserPassword = generateDetApi<
   Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
 >(Config.setUserPassword);
 
+export const patchUser = generateDetApi<
+  Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
+>(Config.patchUser);
+
 /* Info */
 
 export const getInfo = generateDetApi<

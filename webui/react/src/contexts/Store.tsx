@@ -59,6 +59,7 @@ export enum StoreAction {
 
   // Users
   SetUsers,
+  SetCurrentUser,
 
   // Omnibar
   HideOmnibar,
@@ -83,6 +84,7 @@ export type Action =
 | { type: StoreAction.ShowUIChrome }
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
+| { type: StoreAction.SetCurrentUser; value: DetailedUser }
 | { type: StoreAction.SetResourcePools; value: ResourcePool[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
@@ -206,6 +208,8 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
+    case StoreAction.SetCurrentUser:
+      return { ...state, auth: { ...state.auth, user: action.value } };
     case StoreAction.SetResourcePools:
       if (isEqual(state.resourcePools, action.value)) return state;
       return { ...state, resourcePools: action.value };
