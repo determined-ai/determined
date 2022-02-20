@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"fmt"
 	"math"
+	"sort"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job"
@@ -71,52 +72,23 @@ func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 
 // TODO add a comment.
 // adjust in place.
-func adjustPriorities(positions *jobSortState) {
-	// max available space: 0 to current time.
-	// prev := float64(0)
-	// i := 0
+func adjustPriorities(positions jobSortState) jobSortState {
+	reverse_positions := map[float64]model.JobID{}
+	var positions_list []float64
+	for id, position := range positions {
+		reverse_positions[position] = id
+		positions_list = append(positions_list, position)
+	}
 
-	// TODO make sure the highest qposition doesn't increase.. even when moving jobs
-	// the highest value should never go over initalizeQueuePosition(currentTime) for new
-	// jobs to get placed correctly.
+	sort.Float64s(positions_list)
 
-	// for i < len(reqs) {
-	// 	if groups[reqs[i].Group].qPosition == -1 {
-	// 		if i == len(reqs)-1 {
-	// 			groups[reqs[i].Group].qPosition = prev + 1
-	// 		} else {
-	// 			// seek the next populated value
-	// 			var seeker int
-	// 			for loc := i + 1; loc < len(reqs); loc++ {
-	// 				seeker = loc
-	// 				if groups[reqs[loc].Group].qPosition != -1 {
-	// 					break
-	// 				} else if loc == len(reqs) {
-	// 					break
-	// 				}
-	// 			}
+	idx := float64(1) //TODO: refactor to use the timestamp of the tail node
 
-	// 			// set queue positions
-	// 			if seeker >= len(reqs)-1 {
-	// 				for setter := i; setter < len(reqs); setter++ {
-	// 					groups[reqs[setter].Group].qPosition = prev + 1
-	// 					prev++
-	// 				}
-	// 			} else {
-	// 				maxValue := groups[reqs[seeker].Group].qPosition
-	// 				diff := float64(seeker - i)
-	// 				increment := (maxValue - prev) / diff
-
-	// 				for setter := i; setter < seeker; setter++ {
-	// 					groups[reqs[setter].Group].qPosition = prev + increment
-	// 					prev += increment
-	// 				}
-	// 			} // find the value of the non negative position and add increments
-	// 		}
-	// 	}
-	// 	prev = groups[reqs[i].Group].qPosition
-	// 	i++
-	// }
+	for _, position := range positions_list {
+		positions[reverse_positions[position]] = idx
+		idx += 1
+	}
+	return positions
 }
 
 // could be swapped for another job order representation
