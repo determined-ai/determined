@@ -24,6 +24,9 @@ language = "en"
 source_suffix = {".rst": "restructuredtext", ".txt": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
+html_css_files = [
+    'styles/determined.css',
+]
 exclude_patterns = [
     "_build",
     "Thumbs.db",
@@ -65,6 +68,7 @@ html_theme_options = {
     "light_css_variables": {
         "color-brand-primary": "#f37a22",
         "color-brand-content": "#f37a22",
+        "font-stack": "Open Sans, Metric HPE, Arial, sans-serif",
     },
     "dark_css_variables": {
         "color-brand-primary": "#f37a22",
