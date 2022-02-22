@@ -82,7 +82,7 @@ func adjustPriorities(positions jobSortState, latestTime float64) jobSortState {
 
 	sort.Float64s(positions_list)
 
-	increment := latestTime/float64(len(positions)+1)
+	increment := math.Round(latestTime / float64(len(positions)+1))
 	base := increment
 
 	for _, position := range positions_list {
@@ -132,7 +132,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (float64, bool, 
 
 	newPos := (qPos1 + qPos2) / 2
 	triggerRebalance := false
-	if newPos - qPos1 < 1 {
+	if newPos-qPos1 < 1 {
 		triggerRebalance = true
 	}
 
@@ -141,8 +141,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (float64, bool, 
 
 func initalizeQueuePosition(aTime time.Time) float64 {
 	// we could shift this back and forth to give us more more.
-	t := float64(aTime.UnixMicro())
-	return t
+	return float64(aTime.UnixMicro())
 }
 
 // we might RMs to have easier/faster access to this information than this.
