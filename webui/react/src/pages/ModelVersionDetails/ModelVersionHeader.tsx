@@ -33,7 +33,7 @@ const ModelVersionHeader: React.FC<Props> = (
     onSaveDescription, onUpdateTags, onSaveName,
   }: Props,
 ) => {
-  const { auth: { user } } = useStore();
+  const { auth: { user }, users } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
   const [ showDownloadModel, setShowDownloadModel ] = useState(false);
 
@@ -56,15 +56,20 @@ const ModelVersionHeader: React.FC<Props> = (
   }, [ onDeregisterVersion, modelVersion.version ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
+    let displayName;
+    if (modelVersion.username) {
+      const user = users.find(user => user.username === modelVersion.username);
+      displayName = user?.displayName || user?.username || modelVersion.username;
+    } else {
+      const user = users.find(user => user.username === modelVersion.model.username);
+      displayName = user?.displayName || user?.username || modelVersion.model.username;
+    }
+
     return [ {
       content: (
         <Space>
-          {modelVersion.username ? (
-            <Avatar name={modelVersion.username} />
-          ) : (
-            <Avatar name={modelVersion.model.username} />
-          )}
-          {modelVersion.username ? modelVersion.username : modelVersion.model.username}
+          <Avatar name={displayName} />
+          {displayName}
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>
       ),

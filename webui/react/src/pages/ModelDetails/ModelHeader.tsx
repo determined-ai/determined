@@ -31,14 +31,18 @@ const ModelHeader: React.FC<Props> = (
     onSaveDescription, onUpdateTags, onSaveName,
   }: Props,
 ) => {
-  const { auth: { user } } = useStore();
+  const { auth: { user }, users } = useStore();
 
   const infoRows: InfoRow[] = useMemo(() => {
+    const user = users.find(user => user.username === model.username);
+    const displayName = user?.displayName || user?.username || model.username;
+
     return [ {
       content: (
         <Space>
-          <Avatar name={model.username} />
-          {`${model.username} on ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+          <Avatar name={displayName} />
+          {`${displayName} on 
+          ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),
       label: 'Created by',
