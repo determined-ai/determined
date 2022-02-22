@@ -239,14 +239,10 @@ export interface GetJobQStatsParams extends FetchOptions {
   resourcePools?: string[];
 }
 
-export interface SetUserPasswordParams {
-  password: string;
-  username: string;
-}
-
 export interface PatchUserParams {
   userParams: {
-    displayName: string;
+    displayName?: string;
+    password?: string;
   };
   username: string;
 }

@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd';
 import React, { useCallback } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { login, setUserPassword } from 'services/api';
+import { login, patchUser } from 'services/api';
 import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
@@ -22,8 +22,8 @@ const useModalChangePassword = (): ModalHooks => {
 
   const handleFormSubmit = useCallback(async () => {
     try {
-      await setUserPassword({
-        password: form.getFieldValue('newPassword'),
+      await patchUser({
+        userParams: { password: form.getFieldValue('newPassword') },
         username,
       });
       modalClose();

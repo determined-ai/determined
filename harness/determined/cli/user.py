@@ -7,7 +7,7 @@ from requests import Response
 from termcolor import colored
 
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
@@ -22,18 +22,14 @@ def update_user(
     username: str,
     master_address: str,
     active: Optional[bool] = None,
-    password: Optional[str] = None,
     agent_user_group: Optional[Dict[str, Any]] = None,
 ) -> Response:
-    if active is None and password is None and agent_user_group is None:
+    if active is None and agent_user_group is None:
         raise Exception("Internal error (must supply at least one kwarg to update_user).")
 
     request = {}  # type: Dict[str, Any]
     if active is not None:
         request["active"] = active
-
-    if password is not None:
-        request["password"] = password
 
     if agent_user_group is not None:
         request["agent_user_group"] = agent_user_group
@@ -131,7 +127,7 @@ def change_password(parsed_args: Namespace) -> None:
     # Hash the password to avoid sending it in cleartext.
     password = api.salt_and_hash(password)
 
-    update_user(username, parsed_args.master, password=password)
+    bindings.patch_PatchUser(setup_session(parsed_args), password=password)
 
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.

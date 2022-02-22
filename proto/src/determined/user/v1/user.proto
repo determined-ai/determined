@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 package determined.user.v1;
@@ -28,6 +29,8 @@ message User {
 message PatchUser {
   // Name to display in the web UI.
   string display_name = 2;
+  // Updated hashed and salted password.
+  google.protobuf.StringValue password = 3;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

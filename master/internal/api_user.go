@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/guregu/null.v3"
@@ -158,17 +160,18 @@ func (a *apiServer) PatchUser(
 	if !curUser.Admin && curUser.Username != req.Username {
 		return nil, grpcutil.ErrPermissionDenied
 	}
-	user := &model.User{Username: req.Username}
 	// TODO: handle any field name:
 	if req.User.DisplayName != "" {
-		user.DisplayName = null.StringFrom(req.User.DisplayName)
-		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
-		case err == db.ErrNotFound:
-			return nil, errUserNotFound
-		case err != nil:
-			return nil, err
-		}
+		curUser.DisplayName = null.StringFrom(req.User.DisplayName)
 	}
-	fullUser, err := getUser(a.m.db, req.Username)
-	return &apiv1.PatchUserResponse{User: fullUser}, err
+	if req.User.Password != nil {
+		curUser.PasswordHash = null.StringFrom(req.User.Password.Value)
+	}
+
+	finalUser := &userv1.User{}
+	err = a.m.db.QueryProto(
+		"update_user", finalUser, curUser.ID, curUser.DisplayName, curUser.PasswordHash)
+
+	return &apiv1.PatchUserResponse{User: finalUser},
+		errors.Wrapf(err, "error updating user \"%s\" in database", curUser.Username)
 }

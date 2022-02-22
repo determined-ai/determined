@@ -3277,18 +3277,22 @@ class v1PatchUser:
     def __init__(
         self,
         displayName: "typing.Optional[str]" = None,
+        password: "typing.Optional[str]" = None,
     ):
         self.displayName = displayName
+        self.password = password
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchUser":
         return cls(
             displayName=obj.get("displayName", None),
+            password=obj.get("password", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "displayName": self.displayName if self.displayName is not None else None,
+            "password": self.password if self.password is not None else None,
         }
 
 class v1PatchUserResponse:

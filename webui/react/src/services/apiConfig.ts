@@ -119,17 +119,6 @@ export const getUsers: Service.DetApi<
   request: (options) => detApi.Users.getUsers(options),
 };
 
-export const setUserPassword: Service.DetApi<
-  Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
-> = {
-  name: 'setUserPassword',
-  postProcess: (response) => response,
-  request: (params) => detApi.Users.setUserPassword(
-    params.username,
-    params.password,
-  ),
-};
-
 export const patchUser: Service.DetApi<
   Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
 > = {
@@ -137,7 +126,12 @@ export const patchUser: Service.DetApi<
   postProcess: (response) => decoder.mapV1User(response.user),
   request: (params) => detApi.Users.patchUser(
     params.username,
-    params.userParams,
+    {
+      ...params.userParams,
+      password: params.userParams.password
+        ? saltAndHashPassword(params.userParams.password)
+        : undefined
+    },
   ),
 };
 

@@ -3895,6 +3895,12 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     displayName?: string;
+    /**
+     * Updated hashed and salted password.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    password?: string;
 }
 
 /**
