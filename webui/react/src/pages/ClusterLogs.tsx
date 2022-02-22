@@ -1,19 +1,13 @@
 import React, { useCallback } from 'react';
 
 import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer/LogViewer';
-import Page from 'components/Page';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
 import { isNumber } from 'utils/data';
 
 import css from './ClusterLogs.module.scss';
 
-interface Props {
-  className?: string
-  hideTitle?: boolean
-}
-
-const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
+const ClusterLogs: React.FC = () => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
     const offsetId = isNumber(config.offsetLog?.id) ? config.offsetLog?.id ?? 0 : 0;
@@ -39,15 +33,14 @@ const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
   }, []);
 
   return (
-    <Page bodyNoPadding className={className} id="master-logs">
+    <div className={css.base}>
       <LogViewer
         decoder={jsonToClusterLog}
-        hideTitle={hideTitle}
         sortKey="id"
         title={<div className={css.title}>Cluster Logs</div>}
         onFetch={handleFetch}
       />
-    </Page>
+    </div>
   );
 };
 

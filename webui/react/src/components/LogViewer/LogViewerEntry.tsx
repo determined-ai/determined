@@ -14,7 +14,7 @@ export interface LogEntry {
   message: string;
 }
 
-interface Prop extends LogEntry {
+export interface Prop extends LogEntry {
   noWrap?: boolean;
   style?: React.CSSProperties;
   timeStyle?: React.CSSProperties;
