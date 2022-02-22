@@ -9,7 +9,7 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import tabulate
 
@@ -195,8 +195,10 @@ def create(args: Namespace) -> None:
         submit_experiment(args)
 
 
-def limit_offset_paginator(method, agg_field: str, connection_args: Namespace, **kwargs):
-    all_objects: List[bindings.v1Experiment | bindings.v1Trial] = []
+def limit_offset_paginator(
+    method: Callable, agg_field: str, connection_args: Namespace, **kwargs
+) -> List[Union[bindings.v1Experiment, bindings.trialv1Trial]]:
+    all_objects: List[Union[bindings.v1Experiment, bindings.trialv1Trial]] = []
     offset = 0
     while True:
         r = method(setup_session(connection_args), limit=200, offset=offset, **kwargs)
