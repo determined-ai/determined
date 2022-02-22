@@ -103,7 +103,7 @@ const ModelVersionHeader: React.FC<Props> = (
       ),
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ modelVersion, onSaveDescription, onUpdateTags ]);
+  }, [ modelVersion, onSaveDescription, onUpdateTags, users ]);
 
   const actions = useMemo(() => {
     return [

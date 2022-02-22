@@ -70,7 +70,7 @@ const ModelHeader: React.FC<Props> = (
       ),
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ model, onSaveDescription, onUpdateTags ]);
+  }, [ model, onSaveDescription, onUpdateTags, users ]);
 
   const isDeletable = user?.isAdmin || user?.username === model.username;
 

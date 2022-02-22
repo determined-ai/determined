@@ -6,6 +6,7 @@ import { patchUser } from 'services/api';
 import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
+
 import css from './useModalChangeName.module.scss';
 
 const useModalChangeName = (): ModalHooks => {

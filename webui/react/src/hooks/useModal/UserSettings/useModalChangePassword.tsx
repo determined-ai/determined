@@ -6,6 +6,7 @@ import { login, setUserPassword } from 'services/api';
 import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
+
 import css from './useModalChangePassword.module.scss';
 
 const useModalChangePassword = (): ModalHooks => {

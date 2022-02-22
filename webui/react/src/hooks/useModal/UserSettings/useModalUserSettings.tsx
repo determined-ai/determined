@@ -7,6 +7,7 @@ import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
 import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
 
 import useModal, { ModalHooks } from '../useModal';
+
 import css from './useModalUserSettings.module.scss';
 
 interface UserValues {
