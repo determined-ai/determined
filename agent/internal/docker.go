@@ -131,17 +131,25 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 			sendErr(ctx, errors.Wrap(err, "error encoding registry credentials"))
 			return
 		}
-	} else if store, ok := d.credentialStores[reference.Domain(ref)]; ok {
-		var creds types.AuthConfig
-		creds, err = store.get()
-		if err != nil {
-			sendErr(ctx, errors.Wrap(err, "unable to get credentials from helper"))
-			return
-		}
-		reg, err = registryToString(creds)
-		if err != nil {
-			sendErr(ctx, errors.Wrap(err, "error encoding registry credentials from helper"))
-			return
+	} else {
+		domain := reference.Domain(ref)
+		if store, ok := d.credentialStores[domain]; ok {
+			var creds types.AuthConfig
+			creds, err = store.get()
+			if err != nil {
+				sendErr(ctx, errors.Wrap(err, "unable to get credentials from helper"))
+				return
+			}
+			reg, err = registryToString(creds)
+			if err != nil {
+				sendErr(ctx, errors.Wrap(err, "error encoding registry credentials from helper"))
+				return
+			}
+			d.sendAuxLog(ctx, fmt.Sprintf(
+				"domain '%s' found in 'credHelpers' config. Using credentials helper.", domain))
+		} else {
+			d.sendAuxLog(ctx, fmt.Sprintf(
+				"domain '%s' not found in 'credHelpers' config. Using anonymous credentials.", domain))
 		}
 	}
 
@@ -244,6 +252,10 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	case err = <-eerr:
 		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))
 	case exit := <-exit:
+		if exit.Error != nil {
+			sendErr(ctx, fmt.Errorf("error receiving container exit: %s", exit.Error.Message))
+			return
+		}
 		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
 	}
 }

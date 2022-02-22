@@ -61,32 +61,37 @@ TensorboardTableHeader = OrderedDict(
     ]
 )
 
+TaskTypeNotebook = "notebook"
+TaskTypeCommand = "command cmd"
+TaskTypeShell = "shell"
+TaskTypeTensorBoard = "tensorboard"
+
 RemoteTaskName = {
-    "notebook": "notebook",
-    "command cmd": "command",
-    "shell": "shell",
-    "tensorboard": "tensorboard",
+    TaskTypeNotebook: "notebook",
+    TaskTypeCommand: "command",
+    TaskTypeShell: "shell",
+    TaskTypeTensorBoard: "tensorboard",
 }
 
 RemoteTaskLogName = {
-    "notebook": "Notebook",
-    "command cmd": "Command",
-    "shell": "Shell",
-    "tensorboard": "TensorBoard",
+    TaskTypeNotebook: "Notebook",
+    TaskTypeCommand: "Command",
+    TaskTypeShell: "Shell",
+    TaskTypeTensorBoard: "TensorBoard",
 }
 
 RemoteTaskNewAPIs = {
-    "notebook": "notebooks",
-    "command cmd": "commands",
-    "shell": "shells",
-    "tensorboard": "tensorboards",
+    TaskTypeNotebook: "notebooks",
+    TaskTypeCommand: "commands",
+    TaskTypeShell: "shells",
+    TaskTypeTensorBoard: "tensorboards",
 }
 
 RemoteTaskOldAPIs = {
-    "notebook": "notebooks",
-    "command cmd": "commands",
-    "shell": "shells",
-    "tensorboard": "tensorboard",
+    TaskTypeNotebook: "notebooks",
+    TaskTypeCommand: "commands",
+    TaskTypeShell: "shells",
+    TaskTypeTensorBoard: "tensorboard",
 }
 
 RemoteTaskListTableHeaders = {
@@ -158,8 +163,7 @@ def kill(args: Namespace) -> None:
 
     for i, task_id in enumerate(task_ids):
         try:
-            api_full_path = "api/v1/{}/{}/kill".format(RemoteTaskNewAPIs[args._command], task_id)
-            api.post(args.master, api_full_path)
+            _kill(args.master, args._command, task_id)
             print(colored("Killed {} {}".format(name, task_id), "green"))
         except api.errors.APIException as e:
             if not args.force:
@@ -167,6 +171,11 @@ def kill(args: Namespace) -> None:
                     print("Cowardly not killing {}".format(ignored))
                 raise e
             print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
+
+
+def _kill(master_url: str, taskType: str, taskID: str) -> None:
+    api_full_path = "api/v1/{}/{}/kill".format(RemoteTaskNewAPIs[taskType], taskID)
+    api.post(master_url, api_full_path)
 
 
 @authentication.required
@@ -189,19 +198,6 @@ def config(args: Namespace) -> None:
     api_full_path = "api/v1/{}/{}".format(RemoteTaskNewAPIs[args._command], args.id)
     res_json = api.get(args.master, api_full_path).json()
     print(render.format_object_as_yaml(res_json["config"]))
-
-
-@authentication.required
-def tail_logs(args: Namespace) -> None:
-    api_full_path = "{}/{}/events?follow={}&tail={}".format(
-        RemoteTaskOldAPIs[args._command],
-        RemoteTaskGetIDsFunc[args._command](args),  # type: ignore
-        args.follow,
-        args.tail,
-    )
-    with api.ws(args.master, api_full_path) as ws:
-        for msg in ws:
-            render_event_stream(msg)
 
 
 def _set_nested_config(config: Dict[str, Any], key_path: List[str], value: Any) -> Dict[str, Any]:
@@ -279,12 +275,17 @@ def launch_command(
     context_path: Optional[Path] = None,
     data: Optional[Dict[str, Any]] = None,
     preview: Optional[bool] = False,
+    default_body: Optional[Dict[str, Any]] = None,
 ) -> Any:
     user_files = []  # type: List[Dict[str, Any]]
     if context_path:
         user_files, _ = context.read_context(context_path)
 
-    body = {"config": config}  # type: Dict[str, Any]
+    body = {}  # type: Dict[str, Any]
+    if default_body:
+        body.update(default_body)
+
+    body["config"] = config
 
     if template:
         body["template_name"] = template

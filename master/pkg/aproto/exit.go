@@ -70,6 +70,9 @@ const (
 	// ContainerFailed denotes that the container ran but failed with a non-zero exit code.
 	ContainerFailed = FailureType("container failed with non-zero exit code")
 
+	// ContainerAborted denotes the container was canceled before it was started.
+	ContainerAborted = FailureType("container was aborted before it started")
+
 	// TaskAborted denotes that the task was canceled before it was started.
 	TaskAborted = FailureType("task was aborted before the task was started")
 
@@ -95,7 +98,7 @@ func IsRestartableSystemError(err error) bool {
 		case AgentError, AgentFailed:
 			return true
 		// Definitely not a failure.
-		case TaskAborted:
+		case TaskAborted, ContainerAborted:
 			return true
 		default:
 			return false

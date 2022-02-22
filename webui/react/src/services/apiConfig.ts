@@ -597,6 +597,8 @@ export const postModelVersion: Service.DetApi<
 
 /* Tasks */
 
+const TASK_LIMIT = 1000;
+
 export const getCommands: Service.DetApi<
   Service.GetCommandsParams, Api.V1GetCommandsResponse, Type.CommandTask[]
 > = {
@@ -607,7 +609,7 @@ export const getCommands: Service.DetApi<
     params.sortBy,
     params.orderBy,
     params.offset,
-    params.limit,
+    params.limit ?? TASK_LIMIT,
   ),
 };
 
@@ -621,7 +623,7 @@ export const getJupyterLabs: Service.DetApi<
     params.sortBy,
     params.orderBy,
     params.offset,
-    params.limit,
+    params.limit ?? TASK_LIMIT,
   ),
 };
 
@@ -635,7 +637,7 @@ export const getShells: Service.DetApi<
     params.sortBy,
     params.orderBy,
     params.offset,
-    params.limit,
+    params.limit ?? TASK_LIMIT,
   ),
 };
 
@@ -649,7 +651,7 @@ export const getTensorBoards: Service.DetApi<
     params.sortBy,
     params.orderBy,
     params.offset,
-    params.limit,
+    params.limit ?? TASK_LIMIT,
   ),
 };
 

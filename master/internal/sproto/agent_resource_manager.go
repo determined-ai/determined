@@ -7,14 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/device"
 )
-
-// DeviceID is the unique identifier for a device in the cluster.
-type DeviceID struct {
-	Agent  *actor.Ref
-	Device device.Device
-}
 
 // Message protocol from an agent actor to the default resource manager.
 type (
@@ -23,29 +16,9 @@ type (
 		Agent *actor.Ref
 		Label string
 	}
-	// AddDevice makes the device immediately available for scheduling.
-	AddDevice struct {
-		DeviceID
-		ContainerID *cproto.ID
-	}
-	// RemoveDevice removes the device from scheduling.
-	RemoveDevice struct {
-		DeviceID
-	}
 	// RemoveAgent removes the agent from the cluster.
 	RemoveAgent struct {
 		Agent *actor.Ref
-	}
-
-	// EnableAgent clears the state set by DisableAgent.
-	EnableAgent struct {
-		Agent *actor.Ref
-	}
-
-	// DisableAgent disables or drains the agent.
-	DisableAgent struct {
-		Agent *actor.Ref
-		Drain bool
 	}
 )
 

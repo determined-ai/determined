@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -17,7 +18,8 @@ import (
 )
 
 type notebookManager struct {
-	db *db.PgDB
+	db         *db.PgDB
+	taskLogger *task.Logger
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -41,7 +43,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		if err := createGenericCommandActor(
-			ctx, n.db, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg,
+			ctx, n.db, n.taskLogger, taskID, model.TaskTypeNotebook, jobID, model.JobTypeNotebook, msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch notebook")
 			ctx.Respond(err)

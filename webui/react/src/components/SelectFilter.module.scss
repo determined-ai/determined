@@ -6,6 +6,9 @@
     margin-left: var(--theme-sizes-layout-medium);
   }
 }
+:global(.metric-search .ant-select-selection-search-input) {
+  width: auto;
+}
 .disableTags {
   :global(.ant-select-multiple .ant-select-selection-item) {
     background-color: transparent;

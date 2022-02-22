@@ -9,6 +9,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type (
@@ -30,7 +32,6 @@ type (
 	// TaskContainerStarted contains the information needed by tasks from container started.
 	TaskContainerStarted struct {
 		Addresses []cproto.Address
-
 		// NativeReservationID is the native Docker hex container ID of the Determined container.
 		NativeReservationID string
 	}
@@ -79,7 +80,30 @@ func (c ContainerLog) Message() string {
 }
 
 func (c ContainerLog) String() string {
-	shortID := c.Container.ID[:8]
-	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
+	var shortID string
+	if len(c.Container.ID) >= 8 {
+		shortID = c.Container.ID[:8].String()
+	}
+	timestamp := c.Timestamp.UTC().Format(time.RFC3339Nano)
 	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, c.Message())
+}
+
+// ToEvent converts a container log to a container event.
+func (c ContainerLog) ToEvent() Event {
+	return Event{
+		State:       string(c.Container.State),
+		ContainerID: string(c.Container.ID),
+		Time:        c.Timestamp.UTC(),
+		LogEvent:    ptrs.StringPtr(c.Message()),
+	}
+}
+
+// ToTaskLog converts a container log to a task log.
+func (c ContainerLog) ToTaskLog() model.TaskLog {
+	return model.TaskLog{
+		ContainerID: ptrs.StringPtr(string(c.Container.ID)),
+		Level:       c.Level,
+		Timestamp:   ptrs.TimePtr(c.Timestamp.UTC()),
+		Log:         c.Message(),
+	}
 }

@@ -47,12 +47,12 @@ func GetRM(system *actor.System) *actor.Ref {
 
 // UseAgentRM returns if using the agent resource manager.
 func UseAgentRM(system *actor.System) bool {
-	return system.Get(AgentsAddr) != nil
+	return system.Get(AgentRMAddr) != nil
 }
 
 // UseK8sRM returns if using the kubernetes resource manager.
 func UseK8sRM(system *actor.System) bool {
-	return system.Get(PodsAddr) != nil
+	return system.Get(K8sRMAddr) != nil
 }
 
 // GetRP returns the resource pool.

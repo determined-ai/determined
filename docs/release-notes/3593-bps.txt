@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  PyTorchTrial and TFKerasTrial now automatically log the number of batches and number of records
+   in every training and validation workload, as well as the duration of the workload and the
+   calculated batches per second and records per second.

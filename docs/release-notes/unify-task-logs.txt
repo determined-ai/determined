@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  All logs produced by tasks on the cluster are persisted and accessible through the new
+      ``det task logs`` CLI command or the usual commands to retrieve their logs, even after
+      completion.

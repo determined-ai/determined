@@ -83,7 +83,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save metadata.',
-        silent: true,
+        silent: false,
         type: ErrorType.Api,
       });
     }
@@ -116,7 +116,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save description.',
-        silent: true,
+        silent: false,
         type: ErrorType.Api,
       });
     }
@@ -132,7 +132,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save name.',
-        silent: true,
+        silent: false,
         type: ErrorType.Api,
       });
     }
@@ -149,7 +149,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save tags.',
-        silent: true,
+        silent: false,
         type: ErrorType.Api,
       });
     }

@@ -122,7 +122,7 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 
 	for _, rocmDevice := range discoveredRocmDevices {
 		result = append(result, device.Device{
-			ID:    rocmDevice.Index,
+			ID:    device.ID(rocmDevice.Index),
 			Brand: rocmDevice.CardVendor,
 			UUID:  rocmDevice.UUID,
 			Type:  device.ROCM,

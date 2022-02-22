@@ -68,8 +68,14 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--slots-per-trial", default="1")
+    args = parser.parse_args()
+
     conf = yaml.safe_load(
-        """
+        f"""
     description: noop-pytorch-native-api
     data:
       model_type: single_output
@@ -87,6 +93,8 @@ if __name__ == "__main__":
       batches: 1
     min_validation_period:
       batches: 1
+    resources:
+      slots_per_trial: {args.slots_per_trial}
     """
     )
     experimental.create(NoopPyTorchTrial, conf, context_dir=".")

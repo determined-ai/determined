@@ -28,9 +28,6 @@ const EditableTagList: React.FC<Props> = (
 ) => {
   const initialState = {
     editInputIndex: -1,
-    editInputValue: '',
-    editOldInputValue: '',
-    inputValue: '',
     inputVisible: false,
     inputWidth: 82,
   };
@@ -59,50 +56,23 @@ const EditableTagList: React.FC<Props> = (
 
   const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    e.persist();
-    setState(state => ({ ...state, inputValue: e.target?.value }));
-  }, []);
-
-  const handleInputConfirm = useCallback(() => {
-    const { inputValue } = state;
-    const newTag = inputValue.trim();
-    if (newTag && tags.indexOf(newTag) === -1) {
-      onChange?.([ newTag, ...tags ]);
-    }
-    setState(state => ({ ...state, inputValue: '', inputVisible: false }));
-  }, [ onChange, state, tags ]);
-
-  const handleEditInputFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    e.persist();
-    setState(state => ({ ...state, editOldInputValue: e.target?.value }));
-  }, []);
-
-  const handleEditInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    e.persist();
-    setState(state => ({ ...state, editInputValue: e.target?.value }));
-  }, []);
-
-  const handleEditInputConfirm = useCallback(() => {
-    const { editInputValue, editOldInputValue } = state;
-    const oldTag = editOldInputValue.trim();
-    const newTag = editInputValue.trim();
-    if (oldTag && newTag) {
-      const updatedTags = tags.filter(tag => tag !== oldTag);
-      if (updatedTags.indexOf(newTag) === -1) {
+  const handleInputConfirm = useCallback((
+    e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
+    previousValue?: string,
+  ) => {
+    const newTag = (e.target as HTMLInputElement).value.trim();
+    const oldTag = previousValue?.trim();
+    const updatedTags = tags.filter(tag => tag !== oldTag);
+    if (newTag) {
+      if (!updatedTags.includes(newTag)) {
         updatedTags.push(newTag);
       }
       onChange?.(updatedTags);
     }
-    setState(state => ({
-      ...state,
-      editInputIndex: -1,
-      editInputValue: '',
-      editOldInputValue: '',
-    }));
-  }, [ onChange, state, tags ]);
+    setState(state => ({ ...state, editInputIndex: -1, inputVisible: false }));
+  }, [ onChange, tags ]);
 
-  const { editInputIndex, editInputValue, inputVisible, inputValue, inputWidth } = state;
+  const { editInputIndex, inputVisible, inputWidth } = state;
 
   const classes = [ css.base ];
   if (ghost) classes.push(css.ghost);
@@ -125,16 +95,14 @@ const EditableTagList: React.FC<Props> = (
               <Input
                 aria-label={ARIA_LABEL_INPUT}
                 className={css.tagInput}
+                defaultValue={tag}
                 key={tag}
                 ref={editInputRef}
                 size="small"
                 style={{ width: inputWidth }}
-                value={editInputValue}
                 width={inputWidth}
-                onBlur={handleEditInputConfirm}
-                onChange={handleEditInputChange}
-                onFocus={handleEditInputFocus}
-                onPressEnter={handleEditInputConfirm}
+                onBlur={(e) => handleInputConfirm(e, tag)}
+                onPressEnter={(e) => handleInputConfirm(e, tag)}
               />
             );
           }
@@ -158,8 +126,7 @@ const EditableTagList: React.FC<Props> = (
                   setState(state => ({
                     ...state,
                     editInputIndex: index,
-                    editInputValue: tag,
-                    inputWidth: rect?.width || state.inputWidth,
+                    inputWidth: rect?.width ?? state.inputWidth,
                   }));
                 }}>
                 {isLongTag ? truncate(tag, TAG_MAX_LENGTH) : tag}
@@ -172,13 +139,12 @@ const EditableTagList: React.FC<Props> = (
         <Input
           aria-label={ARIA_LABEL_INPUT}
           className={css.tagInput}
+          defaultValue=""
           ref={inputRef}
           size="small"
           style={{ width: inputWidth }}
           type="text"
-          value={inputValue}
           onBlur={handleInputConfirm}
-          onChange={handleInputChange}
           onPressEnter={handleInputConfirm}
         />
       ) : (

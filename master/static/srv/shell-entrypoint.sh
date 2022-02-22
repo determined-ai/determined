@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source /run/determined/task-logging-setup.sh
+
 set -e
 
 STARTUP_HOOK="startup-hook.sh"
@@ -64,4 +66,6 @@ unmodified="/run/determined/ssh/authorized_keys_unmodified"
 modified="/run/determined/ssh/authorized_keys"
 sed -e "s/^/$options /" "$unmodified" > "$modified"
 
-exec /usr/sbin/sshd "$@"
+READINESS_REGEX="Server listening on"
+exec /usr/sbin/sshd "$@" \
+    2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX") >&2)

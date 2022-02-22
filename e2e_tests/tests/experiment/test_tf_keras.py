@@ -101,6 +101,22 @@ def test_tf_keras_parallel(
     export_and_load_model(experiment_id)
     collect_trial_profiles(trials[0]["id"])
 
+    # Check on record/batch counts we emitted in logs.
+    validation_size = 10000
+    global_batch_size = config["hyperparameters"]["global_batch_size"]
+    num_workers = config.get("resources", {}).get("slots_per_trial", 1)
+    global_batch_size = config["hyperparameters"]["global_batch_size"]
+    scheduling_unit = config.get("scheduling_unit", 100)
+    per_slot_batch_size = global_batch_size // num_workers
+    exp_val_batches = (validation_size + (per_slot_batch_size - 1)) // per_slot_batch_size
+    patterns = [
+        # Expect two copies of matching training reports.
+        f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
+        f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
+        f"validated: {validation_size} records.*in {exp_val_batches} batches",
+    ]
+    exp.assert_patterns_in_trial_logs(trials[0]["id"], patterns)
+
 
 @pytest.mark.e2e_gpu
 @pytest.mark.tensorflow2

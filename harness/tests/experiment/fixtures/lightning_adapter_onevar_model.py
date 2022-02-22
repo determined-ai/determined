@@ -24,7 +24,7 @@ class OneVarLM(pl.LightningModule):
 
         model = torch.nn.Linear(1, 1, False)
         self.model = model
-        self.save_hyperparameters()
+        self.save_hyperparameters("lr_frequency")
 
         # Manually initialize the one weight to 0.
         model.weight.data.fill_(0)

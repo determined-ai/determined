@@ -68,7 +68,7 @@ func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
 func (c *containerManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		d, err := client.NewClientWithOpts(client.FromEnv)
+		d, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation(), client.FromEnv)
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(responseReattachContainers{ContainersReattached: reattachedContainers})
 		}
 
-	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TrialLog:
+	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:
@@ -290,7 +290,7 @@ func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.Host
 func containerEnvVars(cont cproto.Container) []string {
 	var slotIds []string
 	for _, d := range cont.Devices {
-		slotIds = append(slotIds, strconv.Itoa(d.ID))
+		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
 	}
 	return []string{
 		fmt.Sprintf("DET_CONTAINER_ID=%s", cont.ID),
@@ -420,7 +420,7 @@ func makeContainerDockerLabels(cont cproto.Container) map[string]string {
 	labels[dockerContainerParentLabel] = cont.Parent.String()
 	var slotIds []string
 	for _, d := range cont.Devices {
-		slotIds = append(slotIds, strconv.Itoa(d.ID))
+		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
 	}
 	labels[dockerContainerDevicesLabel] = strings.Join(slotIds, ",")
 

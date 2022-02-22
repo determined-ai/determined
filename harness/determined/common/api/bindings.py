@@ -495,6 +495,24 @@ class v1AllocationPreemptionSignalResponse:
             "preempt": self.preempt if self.preempt is not None else None,
         }
 
+class v1AllocationReadyRequest:
+    def __init__(
+        self,
+        allocationId: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationReadyRequest":
+        return cls(
+            allocationId=obj.get("allocationId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId if self.allocationId is not None else None,
+        }
+
 class v1AllocationRendezvousInfoResponse:
     def __init__(
         self,
@@ -4533,6 +4551,74 @@ class v1Task:
             "allocations": [x.to_json() for x in self.allocations] if self.allocations is not None else None,
         }
 
+class v1TaskLogsFieldsResponse:
+    def __init__(
+        self,
+        agentIds: "typing.Optional[typing.Sequence[str]]" = None,
+        allocationIds: "typing.Optional[typing.Sequence[str]]" = None,
+        containerIds: "typing.Optional[typing.Sequence[str]]" = None,
+        rankIds: "typing.Optional[typing.Sequence[int]]" = None,
+        sources: "typing.Optional[typing.Sequence[str]]" = None,
+        stdtypes: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.allocationIds = allocationIds
+        self.agentIds = agentIds
+        self.containerIds = containerIds
+        self.rankIds = rankIds
+        self.stdtypes = stdtypes
+        self.sources = sources
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TaskLogsFieldsResponse":
+        return cls(
+            allocationIds=obj.get("allocationIds", None),
+            agentIds=obj.get("agentIds", None),
+            containerIds=obj.get("containerIds", None),
+            rankIds=obj.get("rankIds", None),
+            stdtypes=obj.get("stdtypes", None),
+            sources=obj.get("sources", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationIds": self.allocationIds if self.allocationIds is not None else None,
+            "agentIds": self.agentIds if self.agentIds is not None else None,
+            "containerIds": self.containerIds if self.containerIds is not None else None,
+            "rankIds": self.rankIds if self.rankIds is not None else None,
+            "stdtypes": self.stdtypes if self.stdtypes is not None else None,
+            "sources": self.sources if self.sources is not None else None,
+        }
+
+class v1TaskLogsResponse:
+    def __init__(
+        self,
+        id: str,
+        level: "v1LogLevel",
+        message: str,
+        timestamp: str,
+    ):
+        self.id = id
+        self.timestamp = timestamp
+        self.message = message
+        self.level = level
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TaskLogsResponse":
+        return cls(
+            id=obj["id"],
+            timestamp=obj["timestamp"],
+            message=obj["message"],
+            level=v1LogLevel(obj["level"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id,
+            "timestamp": self.timestamp,
+            "message": self.message,
+            "level": self.level.value,
+        }
+
 class v1Template:
     def __init__(
         self,
@@ -5097,6 +5183,26 @@ def get_AllocationPreemptionSignal(
     if _resp.status_code == 200:
         return v1AllocationPreemptionSignalResponse.from_json(_resp.json())
     raise APIHttpError("get_AllocationPreemptionSignal", _resp)
+
+def post_AllocationReady(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationReadyRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/ready",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AllocationReady", _resp)
 
 def get_AllocationRendezvousInfo(
     session: "client.Session",

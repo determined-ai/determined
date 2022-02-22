@@ -12,6 +12,8 @@ import (
 )
 
 const (
+	// CommandEntrypointResource is the pre-flight script for commands.
+	CommandEntrypointResource = "command-entrypoint.sh"
 	// SSHConfigResource is the template SSH config file.
 	SSHConfigResource = "ssh_config"
 	// SSHDConfigResource is the template SSHD config file.
@@ -26,6 +28,8 @@ const (
 	NotebookEntrypointResource = "notebook-entrypoint.sh"
 	// NotebookIdleCheckResource is the script to check if a notebook is idle.
 	NotebookIdleCheckResource = "check_idle.py"
+	// TaskCheckReadyLogsResource is the script to parse logs to check if a task is ready.
+	TaskCheckReadyLogsResource = "check_ready_logs.py"
 	// TensorboardEntryScriptResource is the script to set up TensorBoard.
 	TensorboardEntryScriptResource = "tensorboard-entrypoint.sh"
 	// TrialEntrypointScriptResource is the script to set up a trial.
@@ -34,6 +38,8 @@ const (
 	AgentSetupScriptTemplateResource = "agent_setup_script.sh.template"
 	// K8InitContainerEntryScriptResource is the script to run the init container on k8s.
 	K8InitContainerEntryScriptResource = "k8_init_container_entrypoint.sh"
+	// TaskLoggingSetupScriptResource is the script to setup prerequistites for logging.
+	TaskLoggingSetupScriptResource = "task-logging-setup.sh"
 )
 
 var staticRoot string

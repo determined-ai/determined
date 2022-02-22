@@ -1,7 +1,0 @@
-:orphan:
-
-**Removed Features**
-
--  Master: removes /searcher/preview, /checkpoints, and /checkpoints/:checkpoint_id/* endpoints from
-   the legacy API. These functions were already replaced by the GRPC API (/api/v1/checkpoints) in
-   the Web UI, CLI, and tests.

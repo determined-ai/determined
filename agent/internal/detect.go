@@ -31,7 +31,7 @@ func (a *agent) detect() error {
 		for i := 0; i < a.ArtificialSlots; i++ {
 			id := uuid.New().String()
 			a.Devices = append(a.Devices, device.Device{
-				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
+				ID: device.ID(i), Brand: "Artificial", UUID: id, Type: device.CPU})
 		}
 	case a.SlotType == "none":
 		a.Devices = []device.Device{}
@@ -171,7 +171,7 @@ func detectMigInstances(visibleGPUs string) ([]device.Device, error) {
 			brand := matches[1]
 			uuid := matches[2]
 			devices = append(devices,
-				device.Device{ID: deviceIndex, Brand: brand, UUID: uuid, Type: device.CUDA})
+				device.Device{ID: device.ID(deviceIndex), Brand: brand, UUID: uuid, Type: device.CUDA})
 			deviceIndex++
 		}
 	}
@@ -226,6 +226,11 @@ func detectCudaGPUs(visibleGPUs string) ([]device.Device, error) {
 		brand := strings.TrimSpace(record[1])
 		uuid := strings.TrimSpace(record[2])
 
-		devices = append(devices, device.Device{ID: index, Brand: brand, UUID: uuid, Type: device.CUDA})
+		devices = append(devices, device.Device{
+			ID:    device.ID(index),
+			Brand: brand,
+			UUID:  uuid,
+			Type:  device.CUDA,
+		})
 	}
 }

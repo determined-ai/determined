@@ -35,10 +35,11 @@ RETURNING id`, trial); err != nil {
 		}
 
 		return addTask(tx, &model.Task{
-			TaskID:    trial.TaskID,
-			TaskType:  model.TaskTypeTrial,
-			StartTime: trial.StartTime,
-			JobID:     trial.JobID,
+			TaskID:     trial.TaskID,
+			TaskType:   model.TaskTypeTrial,
+			StartTime:  trial.StartTime,
+			JobID:      trial.JobID,
+			LogVersion: model.CurrentTaskLogVersion,
 		})
 	})
 }

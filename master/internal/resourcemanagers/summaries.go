@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
@@ -55,10 +56,10 @@ func newTaskSummary(
 }
 
 // newAgentSummary returns a new immutable view of the agent.
-func newAgentSummary(state *agentState) sproto.AgentSummary {
+func newAgentSummary(state *agent.AgentState) sproto.AgentSummary {
 	return sproto.AgentSummary{
-		Name:   state.handler.Address().Local(),
-		IsIdle: state.idle(),
+		Name:   state.Handler.Address().Local(),
+		IsIdle: state.Idle(),
 	}
 }
 
@@ -110,7 +111,7 @@ type ResourceSummary struct {
 }
 
 func getResourceSummary(
-	agentInfo map[*actor.Ref]*agentState,
+	agentInfo map[*actor.Ref]*agent.AgentState,
 ) ResourceSummary {
 	summary := ResourceSummary{
 		numTotalSlots:          0,
@@ -124,11 +125,11 @@ func getResourceSummary(
 
 	for _, agentState := range agentInfo {
 		summary.numAgents++
-		summary.numTotalSlots += agentState.numSlots()
-		summary.numActiveSlots += agentState.numUsedSlots()
-		summary.maxNumAuxContainers += agentState.numZeroSlots()
-		summary.numActiveAuxContainers += agentState.numUsedZeroSlots()
-		for agentDevice := range agentState.devices {
+		summary.numTotalSlots += agentState.NumSlots()
+		summary.numActiveSlots += agentState.NumUsedSlots()
+		summary.maxNumAuxContainers += agentState.NumZeroSlots()
+		summary.numActiveAuxContainers += agentState.NumUsedZeroSlots()
+		for agentDevice := range agentState.Devices {
 			deviceTypeCount[agentDevice.Type]++
 		}
 	}

@@ -5,8 +5,9 @@ import pathlib
 import pickle
 import random
 import sys
+import time
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Type, cast
+from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import h5py
 import numpy as np
@@ -109,6 +110,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
         super().__init__(*arg, **kwarg)
         self.trial_controller = trial_controller
         self.test_inputs = 0
+        self.test_batches = 0
 
     def on_train_begin(self, logs: Optional[Dict] = None) -> None:
         super().on_train_begin()
@@ -129,18 +131,20 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
     def on_test_begin(self, logs: Optional[Dict] = None) -> None:
         super().on_test_begin(logs)
         self.test_inputs = 0
+        self.test_batches = 0
 
     def on_test_batch_end(self, batch: int, logs: Optional[Dict] = None) -> None:
         super().on_test_batch_end(batch, logs)
         assert isinstance(logs, dict)
         self.test_inputs += logs.get("size", self.batch_size)
+        self.test_batches += 1
 
     def _corrected_test_end(self, logs: Dict) -> None:
         super()._corrected_test_end(logs)
         self.trial_controller._stop_training_check()
 
-    def get_test_inputs(self) -> int:
-        return self.test_inputs
+    def get_test_inputs(self) -> Tuple[int, int]:
+        return self.test_inputs, self.test_batches
 
     def _corrected_epoch_end(self, epoch: int, logs: Dict) -> None:
         super()._corrected_epoch_end(epoch, logs)
@@ -800,6 +804,7 @@ class TFKerasTrialController(det.TrialController):
                     # Configure the state for a training step.
                     self.train_response_func = response_func
                     self.train_workload_batches = 0
+                    self.train_workload_inputs = 0
                     self.train_workload_metrics = []
                     self.train_workload_len = wkld.num_batches
                     self.multiplexer.set_batches_requested(wkld.num_batches)
@@ -900,8 +905,10 @@ class TFKerasTrialController(det.TrialController):
             )
 
         if self.context.distributed.size > 1:
-            num_inputs = self._hvd_allreduce(num_inputs, average=False, name="train_num_inputs")
-            num_inputs = self._convert_possible_tensor(num_inputs)
+            self.train_workload_inputs = self._hvd_allreduce(
+                self.train_workload_inputs, average=False, name="train_num_inputs"
+            )
+            self.train_workload_inputs = self._convert_possible_tensor(self.train_workload_inputs)
 
         # Return only the latest metrics, which is the running average for all trained batches in
         # the step (Keras does not report individual logs, only running averages at any point).
@@ -913,9 +920,20 @@ class TFKerasTrialController(det.TrialController):
         self._stop_training_check()
 
         if self.is_chief:
+            if self.multiplexer.train_workload_begin_time is not None:
+                step_duration = time.time() - self.multiplexer.train_workload_begin_time
+                self.multiplexer.train_workload_begin_time = None
+                logging.info(
+                    det.util.make_timing_log(
+                        "trained",
+                        step_duration,
+                        self.train_workload_inputs,
+                        self.train_workload_len,
+                    )
+                )
             response = {
                 "metrics": {
-                    "num_inputs": num_inputs,
+                    "num_inputs": self.train_workload_inputs,
                     "batch_metrics": self.train_workload_metrics,
                     "avg_metrics": final_metrics,
                 },
@@ -933,8 +951,9 @@ class TFKerasTrialController(det.TrialController):
         self.model.reset_metrics()
 
     def _compute_validation_metrics(self) -> workload.Response:
+        validation_start_time = time.time()
         metrics = self._launch_evaluate()
-        num_inputs = self.multiplexer.get_test_inputs()
+        num_inputs, num_batches = self.multiplexer.get_test_inputs()
 
         if self.context.distributed.size > 1:
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
@@ -946,6 +965,9 @@ class TFKerasTrialController(det.TrialController):
             if isinstance(num_inputs, EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
+            num_batches = hvd.allreduce(num_batches, average=False, name="validation_num_batches")
+            if isinstance(num_batches, EagerTensor):
+                num_batches = num_batches.numpy()
 
         metrics = self._allreduce_logs(metrics)
         check.gt(len(metrics), 0)
@@ -954,6 +976,9 @@ class TFKerasTrialController(det.TrialController):
 
         if not self.is_chief:
             return {}
+
+        step_duration = time.time() - validation_start_time
+        logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
@@ -983,7 +1008,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.9``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.10``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

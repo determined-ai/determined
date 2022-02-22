@@ -9,14 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
-	"math/rand"
 	"net"
 	"sort"
 	"testing"
 	"time"
-
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -30,7 +26,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/test/testutils"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func TestFluentPostgresLogging(t *testing.T) {
@@ -51,13 +49,12 @@ func TestFluentPostgresLogging(t *testing.T) {
 	sys.MustActorOf(actor.Addr("fluent"), f)
 
 	// WHEN a container prints some predefined logs
-	//nolint:gosec // Weak RNG is fine in tests.
-	trialID := math.MaxInt16 + rand.Int31n(math.MaxInt16)
-	expected, actual := makeLogTestCase(int(trialID), aConf.AgentID)
-	runContainerWithLogs(t, actual, int(trialID), f.port)
+	taskID := model.NewTaskID()
+	expected, actual := makeLogTestCase(taskID, aConf.AgentID)
+	runContainerWithLogs(t, actual, taskID, f.port)
 
 	// THEN fluent should parse all fields as expected and ship them to the mock master.
-	var logs []model.TrialLog
+	var logs []model.TaskLog
 	for i := 0; i < len(expected); i++ {
 		select {
 		case l := <-logBuffer:
@@ -92,10 +89,9 @@ func TestFluentLoggingElastic(t *testing.T) {
 	sys.MustActorOf(actor.Addr("fluent"), f)
 
 	// WHEN a container prints some predefined logs
-	//nolint:gosec // Weak RNG is fine in tests.
-	trialID := math.MaxInt16 + rand.Int31n(math.MaxInt16)
-	expected, actual := makeLogTestCase(int(trialID), aConf.AgentID)
-	runContainerWithLogs(t, actual, int(trialID), f.port)
+	taskID := model.NewTaskID()
+	expected, actual := makeLogTestCase(taskID, aConf.AgentID)
+	runContainerWithLogs(t, actual, taskID, f.port)
 
 	// This is really unfortunate, but we don't query for logs until they're more than 10 seconds old
 	// to _try_ to avoid the trickiness involved with elastic's consistency model.
@@ -104,50 +100,53 @@ func TestFluentLoggingElastic(t *testing.T) {
 	assert.NilError(t, elastic.WaitForIngest(testutils.CurrentLogstashElasticIndex()))
 
 	// THEN fluent should parse all fields as expected and ship them to elastic.
-	logs, _, err := elastic.TrialLogs(
-		int(trialID), 4, nil, apiv1.OrderBy_ORDER_BY_ASC, nil)
-	assert.NilError(t, err, "failed to retrieve trial logs")
+	logs, _, err := elastic.TaskLogs(taskID, 4, nil, apiv1.OrderBy_ORDER_BY_ASC, nil)
+	assert.NilError(t, err, "failed to retrieve task logs")
 	assert.Equal(t, len(logs), len(expected), "not enough logs received after one minute")
 	for i, l := range logs {
 		assertLogEquals(t, *l, expected[i])
 	}
 }
 
-func makeLogTestCase(trialID int, agentID string) ([]model.TrialLog, string) {
-	expected := []model.TrialLog{
+func makeLogTestCase(taskID model.TaskID, agentID string) ([]model.TaskLog, string) {
+	expected := []model.TaskLog{
 		{
-			TrialID:     trialID,
-			AgentID:     &agentID,
-			ContainerID: stringToPointer("goodcontainer"),
-			RankID:      intToPointer(4),
-			Log:         stringToPointer("\n"),
-			StdType:     stringToPointer("stdout"),
+			TaskID:       taskID.String(),
+			AllocationID: taskToAllocationID(taskID.String()),
+			AgentID:      &agentID,
+			ContainerID:  ptrs.StringPtr("goodcontainer"),
+			RankID:       ptrs.IntPtr(4),
+			Log:          "\n",
+			StdType:      ptrs.StringPtr("stdout"),
 		},
 		{
-			TrialID:     trialID,
-			AgentID:     &agentID,
-			ContainerID: stringToPointer("goodcontainer"),
-			RankID:      intToPointer(1),
-			Level:       stringToPointer("INFO"),
-			Log:         stringToPointer("Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)\n"), //nolint:lll // Anything to make these lines shorter would look worse.
-			StdType:     stringToPointer("stdout"),
+			TaskID:       taskID.String(),
+			AllocationID: taskToAllocationID(taskID.String()),
+			AgentID:      &agentID,
+			ContainerID:  ptrs.StringPtr("goodcontainer"),
+			RankID:       ptrs.IntPtr(1),
+			Level:        ptrs.StringPtr("INFO"),
+			Log:          "Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)\n", //nolint:lll // Anything to make these lines shorter would look worse.
+			StdType:      ptrs.StringPtr("stdout"),
 		},
 		{
-			TrialID:     trialID,
-			AgentID:     &agentID,
-			ContainerID: stringToPointer("goodcontainer"),
-			RankID:      intToPointer(2),
-			Level:       stringToPointer("ERROR"),
-			Log:         stringToPointer("Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)\n"), // nolint:lll
-			StdType:     stringToPointer("stdout"),
+			TaskID:       taskID.String(),
+			AllocationID: taskToAllocationID(taskID.String()),
+			AgentID:      &agentID,
+			ContainerID:  ptrs.StringPtr("goodcontainer"),
+			RankID:       ptrs.IntPtr(2),
+			Level:        ptrs.StringPtr("ERROR"),
+			Log:          "Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)\n", // nolint:lll
+			StdType:      ptrs.StringPtr("stdout"),
 		},
 		{
-			TrialID:     trialID,
-			AgentID:     &agentID,
-			ContainerID: stringToPointer("goodcontainer"),
-			RankID:      intToPointer(3),
-			Log:         stringToPointer("urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]\n"), // nolint:lll
-			StdType:     stringToPointer("stdout"),
+			TaskID:       taskID.String(),
+			AllocationID: taskToAllocationID(taskID.String()),
+			AgentID:      &agentID,
+			ContainerID:  ptrs.StringPtr("goodcontainer"),
+			RankID:       ptrs.IntPtr(3),
+			Log:          "urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]\n", // nolint:lll
+			StdType:      ptrs.StringPtr("stdout"),
 		},
 	}
 	actual := `[rank=4] 
@@ -157,19 +156,19 @@ func makeLogTestCase(trialID int, agentID string) ([]model.TrialLog, string) {
 	return expected, actual
 }
 
-func mockLogAcceptor(t *testing.T) (chan model.TrialLog, func()) {
+func mockLogAcceptor(t *testing.T) (chan model.TaskLog, func()) {
 	e := echo.New()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 8080))
 	assert.NilError(t, err, "error starting mock master listener")
 	e.Listener = lis
-	logBuffer := make(chan model.TrialLog)
-	e.POST("/trial_logs", func(ctx echo.Context) error {
+	logBuffer := make(chan model.TaskLog)
+	e.POST("/task-logs", func(ctx echo.Context) error {
 		body, err := ioutil.ReadAll(ctx.Request().Body)
 		if err != nil {
 			return err
 		}
 
-		var logs []model.TrialLog
+		var logs []model.TaskLog
 		if err = json.Unmarshal(body, &logs); err != nil {
 			return err
 		}
@@ -194,7 +193,7 @@ func mockLogAcceptor(t *testing.T) (chan model.TrialLog, func()) {
 	}
 }
 
-func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int) {
+func runContainerWithLogs(t *testing.T, fakeLogs string, taskID model.TaskID, fluentPort int) {
 	// WHEN we start a container that logs with fluentbit as its log driver.
 	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
 	assert.NilError(t, err, "error connecting to Docker daemon")
@@ -214,7 +213,10 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 			UseFluentLogging: true,
 		},
 	}
-	env := []string{fmt.Sprintf("DET_TRIAL_ID=%d", trialID)}
+	env := []string{
+		fmt.Sprintf("DET_TASK_ID=%s", taskID),
+		fmt.Sprintf("DET_ALLOCATION_ID=%s", *taskToAllocationID(taskID.String())),
+	}
 	cont := cproto.Container{ID: "goodcontainer"}
 	spec, err = overwriteSpec(cont, spec, env, nil, fluentPort)
 	assert.NilError(t, err, "failed to overwrite spec")
@@ -264,21 +266,17 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	}
 }
 
-func assertLogEquals(t *testing.T, l, expected model.TrialLog) {
+func assertLogEquals(t *testing.T, actual, expected model.TaskLog) {
 	// nil out timestamps since they are set by fluent and we cannot know what to expect.
-	l.Timestamp = nil
-	// nil out the message since we don't really care, we just want to see the structured fields.
-	l.Message = ""
+	actual.Timestamp = nil
 	// IDs are assigned unpredictably by the backend, so don't compare them.
-	l.ID = nil
-	l.StringID = nil
-	assert.DeepEqual(t, l, expected)
+	actual.ID = nil
+	actual.StringID = nil
+	// We don't fill out the flat log in expected.
+	actual.FlatLog = ""
+	assert.DeepEqual(t, actual, expected)
 }
 
-func stringToPointer(x string) *string {
-	return &x
-}
-
-func intToPointer(x int) *int {
-	return &x
+func taskToAllocationID(taskID string) *string {
+	return ptrs.StringPtr(taskID + ".0")
 }

@@ -24,6 +24,7 @@ import css from './LogViewerCore.module.scss';
 
 interface Props {
   decoder: (data: unknown) => Log,
+  hideTitle?:boolean
   onDownload?: () => void;
   onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
@@ -314,7 +315,7 @@ const LogViewerCore: React.FC<Props> = ({
 
         addLogs(logs);
 
-        if (currentIsOnBottom) listRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
+        if (currentIsOnBottom) listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
       }
     };
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
@@ -457,6 +458,7 @@ const LogViewerCore: React.FC<Props> = ({
       bodyNoPadding
       bodyScroll
       divider
+      hideTitle={props.hideTitle}
       maxHeight
       options={logViewerOptions}
       title={props.title}>

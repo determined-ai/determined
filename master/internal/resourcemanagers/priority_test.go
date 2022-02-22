@@ -6,6 +6,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -128,7 +129,7 @@ func TestPrioritySchedulingPreemptionDisabled(t *testing.T) {
 
 	// Check that agent stat has not changed.
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 }
 
@@ -161,7 +162,7 @@ func TestPrioritySchedulingPreemptionDisabledHigherPriorityBlocksLowerPriority(t
 
 	// Check that agent stat has not changed.
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 }
 
@@ -224,7 +225,7 @@ func TestPrioritySchedulingPreemptionDisabledAddTasks(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 
 	AllocateTasks(toAllocate, agentMap, taskList)
@@ -272,7 +273,7 @@ func TestPrioritySchedulingPreemptionDisabledAllSlotsAllocated(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 
 	AllocateTasks(toAllocate, agentMap, taskList)
@@ -317,7 +318,7 @@ func TestPrioritySchedulingPreemptionDisabledLowerPriorityMustWait(t *testing.T)
 	assertEqualToAllocate(t, firstAllocation, expectedToAllocate)
 
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 
 	AllocateTasks(firstAllocation, agentMap, taskList)
@@ -355,7 +356,7 @@ func TestPrioritySchedulingPreemptionDisabledTaskFinished(t *testing.T) {
 	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 
 	AllocateTasks(toAllocate, agentMap, taskList)
@@ -407,7 +408,7 @@ func TestPrioritySchedulingPreemptionDisabledAllTasksFinished(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 
 	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
+		assert.Equal(t, agent.NumEmptySlots(), 4)
 	}
 
 	AllocateTasks(toAllocate, agentMap, taskList)
@@ -620,7 +621,7 @@ func TestPrioritySchedulingBackfillingZeroSlotTask(t *testing.T) {
 
 func AllocateTasks(
 	toAllocate []*sproto.AllocateRequest,
-	agents map[*actor.Ref]*agentState,
+	agents map[*actor.Ref]*agent.AgentState,
 	taskList *taskList,
 ) {
 	for _, req := range toAllocate {
@@ -628,7 +629,10 @@ func AllocateTasks(
 
 		for _, fit := range fits {
 			container := newContainer(req, fit.Slots)
-			devices := fit.Agent.allocateFreeDevices(fit.Slots, container.id)
+			devices, err := fit.Agent.AllocateFreeDevices(fit.Slots, container.id)
+			if err != nil {
+				panic(err)
+			}
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,
 				Reservations: []sproto.Reservation{
@@ -677,7 +681,7 @@ func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool
 		if !ok {
 			return false
 		}
-		alloc.agent.deallocateContainer(alloc.container.id)
+		alloc.agent.DeallocateContainer(alloc.container.id)
 	}
 	if delete {
 		taskList.RemoveTaskByHandler(toRelease)

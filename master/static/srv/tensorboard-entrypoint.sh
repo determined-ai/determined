@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /run/determined/task-logging-setup.sh
+
 set -e
 set -x
 
@@ -25,5 +27,7 @@ fi
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
+READINESS_REGEX="TensorBoard contains metrics"
 TENSORBOARD_VERSION=$("$DET_PYTHON_EXECUTABLE" -c "import tensorboard; print(tensorboard.__version__)")
-exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@"
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@" \
+    > >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX"))

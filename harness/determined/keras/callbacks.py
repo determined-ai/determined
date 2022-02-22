@@ -177,6 +177,7 @@ class _MultiplexerBase(tf.keras.callbacks.Callback):  # type: ignore
         self.batches_requested = None  # type: Optional[int]
 
         self.want_train_workload_begin = True
+        self.train_workload_begin_time = None  # type: Optional[float]
 
         self.state = self.SavableState(
             epoch=0,
@@ -328,6 +329,7 @@ class _MultiplexerBase(tf.keras.callbacks.Callback):  # type: ignore
         if not self.want_train_workload_begin:
             return
         self.want_train_workload_begin = False
+        self.train_workload_begin_time = time.time()
         for cb in self.callbacks:
             if isinstance(cb, Callback):
                 cb.on_train_workload_begin(self.state.total_batches, self.batches_requested, {})

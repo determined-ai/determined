@@ -32,6 +32,8 @@ def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
 
 
 def main(train_entrypoint: Optional[str]) -> int:
+    if train_entrypoint == "__NATIVE__":
+        train_entrypoint = None
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
