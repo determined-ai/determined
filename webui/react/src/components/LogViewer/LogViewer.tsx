@@ -21,7 +21,7 @@ import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 
-interface Props {
+export interface Props {
   decoder: (data: unknown) => Log;
   initialLogs?: Log[];
   onDownload?: () => void;
@@ -261,7 +261,7 @@ const LogViewer: React.FC<Props> = ({
       });
     } catch (e) {
       notification.warn({
-        description: e.message,
+        description: (e as Error)?.message,
         message: 'Unable to Copy to Clipboard',
       });
     }
