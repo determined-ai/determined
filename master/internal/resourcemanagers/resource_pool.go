@@ -392,7 +392,7 @@ func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
 	rp.queuePositions[msg.ID] = newPos
 	// condiontally check if rebalancing is needed.
 	if rebalance {
-		rp.queuePositions = adjustPriorities(rp.queuePositions)
+		rp.queuePositions = adjustPriorities(rp.queuePositions, rp.queuePositions[job.TailAnchor])
 	}
 
 	if err := rp.persist(); err != nil {

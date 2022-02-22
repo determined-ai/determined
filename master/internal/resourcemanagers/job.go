@@ -72,7 +72,7 @@ func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 
 // TODO add a comment.
 // adjust in place.
-func adjustPriorities(positions jobSortState) jobSortState {
+func adjustPriorities(positions jobSortState, latestTime float64) jobSortState {
 	reverse_positions := map[float64]model.JobID{}
 	var positions_list []float64
 	for id, position := range positions {
@@ -82,11 +82,12 @@ func adjustPriorities(positions jobSortState) jobSortState {
 
 	sort.Float64s(positions_list)
 
-	idx := float64(1) //TODO: refactor to use the timestamp of the tail node
+	increment := latestTime/float64(len(positions)+1)
+	base := increment
 
 	for _, position := range positions_list {
-		positions[reverse_positions[position]] = idx
-		idx += 1
+		positions[reverse_positions[position]] = base
+		base += increment
 	}
 	return positions
 }
@@ -130,13 +131,18 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (float64, bool, 
 	}
 
 	newPos := (qPos1 + qPos2) / 2
+	triggerRebalance := false
+	if newPos - qPos1 < 1 {
+		triggerRebalance = true
+	}
 
-	return newPos, false, nil
+	return newPos, triggerRebalance, nil
 }
 
 func initalizeQueuePosition(aTime time.Time) float64 {
 	// we could shift this back and forth to give us more more.
-	return float64(aTime.UnixMicro())
+	t := float64(aTime.UnixMicro())
+	return t
 }
 
 // we might RMs to have easier/faster access to this information than this.
