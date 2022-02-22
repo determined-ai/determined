@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
-import useModalChangeName from 'hooks/useModal/useModalChangeName';
-import useModalChangePassword from 'hooks/useModal/useModalChangePassword';
+import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
+import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
 
-import useModal, { ModalHooks } from './useModal';
+import useModal, { ModalHooks } from '../useModal';
 import css from './useModalUserSettings.module.scss';
 
 interface UserValues {

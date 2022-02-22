@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import { useStore } from 'contexts/Store';
-import useModalUserSettings from 'hooks/useModal/useModalUserSettings';
+import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
