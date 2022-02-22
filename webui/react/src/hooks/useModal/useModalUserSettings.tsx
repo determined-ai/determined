@@ -47,7 +47,7 @@ const useModalUserSettings = (): ModalHooks => {
         <div className={css.field}>
           <span className={css.header}>Avatar</span>
           <span className={css.body}>
-            <Avatar hideTooltip large name={userValues.username} />
+            <Avatar hideTooltip large name={userValues.displayName || userValues.username} />
           </span>
           <Divider />
         </div>

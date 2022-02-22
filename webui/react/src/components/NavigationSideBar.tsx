@@ -99,7 +99,7 @@ const NavigationSideBar: React.FC = () => {
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
-  const username = auth.user?.username || 'Anonymous';
+  const displayName = auth.user?.displayName || auth.user?.username || 'Anonymous';
 
   const cluster = useMemo(() => {
     if (overview[ResourceType.ALL].allocation === 0) return undefined;
@@ -150,8 +150,8 @@ const NavigationSideBar: React.FC = () => {
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <div className={css.user}>
-              <Avatar hideTooltip name={username} />
-              <span>{username}</span>
+              <Avatar hideTooltip name={displayName} />
+              <span>{displayName}</span>
             </div>
           </Dropdown>
         </header>

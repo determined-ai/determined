@@ -11,7 +11,7 @@ import css from './useModalChangeName.module.scss';
 const useModalChangeName = (): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const { auth } = useStore();
-  const username = auth.user?.username || 'Anonymous';
+  const username = auth.user?.username || '';
   const existingDisplayName = auth.user?.displayName;
   const [ form ] = Form.useForm();
   const storeDispatch = useStoreDispatch();

@@ -15,7 +15,7 @@ interface Props {
 }
 
 const userToSelectOption = (user: User): React.ReactNode =>
-  <Option key={user.username} value={user.username}>{user.username}</Option>;
+  <Option key={user.username} value={user.username}>{user.displayName || user.username}</Option>;
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const { auth, users } = useStore();
@@ -33,7 +33,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     if (authUser) {
       list.push(
         <Option key={authUser.username} value={authUser.username}>
-          {authUser.username}
+          {authUser.displayName || authUser.username}
         </Option>,
       );
     }
