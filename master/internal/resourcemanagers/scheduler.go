@@ -10,12 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-const (
-	fairShareScheduling  = "fair_share"
-	priorityScheduling   = "priority"
-	roundRobinScheduling = "round_robin"
-)
-
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
 // to determine which pending requests can be fulfilled and which scheduled tasks
 // can be terminated. Schedule is expected to ba called every time there is a change
@@ -30,11 +24,11 @@ type Scheduler interface {
 // MakeScheduler returns the corresponding scheduler implementation.
 func MakeScheduler(config *config.SchedulerConfig) Scheduler {
 	switch config.GetType() {
-	case priorityScheduling:
+	case config.PriorityScheduling:
 		return NewPriorityScheduler(config)
-	case fairShareScheduling:
+	case config.FairShareScheduling:
 		return NewFairShareScheduler()
-	case roundRobinScheduling:
+	case config.RoundRobinScheduling:
 		return NewRoundRobinScheduler()
 	default:
 		panic(fmt.Sprintf("invalid scheduler: %s", config.GetType()))
