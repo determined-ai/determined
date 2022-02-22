@@ -14,7 +14,6 @@ const config: SettingsConfig = {
   settings: [
     {
       key: 'allocationId',
-      storageKey: 'allocationId',
       type: {
         baseType: BaseType.String,
         isArray: true,
@@ -22,7 +21,6 @@ const config: SettingsConfig = {
     },
     {
       key: 'agentId',
-      storageKey: 'agentId',
       type: {
         baseType: BaseType.String,
         isArray: true,
@@ -30,7 +28,6 @@ const config: SettingsConfig = {
     },
     {
       key: 'containerId',
-      storageKey: 'containerId',
       type: {
         baseType: BaseType.String,
         isArray: true,
@@ -38,7 +35,6 @@ const config: SettingsConfig = {
     },
     {
       key: 'rankId',
-      storageKey: 'rankId',
       type: {
         baseType: BaseType.Integer,
         isArray: true,
