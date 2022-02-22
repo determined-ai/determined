@@ -426,7 +426,16 @@ def list_experiments(args: Namespace) -> None:
     if not args.all:
         users = [authentication.must_cli_auth().get_session_user()]
 
-    r = bindings.get_GetExperiments(setup_session(args), users=users, limit=100_000)
+    all_experiments = []
+    offset = 0
+    while True:
+        # pagination of experiments
+        r = bindings.get_GetExperiments(setup_session(args), users=users, limit=200, offset=offset)
+        all_experiments += r.experiments
+        if len(r.experiments) >= 200:
+            offset += len(r.experiments)
+        else:
+            break
 
     def format_experiment(e: Any) -> List[Any]:
         result = [
@@ -458,7 +467,7 @@ def list_experiments(args: Namespace) -> None:
     if args.all:
         headers.append("Archived")
 
-    values = [format_experiment(e) for e in r.experiments]
+    values = [format_experiment(e) for e in all_experiments]
     render.tabulate_or_csv(headers, values, args.csv)
 
 
@@ -499,10 +508,18 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 
 @authentication.required
 def list_trials(args: Namespace) -> None:
-    r = bindings.get_GetExperimentTrials(
-        setup_session(args), experimentId=args.experiment_id, limit=100_000
-    )
-    trials = r.trials
+    all_trials = []
+    offset = 0
+    while True:
+        # pagination of experiment trials
+        r = bindings.get_GetExperimentTrials(
+            setup_session(args), experimentId=args.experiment_id, limit=200, offset=offset
+        )
+        all_trials += r.trials
+        if len(r.trials) >= 200:
+            offset += len(r.trials)
+        else:
+            break
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
     values = [
@@ -514,7 +531,7 @@ def list_trials(args: Namespace) -> None:
             render.format_time(t.endTime),
             t.totalBatchesProcessed,
         ]
-        for t in trials
+        for t in all_trials
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
