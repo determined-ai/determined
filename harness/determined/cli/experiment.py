@@ -195,6 +195,19 @@ def create(args: Namespace) -> None:
         submit_experiment(args)
 
 
+def limit_offset_paginator(method, agg_field: str, connection_args: Namespace, **kwargs):
+    all_objects: List[bindings.v1Experiment | bindings.v1Trial] = []
+    offset = 0
+    while True:
+        r = method(setup_session(connection_args), limit=200, offset=offset, **kwargs)
+        page_objects = getattr(r, agg_field)
+        all_objects += page_objects
+        offset += len(page_objects)
+        if len(page_objects) < 200:
+            break
+    return all_objects
+
+
 @authentication.required
 def delete_experiment(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
@@ -426,16 +439,12 @@ def list_experiments(args: Namespace) -> None:
     if not args.all:
         users = [authentication.must_cli_auth().get_session_user()]
 
-    all_experiments: List[bindings.v1Experiment] = []
-    offset = 0
-    while True:
-        # pagination of experiments
-        r = bindings.get_GetExperiments(setup_session(args), users=users, limit=200, offset=offset)
-        all_experiments += r.experiments
-        if len(r.experiments) >= 200:
-            offset += len(r.experiments)
-        else:
-            break
+    all_experiments = limit_offset_paginator(
+        bindings.get_GetExperiments,
+        "experiments",
+        args,
+        users=users,
+    )
 
     def format_experiment(e: Any) -> List[Any]:
         result = [
@@ -508,18 +517,9 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 
 @authentication.required
 def list_trials(args: Namespace) -> None:
-    all_trials: List[bindings.v1Trial] = []
-    offset = 0
-    while True:
-        # pagination of experiment trials
-        r = bindings.get_GetExperimentTrials(
-            setup_session(args), experimentId=args.experiment_id, limit=200, offset=offset
-        )
-        all_trials += r.trials
-        if len(r.trials) >= 200:
-            offset += len(r.trials)
-        else:
-            break
+    all_trials = limit_offset_paginator(
+        bindings.get_GetExperimentTrials, "trials", args, experimentId=args.experiment_id
+    )
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
     values = [
