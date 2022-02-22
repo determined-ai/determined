@@ -109,13 +109,13 @@ WHERE allocation_id = :allocation_id
 func (db *PgDB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error) {
 	return db.rawQuery(`
 SELECT json_build_object(
-	'allocation_id', a.allocation_id, 
+	'allocation_id', a.allocation_id,
 	'job_id', t.job_id,
 	'task_type', t.task_type,
     'duration_sec', COALESCE(EXTRACT(EPOCH FROM (a.end_time - a.start_time)), 0)
-) 
-FROM allocations as a JOIN tasks as t 
-ON a.task_id = t.task_id 
+)
+FROM allocations as a JOIN tasks as t
+ON a.task_id = t.task_id
 WHERE a.allocation_id = $1;
 `, aID)
 }
@@ -287,7 +287,7 @@ VALUES
 		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
 			i*10+1, i*10+2, i*10+3, i*10+4, i*10+5, i*10+6, i*10+7, i*10+8, i*10+9, i*10+10)
 
-		args = append(args, log.TaskID, log.AllocationID, log.Log, log.AgentID, log.ContainerID,
+		args = append(args, log.TaskID, log.AllocationID, []byte(log.Log), log.AgentID, log.ContainerID,
 			log.RankID, log.Timestamp, log.Level, log.StdType, log.Source)
 	}
 
