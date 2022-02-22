@@ -71,7 +71,7 @@ spec:
           secret:
             secretName: {{ .Values.tlsSecret }}
         {{ end }}
-        {{- if .Values.db.certResourceName }}
+        {{- if .Values.db.sslMode }}
         - name: database-cert
           {{- $resourceType := (required "A valid .Values.db.resourceType entry required!" .Values.db.resourceType | trim)}}
           {{- if eq $resourceType "configMap"}}
