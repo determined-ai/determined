@@ -14,18 +14,43 @@ Queue Management is a new feature and is available to the priority scheduler and
 priority scheduler. It allows users to observe all submitted jobs and their state. It also allow
 users to modify the position of the jobs in the queue either directly or indirectly.
 
-Queue Management's job queue can be viewed from the CLI or from the WebUI. To view it in the CLI,
-use the following command:
+***********************
+ Visualizing Job Queue
+***********************
+
+Queue Management's job queue can be viewed from the CLI or from the WebUI. To view it in the WebUI,
+click on the `Job Queue` tab. To view it in the CLI, use the following command:
 
 .. code:: bash
 
    det job list
 
-This will display a table of results, ordered by scheduling order. Note that the scheduling order is
-not necessarily the priority of the job. In addition to the order of the job, users can see the
-state of the jobs and how many slots each job is using. Jobs can be in the following states: queued,
-scheduled, and scheduled backfilled. Jobs that have completed or errored out are not counted as
-active and are omitted from this list.
+Both the WebUI and the CLI will display a table of results, ordered by scheduling order. Note that
+the scheduling order is not necessarily the priority of the job. In addition to the order of the
+job, users can see the state of the jobs and how many slots each job is using.
+
+************
+ Job States
+************
+
+Jobs can be in the Queued or Scheduled states. Queued jobs have been received by Determined but have
+not been allocated resources yet. Any change made to those experiments in the Job Queue should take
+effect as soon as they are received. A job in the Scheduled state has selected to run by the scheduler;
+it may or may not have acquired resources or be running at that moment. Once it has started running, a
+progress bar like the one in the experiments tab should appear. A job that has already started to run
+will not reflect changes immediately and will instead need to be preempted.
+
+Jobs that have completed or errored out are not counted as active and are omitted from this list.
+
+*********************
+ Modifying Job Queue
+*********************
+
+Users may modify the job queue in either the WebUI or the CLI.
+
+***********************
+ Job Queue Limitations
+***********************
 
 .. code:: markdown
 
