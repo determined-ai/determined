@@ -426,7 +426,7 @@ def list_experiments(args: Namespace) -> None:
     if not args.all:
         users = [authentication.must_cli_auth().get_session_user()]
 
-    all_experiments = []
+    all_experiments: List[bindings.v1Experiment] = []
     offset = 0
     while True:
         # pagination of experiments
@@ -508,7 +508,7 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 
 @authentication.required
 def list_trials(args: Namespace) -> None:
-    all_trials = []
+    all_trials: List[bindings.v1Trial] = []
     offset = 0
     while True:
         # pagination of experiment trials
