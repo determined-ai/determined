@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import pathlib
@@ -6,7 +7,7 @@ import random
 import time
 from abc import abstractmethod
 from inspect import signature
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 import torch
@@ -49,11 +50,6 @@ class PyTorchTrialController(det.TrialController):
             "This might be caused by not wrapping your optimizer with wrap_optimizer()",
         )
         self._check_evaluate_implementation()
-
-        # Validation loader will be undefined on process ranks > 0
-        # when the user defines `validate_full_dataset()`.
-        self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
-        self._set_data_loaders()
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
@@ -159,6 +155,9 @@ class PyTorchTrialController(det.TrialController):
 
         self.context._epoch_len = len(self.training_loader)
 
+        # Validation loader will be undefined on process ranks > 0
+        # when the user defines `validate_full_dataset()`.
+        self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
         validation_data = self.trial.build_validation_data_loader()
         if self._evaluate_batch_defined():
             if isinstance(validation_data, pytorch.DataLoader):
@@ -186,14 +185,38 @@ class PyTorchTrialController(det.TrialController):
                 self.validation_loader = validation_data
 
     def run(self) -> None:
-        # We create the training_iterator here rather than in __init__ because we have to be careful
-        # to trigger its shutdown explicitly, to avoid hangs in when the user is using
-        # multiprocessing-based parallelism for their dataloader.
-        #
-        # We create it before loading state because we don't want the training_iterator shuffling
-        # values after we load state.
-        self.training_iterator = iter(self.training_loader)
-        try:
+        @contextlib.contextmanager
+        def defer(fn: Callable) -> Iterator[None]:
+            try:
+                yield
+            finally:
+                fn()
+
+        with contextlib.ExitStack() as exit_stack:
+            for callback in self.callbacks.values():
+                with self.prof.record_timing(
+                    f"callbacks.{callback.__class__.__name__}.on_trial_startup"
+                ):
+                    callback.on_trial_startup(self.latest_batch, self.env.latest_checkpoint)
+                    exit_stack.enter_context(defer(callback.on_trial_shutdown))
+
+            self._set_data_loaders()
+
+            # We create the training_iterator here rather than in __init__ because we have to be
+            # careful to trigger its shutdown explicitly, to avoid hangs in when the user is using
+            # multiprocessing-based parallelism for their dataloader.
+            #
+            # We create it before loading state because we don't want the training_iterator
+            # shuffling values after we load state.
+            self.training_iterator = iter(self.training_loader)
+
+            def cleanup_iterator() -> None:
+                # Explicitly trigger the training iterator's shutdown (which happens in __del__).
+                # See the rather long note in pytorch/torch/utils/data/dataloader.py.
+                del self.training_iterator
+
+            exit_stack.enter_context(defer(cleanup_iterator))
+
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
                 logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
@@ -214,11 +237,6 @@ class PyTorchTrialController(det.TrialController):
                     ):
                         callback.on_training_start()
                 self._run()
-
-        finally:
-            # Explicitly trigger the training iterator's shutdown (which happens in __del__).
-            # See the rather long note in pytorch/torch/utils/data/dataloader.py.
-            del self.training_iterator
 
     def _run(self) -> None:
         assert self.workloads is not None

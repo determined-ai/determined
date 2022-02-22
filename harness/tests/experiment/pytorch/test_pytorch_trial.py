@@ -534,12 +534,13 @@ class TestPyTorchTrial:
         hparams["disable_dataset_reproducibility_checks"] = False
 
         with pytest.raises(RuntimeError, match="you can disable this check by calling"):
-            _ = utils.make_trial_controller_from_trial_implementation(
+            controller = utils.make_trial_controller_from_trial_implementation(
                 trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=hparams,
                 workloads=make_workloads(),
                 trial_seed=self.trial_seed,
             )
+            controller.run()
 
     def test_custom_dataloader(self) -> None:
         def make_workloads() -> workload.Stream:
