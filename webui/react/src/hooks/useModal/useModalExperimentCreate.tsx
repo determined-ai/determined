@@ -292,7 +292,6 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       okText: type,
       onCancel: handleCancel,
       onOk: handleOk,
-      style: { minWidth: 600 },
       title: (
         <div className={css.title}>
           <Icon name="fork" /> {titleLabel}
