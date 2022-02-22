@@ -14,7 +14,7 @@ export interface LogEntry {
   message: string;
 }
 
-export interface Prop extends LogEntry {
+export interface Props extends LogEntry {
   noWrap?: boolean;
   style?: React.CSSProperties;
   timeStyle?: React.CSSProperties;
@@ -30,7 +30,7 @@ export const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIM
 // Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
 export const MAX_DATETIME_LENGTH = 22;
 
-const LogViewerEntry: React.FC<Prop> = ({
+const LogViewerEntry: React.FC<Props> = ({
   level = LogLevel.None,
   message,
   noWrap = false,
