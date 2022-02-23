@@ -38,11 +38,13 @@ BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 JOB_SUFFIXES = [
     "tf1-cpu",
     "tf2-cpu",
+    "tf24-cpu",
     "tf25-cpu",
     "tf26-cpu",
     "tf27-cpu",
     "tf1-gpu",
     "tf2-gpu",
+    "tf24-gpu",
     "tf25-gpu",
     "tf26-gpu",
     "tf27-gpu",

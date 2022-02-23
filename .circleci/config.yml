@@ -111,11 +111,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-5158dec
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-97e4c60
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.5-tf-2.4-cpu-5158dec
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-97e4c60
 
   login-docker:
     parameters:
@@ -692,7 +692,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
         type: string
     steps:
       - set-cluster-id:
@@ -1785,7 +1785,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
         type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2332,7 +2332,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2351,7 +2351,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2367,9 +2367,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.10
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2388,9 +2389,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.10
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2545,7 +2547,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2560,7 +2562,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2572,9 +2574,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.10
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2589,9 +2592,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.10
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.10
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
 
   weekly-vuln-scan:
     triggers:
