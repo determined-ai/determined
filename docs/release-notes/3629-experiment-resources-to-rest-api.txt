@@ -1,0 +1,6 @@
+:orphan:
+
+-  **API Change** the `/api/v1/experiment/{id}` PATCH endpoint allows you to PATCH scheduling fields
+   (priority, weight, and maxSlots).
+-  **Breaking Change** the legacy API `/experiment/{id}` PATCH endpoint no longer supports the
+   scheduling fields (priority, weight, and maxSlots)
