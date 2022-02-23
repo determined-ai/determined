@@ -519,7 +519,7 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 
 @authentication.required
 def list_trials(args: Namespace) -> None:
-    all_trials = limit_offset_paginator(
+    all_trials: List[bindings.trialv1Trial] = limit_offset_paginator(
         bindings.get_GetExperimentTrials, "trials", args, experimentId=args.experiment_id
     )
 
@@ -533,7 +533,7 @@ def list_trials(args: Namespace) -> None:
             render.format_time(t.endTime),
             t.totalBatchesProcessed,
         ]
-        for t in filter(lambda t: t.__class__ == bindings.trialv1Trial, all_trials)
+        for t in all_trials
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
