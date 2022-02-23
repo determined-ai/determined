@@ -60,6 +60,15 @@ db:
   # create a PersistentVolume that will match the PersistentVolumeClaim.
   # storageClassName:
 
+  # ssl_mode and ssl_root_cert configure the TLS connection to the database. Users must first
+  # create a kubernetes secret or configMap containing their certificate and specify its name in
+  # certResourceName. For sslRootCert, specify the name of the file only (not path).
+  # sslMode: verify-ca
+  # sslRootCert: <cert_name>
+  # resourceType: <secret/configMap>
+  # certResourceName: <secret/configMap name>
+
+
 # checkpointStorage controls where checkpoints are stored. Supported types include `shared_fs`,
 # `gcs`, and `s3`.
 checkpointStorage:
