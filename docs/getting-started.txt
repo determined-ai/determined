@@ -1,6 +1,6 @@
-#########################
- Quickstart for ML Users
-#########################
+#################################
+ Quickstart for Model Developers
+#################################
 
 This quickstart walks you through the basic steps to install and run Determined, train on the
 provided model data, and visualize training experiment results in your browser.
@@ -9,7 +9,10 @@ Three model data and code examples use the MNIST dataset to demonstrate:
 
 -  training on a local, single CPU with or without a GPU.
 -  how to run a distributed training job on multiple GPUs to improve performance.
--  how to increase model accuracy using hyperparameter tuning.
+-  how to use hyperparameter tuning.
+
+Each example uses the same model code and data, changing only a configuration parameter for
+different functionality.
 
 These are followed by a demonstration of how Determined seamless integrates with TensorFlow.
 
@@ -55,7 +58,7 @@ Training Example
 
 These example experiments use the PyTorch MNIST image classification model:
 
-#. Download the image: mnist_pytorch.tgz
+#. Download the image: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
 
 #. Extract the configuration and model files and browse the directory:
 
@@ -94,7 +97,7 @@ might want to review them to gain an understanding of how the Determined API is 
 +------------------+------------------------------------------------------------------------+
 | Filename         | Experiment Type                                                        |
 +==================+========================================================================+
-| ``ata.py``       | Model data loading and preparation code.                               |
+| ``data.py``      | Model data loading and preparation code.                               |
 +------------------+------------------------------------------------------------------------+
 | ``layers.py``    | Convolutional layers used by the model.                                |
 +------------------+------------------------------------------------------------------------+
@@ -245,9 +248,9 @@ For a Determined cluster deployed in the cloud, the default value for each agent
 The loss curve is similar to the single-GPU experiment in the previous exercise but the time to
 complete the trial is reduced by about half.
 
-***************************************************
- Improve Model Accuracy with Hyperparameter Tuning
-***************************************************
+*********************************
+ Run a Hyperparameter Tuning Job
+*********************************
 
 Hyperparameter searches involve multiple trials or model variations, per experiment, to improve
 model accuracy. Typically, hyperparameter tuning takes a significant amount of time and code.
