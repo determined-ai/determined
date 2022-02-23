@@ -205,9 +205,8 @@ func (s *Service) getUsers(c echo.Context) (interface{}, error) {
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	type (
 		request struct {
-			Password *string `json:"password,omitempty"`
-			Active   *bool   `json:"active,omitempty"`
-			Admin    *bool   `json:"admin,omitempty"`
+			Active *bool `json:"active,omitempty"`
+			Admin  *bool `json:"admin,omitempty"`
 
 			AgentUserGroup *agentUserGroup `json:"agent_user_group,omitempty"`
 		}
@@ -254,16 +253,6 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	}
 
 	var toUpdate []string
-
-	if params.Password != nil {
-		if !user.PasswordCanBeModifiedBy(authenticatedUser) {
-			return nil, forbiddenError
-		}
-		if err = user.UpdatePasswordHash(*params.Password); err != nil {
-			return nil, err
-		}
-		toUpdate = append(toUpdate, "password_hash")
-	}
 
 	if params.Active != nil {
 		if !user.ActiveCanBeModifiedBy(authenticatedUser) {

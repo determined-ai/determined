@@ -67,23 +67,6 @@ func (user User) ValidatePassword(password string) bool {
 	return err == nil
 }
 
-// PasswordCanBeModifiedBy checks whether "other" can change the password of "user".
-func (user User) PasswordCanBeModifiedBy(other User) bool {
-	if other.Username == "determined" {
-		return false
-	}
-
-	if other.Admin {
-		return true
-	}
-
-	if other.ID == user.ID {
-		return true
-	}
-
-	return false
-}
-
 // CanCreateUser checks whether the calling user
 // has the authority to create other users.
 func (user User) CanCreateUser() bool {

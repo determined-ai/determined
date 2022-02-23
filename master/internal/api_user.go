@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -131,25 +132,13 @@ func (a *apiServer) PostUser(
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest) (*apiv1.SetUserPasswordResponse, error) {
 	// TODO if ExternalSessions is there, don't even allow this
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	passwordHash := replicateClientSideSaltAndHash(req.Password)
+	getResp, err := a.PatchUser(ctx, &apiv1.PatchUserRequest{Username: req.Username,
+		User: &userv1.PatchUser{Password: &wrapperspb.StringValue{Value: passwordHash}}})
 	if err != nil {
 		return nil, err
 	}
-	if !curUser.Admin && curUser.Username != req.Username {
-		return nil, grpcutil.ErrPermissionDenied
-	}
-	user := &model.User{Username: req.Username}
-	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
-		return nil, err
-	}
-	switch err = a.m.db.UpdateUser(user, []string{"password_hash"}, nil); {
-	case err == db.ErrNotFound:
-		return nil, errUserNotFound
-	case err != nil:
-		return nil, err
-	}
-	fullUser, err := getUser(a.m.db, req.Username)
-	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
+	return &apiv1.SetUserPasswordResponse{User: getResp.User}, err
 }
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest) (*apiv1.PatchUserResponse, error) {
@@ -161,19 +150,19 @@ func (a *apiServer) PatchUser(
 		return nil, grpcutil.ErrPermissionDenied
 	}
 	// TODO: handle any field name:
+	updateUser := &model.User{Username: req.Username}
 	if req.User.DisplayName != "" {
-		curUser.DisplayName = null.StringFrom(req.User.DisplayName)
+		updateUser.DisplayName = null.StringFrom(req.User.DisplayName)
 	}
 	if req.User.Password != nil {
-		if err = curUser.UpdatePasswordHash(req.User.Password.Value); err != nil {
+		if err = updateUser.UpdatePasswordHash(req.User.Password.Value); err != nil {
 			return nil, err
 		}
 	}
-
+	// return the finalUser object so we can be assured only public fields are passed on
 	finalUser := &userv1.User{}
 	err = a.m.db.QueryProto(
-		"update_user", finalUser, curUser.ID, curUser.DisplayName, curUser.PasswordHash)
-
+		"update_user", finalUser, updateUser.Username, updateUser.DisplayName, updateUser.PasswordHash)
 	return &apiv1.PatchUserResponse{User: finalUser},
-		errors.Wrapf(err, "error updating user \"%s\" in database", curUser.Username)
+		errors.Wrapf(err, "error updating user \"%s\" in database", finalUser.Username)
 }
