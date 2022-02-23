@@ -12,7 +12,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
-  onSave?: (newValue: string) => Promise<void>;
+  onSave?: (newValue: string) => Promise<Error|void>;
   placeholder?: string;
   value: string;
 }
@@ -64,7 +64,7 @@ const InlineEditor: React.FC<Props> = ({
     if (onSave) {
       setIsSaving(true);
       const err = await onSave(newValue);
-      if (err !== null) {
+      if (err != null) {
         updateEditorValue(value);
       }
       setIsSaving(false);
