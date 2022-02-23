@@ -57,6 +57,8 @@ message GetExperimentsRequest {
     SORT_BY_USER = 10;
     // Returns experiments sorted by name.
     SORT_BY_NAME = 11;
+    // Returns experiments sorted by originating model
+    SORT_BY_FORKED_FROM = 12;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;

@@ -10,6 +10,7 @@ export const DEFAULT_COLUMNS = [
   'tags',
   'startTime',
   'state',
+  'forkedFrom',
   'searcherType',
   'user',
 ];

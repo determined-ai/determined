@@ -400,8 +400,9 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'forkedFrom',
-        key: 'forkedFrom',
+        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
         render: forkedFromRenderer,
+        sorter: true,
         title: 'Forked From',
       },
       {
