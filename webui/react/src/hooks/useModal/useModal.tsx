@@ -107,9 +107,11 @@ const useModal = (
     }
   }, [ extendEventHandler, modalProps, options, prevModalProps ]);
 
-  // Sets componentUnmounting to true only when the parent component is unmounting so that the next
-  // useEffect only runs modalClose on unmount, rather than every time modalClose updates.
-  // The order of these two useEffects matters, this one has to be first.
+  /**
+   * Sets componentUnmounting to true only when the parent component is unmounting so that the next
+   * useEffect only runs modalClose on unmount, rather than every time modalClose updates.
+   * The order of these two useEffects matters, this one has to be first.
+   */
   useEffect(() => {
     return () => {
       componentUnmounting.current = true;
