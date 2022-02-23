@@ -130,7 +130,7 @@ export const patchUser: Service.DetApi<
       ...params.userParams,
       password: params.userParams.password
         ? saltAndHashPassword(params.userParams.password)
-        : undefined
+        : undefined,
     },
   ),
 };

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from requests import Response
 from termcolor import colored
 
+from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
@@ -127,7 +128,9 @@ def change_password(parsed_args: Namespace) -> None:
     # Hash the password to avoid sending it in cleartext.
     password = api.salt_and_hash(password)
 
-    bindings.patch_PatchUser(setup_session(parsed_args), password=password)
+    bindings.patch_PatchUser(
+        setup_session(parsed_args), username=username, body=bindings.v1PatchUser(password=password)
+    )
 
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.

@@ -23,8 +23,8 @@ const useModalChangePassword = (): ModalHooks => {
   const handleFormSubmit = useCallback(async () => {
     try {
       await patchUser({
-        userParams: { password: form.getFieldValue('newPassword') },
         username,
+        userParams: { password: form.getFieldValue('newPassword') },
       });
       modalClose();
     } catch (e) {
