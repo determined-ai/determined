@@ -3,6 +3,7 @@ entrypoint: model_def:BYOLTrial
 records_per_epoch: 45000
 resources:
   slots_per_trial: 1
+  shm_size: 17179869184
 min_validation_period:
   epochs: 2
 
