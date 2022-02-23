@@ -338,6 +338,13 @@ const ExperimentList: React.FC = () => {
         width: 120,
       },
       {
+        dataIndex: 'forkedFrom',
+        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        render: forkedFromRenderer,
+        sorter: true,
+        title: 'Forked From',
+      },
+      {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
@@ -398,13 +405,7 @@ const ExperimentList: React.FC = () => {
         render: checkmarkRenderer,
         title: 'Archived',
       },
-      {
-        dataIndex: 'forkedFrom',
-        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
-        render: forkedFromRenderer,
-        sorter: true,
-        title: 'Forked From',
-      },
+
       {
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: user.username, value: user.username })),
