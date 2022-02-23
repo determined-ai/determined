@@ -30,7 +30,7 @@ export interface Props {
   title?: React.ReactNode;
 }
 
-interface ViewerLog extends Log {
+export interface ViewerLog extends Log {
   formattedTime: string;
 }
 
@@ -75,7 +75,7 @@ const defaultLocal = {
   previousWidth: 0,
 };
 
-const formatLogEntry = (log: Log): ViewerLog => {
+export const formatLogEntry = (log: Log): ViewerLog => {
   const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
   return { ...log, formattedTime };
 };
@@ -488,9 +488,9 @@ const LogViewer: React.FC<Props> = ({
           )}
         </div>
         <div className={css.scrollTo}>
-          <Tooltip placement="left" title="Scroll to Oldest">
+          <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
             <Button
-              aria-label="Scroll to Oldest"
+              aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
               className={[ css.scrollToTop, css.show ].join(' ')}
               icon={<Icon name="arrow-up" />}
               onClick={handleScrollToOldest}
@@ -504,7 +504,7 @@ const LogViewer: React.FC<Props> = ({
                 : ARIA_LABEL_ENABLE_TAILING
             }>
             <Button
-              aria-label="Enable Tailing"
+              aria-label={ARIA_LABEL_ENABLE_TAILING}
               className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
               onClick={handleEnableTailing}
