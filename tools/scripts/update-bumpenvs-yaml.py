@@ -21,10 +21,12 @@ file will be updated to look like:
 Usage: update-bumpenvs-yaml.py path/to/bumpenvs.yaml ENVIRONMENTS_COMMIT
 """
 
+import argparse
 import collections
 import os
 import sys
 from typing import Any, Dict
+from pathlib import Path
 
 import requests
 import yaml
@@ -49,9 +51,12 @@ JOB_SUFFIXES = [
     "gpt-neox-deepspeed-gpu",
 ]
 
-EXPECT_JOBS = {
+PACKER_JOBS = set([
     "publish-cloud-images",
-    *(f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES),
+])
+
+DOCKER_JOBS = {
+    f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES
 }
 
 PACKER_ARTIFACTS = {
@@ -59,8 +64,6 @@ PACKER_ARTIFACTS = {
 }
 
 DOCKER_ARTIFACTS = {f"publish-{suffix}" for suffix in JOB_SUFFIXES}
-
-EXPECT_ARTIFACTS = PACKER_ARTIFACTS | DOCKER_ARTIFACTS
 
 
 class Build:
@@ -86,7 +89,7 @@ class Build:
         return artifacts
 
 
-def get_all_builds(commit: str) -> Dict[str, Build]:
+def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Build]:
     # Get all the recent jobs.
     print("fetching recent jobs", file=sys.stderr)
     req = requests.get(BASE_URL, params={"limit": 50, "filter": "completed"})  # type: ignore
@@ -106,28 +109,41 @@ def get_all_builds(commit: str) -> Dict[str, Build]:
             build = Build(build_meta)
             builds[build.job_name] = build
 
+    if cloud_images:
+        expected = PACKER_JOBS | DOCKER_JOBS
+    else:
+        expected = DOCKER_JOBS
+
+    if dev:
+        expected = set(s + '-dev' for s in expected)
+
     found = set(builds.keys())
-    expected_found = EXPECT_JOBS.difference(found)
-    found_expected = found.difference(EXPECT_JOBS)
+    expected_found = expected.difference(found)
+    found_expected = found.difference(expected)
     if expected_found:
         print(f"Expected {expected_found} jobs not found")
     if found_expected:
         print(f"Found {found_expected} jobs not expected")
 
-    assert EXPECT_JOBS == found, f"expected jobs ({EXPECT_JOBS}) but found ({found})"
+    assert expected == found, f"expected jobs ({expected}) but found ({found})"
 
     return builds
 
 
-def get_all_artifacts(builds: Dict[str, Build]) -> Dict[str, str]:
+def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str, str]:
     artifacts = {}
     for b in builds.values():
         artifacts.update(b.get_artifacts())
 
+    if cloud_images:
+        expected = PACKER_ARTIFACTS | DOCKER_ARTIFACTS
+    else:
+        expected = DOCKER_ARTIFACTS
+
     found = set(artifacts.keys())
     assert (
-        EXPECT_ARTIFACTS == found
-    ), f"expected artifacts ({EXPECT_ARTIFACTS}) but found ({found})"
+        expected == found
+    ), f"expected artifacts ({expected}) but found ({found})"
 
     return artifacts
 
@@ -203,23 +219,34 @@ def update_tag_for_image_type(subconf: Dict[str, str], new_tag: str) -> bool:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print(__doc__, file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", type=Path, help="path/to/bumpenvs.yaml")
+    parser.add_argument("commit", help="environments commit id")
+    parser.add_argument(
+        "--no-cloud-images", action="store_false", dest="cloud_images",
+        help="skip cloud image update")
+    parser.add_argument(
+        "--dev", action="store_true",
+        help="use dev-suffixed builds")
+    args = parser.parse_args()
 
-    path = sys.argv[1]
-    commit = sys.argv[2]
+    path = args.path
+    commit = args.commit
 
     with open(path) as f:
         conf = yaml.safe_load(f)
 
-    builds = get_all_builds(commit)
-    artifacts = get_all_artifacts(builds)
+    builds = get_all_builds(commit, args.dev, args.cloud_images)
+    artifacts = get_all_artifacts(builds, args.cloud_images)
 
     tag_list = [
-        *(parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS),
         *(yaml.safe_load(artifacts[artifact]) for artifact in DOCKER_ARTIFACTS),
     ]
+
+    if args.cloud_images:
+        tag_list += [
+            *(parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS),
+        ]
 
     # Flatten tag_list dicts into one dict.
     new_tags = {k: v for d in tag_list for (k, v) in d.items()}
