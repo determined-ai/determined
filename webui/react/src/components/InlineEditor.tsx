@@ -12,7 +12,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
-  onSave?: (newValue: string) => Promise<void>;
+  onSave?: (newValue: string) => Promise<Error|void>;
   placeholder?: string;
   value: string;
 }
