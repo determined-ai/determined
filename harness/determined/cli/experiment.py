@@ -9,7 +9,7 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 import tabulate
 
@@ -22,7 +22,7 @@ from determined.cli.session import setup_session
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined
+from determined.common.experimental import Determined, session
 
 from .checkpoint import render_checkpoint
 
@@ -196,12 +196,12 @@ def create(args: Namespace) -> None:
 
 
 def limit_offset_paginator(
-    method: Callable, agg_field: str, connection_args: Namespace, **kwargs: Any
-) -> List[Union[bindings.v1Experiment, bindings.trialv1Trial]]:
-    all_objects: List[Union[bindings.v1Experiment, bindings.trialv1Trial]] = []
+    method: Callable, agg_field: str, sess: session.Session, **kwargs: Any
+) -> List[Any]:
+    all_objects: List[Any] = []
     offset = 0
     while True:
-        r = method(setup_session(connection_args), limit=200, offset=offset, **kwargs)
+        r = method(sess, limit=200, offset=offset, **kwargs)
         page_objects = getattr(r, agg_field)
         all_objects += page_objects
         offset += len(page_objects)
@@ -441,10 +441,10 @@ def list_experiments(args: Namespace) -> None:
     if not args.all:
         users = [authentication.must_cli_auth().get_session_user()]
 
-    all_experiments = limit_offset_paginator(
+    all_experiments: List[bindings.v1Experiment] = limit_offset_paginator(
         bindings.get_GetExperiments,
         "experiments",
-        args,
+        setup_session(args),
         users=users,
     )
 
@@ -520,7 +520,10 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
 @authentication.required
 def list_trials(args: Namespace) -> None:
     all_trials: List[bindings.trialv1Trial] = limit_offset_paginator(
-        bindings.get_GetExperimentTrials, "trials", args, experimentId=args.experiment_id
+        bindings.get_GetExperimentTrials,
+        "trials",
+        setup_session(args),
+        experimentId=args.experiment_id,
     )
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
