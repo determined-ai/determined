@@ -199,19 +199,18 @@ def limit_offset_paginator(
     method: Callable,
     agg_field: str,
     sess: session.Session,
-    page_limit: Optional[int] = 200,
+    limit: int = 200,
     offset: Optional[int] = None,
     **kwargs: Any
 ) -> List[Any]:
     all_objects: List[Any] = []
-    limit = page_limit or 200
     internal_offset = offset or 0
     while True:
         r = method(sess, limit=limit, offset=internal_offset, **kwargs)
         page_objects = getattr(r, agg_field)
         all_objects += page_objects
         internal_offset += len(page_objects)
-        if offset or len(page_objects) < limit:
+        if offset is not None or len(page_objects) < limit:
             break
     return all_objects
 
@@ -698,19 +697,19 @@ def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help)
 
 
+# do not use util.py's pagination_args because default behavior here is
+# to hide pagination and unify all experiment pages into one output
 pagination_args = [
     Arg(
         "--limit",
-        "-l",
         type=int,
         default=200,
         help="Maximum items per page of results",
     ),
     Arg(
         "--offset",
-        "-off",
         type=int,
-        default=0,
+        default=None,
         help="Number of items to skip before starting page of results",
     ),
 ]
