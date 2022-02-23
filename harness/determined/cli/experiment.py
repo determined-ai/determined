@@ -196,16 +196,22 @@ def create(args: Namespace) -> None:
 
 
 def limit_offset_paginator(
-    method: Callable, agg_field: str, sess: session.Session, **kwargs: Any
+    method: Callable,
+    agg_field: str,
+    sess: session.Session,
+    page_limit: Optional[int] = 200,
+    offset: Optional[int] = None,
+    **kwargs: Any
 ) -> List[Any]:
     all_objects: List[Any] = []
-    offset = 0
+    limit = page_limit or 200
+    internal_offset = offset or 0
     while True:
-        r = method(sess, limit=200, offset=offset, **kwargs)
+        r = method(sess, limit=limit, offset=internal_offset, **kwargs)
         page_objects = getattr(r, agg_field)
         all_objects += page_objects
-        offset += len(page_objects)
-        if len(page_objects) < 200:
+        internal_offset += len(page_objects)
+        if offset or len(page_objects) < limit:
             break
     return all_objects
 
@@ -446,6 +452,8 @@ def list_experiments(args: Namespace) -> None:
         "experiments",
         setup_session(args),
         users=users,
+        limit=args.limit,
+        offset=args.offset,
     )
 
     def format_experiment(e: Any) -> List[Any]:
@@ -524,6 +532,8 @@ def list_trials(args: Namespace) -> None:
         "trials",
         setup_session(args),
         experimentId=args.experiment_id,
+        limit=args.limit,
+        offset=args.offset,
     )
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
@@ -688,6 +698,22 @@ def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help)
 
 
+pagination_args = [
+    Arg(
+        "--limit",
+        "-l",
+        type=int,
+        default=200,
+        help="Maximum items per page of results",
+    ),
+    Arg(
+        "--offset",
+        "-off",
+        type=int,
+        default=0,
+        help="Number of items to skip before starting page of results",
+    ),
+]
 main_cmd = Cmd(
     "e|xperiment",
     None,
@@ -705,6 +731,7 @@ main_cmd = Cmd(
                     action="store_true",
                     help="show all experiments (including archived and other users')",
                 ),
+                *pagination_args,
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],
             is_default=True,
@@ -739,6 +766,7 @@ main_cmd = Cmd(
             "list trials of experiment",
             [
                 experiment_id_arg("experiment ID"),
+                *pagination_args,
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],
         ),
