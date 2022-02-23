@@ -49,7 +49,9 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
 
-    if args.tf_state_gcs_bucket_name:
+    # tf_state_gcs_bucket_name argument is not necessary for `down` operation, because TF reads it
+    # from local tf files.
+    if hasattr(args, "tf_state_gcs_bucket_name") and args.tf_state_gcs_bucket_name:
         print("Using GCS bucket for state:", args.tf_state_gcs_bucket_name)
     else:
         print("Using local state path:", args.local_state_path)
