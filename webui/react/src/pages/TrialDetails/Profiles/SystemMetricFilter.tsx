@@ -53,7 +53,7 @@ const SystemMetricFilter: React.FC = () => {
         style={{ width: 220 }}
         value={settings.agentId}
         onChange={handleChangeAgentId}>
-        {settings.name && Object.keys(systemSeries[settings.name]).map(agentId => (
+        {settings.name && systemSeries && Object.keys(systemSeries[settings.name]).map(agentId => (
           <Option key={agentId} value={agentId}>{agentId}</Option>
         ))}
       </SelectFilter>
