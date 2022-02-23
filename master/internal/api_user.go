@@ -165,7 +165,9 @@ func (a *apiServer) PatchUser(
 		curUser.DisplayName = null.StringFrom(req.User.DisplayName)
 	}
 	if req.User.Password != nil {
-		curUser.UpdatePasswordHash(req.User.Password.Value)
+		if err = curUser.UpdatePasswordHash(req.User.Password.Value); err != nil {
+			return nil, err
+		}
 	}
 
 	finalUser := &userv1.User{}
