@@ -1,9 +1,15 @@
 import React, {
-  ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
-} from 'react';
+  ChangeEvent,
+  HTMLAttributes,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import css from './InlineEditor.module.scss';
-import Spinner from './Spinner';
+import css from "./InlineEditor.module.scss";
+import Spinner from "./Spinner";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   allowClear?: boolean;
@@ -17,8 +23,8 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   value: string;
 }
 
-const CODE_ENTER = 'Enter';
-const CODE_ESCAPE = 'Escape';
+const CODE_ENTER = "Enter";
+const CODE_ESCAPE = "Escape";
 
 const InlineEditor: React.FC<Props> = ({
   allowClear = true,
@@ -34,10 +40,10 @@ const InlineEditor: React.FC<Props> = ({
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [ currentValue, setCurrentValue ] = useState(value);
-  const [ isEditable, setIsEditable ] = useState(false);
-  const [ isSaving, setIsSaving ] = useState(false);
-  const classes = [ css.base ];
+  const [currentValue, setCurrentValue] = useState(value);
+  const [isEditable, setIsEditable] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const classes = [css.base];
 
   if (isOnDark) classes.push(css.onDark);
   if (isEditable) classes.push(css.editable);
@@ -47,37 +53,40 @@ const InlineEditor: React.FC<Props> = ({
   }
   if (disabled) classes.push(css.disabled);
 
-  const updateEditorValue = useCallback((value: string) => {
-    let newValue = value;
-    if (maxLength) newValue = newValue.slice(0, maxLength);
-    if (textareaRef.current) textareaRef.current.value = newValue;
-    if (growWrapRef.current) growWrapRef.current.dataset.value = newValue;
-    setCurrentValue(newValue);
-  }, [ maxLength ]);
+  const updateEditorValue = useCallback(
+    (value: string) => {
+      let newValue = value;
+      if (maxLength) newValue = newValue.slice(0, maxLength);
+      if (textareaRef.current) textareaRef.current.value = newValue;
+      if (growWrapRef.current) growWrapRef.current.dataset.value = newValue;
+      setCurrentValue(newValue);
+    },
+    [maxLength]
+  );
 
   const cancel = useCallback(() => {
     updateEditorValue(value);
     if (onCancel) onCancel();
-  }, [ onCancel, updateEditorValue, value ]);
+  }, [onCancel, updateEditorValue, value]);
 
-  const save = useCallback(async (newValue: string) => {
-    if (onSave) {
-      setIsSaving(true);
-      try{
-        await onSave(newValue);
+  const save = useCallback(
+    async (newValue: string) => {
+      if (onSave) {
+        setIsSaving(true);
+        const err = await onSave(newValue);
+        if (err != null) {
+          updateEditorValue(value);
+        }
+        setIsSaving(false);
       }
-      catch {
-        // send user error
-        updateEditorValue(value);
-      }
-      setIsSaving(false);
-    }
-  }, [ onSave, updateEditorValue, value ]);
+    },
+    [onSave, updateEditorValue, value]
+  );
 
   const handleWrapperClick = useCallback(() => {
     if (disabled) return;
     setIsEditable(true);
-  }, [ disabled ]);
+  }, [disabled]);
 
   /*
    * To trigger a save or cancel, we trigger the blur.
@@ -88,51 +97,67 @@ const InlineEditor: React.FC<Props> = ({
     if (!textareaRef.current) return;
 
     const newValue = textareaRef.current.value.trim();
-    (!!newValue || allowClear) && newValue !== value ? save(newValue) : cancel();
+    (!!newValue || allowClear) && newValue !== value
+      ? save(newValue)
+      : cancel();
 
     // Reset `isEditable` to false if the blur was user triggered.
     setIsEditable(false);
-  }, [ allowClear, cancel, save, value ]);
+  }, [allowClear, cancel, save, value]);
 
-  const handleTextareaChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
-    const textarea = e.target as HTMLTextAreaElement;
-    let newValue = textarea.value;
-    if (!allowNewline) newValue = newValue.replace(/(\r?\n|\r\n?)/g, '');
-    updateEditorValue(newValue);
-  }, [ allowNewline, updateEditorValue ]);
+  const handleTextareaChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      const textarea = e.target as HTMLTextAreaElement;
+      let newValue = textarea.value;
+      if (!allowNewline) newValue = newValue.replace(/(\r?\n|\r\n?)/g, "");
+      updateEditorValue(newValue);
+    },
+    [allowNewline, updateEditorValue]
+  );
 
-  const handleTextareaKeyPress = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!isEditable) {
-      e.preventDefault();
-      return;
-    }
-    if (e.code === CODE_ENTER) {
-      if (!allowNewline || !e.shiftKey) e.preventDefault();
-    }
-  }, [ allowNewline, isEditable ]);
+  const handleTextareaKeyPress = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (!isEditable) {
+        e.preventDefault();
+        return;
+      }
+      if (e.code === CODE_ENTER) {
+        if (!allowNewline || !e.shiftKey) e.preventDefault();
+      }
+    },
+    [allowNewline, isEditable]
+  );
 
-  const handleTextareaKeyUp = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.code === CODE_ESCAPE) {
-      // Restore the original value upon escape key.
-      updateEditorValue(value);
-      setIsEditable(false);
-    } else if (!e.shiftKey && e.code === CODE_ENTER) {
-      setIsEditable(false);
-    }
-  }, [ updateEditorValue, value ]);
+  const handleTextareaKeyUp = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.code === CODE_ESCAPE) {
+        // Restore the original value upon escape key.
+        updateEditorValue(value);
+        setIsEditable(false);
+      } else if (!e.shiftKey && e.code === CODE_ENTER) {
+        setIsEditable(false);
+      }
+    },
+    [updateEditorValue, value]
+  );
 
   useEffect(() => {
     updateEditorValue(value);
-  }, [ updateEditorValue, value ]);
+  }, [updateEditorValue, value]);
 
   useEffect(() => {
-    if (!textareaRef.current || document.activeElement !== textareaRef.current) return;
+    if (!textareaRef.current || document.activeElement !== textareaRef.current)
+      return;
     isEditable ? textareaRef.current.focus() : textareaRef.current.blur();
-  }, [ isEditable ]);
+  }, [isEditable]);
 
   return (
-    <div className={classes.join(' ')} {...props}>
-      <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
+    <div className={classes.join(" ")} {...props}>
+      <div
+        className={css.growWrap}
+        ref={growWrapRef}
+        onClick={handleWrapperClick}
+      >
         <textarea
           maxLength={maxLength}
           placeholder={placeholder}
