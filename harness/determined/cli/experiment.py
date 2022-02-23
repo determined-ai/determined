@@ -196,7 +196,7 @@ def create(args: Namespace) -> None:
 
 
 def limit_offset_paginator(
-    method: Callable, agg_field: str, connection_args: Namespace, **kwargs
+    method: Callable, agg_field: str, connection_args: Namespace, **kwargs: Any
 ) -> List[Union[bindings.v1Experiment, bindings.trialv1Trial]]:
     all_objects: List[Union[bindings.v1Experiment, bindings.trialv1Trial]] = []
     offset = 0
@@ -533,7 +533,7 @@ def list_trials(args: Namespace) -> None:
             render.format_time(t.endTime),
             t.totalBatchesProcessed,
         ]
-        for t in all_trials
+        for t in filter(lambda t: t.__class__ == bindings.trialv1Trial, all_trials)
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
