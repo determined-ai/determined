@@ -2,8 +2,7 @@ package resourcemanagers
 
 import (
 	"fmt"
-	"math"
-	"sort"
+	"github.com/shopspring/decimal"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/job"
@@ -70,78 +69,57 @@ func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
 }
 
-// TODO add a comment.
-// adjust in place.
-func adjustPriorities(positions jobSortState, latestTime float64) jobSortState {
-	reverse_positions := map[float64]model.JobID{}
-	var positions_list []float64
-	for id, position := range positions {
-		reverse_positions[position] = id
-		positions_list = append(positions_list, position)
-	}
-
-	sort.Float64s(positions_list)
-
-	increment := math.Round(latestTime / float64(len(positions)+1))
-	base := increment
-
-	for _, position := range positions_list {
-		positions[reverse_positions[position]] = base
-		base += increment
-	}
-	return positions
-}
-
 // could be swapped for another job order representation
 // 0 or nonexisting keys mean that it needs to initialize.
-type jobSortState = map[model.JobID]float64
+type jobSortState = map[model.JobID]decimal.Decimal
 
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
-	state[job.HeadAnchor] = 0
+	state[job.HeadAnchor] = decimal.NewFromInt(0)
 	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	return state
 }
 
-func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (float64, bool, error) {
+func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal, error) {
 	if msg.Anchor1 == msg.ID || msg.Anchor2 == msg.ID {
-		return 0, false, fmt.Errorf("cannot move job relative to itself")
+		return decimal.NewFromInt(0), fmt.Errorf("cannot move job relative to itself")
 	}
 
 	qPos1, ok := qPositions[msg.Anchor1]
 	if !ok {
-		return 0, false, fmt.Errorf("could not find anchor job %s", msg.Anchor1)
+		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", msg.Anchor1)
 	}
 
 	qPos2, ok := qPositions[msg.Anchor2]
 	if !ok {
-		return 0, false, fmt.Errorf("could not find anchor job %s", msg.Anchor2)
+		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", msg.Anchor2)
 	}
 
 	qPos3, ok := qPositions[msg.ID]
 	if !ok {
-		return 0, false, fmt.Errorf("could not find job %s", msg.ID)
+		return decimal.NewFromInt(0), fmt.Errorf("could not find job %s", msg.ID)
 	}
 
 	// check if qPos3 is between qPos1 and qPos2
-	smallPos := math.Min(qPos1, qPos2)
-	bigPos := math.Max(qPos1, qPos2)
-	if qPos3 > smallPos && qPos3 < bigPos {
-		return 0, false, nil // no op. Job is already in the correct position.
+	smallPos := decimal.Min(qPos1, qPos2)
+	//smallPos := math.Min(qPos1, qPos2)
+	bigPos := decimal.Max(qPos1, qPos2)
+	if qPos3.GreaterThan(smallPos) && qPos3.LessThan(bigPos){
+		return decimal.NewFromInt(0), nil // no op. Job is already in the correct position.
 	}
 
-	newPos := (qPos1 + qPos2) / 2
-	triggerRebalance := false
-	if newPos-qPos1 < 1 {
-		triggerRebalance = true
+	newPos := decimal.Avg(qPos1, qPos2)
+
+	if newPos == qPos1 {
+		return decimal.NewFromInt(0), fmt.Errorf("unable to compute a new job position for job %s", msg.ID)
 	}
 
-	return newPos, triggerRebalance, nil
+	return newPos, nil
 }
 
-func initalizeQueuePosition(aTime time.Time) float64 {
+func initalizeQueuePosition(aTime time.Time) decimal.Decimal {
 	// we could shift this back and forth to give us more more.
-	return float64(aTime.UnixMicro())
+	return decimal.NewFromInt(aTime.UnixMicro())
 }
 
 // we might RMs to have easier/faster access to this information than this.
