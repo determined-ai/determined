@@ -11,7 +11,7 @@ from tests import command as cmd
 def test_start_and_write_to_shell(tmp_path: Path) -> None:
     with cmd.interactive_command("shell", "start") as shell:
         # Call our cli to ensure that PATH and PYTHONUSERBASE are properly set.
-        shell.stdin.write(b"det --version\n")
+        shell.stdin.write(b"COLUMNS=80 det --version\n")
         shell.stdin.close()
 
         for line in shell.stdout:
