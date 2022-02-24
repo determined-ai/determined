@@ -14,11 +14,9 @@ Three model data and code examples use the MNIST dataset to demonstrate:
 Each example uses the same model code and data, changing only a configuration parameter for
 different functionality.
 
-These are followed by a demonstration of how Determined seamless integrates with TensorFlow.
-
 Follow these steps for a hands-on introduction to Determined. After gaining familiarity with
 Determined tools and procedures, replace the provided model data and code with your model data and
-code, including integrating with the Determined APIs.
+code.
 
 ***************
  Prerequisites
@@ -287,34 +285,6 @@ search algorithm to use and how many model configurations to explore.
    resources become available. The hyperparameter search halts poorly performing trials. On a
    typical laptop, 16 trials should take around 10 minutes to train with at least one trial
    performing at about 98 percent validation accuracy.
-
-*************************
- TensorBoard Integration
-*************************
-
-After all trials complete, you can compare performance across trials. All Determined experiments
-integrate into TensorBoard without additional code.
-
-While still logged in, on the **Dashboard** page, select an experiment tile, or select an experiment
-on the **Experiments** page, and choose **TensorBoard** in the upper-right, dropdown menu. This
-displays the TensorBoard interface:
-
-   .. image:: /assets/images/qs06.png
-      :width: 704px
-      :align: center
-      :alt: TensorBoard graphic display
-
-Determined-created TensorBoard plots show the training loss, validation accuracy, and validation
-loss for each trial. The training loss plot shows why early-stopping was applied to some trials. For
-example, the loss graph shows **trial 46**, color-coded in rust color, with a significantly higher
-training loss than other trials:
-
-   .. image:: /assets/images/qs07.png
-      :width: 704px
-      :align: center
-      :alt: TensorBoard trial graphic detail
-
-Because of the significant difference, trial 46 did not need extra training and was stopped.
 
 ************
  Learn More
