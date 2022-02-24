@@ -63,7 +63,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     checkpoint_workloads = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
     assert len(checkpoint_workloads)
     assert checkpoint_workloads[0].checkpoint
-    first_checkpoint_id = checkpoint_workloads[0].checkpoint.id
+    first_checkpoint_uuid = checkpoint_workloads[0].checkpoint.uuid
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
 
@@ -76,7 +76,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
-    assert trials[0].trial.warmStartCheckpointId == first_checkpoint_id
+    assert trials[0].trial.warmStartCheckpointUuid == first_checkpoint_uuid
 
 
 @pytest.mark.tensorflow2

@@ -74,7 +74,6 @@ latest_validation AS (
 ),
 best_checkpoint AS (
   SELECT c.uuid::text AS uuid,
-    c.id,
     c.total_batches,
     c.trial_id,
     c.end_time AS end_time,
@@ -104,7 +103,7 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   t.start_time,
   t.end_time,
   t.hparams,
-  t.warm_start_checkpoint_id,
+  ckpt.uuid AS warm_start_checkpoint_uuid,
   t.task_id,
   (
     SELECT s.total_batches
@@ -125,6 +124,7 @@ FROM searcher_info
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
+  LEFT JOIN checkpoints ckpt ON ckpt.id = t.warm_start_checkpoint_id
   -- Return the same ordering of IDs given by $1.
   JOIN (
     SELECT *

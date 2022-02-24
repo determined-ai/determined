@@ -61,7 +61,7 @@ def test_tf_keras_const_warm_start(
     assert len(first_trial.workloads or []) == 4
     checkpoints = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
     assert checkpoints[0].checkpoint
-    first_checkpoint_id = checkpoints[0].checkpoint.id
+    first_checkpoint_uuid = checkpoints[0].checkpoint.uuid
 
     # Add a source trial ID to warm start from.
     config["searcher"]["source_trial_id"] = first_trial_id
@@ -74,7 +74,8 @@ def test_tf_keras_const_warm_start(
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
     for t in trials:
-        assert t.trial.warmStartCheckpointId == first_checkpoint_id
+        assert t.trial.warmStartCheckpointUuid != ""
+        assert t.trial.warmStartCheckpointUuid == first_checkpoint_uuid
     trial_id = trials[0].trial.id
     collect_trial_profiles(trial_id)
 

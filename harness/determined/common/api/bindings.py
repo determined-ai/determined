@@ -303,7 +303,7 @@ class trialv1Trial:
         runnerState: "typing.Optional[str]" = None,
         taskId: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
-        warmStartCheckpointId: "typing.Optional[int]" = None,
+        warmStartCheckpointUuid: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -317,7 +317,7 @@ class trialv1Trial:
         self.bestCheckpoint = bestCheckpoint
         self.runnerState = runnerState
         self.wallClockTime = wallClockTime
-        self.warmStartCheckpointId = warmStartCheckpointId
+        self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
 
     @classmethod
@@ -335,7 +335,7 @@ class trialv1Trial:
             bestCheckpoint=v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj.get("bestCheckpoint", None) is not None else None,
             runnerState=obj.get("runnerState", None),
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
-            warmStartCheckpointId=obj.get("warmStartCheckpointId", None),
+            warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
             taskId=obj.get("taskId", None),
         )
 
@@ -353,7 +353,7 @@ class trialv1Trial:
             "bestCheckpoint": self.bestCheckpoint.to_json() if self.bestCheckpoint is not None else None,
             "runnerState": self.runnerState if self.runnerState is not None else None,
             "wallClockTime": dump_float(self.wallClockTime) if self.wallClockTime is not None else None,
-            "warmStartCheckpointId": self.warmStartCheckpointId if self.warmStartCheckpointId is not None else None,
+            "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
             "taskId": self.taskId if self.taskId is not None else None,
         }
 
@@ -691,7 +691,6 @@ class v1CheckpointWorkload:
         state: "determinedcheckpointv1State",
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
-        id: "typing.Optional[int]" = None,
         resources: "typing.Optional[typing.Dict[str, str]]" = None,
         uuid: "typing.Optional[str]" = None,
     ):
@@ -700,7 +699,6 @@ class v1CheckpointWorkload:
         self.state = state
         self.resources = resources
         self.totalBatches = totalBatches
-        self.id = id
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CheckpointWorkload":
@@ -710,7 +708,6 @@ class v1CheckpointWorkload:
             state=determinedcheckpointv1State(obj["state"]),
             resources=obj.get("resources", None),
             totalBatches=obj["totalBatches"],
-            id=obj.get("id", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -720,7 +717,6 @@ class v1CheckpointWorkload:
             "state": self.state.value,
             "resources": self.resources if self.resources is not None else None,
             "totalBatches": self.totalBatches,
-            "id": self.id if self.id is not None else None,
         }
 
 class v1Command:
