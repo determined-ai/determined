@@ -238,6 +238,7 @@ func (t ec2InstanceType) Slots() int {
 	return 0
 }
 
+// source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
 func (t ec2InstanceType) Accelerator() string {
 	instanceType := t.name()
 	if strings.HasPrefix(instanceType, "p2") {
