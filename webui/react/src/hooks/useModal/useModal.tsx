@@ -34,7 +34,7 @@ export enum ModalCloseReason {
 
 const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
   maskClosable: true,
-  style: { minWidth: 600 },
+  style: { minWidth: 280 },
   visible: true,
 };
 
