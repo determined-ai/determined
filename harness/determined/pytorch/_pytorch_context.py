@@ -52,7 +52,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         det.TrialContext.__init__(self, *args, **kwargs)
         pytorch._PyTorchReducerContext.__init__(self, self.distributed._zmq_allgather)
 
-        self.device = self._init_device()
+        self._init_device()
 
         # Track which types we have issued warnings for in to_device().
         self._to_device_warned_types = set()  # type: Set[Type]
@@ -299,22 +299,21 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         opt_params = {p for group in optimizer.param_groups for p in group.get("params", [])}
         return [(name, p) for name, p in self._main_model.named_parameters() if p in opt_params]
 
-    def _init_device(self) -> torch.device:
+    def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
         if self.distributed.size > 1:
             if self.n_gpus > 0:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
-                device = torch.device("cuda", hvd.local_rank())
-                torch.cuda.set_device(device)
+                self.device = torch.device("cuda", hvd.local_rank())
+                torch.cuda.set_device(self.device)
             else:
-                device = torch.device("cpu")
+                self.device = torch.device("cpu")
         elif self.n_gpus > 0:
-            device = torch.device("cuda", 0)
+            self.device = torch.device("cuda", 0)
         else:
-            device = torch.device("cpu")
-        check.is_not_none(device)
-        return device
+            self.device = torch.device("cpu")
+        check.is_not_none(self.device)
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.
