@@ -165,12 +165,14 @@ hyperparameters on a single slot.
       Preparing files (.../mnist_pytorch) to send to master... 8.6KB and 7 files
       Created experiment 1
 
-   Hint: To automatically stream log messages for the first trial in an experiment to STDOUT,
-   specifying the configuration file and context directory, enter:
+   .. tip::
 
-   .. code:: bash
+      To automatically stream log messages for the first trial in an experiment to STDOUT,
+      specifying the configuration file and context directory, enter:
 
-      det e create const.yaml . --follow
+      .. code:: bash
+
+         det e create const.yaml . --follow
 
 #. Enter the cluster address in the browser to view the experiment status. If you installed locally
    using the ``det deploy local`` command, the URL should be http://localhost:8080/.
