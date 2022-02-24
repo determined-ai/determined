@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 import re
@@ -8,7 +7,6 @@ import tempfile
 import time
 from typing import Any, Dict, List, Optional, Sequence
 
-import dateutil.parser
 import pytest
 
 from determined.common import api, yaml
@@ -129,7 +127,8 @@ def wait_for_experiment_state(
                 report_failed_experiment(experiment_id)
 
             pytest.fail(
-                f"Experiment {experiment_id} terminated in {state.value} state, expected {target_state.value}"
+                f"Experiment {experiment_id} terminated in {state.value} state, "
+                f"expected {target_state.value}"
             )
 
         if seconds_waited > 0 and seconds_waited % log_every == 0:
@@ -276,14 +275,6 @@ def trial_metrics(trial_id: int) -> Dict[str, Any]:
     r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
     json = r.json()  # type: Dict[str, Any]
     return json
-
-
-def get_flat_metrics(trial_id: int, metric: str) -> List:
-    full_trial_metrics = trial_metrics(trial_id)
-    metrics = [
-        m for step in full_trial_metrics["workloads"] for m in step["metrics"]["batch_metrics"]
-    ]
-    return [v[metric] for v in metrics]
 
 
 def num_trials(experiment_id: int) -> int:
@@ -552,7 +543,7 @@ def run_basic_test(
     experiment_id = create_experiment(config_file, model_def_file, create_args)
     wait_for_experiment_state(
         experiment_id,
-        determinedexperimentv1State.STATE_COMPLETE,
+        determinedexperimentv1State.STATE_COMPLETED,
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(experiment_id) == 0

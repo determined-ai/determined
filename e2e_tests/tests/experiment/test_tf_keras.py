@@ -118,7 +118,7 @@ def test_tf_keras_parallel(
         f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
-    exp.assert_patterns_in_trial_logs(trials[0]["id"], patterns)
+    exp.assert_patterns_in_trial_logs(trials[0].trial.id, patterns)
 
 
 @pytest.mark.e2e_gpu

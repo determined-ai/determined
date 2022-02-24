@@ -247,7 +247,7 @@ def test_pytorch_parallel() -> None:
         f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
-    trial_id = exp.experiment_trials(exp_id)[0]["id"]
+    trial_id = exp.experiment_trials(exp_id)[0].trial.id
     exp.assert_patterns_in_trial_logs(trial_id, patterns)
 
 
