@@ -151,7 +151,7 @@ func (a *apiServer) SetUserPassword(
 }
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest) (*apiv1.PatchUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
