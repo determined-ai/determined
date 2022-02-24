@@ -643,55 +643,6 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     return experiment_id
 
 
-class ExperimentDurations:
-    def __init__(
-        self,
-        experiment_duration: datetime.timedelta,
-        training_duration: datetime.timedelta,
-        validation_duration: datetime.timedelta,
-        checkpoint_duration: datetime.timedelta,
-    ):
-        self.experiment_duration = experiment_duration
-        self.training_duration = training_duration
-        self.validation_duration = validation_duration
-        self.checkpoint_duration = checkpoint_duration
-
-    def __str__(self) -> str:
-        duration_strs = []
-        duration_strs.append(f"experiment duration: {self.experiment_duration}")
-        duration_strs.append(f"training duration: {self.training_duration}")
-        duration_strs.append(f"validation duration: {self.validation_duration}")
-        duration_strs.append(f"checkpoint duration: {self.checkpoint_duration}")
-        return "\n".join(duration_strs)
-
-
-def get_experiment_durations(experiment_id: int, trial_idx: int) -> ExperimentDurations:
-    r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
-    experiment_metadata = r.experiment.to_json()
-    end_time = dateutil.parser.parse(experiment_metadata["end_time"])
-    start_time = dateutil.parser.parse(experiment_metadata["start_time"])
-    experiment_duration = end_time - start_time
-
-    training_duration = datetime.timedelta(seconds=0)
-    validation_duration = datetime.timedelta(seconds=0)
-    checkpoint_duration = datetime.timedelta(seconds=0)
-    for step in experiment_metadata["trials"][trial_idx]["workloads"]:
-        end_time = dateutil.parser.parse(step["end_time"])
-        start_time = dateutil.parser.parse(step["start_time"])
-        training_duration += end_time - start_time
-        if "validation" in step and step["validation"]:
-            end_time = dateutil.parser.parse(step["validation"]["end_time"])
-            start_time = dateutil.parser.parse(step["validation"]["start_time"])
-            validation_duration += end_time - start_time
-        if "checkpoint" in step and step["checkpoint"]:
-            end_time = dateutil.parser.parse(step["checkpoint"]["end_time"])
-            start_time = dateutil.parser.parse(step["checkpoint"]["start_time"])
-            checkpoint_duration += end_time - start_time
-    return ExperimentDurations(
-        experiment_duration, training_duration, validation_duration, checkpoint_duration
-    )
-
-
 def run_basic_test_with_temp_config(
     config: Dict[Any, Any],
     model_def_path: str,

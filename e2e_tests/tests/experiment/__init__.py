@@ -15,7 +15,6 @@ from .experiment import (
     experiment_config_json,
     experiment_state,
     experiment_trials,
-    get_experiment_durations,
     get_flat_metrics,
     maybe_create_experiment,
     maybe_create_native_experiment,
