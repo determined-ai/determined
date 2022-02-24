@@ -70,22 +70,22 @@ func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSes
 
 // GetUser returns the currently logged in user.
 func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions) (*model.User,
-	*model.UserSession, error) {
+	*model.UserSession, string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, nil, ErrTokenMissing
+		return nil, nil, "", ErrTokenMissing
 	}
 	tokens := md[userTokenHeader]
 	if len(tokens) == 0 {
 		tokens = md[gatewayTokenHeader]
 		if len(tokens) == 0 {
-			return nil, nil, ErrTokenMissing
+			return nil, nil, "", ErrTokenMissing
 		}
 	}
 
 	token := tokens[0]
 	if !strings.HasPrefix(token, "Bearer ") {
-		return nil, nil, ErrInvalidCredentials
+		return nil, nil, "", ErrInvalidCredentials
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
@@ -96,13 +96,13 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 	switch err {
 	case nil:
 		if !user.Active {
-			return nil, nil, ErrPermissionDenied
+			return nil, nil, "", ErrPermissionDenied
 		}
-		return user, session, nil
+		return user, session, token, nil
 	case db.ErrNotFound:
-		return nil, nil, ErrInvalidCredentials
+		return nil, nil, "", ErrInvalidCredentials
 	default:
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 }
 
@@ -112,7 +112,6 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 	if unauthenticatedMethods[fullMethod] {
 		return nil
 	}
-
 	switch _, err := GetAllocationSession(ctx, db); err {
 	case ErrTokenMissing:
 		// Try user token.
@@ -122,7 +121,7 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 		return err
 	}
 
-	if _, _, err := GetUser(ctx, db, extConfig); err != nil {
+	if _, _, _, err := GetUser(ctx, db, extConfig); err != nil {
 		return err
 	}
 	return nil

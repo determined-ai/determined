@@ -70,7 +70,7 @@ func (a *apiServer) Login(
 
 func (a *apiServer) CurrentUser(
 	ctx context.Context, _ *apiv1.CurrentUserRequest) (*apiv1.CurrentUserResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (a *apiServer) CurrentUser(
 
 func (a *apiServer) Logout(
 	ctx context.Context, _ *apiv1.LogoutRequest) (*apiv1.LogoutResponse, error) {
-	_, userSession, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	_, userSession, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}

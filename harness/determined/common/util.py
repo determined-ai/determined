@@ -5,7 +5,7 @@ import pathlib
 import platform
 import random
 import sys
-from typing import IO, Any, Callable, Iterator, Sequence, TypeVar, Union, overload
+from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Union, overload
 
 from determined.common import yaml
 
@@ -46,6 +46,14 @@ def sizeof_fmt(val: Union[int, float]) -> str:
 
 def get_default_master_address() -> str:
     return os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR", "localhost:8080"))
+
+
+def get_initial_user() -> Optional[str]:
+    return os.environ.get("DET_USER")
+
+
+def get_user_token() -> Optional[str]:
+    return os.environ.get("DET_USER_TOKEN")
 
 
 def debug_mode() -> bool:
