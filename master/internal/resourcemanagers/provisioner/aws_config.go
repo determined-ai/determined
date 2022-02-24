@@ -185,6 +185,11 @@ func (c AWSClusterConfig) SlotType() device.Type {
 	return device.ZeroSlot
 }
 
+// Accelerator returns the GPU accelerator for the instance.
+func (c AWSClusterConfig) Accelerator() string {
+	return c.InstanceType.Accelerator()
+}
+
 func validateMaxSpotPrice(spotMaxPriceInput string) error {
 	// Must have 1 or 0 decimalPoints. All other characters must be digits
 	numDecimalPoints := strings.Count(spotMaxPriceInput, ".")
@@ -231,6 +236,38 @@ func (t ec2InstanceType) Slots() int {
 		return s
 	}
 	return 0
+}
+
+func (t ec2InstanceType) Accelerator() string {
+	instanceType := t.name()
+	if strings.HasPrefix(instanceType, "p2") {
+		return "NVIDIA Tesla K80"
+	}
+	if strings.HasPrefix(instanceType, "p3") {
+		return "NVIDIA Tesla V100"
+	}
+	if strings.HasPrefix(instanceType, "p4d") {
+		return "NVIDIA A100"
+	}
+	if strings.HasPrefix(instanceType, "g3") {
+		return "NVIDIA Tesla M60"
+	}
+	if strings.HasPrefix(instanceType, "g2") {
+		return "NVIDIA GRID K520"
+	}
+	if strings.HasPrefix(instanceType, "g5g") {
+		return "NVIDIA T4G"
+	}
+	if strings.HasPrefix(instanceType, "g5") {
+		return "NVIDIA A10G"
+	}
+	if strings.HasPrefix(instanceType, "g4ad") {
+		return "AMD Radeon Pro V520"
+	}
+	if strings.HasPrefix(instanceType, "g4dn") {
+		return "NVIDIA T4 Tensor Core"
+	}
+	return "-"
 }
 
 // This map tracks how many slots are available in each instance type. It also

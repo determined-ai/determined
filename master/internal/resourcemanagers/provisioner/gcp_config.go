@@ -223,6 +223,11 @@ func (c GCPClusterConfig) SlotType() device.Type {
 	return device.ZeroSlot
 }
 
+// Accelerator returns the GPU accelerator for the instance.
+func (c GCPClusterConfig) Accelerator() string {
+	return c.InstanceType.GPUType
+}
+
 func (c GCPClusterConfig) buildDockerLogString() string {
 	if c.UseCloudLogging {
 		return "--log-driver gcplogs"
