@@ -80,7 +80,11 @@ func (a *apiServer) CurrentUser(
 
 func (a *apiServer) Logout(
 	ctx context.Context, _ *apiv1.LogoutRequest) (*apiv1.LogoutResponse, error) {
-	_, userSession, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	_, userSession, _, err := grpcutil.GetUser(
+		ctx,
+		a.m.db,
+		&a.m.config.InternalConfig.ExternalSessions,
+	)
 	if err != nil {
 		return nil, err
 	}
