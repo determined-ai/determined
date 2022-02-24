@@ -294,7 +294,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	instanceType := ""
 	slotsPerAgent := -1
 	slotType := device.ZeroSlot
-	accelerator := "-"
+	accelerator := ""
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {

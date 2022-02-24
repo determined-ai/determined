@@ -253,22 +253,16 @@ func (t ec2InstanceType) Accelerator() string {
 	if strings.HasPrefix(instanceType, "g3") {
 		return "NVIDIA Tesla M60"
 	}
-	if strings.HasPrefix(instanceType, "g2") {
-		return "NVIDIA GRID K520"
-	}
 	if strings.HasPrefix(instanceType, "g5g") {
 		return "NVIDIA T4G"
 	}
 	if strings.HasPrefix(instanceType, "g5") {
 		return "NVIDIA A10G"
 	}
-	if strings.HasPrefix(instanceType, "g4ad") {
-		return "AMD Radeon Pro V520"
-	}
 	if strings.HasPrefix(instanceType, "g4dn") {
 		return "NVIDIA T4 Tensor Core"
 	}
-	return "-"
+	return ""
 }
 
 // This map tracks how many slots are available in each instance type. It also
