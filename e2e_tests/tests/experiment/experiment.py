@@ -13,6 +13,7 @@ import pytest
 
 from determined.common import api, yaml
 from determined.common.api import authentication, bindings, certs
+from determined.common.api.bindings import determinedexperimentv1State
 from determined.common.experimental import session
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
@@ -90,12 +91,12 @@ def activate_experiment(experiment_id: int) -> None:
 
 def cancel_experiment(experiment_id: int) -> None:
     bindings.post_CancelExperiment(test_session(), id=experiment_id)
-    wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_CANCELED)
+    wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_CANCELED)
 
 
 def wait_for_experiment_state(
     experiment_id: int,
-    target_state: bindings.determinedexperimentv1State,
+    target_state: determinedexperimentv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
 ) -> None:
@@ -140,7 +141,7 @@ def wait_for_experiment_state(
         time.sleep(1)
 
     else:
-        if target_state == bindings.determinedexperimentv1State.STATE_COMPLETED:
+        if target_state == determinedexperimentv1State.STATE_COMPLETED:
             cancel_experiment(experiment_id)
         report_failed_experiment(experiment_id)
         pytest.fail(
@@ -203,10 +204,10 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
         for s in t.workloads or []:
             if (
                 s.training is not None
-                and s.training.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+                and s.training.state == determinedexperimentv1State.STATE_COMPLETED
             ) or (
                 s.validation is not None
-                and s.validation.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+                and s.validation.state == determinedexperimentv1State.STATE_COMPLETED
             ):
                 return True
     return False
@@ -229,7 +230,7 @@ def experiment_trials_json(experiment_id: int) -> Sequence[bindings.trialv1Trial
     return r.trials or []
 
 
-def experiment_state(experiment_id: int) -> bindings.determinedexperimentv1State:
+def experiment_state(experiment_id: int) -> determinedexperimentv1State:
     r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
     return r.experiment.state
 
@@ -258,14 +259,14 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert len(trials) == 1, len(trials)
 
         trial = trials[0].trial
-        assert trial.state == bindings.determinedexperimentv1State.STATE_CANCELED
+        assert trial.state == determinedexperimentv1State.STATE_CANCELED
 
 
-def is_terminal_state(state: bindings.determinedexperimentv1State) -> bool:
+def is_terminal_state(state: determinedexperimentv1State) -> bool:
     return state in (
-        bindings.determinedexperimentv1State.STATE_CANCELED,
-        bindings.determinedexperimentv1State.STATE_COMPLETED,
-        bindings.determinedexperimentv1State.STATE_ERROR,
+        determinedexperimentv1State.STATE_CANCELED,
+        determinedexperimentv1State.STATE_COMPLETED,
+        determinedexperimentv1State.STATE_ERROR,
     )
 
 
@@ -291,21 +292,21 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == bindings.determinedexperimentv1State.STATE_ACTIVE else 0
+        1 if t.trial.state == determinedexperimentv1State.STATE_ACTIVE else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_completed_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED else 0
+        1 if t.trial.state == determinedexperimentv1State.STATE_COMPLETED else 0
         for t in experiment_trials(experiment_id)
     )
 
 
 def num_error_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == bindings.determinedexperimentv1State.STATE_ERROR else 0
+        1 if t.trial.state == determinedexperimentv1State.STATE_ERROR else 0
         for t in experiment_trials(experiment_id)
     )
 
@@ -390,7 +391,7 @@ def assert_performed_initial_validation(exp_id: int) -> None:
 
     assert zeroth_step.validation
     assert zeroth_step.validation.totalBatches == 0
-    assert zeroth_step.validation.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+    assert zeroth_step.validation.state == determinedexperimentv1State.STATE_COMPLETED
 
 
 def last_workload_matches_last_checkpoint(
@@ -409,7 +410,7 @@ def last_workload_matches_last_checkpoint(
         last_workload_detail = last_workload.training or last_workload.validation
         assert last_workload_detail
         assert last_workload_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
-        assert last_workload_detail.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+        assert last_workload_detail.state == determinedexperimentv1State.STATE_COMPLETED
     elif last_workload.checkpoint:
         last_checkpoint_detail = last_workload.checkpoint
         assert last_checkpoint_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
@@ -497,15 +498,25 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state.value == "STATE_ACTIVE")
-    paused = sum(1 for t in trials if t.trial.state.value == "STATE_PAUSED")
-    stopping_completed = sum(1 for t in trials if t.trial.state.value == "STATE_STOPPING_COMPLETED")
-    stopping_canceled = sum(1 for t in trials if t.trial.state.value == "STATE_STOPPING_CANCELED")
-    stopping_error = sum(1 for t in trials if t.trial.state.value == "STATE_STOPPING_ERROR")
-    completed = sum(1 for t in trials if t.trial.state.value == "STATE_COMPLETED")
-    canceled = sum(1 for t in trials if t.trial.state.value == "STATE_CANCELED")
-    errored = sum(1 for t in trials if t.trial.state.value == "STATE_ERROR")
-    stopping_killed = sum(1 for t in trials if t.trial.state.value == "STATE_STOPPING_KILLED")
+    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ACTIVE)
+    paused = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_PAUSED)
+    stopping_completed = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_COMPLETED
+    )
+    stopping_canceled = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_CANCELED
+    )
+    stopping_error = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_ERROR
+    )
+    completed = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_COMPLETED
+    )
+    canceled = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_CANCELED)
+    errored = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ERROR)
+    stopping_killed = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_KILLED
+    )
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
@@ -541,7 +552,7 @@ def run_basic_test(
     experiment_id = create_experiment(config_file, model_def_file, create_args)
     wait_for_experiment_state(
         experiment_id,
-        bindings.determinedexperimentv1State.STATE_COMPLETE,
+        determinedexperimentv1State.STATE_COMPLETE,
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(experiment_id) == 0
@@ -566,7 +577,7 @@ def verify_completed_experiment_metadata(
 
     for t in trials:
         trial = t.trial
-        if trial.state != bindings.determinedexperimentv1State.STATE_COMPLETED:
+        if trial.state != determinedexperimentv1State.STATE_COMPLETED:
             report_failed_trial(trial.id, trial.state.value)
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
 
@@ -581,10 +592,10 @@ def verify_completed_experiment_metadata(
         for s in t.workloads or []:
             if s.training:
                 batch_ids.append(s.training.totalBatches)
-                assert s.training.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+                assert s.training.state == determinedexperimentv1State.STATE_COMPLETED
             if s.validation:
                 batch_ids.append(s.validation.totalBatches)
-                assert s.validation.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+                assert s.validation.state == determinedexperimentv1State.STATE_COMPLETED
             if s.checkpoint:
                 batch_ids.append(s.checkpoint.totalBatches)
                 assert s.checkpoint.state in {
@@ -618,7 +629,7 @@ def verify_completed_experiment_metadata(
 def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[str] = None) -> int:
     experiment_id = create_experiment(config_file, model_def_file)
 
-    wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_ERROR)
+    wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_ERROR)
 
     # The searcher is configured with a `max_trials` of 8. Since the
     # first step of each trial results in an error, there should be no
@@ -637,7 +648,7 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     trials = experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state != bindings.determinedexperimentv1State.STATE_ERROR:
+        if trial.state != determinedexperimentv1State.STATE_ERROR:
             continue
 
         logs = trial_logs(trial.id)
