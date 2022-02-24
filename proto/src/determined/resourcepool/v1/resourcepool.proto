@@ -171,6 +171,8 @@ message ResourcePool {
 
   // GCP, AWS and Priority Scheduler details
   determined.resourcepool.v1.ResourcePoolDetail details = 31;
+  // GCP, AWS accelerator information
+  string accelerator = 33;
 }
 
 // Detailed information about the resource pool

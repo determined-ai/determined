@@ -294,6 +294,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	instanceType := ""
 	slotsPerAgent := -1
 	slotType := device.ZeroSlot
+	accelerator := ""
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
@@ -304,6 +305,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			instanceType = string(pool.Provider.AWS.InstanceType)
 			slotsPerAgent = pool.Provider.AWS.SlotsPerInstance()
 			slotType = pool.Provider.AWS.SlotType()
+			accelerator = pool.Provider.AWS.Accelerator()
 		}
 		if pool.Provider.GCP != nil {
 			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP
@@ -312,6 +314,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 			slotsPerAgent = pool.Provider.GCP.SlotsPerInstance()
 			slotType = pool.Provider.GCP.SlotType()
+			accelerator = pool.Provider.GCP.Accelerator()
 			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
 				instanceType = pool.Provider.GCP.InstanceType.MachineType
 			} else {
@@ -359,6 +362,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		SlotType:                     slotType.Proto(),
+		Accelerator:                  accelerator,
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)

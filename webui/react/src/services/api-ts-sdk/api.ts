@@ -4666,6 +4666,12 @@ export interface V1ResourcePool {
      * @memberof V1ResourcePool
      */
     details: V1ResourcePoolDetail;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ResourcePool
+     */
+    accelerator?: string;
 }
 
 /**
