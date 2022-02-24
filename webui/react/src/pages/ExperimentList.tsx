@@ -405,7 +405,6 @@ const ExperimentList: React.FC = () => {
         render: checkmarkRenderer,
         title: 'Archived',
       },
-
       {
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: user.username, value: user.username })),
