@@ -3,6 +3,7 @@ from typing import Callable, List
 
 import pytest
 
+from determined.common.api.bindings import determinedexperimentv1State
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -165,7 +166,7 @@ def test_pytorch_native_api() -> None:
     exp_id = exp.create_native_experiment(
         conf.fixtures_path("pytorch_no_op"), [sys.executable, "model_def.py"]
     )
-    exp.wait_for_experiment_state(exp_id, "COMPLETED")
+    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.parallel
@@ -271,4 +272,4 @@ def test_pytorch_native_api_parallel() -> None:
         conf.fixtures_path("pytorch_no_op"),
         [sys.executable, "model_def.py", "--slots-per-trial", "8"],
     )
-    exp.wait_for_experiment_state(exp_id, "COMPLETED")
+    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)

@@ -90,18 +90,18 @@ def activate_experiment(experiment_id: int) -> None:
 
 def cancel_experiment(experiment_id: int) -> None:
     bindings.post_CancelExperiment(test_session(), id=experiment_id)
-    wait_for_experiment_state(experiment_id, "CANCELED")
+    wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_CANCELED)
 
 
 def wait_for_experiment_state(
     experiment_id: int,
-    target_state: str,
+    target_state: bindings.determinedexperimentv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
 ) -> None:
     for seconds_waited in range(max_wait_secs):
         try:
-            state = experiment_state(experiment_id).value.replace("STATE_", "")
+            state = experiment_state(experiment_id)
         # Ignore network errors while polling for experiment state to avoid a
         # single network flake to cause a test suite failure. If the master is
         # unreachable multiple times, this test will fail after max_wait_secs.
@@ -128,24 +128,24 @@ def wait_for_experiment_state(
                 report_failed_experiment(experiment_id)
 
             pytest.fail(
-                f"Experiment {experiment_id} terminated in {state} state, expected {target_state}"
+                f"Experiment {experiment_id} terminated in {state.value} state, expected {target_state.value}"
             )
 
         if seconds_waited > 0 and seconds_waited % log_every == 0:
             print(
                 f"Waited {seconds_waited} seconds for experiment {experiment_id} "
-                f"(currently {state}) to reach {target_state}"
+                f"(currently {state.value}) to reach {target_state.value}"
             )
 
         time.sleep(1)
 
     else:
-        if target_state == "COMPLETED":
+        if target_state == bindings.determinedexperimentv1State.STATE_COMPLETED:
             cancel_experiment(experiment_id)
         report_failed_experiment(experiment_id)
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
-                target_state, max_wait_secs
+                target_state.value, max_wait_secs
             )
         )
 
@@ -261,11 +261,11 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         assert trial.state == bindings.determinedexperimentv1State.STATE_CANCELED
 
 
-def is_terminal_state(state: str) -> bool:
+def is_terminal_state(state: bindings.determinedexperimentv1State) -> bool:
     return state in (
-        bindings.determinedexperimentv1State.STATE_CANCELED.value,
-        bindings.determinedexperimentv1State.STATE_COMPLETED.value,
-        bindings.determinedexperimentv1State.STATE_ERROR.value,
+        bindings.determinedexperimentv1State.STATE_CANCELED,
+        bindings.determinedexperimentv1State.STATE_COMPLETED,
+        bindings.determinedexperimentv1State.STATE_ERROR,
     )
 
 
@@ -539,7 +539,11 @@ def run_basic_test(
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
-    wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
+    wait_for_experiment_state(
+        experiment_id,
+        bindings.determinedexperimentv1State.STATE_COMPLETE,
+        max_wait_secs=max_wait_secs,
+    )
     assert num_active_trials(experiment_id) == 0
 
     verify_completed_experiment_metadata(experiment_id, expected_trials)
@@ -614,7 +618,7 @@ def verify_completed_experiment_metadata(
 def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[str] = None) -> int:
     experiment_id = create_experiment(config_file, model_def_file)
 
-    wait_for_experiment_state(experiment_id, "ERROR")
+    wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_ERROR)
 
     # The searcher is configured with a `max_trials` of 8. Since the
     # first step of each trial results in an error, there should be no

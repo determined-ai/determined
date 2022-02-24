@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterator, List, Tuple, Union, cast
 
 import pytest
 
+from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
@@ -233,7 +234,7 @@ def test_agent_restart_exp_container_failure(managed_cluster: ManagedCluster) ->
         # As soon as the agent is back, the original allocation should be considered dead,
         # but the new one should be allocated.
         state = exp.experiment_state(exp_id)
-        assert state.value == "STATE_ACTIVE"
+        assert state == determinedexperimentv1State.STATE_ACTIVE
         tasks_data = _task_list_json(managed_cluster.master_url)
         assert len(tasks_data) == 1
         exp_task_after = list(tasks_data.values())[0]
@@ -241,7 +242,7 @@ def test_agent_restart_exp_container_failure(managed_cluster: ManagedCluster) ->
         assert exp_task_before["task_id"] == exp_task_after["task_id"]
         assert exp_task_before["allocation_id"] != exp_task_after["allocation_id"]
 
-        exp.wait_for_experiment_state(exp_id, "COMPLETED")
+        exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.managed_devcluster
@@ -371,7 +372,7 @@ def test_agent_restart_recover_experiment(managed_cluster: ManagedCluster, downt
             time.sleep(downtime)
             managed_cluster.restart_agent(wait_for_amnesia=False)
 
-        exp.wait_for_experiment_state(exp_id, "COMPLETED")
+        exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
@@ -398,7 +399,7 @@ def test_agent_reconnect_keep_experiment(managed_cluster: ManagedCluster) -> Non
         time.sleep(1)
         managed_cluster.restart_proxy()
 
-        exp.wait_for_experiment_state(exp_id, "COMPLETED")
+        exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
