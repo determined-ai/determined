@@ -1,9 +1,8 @@
 package model
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/google/uuid"
 )
 
 // JobID is the unique ID of a job among all jobs.
@@ -76,5 +75,5 @@ type Job struct {
 	JobID   JobID   `db:"job_id"`
 	JobType JobType `db:"job_type"`
 	OwnerID *UserID `db:"owner_id"`
-	QPos    float64 `db:"q_position"`
+	QPos    string  `db:"q_position"`
 }

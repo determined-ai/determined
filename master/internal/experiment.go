@@ -284,6 +284,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 
+	case job.RegisterJobPosition:
+		e.db.UpdateJob(&model.Job{
+			JobID:   msg.JobID,
+			QPos:    msg.JobPosition,
+		})
+
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if e.State == model.CompletedState || e.State == model.StoppingCompletedState {

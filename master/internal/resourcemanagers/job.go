@@ -110,7 +110,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 
 	newPos := decimal.Avg(qPos1, qPos2)
 
-	if newPos == qPos1 {
+	if newPos.Equal(qPos1) || newPos.Equal(qPos2) {
 		return decimal.NewFromInt(0), fmt.Errorf("unable to compute a new job position for job %s", msg.ID)
 	}
 
@@ -119,7 +119,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 
 func initalizeQueuePosition(aTime time.Time) decimal.Decimal {
 	// we could shift this back and forth to give us more more.
-	return decimal.NewFromInt(aTime.UnixMicro())
+	return decimal.New(aTime.UnixMicro(), 1000)
 }
 
 // we might RMs to have easier/faster access to this information than this.

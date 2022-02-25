@@ -38,7 +38,8 @@ type ResourcePool struct {
 	groups           map[*actor.Ref]*group
 	queuePositions jobSortState // secondary sort key initialized based on job submission time
 	groupActorToID map[*actor.Ref]model.JobID
-	scalingInfo      *sproto.ScalingInfo
+	IDToGroupActor map[model.JobID]*actor.Ref
+	scalingInfo    *sproto.ScalingInfo
 
 	reschedule bool
 
@@ -70,7 +71,8 @@ func NewResourcePool(
 		groups:      make(map[*actor.Ref]*group),
 		queuePositions: initalizeJobSortState(),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
-		scalingInfo: &sproto.ScalingInfo{},
+		IDToGroupActor: make(map[model.JobID]*actor.Ref),
+		scalingInfo:    &sproto.ScalingInfo{},
 
 		reschedule: false,
 	}
@@ -122,6 +124,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 			}
 		}
 		rp.groupActorToID[msg.Group] = msg.JobID
+		rp.IDToGroupActor[msg.JobID] = msg.Group
 	}
 	rp.taskList.AddTask(&msg)
 }
@@ -381,21 +384,24 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
+func (rp *ResourcePool) moveJob(msg job.MoveJob) (job.RegisterJobPosition, error) {
 	// REMOVEME
 	fmt.Println(rp.config.PoolName, "moveJob: ", msg)
 	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	newPos, err := computeNewJobPos(msg, rp.queuePositions)
 	if err != nil {
-		return err
+		return job.RegisterJobPosition{}, err
 	}
 	rp.queuePositions[msg.ID] = newPos
 
 	if err := rp.persist(); err != nil {
-		return err
+		return job.RegisterJobPosition{}, err
 	}
 	// actors.NotifyAfter(ctx, 0, schedulerTick{}) ?
-	return nil
+	return job.RegisterJobPosition{
+		JobID:       msg.ID,
+		JobPosition: newPos.String(),
+	}, nil
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
@@ -406,7 +412,12 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 	case job.MoveJob:
-		ctx.Respond(rp.moveJob(msg))
+		response, err := rp.moveJob(msg)
+		ctx.Respond(err)
+		if err != nil {
+			ctx.Self().System().TellAt(job.JobsActorAddr, response)
+		}
+
 	case job.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
@@ -440,6 +451,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 func (rp *ResourcePool) persist() error {
 	// exlude head and tail?
 	fmt.Println("TODO persist rp", rp.config.PoolName)
+
 	return nil // TODO
 }
 
@@ -454,6 +466,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		if jobID, ok := rp.groupActorToID[msg.Ref]; ok {
 			delete(rp.queuePositions, jobID)
 			delete(rp.groupActorToID, msg.Ref)
+			delete(rp.IDToGroupActor, jobID)
 			if err := rp.persist(); err != nil {
 				ctx.Log().Errorf("error persisting queuePositions: %s", err)
 				// CHECK fail?

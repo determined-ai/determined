@@ -321,6 +321,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case job.SetGroupPriority:
 		ctx.Respond(c.setPriority(ctx, msg.Priority))
 
+	case job.RegisterJobPosition:
+		c.db.UpdateJob(&model.Job{
+			JobID:   msg.JobID,
+			QPos:    msg.JobPosition,
+		})
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

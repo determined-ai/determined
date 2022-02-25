@@ -74,6 +74,13 @@ type (
 	}
 )
 
+// RegisterJobPosition gets sent from the resource pool to jobs.
+// It notifies the job of its new position.
+type RegisterJobPosition struct {
+	JobID       model.JobID
+	JobPosition string
+}
+
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
 type RegisterJob struct {
