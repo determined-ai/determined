@@ -105,17 +105,17 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 		panic(errMock)
 
 	case sproto.ResourcesAllocated:
-		for rank, allocation := range msg.Reservations {
-			allocation.Start(ctx, tasks.TaskSpec{}, sproto.ReservationRuntimeInfo{
+		for rank, allocation := range msg.Resources {
+			allocation.Start(ctx, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
 				Token:        "",
 				AgentRank:    rank,
-				IsMultiAgent: len(msg.Reservations) > 1,
+				IsMultiAgent: len(msg.Resources) > 1,
 			})
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
-	case sproto.TaskContainerStateChanged:
+	case sproto.ResourcesStateChanged:
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -296,11 +296,11 @@ func forceSetTaskAllocations(
 	assert.Check(t, ok)
 	if numAllocated > 0 {
 		allocated := &sproto.ResourcesAllocated{
-			ID:           model.AllocationID(taskID),
-			Reservations: []sproto.Reservation{},
+			ID:        model.AllocationID(taskID),
+			Resources: []sproto.Resources{},
 		}
 		for i := 0; i < numAllocated; i++ {
-			allocated.Reservations = append(allocated.Reservations, containerReservation{})
+			allocated.Resources = append(allocated.Resources, containerResources{})
 		}
 		taskList.SetAllocations(req.TaskActor, allocated)
 	} else {
@@ -410,8 +410,8 @@ func setupSchedulerStates(
 
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,
-				Reservations: []sproto.Reservation{
-					&containerReservation{
+				Resources: []sproto.Resources{
+					&containerResources{
 						req:       req,
 						agent:     agentState,
 						container: container,

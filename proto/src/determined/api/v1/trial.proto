@@ -300,17 +300,36 @@ message AckAllocationPreemptionSignalRequest {
 message AckAllocationPreemptionSignalResponse {}
 
 // Mark some reservation as a daemon.
-message MarkAllocationReservationDaemonRequest {
+message MarkAllocationResourcesDaemonRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "allocation_id", "container_id" ] }
   };
-  // The allocation ID for the reservation.
+  // The id of the allocation.
   string allocation_id = 1;
-  // The container ID for the reservation.
-  string container_id = 2;
+  // The id of the clump of resources to mark as daemon.
+  string resources_id = 2;
 }
-// Response to MarkAllocationReservationDaemonRequest.
-message MarkAllocationReservationDaemonResponse {}
+// Response to MarkAllocationResourcesDaemonRequest.
+message MarkAllocationResourcesDaemonResponse {}
+
+// Gathers the rendezvous info for an allocation.
+message AllocationRendezvousInfoRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "resources_id" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The id of the clump of resources.
+  string resources_id = 2;
+}
+// Response to AllocationRendezvousInfoRequest
+message AllocationRendezvousInfoResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "rendezvous_info" ] }
+  };
+  // The rendezvous information.
+  determined.trial.v1.RendezvousInfo rendezvous_info = 1;
+}
 
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
@@ -403,25 +422,6 @@ message ReportTrialCheckpointMetadataRequest {
 }
 // Response to ReportTrialCheckpointMetadataRequest
 message ReportTrialCheckpointMetadataResponse {}
-
-// Gathers the rendezvous info for an allocation.
-message AllocationRendezvousInfoRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "allocation_id", "container_id" ] }
-  };
-  // The id of the allocation.
-  string allocation_id = 1;
-  // The id of the allocation. Used to verify all allocations are connected.
-  string container_id = 2;
-}
-// Response to AllocationRendezvousInfoRequest
-message AllocationRendezvousInfoResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "rendezvous_info" ] }
-  };
-  // The rendezvous information.
-  determined.trial.v1.RendezvousInfo rendezvous_info = 1;
-}
 
 // Partially update the trial metadata.
 message PostTrialRunnerMetadataRequest {

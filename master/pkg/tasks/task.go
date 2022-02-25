@@ -71,7 +71,7 @@ type TaskSpec struct {
 	// The parent task of an allocation.
 	TaskID string
 
-	// Fields that are set on the per-allocation basis.
+	// Fields that are set on per-resources basis.
 	AllocationID           string
 	AllocationSessionToken string
 	ContainerID            string

@@ -155,7 +155,7 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "tasks").json()
     for task in r.values():
-        if "Experiment {}".format(experiment_id) in task["name"] and len(task["containers"]) > 0:
+        if "Experiment {}".format(experiment_id) in task["name"] and len(task["resources"]) > 0:
             return True
 
     return False

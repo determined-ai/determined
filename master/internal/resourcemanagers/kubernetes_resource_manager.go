@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -355,10 +356,10 @@ func (k *kubernetesResourceManager) assignResources(
 
 	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
-	allocations := make([]sproto.Reservation, 0, numPods)
+	allocations := make([]sproto.Resources, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
 		container := newContainer(req, slotsPerPod)
-		allocations = append(allocations, &k8sPodReservation{
+		allocations = append(allocations, &k8sPodResources{
 			req:       req,
 			podsActor: k.podsActor,
 			container: container,
@@ -369,7 +370,7 @@ func (k *kubernetesResourceManager) assignResources(
 		k.containerIDtoAddr[container.id.String()] = req.TaskActor
 	}
 
-	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Reservations: allocations}
+	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
 	k.reqList.SetAllocationsRaw(req.TaskActor, &assigned)
 	req.TaskActor.System().Tell(req.TaskActor, assigned)
 
@@ -436,7 +437,7 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 	}
 }
 
-type k8sPodReservation struct {
+type k8sPodResources struct {
 	req       *sproto.AllocateRequest
 	container *container
 	podsActor *actor.Ref
@@ -444,17 +445,23 @@ type k8sPodReservation struct {
 }
 
 // Summary summarizes a container allocation.
-func (p k8sPodReservation) Summary() sproto.ContainerSummary {
-	return sproto.ContainerSummary{
-		AllocationID: p.req.AllocationID,
-		ID:           p.container.id,
-		Agent:        p.podsActor.Address().Local(),
+func (p k8sPodResources) Summary() sproto.ResourcesSummary {
+	return sproto.ResourcesSummary{
+		AllocationID:  p.req.AllocationID,
+		ResourcesID:   sproto.ResourcesID(p.container.id),
+		ResourcesType: sproto.ResourcesTypeK8sPod,
+		AgentDevices: map[string][]device.Device{
+			// TODO: Make it more obvious k8s can't be trusted.
+			p.podsActor.Address().Local(): nil,
+		},
+
+		ContainerID: &p.container.id,
 	}
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p k8sPodReservation) Start(
-	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
+func (p k8sPodResources) Start(
+	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) {
 	spec.ContainerID = string(p.container.id)
 	spec.AllocationID = string(p.req.AllocationID)
@@ -476,7 +483,7 @@ func (p k8sPodReservation) Start(
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p k8sPodReservation) Kill(ctx *actor.Context) {
+func (p k8sPodResources) Kill(ctx *actor.Context) {
 	ctx.Tell(p.podsActor, kubernetes.KillTaskPod{
 		PodID: p.container.id,
 	})

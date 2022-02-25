@@ -10,13 +10,14 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
     def agent_info(t: Dict[str, Any]) -> Union[str, List[str]]:
-        containers = t.get("containers", [])
-        if not containers:
+        resources = t.get("resources", [])
+        if not resources:
             return "unassigned"
-        if len(containers) == 1:
-            agent = containers[0]["agent"]  # type: str
+        agents = [a for r in resources for a in r["agent_devices"].keys()]
+        if len(agents) == 1:
+            agent = agents[0]  # type: str
             return agent
-        return [c["agent"] for c in containers]
+        return agents
 
     if args.json:
         print(json.dumps(tasks, indent=4))

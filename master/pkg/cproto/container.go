@@ -56,3 +56,20 @@ func (c *Container) Proto() *containerv1.Container {
 		Devices: devices,
 	}
 }
+
+// DeepCopy returns the proto representation of the container.
+func (c *Container) DeepCopy() *Container {
+	if c == nil {
+		return nil
+	}
+
+	devices := make([]device.Device, len(c.Devices))
+	copy(devices, c.Devices)
+
+	return &Container{
+		Parent:  c.Parent,
+		ID:      c.ID,
+		State:   c.State,
+		Devices: devices,
+	}
+}

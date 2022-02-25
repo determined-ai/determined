@@ -586,14 +586,26 @@ service Determined {
   }
   // Mark the given reservation (container, pod, etc) within an allocation as
   // a daemon reservation. In the exit of a successful exit, Determined will
-  // wait for all reservations to exit - unless they are marked as daemon
-  // reservations, in which case Determined will clean them up regardless of
-  // exit status after all non-daemon reservations have exited.
-  rpc MarkAllocationReservationDaemon(MarkAllocationReservationDaemonRequest)
-      returns (MarkAllocationReservationDaemonResponse) {
+  // wait for all resources to exit - unless they are marked as daemon
+  // resources, in which case Determined will clean them up regardless of
+  // exit status after all non-daemon resources have exited.
+  rpc MarkAllocationResourcesDaemon(MarkAllocationResourcesDaemonRequest)
+      returns (MarkAllocationResourcesDaemonResponse) {
     option (google.api.http) = {
-      post: "/api/v1/allocations/{allocation_id}/containers/{container_id}/daemon"
+      post: "/api/v1/allocations/{allocation_id}/resources/{resources_id}/daemon"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Gather an allocation's rendezvous info. Blocks until all trial containers
+  // connect to gather their rendezvous information and responds to them all at
+  // once.
+  rpc AllocationRendezvousInfo(AllocationRendezvousInfoRequest)
+      returns (AllocationRendezvousInfoResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/allocations/{allocation_id}/resources/{resources_id}/rendezvous"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -686,18 +698,6 @@ service Determined {
     option (google.api.http) = {
       post: "/api/v1/trials/{checkpoint_metadata.trial_id}/checkpoint_metadata"
       body: "checkpoint_metadata"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-  // Gather an allocation's rendezvous info. Blocks until all trial containers
-  // connect to gather their rendezvous information and responds to them all at
-  // once.
-  rpc AllocationRendezvousInfo(AllocationRendezvousInfoRequest)
-      returns (AllocationRendezvousInfoResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/allocations/{allocation_id}/rendezvous_info/{container_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

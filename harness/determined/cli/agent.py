@@ -67,10 +67,12 @@ def list_slots(args: argparse.Namespace) -> None:
     agents = agent_res.json()
     allocations = task_res.json()
 
-    c_names = {}
-    for a in allocations.values():
-        for cont in a["containers"]:
-            c_names[cont["id"]] = {"name": a["name"], "allocation_id": a["allocation_id"]}
+    c_names = {
+        r["container_id"]: {"name": a["name"], "allocation_id": a["allocation_id"]}
+        for a in allocations.values()
+        for r in a["resources"]
+        if r["container_id"]
+    }
 
     slots = [
         OrderedDict(
@@ -153,11 +155,15 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
         # When draining, check if there're any tasks currently running on
         # these slots, and list them.
         if drain_mode:
-            r = api.get(args.master, "tasks")
+            rsp = api.get(args.master, "tasks")
             tasks_data = {
                 k: t
-                for (k, t) in r.json().items()
-                if any(c["agent"] in agent_ids for c in t["containers"])
+                for (k, t) in rsp.json().items()
+                if any(
+                    a in agent_ids
+                    for r in t.get("resources", [])
+                    for a in r["agent_devices"].keys()
+                )
             }
 
             if not (args.json or args.csv):
