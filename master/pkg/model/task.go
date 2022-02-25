@@ -265,6 +265,10 @@ type TaskLog struct {
 	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
 }
 
+// RFC3339MicroTrailingZeroes unlike time.RFC3339Nano is a time format specifier that preserves
+// trailing zeroes.
+const RFC3339MicroTrailingZeroes = "2006-01-02T15:04:05.000000Z07:00"
+
 // Message resolves the flat version of the log that UIs have shown historically.
 // TODO(task-unif): Should we just.. stop doing this? And send the log as is and let the
 // UIs handle display (yes, IMO).
@@ -275,7 +279,7 @@ func (t *TaskLog) Message() string {
 
 	var timestamp string
 	if t.Timestamp != nil {
-		timestamp = t.Timestamp.Format(time.RFC3339Nano)
+		timestamp = t.Timestamp.Format(RFC3339MicroTrailingZeroes)
 	} else {
 		timestamp = defaultTaskLogTime
 	}
