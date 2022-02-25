@@ -223,7 +223,7 @@ func (a *apiServer) LaunchCommand(
 			err.Error(),
 		)
 	}
-	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCommand}
+	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCommand)}
 
 	// Launch a command actor.
 	var cmdID model.TaskID
