@@ -604,10 +604,9 @@ def remove_label(args: Namespace) -> None:
 @authentication.required
 def set_max_slots(args: Namespace) -> None:
     session = setup_session(args)
-    r = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    exp = r.to_json()
-    exp["maxSlots"] = args.max_slots
-    exp_patch = bindings.v1PatchExperiment.from_json(exp)
+    exp_patch = bindings.v1PatchExperiment.from_json(
+        {"id": args.experiment_id, "maxSlots": args.max_slots}
+    )
     bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Set `max_slots` of experiment {} to {}".format(args.experiment_id, args.max_slots))
 
@@ -615,10 +614,9 @@ def set_max_slots(args: Namespace) -> None:
 @authentication.required
 def set_weight(args: Namespace) -> None:
     session = setup_session(args)
-    r = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    exp = r.to_json()
-    exp["weight"] = args.weight
-    exp_patch = bindings.v1PatchExperiment.from_json(exp)
+    exp_patch = bindings.v1PatchExperiment.from_json(
+        {"id": args.experiment_id, "weight": args.weight}
+    )
     bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Set `weight` of experiment {} to {}".format(args.experiment_id, args.weight))
 
@@ -626,10 +624,9 @@ def set_weight(args: Namespace) -> None:
 @authentication.required
 def set_priority(args: Namespace) -> None:
     session = setup_session(args)
-    r = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
-    exp = r.to_json()
-    exp["priority"] = args.priority
-    exp_patch = bindings.v1PatchExperiment.from_json(exp)
+    exp_patch = bindings.v1PatchExperiment.from_json(
+        {"id": args.experiment_id, "priority": args.priority}
+    )
     bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Set `priority` of experiment {} to {}".format(args.experiment_id, args.priority))
 
