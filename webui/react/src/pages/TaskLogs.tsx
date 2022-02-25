@@ -2,7 +2,7 @@ import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer/LogViewer';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import useSettings from 'hooks/useSettings';
@@ -66,7 +66,8 @@ const TaskLogs: React.FC = () => {
     };
 
     if (type === FetchType.Initial) {
-      options.orderBy = config.isNewestFirst ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+      options.orderBy = config.fetchDirection === FetchDirection.Older
+        ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
     } else if (type === FetchType.Newer) {
       options.orderBy = 'ORDER_BY_ASC';
       if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;

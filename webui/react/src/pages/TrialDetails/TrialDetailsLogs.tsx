@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import LogViewer, { FetchConfig, FetchType } from 'components/LogViewer/LogViewer';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
@@ -103,7 +103,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     };
 
     if (type === FetchType.Initial) {
-      options.orderBy = config.isNewestFirst ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+      options.orderBy = config.fetchDirection === FetchDirection.Older
+        ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
     } else if (type === FetchType.Newer) {
       options.orderBy = 'ORDER_BY_ASC';
       if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;

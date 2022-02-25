@@ -38,7 +38,7 @@ type Hash = Record<RecordKey, boolean>;
 
 export interface FetchConfig {
   canceler: AbortController;
-  isNewestFirst: boolean;
+  fetchDirection: FetchDirection;
   limit: number;
   offset?: number;
   offsetLog?: Log;
@@ -50,6 +50,14 @@ export enum FetchType {
   Older = 'Older',
   Stream = 'Stream',
 }
+
+export enum FetchDirection {
+  Newer = 'Newer',
+  Older = 'Older',
+}
+
+export const ARIA_LABEL_ENABLE_TAILING = 'Enable Tailing';
+export const ARIA_LABEL_SCROLL_TO_OLDEST = 'Scroll to Oldest';
 
 const PAGE_LIMIT = 100;
 const PADDING = 8;
@@ -100,14 +108,14 @@ const LogViewer: React.FC<Props> = ({
   const listRef = useRef<VariableSizeList>(null);
   const local = useRef(clone(defaultLocal));
   const [ canceler ] = useState(new AbortController());
-  const [ isNewestFirst, setIsNewestFirst ] = useState(true);
+  const [ fetchDirection, setFetchDirection ] = useState(FetchDirection.Older);
   const [ isTailing, setIsTailing ] = useState(true);
   const [ logs, setLogs ] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
   const enableTailingClasses = [ css.enableTailing ];
 
-  if (isTailing && isNewestFirst) enableTailingClasses.push(css.enabled);
+  if (isTailing && fetchDirection === FetchDirection.Older) enableTailingClasses.push(css.enabled);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
@@ -168,14 +176,14 @@ const LogViewer: React.FC<Props> = ({
       onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
       event => {
         const logEntry = decoder(event);
-        isNewestFirst ? buffer.unshift(logEntry) : buffer.push(logEntry);
+        fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
       },
     );
 
     local.current.isFetching = false;
 
     return processLogs(buffer);
-  }, [ decoder, isNewestFirst, onFetch, processLogs ]);
+  }, [ decoder, fetchDirection, onFetch, processLogs ]);
 
   const handleItemsRendered = useCallback(async (
     { visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps,
@@ -186,20 +194,20 @@ const LogViewer: React.FC<Props> = ({
     local.current.isOnTop = visibleStartIndex === 0;
     local.current.isOnBottom = visibleStopIndex === logs.length - 1;
 
-    setIsTailing(local.current.isOnBottom && isNewestFirst);
+    setIsTailing(local.current.isOnBottom && fetchDirection === FetchDirection.Older);
 
     // Still busy with a previous fetch, prevent another fetch.
     if (local.current.isFetching || local.current.isAtOffsetEnd) return;
 
     // Detect when user scrolls to the "edge" and requires more logs to load.
-    const shouldFetchNewLogs = local.current.isOnBottom && !isNewestFirst;
-    const shouldFetchOldLogs = local.current.isOnTop && isNewestFirst;
+    const shouldFetchNewLogs = local.current.isOnBottom && fetchDirection === FetchDirection.Newer;
+    const shouldFetchOldLogs = local.current.isOnTop && fetchDirection === FetchDirection.Older;
 
     if (shouldFetchNewLogs || shouldFetchOldLogs) {
       const newLogs = await fetchLogs(
         {
           canceler,
-          isNewestFirst,
+          fetchDirection,
           offsetLog: shouldFetchNewLogs ? logs.last() : logs.first(),
         },
         shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
@@ -215,12 +223,12 @@ const LogViewer: React.FC<Props> = ({
       // No more logs will load.
       if (newLogs.length === 0) local.current.isAtOffsetEnd = true;
     }
-  }, [ addLogs, canceler, fetchLogs, isNewestFirst, logs ]);
+  }, [ addLogs, canceler, fetchDirection, fetchLogs, logs ]);
 
   const handleScrollToOldest = useCallback(() => {
     setIsTailing(false);
 
-    if (!isNewestFirst) {
+    if (fetchDirection === FetchDirection.Newer) {
       listRef.current?.scrollToItem(0, 'start');
     } else {
       local.current.fetchOffset = 0;
@@ -229,14 +237,14 @@ const LogViewer: React.FC<Props> = ({
       local.current.isAtOffsetEnd = false;
 
       setLogs([]);
-      setIsNewestFirst(false);
+      setFetchDirection(FetchDirection.Newer);
     }
-  }, [ isNewestFirst ]);
+  }, [ fetchDirection ]);
 
   const handleEnableTailing = useCallback(() => {
     setIsTailing(true);
 
-    if (isNewestFirst) {
+    if (fetchDirection === FetchDirection.Older) {
       listRef.current?.scrollToItem(logs.length, 'end');
     } else {
       local.current.fetchOffset = -PAGE_LIMIT;
@@ -245,9 +253,9 @@ const LogViewer: React.FC<Props> = ({
       local.current.isAtOffsetEnd = false;
 
       setLogs([]);
-      setIsNewestFirst(true);
+      setFetchDirection(FetchDirection.Older);
     }
-  }, [ isNewestFirst, logs.length ]);
+  }, [ fetchDirection, logs.length ]);
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
@@ -277,10 +285,10 @@ const LogViewer: React.FC<Props> = ({
 
   // Fetch initial logs on a mount or when the mode changes.
   useEffect(() => {
-    fetchLogs({ canceler, isNewestFirst }, FetchType.Initial).then(logs => {
+    fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then(logs => {
       addLogs(logs);
 
-      if (isNewestFirst) {
+      if (fetchDirection === FetchDirection.Older) {
         listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
       } else {
         listRef.current?.scrollToItem(0, 'start');
@@ -288,7 +296,7 @@ const LogViewer: React.FC<Props> = ({
 
       local.current.isScrollReady = true;
     });
-  }, [ addLogs, canceler, fetchLogs, isNewestFirst ]);
+  }, [ addLogs, canceler, fetchDirection, fetchLogs ]);
 
   // Enable streaming for loading latest entries.
   useEffect(() => {
@@ -315,9 +323,9 @@ const LogViewer: React.FC<Props> = ({
     };
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
 
-    if (isNewestFirst && onFetch) {
+    if (fetchDirection === FetchDirection.Older && onFetch) {
       consumeStream(
-        onFetch({ canceler, isNewestFirst: true, limit: PAGE_LIMIT }, FetchType.Stream),
+        onFetch({ canceler, fetchDirection, limit: PAGE_LIMIT }, FetchType.Stream),
         event => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
@@ -329,7 +337,7 @@ const LogViewer: React.FC<Props> = ({
       canceler.abort();
       throttledProcessBuffer.cancel();
     };
-  }, [ addLogs, decoder, isNewestFirst, onFetch, processLogs ]);
+  }, [ addLogs, decoder, fetchDirection, onFetch, processLogs ]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {
@@ -337,7 +345,7 @@ const LogViewer: React.FC<Props> = ({
 
     setLogs([]);
     setIsTailing(true);
-    setIsNewestFirst(true);
+    setFetchDirection(FetchDirection.Older);
   }, [ onFetch ]);
 
   // Initialize logs if applicable.
@@ -490,7 +498,11 @@ const LogViewer: React.FC<Props> = ({
           </Tooltip>
           <Tooltip
             placement="left"
-            title={isNewestFirst ? 'Tailing Enabled' : 'Enable Tailing'}>
+            title={
+              fetchDirection === FetchDirection.Older
+                ? 'Tailing Enabled'
+                : ARIA_LABEL_ENABLE_TAILING
+            }>
             <Button
               aria-label="Enable Tailing"
               className={enableTailingClasses.join(' ')}
