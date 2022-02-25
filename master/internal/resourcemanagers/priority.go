@@ -2,10 +2,10 @@ package resourcemanagers
 
 import (
 	"fmt"
-	"github.com/shopspring/decimal"
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/job"

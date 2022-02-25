@@ -286,8 +286,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	case job.RegisterJobPosition:
 		e.db.UpdateJob(&model.Job{
-			JobID:   msg.JobID,
-			QPos:    msg.JobPosition,
+			JobID: msg.JobID,
+			QPos:  msg.JobPosition,
 		})
 
 	// Experiment shutdown logic.

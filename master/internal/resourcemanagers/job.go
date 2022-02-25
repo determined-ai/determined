@@ -2,8 +2,9 @@ package resourcemanagers
 
 import (
 	"fmt"
-	"github.com/shopspring/decimal"
 	"time"
+
+	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -104,7 +105,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 	smallPos := decimal.Min(qPos1, qPos2)
 	//smallPos := math.Min(qPos1, qPos2)
 	bigPos := decimal.Max(qPos1, qPos2)
-	if qPos3.GreaterThan(smallPos) && qPos3.LessThan(bigPos){
+	if qPos3.GreaterThan(smallPos) && qPos3.LessThan(bigPos) {
 		return decimal.NewFromInt(0), nil // no op. Job is already in the correct position.
 	}
 

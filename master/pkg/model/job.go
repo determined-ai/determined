@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/google/uuid"
+
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // JobID is the unique ID of a job among all jobs.
