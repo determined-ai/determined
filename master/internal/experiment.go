@@ -181,6 +181,15 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		if e.restored {
 			e.restoreTrials(ctx)
+			j, err := e.db.JobByID(e.JobID)
+			if err != nil {
+				return err
+			}
+			ctx.Tell(e.rm, job.RecoverJobPosition{
+				JobID:        e.JobID,
+				JobPosition:  j.QPos,
+				ResourcePool: e.Config.Resources().ResourcePool(),
+			})
 			return nil
 		}
 

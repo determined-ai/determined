@@ -74,11 +74,19 @@ type (
 	}
 )
 
-// RegisterJobPosition gets sent from the resource pool to jobs.
-// It notifies the job of its new position.
+// RegisterJobPosition gets sent from the resource pool to experiment/command actors.
+// It notifies the task of its new position.
 type RegisterJobPosition struct {
 	JobID       model.JobID
 	JobPosition string
+}
+
+// RecoverJobPosition gets sent from the experiment or command actor to the resource pool.
+// Notifies the resource pool of the position of the job.
+type RecoverJobPosition struct {
+	JobID        model.JobID
+	JobPosition  string
+	ResourcePool string
 }
 
 // RegisterJob Registers an active job with the jobs actor.

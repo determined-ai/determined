@@ -68,6 +68,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		job.MoveJob:
 		a.forwardToAllPools(ctx, msg)
 
+	case job.RecoverJobPosition:
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
+
 	case sproto.GetTaskHandler:
 		if handler, err := a.aggregateTaskHandler(a.forwardToAllPools(ctx, msg)); err != nil {
 			ctx.Respond(err)

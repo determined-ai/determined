@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
@@ -301,7 +303,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobQStats,
 		job.SetGroupWeight,
-		job.SetGroupPriority:
+		job.SetGroupPriority,
+		job.RecoverJobPosition:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -404,6 +407,15 @@ func (rp *ResourcePool) moveJob(msg job.MoveJob) (job.RegisterJobPosition, error
 	}, nil
 }
 
+func (rp *ResourcePool) recoverJobPosition(msg job.RecoverJobPosition) error {
+	position, err := decimal.NewFromString(msg.JobPosition)
+	if err != nil {
+		return err
+	}
+	rp.queuePositions[msg.JobID] = position
+	return nil
+}
+
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case job.GetJobQStats:
@@ -442,6 +454,11 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		// if !ok: we haven't seen the job yet or this group is not IsUserVisible
 		// thus no need to reinitialize its queue position.
 
+	case job.RecoverJobPosition:
+		err := rp.recoverJobPosition(msg)
+		if err != nil {
+			ctx.Log().Errorf("failed to recover job position for job: %s", msg.JobID)
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
