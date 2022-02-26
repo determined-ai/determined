@@ -1456,6 +1456,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_USER = "SORT_BY_USER"
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
+    SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
 
 class v1GetExperimentsResponse:
     def __init__(
