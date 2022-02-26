@@ -389,7 +389,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'resourcePool',
-        key: 'resourcePool',
+        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
         sorter: true,
         title: 'Resource Pool',
       },

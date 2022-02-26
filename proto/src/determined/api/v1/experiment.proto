@@ -59,6 +59,8 @@ message GetExperimentsRequest {
     SORT_BY_NAME = 11;
     // Returns experiments sorted by originating model.
     SORT_BY_FORKED_FROM = 12;
+    // Returns experiments sorted by resource pool.
+    SORT_BY_RESOURCE_POOL = 13;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;

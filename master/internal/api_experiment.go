@@ -253,11 +253,12 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "COALESCE(progress, 0)",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM: "forked_from",
+		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
 	orderExpr := ""
 	switch _, ok := orderColMap[req.SortBy]; {
