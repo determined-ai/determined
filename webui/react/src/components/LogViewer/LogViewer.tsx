@@ -149,10 +149,7 @@ const LogViewer: React.FC<Props> = ({
         map[log.id] = true;
         return !isDuplicate && !isTqdm;
       })
-      .map(log => {
-        const formattedTime = log.time ? formatDatetime(log.time, { format: DATETIME_FORMAT }) : '';
-        return { ...log, formattedTime };
-      })
+      .map(log => formatLogEntry(log))
       .sort(logSorter(sortKey));
   }, [ sortKey ]);
 
