@@ -2,8 +2,8 @@
  Quickstart for Model Developers
 #################################
 
-This quickstart walks you through the basic steps to install and run Determined, train on the
-provided model data, and visualize training experiment results in your browser.
+This quickstart walks you through the basic steps to install and run Determined, run training
+experiments, and visualize training experiment results in your browser.
 
 Three model data and code examples use the MNIST dataset to demonstrate:
 
@@ -11,8 +11,11 @@ Three model data and code examples use the MNIST dataset to demonstrate:
 -  how to run a distributed training job on multiple GPUs to improve performance.
 -  how to use hyperparameter tuning.
 
-Each example uses the same model code and data, changing only a configuration parameter for
-different functionality.
+A Determined cluster comprises a master and one or more agents. A master provides centralized
+resource management of agents installed on distributed resources. Master and agent behavior are
+controlled by setting configuration variables. Each of these examples uses the same model code and
+data with simple configuration changes to account for different performance requirement and resource
+utilization.
 
 Follow these steps for a hands-on introduction to Determined. After gaining familiarity with
 Determined tools and procedures, replace the provided model data and code with your model data and
@@ -47,8 +50,8 @@ Hardware
 Docker
 ======
 
-For the examples that use an agent, install Docker installed to run containerized workloads. If you
-do not already have Docker installed, follow the :doc:`Installing Docker
+For the examples that use an agent, install Docker to run containerized workloads. If you do not
+already have Docker installed, follow the :doc:`Installing Docker
 </sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
 
 Training Example
@@ -66,12 +69,15 @@ These example experiments use the PyTorch MNIST image classification model:
 
 The ``mnist_pytorch`` directory contains the YAML configuration files used in these examples.
 
-Configuration parameters specify:
+Among other variables, configuration parameters define:
 
 -  dataset location
 -  hyperparameters
 -  number of batches of data to use in training
 -  entry point location of the model class
+-  number of GPU slots
+-  batch size
+-  shared memory size
 
 Each example configuration file corresponds to one of the example experiments presented in this
 quickstart:
@@ -204,10 +210,6 @@ hyperparameters on a single slot.
       :align: center
       :alt: Trial page
 
-   Because this experiment trains a single model with a fixed set of hyperparameters, there is only
-   one trial so selecting the experiment tile takes you directly to the trial page. [TBD: what does
-   this mean?]
-
 You can create additional experiments repeating the ``det experiment create`` command as a way to
 gain familiarity with other Determined WebUI functions.
 
@@ -218,19 +220,17 @@ gain familiarity with other Determined WebUI functions.
 This exercise requires a Determined cluster with multiple GPUs.
 
 Determined can coordinate multiple GPUs to train a single trial more quickly by using distributed
-training. Distributed training is best applied to complex models. The model used in this example
-does not fully demonstrate the benefits of distributed training but is still useful in showing how
-to work with additional hardware resources.
+training. The model used in this example does not fully demonstrate the benefits of distributed
+training but is still useful in showing how to work with additional hardware resources.
 
-Moving from single-GPU training to distributed training involves changing a single
-:ref:`resources.slots_per_trial <exp-config-resources-slots-per-trial>` setting in the experiment
-``distributed.yaml`` configuration file, which is similar to the ``const.yaml`` file used in the
-previous example, except that a *resources* property is added with the ``resources.slots_per_trial``
-field is set to ``8`` to represent eight GPUs. The default ``slots_per_trial`` setting is ``1``. If
-``slots_per_trial`` is larger than the number of slots on an agent, set
-``resources.slots_per_trial`` to a multiple of the number of GPUs in each machine in the cluster.
-For example, if your cluster consists of 8-GPU machines, use a value that is a multiple of eight.
-For a Determined cluster deployed in the cloud, the default value for each agent is eight GPUs.
+To use distributed training, the ``resources.slots_per_trial`` field in the configuration file is
+set to the number of GPUs to distribute across. The ``distributed.yaml`` file is the same as the
+``const.yaml`` file, except that the ``resources.slots_per_trial`` field is set to ``8``. The
+default ``slots_per_trial`` setting is ``1``.
+
+For clusters that have multiple GPUs per machine, ``slots_per_trial`` must be divisible by the
+number of GPUs per machine or the job cannot be scheduled. For example, a 7-GPU job cannot be
+scheduled on a 4-GPU per machine cluster, but an 8-GPU job can be scheduled.
 
 #. Create the experiment using the distributed.yaml file:
 
@@ -252,16 +252,12 @@ complete the trial is reduced by about half.
  Run a Hyperparameter Tuning Job
 *********************************
 
-Hyperparameter searches involve multiple trials or model variations, per experiment, to improve
-model accuracy. Typically, hyperparameter tuning takes a significant amount of time and code.
-Determined hyperparameter search efficiently executes a state-of-the-art early-stopping-based
-algorithm with seamless parallelization.
-
-This example demonstrates hyperparameter search using the ``adaptive.yaml`` configuration file. The
-parameter settings tell the search algorithm the ranges to explore for each hyperparameter. This
-example model uses a fixed batch size and searches on dropout size, filters, and learning rate. The
-searcher name is set to ``adaptive_asha`` and ``max_trials`` is set to ``16``, indicating which
-search algorithm to use and how many model configurations to explore.
+Hyperparameter searches involve multiple trials or model variations per experiment. This example
+demonstrates hyperparameter search using the ``adaptive.yaml`` configuration file. The parameter
+settings tell the search algorithm the ranges to explore for each hyperparameter. This example model
+uses a fixed batch size and searches on dropout size, filters, and learning rate. The searcher name
+is set to ``adaptive_asha`` and ``max_trials`` is set to ``16``, indicating which search algorithm
+to use and how many model configurations to explore.
 
 #. Submit the experiment specifying the configuration file:
 
