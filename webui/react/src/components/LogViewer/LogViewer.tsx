@@ -1,6 +1,8 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ListChildComponentProps, ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
+import {
+  ListChildComponentProps, ListOnItemsRenderedProps, ListOnScrollProps, VariableSizeList,
+} from 'react-window';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
@@ -23,7 +25,7 @@ import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from
 
 export interface Props {
   decoder: (data: unknown) => Log;
-  initialLogs?: Log[];
+  initialLogs?: unknown[];
   onDownload?: () => void;
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
@@ -73,6 +75,7 @@ const defaultLocal = {
   isScrollReady: false,
   previousHeight: 0,
   previousWidth: 0,
+  scrollOffset: 0,
 };
 
 export const formatLogEntry = (log: Log): ViewerLog => {
@@ -191,8 +194,6 @@ const LogViewer: React.FC<Props> = ({
     local.current.isOnTop = visibleStartIndex === 0;
     local.current.isOnBottom = visibleStopIndex === logs.length - 1;
 
-    setIsTailing(local.current.isOnBottom && fetchDirection === FetchDirection.Older);
-
     // Still busy with a previous fetch, prevent another fetch.
     if (local.current.isFetching || local.current.isAtOffsetEnd) return;
 
@@ -221,6 +222,44 @@ const LogViewer: React.FC<Props> = ({
       if (newLogs.length === 0) local.current.isAtOffsetEnd = true;
     }
   }, [ addLogs, canceler, fetchDirection, fetchLogs, logs ]);
+
+  /**
+   * scrollUpdateWasRequested:
+   *   true:  if the scroll was caused by scrollTo() or scrollToItem()
+   *   false: if the scroll was caused by user interaction in the browser
+   */
+  const handleScroll = useCallback(({
+    scrollDirection,
+    scrollOffset,
+    scrollUpdateWasRequested,
+  }: ListOnScrollProps) => {
+    /**
+     * `react-window` automatically adjusts floating point offsets to integers.
+     * Unfortunately, this triggers a second `onScroll` event with the `scrollUpdateWasRequested`
+     * set as `false` indicating user triggered scrolling, which is not the case.
+     * `isAutoWindowAdjustment` logic is used to filter out these auto adjustments made
+     * my `react-window`.
+     */
+    const prevScrollOffset = local.current.scrollOffset;
+    const isUserScrollBackwards = scrollDirection === 'backward' && !scrollUpdateWasRequested;
+    const isAutoWindowAdjustment = (
+      prevScrollOffset !== scrollOffset && Math.floor(prevScrollOffset) === scrollOffset
+    );
+    if (isUserScrollBackwards && !isAutoWindowAdjustment) setIsTailing(false);
+
+    // Re-engage tailing if the scroll position is at the bottom of the scrollable window.
+    if (logsRef.current) {
+      const listParent = logsRef.current.firstElementChild;
+      const list = listParent?.firstElementChild;
+      const scrollHeight = list?.scrollHeight ?? 0;
+      const parentHeight = listParent?.clientHeight ?? 0;
+      const scrollTop = scrollHeight - parentHeight;
+      if (scrollTop && scrollTop === scrollOffset) setIsTailing(true);
+    }
+
+    // Store last scrollOffset.
+    local.current.scrollOffset = scrollOffset;
+  }, []);
 
   const handleScrollToOldest = useCallback(() => {
     setIsTailing(false);
@@ -341,7 +380,7 @@ const LogViewer: React.FC<Props> = ({
     local.current = clone(defaultLocal);
 
     setLogs([]);
-    setIsTailing(true);
+    // setIsTailing(true);
     setFetchDirection(FetchDirection.Older);
   }, [ onFetch ]);
 
@@ -349,8 +388,8 @@ const LogViewer: React.FC<Props> = ({
   useEffect(() => {
     if (!initialLogs) return;
 
-    addLogs(initialLogs.map(log => formatLogEntry(log)));
-  }, [ addLogs, initialLogs ]);
+    addLogs(initialLogs.map(log => formatLogEntry(decoder(log))));
+  }, [ addLogs, decoder, initialLogs ]);
 
   // Abort all outstanding API calls if log viewer unmounts.
   useEffect(() => {
@@ -474,7 +513,8 @@ const LogViewer: React.FC<Props> = ({
               itemSize={getItemHeight}
               ref={listRef}
               width="100%"
-              onItemsRendered={handleItemsRendered}>
+              onItemsRendered={handleItemsRendered}
+              onScroll={handleScroll}>
               {LogViewerRow}
             </VariableSizeList>
           </div>
@@ -495,11 +535,7 @@ const LogViewer: React.FC<Props> = ({
           </Tooltip>
           <Tooltip
             placement="left"
-            title={
-              fetchDirection === FetchDirection.Older
-                ? 'Tailing Enabled'
-                : ARIA_LABEL_ENABLE_TAILING
-            }>
+            title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}>
             <Button
               aria-label={ARIA_LABEL_ENABLE_TAILING}
               className={enableTailingClasses.join(' ')}
