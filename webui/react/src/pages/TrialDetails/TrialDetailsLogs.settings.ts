@@ -1,6 +1,5 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-
-import { LogLevelFromApi } from './Logs/TrialLogFilters';
+import { LogLevelFromApi } from 'types';
 
 export interface Settings {
   agentId?: string[];

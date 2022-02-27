@@ -3,6 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
+import { LogLevelFromApi } from 'types';
 
 const { Option } = Select;
 
@@ -11,16 +12,6 @@ interface Props {
   onReset?: () => void;
   options: Filters;
   values: Filters;
-}
-
-export enum LogLevelFromApi {
-  Unspecified = 'LOG_LEVEL_UNSPECIFIED',
-  Trace = 'LOG_LEVEL_TRACE',
-  Debug = 'LOG_LEVEL_DEBUG',
-  Info = 'LOG_LEVEL_INFO',
-  Warning = 'LOG_LEVEL_WARNING',
-  Error = 'LOG_LEVEL_ERROR',
-  Critical = 'LOG_LEVEL_CRITICAL',
 }
 
 export interface Filters {
