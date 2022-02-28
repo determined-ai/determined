@@ -24,9 +24,6 @@ if __name__ == "__main__":
     parser.add_argument("-x", "--on-fail", dest="on_fail", action="store", default="SIGTERM")
     parser.add_argument("-e", "--on-exit", dest="on_exit", action="store", default="WAIT")
     parser.add_argument("--grace-period", dest="grace_period", type=int, default=3)
-    parser.add_argument(
-        "--return-one-on-worker-error", dest="return_one_on_worker_error", action="store_true"
-    )
     parser.add_argument("addr")
     parser.add_argument("num_workers", type=int)
     parser.add_argument("cmd")
@@ -45,6 +42,5 @@ if __name__ == "__main__":
                 on_fail=on_fail,
                 on_exit=on_exit,
                 grace_period=args.grace_period,
-                return_one_on_worker_error=args.return_one_on_worker_error,
             ),
         )

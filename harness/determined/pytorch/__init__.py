@@ -6,6 +6,7 @@ from determined.pytorch._data import (
     adapt_batch_sampler,
     data_length,
     to_device,
+    _dataset_repro_warning,
 )
 from determined.pytorch._callback import PyTorchCallback
 from determined.pytorch._lr_scheduler import LRScheduler

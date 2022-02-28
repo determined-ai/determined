@@ -139,7 +139,7 @@ class PyTorchTrialController(det.TrialController):
             # Non-determined DataLoader; ensure the user meant to do this.
             if not self.context.experimental._data_repro_checks_disabled:
                 raise RuntimeError(
-                    pytorch._data._dataset_repro_warning("build_training_data_loader", train_data)
+                    pytorch._dataset_repro_warning("build_training_data_loader", train_data)
                 )
             self.training_loader = train_data
 
@@ -158,7 +158,7 @@ class PyTorchTrialController(det.TrialController):
                 # Non-determined DataLoader; ensure the user meant to do this.
                 if not self.context.experimental._data_repro_checks_disabled:
                     raise RuntimeError(
-                        pytorch._data._dataset_repro_warning(
+                        pytorch._dataset_repro_warning(
                             "build_validation_data_loader", validation_data
                         )
                     )
@@ -172,7 +172,7 @@ class PyTorchTrialController(det.TrialController):
                 # Non-determined DataLoader; ensure the user meant to do this.
                 if not self.context.experimental._data_repro_checks_disabled:
                     raise RuntimeError(
-                        pytorch._data._dataset_repro_warning(
+                        pytorch._dataset_repro_warning(
                             "build_validation_data_loader", validation_data
                         )
                     )

@@ -11,14 +11,14 @@ def _combine_metrics_across_processes(
     context: det._core.DistributedContext, metrics: Dict[str, Any], num_batches: int
 ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]], Optional[int]]:
     # The chief receives the metric from every other training process.
-    assert context.size > 1, (
-        "_combine_metrics_across_processes should only be " "called if context.distributed > 1"
-    )
+    assert (
+        context.size > 1
+    ), "_combine_metrics_across_processes should only be called if context.distributed > 1"
 
     # all_args is a list of [(metrics, num_batches), ...] for each worker.
     all_args = context._zmq_gather((metrics, num_batches))
 
-    if not context._is_chief:
+    if not context.rank == 0:
         return None, None, None
 
     # Remove items without keys in dictionary. These are from intermediate model parallel nodes.
@@ -52,7 +52,7 @@ def _average_training_metrics(
         context, metrics_timeseries, num_batches=len(per_batch_metrics)
     )
 
-    if context._is_chief:
+    if context.rank == 0:
         # We can safely cast variables here because this is all happening on the chief, which
         # is where we gather metrics.
         combined_timeseries = cast(Dict[str, List[List[Any]]], combined_timeseries)
@@ -115,7 +115,6 @@ def _prepare_metrics_reducers(
 
 
 def _convert_metrics_to_numpy(metrics: Dict[str, Any]) -> Dict[str, Any]:
-    # Same as that for PyTorchTrialController.
     for metric_name, metric_val in metrics.items():
         if isinstance(metric_val, torch.Tensor):
             metrics[metric_name] = metric_val.cpu().numpy()
@@ -146,7 +145,7 @@ def _reduce_metrics(
         combined_metrics, batches_per_process, _ = _combine_metrics_across_processes(
             context, metrics, num_batches
         )
-        if context._is_chief:
+        if context.rank == 0:
             # Only the chief collects all the metrics.
             combined_metrics = _convert_metrics_to_numpy(cast(Dict[str, Any], combined_metrics))
             metrics = {

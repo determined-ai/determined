@@ -62,22 +62,16 @@ class DeepSpeedTrialController(det.TrialController):
         # DeepSpeed's init_distributed handles situations in which only 1 gpu is used and
         # also handles multiple calls to init in one process.
         deepspeed.init_distributed()
-        cls._set_random_seeds(env.trial_seed)
 
-    @classmethod
-    def _set_random_seeds(cls: Type["DeepSpeedTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes.
         # When data parallel world size > 1, each data parallel rank will start at a unique
         # offset in the dataset, ensuring it's processing a unique
         # training batch.
         # TODO (Liam): seed data loading workers so that we can configure different seeds for
         # data augmentations per slot per worker.
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.random.manual_seed(seed)
-        # TODO(Aaron): Add flag to enable determinism.
-        # torch.backends.cudnn.deterministic = True
-        # torch.backends.cudnn.benchmark = False
+        random.seed(env.trial_seed)
+        np.random.seed(env.trial_seed)
+        torch.random.manual_seed(env.trial_seed)
 
     @classmethod
     def from_trial(
@@ -108,12 +102,12 @@ class DeepSpeedTrialController(det.TrialController):
                 self.training_loader = train_data.get_data_loader(
                     repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
                 )
-            elif isinstance(train_data, torch.utils.data.DataLoader):
+            else:
                 # Non-determined DataLoader; ensure the user meant to do this.
                 if not self.context._data_repro_checks_disabled:
                     raise RuntimeError(
-                        pytorch._data._dataset_repro_warning(
-                            "build_training_data_loader", train_data
+                        pytorch._dataset_repro_warning(
+                            "build_training_data_loader", train_data, is_deepspeed_trial=True
                         )
                     )
                 self.training_loader = train_data
@@ -127,7 +121,14 @@ class DeepSpeedTrialController(det.TrialController):
                 self.validation_loader = validation_data.get_data_loader(
                     repeat=False, skip=0, num_replicas=nreplicas, rank=rank
                 )
+
                 if self.context.use_pipeline_parallel:
+                    if len(self.validation_loader) < self.context.num_micro_batches_per_slot:
+                        raise det.errors.InvalidExperimentException(
+                            "Number of train micro batches in validation dataloader should not be "
+                            "less than the number of gradient accumulation steps when using "
+                            "pipeline parallelism."
+                        )
                     excluded_micro_batches = (
                         len(validation_data) % self.context.num_micro_batches_per_slot
                     )
@@ -141,8 +142,8 @@ class DeepSpeedTrialController(det.TrialController):
                 # Non-determined DataLoader; ensure the user meant to do this.
                 if not self.context._data_repro_checks_disabled:
                     raise RuntimeError(
-                        pytorch._data._dataset_repro_warning(
-                            "build_validation_data_loader", validation_data
+                        pytorch._dataset_repro_warning(
+                            "build_validation_data_loader", validation_data, is_deepspeed_trial=True
                         )
                     )
                 if self.context.use_pipeline_parallel:

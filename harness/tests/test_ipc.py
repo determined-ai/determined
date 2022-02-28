@@ -306,7 +306,7 @@ class TestPIDServer:
 
             assert len(pid_server.graceful_shutdowns) == 0
 
-    def test_return_one_on_worker_error(self) -> None:
+    def test_return_code_on_worker_error(self) -> None:
         with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
             assert pid_server.listener
             _, port = pid_server.listener.getsockname()
@@ -324,10 +324,9 @@ class TestPIDServer:
 
             error_code = pid_server.run_subprocess(
                 ["sleep", "30"],
-                return_one_on_worker_error=True,
             )
 
-            assert error_code == 1
+            assert error_code == 77
 
             for p in procs:
                 p.terminate()

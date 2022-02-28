@@ -13,7 +13,7 @@ import sys
 import time
 from typing import Dict, List, cast
 
-from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME, DLTS_HOSTFILE
+from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
 import determined as det
 from determined import constants
@@ -21,12 +21,13 @@ from determined.common import api
 from determined.common.api import certs
 
 
-def create_hostlist_file(num_proc_per_machine: int, ip_addresses: List[str]) -> str:
+def create_hostlist_file(
+    hostfile_path: pathlib.Path, num_proc_per_machine: int, ip_addresses: List[str]
+) -> str:
     trial_runner_hosts = ip_addresses.copy()
     if len(ip_addresses) == 1:
         trial_runner_hosts[0] = "localhost"
 
-    hostfile_path = pathlib.Path(DLTS_HOSTFILE)
     os.makedirs(hostfile_path.parent, exist_ok=True)
     with open(hostfile_path, "w") as hostfile:
         lines = [f"{host} slots={num_proc_per_machine}\n" for host in trial_runner_hosts]
@@ -56,11 +57,14 @@ def create_run_command(
     ip_addresses: List[str],
 ) -> List[str]:
     # Construct the deepspeed command.
-    master_address = create_hostlist_file(num_proc_per_machine, ip_addresses)
+    hostfile_path = "/tmp/hostfile.txt"
+    master_address = create_hostlist_file(
+        pathlib.Path(hostfile_path), num_proc_per_machine, ip_addresses
+    )
     deepspeed_process_cmd = [
         "deepspeed",
         "-H",
-        DLTS_HOSTFILE,
+        hostfile_path,
         "--master_addr",
         master_address,
         "--no_python",
@@ -125,7 +129,6 @@ def main(train_entrypoint: str) -> int:
             "SIGTERM",
             "--grace-period",
             "3",
-            "--return-one-on-worker-error",
             f"/tmp/pid_server-{info.allocation_id}",
             str(len(info.slot_ids)),
             "--",
@@ -179,7 +182,6 @@ def main(train_entrypoint: str) -> int:
         "SIGTERM",
         "--grace-period",
         "5",
-        "--return-one-on-worker-error",
         f"/tmp/pid_server-{info.allocation_id}",
         str(len(info.slot_ids)),
         "--",
@@ -197,11 +199,7 @@ def main(train_entrypoint: str) -> int:
         "--",
     ]
 
-    log_redirect_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-    ]
+    log_redirect_cmd = ["python3", "-m", "determined.exec.worker_process_wrapper", "RANK"]
 
     harness_cmd = [
         "python3",

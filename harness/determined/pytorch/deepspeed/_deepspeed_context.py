@@ -96,7 +96,6 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # The following attributes are initialized during the lifetime of
         # a DeepSpeedTrialContext.
         self.models = []  # type: List[nn.Module]
-        self.profiler = None  # type: Any
         self._epoch_len = None  # type: Optional[int]
 
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
@@ -108,6 +107,9 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             self.distributed
         )  # type: det_ds.ModelParallelUnit
         self._called_wrap_mpu = False
+        # We will compute these as model engines and/or mpus are passed to the context.
+        self._global_batch_size = self.env.global_batch_size
+        self._per_slot_batch_size = self.env.per_slot_batch_size
         self._train_micro_batch_size_per_gpu = None  # type: Optional[int]
         self._num_micro_batches_per_slot = None  # type: Optional[int]
         self._use_pipeline_parallel = False
@@ -140,6 +142,12 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "Determined experiment config.",
             )
 
+    def get_global_batch_size(self) -> int:
+        return self._global_batch_size
+
+    def get_per_slot_batch_size(self) -> int:
+        return self._per_slot_batch_size
+
     def wrap_mpu(self, mpu: det_ds.ModelParallelUnit) -> det_ds.ModelParallelUnit:
         if self._called_wrap_mpu:
             raise det.errors.InvalidExperimentException(
@@ -151,8 +159,8 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._mpu = mpu
         if old_mpu.get_data_parallel_world_size() != mpu.get_data_parallel_world_size():
             (
-                self.env._per_slot_batch_size,
-                self.env._global_batch_size,
+                self._per_slot_batch_size,
+                self._global_batch_size,
             ) = self._calculate_batch_sizes()
             logging.warning(
                 "Wrapped MPU uses model parallelism.  Changing per slot batch size "
@@ -193,7 +201,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "deepspeed config dict which you can pass to the config field when calling"
                 "deepspeed.initialize to build the model engine."
             )
-            self.env._global_batch_size = model.train_batch_size()
+            self._global_batch_size = model.train_batch_size()
             recompute_batch_size = True
 
         if self._train_micro_batch_size_per_gpu is None:
@@ -207,8 +215,8 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if recompute_batch_size:
             (
-                self.env._per_slot_batch_size,
-                self.env._global_batch_size,
+                self._per_slot_batch_size,
+                self._global_batch_size,
             ) = self._calculate_batch_sizes()
 
         self.models.append(model)
@@ -236,7 +244,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         This needs to be done after the user calls wrap_model_engine to let us know the deepspeed
         config which contains the micro-batch-size.
         """
-        global_batch_size = self.env.global_batch_size
+        global_batch_size = self._global_batch_size
 
         # Configure batch sizes.
         num_replicas = self._mpu.get_data_parallel_world_size()
@@ -281,18 +289,15 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
+        if not self.n_gpus:
+            raise det.errors.InvalidExperimentException("GPUs required for DeepSpeedTrial.")
         if self.distributed.size > 1:
-            if self.n_gpus > 0:
-                # We launch a separate process per GPU with LOCAL_RANK set by DeepSpeed's launcher.
-                # Each process needs to bind to a unique GPU.
-                self.device = torch.device("cuda", int(cast(str, os.environ.get("LOCAL_RANK"))))
-                torch.cuda.set_device(self.device)
-            else:
-                self.device = torch.device("cpu")
-        elif self.n_gpus > 0:
-            self.device = torch.device("cuda", 0)
+            # We launch a separate process per GPU with LOCAL_RANK set by DeepSpeed's launcher.
+            # Each process needs to bind to a unique GPU.
+            self.device = torch.device("cuda", int(cast(str, os.environ.get("LOCAL_RANK"))))
+            torch.cuda.set_device(self.device)
         else:
-            self.device = torch.device("cpu")
+            self.device = torch.device("cuda", 0)
         assert self.device is not None, "Error setting torch device."
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:

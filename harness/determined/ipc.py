@@ -671,7 +671,6 @@ class PIDServer:
         cmd: List[str],
         on_fail: Optional[signal.Signals] = None,
         on_exit: Optional[signal.Signals] = None,
-        return_one_on_worker_error: bool = False,
         grace_period: int = 3,
     ) -> int:
         p = subprocess.Popen(cmd)
@@ -698,11 +697,11 @@ class PIDServer:
                 p.send_signal(on_fail)
                 if on_fail != signal.SIGKILL:
                     try:
-                        return p.wait(timeout=10) if not return_one_on_worker_error else 1
+                        return p.wait(timeout=10) or 77
                     except subprocess.TimeoutExpired:
                         logging.error(f"killing worker which didn't exit after {on_fail.name}")
                         p.send_signal(signal.SIGKILL)
-            return p.wait() if not return_one_on_worker_error else 1
+            return p.wait() or 77
 
         # All workers exited normally.
         if on_exit is not None:

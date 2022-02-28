@@ -1,8 +1,9 @@
 """
-worker_process_wrapper.py is the entrypoint for Horovod worker processes.
+worker_process_wrapper.py is the entrypoint for distributed worker processes.
 It exists to redirect stdout/stderr to the docker logging without needing
 to package a shell script.
 """
+import argparse
 import os
 import subprocess
 import sys
@@ -26,10 +27,14 @@ def run_all(ts: List[threading.Thread]) -> None:
 
 
 def main() -> int:
-    rank = os.environ.get("HOROVOD_RANK")
-    if rank is None:
-        rank = os.environ.get("RANK")
-    proc = subprocess.Popen(sys.argv[1:], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    parser = argparse.ArgumentParser()
+    # Different launcher may use different environment variable names to indicate rank.
+    parser.add_argument("rank_var_name")
+    parser.add_argument("cmd", nargs="*")
+    args = parser.parse_args()
+
+    rank = os.environ.get(args.rank_var_name)
+    proc = subprocess.Popen(args.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with open(constants.CONTAINER_STDOUT, "w") as cstdout, open(
         constants.CONTAINER_STDERR, "w"
     ) as cstderr, proc:
