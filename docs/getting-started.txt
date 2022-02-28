@@ -14,8 +14,7 @@ Three model data and code examples use the MNIST dataset to demonstrate:
 A Determined cluster comprises a master and one or more agents. A master provides centralized
 resource management of agents installed on distributed resources. Master and agent behavior are
 controlled by setting configuration variables. Each of these examples uses the same model code and
-data with simple configuration changes to account for different performance requirement and resource
-utilization.
+data with simple configuration changes for each of the three examples.
 
 Follow these steps for a hands-on introduction to Determined. After gaining familiarity with
 Determined tools and procedures, replace the provided model data and code with your model data and
@@ -162,7 +161,7 @@ hyperparameters on a single slot.
       det experiment create const.yaml .
 
    The last argument dot notation (.) uploads all files in the current directory to the Determined
-   cluster, and makes them available in the working directory in which each trial is run. This
+   cluster and makes them available in the working directory in which each trial is run. This
    directory is called the context directory.
 
    After the experiment has been submitted, you should see that the experiment is created:
@@ -197,8 +196,7 @@ hyperparameters on a single slot.
    ACTIVE state.
 
    While an experiment is in the ACTIVE, training state, click an experiment tile to see the Metrics
-   graph update with your currently defined metrics. In this example, the graph displays the loss
-   and error rate per batch:
+   graph update with your currently defined metrics. In this example, the graph displays the loss:
 
    .. image:: /assets/images/qs04.png
       :width: 704px
