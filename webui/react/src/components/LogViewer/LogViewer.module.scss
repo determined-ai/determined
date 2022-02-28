@@ -30,9 +30,6 @@
   .buttons.show {
     display: flex;
   }
-  .buttons > *:not(:first-child) {
-    margin-top: var(--theme-sizes-layout-big);
-  }
   .buttons > button {
     border-color: var(--theme-colors-monochrome-9);
     box-shadow: var(--theme-shadow);
@@ -40,10 +37,15 @@
     transition: opacity 0.2s linear;
     user-select: none;
   }
-  .scrollToTop {
-    opacity: 0.2;
+  .buttons > button + button {
+    margin-top: var(--theme-sizes-layout-big);
   }
-  .scrollToTop:focus {
+  .scrollToOldest {
+    opacity: 0.2;
+    opacity: 1;
+    user-select: auto;
+  }
+  .scrollToOldest:focus {
     border-color: var(--theme-colors-action-normal);
     color: var(--theme-colors-monochrome-9);
 
@@ -55,10 +57,6 @@
       position: absolute;
       width: 100%;
     }
-  }
-  .scrollToTop.show {
-    opacity: 1;
-    user-select: auto;
   }
   .enableTailing {
     transition: all 0.2s linear;
