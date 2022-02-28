@@ -336,15 +336,18 @@ const LogViewer: React.FC<Props> = ({
   // Fetch initial logs on a mount or when the mode changes.
   useEffect(() => {
     fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then(logs => {
-      addLogs(logs);
+      addLogs(logs, true);
 
       if (fetchDirection === FetchDirection.Older) {
-        listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
+        // Slight delay on scrolling to the end for the log viewer to render and resolve everything.
+        setTimeout(() => {
+          listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
+          local.current.isScrollReady = true;
+        }, 100);
       } else {
         listRef.current?.scrollToItem(0, 'start');
+        local.current.isScrollReady = true;
       }
-
-      local.current.isScrollReady = true;
     });
   }, [ addLogs, canceler, fetchDirection, fetchLogs ]);
 
@@ -555,7 +558,7 @@ const LogViewer: React.FC<Props> = ({
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
             <Button
               aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
-              className={[ css.scrollToTop, css.show ].join(' ')}
+              className={css.scrollToOldest}
               icon={<Icon name="arrow-up" />}
               onClick={handleScrollToOldest}
             />
