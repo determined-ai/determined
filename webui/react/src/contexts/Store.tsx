@@ -1,3 +1,4 @@
+import { Modal } from 'antd';
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
@@ -211,7 +212,7 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetCurrentUser: {
       const users = [ ...state.users ];
       const userIdx = users.findIndex(user => user.username === action.value.username);
-      users[userIdx] = { ...users[userIdx], ...action.value };
+      if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }
     case StoreAction.SetResourcePools:
@@ -246,9 +247,12 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   const [ state, dispatch ] = useReducer(reducer, initState);
+  const [ modal, contextHolder ] = Modal.useModal();
+
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>
+        {contextHolder}
         {children}
       </DispatchContext.Provider>
     </StateContext.Provider>
