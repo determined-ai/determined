@@ -140,7 +140,8 @@
   },
   "jest": {
     "coveragePathIgnorePatterns": [
-      "/src/services/api-ts-sdk/"
+      "/src/services/api-ts-sdk/",
+      ".stories.tsx"
     ]
   }
 }
