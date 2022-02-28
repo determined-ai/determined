@@ -113,12 +113,15 @@ const LogViewer: React.FC<Props> = ({
   const [ canceler ] = useState(new AbortController());
   const [ fetchDirection, setFetchDirection ] = useState(FetchDirection.Older);
   const [ isTailing, setIsTailing ] = useState(true);
+  const [ showButtons, setShowButtons ] = useState(false);
   const [ logs, setLogs ] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
   const enableTailingClasses = [ css.enableTailing ];
+  const buttonClasses = [ css.buttons ];
 
   if (isTailing && fetchDirection === FetchDirection.Older) enableTailingClasses.push(css.enabled);
+  if (showButtons) buttonClasses.push(css.show);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
@@ -219,7 +222,18 @@ const LogViewer: React.FC<Props> = ({
       }
 
       // No more logs will load.
-      if (newLogs.length === 0) local.current.isAtOffsetEnd = true;
+      if (newLogs.length === 0) {
+        local.current.isAtOffsetEnd = true;
+
+        /**
+         * The user has scrolled all the way to the newest entry,
+         * enable tailing behavior.
+         */
+        if (shouldFetchNewLogs) {
+          setIsTailing(true);
+          setFetchDirection(FetchDirection.Older);
+        }
+      }
     }
   }, [ addLogs, canceler, fetchDirection, fetchLogs, logs ]);
 
@@ -380,7 +394,7 @@ const LogViewer: React.FC<Props> = ({
     local.current = clone(defaultLocal);
 
     setLogs([]);
-    // setIsTailing(true);
+    setIsTailing(true);
     setFetchDirection(FetchDirection.Older);
   }, [ onFetch ]);
 
@@ -409,6 +423,19 @@ const LogViewer: React.FC<Props> = ({
     local.current.previousWidth = containerSize.width;
     local.current.previousHeight = containerSize.height;
   }, [ containerSize, resizeLogs ]);
+
+  // Show scrolling buttons based on whether or not logs spill outside of the list view.
+  useLayoutEffect(() => {
+    setShowButtons(() => {
+      if (!logsRef.current || logs.length === 0) return false;
+
+      const listParent = logsRef.current.firstElementChild;
+      const list = listParent?.firstElementChild;
+      const scrollHeight = list?.scrollHeight ?? 0;
+      const parentHeight = listParent?.clientHeight ?? 0;
+      return scrollHeight > parentHeight;
+    });
+  }, [ logs.length ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -524,7 +551,7 @@ const LogViewer: React.FC<Props> = ({
             </div>
           )}
         </div>
-        <div className={css.scrollTo}>
+        <div className={buttonClasses.join(' ')}>
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
             <Button
               aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
