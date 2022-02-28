@@ -24,7 +24,7 @@ def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: 
 
     assert isinstance(
         blob, storage.Blob
-    ), f"Called download_gcs_blob_with_backoff with object of type {type(blob)}"
+    ), f"Called download_gcs_blob_with_backoff with object of type {type(blob).__name__}"
     for n in range(n_retries):
         try:
             return blob.download_as_string()
