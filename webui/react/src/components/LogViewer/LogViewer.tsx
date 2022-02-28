@@ -118,10 +118,8 @@ const LogViewer: React.FC<Props> = ({
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
   const enableTailingClasses = [ css.enableTailing ];
-  const buttonClasses = [ css.buttons ];
 
   if (isTailing && fetchDirection === FetchDirection.Older) enableTailingClasses.push(css.enabled);
-  if (showButtons) buttonClasses.push(css.show);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
@@ -188,9 +186,10 @@ const LogViewer: React.FC<Props> = ({
     return processLogs(buffer);
   }, [ decoder, fetchDirection, onFetch, processLogs ]);
 
-  const handleItemsRendered = useCallback(async (
-    { visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps,
-  ) => {
+  const handleItemsRendered = useCallback(async ({
+    visibleStartIndex,
+    visibleStopIndex,
+  }: ListOnItemsRenderedProps) => {
     // Scroll may occur before the initial logs have rendered.
     if (!local.current.isScrollReady) return;
 
@@ -371,7 +370,9 @@ const LogViewer: React.FC<Props> = ({
 
         addLogs(logs);
 
-        if (currentIsOnBottom) listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
+        if (currentIsOnBottom) {
+          listRef.current?.scrollToItem(Number.MAX_SAFE_INTEGER, 'end');
+        }
       }
     };
     const throttledProcessBuffer = throttle(THROTTLE_TIME, processBuffer);
@@ -431,7 +432,6 @@ const LogViewer: React.FC<Props> = ({
   useLayoutEffect(() => {
     setShowButtons(() => {
       if (!logsRef.current || logs.length === 0) return false;
-
       const listParent = logsRef.current.firstElementChild;
       const list = listParent?.firstElementChild;
       const scrollHeight = list?.scrollHeight ?? 0;
@@ -554,7 +554,7 @@ const LogViewer: React.FC<Props> = ({
             </div>
           )}
         </div>
-        <div className={buttonClasses.join(' ')}>
+        <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
             <Button
               aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}

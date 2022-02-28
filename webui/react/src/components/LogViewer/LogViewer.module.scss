@@ -22,13 +22,10 @@
   }
   .buttons {
     bottom: var(--theme-sizes-layout-giant);
-    display: none;
+    display: flex;
     flex-direction: column;
     position: absolute;
     right: var(--theme-sizes-layout-giant);
-  }
-  .buttons.show {
-    display: flex;
   }
   .buttons > button {
     border-color: var(--theme-colors-monochrome-9);

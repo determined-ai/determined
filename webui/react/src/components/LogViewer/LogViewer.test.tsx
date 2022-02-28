@@ -4,16 +4,24 @@ import React from 'react';
 
 import { FetchArgs } from 'services/api-ts-sdk';
 import { jsonToTaskLog } from 'services/decoder';
-import { LogLevel } from 'types';
+import { LogLevelFromApi } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
-import * as LogViewer from './LogViewer';
+import * as src from './LogViewer';
+
+interface TestLog {
+  id: number | string;
+  level?: string;
+  message: string;
+  time: string;
+}
 
 const DEFAULT_MIN_WORD_COUNT = 5;
 const DEFAULT_MAX_WORD_COUNT = 8;
 const DEFAULT_MIN_WORD_LENGTH = 3;
 const DEFAULT_MAX_WORD_LENGTH = 12;
-const LEVELS = Object.values(LogLevel as Record<string, string>);
+const LEVELS = Object.values(LogLevelFromApi) as string[];
+const NOW = Date.now();
 
 /**
  * This is based on the window height, which is determined by `DEFAUL_SIZE`,
@@ -43,47 +51,78 @@ const generateMessage = (options: {
   return words.join(' ');
 };
 
-const generateLogs = (count = 100): LogViewer.ViewerLog[] => {
-  return new Array(count).fill(null).map((_, index) => LogViewer.formatLogEntry({
-    id: generateAlphaNumeric(),
-    level: LEVELS[Math.floor(Math.random() * LEVELS.length)] as LogLevel,
-    message: `message ${index} - ${generateMessage()}`,
-    time: new Date(Date.now() - (count - index)).toString(),
-  }));
+const generateLogs = (
+  count = 1,
+  startIndex = 0,
+  nowIndex?: number,      // when undefined, assumed the last generated log is now
+): TestLog[] => {
+  const dateIndex = nowIndex != null ? nowIndex : count - 1;
+  return new Array(count).fill(null).map((_, i) => {
+    const index = startIndex + i;
+    const timeOffset = (dateIndex - index) * 1000;
+    const timestamp = NOW - timeOffset;
+    return {
+      id: generateAlphaNumeric(),
+      level: LEVELS[Math.floor(Math.random() * LEVELS.length)],
+      message: `index: ${index} - timestamp: ${timestamp} - ${generateMessage()}`,
+      time: new Date(timestamp).toString(),
+    };
+  });
 };
 
-const setup = (props: LogViewer.Props) => render(<LogViewer.default {...props} />);
+const setup = (props: src.Props) => render(<src.default {...props} />);
 
-const mockOnFetch = (canceler?: AbortController) => (
-  config: LogViewer.FetchConfig,
-  type: LogViewer.FetchType,
+/**
+ * canceler -        AbortController to manually stop ongoing API calls.
+ * logsReference -   Allows tests to pass in an array to reflect the current state of loaded logs.
+ * skipStreaming -   Disables the streaming portion of the mocked `consumeStream` function.
+ * streamingRounds - How many rounds of stream chunks to simulate.
+ */
+const mockOnFetch = (mockOptions: {
+  canceler?: AbortController,
+  existingLogs?: TestLog[],
+  logsReference?: TestLog[],
+  skipStreaming?: boolean,
+  streamingRounds?: number,
+} = {}) => (
+  config: src.FetchConfig,
+  type: src.FetchType,
 ): FetchArgs => {
   const options = {
+    existingLogs: mockOptions.existingLogs,
     follow: false,
     limit: config.limit,
+    logsReference: mockOptions.logsReference,
     orderBy: 'ORDER_BY_UNSPECIFIED',
-    signal: canceler?.signal,
+    signal: mockOptions.canceler?.signal,
+    skipStreaming: mockOptions.skipStreaming,
+    streamingRounds: mockOptions.streamingRounds,
     timestampAfter: '',
     timestampBefore: '',
   };
 
-  if (type === LogViewer.FetchType.Initial) {
-    options.orderBy = config.isNewestFirst ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-  } else if (type === LogViewer.FetchType.Newer) {
+  if (type === src.FetchType.Initial) {
+    options.orderBy = config.fetchDirection === src.FetchDirection.Older
+      ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+  } else if (type === src.FetchType.Newer) {
     options.orderBy = 'ORDER_BY_ASC';
     if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-  } else if (type === LogViewer.FetchType.Older) {
+  } else if (type === src.FetchType.Older) {
     options.orderBy = 'ORDER_BY_DESC';
     if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-  } else if (type === LogViewer.FetchType.Stream) {
+  } else if (type === src.FetchType.Stream) {
     options.follow = true;
     options.limit = 0;
     options.orderBy = 'ORDER_BY_ASC';
-    options.timestampAfter = new Date().toISOString();
+    options.timestampAfter = new Date(NOW).toISOString();
   }
-  console.log('onFetchByTime', config, type);
 
   return { options, url: 'byTime' };
+};
+
+const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
+  const timestamp = new Date(timeString).getTime().toString();
+  return logs.findIndex(log => log.message.includes(timestamp));
 };
 
 jest.mock('hooks/useResize', () => ({ __esModule: true, default: () => DEFAULT_SIZE }));
@@ -93,21 +132,52 @@ jest.mock('hooks/useGetCharMeasureInContainer', () => ({
   default: () => DEFAULT_CHAR_SIZE,
 }));
 
-/*
- * `mockTimeLogs` requires the `mock` prefix to allow `jest.mock()` to be able
- * to access it within the implementation block.
- */
-const mockTimeLogs = generateLogs(5000);
 jest.mock('services/utils', () => ({
   __esModule: true,
   ...jest.requireActual('services/utils'),
-  consumeStream: ({ options, url }: FetchArgs, onEvent: (event: unknown) => void): void => {
-    console.log('url', url, 'options', options);
+  consumeStream: ({ options }: FetchArgs, onEvent: (event: unknown) => void): void => {
+    // Default mocking options.
+    const existingLogs = options.existingLogs ?? [];
+    const skipStreaming = options.skipStreaming ?? true;
+    const streamingRounds = options.streamingRounds ?? 100;
+    const desc = options.orderBy === 'ORDER_BY_DESC';
 
-    if (options.follow) {
-      console.log('stream follow');
-    } else {
-      mockTimeLogs.forEach(log => onEvent(log));
+    if (!options.follow) {
+      const range = [ 0, existingLogs.length - 1 ];
+      if (desc) {
+        if (options.timestampBefore) {
+          const before = findTimeLogIndex(existingLogs, options.timestampBefore);
+          range[0] = before - options.limit;
+          range[1] = before;
+        } else {
+          range[0] = existingLogs.length - options.limit;
+          range[1] = existingLogs.length;
+        }
+      } else {
+        if (options.timestampAfter) {
+          const after = findTimeLogIndex(existingLogs, options.timestampAfter);
+          range[0] = after + 1;
+          range[1] = after + options.limit + 1;
+        } else {
+          range[0] = 0;
+          range[1] = options.limit;
+        }
+      }
+      const filteredLogs: TestLog[] = existingLogs.slice(range[0], range[1]);
+      if (desc) filteredLogs.reverse();
+      if (options.logsReference) options.logsReference.push(...filteredLogs);
+      filteredLogs.forEach(log => onEvent(log));
+    } else if (options.follow && !skipStreaming) {
+      let startIndex = existingLogs.length;
+      let rounds = 0;
+      while (rounds < streamingRounds) {
+        const count = Math.floor(Math.random() * 4) + 1;
+        const logs = generateLogs(count, startIndex, existingLogs.length - 1);
+        if (options.logsReference) options.logsReference.push(...logs);
+        logs.forEach(log => onEvent(log));
+        startIndex += count;
+        rounds++;
+      }
     }
   },
 }));
@@ -115,9 +185,10 @@ jest.mock('services/utils', () => ({
 describe('LogViewer', () => {
   const decoder = jsonToTaskLog;
 
-  describe('initialLogs', () => {
+  describe('static logs', () => {
     it('should render logs with initial logs and show partial logs', async () => {
       const initialLogs = generateLogs(VISIBLE_LINES + 100);
+      const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
       setup({ decoder, initialLogs });
 
@@ -125,31 +196,99 @@ describe('LogViewer', () => {
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
        * but not the logs outside of that range.
        */
-      expect(screen.queryByText(initialLogs[0].message)).toBeInTheDocument();
+      expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
       await waitFor(() => {
         expect(screen.queryByText(lastLog.message)).not.toBeInTheDocument();
       });
 
-      const tailingButton = screen.getByLabelText(LogViewer.ARIA_LABEL_ENABLE_TAILING);
-      userEvent.click(tailingButton);
+      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
+      userEvent.click(enableTailingButton);
 
       expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       await waitFor(() => {
-        expect(screen.queryByText(initialLogs[0].message)).not.toBeInTheDocument();
+        expect(screen.queryByText(firstLog.message)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should hide scrolling buttons when log content is empty', async () => {
+      setup({ decoder, initialLogs: [] });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST)).not.toBeVisible();
+        expect(screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING)).not.toBeVisible();
       });
     });
   });
 
-  describe('streaming', () => {
+  describe('streaming logs', () => {
+    const streamingRounds = 5;
+    const existingLogCount = 5000;
+    let canceler: AbortController;
+    let existingLogs: TestLog[];
+    let logsReference: TestLog[];
+    let onFetch: (config: src.FetchConfig, type: src.FetchType) => FetchArgs;
+
     beforeEach(() => {
-      // jest.resetModules();
+      canceler = new AbortController();
+      existingLogs = generateLogs(existingLogCount, 0, existingLogCount - 1);
+      logsReference = [];
+      onFetch = mockOnFetch({
+        canceler,
+        existingLogs,
+        logsReference,
+        skipStreaming: false,
+        streamingRounds,
+      });
     });
 
     it('should render logs with streaming', async () => {
-      const onFetch = mockOnFetch();
       setup({ decoder, onFetch });
+
       await waitFor(() => {
-        expect(true).toBe(true);
+        const lastLog = logsReference[logsReference.length - 1];
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+      });
+    });
+
+    it('should show oldest logs', async () => {
+      setup({ decoder, onFetch });
+
+      await waitFor(() => {
+        const lastLog = logsReference[logsReference.length - 1];
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        const lastExistingLog = existingLogs[existingLogs.length - 1];
+        expect(screen.queryByText(lastExistingLog.message)).toBeInTheDocument();
+      });
+
+      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
+      userEvent.click(scrollToOldestButton);
+
+      await waitFor(() => {
+        const firstLog = existingLogs[0];
+        expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
+      });
+    });
+
+    it('should show newest logs when enabling tailing', async () => {
+      setup({ decoder, onFetch });
+
+      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
+      userEvent.click(scrollToOldestButton);
+
+      await waitFor(() => {
+        const firstLog = existingLogs[0];
+        expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
+      });
+
+      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
+      userEvent.click(enableTailingButton);
+
+      await waitFor(() => {
+        const lastLog = logsReference[logsReference.length - 1];
+        expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
     });
   });
