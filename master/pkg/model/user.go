@@ -36,6 +36,7 @@ type UserSession struct {
 // A FullUser is a User joined with any other user relations.
 type FullUser struct {
 	ID       UserID `db:"id" json:"id"`
+	DisplayName  null.String `db:"display_name" json:"display_name"`
 	Username string `db:"username" json:"username"`
 	Admin    bool   `db:"admin" json:"admin"`
 	Active   bool   `db:"active" json:"active"`

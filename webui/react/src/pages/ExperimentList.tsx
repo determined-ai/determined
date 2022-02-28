@@ -406,7 +406,12 @@ const ExperimentList: React.FC = () => {
       },
       {
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: user.username, value: user.username })),
+        filters: users.map(user => {
+          return {
+            text: user.displayName || user.username,
+            value: user.username,
+          };
+        }),
         key: V1GetExperimentsRequestSortBy.USER,
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
