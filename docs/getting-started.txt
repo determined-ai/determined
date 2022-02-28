@@ -141,17 +141,16 @@ You can also include the master IP address in the command line:
 
 .. code:: bash
 
-   det -m http://<ipAddress>:8080 experiment create distributed.yaml
+   det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
 ***********************************
  Run a Single CPU/GPU Training Job
 ***********************************
 
 An experiment is a training job that consists of one or more variations, or trials, of the same
-model. A trial page contains detailed information about the model, the configuration, output logs,
-and training metrics. Typically, you have to code the metric frequency output, plots, and
-checkpointing while managing the configuration for each model. By integrating the Determined API,
-every experiment automatically provides these capabilities without writing extra code.
+model. By integrating the Determined API, every experiment automatically gives you metric frequency
+output, plots, and checkpointing without writing extra code. The Determined WebUI displays detailed
+information about the model, the configuration, output logs, and training metrics.
 
 This exercise trains a single model for a fixed number of batches, using constant values for all
 hyperparameters on a single slot.
@@ -162,7 +161,9 @@ hyperparameters on a single slot.
 
       det experiment create const.yaml .
 
-   The last argument dot notation (.) uploads all files in the current, context directory.
+   The last argument dot notation (.) uploads all files in the current directory to the Determined
+   cluster, and makes them available in the working directory in which each trial is run. This
+   directory is called the context directory.
 
    After the experiment has been submitted, you should see that the experiment is created:
 
@@ -173,7 +174,7 @@ hyperparameters on a single slot.
 
    .. tip::
 
-      To automatically stream log messages for the first trial in an experiment to STDOUT,
+      To automatically stream log messages for the first trial in an experiment to ``stdout``,
       specifying the configuration file and context directory, enter:
 
       .. code:: bash
@@ -183,8 +184,7 @@ hyperparameters on a single slot.
 #. Enter the cluster address in the browser to view the experiment status. If you installed locally
    using the ``det deploy local`` command, the URL should be http://localhost:8080/.
 
-#. Accept the default determined username with no password and click **Sign In** to view the
-   dashboard:
+#. To view the dashboard, enter your username and password. If you deployed locally, accept the default determined username with no password and click **Sign In**:
 
    .. image:: /assets/images/qs01b.png
       :width: 704px
@@ -203,7 +203,7 @@ hyperparameters on a single slot.
       :align: center
       :alt: Metrics graph detail
 
-#. When the experiment completes, click an experiment tile to view the trial page:
+#. When the experiment completes, click an experiment tile in the WebUI to view the trial page:
 
    .. image:: /assets/images/qs03.png
       :width: 704px
@@ -240,7 +240,7 @@ scheduled on a 4-GPU per machine cluster, but an 8-GPU job can be scheduled.
 
 #. Enter the cluster address in the browser.
 
-#. Accept the default determined username with no password and click **Sign In** to view the
+#. Accept the default determined username with no password and click **Sign In** to view the WebUI
    dashboard.
 
 #. Click the **Experiment** tile to view the experiment’s trial display.
