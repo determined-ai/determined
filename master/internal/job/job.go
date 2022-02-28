@@ -14,6 +14,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+// DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.
+const DecimalExp = 1000
+
 var (
 	// JobsActorAddr is the address of the jobs actor.
 	JobsActorAddr = actor.Addr("jobs")

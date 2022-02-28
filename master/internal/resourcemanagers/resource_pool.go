@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"fmt"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -37,10 +38,10 @@ type ResourcePool struct {
 	agentStatesCache map[*actor.Ref]*agent.AgentState
 	taskList         *taskList
 	groups           map[*actor.Ref]*group
-	queuePositions jobSortState // secondary sort key initialized based on job submission time
-	groupActorToID map[*actor.Ref]model.JobID
-	IDToGroupActor map[model.JobID]*actor.Ref
-	scalingInfo    *sproto.ScalingInfo
+	queuePositions   jobSortState // secondary sort key initialized based on job submission time
+	groupActorToID   map[*actor.Ref]model.JobID
+	IDToGroupActor   map[model.JobID]*actor.Ref
+	scalingInfo      *sproto.ScalingInfo
 
 	reschedule bool
 
@@ -66,10 +67,10 @@ func NewResourcePool(
 
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
-		
-		agents:      make(map[*actor.Ref]bool),
-		taskList:    newTaskList(),
-		groups:      make(map[*actor.Ref]*group),
+
+		agents:         make(map[*actor.Ref]bool),
+		taskList:       newTaskList(),
+		groups:         make(map[*actor.Ref]*group),
 		queuePositions: initalizeJobSortState(),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
 		IDToGroupActor: make(map[model.JobID]*actor.Ref),

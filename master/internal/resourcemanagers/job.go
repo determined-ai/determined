@@ -76,7 +76,7 @@ type jobSortState = map[model.JobID]decimal.Decimal
 
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
-	state[job.HeadAnchor] = decimal.New(0, 1000)
+	state[job.HeadAnchor] = decimal.New(0, job.DecimalExp)
 	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	return state
 }
@@ -111,7 +111,8 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 	newPos := decimal.Avg(qPos1, qPos2)
 
 	if newPos.Equal(qPos1) || newPos.Equal(qPos2) {
-		return decimal.NewFromInt(0), fmt.Errorf("unable to compute a new job position for job %s", msg.ID)
+		return decimal.NewFromInt(0), fmt.Errorf("unable to compute a new job position for job %s",
+			msg.ID)
 	}
 
 	return newPos, nil
@@ -119,7 +120,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 
 func initalizeQueuePosition(aTime time.Time) decimal.Decimal {
 	// we could add exponent to give us more insertions if needed.
-	return decimal.New(aTime.UnixMicro(), 1000)
+	return decimal.New(aTime.UnixMicro(), job.DecimalExp)
 }
 
 // we might RMs to have easier/faster access to this information than this.
