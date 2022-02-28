@@ -322,10 +322,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.setPriority(ctx, msg.Priority))
 
 	case job.RegisterJobPosition:
-		c.db.UpdateJob(&model.Job{
+		err := c.db.UpdateJob(&model.Job{
 			JobID: msg.JobID,
 			QPos:  msg.JobPosition,
 		})
+		if err != nil {
+			ctx.Log().Errorf("persisting position for job %s failed", msg.JobID)
+		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

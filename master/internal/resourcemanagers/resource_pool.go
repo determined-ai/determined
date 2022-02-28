@@ -2,7 +2,6 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
-	"fmt"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -120,10 +119,6 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
 			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
-			if err := rp.persist(); err != nil {
-				ctx.Log().Errorf("error persisting queue positions: %s", err)
-				// CHECK: fail?
-			}
 		}
 		rp.groupActorToID[msg.Group] = msg.JobID
 		rp.IDToGroupActor[msg.JobID] = msg.Group
@@ -279,9 +274,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return err
 		}
-		if err = rp.restore(); err != nil {
-			ctx.Log().Errorf("failed to restore resource pool: %s", err)
-		}
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 		return err
 
@@ -388,8 +380,6 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) moveJob(msg job.MoveJob) (job.RegisterJobPosition, error) {
-	// REMOVEME
-	fmt.Println(rp.config.PoolName, "moveJob: ", msg)
 	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	newPos, err := computeNewJobPos(msg, rp.queuePositions)
 	if err != nil {
@@ -397,9 +387,6 @@ func (rp *ResourcePool) moveJob(msg job.MoveJob) (job.RegisterJobPosition, error
 	}
 	rp.queuePositions[msg.ID] = newPos
 
-	if err := rp.persist(); err != nil {
-		return job.RegisterJobPosition{}, err
-	}
 	// actors.NotifyAfter(ctx, 0, schedulerTick{}) ?
 	return job.RegisterJobPosition{
 		JobID:       msg.ID,
@@ -408,6 +395,9 @@ func (rp *ResourcePool) moveJob(msg job.MoveJob) (job.RegisterJobPosition, error
 }
 
 func (rp *ResourcePool) recoverJobPosition(msg job.RecoverJobPosition) error {
+	if msg.JobPosition == "" {
+		return nil
+	}
 	position, err := decimal.NewFromString(msg.JobPosition)
 	if err != nil {
 		return err
@@ -426,8 +416,11 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	case job.MoveJob:
 		response, err := rp.moveJob(msg)
 		ctx.Respond(err)
-		if err != nil {
-			ctx.Self().System().TellAt(job.JobsActorAddr, response)
+		if err == nil {
+			addr, ok := rp.IDToGroupActor[response.JobID]
+			if ok {
+				ctx.Tell(addr, response)
+			}
 		}
 
 	case job.SetGroupWeight:
@@ -465,18 +458,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) persist() error {
-	// exlude head and tail?
-	fmt.Println("TODO persist rp", rp.config.PoolName)
-
-	return nil // TODO
-}
-
-func (rp *ResourcePool) restore() error {
-	fmt.Println("TODO restore rp", rp.config.PoolName)
-	return nil // TODO
-}
-
 func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case groupActorStopped:
@@ -484,10 +465,6 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 			delete(rp.queuePositions, jobID)
 			delete(rp.groupActorToID, msg.Ref)
 			delete(rp.IDToGroupActor, jobID)
-			if err := rp.persist(); err != nil {
-				ctx.Log().Errorf("error persisting queuePositions: %s", err)
-				// CHECK fail?
-			}
 		} else {
 			ctx.Log().Errorf("group actor stopped but no job id found for group: %s", msg.Ref)
 		}

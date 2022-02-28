@@ -64,7 +64,10 @@ require (
 	k8s.io/client-go v0.20.14
 )
 
-require github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
+require (
+	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
+	github.com/shopspring/decimal v1.2.0
+)
 
 require (
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -118,7 +121,6 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.25.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
-	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

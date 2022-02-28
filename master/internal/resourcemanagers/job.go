@@ -76,7 +76,7 @@ type jobSortState = map[model.JobID]decimal.Decimal
 
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
-	state[job.HeadAnchor] = decimal.NewFromInt(0)
+	state[job.HeadAnchor] = decimal.New(0, 1000)
 	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	return state
 }
@@ -103,7 +103,6 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 
 	// check if qPos3 is between qPos1 and qPos2
 	smallPos := decimal.Min(qPos1, qPos2)
-	//smallPos := math.Min(qPos1, qPos2)
 	bigPos := decimal.Max(qPos1, qPos2)
 	if qPos3.GreaterThan(smallPos) && qPos3.LessThan(bigPos) {
 		return decimal.NewFromInt(0), nil // no op. Job is already in the correct position.
@@ -119,7 +118,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 }
 
 func initalizeQueuePosition(aTime time.Time) decimal.Decimal {
-	// we could shift this back and forth to give us more more.
+	// we could add exponent to give us more insertions if needed.
 	return decimal.New(aTime.UnixMicro(), 1000)
 }
 
