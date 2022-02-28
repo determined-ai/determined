@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Select } from 'antd';
 import React from 'react';
@@ -29,24 +29,28 @@ const setup = () => {
 };
 
 describe('SelectFilter', () => {
-  it('displays label and placeholder', () => {
+  it('displays label and placeholder', async () => {
     setup();
 
-    expect(screen.getByText(LABEL)).toBeInTheDocument();
-    expect(screen.getByText(PLACEHOLDER)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(LABEL)).toBeInTheDocument();
+      expect(screen.queryByText(PLACEHOLDER)).toBeInTheDocument();
+    });
   });
 
-  it('opens select list', () => {
+  it('opens select list', async () => {
     const { handleOpen } = setup();
 
     expect(handleOpen).not.toHaveBeenCalled();
     userEvent.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
 
-    expect(screen.getAllByTitle(OPTION_TITLE)).toHaveLength(NUM_OPTIONS);
+    await waitFor(() => {
+      expect(screen.queryAllByTitle(OPTION_TITLE)).toHaveLength(NUM_OPTIONS);
+    });
   });
 
-  it('selects option', () => {
+  it('selects option', async () => {
     const { handleOpen } = setup();
 
     userEvent.click(screen.getByText(PLACEHOLDER));
@@ -57,10 +61,12 @@ describe('SelectFilter', () => {
 
     userEvent.click(list[0], undefined, { skipPointerEventsCheck: true });
 
-    expect(document.querySelector('.ant-select-selection-item')?.textContent).toBe(firstOption);
+    await waitFor(() => {
+      expect(document.querySelector('.ant-select-selection-item')?.textContent).toBe(firstOption);
+    });
   });
 
-  it('searches', () => {
+  it('searches', async () => {
     const { handleOpen } = setup();
 
     userEvent.click(screen.getByText(PLACEHOLDER));
@@ -70,7 +76,9 @@ describe('SelectFilter', () => {
 
     userEvent.type(screen.getByRole('combobox'), firstOption);
 
-    expect(screen.queryAllByTitle(OPTION_TITLE)).toHaveLength(1);
-    expect(screen.getByTitle(OPTION_TITLE).textContent).toBe(firstOption);
+    await waitFor(() => {
+      expect(screen.queryAllByTitle(OPTION_TITLE)).toHaveLength(1);
+      expect(screen.queryByTitle(OPTION_TITLE)?.textContent).toBe(firstOption);
+    });
   });
 });
