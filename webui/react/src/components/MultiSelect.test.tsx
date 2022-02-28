@@ -20,7 +20,6 @@ const setup = () => {
     <MultiSelect
       itemName="Agent"
       label={LABEL}
-      open
       placeholder={PLACEHOLDER}
       onDropdownVisibleChange={handleOpen}>
       {new Array(NUM_OPTIONS).fill(null).map((v, index) => (
@@ -46,8 +45,8 @@ describe('SelectFilter', () => {
 
   it('opens select list', async () => {
     const { handleOpen } = setup();
+    expect(handleOpen).not.toHaveBeenCalled();
     await waitFor(() => {
-      expect(handleOpen).not.toHaveBeenCalled();
       userEvent.click(screen.getByText(PLACEHOLDER));
       expect(handleOpen).toHaveBeenCalled();
 
