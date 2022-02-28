@@ -105,7 +105,7 @@ might want to review them to gain an understanding of how the Determined API is 
 +------------------+------------------------------------------------------------------------+
 | ``layers.py``    | Convolutional layers used by the model.                                |
 +------------------+------------------------------------------------------------------------+
-| ``model_def.py`` | Core, model code, which includes building and compiling the model.     |
+| ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
 ***************************************
