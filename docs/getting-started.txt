@@ -184,15 +184,17 @@ hyperparameters on a single slot.
 #. Enter the cluster address in the browser to view the experiment status. If you installed locally
    using the ``det deploy local`` command, the URL should be http://localhost:8080/.
 
-#. To view the dashboard, enter your username and password. If you deployed locally, accept the default determined username with no password and click **Sign In**:
+#. To view the dashboard, enter your username and password. If you deployed locally, accept the
+   default determined username with no password and click **Sign In**:
 
    .. image:: /assets/images/qs01b.png
       :width: 704px
       :align: center
       :alt: Dashboard
 
-   In this example, you can see two experiments. Experiment 3 is in the COMPLETED state and
-   experiment 4 is in the ACTIVE state.
+   The screenshot shows that two experiments have been run, demonstrating the experiment progress
+   notification. Notice that experiment 3 is in the COMPLETED state and experiment 4 is in the
+   ACTIVE state.
 
    While an experiment is in the ACTIVE, training state, click an experiment tile to see the Metrics
    graph update with your currently defined metrics. In this example, the graph displays the loss
