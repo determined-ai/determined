@@ -1,10 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+/* eslint-disable max-len */
+import React, { useRef } from 'react';
 
+import { jsonToClusterLog } from 'services/decoder';
 import HelmetDecorator from 'storybook/HelmetDecorator';
 import StoreDecorator from 'storybook/StoreDecorator';
 import { downloadText, simulateLogsDownload } from 'utils/browser';
 
-import LogViewer, { LogViewerHandles } from './LogViewer';
+import LogViewer from './LogViewer';
 
 export default {
   component: LogViewer,
@@ -18,22 +20,20 @@ const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,3
     system="master" trial-id="10" type="trial"
 `;
 
-export const Default = (): React.ReactNode => {
-  const logsRef = useRef<LogViewerHandles>(null);
-
-  useEffect(() => {
-    /* eslint-disable max-len */
-    if (logsRef.current) logsRef.current?.addLogs([
-      { id: 0, message: 'Simple one liner.', time: '2020-06-02T21:48:07.456381-06:00' },
-      { id: 1, message: 'Another line', time: '2020-06-02T21:48:08.456381-06:00' },
-      { id: 2, message: 'Example of a really long line. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.', time: '2020-06-02T21:48:09.456381-06:00' },
-      { id: 3, message: 'Example of multi-line log with newlines\nanother line\nanother line\nanother line', time: '2020-06-02T21:48:10.456381-06:00' },
-      { id: 4, message: messageWithTags, time: '2020-06-02T21:48:12.456389-06:00' },
-    ]);
-  });
-
-  return <LogViewer pageProps={{ title: 'Default' }} ref={logsRef} />;
-};
+export const Default = (): React.ReactNode => (
+  <div style={{ height: '100vh' }}>
+    <LogViewer
+      decoder={jsonToClusterLog}
+      initialLogs={[
+        { id: '0', message: 'Simple one liner.', time: '2020-06-02T21:48:07.456381-06:00' },
+        { id: '1', message: 'Another line', time: '2020-06-02T21:48:08.456381-06:00' },
+        { id: '2', message: 'Example of a really long line. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.', time: '2020-06-02T21:48:09.456381-06:00' },
+        { id: '3', message: 'Example of multi-line log with newlines\nanother line\nanother line\nanother line', time: '2020-06-02T21:48:10.456381-06:00' },
+        { id: '4', message: messageWithTags, time: '2020-06-02T21:48:12.456389-06:00' },
+      ]}
+    />
+  </div>
+);
 
 const ansiText = `Standard colors:
 [30m  30[0m[31m  31[0m[32m  32[0m[33m  33[0m[34m  34[0m[35m  35[0m[36m  36[0m
@@ -84,19 +84,17 @@ Intense colors:
 [38;5;250m 250[0m[38;5;251m 251[0m[38;5;252m 252[0m[38;5;253m 253[0m[38;5;254m 254[0m[38;5;255m 255[0m
 `;
 
-export const Ansi = (): React.ReactNode => {
-  const logsRef = useRef<LogViewerHandles>(null);
-
-  useEffect(() => {
-    /* eslint-disable max-len */
-    if (logsRef.current) logsRef.current?.addLogs([
-      { id: 0, message: 'example of logs with ANSI color codes', time: '2020-06-02T21:48:07.456381-06:00' },
-      { id: 1, message: ansiText, time: '2020-06-02T21:48:08.456381-06:00' },
-    ]);
-  });
-
-  return <LogViewer pageProps={{ title: 'ANSI Characters' }} ref={logsRef} />;
-};
+export const Ansi = (): React.ReactNode => (
+  <div style={{ height: '100vh' }}>
+    <LogViewer
+      decoder={jsonToClusterLog}
+      initialLogs={[
+        { id: '0', message: 'example of logs with ANSI color codes', time: '2020-06-02T21:48:07.456381-06:00' },
+        { id: '1', message: ansiText, time: '2020-06-02T21:48:08.456381-06:00' },
+      ]}
+    />
+  </div>
+);
 
 export const DefaultDownload = (): React.ReactNode => (
   <button onClick={() => downloadText('default-logs.txt', [ messageWithTags ])}>

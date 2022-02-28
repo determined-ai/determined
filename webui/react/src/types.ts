@@ -609,12 +609,23 @@ export enum LogLevel {
   Debug = 'debug',
   Error = 'error',
   Info = 'info',
+  None = 'none',
   Trace = 'trace',
   Warning = 'warning',
 }
 
+export enum LogLevelFromApi {
+  Unspecified = 'LOG_LEVEL_UNSPECIFIED',
+  Trace = 'LOG_LEVEL_TRACE',
+  Debug = 'LOG_LEVEL_DEBUG',
+  Info = 'LOG_LEVEL_INFO',
+  Warning = 'LOG_LEVEL_WARNING',
+  Error = 'LOG_LEVEL_ERROR',
+  Critical = 'LOG_LEVEL_CRITICAL',
+}
+
 export interface Log {
-  id: number;
+  id: number | string;
   level?: LogLevel;
   message: string;
   meta?: string;
@@ -622,7 +633,7 @@ export interface Log {
 }
 
 export interface TrialLog {
-  id: number;
+  id: string;
   level?: LogLevel;
   message: string;
   time: string;

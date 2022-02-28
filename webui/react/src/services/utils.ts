@@ -1,12 +1,9 @@
-import axios, { AxiosResponse } from 'axios';
-
-import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
 
-import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
+import { DetApi, FetchOptions } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -50,12 +47,10 @@ export const isNotFound = (e: any): boolean => {
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAborted = (e: any): boolean => {
-  return e?.name === 'AbortError' || axios.isCancel(e);
+  return e?.name === 'AbortError';
 };
 
 /* HTTP Helpers */
-
-export const http = axios.create({ responseType: 'json', withCredentials: false });
 
 /* Fits API errors into a DetError. */
 export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
@@ -84,36 +79,9 @@ export const processApiError = async (name: string, e: unknown): Promise<DetErro
       options.payload = err;
     }
   }
+
   return new DetError(e, options);
 };
-
-export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
-  return async function(params: Input & ApiCommonParams): Promise<Output> {
-    const httpOpts = api.httpOptions(params);
-
-    try {
-      let headers = httpOpts.headers;
-      if (!api.unAuthenticated) {
-        headers = {
-          Authorization: `Bearer ${globalStorage.authToken}`,
-          ...headers,
-        };
-      }
-      const response = api.stubbedResponse ? { data: api.stubbedResponse } as AxiosResponse<unknown>
-        : await http.request({
-          cancelToken: params.cancelToken,
-          data: httpOpts.body,
-          headers,
-          method: httpOpts.method || 'GET',
-          url: serverAddress() + httpOpts.url,
-        });
-
-      return api.postProcess ? api.postProcess(response) : response.data as Output;
-    } catch (e) {
-      throw (await processApiError(api.name, e));
-    }
-  };
-}
 
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
   return async function(params: Input, options?: FetchOptions): Promise<Output> {

@@ -2,7 +2,7 @@ import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
-import { generateApi, generateDetApi } from 'services/utils';
+import { generateDetApi } from 'services/utils';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
@@ -292,5 +292,3 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
-
-export const getTaskLogs = generateApi<Service.TaskLogsParams, Type.Log[]>(Config.getTaskLogs);

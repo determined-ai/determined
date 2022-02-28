@@ -3,6 +3,7 @@ import { LogLevelFromApi } from 'types';
 
 export interface Settings {
   agentId?: string[];
+  allocationId?: string[];
   containerId?: string[];
   level?: LogLevelFromApi[];
   rankId?: number[];
@@ -11,8 +12,14 @@ export interface Settings {
 const config: SettingsConfig = {
   settings: [
     {
+      key: 'allocationId',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+    {
       key: 'agentId',
-      storageKey: 'agentId',
       type: {
         baseType: BaseType.String,
         isArray: true,
@@ -20,7 +27,6 @@ const config: SettingsConfig = {
     },
     {
       key: 'containerId',
-      storageKey: 'containerId',
       type: {
         baseType: BaseType.String,
         isArray: true,
@@ -28,7 +34,6 @@ const config: SettingsConfig = {
     },
     {
       key: 'rankId',
-      storageKey: 'rankId',
       type: {
         baseType: BaseType.Integer,
         isArray: true,
@@ -43,7 +48,7 @@ const config: SettingsConfig = {
       },
     },
   ],
-  storagePath: 'trial-logs',
+  storagePath: 'task-logs',
 };
 
 export default config;

@@ -16,6 +16,7 @@ interface Props {
 
 export interface Filters {
   agentIds?: string[],
+  allocationIds?: string[],
   containerIds?: string[],
   levels?: LogLevelFromApi[],
   rankIds?: number[],
@@ -23,7 +24,7 @@ export interface Filters {
   stdtypes?: string[],
 }
 
-const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
+const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
   const selectOptions = useMemo(() => {
     return {
       ...options,
@@ -48,6 +49,14 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }
   return (
     <>
       <Space>
+        {selectOptions?.allocationIds?.length !== 0 && (
+          <MultiSelect
+            itemName="Allocation"
+            value={values.allocationIds}
+            onChange={handleChange('allocationIds', String)}>
+            {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
+          </MultiSelect>
+        )}
         {selectOptions?.agentIds?.length !== 0 && (
           <MultiSelect
             itemName="Agent"
@@ -62,7 +71,9 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }
             style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
-            {selectOptions?.containerIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
+            {selectOptions?.containerIds?.map(id => (
+              <Option key={id} value={id}>{id || 'No Container'}</Option>
+            ))}
           </MultiSelect>
         )}
         {selectOptions?.rankIds?.length !== 0 && (
@@ -87,4 +98,4 @@ const TrialLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }
   );
 };
 
-export default TrialLogFilters;
+export default TaskLogFilters;
