@@ -1,5 +1,4 @@
 import { sha512 } from 'js-sha512';
-import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
@@ -27,6 +26,7 @@ export const detApi = {
   StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
+  StreamingJobs: Api.JobsApiFetchParamCreator(ApiConfig),
   StreamingProfiler: Api.ProfilerApiFetchParamCreator(ApiConfig),
   Tasks: new Api.TasksApi(ApiConfig),
   Templates: new Api.TemplatesApi(ApiConfig),
@@ -34,8 +34,9 @@ export const detApi = {
   Users: new Api.UsersApi(ApiConfig),
 };
 
-const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
-Api.ConfigurationParameters => {
+const updatedApiConfigParams = (
+  apiConfig?: Api.ConfigurationParameters,
+): Api.ConfigurationParameters => {
   return {
     apiKey: `Bearer ${globalStorage.authToken}`,
     basePath: serverAddress(),
@@ -57,6 +58,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingCluster = Api.ClusterApiFetchParamCreator(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
   detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
+  detApi.StreamingJobs = Api.JobsApiFetchParamCreator(ApiConfig),
   detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
   detApi.Tasks = new Api.TasksApi(config);
   detApi.TensorBoards = new Api.TensorboardsApi(config);
@@ -770,24 +772,4 @@ export const updateJobQueue: Service.DetApi<
   name: 'updateJobQueue',
   postProcess: identity,
   request: (params: Api.V1UpdateJobQueueRequest) => detApi.Internal.updateJobQueue(params),
-};
-
-/* Logs */
-
-const buildQuery = (params: Service.LogsParams): string => {
-  const queryParams: Record<string, number> = {};
-  if (params.tail) queryParams['tail'] = params.tail;
-  if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
-  return queryString.stringify(queryParams);
-};
-
-export const getTaskLogs: Service.HttpApi<Service.TaskLogsParams, Type.Log[]> = {
-  httpOptions: (params: Service.TaskLogsParams) => ({
-    url: [
-      `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
-      buildQuery(params),
-    ].join('?'),
-  }),
-  name: 'getTaskLogs',
-  postProcess: response => decoder.jsonToTaskLogs(response.data),
 };

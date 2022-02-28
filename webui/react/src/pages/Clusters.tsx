@@ -33,10 +33,10 @@ const Clusters: React.FC = () => {
   }, [ basePath, history ]);
 
   return (
-    <Page id="cluster" stickyHeader title="Cluster">
-      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
-        <TabPane key="logs" tab="Master Logs">
-          <ClusterLogs className="pageFullHeight" hideTitle={true} />
+    <Page bodyNoPadding id="cluster" stickyHeader title="Cluster">
+      <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+        <TabPane key="logs" tab="Cluster Logs">
+          <ClusterLogs />
         </TabPane>
       </Tabs>
     </Page>

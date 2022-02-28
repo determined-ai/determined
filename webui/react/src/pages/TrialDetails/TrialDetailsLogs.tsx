@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
@@ -103,7 +103,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     };
 
     if (type === FetchType.Initial) {
-      options.orderBy = config.isNewestFirst ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+      options.orderBy = config.fetchDirection === FetchDirection.Older
+        ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
     } else if (type === FetchType.Newer) {
       options.orderBy = 'ORDER_BY_ASC';
       if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
@@ -151,7 +152,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     return () => canceler.abort();
   }, [ trial.id, ui.isPageHidden ]);
 
-  const trialLogFilters = (
+  const logFilters = (
     <div className={css.filters}>
       <TrialLogFilters
         options={filterOptions}
@@ -164,10 +165,9 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   return (
     <div className={css.base}>
-      <LogViewerCore
+      <LogViewer
         decoder={jsonToTrialLog}
-        sortKey="time"
-        title={trialLogFilters}
+        title={logFilters}
         onDownload={handleDownloadLogs}
         onFetch={handleFetch}
       />

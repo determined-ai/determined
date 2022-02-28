@@ -1,11 +1,11 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
+import Icon from 'components/Icon';
 import { LogLevel } from 'types';
 import { ansiToHtml } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
-import Icon from './Icon';
 import css from './LogViewerEntry.module.scss';
 
 export interface LogEntry {
@@ -14,7 +14,7 @@ export interface LogEntry {
   message: string;
 }
 
-interface Prop extends LogEntry {
+export interface Props extends LogEntry {
   noWrap?: boolean;
   style?: React.CSSProperties;
   timeStyle?: React.CSSProperties;
@@ -30,8 +30,8 @@ export const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIM
 // Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
 export const MAX_DATETIME_LENGTH = 22;
 
-const LogViewerEntry: React.FC<Prop> = ({
-  level,
+const LogViewerEntry: React.FC<Props> = ({
+  level = LogLevel.None,
   message,
   noWrap = false,
   style,
@@ -39,23 +39,19 @@ const LogViewerEntry: React.FC<Prop> = ({
   timeStyle,
 }) => {
   const classes = [ css.base ];
-  const logLevel = level;
-  const levelClasses = [ css.level, css[logLevel] ];
-  const messageClasses = [ css.message ];
+  const levelClasses = [ css.level, css[level] ];
+  const messageClasses = [ css.message, css[level] ];
 
   if (noWrap) classes.push(css.noWrap);
-  if (logLevel) messageClasses.push(css[logLevel]);
 
   return (
     <div className={classes.join(' ')} style={style}>
-      {logLevel ? (
-        <Tooltip placement="top" title={`Level: ${capitalize(logLevel)}`}>
-          <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
-            <div className={css.levelLabel}>&lt;[{logLevel}]&gt;</div>
-            <Icon name={logLevel} size="small" />
-          </div>
-        </Tooltip>
-      ) : <div style={{ width: ICON_WIDTH }} /> }
+      <Tooltip placement="top" title={`Level: ${capitalize(level)}`}>
+        <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
+          <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
+          <Icon name={level} size="small" />
+        </div>
+      </Tooltip>
       <div className={css.time} style={timeStyle}>{formattedTime}</div>
       <div
         className={messageClasses.join(' ')}

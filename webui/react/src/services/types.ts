@@ -1,23 +1,11 @@
-import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, Job, Metadata, RecordKey } from 'types';
+import { DetailedUser, Job, Metadata, RecordKey } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
-export interface ApiCommonParams {
-  cancelToken?: CancelToken,
-}
-
 export interface FetchOptions {
   signal?: AbortSignal;
-}
-
-export interface HttpOptions {
-  body?: Record<keyof unknown, unknown> | string;
-  headers?: Record<string, unknown>;
-  method?: Method;
-  url: string;
 }
 
 interface ApiBase {
@@ -33,16 +21,11 @@ export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   request: (params: Input, options?: FetchOptions) => Promise<DetOutput>;
   stubbedResponse?: DetOutput;
 }
-export interface HttpApi<Input, Output> extends ApiBase {
-  httpOptions: (params: Input) => HttpOptions;
-  postProcess: (response: AxiosResponse<unknown>) => Output; // io type decoder.
-}
 
 export interface ApiState<T> {
   data?: T;
   error?: Error;
   isLoading: boolean;
-  source?: CancelTokenSource;
 }
 
 export interface LoginResponse {
@@ -217,16 +200,6 @@ export interface LaunchJupyterLabParams {
   };
   preview?: boolean;
   templateName?: string;
-}
-
-export interface LogsParams {
-  greaterThanId?: number;
-  tail?: number;
-}
-
-export interface TaskLogsParams extends LogsParams {
-  taskId: string;
-  taskType: CommandType;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */

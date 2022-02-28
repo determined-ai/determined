@@ -1,27 +1,23 @@
 import React, { useCallback } from 'react';
 
-import LogViewerCore, { FetchConfig, FetchType } from 'components/LogViewerCore';
-import Page from 'components/Page';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
+import { isNumber } from 'utils/data';
 
 import css from './ClusterLogs.module.scss';
 
-interface Props {
-  className?: string
-  hideTitle?: boolean
-}
-
-const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
+const ClusterLogs: React.FC = () => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
+    const offsetId = isNumber(config.offsetLog?.id) ? config.offsetLog?.id ?? 0 : 0;
 
     if (type === FetchType.Initial) {
-      if (config.isNewestFirst) options.offset = -config.limit;
+      if (config.fetchDirection === FetchDirection.Older) options.offset = -config.limit;
     } else if (type === FetchType.Newer) {
-      options.offset = config.offsetLog?.id ?? 0;
+      options.offset = offsetId;
     } else if (type === FetchType.Older) {
-      options.offset = Math.max(0, (config.offsetLog?.id ?? 0) - config.limit);
+      options.offset = Math.max(0, offsetId - config.limit);
     } else if (type === FetchType.Stream) {
       options.offset = -1;
       options.follow = true;
@@ -37,15 +33,14 @@ const ClusterLogs: React.FC<Props> = ({ className, hideTitle }: Props) => {
   }, []);
 
   return (
-    <Page bodyNoPadding className={className} id="master-logs">
-      <LogViewerCore
+    <div className={css.base}>
+      <LogViewer
         decoder={jsonToClusterLog}
-        hideTitle={hideTitle}
         sortKey="id"
         title={<div className={css.title}>Cluster Logs</div>}
         onFetch={handleFetch}
       />
-    </Page>
+    </div>
   );
 };
 
