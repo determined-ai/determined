@@ -613,6 +613,23 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
+func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
+	t := time.NewTicker(10 * time.Minute)
+	defer t.Stop()
+	for {
+		currentTime := time.Now().UTC().Truncate(time.Millisecond)
+		err := db.UpdateClusterHeartBeat(currentTime)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		select {
+		case <-t.C:
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	var logs []*model.TaskLog
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
@@ -806,6 +823,11 @@ func (m *Master) Run(ctx context.Context) error {
 	if err = m.db.CloseOpenAllocations(); err != nil {
 		return err
 	}
+
+	// The below function call is intentionally made after the call to CloseOpenAllocations.
+	// This ensures that in the scenario where a cluster fails all open allocations are
+	// set to the last cluster heartbeat when the cluster was running.
+	go updateClusterHeartbeat(ctx, m.db)
 
 	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")

@@ -194,9 +194,8 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 func (db *PgDB) CloseOpenAllocations() error {
 	if _, err := db.sql.Exec(`
 UPDATE allocations
-SET end_time = current_timestamp AT TIME ZONE 'UTC'
-WHERE end_time IS NULL
-`); err != nil {
+SET end_time = cluster_heartbeat FROM cluster_id
+WHERE end_time IS NULL`); err != nil {
 		return errors.Wrap(err, "closing old allocations")
 	}
 	return nil
