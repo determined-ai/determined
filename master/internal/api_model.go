@@ -131,7 +131,8 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
 	if err := a.clearModelName(ctx, req.Name); err != nil {
-		return nil, errors.Wrap(err, "error setting model name")
+		return nil, status.Errorf(codes.AlreadyExists,
+			"Error renaming model: %s", err.Error())
 	}
 
 	b, err := protojson.Marshal(req.Metadata)
@@ -173,7 +174,8 @@ func (a *apiServer) PatchModel(
 		log.Infof("model (%d) name changing from \"%s\" to \"%s\"",
 			currModel.Id, currModel.Name, req.Model.Name.Value)
 		if err = a.clearModelName(ctx, req.Model.Name.Value); err != nil {
-			return nil, errors.Wrap(err, "error renaming model")
+			return nil, status.Errorf(codes.AlreadyExists,
+				"Error renaming model: %s", err.Error())
 		}
 		madeChanges = true
 		currModel.Name = req.Model.Name.Value
