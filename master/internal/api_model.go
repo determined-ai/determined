@@ -123,7 +123,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 		return err
 	}
 	if len(getResp.Models) > 0 {
-		return status.Errorf(codes.AlreadyExists, "avoid names similar too other models (case-insensitive)")
+		return status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
 	}
 	return nil
 }
