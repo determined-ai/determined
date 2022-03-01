@@ -276,6 +276,21 @@ const ExperimentList: React.FC = () => {
     }
   }, [ ]);
 
+  const contextualNameRenderer = (
+    value: string | number | undefined,
+    record: ExperimentItem
+  ): React.ReactNode => (
+    <TaskActionDropdown
+      curUser={user}
+      task={taskFromExperiment(record)}
+      onComplete={handleActionComplete}
+    >
+      <Link path={paths.experimentDetails(record.id)}>
+        {value === undefined ? "" : value}
+      </Link>
+    </TaskActionDropdown>
+);
+
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
@@ -322,7 +337,7 @@ const ExperimentList: React.FC = () => {
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.NAME,
         onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
-        render: experimentNameRenderer,
+        render: contextualNameRenderer,
         sorter: true,
         title: 'Name',
         width: 240,
