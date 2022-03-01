@@ -728,8 +728,8 @@ func TestPrioritySchedulingNoPreemptionByPosition(t *testing.T) {
 	jobsList := map[model.JobID]decimal.Decimal{
 		"1": decimal.New(1, job.DecimalExp),
 		"2": decimal.New(2, job.DecimalExp),
-		"3": decimal.NewFromFloatWithExponent(1.5, job.DecimalExp),
 	}
+	jobsList["3"] = decimal.Avg(jobsList["1"], jobsList["2"])
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
