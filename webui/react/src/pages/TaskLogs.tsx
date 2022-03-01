@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
+import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import useSettings from 'hooks/useSettings';
@@ -12,7 +13,6 @@ import { jsonToTaskLog } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { CommandType } from 'types';
 
-import TaskLogFilters, { Filters } from './TaskLogFilters';
 import css from './TaskLogs.module.scss';
 import settingsConfig, { Settings } from './TaskLogs.settings';
 
@@ -116,7 +116,7 @@ const TaskLogs: React.FC = () => {
 
   const logFilters = (
     <div className={css.filters}>
-      <TaskLogFilters
+      <LogViewerFilters
         options={filterOptions}
         values={filterValues}
         onChange={handleFilterChange}

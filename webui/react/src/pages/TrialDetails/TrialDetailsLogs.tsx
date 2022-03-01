@@ -3,9 +3,9 @@ import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
+import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
-import TrialLogFilters, { Filters } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
@@ -154,7 +154,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const logFilters = (
     <div className={css.filters}>
-      <TrialLogFilters
+      <LogViewerFilters
         options={filterOptions}
         values={filterValues}
         onChange={handleFilterChange}
