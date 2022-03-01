@@ -9,7 +9,7 @@
 +--------------------+
 | Prometheus 2.14.0  |
 +--------------------+
-| Determined 0.17.8+ |
+| Determined 0.17.6+ |
 +--------------------+
 
 This document describes the setup and configuration to enable a Grafana dashboard to monitor
@@ -81,8 +81,8 @@ This enables the following two Prometheus API endpoints on the instance.
  Configure cAdvisor and dcgm-exporter
 **************************************
 
-The cAdvisor and dcgm-exporter tools must be running on the cluster agents to be monitored. These
-can be installed manually or run as individual Docker containers.
+The cAdvisor and dcgm-exporter monitoring tools must be running on the cluster agents to be
+monitored. These can be installed manually or run as individual Docker containers.
 
 To configure dynamic agents to start up with cAdvisor and dcgm-exporter, add the following startup
 script to the ``master.yaml`` file:
@@ -110,8 +110,8 @@ script to the ``master.yaml`` file:
              --device=/dev/kmsg \
              gcr.io/cadvisor/cadvisor:$VERSION
 
-This example startup script includes the default setup docker commands provided by dcgm-exporter and
-cAdvisor.
+This example startup script includes the default setup docker commands provided by `dcgm-exporter
+<https://github.com/NVIDIA/dcgm-exporter>`__ and `cAdvisor <https://github.com/google/cadvisor>`__.
 
 **********************
  Configure Prometheus
