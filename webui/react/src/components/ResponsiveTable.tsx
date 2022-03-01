@@ -83,7 +83,17 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
-        <Table scroll={tableScroll} tableLayout="auto" {...props} />
+        <Table
+          scroll={tableScroll}
+          tableLayout="auto"
+          onRow={(record, rowIndex) => ({
+            onContextMenu: e => {
+              e.preventDefault()
+              console.log("row right click")
+              // toggle visibility of custom action menu
+            }
+            })}
+          {...props} />
       </Spinner>
     </div>
   );
