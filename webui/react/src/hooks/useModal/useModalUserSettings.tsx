@@ -1,4 +1,5 @@
 import { Button } from 'antd';
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
@@ -8,8 +9,8 @@ import useModalChangePassword from 'hooks/useModal/useModalChangePassword';
 import useModal, { ModalHooks } from './useModal';
 import css from './useModalUserSettings.module.scss';
 
-const useModalUserSettings = (): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+const useModalUserSettings = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ modal });
   const { auth } = useStore();
   const username = auth.user?.username || 'Anonymous';
 
