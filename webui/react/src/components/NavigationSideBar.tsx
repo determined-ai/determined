@@ -1,4 +1,4 @@
-import { Button, Menu, Tooltip } from 'antd';
+import { Button, Menu, Modal, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
@@ -93,7 +93,8 @@ const NavigationSideBar: React.FC = () => {
   const { auth, cluster: overview, ui, resourcePools } = useStore();
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings();
+  const [ modal, contextHolder ] = Modal.useModal();
+  const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -135,6 +136,7 @@ const NavigationSideBar: React.FC = () => {
       nodeRef={nodeRef}
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
+        {contextHolder}
         <header>
           <Dropdown
             content={(
