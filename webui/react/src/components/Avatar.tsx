@@ -1,6 +1,7 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
+import { useStore } from 'contexts/Store';
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
 
@@ -32,7 +33,12 @@ const getColor = (name = ''): string => {
 const Avatar: React.FC<Props> = ({ hideTooltip, name, large }: Props) => {
   const style = { backgroundColor: getColor(name) };
   const classes = [ css.base ];
+  const { users } = useStore();
+
   if (large) classes.push(css.large);
+
+  console.log('users', users);
+
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>
       {getInitials(name)}
