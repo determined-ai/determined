@@ -247,16 +247,18 @@ const ExperimentList: React.FC = () => {
     updateSettings({ row: undefined, user: undefined });
   }, [ updateSettings ]);
 
-  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      multiple
-      searchable
-      values={settings.user}
-      onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset}
-    />
-  ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
+  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => {
+    return (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        searchable
+        values={settings.user}
+        onFilter={handleUserFilterApply}
+        onReset={handleUserFilterReset}
+      />
+    );
+  }, [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
     try {

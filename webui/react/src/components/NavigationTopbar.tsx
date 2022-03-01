@@ -13,7 +13,6 @@ import css from './NavigationTopbar.module.scss';
 const NavigationTopbar: React.FC = () => {
   const { auth, info, ui } = useStore();
 
-  const displayName = auth.user?.displayName || auth.user?.username || 'Anonymous';
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   if (!showNavigation) return null;
@@ -32,7 +31,7 @@ const NavigationTopbar: React.FC = () => {
           )}
           offset={{ x: 0, y: 8 }}
           placement={Placement.BottomRight}>
-          <Avatar hideTooltip name={displayName} />
+          <Avatar hideTooltip id={auth.user?.username} />
         </Dropdown>
       </div>
     </nav>

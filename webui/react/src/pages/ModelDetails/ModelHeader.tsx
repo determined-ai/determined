@@ -13,6 +13,7 @@ import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/datetime';
+import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
 
@@ -35,13 +36,12 @@ const ModelHeader: React.FC<Props> = (
 
   const infoRows: InfoRow[] = useMemo(() => {
     const user = users.find(user => user.username === model.username);
-    const displayName = user?.displayName || user?.username || model.username;
 
     return [ {
       content: (
         <Space>
-          <Avatar name={displayName} />
-          {`${displayName} on 
+          <Avatar id={user?.username} />
+          {`${getDisplayName(user)} on 
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),

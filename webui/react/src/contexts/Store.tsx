@@ -1,4 +1,3 @@
-import { Modal } from 'antd';
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
@@ -247,12 +246,10 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   const [ state, dispatch ] = useReducer(reducer, initState);
-  const [ modal, contextHolder ] = Modal.useModal();
 
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>
-        {contextHolder}
         {children}
       </DispatchContext.Provider>
     </StateContext.Provider>

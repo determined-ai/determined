@@ -9,6 +9,7 @@ import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
+import { getDisplayName } from 'utils/user';
 
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
@@ -99,7 +100,6 @@ const NavigationSideBar: React.FC = () => {
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
-  const displayName = auth.user?.displayName || auth.user?.username || 'Anonymous';
 
   const cluster = useMemo(() => {
     if (overview[ResourceType.ALL].allocation === 0) return undefined;
@@ -150,8 +150,8 @@ const NavigationSideBar: React.FC = () => {
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <div className={css.user}>
-              <Avatar hideTooltip name={displayName} />
-              <span>{displayName}</span>
+              <Avatar hideTooltip id={auth.user?.username} />
+              <span>{getDisplayName(auth.user)}</span>
             </div>
           </Dropdown>
         </header>

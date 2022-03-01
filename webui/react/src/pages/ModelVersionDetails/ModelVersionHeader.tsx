@@ -16,6 +16,7 @@ import { paths } from 'routes/utils';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/datetime';
 import { copyToClipboard } from 'utils/dom';
+import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
 
@@ -56,20 +57,15 @@ const ModelVersionHeader: React.FC<Props> = (
   }, [ onDeregisterVersion, modelVersion.version ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
-    let displayName;
-    if (modelVersion.username) {
-      const user = users.find(user => user.username === modelVersion.username);
-      displayName = user?.displayName || user?.username || modelVersion.username;
-    } else {
-      const user = users.find(user => user.username === modelVersion.model.username);
-      displayName = user?.displayName || user?.username || modelVersion.model.username;
-    }
+    const user = modelVersion.username ?
+      users.find(user => user.username === modelVersion.username) :
+      users.find(user => user.username === modelVersion.model.username);
 
     return [ {
       content: (
         <Space>
-          <Avatar name={displayName} />
-          {displayName}
+          <Avatar id={modelVersion.username || modelVersion.model.username} />
+          {getDisplayName(user)}
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>
       ),

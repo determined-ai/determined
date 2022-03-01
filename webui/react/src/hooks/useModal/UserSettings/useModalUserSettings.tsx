@@ -2,9 +2,10 @@ import { Button, Divider } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Avatar from 'components/Avatar';
-import { useStore } from 'contexts/Store';
+import StoreProvider, { useStore } from 'contexts/Store';
 import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
 import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
+import { getDisplayName } from 'utils/user';
 
 import useModal, { ModalHooks } from '../useModal';
 
@@ -44,47 +45,49 @@ const useModalUserSettings = (): ModalHooks => {
 
   const getModalContent = useCallback((userValues: UserValues): React.ReactNode => {
     return (
-      <div className={css.base}>
-        <div className={css.field}>
-          <span className={css.header}>Avatar</span>
-          <span className={css.body}>
-            <Avatar hideTooltip large name={userValues.displayName || userValues.username} />
-          </span>
-          <Divider />
+      <StoreProvider>
+        <div className={css.base}>
+          <div className={css.field}>
+            <span className={css.header}>Avatar</span>
+            <span className={css.body}>
+              <Avatar hideTooltip id={userValues.username} large />
+            </span>
+            <Divider />
+          </div>
+          <div className={css.field}>
+            <span className={css.header}>Display name</span>
+            <span className={css.body}>
+              <span>{userValues.displayName}</span>
+              <Button
+                onClick={handleDisplayNameClick}>
+                Change name
+              </Button>
+            </span>
+            <Divider />
+          </div>
+          <div className={css.field}>
+            <span className={css.header}>Username</span>
+            <span className={css.body}>{userValues.username}</span>
+            <Divider />
+          </div>
+          <div className={css.field}>
+            <span className={css.header}>Password</span>
+            <span className={css.body}>
+              <Button
+                onClick={handlePasswordClick}>
+                Change password
+              </Button>
+            </span>
+          </div>
         </div>
-        <div className={css.field}>
-          <span className={css.header}>Display name</span>
-          <span className={css.body}>
-            <span>{userValues.displayName}</span>
-            <Button
-              onClick={handleDisplayNameClick}>
-              Change name
-            </Button>
-          </span>
-          <Divider />
-        </div>
-        <div className={css.field}>
-          <span className={css.header}>Username</span>
-          <span className={css.body}>{userValues.username}</span>
-          <Divider />
-        </div>
-        <div className={css.field}>
-          <span className={css.header}>Password</span>
-          <span className={css.body}>
-            <Button
-              onClick={handlePasswordClick}>
-              Change password
-            </Button>
-          </span>
-        </div>
-      </div>
+      </StoreProvider>
     );
   }, [ handleDisplayNameClick, handlePasswordClick ]);
 
   useEffect(() => {
     setUserValues({
-      displayName: auth.user?.displayName || '',
-      username: auth.user?.username || 'Anonymous',
+      displayName: getDisplayName(auth.user),
+      username: auth.user?.username || '',
     });
   }, [ auth ]);
 
