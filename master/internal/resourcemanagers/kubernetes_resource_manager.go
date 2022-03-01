@@ -320,7 +320,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 			if it.value().Group == msg.Handler {
 				taskActor := it.value().TaskActor
 				if id, ok := k.addrToContainerID[taskActor]; ok {
-					ctx.Tell(k.agent.handler, kubernetes.ChangePriority{PodID: id})
+					ctx.Tell(k.podsActor, kubernetes.ChangePriority{PodID: id})
 					delete(k.addrToContainerID, taskActor)
 				}
 			}
@@ -386,7 +386,7 @@ func (k *kubernetesResourceManager) assignResources(
 		})
 
 		k.addrToContainerID[req.TaskActor] = container.id
-		ctx.Tell(k.agent.handler, kubernetes.SetPodOrder{
+		ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
 			QPosition: -1,
 			PodID:     container.id,
 		})
