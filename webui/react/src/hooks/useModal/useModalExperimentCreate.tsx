@@ -100,10 +100,10 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     props?.onClose?.();
   }, [ props ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(
-    handleModalClose,
-    { rawCancel: true },
-  );
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({
+    onClose: handleModalClose,
+    options: { rawCancel: true },
+  });
 
   const handleEditorChange = useCallback((newConfigString: string) => {
     // Update config string and config error upon each keystroke change.
