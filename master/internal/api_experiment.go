@@ -242,21 +242,23 @@ func (a *apiServer) GetExperiments(
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
-		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED: "id",
-		apiv1.GetExperimentsRequest_SORT_BY_ID:          "id",
-		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION: "description",
-		apiv1.GetExperimentsRequest_SORT_BY_NAME:        "name",
-		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:  "start_time",
-		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
-		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
-		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
+		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:   "id",
+		apiv1.GetExperimentsRequest_SORT_BY_ID:            "id",
+		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:   "description",
+		apiv1.GetExperimentsRequest_SORT_BY_NAME:          "name",
+		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "start_time",
+		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "end_time",
+		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
+		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
+		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
+		apiv1.GetExperimentsRequest_SORT_BY_USER:          "username",
+		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
+		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
 	orderExpr := ""
 	switch _, ok := orderColMap[req.SortBy]; {

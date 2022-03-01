@@ -338,6 +338,13 @@ const ExperimentList: React.FC = () => {
         width: 120,
       },
       {
+        dataIndex: 'forkedFrom',
+        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        render: forkedFromRenderer,
+        sorter: true,
+        title: 'Forked From',
+      },
+      {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
@@ -382,7 +389,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'resourcePool',
-        key: 'resourcePool',
+        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
         sorter: true,
         title: 'Resource Pool',
       },
@@ -397,12 +404,6 @@ const ExperimentList: React.FC = () => {
         key: 'archived',
         render: checkmarkRenderer,
         title: 'Archived',
-      },
-      {
-        dataIndex: 'forkedFrom',
-        key: 'forkedFrom',
-        render: forkedFromRenderer,
-        title: 'Forked From',
       },
       {
         filterDropdown: userFilterDropdown,
