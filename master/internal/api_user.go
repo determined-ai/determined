@@ -87,7 +87,7 @@ func (a *apiServer) GetUser(
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
-	curUser, _, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (a *apiServer) PostUser(
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest) (*apiv1.SetUserPasswordResponse, error) {
 	// TODO if ExternalSessions is there, don't even allow this
-	curUser, _, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (a *apiServer) SetUserPassword(
 }
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest) (*apiv1.PatchUserResponse, error) {
-	curUser, _, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}

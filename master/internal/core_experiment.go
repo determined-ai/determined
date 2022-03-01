@@ -385,6 +385,14 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		}
 	}
 
+	token, createSessionErr := m.db.StartUserSession(user)
+	if createSessionErr != nil {
+		return nil, false, nil, errors.Wrapf(
+			createSessionErr, "unable to create user session inside task")
+	}
+	taskSpec.UserSessionToken = token
+	taskSpec.Owner = user
+
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)

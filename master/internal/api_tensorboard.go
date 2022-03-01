@@ -263,9 +263,7 @@ func (a *apiServer) LaunchTensorboard(
 		[]string{tensorboardEntrypointFile, expConfPath, strings.Join(logDirs, ",")},
 		spec.Config.TensorBoardArgs...)
 
-	for k, v := range uniqEnvVars {
-		spec.Base.ExtraEnvVars[k] = v
-	}
+	spec.Base.ExtraEnvVars = uniqEnvVars
 
 	spec.Config.Environment.Image = model.RuntimeItem{
 		CPU:  expConf.Environment().Image().CPU(),

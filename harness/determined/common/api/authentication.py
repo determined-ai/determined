@@ -62,14 +62,17 @@ class Authentication:
         session_user = (
             requested_user
             or self.token_store.get_active_user()
-            or util.get_initial_user()
+            or util.get_container_user()
             or constants.DEFAULT_DETERMINED_USER
         )
 
-        token = self.token_store.get_token(session_user) or util.get_user_token()
+        token = self.token_store.get_token(session_user)
         if token is not None and not _is_token_valid(self.master_address, token, cert):
             self.token_store.drop_user(session_user)
             token = None
+
+        if token is None:
+            token = util.get_user_token()
 
         if token is not None:
             return Session(session_user, token)
