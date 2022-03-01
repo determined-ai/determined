@@ -326,7 +326,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'id',
         key: V1GetExperimentsRequestSortBy.ID,
-        render: experimentNameRenderer,
+        render: contextualNameRenderer,
         sorter: true,
         title: 'ID',
       },
