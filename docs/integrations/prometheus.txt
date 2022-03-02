@@ -120,7 +120,9 @@ This example startup script includes the default setup docker commands provided 
 #. `Install Prometheus <https://prometheus.io/docs/prometheus/latest/installation/>`__ on any node
    in the monitored cluster.
 
-#. Launch Prometheus with the provided prometheus.yml configuration file.
+#. Launch Prometheus with the provided `prometheus.yml
+   <https://github.com/determined-ai/works-with-determined#observability-tools>`__ configuration
+   file.
 
    The ``metric_relabel_configs`` parameter edits certain label names in jobs for joining in PromQL.
    - The ``scrape_interval`` parameter values can be modified to optimize for resolution/size/time.
