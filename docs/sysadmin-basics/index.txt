@@ -41,6 +41,17 @@ More information on a Determined cluster can be found:
 
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   network-requirements
+   cluster-config
+   elasticsearch-logging-backend
+   historical-cluster-usage-data
+   upgrades
+   troubleshoot
+   users
+   oauth
+   oidc
+   saml
+   scim
+   tls

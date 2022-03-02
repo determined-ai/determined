@@ -163,12 +163,13 @@ Useful steps for debugging this include:
    # Check the logs of master pod.
    kubectl logs <determined-master-pod-name>
 
-************
- Learn More
-************
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   helm-config
+   install-on-kubernetes
+   k8s-dev-guide
+   setup-aks-cluster
+   setup-eks-cluster
+   setup-gke-cluster
