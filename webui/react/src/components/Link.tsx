@@ -43,6 +43,7 @@ const Link: React.FC<Props> = ({
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
     <a
+      onContextMenu={e => e.stopPropagation()}
       aria-label={props.label}
       className={classes.join(' ')}
       href={href}
