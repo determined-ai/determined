@@ -235,6 +235,7 @@ SELECT
     l.allocation_id,
     l.agent_id,
     l.container_id,
+    l.rank_id,
     l.timestamp,
     l.level,
     l.stdtype,
