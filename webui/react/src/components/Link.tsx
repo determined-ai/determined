@@ -42,7 +42,8 @@ const Link: React.FC<Props> = ({
   return props.disabled ? (
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
-    <a
+      <a
+      onContextMenu={e =>  e.stopPropagation() }
       aria-label={props.label}
       className={classes.join(' ')}
       href={href}
