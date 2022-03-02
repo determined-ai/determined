@@ -3,7 +3,7 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 
@@ -46,7 +46,7 @@ export const handleTableChange = (
   };
 };
 
-const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
+const ResponsiveTable: ResponsiveTable = ({ loading, scroll, rowWrapper, ...props }) => {
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
   const [ tableScroll, setTableScroll ] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -54,11 +54,9 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   const recordsDict = useMemo(
     () =>
       props.dataSource
-        ?.map(({ id, ...rest }) => ({
-          [id]: rest,
-        }))
+        ?.map(({ id, ...rest }) => ({ [id]: rest }))
         .reduce((a, b) => ({ ...a, ...b }), {}),
-    [props.dataSource]
+    [ props.dataSource ],
   );
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
@@ -97,12 +95,12 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
             body: {
               row: useCallback(
                 (rowProps) =>
-                  props.rowWrapper ? (
-                    props.rowWrapper(rowProps, recordsDict)
+                  rowWrapper ? (
+                    rowWrapper(rowProps, recordsDict)
                   ) : (
                     <tr {...rowProps} />
                   ),
-                [recordsDict, props.rowWrapper]
+                [ recordsDict, rowWrapper ],
               ),
             },
           }}
