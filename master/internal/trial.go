@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -350,7 +349,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.ErrorState)
 		}
 		return t.transition(ctx, model.CompletedState)
-	case exit.Err != nil && !aproto.IsRestartableSystemError(exit.Err):
+	case exit.Err != nil && !sproto.IsRestartableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())

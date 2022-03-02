@@ -14,10 +14,16 @@ import (
 // these are here rather than on cproto.ID as ToResourcesID to prevent circular imports; sproto
 // should be able to import cproto but not vice versa.
 
+// ResourcesID is the ID of some set of resources.
+type ResourcesID string
+
 // FromContainerID converts a cproto.ID to a ResourcesID.
 func FromContainerID(cID cproto.ID) ResourcesID {
 	return ResourcesID(cID)
 }
+
+// ResourcesType is the type of some set of resources. This should be purely informational.
+type ResourcesType string
 
 // ResourcesState is the state of some set of resources.
 type ResourcesState string
@@ -60,6 +66,13 @@ func FromContainerState(state cproto.State) ResourcesState {
 	default:
 		return Unknown
 	}
+}
+
+// ResourcesStarted contains the information needed by tasks from container started.
+type ResourcesStarted struct {
+	Addresses []cproto.Address
+	// NativeResourcesID is the native Docker hex container ID of the Determined container.
+	NativeResourcesID string
 }
 
 // FromContainerStarted converts an aproto.ContainerStarted message to ResourcesStarted.
@@ -143,6 +156,94 @@ func (f ResourcesFailure) Error() string {
 		return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
 	}
 	return fmt.Sprintf("%s: %s (exit code %d)", f.FailureType, f.ErrMsg, *f.ExitCode)
+}
+
+// ExitCode is the process exit code of the container.
+type ExitCode int
+
+const (
+	// SuccessExitCode is the 0 zero value exit code.
+	SuccessExitCode = 0
+)
+
+// FromContainerExitCode converts an aproto.ExitCode to an ExitCode. ExitCode's type is subject to
+// change - it may become an enum instead where we interpret the type of exit for consumers.
+func FromContainerExitCode(c *aproto.ExitCode) *ExitCode {
+	if c == nil {
+		return nil
+	}
+	ec := ExitCode(*c)
+	return &ec
+}
+
+// FailureType denotes the type of failure that resulted in the container stopping.
+// Each FailureType must be handled by ./internal/task/allocation.go.
+type FailureType string
+
+const (
+	// ContainerFailed denotes that the container ran but failed with a non-zero exit code.
+	ContainerFailed = FailureType("container failed with non-zero exit code")
+
+	// ContainerAborted denotes the container was canceled before it was started.
+	ContainerAborted = FailureType("container was aborted before it started")
+
+	// TaskAborted denotes that the task was canceled before it was started.
+	TaskAborted = FailureType("task was aborted before the task was started")
+
+	// TaskError denotes that the task failed without an associated exit code.
+	TaskError = FailureType("task failed without an associated exit code")
+
+	// AgentFailed denotes that the agent failed while the container was running.
+	AgentFailed = FailureType("agent failed while the container was running")
+
+	// AgentError denotes that the agent failed to launch the container.
+	AgentError = FailureType("agent failed to launch the container")
+
+	// UnknownError denotes an internal error that did not map to a know failure type.
+	UnknownError
+)
+
+// FromContainerFailureType converts an aproto.FailureType to a FailureType. This mapping is not
+// guaranteed to remain one to one; this conversion may do some level of interpretation.
+func FromContainerFailureType(t aproto.FailureType) FailureType {
+	switch t {
+	case aproto.ContainerFailed:
+		return FailureType(t)
+	case aproto.ContainerAborted:
+		return FailureType(t)
+	case aproto.TaskAborted:
+		return FailureType(t)
+	case aproto.TaskError:
+		return FailureType(t)
+	case aproto.AgentFailed:
+		return FailureType(t)
+	case aproto.AgentError:
+		return FailureType(t)
+	default:
+		return FailureType(t)
+	}
+}
+
+// IsRestartableSystemError checks if the error is caused by the system and
+// shouldn't count against `max_restarts`.
+func IsRestartableSystemError(err error) bool {
+	switch contErr := err.(type) {
+	case ResourcesFailure:
+		switch contErr.FailureType {
+		case ContainerFailed, TaskError:
+			return false
+		// Questionable, could be considered failures, but for now we don't.
+		case AgentError, AgentFailed:
+			return true
+		// Definitely not a failure.
+		case TaskAborted, ContainerAborted:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
 }
 
 // ResourcesStateChanged notifies that the task actor container state has been transitioned.

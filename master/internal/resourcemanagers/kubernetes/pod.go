@@ -318,10 +318,11 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Terminated)
 
-		resourcesStopped := sproto.ResourcesStopped{}
-		if exitCode == aproto.SuccessExitCode {
+		var resourcesStopped sproto.ResourcesStopped
+		switch exitCode {
+		case aproto.SuccessExitCode:
 			ctx.Log().Infof("pod exited successfully")
-		} else {
+		default:
 			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
 			resourcesStopped.Failure = sproto.NewResourcesFailure(
 				sproto.ContainerFailed,
@@ -392,7 +393,7 @@ func (p *pod) informTaskResourcesState(ctx *actor.Context) {
 	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
 		ResourcesID:    sproto.FromContainerID(p.container.ID),
 		ResourcesState: sproto.FromContainerState(p.container.State),
-		Container:      &p.container,
+		Container:      p.container.DeepCopy(),
 	})
 }
 
