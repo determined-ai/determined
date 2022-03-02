@@ -11,9 +11,9 @@ import css from './Avatar.module.scss';
 
 interface Props {
   hideTooltip?: boolean;
-  id?: string;
   large?: boolean;
   name?: string;
+  username?: string;
 }
 
 const getInitials = (name = ''): string => {
@@ -33,22 +33,22 @@ const getColor = (name = ''): string => {
   return hsl2str({ ...hslColor, l: 50 });
 };
 
-const Avatar: React.FC<Props> = ({ hideTooltip, id, name, large }: Props) => {
+const Avatar: React.FC<Props> = ({ hideTooltip, name, large, username }: Props) => {
   const [ value, setValue ] = useState('');
   const { users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
 
   useEffect(() => {
-    if (!name && id) {
+    if (!name && username) {
       if (!users.length) {
         fetchUsers();
       }
-      const user = users.find(user => user.username === id);
+      const user = users.find(user => user.username === username);
       setValue(getDisplayName(user));
     } else if (name) {
       setValue(name);
     }
-  }, [ fetchUsers, id, name, users ]);
+  }, [ fetchUsers, username, name, users ]);
 
   const style = { backgroundColor: getColor(value) };
   const classes = [ css.base ];

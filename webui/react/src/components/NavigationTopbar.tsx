@@ -31,7 +31,7 @@ const NavigationTopbar: React.FC = () => {
           )}
           offset={{ x: 0, y: 8 }}
           placement={Placement.BottomRight}>
-          <Avatar hideTooltip id={auth.user?.username} />
+          <Avatar hideTooltip username={auth.user?.username} />
         </Dropdown>
       </div>
     </nav>

@@ -64,7 +64,7 @@ const ModelVersionHeader: React.FC<Props> = (
     return [ {
       content: (
         <Space>
-          <Avatar id={modelVersion.username || modelVersion.model.username} />
+          <Avatar username={modelVersion.username || modelVersion.model.username} />
           {getDisplayName(user)}
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>

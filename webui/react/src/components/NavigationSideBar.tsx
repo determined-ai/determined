@@ -152,7 +152,7 @@ const NavigationSideBar: React.FC = () => {
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <div className={css.user}>
-              <Avatar hideTooltip id={auth.user?.username} />
+              <Avatar hideTooltip username={auth.user?.username} />
               <span>{getDisplayName(auth.user)}</span>
             </div>
           </Dropdown>

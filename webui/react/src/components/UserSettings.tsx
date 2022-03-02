@@ -28,7 +28,7 @@ const UserSettings: React.FC = () => {
       <div className={css.field}>
         <span className={css.header}>Avatar</span>
         <span className={css.body}>
-          <Avatar hideTooltip id={auth.user?.username} large />
+          <Avatar hideTooltip large username={auth.user?.username} />
         </span>
         <Divider />
       </div>
