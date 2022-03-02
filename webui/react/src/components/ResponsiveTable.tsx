@@ -87,23 +87,17 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, rowWrapper, ...prop
     });
   }, [ hasScrollBeenEnabled, resize, scroll ]);
 
+  const row = useCallback(
+    (rowProps) =>
+      rowWrapper ? rowWrapper(rowProps, recordsDict) : <tr {...rowProps} />,
+    [recordsDict, rowWrapper]
+  );
+
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
         <Table
-          components={{
-            body: {
-              row: useCallback(
-                (rowProps) =>
-                  rowWrapper ? (
-                    rowWrapper(rowProps, recordsDict)
-                  ) : (
-                    <tr {...rowProps} />
-                  ),
-                [ recordsDict, rowWrapper ],
-              ),
-            },
-          }}
+          components={{ body: { row } }}
           scroll={tableScroll}
           tableLayout="auto"
           {...props}

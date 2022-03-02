@@ -276,7 +276,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ ]);
 
-  const rowWrapper = (rowProps, recordsDict) => {
+  const rowWrapper = useCallback((rowProps, recordsDict) => {
     const record = recordsDict?.[rowProps['data-row-key']];
     return record ? (
       <TaskActionDropdown
@@ -288,7 +288,7 @@ const ExperimentList: React.FC = () => {
     ) : (
       <tr {...rowProps} />
     );
-  };
+  }, [])
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
