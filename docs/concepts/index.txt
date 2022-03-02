@@ -4,10 +4,6 @@
  Concepts
 ##########
 
-**********
- Overview
-**********
-
 Deep learning practitioners come from a variety of disciplines. Depending on their background, some
 practitioners have strong foundations in engineering, while others focus on statistics and domain
 expertise. Determined AI is a deep learning training platform that simplifies infrastructure
