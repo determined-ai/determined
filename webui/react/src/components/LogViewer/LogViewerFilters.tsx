@@ -1,5 +1,6 @@
 import { Button, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
+import { boolean } from 'fp-ts';
 import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
@@ -34,14 +35,23 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
     };
   }, [ options ]);
 
+  const show = useMemo(() => {
+    return Object.keys(selectOptions).reduce((acc, key) => {
+      const filterKey = key as keyof Filters;
+      const options = selectOptions[filterKey];
+
+      // !! casts `undefined` into the boolean value of `false`.
+      acc[filterKey] = !!(options && options.length > 0);
+
+      return acc;
+    }, {} as Record<keyof Filters, boolean>);
+  }, [ selectOptions ]);
+
   const handleChange = useCallback((
     key: keyof Filters,
     caster: NumberConstructor | StringConstructor,
   ) => (value: SelectValue) => {
-    onChange?.({
-      ...values,
-      [key]: (value as Array<string>).map(item => caster(item)),
-    });
+    onChange?.({ ...values, [key]: (value as Array<string>).map(item => caster(item)) });
   }, [ onChange, values ]);
 
   const handleReset = useCallback(() => onReset?.(), [ onReset ]);
@@ -49,7 +59,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
   return (
     <>
       <Space>
-        {selectOptions?.allocationIds?.length !== 0 && (
+        {show.allocationIds && (
           <MultiSelect
             itemName="Allocation"
             value={values.allocationIds}
@@ -57,7 +67,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {selectOptions?.agentIds?.length !== 0 && (
+        {show.agentIds && (
           <MultiSelect
             itemName="Agent"
             value={values.agentIds}
@@ -65,7 +75,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             {selectOptions?.agentIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {selectOptions?.containerIds?.length !== 0 && (
+        {show.containerIds && (
           <MultiSelect
             itemName="Container"
             style={{ width: 150 }}
@@ -76,7 +86,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             ))}
           </MultiSelect>
         )}
-        {selectOptions?.rankIds?.length !== 0 && (
+        {show.rankIds && (
           <MultiSelect
             itemName="Rank"
             value={values.rankIds}
