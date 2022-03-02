@@ -1,9 +1,12 @@
+// @ts-nocheck
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 
+import TaskActionDropdown from './TaskActionDropdown';
+import { taskFromExperiment } from 'utils/task';
 import useResize from 'hooks/useResize';
 
 import Spinner from './Spinner';
@@ -50,7 +53,15 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   const [ tableScroll, setTableScroll ] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
   const resize = useResize(tableRef);
-
+  const recordsDict = useMemo(
+    () =>
+      props.dataSource
+        ?.map(({ id, ...rest }) => ({
+          [id]: rest,
+        }))
+        .reduce((a, b) => ({ ...a, ...b })),
+    [props.dataSource]
+  );
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   useEffect(() => {
@@ -84,14 +95,37 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
         <Table
+          components={{
+            body: {
+              row: useCallback(
+                (props: React.HTMLAttributes<HTMLElement>, other) => {
+                  const record =
+                    recordsDict && recordsDict[props['data-row-key']];
+                  return record ? (
+                    <TaskActionDropdown
+                      // curUser={user}
+                      task={taskFromExperiment(record)}
+                      onComplete={() => {}}
+                    >
+                      <tr  {...props} />
+                    </TaskActionDropdown>
+                  ) : (
+                      <tr  {...props} />
+                  );
+                },
+                [recordsDict]
+              ),
+            },
+          }}
           scroll={tableScroll}
           tableLayout="auto"
           onRow={(record, rowIndex) => ({
-            onContextMenu: e => {
+            onContextMenu: (e) => {
               // placeholder to display custom menu
-            }
-            })}
-          {...props} />
+            },
+          })}
+          {...props}
+        />
       </Spinner>
     </div>
   );

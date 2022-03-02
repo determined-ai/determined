@@ -171,22 +171,19 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser,  child
 
   const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
 
-  return (
+  return children ? (
+    <Dropdown overlay={menu} placement={"bottomLeft"} trigger={["contextMenu"]}>
+      {children}
+    </Dropdown>
+  ) : (
     <div
       className={css.base}
       title="Open actions menu"
       onClick={stopPropagation}
-      onContextMenu={stopPropagation}
     >
-      <Dropdown
-        overlay={menu}
-        placement={children ? "bottomLeft" : "bottomRight"}
-        trigger={children ? ["contextMenu"] : ["click"]}
-      >
+      <Dropdown overlay={menu} placement={"bottomRight"} trigger={["click"]}>
         <button onClick={stopPropagation}>
-        {children || (
           <Icon name="overflow-vertical" />
-          )}
         </button>
       </Dropdown>
     </div>
