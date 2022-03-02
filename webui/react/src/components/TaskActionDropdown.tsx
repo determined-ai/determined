@@ -25,15 +25,15 @@ import css from './ActionDropdown.module.scss';
 import Link from './Link';
 
 interface Props {
+  children?: React.ReactNode;
   curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
   task: AnyTask;
-  children?: React.ReactNode;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser,  children }: Props) => {
+const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser, children }: Props) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
   const isExperiment = isExperimentTask(task);
   const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
@@ -172,16 +172,15 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser,  child
   const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
 
   return children ? (
-    <Dropdown overlay={menu} placement={"bottomLeft"} trigger={["contextMenu"]}>
+    <Dropdown overlay={menu} placement={'bottomLeft'} trigger={[ 'contextMenu' ]}>
       {children}
     </Dropdown>
   ) : (
     <div
       className={css.base}
       title="Open actions menu"
-      onClick={stopPropagation}
-    >
-      <Dropdown overlay={menu} placement={"bottomRight"} trigger={["click"]}>
+      onClick={stopPropagation}>
+      <Dropdown overlay={menu} placement={'bottomRight'} trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

@@ -276,22 +276,20 @@ const ExperimentList: React.FC = () => {
       return e;
     }
   }, [ ]);
-  
+
   const rowWrapper = (rowProps, recordsDict) => {
-    const record = recordsDict && recordsDict[rowProps['data-row-key']];
+    const record = recordsDict?.[rowProps['data-row-key']];
     return record ? (
       <TaskActionDropdown
         curUser={user}
         task={taskFromExperiment(record)}
-        onComplete={handleActionComplete}
-      >
+        onComplete={handleActionComplete}>
         <tr {...rowProps} />
       </TaskActionDropdown>
     ) : (
       <tr {...rowProps} />
     );
   };
-
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
@@ -650,10 +648,10 @@ const ExperimentList: React.FC = () => {
           preserveSelectedRowKeys: true,
           selectedRowKeys: settings.row ?? [],
         }}
+        rowWrapper={rowWrapper}
         showSorterTooltip={false}
         size="small"
         onChange={handleTableChange(columns, settings, updateSettings)}
-        rowWrapper={rowWrapper}
       />
     </Page>
   );
