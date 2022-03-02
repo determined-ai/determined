@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
 import { LogLevelFromApi } from 'types';
+import { alphaNumericSorter } from 'utils/sort';
 
 const { Option } = Select;
 
@@ -26,11 +27,16 @@ export interface Filters {
 
 const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
   const selectOptions = useMemo(() => {
+    const { agentIds, allocationIds, containerIds, rankIds } = options;
     return {
       ...options,
+      agentIds: agentIds ? agentIds.sortAll(alphaNumericSorter) : undefined,
+      allocationIds: allocationIds ? allocationIds.sortAll(alphaNumericSorter) : undefined,
+      containerIds: containerIds ? containerIds.sortAll(alphaNumericSorter) : undefined,
       levels: Object.entries(LogLevelFromApi)
         .filter(entry => entry[1] !== LogLevelFromApi.Unspecified)
         .map(([ key, value ]) => ({ label: key, value })),
+      rankIds: rankIds ? rankIds.sortAll(alphaNumericSorter) : undefined,
     };
   }, [ options ]);
 
