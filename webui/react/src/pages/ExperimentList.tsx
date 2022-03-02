@@ -288,7 +288,7 @@ const ExperimentList: React.FC = () => {
     ) : (
       <tr {...rowProps} />
     );
-  }, [user, taskFromExperiment, handleActionComplete])
+  }, [])
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
