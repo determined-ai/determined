@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
 import { LogLevelFromApi } from 'types';
+import { alphaNumericSorter } from 'utils/sort';
 
 const { Option } = Select;
 
@@ -24,24 +25,48 @@ export interface Filters {
   stdtypes?: string[],
 }
 
-const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
+const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
   const selectOptions = useMemo(() => {
+    const { agentIds, allocationIds, containerIds, rankIds } = options;
     return {
       ...options,
+      agentIds: agentIds ? agentIds.sortAll(alphaNumericSorter) : undefined,
+      allocationIds: allocationIds ? allocationIds.sortAll(alphaNumericSorter) : undefined,
+      containerIds: containerIds ? containerIds.sortAll(alphaNumericSorter) : undefined,
       levels: Object.entries(LogLevelFromApi)
         .filter(entry => entry[1] !== LogLevelFromApi.Unspecified)
         .map(([ key, value ]) => ({ label: key, value })),
+      rankIds: rankIds ? rankIds.sortAll(alphaNumericSorter) : undefined,
     };
   }, [ options ]);
+
+  const show = useMemo(() => {
+    return Object.keys(selectOptions).reduce((acc, key) => {
+      const filterKey = key as keyof Filters;
+      const options = selectOptions[filterKey];
+
+      // !! casts `undefined` into the boolean value of `false`.
+      acc[filterKey] = !!(options && options.length > 1);
+
+      return acc;
+    }, {} as Record<keyof Filters, boolean>);
+  }, [ selectOptions ]);
+
+  const isResetShown = useMemo(() => {
+    const keys = Object.keys(selectOptions);
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i] as keyof Filters;
+      const value = values[key];
+      if (value && value.length !== 0) return true;
+    }
+    return false;
+  }, [ selectOptions, values ]);
 
   const handleChange = useCallback((
     key: keyof Filters,
     caster: NumberConstructor | StringConstructor,
   ) => (value: SelectValue) => {
-    onChange?.({
-      ...values,
-      [key]: (value as Array<string>).map(item => caster(item)),
-    });
+    onChange?.({ ...values, [key]: (value as Array<string>).map(item => caster(item)) });
   }, [ onChange, values ]);
 
   const handleReset = useCallback(() => onReset?.(), [ onReset ]);
@@ -49,7 +74,7 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
   return (
     <>
       <Space>
-        {selectOptions?.allocationIds?.length !== 0 && (
+        {show.allocationIds && (
           <MultiSelect
             itemName="Allocation"
             value={values.allocationIds}
@@ -57,7 +82,7 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
             {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {selectOptions?.agentIds?.length !== 0 && (
+        {show.agentIds && (
           <MultiSelect
             itemName="Agent"
             value={values.agentIds}
@@ -65,7 +90,7 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
             {selectOptions?.agentIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {selectOptions?.containerIds?.length !== 0 && (
+        {show.containerIds && (
           <MultiSelect
             itemName="Container"
             style={{ width: 150 }}
@@ -76,7 +101,7 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
             ))}
           </MultiSelect>
         )}
-        {selectOptions?.rankIds?.length !== 0 && (
+        {show.rankIds && (
           <MultiSelect
             itemName="Rank"
             value={values.rankIds}
@@ -92,10 +117,10 @@ const TaskLogFilters: React.FC<Props> = ({ onChange, onReset, options, values }:
             <Option key={level.value} value={level.value}>{level.label}</Option>
           ))}
         </MultiSelect>
-        <Button onClick={handleReset}>Reset</Button>
+        {isResetShown && <Button onClick={handleReset}>Reset</Button>}
       </Space>
     </>
   );
 };
 
-export default TaskLogFilters;
+export default LogViewerFilters;

@@ -41,14 +41,13 @@ const config: SettingsConfig = {
     },
     {
       key: 'level',
-      storageKey: 'level',
       type: {
         baseType: BaseType.String,
         isArray: true,
       },
     },
   ],
-  storagePath: 'task-logs',
+  storagePath: 'log-viewer-filters',
 };
 
 export default config;
