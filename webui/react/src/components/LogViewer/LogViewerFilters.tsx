@@ -1,6 +1,5 @@
 import { Button, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import { boolean } from 'fp-ts';
 import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
@@ -46,6 +45,16 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
       return acc;
     }, {} as Record<keyof Filters, boolean>);
   }, [ selectOptions ]);
+
+  const isResetShown = useMemo(() => {
+    const keys = Object.keys(selectOptions);
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i] as keyof Filters;
+      const value = values[key];
+      if (value && value.length !== 0) return true;
+    }
+    return false;
+  }, [ selectOptions, values ]);
 
   const handleChange = useCallback((
     key: keyof Filters,
@@ -102,7 +111,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             <Option key={level.value} value={level.value}>{level.label}</Option>
           ))}
         </MultiSelect>
-        <Button onClick={handleReset}>Reset</Button>
+        {isResetShown && <Button onClick={handleReset}>Reset</Button>}
       </Space>
     </>
   );
