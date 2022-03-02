@@ -246,7 +246,6 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
   const [ state, dispatch ] = useReducer(reducer, initState);
-
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>

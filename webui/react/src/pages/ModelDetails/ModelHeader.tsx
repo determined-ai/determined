@@ -35,13 +35,11 @@ const ModelHeader: React.FC<Props> = (
   const { auth: { user }, users } = useStore();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    const user = users.find(user => user.username === model.username);
-
     return [ {
       content: (
         <Space>
-          <Avatar username={user?.username} />
-          {`${getDisplayName(user)} on 
+          <Avatar username={model.username} />
+          {`${getDisplayName(users.find(user => user.username === model.username))} on 
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),

@@ -12,7 +12,7 @@ import css from './useModalChangePassword.module.scss';
 const useModalChangePassword = (): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const { auth } = useStore();
-  const username = auth.user?.username || '';
+  const username = auth.user?.username ?? '';
   const [ form ] = Form.useForm();
 
   const handleFormCancel = useCallback(() => {

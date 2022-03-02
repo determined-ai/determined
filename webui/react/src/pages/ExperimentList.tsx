@@ -47,6 +47,7 @@ import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
+import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
@@ -247,18 +248,16 @@ const ExperimentList: React.FC = () => {
     updateSettings({ row: undefined, user: undefined });
   }, [ updateSettings ]);
 
-  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => {
-    return (
-      <TableFilterDropdown
-        {...filterProps}
-        multiple
-        searchable
-        values={settings.user}
-        onFilter={handleUserFilterApply}
-        onReset={handleUserFilterReset}
-      />
-    );
-  }, [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
+  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      searchable
+      values={settings.user}
+      onFilter={handleUserFilterApply}
+      onReset={handleUserFilterReset}
+    />
+  ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
     try {
@@ -408,12 +407,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => {
-          return {
-            text: user.displayName || user.username,
-            value: user.username,
-          };
-        }),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: V1GetExperimentsRequestSortBy.USER,
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,

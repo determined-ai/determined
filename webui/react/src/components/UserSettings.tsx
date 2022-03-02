@@ -35,9 +35,8 @@ const UserSettings: React.FC = () => {
       <div className={css.field}>
         <span className={css.header}>Display name</span>
         <span className={css.body}>
-          <span>{getDisplayName(auth.user)}</span>
-          <Button
-            onClick={handleDisplayNameClick}>
+          <span>{auth.user?.displayName}</span>
+          <Button onClick={handleDisplayNameClick}>
             Change name
           </Button>
         </span>
@@ -51,8 +50,7 @@ const UserSettings: React.FC = () => {
       <div className={css.field}>
         <span className={css.header}>Password</span>
         <span className={css.body}>
-          <Button
-            onClick={handlePasswordClick}>
+          <Button onClick={handlePasswordClick}>
             Change password
           </Button>
         </span>
