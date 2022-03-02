@@ -46,7 +46,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
       const options = selectOptions[filterKey];
 
       // !! casts `undefined` into the boolean value of `false`.
-      acc[filterKey] = !!(options && options.length > 0);
+      acc[filterKey] = !!(options && options.length > 1);
 
       return acc;
     }, {} as Record<keyof Filters, boolean>);
