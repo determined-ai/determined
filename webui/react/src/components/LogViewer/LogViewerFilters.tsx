@@ -1,5 +1,6 @@
 import { Button, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
+import { boolean } from 'fp-ts';
 import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
