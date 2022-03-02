@@ -24,6 +24,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -192,7 +193,7 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 // 2. The difference between the most(aka max) trained trial and the lowest batch are within a
 // defined range (maxDiffCompBatches).
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
-	experimentConfig expconf.ExperimentConfig, masterConfig HPImportanceConfig,
+	experimentConfig expconf.ExperimentConfig, masterConfig config.HPImportanceConfig,
 	growforest string, workingDir string) (map[string]float64, error) {
 	if len(data) == 0 {
 		return nil, errors.New("not enough data to compute HP importance")

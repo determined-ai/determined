@@ -10,7 +10,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -64,7 +63,7 @@ task_container_defaults:
 		ShmSizeBytes: 4294967296,
 		NetworkMode:  "bridge",
 	}
-	expected.ResourcePools = []resourcemanagers.ResourcePoolConfig{
+	expected.ResourcePools = []config.ResourcePoolConfig{
 		{
 			PoolName:                 "default",
 			Provider:                 providerConf,

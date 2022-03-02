@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -16,7 +17,7 @@ type (
 		experimentID int
 		metricName   string
 		metricType   model.MetricType
-		config       HPImportanceConfig
+		config       config.HPImportanceConfig
 	}
 
 	workStarted struct {

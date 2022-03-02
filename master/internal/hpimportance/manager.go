@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/pool"
@@ -30,14 +31,6 @@ const (
 	// The name of the CloudForest executable to look for.
 	growforestBin = "growforest"
 )
-
-// HPImportanceConfig is the configuration in the master for hyperparameter importance.
-type HPImportanceConfig struct {
-	WorkersLimit   uint `json:"workers_limit"`
-	QueueLimit     uint `json:"queue_limit"`
-	CoresPerWorker uint `json:"cores_per_worker"`
-	MaxTrees       uint `json:"max_trees"`
-}
 
 // Messages handled by the HP importance manager.
 type (
@@ -74,7 +67,7 @@ type stateRecord struct {
 }
 
 type manager struct {
-	config   HPImportanceConfig
+	config   config.HPImportanceConfig
 	db       *db.PgDB
 	state    map[int]stateRecord
 	pool     pool.ActorPool
@@ -82,8 +75,8 @@ type manager struct {
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, masterRoot string,
-) (actor.Actor, error) {
+func NewManager(db *db.PgDB, system *actor.System,
+	config config.HPImportanceConfig, masterRoot string) (actor.Actor, error) {
 	// growforest should either be installed in PATH (when running from source) or package with the
 	// master (when running from binary packages).
 	growforest := path.Join(masterRoot, growforestBin)

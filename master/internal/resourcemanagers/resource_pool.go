@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
@@ -23,7 +24,7 @@ import (
 
 // ResourcePool manages the agent and task lifecycles.
 type ResourcePool struct {
-	config *ResourcePoolConfig
+	config *config.ResourcePoolConfig
 	cert   *tls.Certificate
 
 	scheduler        Scheduler
@@ -50,7 +51,7 @@ type GetResourceSummary struct{}
 
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
-	config *ResourcePoolConfig,
+	config *config.ResourcePoolConfig,
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,

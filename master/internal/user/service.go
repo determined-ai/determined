@@ -88,11 +88,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 
 		var user *model.User
 		var session *model.UserSession
-		if s.extConfig.JwtKey == "" {
-			user, session, err = s.db.UserByToken(token)
-		} else {
-			user, session, err = s.db.UserByExternalToken(token, s.extConfig.JwtKey)
-		}
+		user, session, err = s.db.UserByToken(token, s.extConfig)
 		switch err {
 		case nil:
 			if !user.Active {

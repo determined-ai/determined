@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/labstack/echo/v4"
@@ -53,7 +54,7 @@ func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 func Setup(
 	system *actor.System,
 	echo *echo.Echo,
-	config *ResourceConfig,
+	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
@@ -83,7 +84,7 @@ func Setup(
 func setupAgentResourceManager(
 	system *actor.System,
 	echo *echo.Echo,
-	config *ResourceConfig,
+	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
@@ -100,7 +101,7 @@ func setupAgentResourceManager(
 func setupKubernetesResourceManager(
 	system *actor.System,
 	echo *echo.Echo,
-	config *KubernetesResourceManagerConfig,
+	config *config.KubernetesResourceManagerConfig,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 ) *actor.Ref {

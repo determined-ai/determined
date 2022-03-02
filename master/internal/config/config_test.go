@@ -10,8 +10,6 @@ import (
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/config"
@@ -51,24 +49,24 @@ resource_pools:
 			Level: "info",
 			Color: false,
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		ResourceConfig: &resourcemanagers.ResourceConfig{
-			ResourceManager: &resourcemanagers.ResourceManagerConfig{
-				AgentRM: &resourcemanagers.AgentResourceManagerConfig{
-					Scheduler: &resourcemanagers.SchedulerConfig{
-						FairShare:     &resourcemanagers.FairShareSchedulerConfig{},
+		ResourceConfig: &ResourceConfig{
+			ResourceManager: &ResourceManagerConfig{
+				AgentRM: &AgentResourceManagerConfig{
+					Scheduler: &SchedulerConfig{
+						FairShare:     &FairShareSchedulerConfig{},
 						FittingPolicy: "best",
 					},
 					DefaultComputeResourcePool: "default",
 					DefaultAuxResourcePool:     "default",
 				},
 			},
-			ResourcePools: []resourcemanagers.ResourcePoolConfig{
+			ResourcePools: []ResourcePoolConfig{
 				{
 					PoolName: "default",
 					Provider: &provisioner.Config{
@@ -119,18 +117,18 @@ resource_pools:
       max_agent_starting_period: 40s
 `
 	expected := Config{
-		ResourceConfig: &resourcemanagers.ResourceConfig{
-			ResourceManager: &resourcemanagers.ResourceManagerConfig{
-				AgentRM: &resourcemanagers.AgentResourceManagerConfig{
-					Scheduler: &resourcemanagers.SchedulerConfig{
-						FairShare:     &resourcemanagers.FairShareSchedulerConfig{},
+		ResourceConfig: &ResourceConfig{
+			ResourceManager: &ResourceManagerConfig{
+				AgentRM: &AgentResourceManagerConfig{
+					Scheduler: &SchedulerConfig{
+						FairShare:     &FairShareSchedulerConfig{},
 						FittingPolicy: "best",
 					},
 					DefaultComputeResourcePool: "gpu-pool",
 					DefaultAuxResourcePool:     "cpu-pool",
 				},
 			},
-			ResourcePools: []resourcemanagers.ResourcePoolConfig{
+			ResourcePools: []ResourcePoolConfig{
 				{
 					PoolName: "cpu-pool",
 					Provider: &provisioner.Config{
@@ -187,7 +185,7 @@ db:
 			Level: "info",
 			Color: false,
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",
@@ -223,7 +221,7 @@ checkpoint_storage:
 			Level: "info",
 			Color: false,
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",
@@ -274,7 +272,7 @@ telemetry:
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
-		DB: db.Config{
+		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
 			Host:     "hostname",

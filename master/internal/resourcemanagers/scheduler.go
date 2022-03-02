@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -21,15 +22,15 @@ type Scheduler interface {
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
-func MakeScheduler(config *SchedulerConfig) Scheduler {
-	switch config.GetType() {
-	case priorityScheduling:
-		return NewPriorityScheduler(config)
-	case fairShareScheduling:
+func MakeScheduler(conf *config.SchedulerConfig) Scheduler {
+	switch conf.GetType() {
+	case config.PriorityScheduling:
+		return NewPriorityScheduler(conf)
+	case config.FairShareScheduling:
 		return NewFairShareScheduler()
-	case roundRobinScheduling:
+	case config.RoundRobinScheduling:
 		return NewRoundRobinScheduler()
 	default:
-		panic(fmt.Sprintf("invalid scheduler: %s", config.GetType()))
+		panic(fmt.Sprintf("invalid scheduler: %s", conf.GetType()))
 	}
 }

@@ -18,8 +18,9 @@ import (
 // DB is an interface for _all_ the functionality packed into the DB.
 type DB interface {
 	StartUserSession(user *model.User) (string, error)
-	UserByToken(token string) (*model.User, *model.UserSession, error)
-	UserByExternalToken(token string, tokenKey string) (*model.User, *model.UserSession, error)
+	UserByToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error)
+	UserByExternalToken(token string, ext *model.ExternalSessions) (*model.User,
+		*model.UserSession, error)
 	DeleteUserSessionByID(sessionID model.SessionID) error
 	UserByUsername(username string) (*model.User, error)
 	AddUser(user *model.User, ug *model.AgentUserGroup) error
