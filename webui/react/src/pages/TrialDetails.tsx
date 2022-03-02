@@ -91,7 +91,7 @@ const TrialDetailsComp: React.FC = () => {
       setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
-        setTrialDetails(prev => ({ ...prev, error: e }));
+        setTrialDetails(prev => ({ ...prev, error: e as Error }));
       }
     }
   }, [ canceler, trialDetails.error, trialId ]);

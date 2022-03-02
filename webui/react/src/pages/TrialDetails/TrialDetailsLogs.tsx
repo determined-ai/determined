@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
+import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
@@ -15,7 +16,6 @@ import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
-import settingsConfig, { Settings } from './TrialDetailsLogs.settings';
 
 export interface Props {
   experiment: ExperimentBase;

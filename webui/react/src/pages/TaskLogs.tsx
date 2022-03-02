@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
+import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import useSettings from 'hooks/useSettings';
@@ -14,7 +15,6 @@ import { consumeStream } from 'services/utils';
 import { CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
-import settingsConfig, { Settings } from './TaskLogs.settings';
 
 interface Params {
   taskId: string;
