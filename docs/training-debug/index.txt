@@ -339,11 +339,8 @@ pitfalls:
    reducers with :ref:`PyTorch <pytorch-custom-reducers>` and :ref:`TensorFlow Estimator
    <estimators-custom-reducers>`.
 
-Learn More
-==========
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   profiling

@@ -156,12 +156,14 @@ Determined will finish the current training or validation workload and checkpoin
 that are stopped early are considered to be "completed", whereas trials that fail are marked as
 "errored".
 
-************
- Learn More
-************
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   hp-adaptive-asha
+   hp-constraints-det
+   hp-grid
+   hp-pbt
+   hp-random
+   hp-single
+   hp-tuning-defined
