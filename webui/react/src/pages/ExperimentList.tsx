@@ -276,18 +276,18 @@ const ExperimentList: React.FC = () => {
     }
   }, [ ]);
   
-  const rowWrapper = (props, recordsDict) => {
-    const record = recordsDict && recordsDict[props['data-row-key']];
+  const rowWrapper = (rowProps, recordsDict) => {
+    const record = recordsDict && recordsDict[rowProps['data-row-key']];
     return record ? (
       <TaskActionDropdown
         curUser={user}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
       >
-        <tr {...props} />
+        <tr {...rowProps} />
       </TaskActionDropdown>
     ) : (
-      <tr {...props} />
+      <tr {...rowProps} />
     );
   };
 
