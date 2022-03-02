@@ -27,10 +27,9 @@ preparation needed.
 If you need to add additional customization to the training environment, review the
 :doc:`/prepare-environment/custom-env` page.
 
-See the full list of documents.
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   custom-env
+   custom-pod-specs

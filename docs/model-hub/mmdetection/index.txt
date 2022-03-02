@@ -1,12 +1,10 @@
 .. _model-hub-mmdetection:
 
-#######################
- Model Hub MMDetection
-#######################
+#############
+ MMDetection
+#############
 
 .. _readme: https://github.com/determined-ai/determined/tree/master/model_hub/examples/mmdetection/README.md
-
-.. rubric:: **Overview**
 
 `The MMDetection library <https://mmdetection.readthedocs.io/en/latest>`_ is a popular library for
 object detection. It provides implementations for many popular object detection approaches like
@@ -35,8 +33,6 @@ following apply:
    distributed training and advanced hyperparameter search.
 -  You are a **MMDetection** user looking for a single platform to manage experiments, handle
    checkpoints with automated fault tolerance, and perform hyperparameter search/visualization.
-
-.. rubric:: **Getting Started**
 
 The easiest way to use MMDetection is to start with the provided `experiment configuration for
 Faster-RCNN
