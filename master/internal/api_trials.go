@@ -242,27 +242,58 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
-	fetch := func(lr api.BatchRequest) (api.Batch, error) {
-		fields, err := a.m.trialLogBackend.TrialLogsFields(int(req.TrialId))
-		return api.ToBatchOfOne(fields), err
+	trial, err := a.m.db.TrialByID(int(req.TrialId))
+	if err != nil {
+		return errors.Wrap(err, "retreiving trial")
 	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
-	res := make(chan api.BatchResult)
+	// Stream fields from trial logs table, just to support pre-task-logs trials with old logs.
+	resOld := make(chan api.BatchResult)
 	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
-		fetch,
+		func(lr api.BatchRequest) (api.Batch, error) {
+			fields, err := a.m.trialLogBackend.TrialLogsFields(int(req.TrialId))
+			return api.ToBatchOfOne(fields), err
+		},
 		a.isTrialTerminalFunc(int(req.TrialId), a.m.taskLogBackend.MaxTerminationDelay()),
 		true,
 		&distinctFieldBatchWaitTime,
 		&distinctFieldBatchWaitTime,
-	).Run(ctx, res)
+	).Run(ctx, resOld)
 
-	return processBatches(res, func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return resp.Send(r.(*apiv1.TrialLogsFieldsResponse))
+	// Also stream fields from task logs table, for ordinary logs (as they are written now).
+	resNew := make(chan api.BatchResult)
+	go api.NewBatchStreamProcessor(
+		api.BatchRequest{Follow: req.Follow},
+		func(lr api.BatchRequest) (api.Batch, error) {
+			fields, err := a.m.taskLogBackend.TaskLogsFields(trial.TaskID)
+			return api.ToBatchOfOne(&apiv1.TrialLogsFieldsResponse{
+				AgentIds:     fields.AgentIds,
+				ContainerIds: fields.ContainerIds,
+				RankIds:      fields.RankIds,
+				Stdtypes:     fields.Stdtypes,
+				Sources:      fields.Sources,
+			}), err
+		},
+		a.isTaskTerminalFunc(trial.TaskID, a.m.taskLogBackend.MaxTerminationDelay()),
+		true,
+		&distinctFieldBatchWaitTime,
+		&distinctFieldBatchWaitTime,
+	).Run(ctx, resNew)
+
+	// And merge the available filters.
+	return zipBatches(resOld, resNew, func(b1, b2 api.Batch) error {
+		r1 := b1.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
+		r2 := b2.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
+		return resp.Send(&apiv1.TrialLogsFieldsResponse{
+			AgentIds:     setString(append(r1.AgentIds, r2.AgentIds...)...),
+			ContainerIds: setString(append(r1.ContainerIds, r2.ContainerIds...)...),
+			RankIds:      setInt32(append(r1.RankIds, r2.RankIds...)...),
+			Stdtypes:     setString(append(r1.Stdtypes, r2.Stdtypes...)...),
+			Sources:      setString(append(r1.Sources, r2.Sources...)...),
 		})
 	})
 }
@@ -862,4 +893,30 @@ func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.T
 		}
 		return false, nil
 	}
+}
+
+func setInt32(xs ...int32) []int32 {
+	s := map[int32]bool{}
+	for _, x := range xs {
+		s[x] = true
+	}
+
+	var nxs []int32
+	for x := range s {
+		nxs = append(nxs, x)
+	}
+	return nxs
+}
+
+func setString(xs ...string) []string {
+	s := map[string]bool{}
+	for _, x := range xs {
+		s[x] = true
+	}
+
+	var nxs []string
+	for x := range s {
+		nxs = append(nxs, x)
+	}
+	return nxs
 }
