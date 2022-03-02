@@ -1431,10 +1431,15 @@ jobs:
       managed-devcluster:
         type: boolean
         default: false
+      postgres-version:
+        type: string
+        default: '10'
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
+    environment:
+      DET_POSTGRES_VERSION: <<parameters.postgres-version>>
     steps:
       - checkout
       - attach_workspace:
@@ -1942,6 +1947,26 @@ workflows:
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
+
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: '10'
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: '14'
 
       - deploy:
           enable-cors: true
