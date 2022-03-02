@@ -101,6 +101,8 @@ def check_logs(
 
     # Convert fields to log_fn filters and check all are valid.
     fields = fields_list[0]
+    assert any(fields.values()), "no filter values were returned"
+
     for k, v in fields.items():
         if not any(v):
             continue

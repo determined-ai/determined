@@ -287,7 +287,7 @@ func (a *apiServer) TrialLogsFields(
 	// And merge the available filters.
 	return zipBatches(resOld, resNew, func(b1, b2 api.Batch) error {
 		r1 := b1.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
-		r2 := b1.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
+		r2 := b2.(api.BatchOfOne).Inner.(*apiv1.TrialLogsFieldsResponse)
 		return resp.Send(&apiv1.TrialLogsFieldsResponse{
 			AgentIds:     setString(append(r1.AgentIds, r2.AgentIds...)...),
 			ContainerIds: setString(append(r1.ContainerIds, r2.ContainerIds...)...),
