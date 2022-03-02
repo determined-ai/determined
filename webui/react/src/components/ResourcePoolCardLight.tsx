@@ -4,9 +4,11 @@ import awsLogo from 'assets/images/aws-logo.svg';
 import gcpLogo from 'assets/images/gcp-logo.svg';
 import k8sLogo from 'assets/images/k8s-logo.svg';
 import staticLogo from 'assets/images/on-prem-logo.svg';
+import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
 import { clone } from 'utils/data';
 
@@ -14,8 +16,6 @@ import Json from './Json';
 import Link from './Link';
 import css from './ResourcePoolCardLight.module.scss';
 import ResourcePoolDetails from './ResourcePoolDetails';
-import Icon from 'components/Icon'
-import { ShirtSize } from 'themes';
 
 interface Props {
   computeContainerStates: ResourceState[];
@@ -46,10 +46,22 @@ export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
 };
 
 const poolAttributes = [
-  { key: 'accelerator', label: 'Accelerator', render: (x: ResourcePool)=>x.accelerator?x.accelerator:"--" },
-  { key: 'type', label: 'Type', render: (x: ResourcePool)=>V1ResourcePoolTypeToLabel[x.type]},
+  {
+    key: 'accelerator',
+    label: 'Accelerator',
+    render: (x: ResourcePool) => x.accelerator ? x.accelerator : '--',
+  },
+  {
+    key: 'type',
+    label: 'Type',
+    render: (x: ResourcePool) => V1ResourcePoolTypeToLabel[x.type],
+  },
   { key: 'instanceType', label: 'Instance Type' },
-  { key: 'numAgents', label: 'Connected Agents', render: (x: ResourcePool)=>`${x.numAgents}/${x.maxAgents}` },
+  {
+    key: 'numAgents',
+    label: 'Connected Agents',
+    render: (x: ResourcePool) => `${x.numAgents}/${x.maxAgents}`,
+  },
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
 ];
@@ -80,14 +92,13 @@ const ResourcePoolCardLight: React.FC<Props> = ({
 
   const shortDetails = useMemo(() => {
     return poolAttributes.reduce((acc, attribute) => {
-      const value = attribute.render ? attribute.render(processedPool) : processedPool[attribute.key as keyof ResourcePool];
-      console.log(attribute.render)
+      const value = attribute.render ?
+        attribute.render(processedPool) :
+        processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
       return acc;
     }, {} as SafeRawJson);
   }, [ processedPool ]);
-
-
 
   const toggleModal = useCallback(() => setDetailVisible((cur: boolean) => !cur), []);
 
@@ -102,22 +113,23 @@ const ResourcePoolCardLight: React.FC<Props> = ({
           <Link onClick={toggleModal}><Icon name="info" /></Link>
         </div>
       </div>
-      
       <div className={css.body}>
-        
         <section>
-        
-            <SlotAllocationBar
-              resourceStates={computeContainerStates}
-              title={deviceTypes.has(resourceType) ? resourceType : undefined}
-              totalSlots={totalComputeSlots}
-              hideHeader
-              footer= {{ isAux: pool.auxContainerCapacityPerAgent>0, auxRunning: pool.auxContainersRunning, auxTotal: pool.auxContainerCapacity}}
-              size={ShirtSize.large}
-            />
+          <SlotAllocationBar
+            footer={{
+              auxRunning: pool.auxContainersRunning,
+              auxTotal: pool.auxContainerCapacity,
+              isAux: pool.auxContainerCapacityPerAgent > 0,
+            }}
+            hideHeader
+            resourceStates={computeContainerStates}
+            size={ShirtSize.large}
+            title={deviceTypes.has(resourceType) ? resourceType : undefined}
+            totalSlots={totalComputeSlots}
+          />
         </section>
         <section className={css.details}>
-          <Json json={shortDetails}  hideDivider />
+          <Json hideDivider json={shortDetails} />
           <div>
             <ResourcePoolDetails
               finally={toggleModal}

@@ -1,16 +1,15 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
+import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
+import { ResourceType } from 'types';
+import { percent } from 'utils/number';
 
 import ClusterLogs from './ClusterLogs';
-import ClustersOverview from './Clusters/ClustersOverview'
-import { useStore } from 'contexts/Store';
-import { percent } from 'utils/number';
-import { ResourceType } from 'types';
-
+import ClustersOverview from './Clusters/ClustersOverview';
 
 const { TabPane } = Tabs;
 
@@ -49,7 +48,11 @@ const Clusters: React.FC = () => {
   }, [ basePath, history ]);
 
   return (
-    <Page bodyNoPadding id="cluster" stickyHeader title={`Cluster ${cluster ? `- ${cluster}`:''}`}>
+    <Page
+      bodyNoPadding
+      id="cluster"
+      stickyHeader
+      title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <ClustersOverview />

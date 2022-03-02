@@ -15,20 +15,20 @@ import css from './SlotAllocation.module.scss';
 export interface Props {
   barOnly?: boolean;
   className?: string;
+  footer?: AllocationBarFooterProps;
   hideHeader?: boolean;
   resourceStates: ResourceState[];
   showLegends?: boolean;
-  footer?: AllocationBarFooterProps;
   size?: ShirtSize;
   title?: string;
   totalSlots: number;
 }
 
 export interface AllocationBarFooterProps {
-  queued?: number;
-  isAux?: boolean;
   auxRunning ?: number;
   auxTotal?:number
+  isAux?: boolean;
+  queued?: number;
 }
 
 interface LegendProps {
@@ -159,8 +159,17 @@ const SlotAllocationBar: React.FC<Props> = ({
       </ConditionalWrapper>
       {footer && (
         <div className={css.footer}>
-          <header>{`${footer.isAux?`${footer.auxRunning}/${footer.auxTotal} Aux Container Running`:`${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}</header>
-          {!footer.isAux && (footer.queued ? <span className={css.queued}>{`${footer.queued > 100 ? '100+': footer.queued} Jobs Queued`}</span> : <span>{`${totalSlots - resourceStates.length} Slots Free`}</span> )}
+          <header>{`${footer.isAux ?
+            `${footer.auxRunning}/${footer.auxTotal} Aux Container Running` :
+            `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
+          </header>
+          {!footer.isAux && (footer.queued ? (
+            <span className={css.queued}>{`${footer.queued > 100 ?
+              '100+' :
+              footer.queued} Jobs Queued`}
+            </span>
+          ) :
+            <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>)}
         </div>
       )}
       {showLegends && (
