@@ -4,10 +4,6 @@
  Model Hub
 ###########
 
-**********
- Overview
-**********
-
 Determined's **model-hub** library makes it easy to train models from popular third-party libraries
 with a Determined cluster. With **model-hub**, use trusted implementations of model architectures
 with Determined's ability to easily scale to distributed training, track experiments, share

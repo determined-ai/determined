@@ -14,10 +14,13 @@ Debian packages and running them as `systemd <https://freedesktop.org/wiki/Softw
 services.
 
 To install Determined on-premise, first :ref:`install Docker <install-docker>`. Then install
-Determined by your preferred method:
+Determined by your preferred method.
 
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   requirements
+   docker
+   deploy
+   linux-packages

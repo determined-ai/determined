@@ -253,12 +253,8 @@ Determined may pick one of those interfaces rather than one that allows one agen
 another. In this case, it is possible to set the network interface used for distributed training
 explicitly in the :ref:`cluster-configuration`.
 
-************
- Learn More
-************
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   effective-distributed-training

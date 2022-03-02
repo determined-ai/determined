@@ -368,15 +368,9 @@ To execute arbitrary Python code during the lifecycle of a
 :class:`~determined.pytorch.PyTorchTrial` by implementing
 :meth:`~determined.pytorch.PyTorchTrial.build_callbacks`.
 
-************
- Learn More
-************
-
-See the full list of documents.
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
    api-pytorch-advanced
    api-pytorch-porting

@@ -85,14 +85,8 @@ implement the :class:`determined.keras.callbacks.Callback` interface (an extensi
 :class:`~determined.keras.TFKerasTrial` by implementing
 :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
-************
- Learn More
-************
-
-See the full list of documents.
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
    api-keras-reference
