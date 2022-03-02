@@ -32,3 +32,8 @@
   text-align: right;
   word-break: break-all;
 }
+.hideDivider {
+  .item {
+    border-width: 0;
+  }
+}

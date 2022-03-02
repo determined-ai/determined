@@ -646,6 +646,7 @@ export interface Template {
 }
 
 export interface ResourcePool {
+  accelerator?: string;
   auxContainerCapacity: number;
   auxContainerCapacityPerAgent: number;
   auxContainersRunning: number;

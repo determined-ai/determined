@@ -1,11 +1,16 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
 import { paths } from 'routes/utils';
 
 import ClusterLogs from './ClusterLogs';
+import ClustersOverview from './Clusters/ClustersOverview'
+import { useStore } from 'contexts/Store';
+import { percent } from 'utils/number';
+import { ResourceType } from 'types';
+
 
 const { TabPane } = Tabs;
 
@@ -26,6 +31,17 @@ const Clusters: React.FC = () => {
   const history = useHistory();
 
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const { cluster: overview, resourcePools } = useStore();
+
+  const cluster = useMemo(() => {
+    if (overview[ResourceType.ALL].allocation === 0) return undefined;
+    const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
+      return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
+    }, 0);
+    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
+    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
+      / totalSlots)}%`;
+  }, [ overview, resourcePools ]);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
@@ -33,8 +49,11 @@ const Clusters: React.FC = () => {
   }, [ basePath, history ]);
 
   return (
-    <Page bodyNoPadding id="cluster" stickyHeader title="Cluster">
+    <Page bodyNoPadding id="cluster" stickyHeader title={`Cluster ${cluster ? `- ${cluster}`:''}`}>
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+        <TabPane key="overview" tab="Overview">
+          <ClustersOverview />
+        </TabPane>
         <TabPane key="logs" tab="Cluster Logs">
           <ClusterLogs />
         </TabPane>

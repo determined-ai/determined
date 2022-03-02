@@ -18,9 +18,17 @@ export interface Props {
   hideHeader?: boolean;
   resourceStates: ResourceState[];
   showLegends?: boolean;
+  footer?: AllocationBarFooterProps;
   size?: ShirtSize;
   title?: string;
   totalSlots: number;
+}
+
+export interface AllocationBarFooterProps {
+  queued?: number;
+  isAux?: boolean;
+  auxRunning ?: number;
+  auxTotal?:number
 }
 
 interface LegendProps {
@@ -58,6 +66,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   showLegends,
   className,
   hideHeader,
+  footer,
   title,
   ...barProps
 }: Props) => {
@@ -148,6 +157,12 @@ const SlotAllocationBar: React.FC<Props> = ({
           <Bar {...barProps} parts={barParts} />
         </div>
       </ConditionalWrapper>
+      {footer && (
+        <div className={css.footer}>
+          <header>{`${footer.isAux?`${footer.auxRunning}/${footer.auxTotal} Aux Container Running`:`${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}</header>
+          {!footer.isAux && (footer.queued ? <span className={css.queued}>{`${footer.queued > 100 ? '100+': footer.queued} Jobs Queued`}</span> : <span>{`${totalSlots - resourceStates.length} Slots Free`}</span> )}
+        </div>
+      )}
       {showLegends && (
         <div className={css.overallLegends}>
           <Popover content={stateDetails} placement="bottom">
