@@ -90,7 +90,7 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, rowWrapper, ...prop
   const row = useCallback(
     (rowProps) =>
       rowWrapper ? rowWrapper(rowProps, recordsDict) : <tr {...rowProps} />,
-    [recordsDict, rowWrapper]
+    [recordsDict]
   );
 
   return (
