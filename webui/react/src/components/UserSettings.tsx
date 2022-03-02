@@ -5,7 +5,6 @@ import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
 import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
 import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
-import { getDisplayName } from 'utils/user';
 
 import css from './UserSettings.module.scss';
 

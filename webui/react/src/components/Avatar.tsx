@@ -34,7 +34,7 @@ const getColor = (name = ''): string => {
 };
 
 const Avatar: React.FC<Props> = ({ hideTooltip, name, large, username }: Props) => {
-  const [ value, setValue ] = useState('');
+  const [ displayName, setDisplayName ] = useState('');
   const { users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
 
@@ -44,21 +44,21 @@ const Avatar: React.FC<Props> = ({ hideTooltip, name, large, username }: Props) 
         fetchUsers();
       }
       const user = users.find(user => user.username === username);
-      setValue(getDisplayName(user));
+      setDisplayName(getDisplayName(user));
     } else if (name) {
-      setValue(name);
+      setDisplayName(name);
     }
   }, [ fetchUsers, username, name, users ]);
 
-  const style = { backgroundColor: getColor(value) };
+  const style = { backgroundColor: getColor(displayName) };
   const classes = [ css.base ];
   if (large) classes.push(css.large);
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>
-      {getInitials(value)}
+      {getInitials(displayName)}
     </div>
   );
-  return hideTooltip ? avatar : <Tooltip placement="right" title={value}>{avatar}</Tooltip>;
+  return hideTooltip ? avatar : <Tooltip placement="right" title={displayName}>{avatar}</Tooltip>;
 };
 
 export default Avatar;
