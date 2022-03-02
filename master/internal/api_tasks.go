@@ -246,3 +246,36 @@ func processBatches(res chan api.BatchResult, h func(api.Batch) error) error {
 	}
 	return err.ErrorOrNil()
 }
+
+func zipBatches(res1, res2 chan api.BatchResult, z func(api.Batch, api.Batch) error) error {
+	var err *multierror.Error
+	for {
+		b1, ok := <-res1
+		switch {
+		case !ok:
+			return err.ErrorOrNil()
+		case b1.Err() != nil:
+			// Noting the failure but not exiting here will cause us to wait for the downstream
+			// processor to fail from its error or continue.
+			err = multierror.Append(err, b1.Err())
+			continue
+		}
+
+		b2, ok := <-res2
+		switch {
+		case !ok:
+			return err.ErrorOrNil()
+		case b2.Err() != nil:
+			// Noting the failure but not exiting here will cause us to wait for the downstream
+			// processor to fail from its error or continue.
+			err = multierror.Append(err, b2.Err())
+			continue
+		}
+
+		if zErr := z(b1.Batch(), b2.Batch()); zErr != nil {
+			// Since this is our failure, we fail and return. This should cause upstream
+			// processses and cause downstream senders to cancel.
+			return zErr
+		}
+	}
+}
