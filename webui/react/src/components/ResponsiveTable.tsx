@@ -5,8 +5,6 @@ import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 
-import TaskActionDropdown from './TaskActionDropdown';
-import { taskFromExperiment } from 'utils/task';
 import useResize from 'hooks/useResize';
 
 import Spinner from './Spinner';
@@ -59,7 +57,7 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
         ?.map(({ id, ...rest }) => ({
           [id]: rest,
         }))
-        .reduce((a, b) => ({ ...a, ...b })),
+        .reduce((a, b) => ({ ...a, ...b }), {}),
     [props.dataSource]
   );
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
@@ -98,32 +96,18 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
           components={{
             body: {
               row: useCallback(
-                (props: React.HTMLAttributes<HTMLElement>, other) => {
-                  const record =
-                    recordsDict && recordsDict[props['data-row-key']];
-                  return record ? (
-                    <TaskActionDropdown
-                      // curUser={user}
-                      task={taskFromExperiment(record)}
-                      onComplete={() => {}}
-                    >
-                      <tr  {...props} />
-                    </TaskActionDropdown>
+                (rowProps) =>
+                  props.rowWrapper ? (
+                    props.rowWrapper(rowProps, recordsDict)
                   ) : (
-                      <tr  {...props} />
-                  );
-                },
-                [recordsDict]
+                    <tr {...rowProps} />
+                  ),
+                [recordsDict, props.rowWrapper]
               ),
             },
           }}
           scroll={tableScroll}
           tableLayout="auto"
-          onRow={(record, rowIndex) => ({
-            onContextMenu: (e) => {
-              // placeholder to display custom menu
-            },
-          })}
           {...props}
         />
       </Spinner>
