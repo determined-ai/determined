@@ -25,8 +25,8 @@ import argparse
 import collections
 import os
 import sys
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any, Dict
 
 import requests
 import yaml
@@ -51,13 +51,9 @@ JOB_SUFFIXES = [
     "gpt-neox-deepspeed-gpu",
 ]
 
-PACKER_JOBS = set([
-    "publish-cloud-images",
-])
+PACKER_JOBS = {"publish-cloud-images"}
 
-DOCKER_JOBS = {
-    f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES
-}
+DOCKER_JOBS = {f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES}
 
 PACKER_ARTIFACTS = {
     "packer-log",
@@ -115,7 +111,7 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
         expected = DOCKER_JOBS
 
     if dev:
-        expected = set(s + '-dev' for s in expected)
+        expected = {s + "-dev" for s in expected}
 
     found = set(builds.keys())
     expected_found = expected.difference(found)
@@ -141,9 +137,7 @@ def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str,
         expected = DOCKER_ARTIFACTS
 
     found = set(artifacts.keys())
-    assert (
-        expected == found
-    ), f"expected artifacts ({expected}) but found ({found})"
+    assert expected == found, f"expected artifacts ({expected}) but found ({found})"
 
     return artifacts
 
@@ -223,11 +217,12 @@ if __name__ == "__main__":
     parser.add_argument("path", type=Path, help="path/to/bumpenvs.yaml")
     parser.add_argument("commit", help="environments commit id")
     parser.add_argument(
-        "--no-cloud-images", action="store_false", dest="cloud_images",
-        help="skip cloud image update")
-    parser.add_argument(
-        "--dev", action="store_true",
-        help="use dev-suffixed builds")
+        "--no-cloud-images",
+        action="store_false",
+        dest="cloud_images",
+        help="skip cloud image update",
+    )
+    parser.add_argument("--dev", action="store_true", help="use dev-suffixed builds")
     args = parser.parse_args()
 
     path = args.path
