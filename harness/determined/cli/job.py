@@ -1,5 +1,5 @@
 import json
-from argparse import Namespace
+from argparse import Namespace, ONE_OR_MORE
 from datetime import datetime
 from typing import Any, List
 
@@ -99,6 +99,43 @@ def update(args: Namespace) -> None:
         setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
     )
 
+def _single_update(job_id, session, priority=None, weight=None, resource_pool=None, behind_of=None, ahead_of=None) -> None:
+    update = bindings.v1QueueControl(
+        jobId=job_id,
+        priority=priority,
+        weight=weight,
+        resourcePool=resource_pool,
+        behindOf=behind_of,
+        aheadOf=ahead_of,
+    )
+    bindings.post_UpdateJobQueue(
+        session, body=bindings.v1UpdateJobQueueRequest([update])
+    )
+    print("job_id:", job_id)
+    print("priority:", priority)
+    print("weight:", weight)
+    print("resource_pool:", resource_pool)
+    print("behind_of:", behind_of)
+    print("ahead_of:", ahead_of)
+    return
+
+
+@authentication.required
+def process_updates(args: Namespace) -> None:
+    session = setup_session(args)
+    for arg in args.operation:
+        inputs = {"session": session}
+        values = arg.split(".")
+        if len(values) != 2:
+            raise ValueError("Incorrect format")
+        inputs["job_id"] = values[0]
+        operation = values[1].split("=")
+        if len(operation) != 2:
+            raise ValueError("Incorrect format")
+        inputs[operation[0]] = operation[1]
+        _single_update(**inputs)
+
+
 
 args_description = [
     Cmd(
@@ -128,43 +165,31 @@ args_description = [
             ),
             Cmd(
                 "u|pdate",
-                update,
+                process_updates,
                 "update job",
                 [
+                    Arg("job_id", type=str, help="The target job ID"),
+                    Group(Arg("-p", "--priority", type=int, help="The new priority. Exclusive to priority scheduler."),
+                        Arg("-w", "--weight", type=float, help="The new weight. Exclusive to fair_share scheduler."),
+                        Arg("--resource-pool", type=str, help="The target resource pool to move the job to."),
+                        Arg("--ahead-of", type=str, help="The job ID of the job to be put ahead of in the queue."),
+                        Arg("--behind-of", type=str, help="The job ID of the job to be put behind in the queue."),
+                    ),
+                ],
+            ),
+            Cmd(
+                "update-batch",
+                process_updates,
+                "batch update jobs",
+                [
                     Arg(
-                        "job_id",
+                        "operation",
+                        nargs=ONE_OR_MORE,
                         type=str,
-                        help="The target job ID",
-                    ),
-                    Group(
-                        Arg(
-                            "-p",
-                            "--priority",
-                            type=int,
-                            help="The new priority. Exclusive to priority scheduler.",
-                        ),
-                        Arg(
-                            "-w",
-                            "--weight",
-                            type=float,
-                            help="The new weight. Exclusive to fair_share scheduler.",
-                        ),
-                        Arg(
-                            "--resource-pool",
-                            type=str,
-                            help="The target resource pool to move the job to.",
-                        ),
-                        Arg(
-                            "--ahead-of",
-                            type=str,
-                            help="The job ID of the job to be put ahead of in the queue.",
-                        ),
-                        Arg(
-                            "--behind-of",
-                            type=str,
-                            help="The job ID of the job to be put behind in the queue.",
-                        ),
-                    ),
+                        help="The target job ID(s) and target operation(s), formatted as "
+                             "<jobID>.<operation>=<value>. Operations include priority, weight, "
+                             "resource-pool, ahead-of, and behind-of."
+                    )
                 ],
             ),
         ],
