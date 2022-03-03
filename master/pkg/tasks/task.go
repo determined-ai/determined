@@ -116,12 +116,8 @@ func (t TaskSpec) EnvVars() map[string]string {
 		"DET_TASK_ID":       t.TaskID,
 		"DET_ALLOCATION_ID": t.AllocationID,
 		"DET_SESSION_TOKEN": t.AllocationSessionToken,
-	}
-	if t.UserSessionToken != "" {
-		e["DET_USER_TOKEN"] = t.UserSessionToken
-	}
-	if t.Owner != nil {
-		e["DET_USER"] = t.Owner.Username
+		"DET_USER_TOKEN":    t.UserSessionToken,
+		"DET_USER":          t.Owner.Username,
 	}
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
