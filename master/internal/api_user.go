@@ -32,7 +32,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		Admin:          user.Admin,
 		Active:         user.Active,
 		AgentUserGroup: agentUserGroup,
-		DisplayName: 		displayNameString,
+		DisplayName:    displayNameString,
 	}
 }
 
