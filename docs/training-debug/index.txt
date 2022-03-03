@@ -1,8 +1,8 @@
 .. _model-debug:
 
-##############
- Debug Models
-##############
+#####################
+ How to Debug Models
+#####################
 
 This document recommends how to use Determined to debug models depending on your environment.
 
@@ -79,8 +79,8 @@ performs as expected by calling its methods and verifying the output.
  Step 3 - Verify local test mode
 *********************************
 
-:ref:`Step 2 <step2>`, validated that your Trial API calls work as expected. This step uses your
-code to run an actual Determined training loop with abbreviated workloads to make sure that it meets
+:ref:`Step 2 <step2>` validated that your Trial API calls work as expected. This step uses your code
+to run an actual Determined training loop with abbreviated workloads to make sure that it meets
 Determined requirements.
 
 This step assumes you have a working local environment for training. If you do not, skip to
@@ -96,7 +96,7 @@ This step assumes you have a working local environment for training. If you do n
    of occurring on a cluster. The ``--test`` argument runs abbreviated workloads to try to detect
    bugs sooner and exits immediately.
 
-#. The test is considered to have passed if the command completes successfully.
+   The test is considered to have passed if the command completes successfully.
 
 #. Perform failure diagnostics:
 
@@ -127,7 +127,7 @@ cluster instead of locally.
 
    Pass the root directory containing your model and training scripts in the ``--context`` argument:
 
-   If you are using a Jupyter notebook, enter:
+   If you prefer a Jupyter notebook, enter:
 
    .. code:: bash
 
@@ -271,8 +271,8 @@ interactive environment, it is submitted to the cluster and managed by Determine
 
    -  Environment variables are correctly set in the experiment configuration.
 
-   If no customizations are missing, the following, new layers introduced with a cluster-managed
-   experiment could be the problem cause:
+   If no customizations are missing, the following new layers introduced with a cluster-managed
+   experiment could be the cause of the problem:
 
    -  The ``checkpoint_storage`` settings are used for cluster-managed training. If
       ``checkpoint_storage`` is not configured in the experiment configuration or the master
@@ -288,11 +288,12 @@ interactive environment, it is submitted to the cluster and managed by Determine
       you should review the ``checkpoint_storage`` setting values.
 
    -  The experiment configuration is more strictly validated for cluster-managed experiments than
-      for ``--local --test`` mode. Errors related to ``unmarshaling JSON`` when attempting to submit
-      the experiment to the cluster indicate that the experiment configuration has errors. Review
-      the :ref:`experiment configuration <experiment-configuration>`.
+      for ``--local --test`` mode. Errors related to ``invalid experiment configuration`` when
+      attempting to submit the experiment to the cluster indicate that the experiment configuration
+      has errors. Review the :ref:`experiment configuration <experiment-configuration>`.
 
-If you are unable to identify the root cause of the issue, contact Determined `community support
+If no customizations are missing and the new layers introduced with a cluster-managed experiment are
+not the cause of the problem, contact Determined `community support
 <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__!
 
 .. _step8:
@@ -316,7 +317,7 @@ executes full training for each trial.
 
 #. Create an experiment without the ``--test`` or ``--local`` arguments:
 
-   You might find the ``--follow``, or ``-f``, arguments helpful:
+   You might find the ``--follow``, or ``-f``, argument helpful:
 
    .. code:: bash
 
@@ -371,9 +372,10 @@ step only applies if you have multiple GPUs and want to use distributed training
          could be ``1``, ``2``, ``3``, or ``4``, which would fit on a single machine.
       -  A ``slots_per_trial`` value of ``8``, ``12``, or ``16`` would completely utilize a number
          of agent machines.
-      -  A ``slots_per_trial`` value of ``5``, implies more than one agent but is not a multiple of
-         agent size.
-      -  A ``slots_per_trial`` value of ``32`` is too large for the cluster.
+      -  A ``slots_per_trial`` value of ``5`` implies more than one agent but it is not a multiple
+         of agent size so this is an invalid case.
+      -  A ``slots_per_trial`` value of ``32`` is too large for the cluster and would also be an
+         invalid case.
 
       Ensure that there are no other notebooks, shells, or experiments on the cluster that might
       consume too many resources and prevent the experiment from starting.
