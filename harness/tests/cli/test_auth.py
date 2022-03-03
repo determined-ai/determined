@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import shutil
@@ -55,20 +56,29 @@ def test_auth_with_store(requests_mock: requests_mock.Mocker, user: Optional[str
         assert authentication.session.token == expected_token
 
 
+@contextlib.contextmanager
+def set_container_env_vars() -> None:
+    try:
+        os.environ["DET_USER"] = "alice"
+        os.environ["DET_USER_TOKEN"] = "alice.token"
+        yield
+    finally:
+        del os.environ["DET_USER"]
+        del os.environ["DET_USER_TOKEN"]
+
+
 @pytest.mark.parametrize("user", [None, "bob", "determined"])
 @pytest.mark.parametrize("has_token_store", [True, False])
 def test_auth_user_from_env(
     requests_mock: requests_mock.Mocker, user: Optional[str], has_token_store: bool
 ) -> None:
-    with use_test_config_dir() as config_dir:
+    with use_test_config_dir() as config_dir, set_container_env_vars():
         if has_token_store:
             auth_json_path = config_dir / "auth.json"
             with open(auth_json_path, "w") as f:
                 json.dump(AUTH_JSON, f)
 
         requests_mock.get("/users/me", status_code=200, json={"username": "alice"})
-        os.environ["DET_USER"] = "alice"
-        os.environ["DET_USER_TOKEN"] = "alice.token"
 
         authentication = Authentication(MOCK_MASTER_URL, user)
         if has_token_store:
