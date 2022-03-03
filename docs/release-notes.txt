@@ -20,17 +20,16 @@ Version 0.17.10
 
 **New Features**
 
--  Added self-supervised image classification example in PyTorch using Bootstrap Your Own Latent
-   (BYOL).
+-  Added a Bootstrap Your Own Latent (BYOL) self-supervised image classification PyTorch example.
 
 -  PyTorchTrial and TFKerasTrial now automatically log the number of batches and number of records
    in every training and validation workload, as well as the duration of the workload and the
    calculated batches per second and records per second.
 
--  All logs produced by tasks on the cluster are persisted and accessible through the new ``det task
-   logs`` CLI command or the usual commands to retrieve their logs, even after completion.
+-  All (experiment and non-experiment) task logs are persisted and accessible through the new ``det
+   task logs`` CLI command or the usual commands to retrieve their logs, even after completion.
 
--  Now supports setting root certificates for the DB via the Determined Helm chart. This allows
+-  Support specifying root certificates for the DB via the Determined Helm chart. This allows
    Determined to use SSL to connect to the DB without having to replace the master config manually.
    To use this feature, save the certificate in a configmap or secret and set the following values:
    ``sslMode``, ``sslRootCert``, ``resourceType``, and ``certResourceName``. Additional details can
