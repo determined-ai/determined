@@ -1,5 +1,5 @@
 import json
-from argparse import Namespace, ONE_OR_MORE
+from argparse import ONE_OR_MORE, Namespace
 from datetime import datetime
 from typing import Any, List
 
@@ -12,26 +12,13 @@ from determined.cli.util import format_args, pagination_args
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
+from determined.common.experimental import Session
 
 
 @authentication.required
 def ls(args: Namespace) -> None:
-    is_priority = True
     config = api.get(args.master, "config").json()
-    try:
-        for pool in config["resource_pools"]:
-            if (
-                pool["pool_name"] == args.resource_pool
-                and pool["scheduler"]["type"] == "fair_share"
-            ):
-                is_priority = False
-    except (KeyError, TypeError):
-        try:
-            if config["resource_manager"]["scheduler"]["type"] == "fair_share":
-                is_priority = False
-        except KeyError:
-            pass
-
+    is_priority = check_is_priority(config, args.resource_pool)
     response = bindings.get_GetJobs(
         setup_session(args),
         resourcePool=args.resource_pool,
@@ -99,26 +86,6 @@ def update(args: Namespace) -> None:
         setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
     )
 
-def _single_update(job_id, session, priority=None, weight=None, resource_pool=None, behind_of=None, ahead_of=None) -> None:
-    update = bindings.v1QueueControl(
-        jobId=job_id,
-        priority=priority,
-        weight=weight,
-        resourcePool=resource_pool,
-        behindOf=behind_of,
-        aheadOf=ahead_of,
-    )
-    bindings.post_UpdateJobQueue(
-        session, body=bindings.v1UpdateJobQueueRequest([update])
-    )
-    print("job_id:", job_id)
-    print("priority:", priority)
-    print("weight:", weight)
-    print("resource_pool:", resource_pool)
-    print("behind_of:", behind_of)
-    print("ahead_of:", ahead_of)
-    return
-
 
 @authentication.required
 def process_updates(args: Namespace) -> None:
@@ -127,14 +94,74 @@ def process_updates(args: Namespace) -> None:
         inputs = {"session": session}
         values = arg.split(".")
         if len(values) != 2:
-            raise ValueError("Incorrect format")
+            raise ValueError(
+                f"Invalid operation specified for job {values[0]}. "
+                f"Please ensure they are formatted as <jobID>.<operation>=<value>."
+            )
         inputs["job_id"] = values[0]
         operation = values[1].split("=")
         if len(operation) != 2:
-            raise ValueError("Incorrect format")
+            raise ValueError(
+                f"Operation for job {values[0]} has invalid format. "
+                f"Please ensure it is formatted as <jobID>.<operation>=<value>."
+            )
         inputs[operation[0]] = operation[1]
+        replace_keys(inputs)
         _single_update(**inputs)
 
+
+def _single_update(
+    job_id: str,
+    session: Session,
+    priority: str = None,
+    weight: str = None,
+    resource_pool: str = None,
+    behind_of: str = None,
+    ahead_of: str = None,
+) -> None:
+    update = bindings.v1QueueControl(
+        jobId=job_id,
+        priority=priority,
+        weight=int(weight),
+        resourcePool=resource_pool,
+        behindOf=behind_of,
+        aheadOf=ahead_of,
+    )
+    bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest([update]))
+    return
+
+
+def is_priority_rm(config: dict) -> bool:
+    try:
+        if config["resource_manager"]["scheduler"]["type"] == "fair_share":
+            return False
+    except KeyError:
+        pass
+    return True
+
+
+def check_is_priority(config: dict, resource_pool: str) -> bool:
+    try:
+        for pool in config["resource_pools"]:
+            if pool["pool_name"] == resource_pool and pool["scheduler"]["type"] == "fair_share":
+                return False
+        return is_priority_rm(config)
+
+    except (KeyError, TypeError):
+        return is_priority_rm(config)
+    return True
+
+
+def replace_keys(operations: dict) -> None:
+    replacements = {
+        "resource-pool": "resource_pool",
+        "ahead-of": "ahead_of",
+        "behind-of": "behind_of",
+    }
+    for k, v in replacements.items():
+        if k in operations:
+            operations[v] = operations[k]
+            del operations[k]
 
 
 args_description = [
@@ -165,15 +192,38 @@ args_description = [
             ),
             Cmd(
                 "u|pdate",
-                process_updates,
+                update,
                 "update job",
                 [
                     Arg("job_id", type=str, help="The target job ID"),
-                    Group(Arg("-p", "--priority", type=int, help="The new priority. Exclusive to priority scheduler."),
-                        Arg("-w", "--weight", type=float, help="The new weight. Exclusive to fair_share scheduler."),
-                        Arg("--resource-pool", type=str, help="The target resource pool to move the job to."),
-                        Arg("--ahead-of", type=str, help="The job ID of the job to be put ahead of in the queue."),
-                        Arg("--behind-of", type=str, help="The job ID of the job to be put behind in the queue."),
+                    Group(
+                        Arg(
+                            "-p",
+                            "--priority",
+                            type=int,
+                            help="The new priority. Exclusive to priority scheduler.",
+                        ),
+                        Arg(
+                            "-w",
+                            "--weight",
+                            type=float,
+                            help="The new weight. Exclusive to fair_share scheduler.",
+                        ),
+                        Arg(
+                            "--resource-pool",
+                            type=str,
+                            help="The target resource pool to move the job to.",
+                        ),
+                        Arg(
+                            "--ahead-of",
+                            type=str,
+                            help="The job ID of the job to be put ahead of in the queue.",
+                        ),
+                        Arg(
+                            "--behind-of",
+                            type=str,
+                            help="The job ID of the job to be put behind in the queue.",
+                        ),
                     ),
                 ],
             ),
@@ -187,8 +237,8 @@ args_description = [
                         nargs=ONE_OR_MORE,
                         type=str,
                         help="The target job ID(s) and target operation(s), formatted as "
-                             "<jobID>.<operation>=<value>. Operations include priority, weight, "
-                             "resource-pool, ahead-of, and behind-of."
+                        "<jobID>.<operation>=<value>. Operations include priority, weight, "
+                        "resource-pool, ahead-of, and behind-of.",
                     )
                 ],
             ),
