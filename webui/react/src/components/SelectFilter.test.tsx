@@ -59,6 +59,12 @@ describe('SelectFilter', () => {
     const list = screen.getAllByTitle(OPTION_TITLE);
     const firstOption = list[0].textContent ?? '';
 
+    /**
+     * With Ant Design v4 the select dropdown box container has an issue of having the style
+     * set as "opacity: 0; pointer-events: none;" which prevents the default `userEvent.click()`
+     * from working, because it checks for pointer-events.
+     * https://github.com/ant-design/ant-design/issues/23009#issuecomment-929766415
+     */
     userEvent.click(list[0], undefined, { skipPointerEventsCheck: true });
 
     await waitFor(() => {
