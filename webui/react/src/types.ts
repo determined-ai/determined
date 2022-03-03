@@ -668,6 +668,7 @@ export interface ResourcePool {
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;
+  stats?: Api.V1QueueStats;
   type: Api.V1ResourcePoolType;
 }
 

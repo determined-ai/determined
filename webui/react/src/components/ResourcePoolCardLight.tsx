@@ -80,6 +80,10 @@ const ResourcePoolCardLight: React.FC<Props> = ({
 
   if (!pool.description) descriptionClasses.push(css.empty);
 
+  const isAux = useMemo(() => {
+    return pool.auxContainerCapacityPerAgent > 0;
+  }, [ pool ]);
+
   const processedPool = useMemo(() => {
     const newPool = clone(pool);
     Object.keys(newPool).forEach(key => {
@@ -96,9 +100,11 @@ const ResourcePoolCardLight: React.FC<Props> = ({
         attribute.render(processedPool) :
         processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
+      if (isAux && attribute.key === 'slotsPerAgent') delete acc[attribute.label];
+      if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
       return acc;
     }, {} as SafeRawJson);
-  }, [ processedPool ]);
+  }, [ processedPool, isAux ]);
 
   const toggleModal = useCallback(() => setDetailVisible((cur: boolean) => !cur), []);
 
@@ -119,7 +125,8 @@ const ResourcePoolCardLight: React.FC<Props> = ({
             footer={{
               auxRunning: pool.auxContainersRunning,
               auxTotal: pool.auxContainerCapacity,
-              isAux: pool.auxContainerCapacityPerAgent > 0,
+              isAux: isAux,
+              queued: pool?.stats?.queuedCount,
             }}
             hideHeader
             resourceStates={computeContainerStates}

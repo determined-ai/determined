@@ -4,6 +4,7 @@ package determined.resourcepool.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/resourcepoolv1";
 import "protoc-gen-swagger/options/annotations.proto";
 import "determined/device/v1/device.proto";
+import "determined/job/v1/job.proto";
 
 // The type of the ResourcePool.
 enum ResourcePoolType {
@@ -173,6 +174,9 @@ message ResourcePool {
   determined.resourcepool.v1.ResourcePoolDetail details = 31;
   // GCP, AWS accelerator information
   string accelerator = 33;
+
+  // Job queue stats
+  determined.job.v1.QueueStats stats = 34;
 }
 
 // Detailed information about the resource pool

@@ -163,7 +163,7 @@ const SlotAllocationBar: React.FC<Props> = ({
             `${footer.auxRunning}/${footer.auxTotal} Aux Container Running` :
             `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
           </header>
-          {!footer.isAux && (footer.queued ? (
+          { (footer.queued ? (
             <span className={css.queued}>{`${footer.queued > 100 ?
               '100+' :
               footer.queued} Jobs Queued`}

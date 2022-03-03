@@ -54,10 +54,11 @@ ul.detailedLegends {
 }
 .footer {
   display: flex;
-  justify-content: space-between;
   font-size: var(--theme-sizes-font-small);
+  justify-content: space-between;
   margin-bottom: 8px;
+
   .queued {
-    color: var(--theme-clors-states-pending)
+    color: var(--theme-colors-states-pending)
   }
 }

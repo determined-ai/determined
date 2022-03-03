@@ -11,8 +11,8 @@ $line-height: 22px;
   font-size: var(--theme-sizes-font-medium);
   line-height: $line-height;
   overflow: hidden;
-  text-overflow: ellipsis;
   padding: var(--theme-sizes-layout-tiny) $padding 0;
+  text-overflow: ellipsis;
 
   .body {
     display: flex;
@@ -20,11 +20,10 @@ $line-height: 22px;
     flex-grow: 1;
   }
   .header {
-
+    align-items: center;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
     padding: $padding;
 
  
@@ -36,10 +35,10 @@ $line-height: 22px;
       }
     }
     .default {
-      display: flex;
       color: var(--theme-colors-monochrome-7);
+      display: flex;
+
       span {
-        
         margin-right: 4px;
       }
       i {
@@ -48,7 +47,6 @@ $line-height: 22px;
       }
     }
   }
-
   .empty {
     color: var(--theme-colors-monochrome-7);
   }
@@ -65,4 +63,3 @@ section.details {
     flex-grow: 1;
   }
 }
-
