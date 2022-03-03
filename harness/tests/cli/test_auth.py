@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Optional, Iterator
+from typing import Iterator, Optional
 
 import pytest
 import requests_mock
