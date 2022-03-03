@@ -27,7 +27,7 @@ class Reducer(enum.Enum):
     MIN = 4
 
 
-def _reduce_metrics(
+def _simple_reduce_metrics(
     reducer: Reducer, metrics: np.array, num_batches: Optional[List[int]] = None
 ) -> np.float:
     if reducer == Reducer.AVG:

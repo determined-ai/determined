@@ -10,7 +10,7 @@ hyperparameters:
         - 4
         - 8
   deepspeed: true
-  conf_dir: /run/determined/workdir/configs
+  conf_dir: /gpt-neox/configs
   conf_file:
       - large.yml
       - determined_cluster.yml

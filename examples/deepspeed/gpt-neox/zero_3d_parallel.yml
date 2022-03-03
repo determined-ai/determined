@@ -9,7 +9,7 @@ hyperparameters:
   search_world_size: false
   global_batch_size: 128 # this should be data_parallel_world_size * gradient_accumulation_steps * micro_batch_size
   data_parallel_world_size: 4
-  conf_dir: /run/determined/workdir/configs
+  conf_dir: /gpt-neox/configs
   conf_file:
       - medium.yml
       - determined_cluster.yml

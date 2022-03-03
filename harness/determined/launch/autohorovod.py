@@ -163,6 +163,7 @@ def main(train_entrypoint: str) -> int:
         "-m",
         "determined.exec.worker_process_wrapper",
         "HOROVOD_RANK",
+        "--",
     ]
 
     harness_cmd = [

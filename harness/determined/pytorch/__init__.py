@@ -15,7 +15,13 @@ from determined.pytorch._reducer import (
     _PyTorchReducerContext,
     _SimpleReducer,
     Reducer,
+    _simple_reduce_metrics,
+)
+from determined.pytorch._metric_utils import (
+    _combine_and_average_training_metrics,
+    _prepare_metrics_reducers,
     _reduce_metrics,
+    _convert_metrics_to_numpy,
 )
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext

@@ -2,12 +2,10 @@ import contextlib
 import importlib.util
 import json
 import logging
-import os
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, Type, Union, cast
 
 import deepspeed
 import torch
-import torch.nn as nn
 from deepspeed.runtime import config_utils
 
 import determined as det
@@ -95,7 +93,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         # The following attributes are initialized during the lifetime of
         # a DeepSpeedTrialContext.
-        self.models = []  # type: List[nn.Module]
+        self.models = []  # type: List[deepspeed.DeepSpeedEngine]
         self._epoch_len = None  # type: Optional[int]
 
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
@@ -116,19 +114,18 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._data_repro_checks_disabled = False
         self._manual_grad_accumulation = False
 
-        self._check_experiment_config()
+        self._check_experiment_config_optimizations()
 
-    def _check_experiment_config(self) -> None:
+    def _check_experiment_config_optimizations(self) -> None:
         """
-        Check if the user specified options in optimizations that are incompatible with
+        Check if the user specified options in optimizations are incompatible with
         DeepSpeedTrial.
         """
         optimizations_config = self.env.experiment_config.get_optimizations_config()
-        if not optimizations_config.get("average_training_metrics", False):
-            logging.warning(
-                "DeepSpeedTrial always averages training metrics across data parallel ranks."
-            )
-        self._average_training_metrics = True
+        self._average_training_metrics = cast(
+            bool, optimizations_config.get("average_training_metrics")
+        )
+
         mixed_precision_val = optimizations_config.get("mixed_precision", "O0")
         if mixed_precision_val != "O0":
             raise det.errors.InvalidExperimentException(
@@ -141,6 +138,20 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "Gradient aggregation is specified through the deepspeed config instead of the "
                 "Determined experiment config.",
             )
+        other_optimizations_default_values = {
+            "average_aggregated_gradients": True,
+            "gradient_compression": False,
+            "tensor_fusion_threshold": 64,
+            "tensor_fusion_cycle_time": 5,
+            "autotune_tensor_fusion": False,
+        }
+        for opt_field, default_value in other_optimizations_default_values.items():
+            opt_value = optimizations_config.get(opt_field, default_value)
+            if opt_value != default_value:
+                logging.warning(
+                    f"{opt_field}={opt_value} ignored since the setting does not apply "
+                    "to DeepSpeedTrial."
+                )
 
     def get_global_batch_size(self) -> int:
         return self._global_batch_size
@@ -154,6 +165,12 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "Only one MPU can be passed to DeepSpeedTrialContext.  "
                 "Please make sure wrap_mpu is only called once in the trial definition."
             )
+        if self.distributed.rank == 0:
+            if not self._mpu.should_report_metrics() and not self._average_training_metrics:
+                raise det.errors.InvalidExperimentException(
+                    "Please set optimizations.average_training_metrics in the experiment config "
+                    "to true so that metrics will exist on the chief for report to the master."
+                )
         self._called_wrap_mpu = True
         old_mpu = self._mpu
         self._mpu = mpu
@@ -173,7 +190,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def mpu(self) -> det_ds.ModelParallelUnit:
         return self._mpu
 
-    def wrap_model_engine(self, model: torch.nn.Module) -> torch.nn.Module:
+    def wrap_model_engine(self, model: deepspeed.DeepSpeedEngine) -> deepspeed.DeepSpeedEngine:
         """Returns a wrapped model engine.
 
         In the background, we perform checks to properly handle pipeline parallelism if
@@ -187,7 +204,11 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # Pipeline parallel model engine has its own MPU that we will use here.
         if isinstance(model, deepspeed.PipelineEngine):
             self._use_pipeline_parallel = True
-            self._mpu = det_ds.DeepSpeedMPU(model.mpu)
+            logging.info(
+                "Model engine uses pipeline parallelism, please remember to pass a "
+                "ModelParallelUnit to the context by calling e.g. "
+                "context.wrap_mpu(determined.pytorch.deepspeed.DeepSpeedMPU(model_engine.mpu)."
+            )
 
         recompute_batch_size = False
 
@@ -196,10 +217,10 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self.get_global_batch_size() != model.train_batch_size():
             logging.warning(
                 f"Setting global batch size to {model.train_batch_size()} to match the "
-                "deepspeed config.  To prevent this from happening, you can call "
-                "self.context.overwrite_deepspeed_config(base_ds_config) to get a consistent"
-                "deepspeed config dict which you can pass to the config field when calling"
-                "deepspeed.initialize to build the model engine."
+                "deepspeed config. To prevent this from happening, you can use "
+                "determined.pytorch.deepspeed.overwrite_deepspeed_config to overwrite values "
+                "in a base deepspeed config dict using values from a source deepspeed config dict "
+                "and passing that config to deepspeed.initialize to build the model engine."
             )
             self._global_batch_size = model.train_batch_size()
             recompute_batch_size = True
@@ -292,9 +313,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if not self.n_gpus:
             raise det.errors.InvalidExperimentException("GPUs required for DeepSpeedTrial.")
         if self.distributed.size > 1:
-            # We launch a separate process per GPU with LOCAL_RANK set by DeepSpeed's launcher.
-            # Each process needs to bind to a unique GPU.
-            self.device = torch.device("cuda", int(cast(str, os.environ.get("LOCAL_RANK"))))
+            self.device = torch.device("cuda", self.distributed.get_local_rank())
             torch.cuda.set_device(self.device)
         else:
             self.device = torch.device("cuda", 0)

@@ -66,6 +66,7 @@ class CIFARTrial(DeepSpeedTrial):
 
         self.model_engine = model_engine
         self.model_engine = self.context.wrap_model_engine(model_engine)
+        self.context.wrap_mpu(DeepSpeedMPU(model_engine.mpu))
 
     def train_batch(
         self, iter_dataloader, epoch_idx: int, batch_idx: int

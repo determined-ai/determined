@@ -1,7 +1,6 @@
 import argparse
 import signal
 import sys
-import time
 from typing import Optional
 
 from determined import ipc
@@ -34,7 +33,6 @@ if __name__ == "__main__":
     on_exit = read_action("--on-exit", args.on_exit)
     addr = ipc.read_pid_server_addr(args.addr)
 
-    start_time = time.time()
     with ipc.PIDServer(addr, args.num_workers) as pid_server:
         sys.exit(
             pid_server.run_subprocess(

@@ -13,7 +13,6 @@ import torch
 import determined as det
 from determined import layers, pytorch, util, workload
 from determined.common import storage
-from determined.pytorch import _metric_utils
 from determined.pytorch import deepspeed as det_ds
 
 
@@ -299,7 +298,7 @@ class DeepSpeedTrialController(det.TrialController):
                         _ = self.context.distributed._zmq_gather(
                             storage.StorageManager._list_directory(path)
                         )
-                        if self.context.distributed._is_local_chief:
+                        if self.context.distributed.local_rank == 0:
                             storage_manager.post_store_path(storage_id, path)
                         response = {}
 
@@ -330,12 +329,16 @@ class DeepSpeedTrialController(det.TrialController):
         and optimizer step calls track micro batches and will automatically update model weights
         and lr scheduler if micro batches % gradient_accumulation_steps == 0.
 
-        Comparing throughput with and without pipeline parallel is a common goal so we will
-        automatically perform gradient accumulation by default when pipeline parallelism is not
-        used.  This can be turned off by setting context.disable_auto_grad_accumulation.
+        Comparing training with and without pipeline parallel is a common goal.  Since DeepSpeed's
+        PipelineEngine trains on a number of micro batches equal to gradient accumulation steps,
+        we automatically perform gradient accumulation by default when pipeline parallelism is not
+        enabled.  This makes it fair to compare training with and without pipeline parallelism
+        at a given batch idx. This can be turned off by setting
+        context.disable_auto_grad_accumulation.
         """
         self.prof.set_training(True)
         assert step_id > 0, "step_id should be greater than 0"
+        step_start_time = time.time()
         self.context.reset_reducers()
 
         # Set the behavior of certain layers (e.g., dropout) that are different
@@ -375,20 +378,11 @@ class DeepSpeedTrialController(det.TrialController):
             self.context._loss_ids = {}
             for _ in range(num_train_batch_calls):
                 with self.prof.record_timing("train_batch", requires_sync=False, accumulate=True):
-                    if self.context.profiler:
-                        with self.context.profiler as torch_profiler:
-                            tr_metrics = self.trial.train_batch(
-                                self.training_iterator,
-                                self.get_epoch_idx(batch_idx),
-                                batch_idx,
-                            )
-                            torch_profiler.step()
-                    else:
-                        tr_metrics = self.trial.train_batch(
-                            self.training_iterator,
-                            self.get_epoch_idx(batch_idx),
-                            batch_idx,
-                        )
+                    tr_metrics = self.trial.train_batch(
+                        self.training_iterator,
+                        self.get_epoch_idx(batch_idx),
+                        batch_idx,
+                    )
                 if self.context.mpu.should_report_metrics():
                     if isinstance(tr_metrics, torch.Tensor):
                         tr_metrics = {"loss": tr_metrics}
@@ -420,11 +414,9 @@ class DeepSpeedTrialController(det.TrialController):
             self.prof.record_metric("samples_per_second", samples_per_second)
 
         # Aggregate and reduce training metrics from all the training processes.
-        # We need this because only slots in the last stage of the pipeline compute
-        # metrics and we need to aggregate on chief slot anyway to report.
-        if self.context.distributed.size > 1:
+        if self.context.distributed.size > 1 and self.context._average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
-                per_batch_metrics = _metric_utils._average_training_metrics(
+                per_batch_metrics = pytorch._combine_and_average_training_metrics(
                     self.context.distributed, per_batch_metrics
                 )
         num_inputs *= self.context.mpu.get_data_parallel_world_size()
@@ -434,16 +426,15 @@ class DeepSpeedTrialController(det.TrialController):
         # metrics are even logical for a custom reducer.
         with self.prof.record_timing("reduce_metrics"):
             metrics["avg_metrics"].update(
-                _metric_utils._convert_metrics_to_numpy(
-                    self.context.reduce_metrics(for_training=True)
-                )
+                pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
         if not self.is_chief:
             # The training metrics are reported only in the chief process.
             return {}
 
-        logging.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
+        step_duration = time.time() - step_start_time
+        logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
         self.prof.set_training(False)
 
         return metrics
@@ -455,6 +446,8 @@ class DeepSpeedTrialController(det.TrialController):
         # different between training and inference.
         for model in self.context.models:
             model.eval()
+
+        step_start_time = time.time()
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
@@ -498,29 +491,27 @@ class DeepSpeedTrialController(det.TrialController):
                         "metrics",
                     )
                 # TODO: For performance perform -> cpu() only at the end of validation.
-                batch_metrics.append(_metric_utils._convert_metrics_to_numpy(vld_metrics))
+                batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
             if self.env.test_mode:
                 break
 
-        all_keys = self.context.distributed._zmq_gather(keys if keys is None else list(keys))
+        all_keys = self.context.distributed._zmq_gather(keys and list(keys))
         if self.is_chief:
-            all_keys = [k for k in all_keys if k is not None]
+            all_keys = [k for k in all_keys if k]
             keys = all_keys[0]
         keys = self.context.distributed._zmq_broadcast(keys)
 
         for callback in self.callbacks.values():
             callback.on_validation_epoch_end(batch_metrics)
 
-        metrics = _metric_utils._reduce_metrics(
+        metrics = pytorch._reduce_metrics(
             self.context.distributed,
             batch_metrics=batch_metrics,
             keys=keys,
-            metrics_reducers=_metric_utils._prepare_metrics_reducers(
-                pytorch.Reducer.AVG, keys=keys
-            ),
+            metrics_reducers=pytorch._prepare_metrics_reducers(pytorch.Reducer.AVG, keys=keys),
         )
         metrics.update(
-            _metric_utils._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
+            pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
         if self.context.distributed.size > 1 and any(
@@ -550,9 +541,13 @@ class DeepSpeedTrialController(det.TrialController):
             return {}
 
         num_inputs *= self.context.mpu.get_data_parallel_world_size()
-        logging.debug(
-            f"Done validating: {num_inputs} records in {self.num_validation_batches} batches."
+        step_duration = time.time() - step_start_time
+        logging.info(
+            det.util.make_timing_log(
+                "validated", step_duration, num_inputs, cast(int, self.num_validation_batches)
+            )
         )
+
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:
@@ -561,13 +556,16 @@ class DeepSpeedTrialController(det.TrialController):
         # TODO (Liam): revisit later to optimize sharded checkpoint loading.
 
         # Load stateful things tracked by Determined on all slots.
-        checkpoint: Optional[Dict[str, Any]] = None
-        ckpt_path = "det_state_dict.pth"
+        ckpt_path = f"det_state_dict_rank{self.context.distributed.rank}.pth"
         maybe_ckpt = load_path.joinpath(ckpt_path)
-        if maybe_ckpt.exists():
-            checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
-        if checkpoint is None or not isinstance(checkpoint, dict):
+
+        if not maybe_ckpt.exists():
             return
+
+        checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
+        assert isinstance(
+            checkpoint, dict
+        ), f"Expected checkpoint at {maybe_ckpt} to be a dictionary."
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_load_start(checkpoint)
@@ -617,52 +615,53 @@ class DeepSpeedTrialController(det.TrialController):
                 self.wlsq.load_state(pickle.load(f))
 
     def _save(self, path: pathlib.Path) -> None:
-        if self.context.distributed._is_local_chief:
+        if self.context.distributed.local_rank == 0:
             path.mkdir(parents=True, exist_ok=True)
-        self.context.distributed._zmq_gather(None)  # sync
+        _ = self.context.distributed._zmq_gather_local(None)  # sync
 
         if self.is_chief:
             # We assume these stateful objects should be the same across slots and only have
             # the chief save them.
             util.write_user_code(path, self.env.on_cluster)
 
-            rng_state = {
-                "cpu_rng_state": torch.random.get_rng_state(),
-                "np_rng_state": np.random.get_state(),
-                "random_rng_state": random.getstate(),
-            }
-
-            if torch.cuda.device_count():
-                rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(
-                    self.context.distributed.get_local_rank()
-                )
-            checkpoint = {"rng_state": rng_state}
-
-            # PyTorch uses optimizer objects that take the model parameters to
-            # optimize on construction, so we store and reload the `state_dict()`
-            # of the model and optimizer explicitly (instead of dumping the entire
-            # objects) to avoid breaking the connection between the model and the
-            # optimizer.
-            checkpoint["callbacks"] = {
-                name: callback.state_dict() for name, callback in self.callbacks.items()
-            }
-
-            for callback in self.callbacks.values():
-                callback.on_checkpoint_save_start(checkpoint)
-
-            ckpt_name = "det_state_dict.pth"
-            torch.save(checkpoint, str(path.joinpath(ckpt_name)))
-
-            for callback in self.callbacks.values():
-                callback.on_checkpoint_end(str(path))
-
             if self.wlsq is not None:
                 with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                     pickle.dump(self.wlsq.get_state(), f)
 
+        # Save per rank Determined checkpoint.
+        rng_state = {
+            "cpu_rng_state": torch.random.get_rng_state(),
+            "np_rng_state": np.random.get_state(),
+            "random_rng_state": random.getstate(),
+        }
+
+        if torch.cuda.device_count():
+            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(
+                self.context.distributed.get_local_rank()
+            )
+        checkpoint = {"rng_state": rng_state}
+
+        # PyTorch uses optimizer objects that take the model parameters to
+        # optimize on construction, so we store and reload the `state_dict()`
+        # of the model and optimizer explicitly (instead of dumping the entire
+        # objects) to avoid breaking the connection between the model and the
+        # optimizer.
+        checkpoint["callbacks"] = {
+            name: callback.state_dict() for name, callback in self.callbacks.items()
+        }
+
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_save_start(checkpoint)
+
+        ckpt_name = f"det_state_dict_rank{self.context.distributed.rank}.pth"
+        torch.save(checkpoint, str(path.joinpath(ckpt_name)))
+
         # We allow users to override save behavior if needed but we default to using
         # the save method provided by DeepSpeed.
         self.trial.save(self.context, path)
+
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_end(str(path))
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)

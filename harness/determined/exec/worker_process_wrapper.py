@@ -30,11 +30,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     # Different launcher may use different environment variable names to indicate rank.
     parser.add_argument("rank_var_name")
-    parser.add_argument("cmd", nargs="*")
+    parser.add_argument("cmd")
+    parser.add_argument("cmd_args", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     rank = os.environ.get(args.rank_var_name)
-    proc = subprocess.Popen(args.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        [args.cmd] + args.cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     with open(constants.CONTAINER_STDOUT, "w") as cstdout, open(
         constants.CONTAINER_STDERR, "w"
     ) as cstderr, proc:

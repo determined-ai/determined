@@ -52,15 +52,8 @@ def create_deepspeed_env_file() -> None:
                 f.write(f"{k}={v}\n")
 
 
-def create_run_command(
-    num_proc_per_machine: int,
-    ip_addresses: List[str],
-) -> List[str]:
+def create_run_command(master_address: str, hostfile_path: str) -> List[str]:
     # Construct the deepspeed command.
-    hostfile_path = "/tmp/hostfile.txt"
-    master_address = create_hostlist_file(
-        pathlib.Path(hostfile_path), num_proc_per_machine, ip_addresses
-    )
     deepspeed_process_cmd = [
         "deepspeed",
         "-H",
@@ -187,9 +180,13 @@ def main(train_entrypoint: str) -> int:
         "--",
     ]
 
-    cmd = create_run_command(
-        num_proc_per_machine=len(info.slot_ids), ip_addresses=info.container_addrs
+    hostfile_path = "/tmp/hostfile.txt"
+    master_address = create_hostlist_file(
+        hostfile_path=pathlib.Path(hostfile_path),
+        num_proc_per_machine=len(info.slot_ids),
+        ip_addresses=info.container_addrs,
     )
+    cmd = create_run_command(master_address, hostfile_path)
 
     pid_client_cmd = [
         "python3",
@@ -199,7 +196,13 @@ def main(train_entrypoint: str) -> int:
         "--",
     ]
 
-    log_redirect_cmd = ["python3", "-m", "determined.exec.worker_process_wrapper", "RANK"]
+    log_redirect_cmd = [
+        "python3",
+        "-m",
+        "determined.exec.worker_process_wrapper",
+        "RANK",
+        "--",
+    ]
 
     harness_cmd = [
         "python3",

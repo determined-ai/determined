@@ -291,53 +291,6 @@ class PyTorchTrialController(det.TrialController):
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)
 
-    def _average_training_metrics(
-        self, per_batch_metrics: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Average training metrics across GPUs"""
-        assert (
-            self.context.distributed.size > 1
-        ), "Can only average training metrics in multi-GPU training."
-        metrics_timeseries = util._list_to_dict(per_batch_metrics)
-
-        # combined_timeseries is: dict[metric_name] -> 2d-array.
-        # A measurement is accessed via combined_timeseries[metric_name][process_idx][batch_idx].
-        combined_timeseries, _ = self._combine_metrics_across_processes(
-            metrics_timeseries, num_batches=len(per_batch_metrics)
-        )
-
-        # If the value for a metric is a single-element array, the averaging process will
-        # change that into just the element. We record what metrics are single-element arrays
-        # so we can wrap them in an array later (for perfect compatibility with non-averaging
-        # codepath).
-        array_metrics = []
-        for metric_name in per_batch_metrics[0].keys():
-            if isinstance(per_batch_metrics[0][metric_name], np.ndarray):
-                array_metrics.append(metric_name)
-
-        if self.is_chief:
-            combined_timeseries_type = Dict[str, List[List[Any]]]
-            combined_timeseries = cast(combined_timeseries_type, combined_timeseries)
-            num_batches = len(per_batch_metrics)
-            num_processes = self.context.distributed.size
-            averaged_metrics_timeseries = {}  # type: Dict[str, List]
-
-            for metric_name in combined_timeseries.keys():
-                averaged_metrics_timeseries[metric_name] = []
-                for batch_idx in range(num_batches):
-                    batch = [
-                        combined_timeseries[metric_name][process_idx][batch_idx]
-                        for process_idx in range(num_processes)
-                    ]
-
-                    np_batch = np.array(batch)
-                    batch_avg = np.mean(np_batch[np_batch != None])  # noqa: E711
-                    if metric_name in array_metrics:
-                        batch_avg = np.array(batch_avg)
-                    averaged_metrics_timeseries[metric_name].append(batch_avg)
-            per_batch_metrics = util._dict_to_list(averaged_metrics_timeseries)
-        return per_batch_metrics
-
     def _auto_step_lr_scheduler_per_batch(
         self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
     ) -> None:
@@ -480,7 +433,9 @@ class PyTorchTrialController(det.TrialController):
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1 and self.context._average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
-                per_batch_metrics = self._average_training_metrics(per_batch_metrics)
+                per_batch_metrics = pytorch._combine_and_average_training_metrics(
+                    self.context.distributed, per_batch_metrics
+                )
         num_inputs *= self.context.distributed.size
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
 
@@ -488,7 +443,7 @@ class PyTorchTrialController(det.TrialController):
         # metrics are even logical for a custom reducer.
         with self.prof.record_timing("reduce_metrics"):
             metrics["avg_metrics"].update(
-                self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
+                pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
             )
 
         if not self.is_chief:
@@ -498,15 +453,6 @@ class PyTorchTrialController(det.TrialController):
         step_duration = time.time() - step_start_time
         logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
 
-        return metrics
-
-    @classmethod
-    def _convert_metrics_to_numpy(
-        cls: Type["PyTorchTrialController"], metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        for metric_name, metric_val in metrics.items():
-            if isinstance(metric_val, torch.Tensor):
-                metrics[metric_name] = metric_val.cpu().numpy()
         return metrics
 
     @torch.no_grad()  # type: ignore
@@ -567,17 +513,20 @@ class PyTorchTrialController(det.TrialController):
                     "metrics",
                 )
                 # TODO: For performance perform -> cpu() only at the end of validation.
-                batch_metrics.append(self._convert_metrics_to_numpy(vld_metrics))
+                batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
                 if self.env.test_mode:
                     break
 
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_end(batch_metrics)
 
-            metrics = self._reduce_metrics(
+            metrics = pytorch._reduce_metrics(
+                self.context.distributed,
                 batch_metrics=batch_metrics,
                 keys=keys,
-                metrics_reducers=self._prepare_metrics_reducers(keys=keys),
+                metrics_reducers=pytorch._prepare_metrics_reducers(
+                    self.trial.evaluation_reducer(), keys=keys
+                ),
             )
 
             # Gather a list of per-worker (num_inputs, num_batches) tuples.
@@ -597,11 +546,11 @@ class PyTorchTrialController(det.TrialController):
                     metrics, dict, f"eval() must return a dictionary, got {type(metrics)}."
                 )
 
-                metrics = self._convert_metrics_to_numpy(metrics)
+                metrics = pytorch._convert_metrics_to_numpy(metrics)
                 num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
 
         metrics.update(
-            self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
+            pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
         if self.context.distributed.size > 1 and any(
@@ -639,88 +588,6 @@ class PyTorchTrialController(det.TrialController):
             )
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
-
-    def _prepare_metrics_reducers(self, keys: Any) -> Dict[str, pytorch.Reducer]:
-        metrics_reducers = {}  # type: Dict[str, pytorch.Reducer]
-        reducer = self.trial.evaluation_reducer()
-        if isinstance(reducer, Dict):
-            metrics_reducers = reducer
-            check.eq(
-                metrics_reducers.keys(),
-                keys,
-                "Please provide a single evaluation reducer or "
-                "provide a reducer for every validation metric. "
-                f"Expected keys: {keys}, provided keys: {metrics_reducers.keys()}.",
-            )
-        elif isinstance(reducer, pytorch.Reducer):
-            for key in keys:
-                metrics_reducers[key] = reducer
-
-        for key in keys:
-            check.true(
-                isinstance(metrics_reducers[key], pytorch.Reducer),
-                "Please select `determined.pytorch.Reducer` for reducing validation metrics.",
-            )
-
-        return metrics_reducers
-
-    def _reduce_metrics(
-        self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, pytorch.Reducer]
-    ) -> Dict[str, Any]:
-        metrics = {
-            name: pytorch._reduce_metrics(
-                reducer=metrics_reducers[name],
-                metrics=np.stack([b[name] for b in batch_metrics], axis=0),
-                num_batches=None,
-            )
-            for name in keys or []
-        }
-
-        if self.context.distributed.size > 1:
-            # If using horovod combine metrics across all processes.
-            # Only the chief process will receive all the metrics.
-            self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
-            num_batches = len(self.validation_loader)
-            combined_metrics, batches_per_process = self._combine_metrics_across_processes(
-                metrics, num_batches
-            )
-            if self.is_chief:
-                # Only the chief collects all the metrics.
-                combined_metrics = self._convert_metrics_to_numpy(
-                    cast(Dict[str, Any], combined_metrics)
-                )
-                metrics = {
-                    name: pytorch._reduce_metrics(
-                        reducer=metrics_reducers[name],
-                        metrics=combined_metrics[name],
-                        num_batches=batches_per_process,
-                    )
-                    for name in keys or []
-                }
-            else:
-                return {}
-
-        return metrics
-
-    def _combine_metrics_across_processes(
-        self, metrics: Dict[str, Any], num_batches: int
-    ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
-        # The chief receives the metric from every other training process.
-        check.true(self.context.distributed.size > 1)
-
-        # all_args is a list of [(metrics, num_batches), ...] for each worker.
-        all_args = self.context.distributed._zmq_gather((metrics, num_batches))
-
-        if not self.is_chief:
-            return None, None
-
-        # Reshape so e.g. all_metrics = [metrics, metrics, ...].
-        all_metrics, all_num_batches = zip(*all_args)
-
-        # convert all_metrics from List[Dict[str, Any]] to Dict[str, List[Any]].
-        metrics_lists = {key: [m[key] for m in all_metrics] for key in metrics}
-
-        return metrics_lists, all_num_batches
 
     def _load(self, load_path: pathlib.Path) -> None:
         # Backwards compat with older checkpoint formats. List is newest to
