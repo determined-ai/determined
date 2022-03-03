@@ -370,12 +370,12 @@ step only applies if you have multiple GPUs and want to use distributed training
 
       -  If you have four Determined agents running with four GPUs each, your ``slots_per_trial``
          could be ``1``, ``2``, ``3``, or ``4``, which fits on a single machine.
-      -  A ``slots_per_trial`` value of ``8``, ``12``, or ``16`` completely utilizes a number
-         of agent machines.
+      -  A ``slots_per_trial`` value of ``8``, ``12``, or ``16`` completely utilizes a number of
+         agent machines.
       -  A ``slots_per_trial`` value of ``5`` implies more than one agent but it is not a multiple
          of agent size so this is an invalid case.
-      -  A ``slots_per_trial`` value of ``32`` is too large for the cluster and is also an
-         invalid case.
+      -  A ``slots_per_trial`` value of ``32`` is too large for the cluster and is also an invalid
+         case.
 
       Ensure that there are no other notebooks, shells, or experiments on the cluster that might
       consume too many resources and prevent the experiment from starting.
