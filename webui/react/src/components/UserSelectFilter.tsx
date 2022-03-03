@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { ALL_VALUE, User } from 'types';
+import { getDisplayName } from 'utils/user';
 
 import SelectFilter from './SelectFilter';
 
@@ -15,7 +16,7 @@ interface Props {
 }
 
 const userToSelectOption = (user: User): React.ReactNode =>
-  <Option key={user.username} value={user.username}>{user.username}</Option>;
+  <Option key={user.username} value={user.username}>{getDisplayName(user)}</Option>;
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const { auth, users } = useStore();
@@ -33,7 +34,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     if (authUser) {
       list.push(
         <Option key={authUser.username} value={authUser.username}>
-          {authUser.username}
+          {getDisplayName(authUser)}
         </Option>,
       );
     }

@@ -44,7 +44,8 @@ const TableFilterDropdown: React.FC<Props> = ({
   const filteredOptions = useMemo(() => {
     const searchString = search.toLocaleLowerCase();
     return (filters || []).filter(filter => {
-      return filter.value?.toString().toLocaleLowerCase().includes(searchString);
+      return filter.value?.toString().toLocaleLowerCase().includes(searchString) ||
+        filter.text?.toString().toLocaleLowerCase().includes(searchString);
     });
   }, [ filters, search ]);
 

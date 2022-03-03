@@ -91,7 +91,7 @@ export const tooltipRenderer: Renderer = text => (
 );
 
 export const userRenderer: Renderer<{ username: string }> = (_, record) => (
-  <Avatar name={record.username} />
+  <Avatar username={record.username} />
 );
 
 /* Command Task Table Column Renderers */

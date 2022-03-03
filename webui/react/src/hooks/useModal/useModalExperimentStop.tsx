@@ -26,7 +26,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
     onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
   }, [ onClose, type ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(handleClose);
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
 
   const modalContent = useMemo(() => {
     const isCancel = type === ActionType.Cancel;

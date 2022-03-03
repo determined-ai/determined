@@ -13,6 +13,7 @@ import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/datetime';
+import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
 
@@ -31,14 +32,15 @@ const ModelHeader: React.FC<Props> = (
     onSaveDescription, onUpdateTags, onSaveName,
   }: Props,
 ) => {
-  const { auth: { user } } = useStore();
+  const { auth: { user }, users } = useStore();
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content: (
         <Space>
-          <Avatar name={model.username} />
-          {`${model.username} on ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
+          <Avatar username={model.username} />
+          {`${getDisplayName(users.find(user => user.username === model.username))} on 
+          ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),
       label: 'Created by',
@@ -66,7 +68,7 @@ const ModelHeader: React.FC<Props> = (
       ),
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ model, onSaveDescription, onUpdateTags ]);
+  }, [ model, onSaveDescription, onUpdateTags, users ]);
 
   const isDeletable = user?.isAdmin || user?.username === model.username;
 

@@ -208,8 +208,12 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
-    case StoreAction.SetCurrentUser:
-      return { ...state, auth: { ...state.auth, user: action.value } };
+    case StoreAction.SetCurrentUser: {
+      const users = [ ...state.users ];
+      const userIdx = users.findIndex(user => user.username === action.value.username);
+      if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
+      return { ...state, auth: { ...state.auth, user: action.value }, users };
+    }
     case StoreAction.SetResourcePools:
       if (isEqual(state.resourcePools, action.value)) return state;
       return { ...state, resourcePools: action.value };

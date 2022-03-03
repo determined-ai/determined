@@ -18,6 +18,7 @@ export type RawJson = Record<string, any>;
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
 export interface User {
+  displayName?: string;
   username: string;
 }
 

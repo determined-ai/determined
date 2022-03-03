@@ -47,6 +47,7 @@ import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
+import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
@@ -407,7 +408,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: user.username, value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: V1GetExperimentsRequestSortBy.USER,
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,

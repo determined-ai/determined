@@ -25,12 +25,14 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 			AgentGid: int32(user.AgentGID.ValueOrZero()),
 		}
 	}
+	displayNameString := user.DisplayName.ValueOrZero()
 	return &userv1.User{
 		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
 		AgentUserGroup: agentUserGroup,
+		DisplayName:    displayNameString,
 	}
 }
 
