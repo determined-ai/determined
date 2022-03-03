@@ -8,6 +8,34 @@
  Version 0.17
 **************
 
+Version 0.17.10
+===============
+
+**Release Date:** March 03, 2022
+
+**Breaking Change**
+
+-  API: Pytorch Lightning has been updated from 1.3.5 to 1.5.9 to address a security vulnerability.
+   Experiments using Pytorch Lightning Adapter with v1.3.5 are no longer supported.
+
+**New Features**
+
+-  Added self-supervised image classification example in PyTorch using Bootstrap Your Own Latent
+   (BYOL).
+
+-  PyTorchTrial and TFKerasTrial now automatically log the number of batches and number of records
+   in every training and validation workload, as well as the duration of the workload and the
+   calculated batches per second and records per second.
+
+-  All logs produced by tasks on the cluster are persisted and accessible through the new ``det task
+   logs`` CLI command or the usual commands to retrieve their logs, even after completion.
+
+-  Now supports setting root certificates for the DB via the Determined Helm chart. This allows
+   Determined to use SSL to connect to the DB without having to replace the master config manually.
+   To use this feature, save the certificate in a configmap or secret and set the following values:
+   ``sslMode``, ``sslRootCert``, ``resourceType``, and ``certResourceName``. Additional details can
+   be found in the default values.yaml file.
+
 Version 0.17.9
 ==============
 
