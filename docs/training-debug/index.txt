@@ -67,7 +67,7 @@ performs as expected by calling its methods and verifying the output.
    :meth:`determined.TrialContext.from_config` documentation, but only you can verify what is
    reasonable for your test.
 
-#. Perform failure diagnostics:
+#. Diagnose failures:
 
    If you experience issues running the ``Trial`` subclass methods locally, it is likely there are
    errors are in your trial class or the ``hyperparameters`` section of your configuration file.
@@ -98,7 +98,7 @@ This step assumes you have a working local environment for training. If you do n
 
    The test is considered to have passed if the command completes successfully.
 
-#. Perform failure diagnostics:
+#. Diagnose failures:
 
    Local test mode performs the following actions:
 
@@ -196,7 +196,7 @@ cluster instead of locally.
 
    When interacting with the shell or notebook, testing is the same as :ref:`Step 2 <step2>`.
 
-#. Perform failure diagnostics:
+#. Diagnose failures:
 
    Combine the failure diagnosis steps used in :ref:`Step 2 <step2>` and :ref:`Step 4 <step4>`.
 
@@ -211,12 +211,12 @@ cluster instead of locally.
 
 #. Launch a notebook or shell as described in :ref:`Step 4 <step4>`.
 
-   On the cluster, testing is the same as :ref:`Step 3 <step3>`, except that the second, model
+   On the cluster, testing is the same as :ref:`Step 3 <step3>`, except that the second model
    definition argument of the ``det experiment create`` command should be
-   ``/run/determined/workdir``, or ``.``, the current directory if you have not changed the working
-   directory after connecting to the cluster. This is because the ``--context`` specified when
-   creating the shell or notebook is copied to the ``/run/determined/workdir`` directory inside the
-   container, the same as the model definition argument is copied to ``det experiment create``.
+   ``/run/determined/workdir`` or ``.`` if you have not changed the working directory after
+   connecting to the cluster. This is because the ``--context`` specified when creating the shell or
+   notebook is copied to the ``/run/determined/workdir`` directory inside the container, the same as
+   the model definition argument is copied to ``det experiment create``.
 
 #. Perform failure diagnosis:
 
@@ -246,7 +246,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
    .. code:: yaml
 
       resources:
-      slots_per_trial: 1
+        slots_per_trial: 1
 
 #. Create an experiment with the ``--test`` argument, omitting the ``--local`` argument:
 
@@ -254,7 +254,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
 
       det experiment create myconfig.yaml my_model_dir --test
 
-#. Perform failure diagnostics:
+#. Diagnose failures:
 
    If you can run local test mode inside a notebook or shell but are unable to successfully submit
    an experiment, make sure that notebook or shell customizations you might have made are replicated
