@@ -19,7 +19,7 @@ Determined model. Follow the nine steps as applicable to your environment:
 
 -  Model-related Issues
       -  `Step 1 - Verify that your code runs locally`_
-      -  `Step 2 - Verify that each Trial subclass method work locally`_
+      -  `Step 2 - Verify that each Trial subclass method works locally`_
       -  `Step 3 - Verify local test mode`_
 
 -  Docker- or Cluster-related Issues
@@ -53,7 +53,7 @@ Confirm that your code works as expected before continuing.
 .. _step2:
 
 **************************************************************
- Step 2 - Verify that each Trial subclass method work locally
+ Step 2 - Verify that each Trial subclass method works locally
 **************************************************************
 
 This step assumes you have a working local environment for training. If you typically run your code
