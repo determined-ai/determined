@@ -112,6 +112,7 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 	if unauthenticatedMethods[fullMethod] {
 		return nil
 	}
+
 	switch _, err := GetAllocationSession(ctx, db); err {
 	case ErrTokenMissing:
 		// Try user token.

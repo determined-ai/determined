@@ -48,11 +48,11 @@ def get_default_master_address() -> str:
     return os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR", "localhost:8080"))
 
 
-def get_container_user() -> Optional[str]:
+def get_container_user_name() -> Optional[str]:
     return os.environ.get("DET_USER")
 
 
-def get_user_token() -> Optional[str]:
+def get_container_user_token() -> Optional[str]:
     return os.environ.get("DET_USER_TOKEN")
 
 
