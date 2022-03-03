@@ -24,11 +24,14 @@ const getInitials = (name = ''): string => {
     .join('');
 
   // If initials are long, just keep the first and the last.
-  return initials.length > 2 ? `${initials.charAt(0)}${initials.substr(-1)}` : initials;
+  return initials.length > 2 ? `${initials.charAt(0)}${initials.substring(-1)}` : initials;
 };
 
 const getColor = (name = ''): string => {
-  const hexColor = md5(name).substr(0, 6);
+  if (name === '') {
+    return hsl2str(hex2hsl('#808080'));
+  }
+  const hexColor = md5(name).substring(0, 6);
   const hslColor = hex2hsl(hexColor);
   return hsl2str({ ...hslColor, l: 50 });
 };
