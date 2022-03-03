@@ -77,7 +77,8 @@ class Authentication:
             and util.get_container_user_name() is not None
             and util.get_container_user_token() is not None
         ):
-            session_user, token = util.get_container_user_name(), util.get_container_user_token()
+            session_user = util.get_container_user_name()  # type: ignore
+            token = util.get_container_user_token()
 
         if token is not None:
             return Session(session_user, token)

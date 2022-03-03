@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterator
 
 import pytest
 import requests_mock
@@ -57,7 +57,7 @@ def test_auth_with_store(requests_mock: requests_mock.Mocker, user: Optional[str
 
 
 @contextlib.contextmanager
-def set_container_env_vars() -> None:
+def set_container_env_vars() -> Iterator[None]:
     try:
         os.environ["DET_USER"] = "alice"
         os.environ["DET_USER_TOKEN"] = "alice.token"
