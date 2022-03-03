@@ -52,9 +52,9 @@ Confirm that your code works as expected before continuing.
 
 .. _step2:
 
-**************************************************************
+***************************************************************
  Step 2 - Verify that each Trial subclass method works locally
-**************************************************************
+***************************************************************
 
 This step assumes you have a working local environment for training. If you typically run your code
 in a Docker environment, skip to :ref:`Step 4 <step4>`. This step also ensures that your class
