@@ -134,7 +134,7 @@ cluster instead of locally.
       det notebook start --context my_model_dir
       # Your browser should automatically open the notebook.
 
-   If you are using SSH to interact with your model, enter:
+   If you prefer to use SSH to interact with your model, enter:
 
    .. code:: bash
 
@@ -149,7 +149,7 @@ cluster instead of locally.
 
    After you are on the cluster, testing is the same as :ref:`Step 1 <step1>`.
 
-#. Perform the following failure diagnostic steps:
+#. Diagnose failures:
 
    -  If you are unable to start the container and receive a message about the context directory
       exceeding the maximum allowed size, it is because the ``--context`` directory cannot be larger
@@ -180,14 +180,14 @@ cluster instead of locally.
 
 #. Launch a notebook or shell:
 
-   If you are using a Jupyter notebook, enter:
+   If you prefer to use Jupyter notebook, enter:
 
    .. code:: bash
 
       det notebook start --context my_model_dir
       # Your browser should automatically open the notebook.
 
-   If you are using SSH to interact with your model, enter:
+   If you prefer to use SSH to interact with your model, enter:
 
    .. code:: bash
 
@@ -218,9 +218,7 @@ cluster instead of locally.
    notebook is copied to the ``/run/determined/workdir`` directory inside the container, the same as
    the model definition argument is copied to ``det experiment create``.
 
-#. Perform failure diagnosis:
-
-   Follow the combined failure diagnostic steps used for :ref:`Step 3 <step3>` and :ref:`Step 4
+#. Diagnose failures following the same steps described in :ref:`Step 3 <step3>` and :ref:`Step 4
    <step4>`.
 
 .. _step7:
@@ -292,8 +290,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
       attempting to submit the experiment to the cluster indicate that the experiment configuration
       has errors. Review the :ref:`experiment configuration <experiment-configuration>`.
 
-If no customizations are missing and the new layers introduced with a cluster-managed experiment are
-not the cause of the problem, contact Determined `community support
+If you are unable to identify the cause of the problem, contact Determined `community support
 <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__!
 
 .. _step8:
