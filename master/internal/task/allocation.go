@@ -69,6 +69,8 @@ type (
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
+		// active all gather state
+		allGather *AllGather
 	}
 
 	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -224,6 +226,25 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		default:
 			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
+		}
+	case WatchAllGather, UnwatchAllGather, allGatherTimeout:
+		if a.allGather == nil {
+			switch msg.(type) {
+			case WatchAllGather:
+				a.allGather = NewAllGather()
+				a.allGather.PreStart(ctx)
+			case UnwatchAllGather, allGatherTimeout:
+				// Ignore without active all gather.
+				return nil
+			}
+		}
+
+		switch finished, err := a.allGather.ReceiveMsg(ctx); {
+		case err != nil:
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+			ctx.Log().WithError(err).Error("performing all gather through master")
+		case finished:
+			a.allGather = nil
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
 		if !a.req.Preemptible {
