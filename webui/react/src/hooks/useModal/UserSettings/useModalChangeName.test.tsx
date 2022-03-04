@@ -4,6 +4,7 @@ import { Button, Modal } from 'antd';
 import React, { useCallback } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { PatchUserParams } from 'services/types';
 import { DetailedUser } from 'types';
 
 import useModalUserSettings from './useModalUserSettings';
@@ -14,6 +15,7 @@ const USERNAME = 'test_username1';
 const DISPLAY_NAME = 'Test Name';
 const CHANGE_NAME_TEXT = 'Change name';
 const USER_SETTINGS_HEADER = 'Account';
+const UPDATED_DISPLAY_NAME = 'New Displayname';
 
 const currentUser: DetailedUser = {
   displayName: DISPLAY_NAME,
@@ -64,6 +66,12 @@ const setup = async () => {
   userEvent.click(await screen.findByText(LOAD_USERS_TEXT));
 };
 
+jest.mock('services/api', () => ({
+  patchUser: ({ userParams }: PatchUserParams) => {
+    return Promise.resolve({ displayName: userParams.displayName });
+  },
+}));
+
 describe('useModalChangeName', () => {
   it('opens modal with correct values', async () => {
     await setup();
@@ -72,6 +80,45 @@ describe('useModalChangeName', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: CHANGE_NAME_TEXT })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: 'Display name' })).toHaveValue(DISPLAY_NAME);
+    });
+  });
+
+  it('validates display name', async () => {
+    await setup();
+    userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
+
+    await waitFor(() => {
+      userEvent.type(screen.getByRole('textbox', { name: 'Display name' }), 'a'.repeat(81));
+      userEvent.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  it('updates display name', async () => {
+    await setup();
+    userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
+
+    await waitFor(() => {
+      userEvent.type(
+        screen.getByRole('textbox', { name: 'Display name' }),
+        `{selectall}{del}${UPDATED_DISPLAY_NAME}`,
+      );
+    });
+
+    await waitFor(() => {
+      userEvent.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
+    });
+
+    // TODO: test for toast message appearance?
+
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+      expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
+      expect(screen.getByText(UPDATED_DISPLAY_NAME)).toBeInTheDocument();
     });
   });
 
@@ -85,7 +132,7 @@ describe('useModalChangeName', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
     });
   });
 });
