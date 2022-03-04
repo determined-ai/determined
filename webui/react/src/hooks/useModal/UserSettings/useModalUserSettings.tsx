@@ -16,7 +16,7 @@ const useModalUserSettings = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalH
       closable: true,
       content: <UserSettings />,
       icon: null,
-      title: 'Account',
+      title: <h5>Account</h5>,
     });
   }, [ openOrUpdate ]);
 

@@ -76,7 +76,7 @@ const useModalChangeName = (): ModalHooks => {
       closable: true,
       content: getModalContent(),
       icon: null,
-      title: 'Change name',
+      title: <h5>Change name</h5>,
     });
   }, [ getModalContent, openOrUpdate ]);
 
