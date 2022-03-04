@@ -91,23 +91,8 @@ def update(args: Namespace) -> None:
 def process_updates(args: Namespace) -> None:
     session = setup_session(args)
     for arg in args.operation:
-        inputs = {"session": session}
-        values = arg.split(".")
-        if len(values) != 2:
-            raise ValueError(
-                f"Invalid operation specified for job {values[0]}. "
-                f"Please ensure they are formatted as <jobID>.<operation>=<value>."
-            )
-        inputs["job_id"] = values[0]
-        operation = values[1].split("=")
-        if len(operation) != 2:
-            raise ValueError(
-                f"Operation for job {values[0]} has invalid format. "
-                f"Please ensure it is formatted as <jobID>.<operation>=<value>."
-            )
-        inputs[operation[0]] = operation[1]
-        replace_keys(inputs)
-        _single_update(**inputs)
+        inputs = validate_operation_args(arg)
+        _single_update(session=session, **inputs)
 
 
 def _single_update(
@@ -122,7 +107,7 @@ def _single_update(
     update = bindings.v1QueueControl(
         jobId=job_id,
         priority=priority,
-        weight=int(weight),
+        weight=int(weight) if weight else None,
         resourcePool=resource_pool,
         behindOf=behind_of,
         aheadOf=ahead_of,
@@ -152,17 +137,32 @@ def check_is_priority(config: dict, resource_pool: str) -> bool:
     return True
 
 
-def replace_keys(operations: dict) -> None:
+def validate_operation_args(operation: str) -> dict:
     replacements = {
         "resource-pool": "resource_pool",
         "ahead-of": "ahead_of",
         "behind-of": "behind_of",
     }
-    for k, v in replacements.items():
-        if k in operations:
-            operations[v] = operations[k]
-            del operations[k]
+    args = {}
+    values = operation.split(".")
+    if len(values) != 2:
+        raise ValueError(
+            f"Invalid operation specified for job {values[0]}. "
+            f"Please ensure the operation is formatted as <jobID>.<operation>=<value>."
+        )
+    args["job_id"] = values[0]
+    operation = values[1].split("=")
+    if len(operation) != 2:
+        raise ValueError(
+            f"The operation for job {values[0]} has invalid format. "
+            f"Please ensure it is formatted as <operation>=<value>."
+        )
+    if operation[0] in replacements:
+        args[replacements[operation[0]]] = operation[1]
+    else:
+        args[operation[0]] = operation[1]
 
+    return args
 
 args_description = [
     Cmd(
