@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "determined/experiment/v1/experiment.proto";
@@ -329,6 +330,29 @@ message AllocationRendezvousInfoResponse {
   };
   // The rendezvous information.
   determined.trial.v1.RendezvousInfo rendezvous_info = 1;
+}
+
+// Arguments to an all gather.
+message AllocationAllGatherRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "global_recv_count", "data" ] }
+  };
+  // The ID of the allocation.
+  string allocation_id = 1;
+  // The UUID of the participant in an all gather.
+  string request_uuid = 2;
+  // The number of process to wait for.
+  int32 num_peers = 3;
+  // The data from this process.
+  google.protobuf.Struct data = 4;
+}
+// Response to AllocationAllGatherResponse
+message AllocationAllGatherResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data" ] }
+  };
+  // The data for all the processes.
+  repeated google.protobuf.Struct data = 1;
 }
 
 // Retrieves the current searcher operation.
