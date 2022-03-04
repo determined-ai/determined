@@ -10,6 +10,7 @@ from torch.utils.data import TensorDataset
 import determined as det
 from determined import pytorch
 from determined.common import check
+from tests.experiment.fixtures.pytorch_counter_callback import Counter
 
 
 def error_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
@@ -290,51 +291,6 @@ class XORTrialWithLRScheduler(XORTrialMulti):
 class XORTrialPerMetricReducers(XORTrialWithMultiValidation):
     def evaluation_reducer(self) -> Dict[str, det.pytorch.Reducer]:
         return {"accuracy": det.pytorch.Reducer.AVG, "binary_error": det.pytorch.Reducer.AVG}
-
-
-class Counter(det.pytorch.PyTorchCallback):
-    def __init__(self) -> None:
-        self.validation_steps_started = 0
-        self.validation_steps_ended = 0
-        self.checkpoints_ended = 0
-        self.training_started_times = 0
-        self.training_epochs_started = 0
-        self.training_epochs_ended = 0
-        self.trial_startups = 0
-        self.trial_shutdowns = 0
-
-    def on_validation_start(self) -> None:
-        self.validation_steps_started += 1
-
-    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
-        self.validation_steps_ended += 1
-
-    def on_checkpoint_end(self, checkpoint_dir: str):
-        self.checkpoints_ended += 1
-
-    def on_training_start(self) -> None:
-        logging.debug("starting training")
-        self.training_started_times += 1
-
-    def on_training_epoch_start(self, epoch_idx) -> None:
-        logging.debug(f"starting epoch {epoch_idx}")
-        self.training_epochs_started += 1
-
-    def on_training_epoch_end(self, epoch_idx: int) -> None:
-        logging.debug(f"end of epoch {epoch_idx}")
-        self.training_epochs_ended += 1
-
-    def state_dict(self) -> Dict[str, Any]:
-        return self.__dict__
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.__dict__ = state_dict
-
-    def on_trial_startup(self, *arg):
-        self.trial_startups += 1
-
-    def on_trial_shutdown(self):
-        self.trial_shutdowns += 1
 
 
 class EphemeralLegacyCallbackCounter(det.pytorch.PyTorchCallback):

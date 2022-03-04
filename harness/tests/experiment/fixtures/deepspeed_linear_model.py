@@ -1,0 +1,196 @@
+# type: ignore
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
+
+import attrdict
+import deepspeed
+import numpy as np
+import torch
+
+from determined import pytorch
+from determined.pytorch.deepspeed import DeepSpeedMPU, DeepSpeedTrial, DeepSpeedTrialContext
+from tests.experiment.fixtures.pytorch_counter_callback import Counter
+
+
+class LinearDataset(torch.utils.data.Dataset):
+    def __init__(self, a: int, b: int, num_samples: int):
+        self.a = a
+        self.b = b
+        self.num_samples = num_samples
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
+        x = np.random.uniform() * 10
+        noise = np.random.normal()
+        val = self.a * x + self.b + noise
+        return torch.tensor([x], dtype=torch.float32), torch.tensor([val], dtype=torch.float32)
+
+
+class LinearDeepSpeedTrial(DeepSpeedTrial):
+    _searcher_metric = "loss"
+
+    def __init__(self, context: DeepSpeedTrialContext):
+        self.context = context
+        self.hparams = attrdict.AttrDict(context.get_hparams())
+        if self.hparams.disable_auto_grad_accumulation:
+            self.context.disable_auto_grad_accumulation()
+        if self.hparams.disable_dataset_reproducibility_checks:
+            self.context.disable_dataset_reproducibility_checks()
+        self.ds_config = attrdict.AttrDict(self.hparams.deepspeed_config)
+        model = torch.nn.Linear(1, 1)
+        self.model, optimizer, _, _ = deepspeed.initialize(
+            model=model, config=self.ds_config, model_parameters=model.parameters()
+        )
+        self.model = self.context.wrap_model_engine(self.model)
+        self.loss = torch.nn.MSELoss()
+        self.reducer = None
+        if self.hparams.test_custom_reducer:
+            self.reducer = self.context.wrap_reducer(lambda x: np.mean(x) * 2, name="loss_2x")
+
+    def build_training_data_loader(self) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
+        dataset = LinearDataset(1, 1, self.ds_config.train_batch_size * 2)
+        if self.hparams.disable_dataset_reproducibility_checks:
+            return deepspeed.utils.RepeatingLoader(
+                torch.util.data.DataLoader(
+                    dataset, batch_size=self.ds_config.train_micro_batch_size_per_gpu
+                )
+            )
+        return pytorch.DataLoader(dataset, batch_size=self.ds_config.train_micro_batch_size_per_gpu)
+
+    def build_validation_data_loader(
+        self,
+    ) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
+        dataset = LinearDataset(1, 1, self.ds_config.train_batch_size * 10)
+        if self.hparams.disable_dataset_reproducibility_checks:
+            return torch.util.data.DataLoader(
+                dataset, batch_size=self.ds_config.train_micro_batch_size_per_gpu
+            )
+        return pytorch.DataLoader(dataset, batch_size=self.ds_config.train_micro_batch_size_per_gpu)
+
+    def train_batch(
+        self,
+        dataloader_iter: Optional[Iterator[pytorch.TorchData]],
+        epoch_idx: int,
+        batch_idx: int,
+    ) -> Union[torch.Tensor, Dict[str, Any]]:
+        losses = []
+        num_batches = 1
+        if self.hparams.disable_auto_grad_accumulation:
+            num_batches = self.model.gradient_accumulation_steps()
+        for _ in range(num_batches):
+            x, y = self.context.to_device(next(dataloader_iter))
+            preds = self.model(x)
+            loss = self.loss(y, preds)
+            self.model.backward(loss)
+            self.model.step()
+            losses.append(loss.cpu().detach().numpy())
+        if self.reducer is not None:
+            self.reducer.update(np.mean(losses))
+
+        if self.hparams.return_non_scalar_metrics:
+            return {"loss": np.mean(losses), "losses": losses}
+        return {"loss": np.mean(losses)}
+
+    def evaluate_batch(
+        self, dataloader_iter: Optional[Iterator[pytorch.TorchData]], batch_idx: int
+    ) -> Dict[str, Any]:
+        x, y = self.context.to_device(next(dataloader_iter))
+        preds = self.model(x)
+        loss = self.loss(y, preds)
+        if self.reducer is not None:
+            self.reducer.update(np.mean(loss))
+        if self.hparams.return_non_scalar_metrics:
+            return {"loss": loss, "preds": preds}
+        return {"loss": loss}
+
+
+class LinearCallbackTrial(LinearDeepSpeedTrial):
+    def __init__(self, context: DeepSpeedTrialContext):
+        super().__init__(context)
+        self.counter = Counter()
+
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+        return {"counter": self.counter}
+
+
+class LinearPipelineEngineTrial(LinearDeepSpeedTrial):
+    def __init__(self, context: DeepSpeedTrialContext):
+        self.context = context
+        self.hparams = attrdict.AttrDict(context.get_hparams())
+        self.ds_config = attrdict.AttrDict(self.hparams.deepspeed_config)
+        model = torch.nn.Linear(1, 1)
+        model = deepspeed.PipelineModule(
+            layers=[model],
+            loss_fn=torch.nn.MSELoss(),
+            num_stages=1,
+        )
+        self.model, _, _, _ = deepspeed.initialize(
+            model=model,
+            config=self.ds_config,
+            model_parameters=[p for p in model.parameters() if p.requires_grad],
+        )
+        self.model = self.context.wrap_model_engine(self.model)
+        self.context.wrap_mpu(DeepSpeedMPU(self.model.mpu))
+
+    def train_batch(
+        self,
+        dataloader_iter: Optional[Iterator[pytorch.TorchData]],
+        epoch_idx: int,
+        batch_idx: int,
+    ) -> Union[torch.Tensor, Dict[str, Any]]:
+        loss = self.model.train_batch(dataloader_iter)
+        return {"loss": loss}
+
+    def evaluate_batch(
+        self, dataloader_iter: Optional[Iterator[pytorch.TorchData]], batch_idx: int
+    ) -> Dict[str, Any]:
+        loss = self.model.eval_batch(dataloader_iter)
+        return {"loss": loss}
+
+
+class LinearTwoEngineTrial(LinearDeepSpeedTrial):
+    def __init__(self, context: DeepSpeedTrialContext):
+        self.context = context
+        self.hparams = attrdict.AttrDict(context.get_hparams())
+        self.ds_config = attrdict.AttrDict(self.hparams.deepspeed_config)
+        model1 = torch.nn.Linear(1, 1)
+        model2 = torch.nn.Linear(1, 1)
+        self.loss = torch.nn.MSELoss()
+        self.model1, _, _, _ = deepspeed.initialize(
+            model=model1, config=self.ds_config, model_parameters=model1.parameters()
+        )
+        self.model2, _, _, _ = deepspeed.initialize(
+            model=model2, config=self.ds_config, model_parameters=model2.parameters()
+        )
+        self.model1 = self.context.wrap_model_engine(self.model1)
+        self.model2 = self.context.wrap_model_engine(self.model2)
+
+    def train_batch(
+        self,
+        dataloader_iter: Optional[Iterator[pytorch.TorchData]],
+        epoch_idx: int,
+        batch_idx: int,
+    ) -> Union[torch.Tensor, Dict[str, Any]]:
+        x, y = self.context.to_device(next(dataloader_iter))
+
+        def take_step(model):
+            preds = model(x)
+            loss = self.loss(y, preds)
+            model.backward(loss)
+            model.step()
+            return loss
+
+        return {"loss1": take_step(self.model1), "loss2": take_step(self.model2)}
+
+    def evaluate_batch(
+        self, dataloader_iter: Optional[Iterator[pytorch.TorchData]], batch_idx: int
+    ) -> Dict[str, Any]:
+        x, y = self.context.to_device(next(dataloader_iter))
+
+        def take_step(model):
+            preds = model(x)
+            loss = self.loss(y, preds)
+            return loss
+
+        return {"loss1": take_step(self.model1), "loss2": take_step(self.model2)}

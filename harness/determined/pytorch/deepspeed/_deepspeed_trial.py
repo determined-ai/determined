@@ -392,14 +392,13 @@ class DeepSpeedTrialController(det.TrialController):
                             f"mapping string names to Tensor metrics, got {type(tr_metrics)}",
                         )
 
-                    with self.prof.record_timing("from_device"):
-                        for name, metric in tr_metrics.items():
-                            # Convert PyTorch metric values to NumPy, so that
-                            # `det.util.encode_json` handles them properly without
-                            # needing a dependency on PyTorch.
-                            if isinstance(metric, torch.Tensor):
-                                metric = metric.cpu().detach().numpy()
-                            tr_metrics[name] = metric
+                    for name, metric in tr_metrics.items():
+                        # Convert PyTorch metric values to NumPy, so that
+                        # `det.util.encode_json` handles them properly without
+                        # needing a dependency on PyTorch.
+                        if isinstance(metric, torch.Tensor):
+                            metric = metric.cpu().detach().numpy()
+                        tr_metrics[name] = metric
                     per_batch_metrics.append(tr_metrics)
             # We do a check here to make sure that we do indeed process `num_micro_batches_per_slot`
             # micro batches when train a batch for models that do not use pipeline parallelism.
@@ -412,6 +411,13 @@ class DeepSpeedTrialController(det.TrialController):
             samples_per_second = batch_inputs / batch_dur
             samples_per_second *= self.context.mpu.get_data_parallel_world_size()
             self.prof.record_metric("samples_per_second", samples_per_second)
+
+            if self.context.is_epoch_end():
+                for callback in self.callbacks.values():
+                    with self.prof.record_timing(
+                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_end"
+                    ):
+                        callback.on_training_epoch_end(self.get_epoch_idx(batch_idx))
 
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1 and self.context._average_training_metrics:
@@ -734,7 +740,7 @@ class DeepSpeedTrial(det.Trial):
     @abc.abstractmethod
     def train_batch(
         self,
-        dataloader_iter: Optional[Iterator[torch.utils.data.DataLoader]],
+        dataloader_iter: Optional[Iterator[pytorch.TorchData]],
         epoch_idx: int,
         batch_idx: int,
     ) -> Union[torch.Tensor, Dict[str, Any]]:
@@ -829,7 +835,7 @@ class DeepSpeedTrial(det.Trial):
 
     @abc.abstractmethod
     def evaluate_batch(
-        self, dataloader_iter: Optional[Iterator[torch.utils.data.DataLoader]], batch_idx: int
+        self, dataloader_iter: Optional[Iterator[pytorch.TorchData]], batch_idx: int
     ) -> Dict[str, Any]:
         """
         Calculate validation metrics for a batch and return them as a

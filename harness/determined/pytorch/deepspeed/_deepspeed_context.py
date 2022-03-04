@@ -198,8 +198,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         the deepspeed config.
         """
 
-        if self.env.managed_training:
-            model = model.to(self.device)
+        model = model.to(self.device)
 
         # Pipeline parallel model engine has its own MPU that we will use here.
         if isinstance(model, deepspeed.PipelineEngine):
