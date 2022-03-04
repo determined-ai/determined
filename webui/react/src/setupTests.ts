@@ -19,5 +19,4 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-global.crypto = require('crypto');
 global.ResizeObserver = require('resize-observer-polyfill');

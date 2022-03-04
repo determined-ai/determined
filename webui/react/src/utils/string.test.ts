@@ -90,6 +90,16 @@ describe('String Utilities', () => {
     });
   });
 
+  describe('generateUUID', () => {
+    it('should generate UUIDs with the correct format', () => {
+      const regex = /[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}/i;
+      for (let i = 0; i < 10; i++) {
+        const uuid = utils.generateUUID();
+        expect(regex.test(uuid)).toBe(true);
+      }
+    });
+  });
+
   describe('generateLetters', () => {
     it('should generate default sized letters only string', () => {
       const letters = utils.generateLetters();

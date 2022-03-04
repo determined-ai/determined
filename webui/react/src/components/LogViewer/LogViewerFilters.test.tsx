@@ -3,14 +3,14 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { LogLevelFromApi } from 'types';
-import { generateAlphaNumeric } from 'utils/string';
+import { generateAlphaNumeric, generateUUID } from 'utils/string';
 
 import LogViewerFilters, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerFilters';
 
 const DEFAULT_FILTER_OPTIONS = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),
-  allocationIds: new Array(2).fill('').map((_, i) => `${crypto.randomUUID()}.${i}`),
-  containerIds: [ '', ...new Array(2).fill('').map(() => crypto.randomUUID()) ],
+  allocationIds: new Array(2).fill('').map((_, i) => `${generateUUID()}.${i}`),
+  containerIds: [ '', ...new Array(2).fill('').map(() => generateUUID()) ],
   rankIds: [ 0, 1, 2 ],
   sources: [ 'agent', 'master' ],
   stdtypes: [ 'stdout', 'stderr' ],
