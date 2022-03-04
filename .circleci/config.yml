@@ -1968,21 +1968,6 @@ workflows:
           cluster-id: determined-preview
           compute-agent-instance-type: t2.medium
 
-      - deploy:
-          name: deploy-release-party
-          context: aws
-          filters:
-            branches:
-              only:
-                - /release-.*/
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [8]
-
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
           context: aws
