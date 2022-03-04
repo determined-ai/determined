@@ -1,10 +1,10 @@
 import { Alert } from 'antd';
+import { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
-import ParallelCoordinates, {
-  Constraint, Dimension, DimensionType, dimensionTypeMap,
-} from 'components/ParallelCoordinates';
+import { Constraint } from 'components/ParallelCoordinates';
+import PCoordinates from 'components/PCoordinates';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
@@ -89,31 +89,34 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData?.metricRange, smallerIsBetter ]);
 
+  const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(() => ({
+    style: {
+      data: {
+        colorScale: {
+          colors: colorScale.map(scale => scale.color),
+          dimensionKey: metricNameToStr(selectedMetric),
+        },
+      },
+    },
+  }), [ colorScale, selectedMetric ]);
+
   const dimensions = useMemo(() => {
     const newDimensions = selectedHParams.map(key => {
       const hp = hyperparameters[key] || {};
-      const dimension: Dimension = {
-        label: key,
-        type: hp.type ? dimensionTypeMap[hp.type] : DimensionType.Scalar,
-      };
 
-      if (hp.vals) dimension.categories = hp.vals;
-      if (hp.minval != null && hp.maxval != null) {
-        const isLogarithmic = hp.type === HyperparameterType.Log;
-        dimension.range = isLogarithmic ?
-          [ 10 ** hp.minval, 10 ** hp.maxval ] : [ hp.minval, hp.maxval ];
+      if (hp.type === HyperparameterType.Categorical || hp.vals) {
+        return { categories: hp.vals ?? [], key, label: key, type: DimensionType.Categorical };
+      } else if (hp.type === HyperparameterType.Log) {
+        return { key, label: key, logBase: hp.base, type: DimensionType.Logarithmic };
       }
 
-      return dimension;
+      return { key, label: key, type: DimensionType.Linear };
     });
 
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
-      newDimensions.push({
-        label: metricNameToStr(selectedMetric),
-        range: chartData.metricRange,
-        type: DimensionType.Scalar,
-      });
+      const key = metricNameToStr(selectedMetric);
+      newDimensions.push({ key, label: key, type: DimensionType.Linear });
     }
 
     return newDimensions;
@@ -284,12 +287,17 @@ const HpParallelCoordinates: React.FC<Props> = ({
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
-            <ParallelCoordinates
+            {/* <ParallelCoordinates
               colorScale={colorScale}
               colorScaleKey={metricNameToStr(selectedMetric)}
               data={chartData?.data || {}}
               dimensions={dimensions}
               onFilter={handleChartFilter}
+            /> */}
+            <PCoordinates
+              config={config}
+              data={chartData?.data ?? {}}
+              dimensions={dimensions}
             />
           </div>
           <div>
