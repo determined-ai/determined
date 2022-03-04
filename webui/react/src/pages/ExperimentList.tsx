@@ -14,7 +14,7 @@ import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
+  checkmarkRenderer, defaultRowClassName, experimentProgressRenderer,
   ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig,
   relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
@@ -53,6 +53,8 @@ import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
 
+const stopPropagation = event => event.stopPropagation()
+export const RowContext = React.createContext({});
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
 const ExperimentList: React.FC = () => {
@@ -277,19 +279,66 @@ const ExperimentList: React.FC = () => {
     }
   }, [ ]);
 
-  const rowWrapper = useCallback((rowProps, recordsDict) => {
-    const record = recordsDict?.[rowProps['data-row-key']];
+  const rowWrapper = /* useCallback( */
+    (rowProps, recordsDict) => {
+      
+
+      const [rowHovered, setRowHovered] = useState(false);
+      const [textCellHovered, setTextCellHovered] = useState(false);
+      const [contextOpen, setContextMenuOpened] = useState(false);
+
+      const context ={
+        textCellHovered,
+        setTextCellHovered,
+      };
+      
+
+      const { onMouseEnter, onMouseLeave, className, 'data-row-key': key, children, ...rest } = rowProps;
+      const wrappedOnMouseEnter = useCallback((e) => {
+        setRowHovered(true);
+        onMouseEnter(e);
+      });
+      const wrappedOnMouseLeave = useCallback((e) => {
+        setRowHovered(false);
+        onMouseLeave(e);
+      });
+      const record = recordsDict?.[key];
+      // console.log({ textCellHovered });
+      const contextActiveOrTriggerable = (rowHovered && !textCellHovered) || contextOpen;
     return record ? (
+        <RowContext.Provider value={context}>
       <TaskActionDropdown
         curUser={user}
         task={taskFromExperiment(record)}
-        onComplete={handleActionComplete}>
-        <tr {...rowProps} />
+            onComplete={handleActionComplete}
+            setContextMenuOpened={setContextMenuOpened}
+          >
+            <tr
+              onMouseEnter={wrappedOnMouseEnter}
+              onMouseLeave={wrappedOnMouseLeave}
+              className={
+                contextActiveOrTriggerable ? `${className} ant-table-row-selected` : className
+              }
+              {...rest}
+            >
+              {children}
+              </tr>
+{/*               // .map(({props, ...stuff }) => ({
+                // props: {
+                //   onMouseEnter: (e) => setTextCellHovered(true),
+                //   onMouseLeave: (e) => e.setTextCellHovered(false),
+                //   ...props,
+                // },
+                // ...stuff,
+              // }))} */}
       </TaskActionDropdown>
+        </RowContext.Provider>
     ) : (
-      <tr {...rowProps} />
+        <tr {...{ className, onMouseEnter, onMouseLeave, ...rowProps }} />
     );
-  }, [user, taskFromExperiment, handleActionComplete ])
+    }/* ,
+    [user, taskFromExperiment, handleActionComplete]
+  ); */
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
@@ -308,20 +357,43 @@ const ExperimentList: React.FC = () => {
       />
     );
 
-    const descriptionRenderer = (value:string, record: ExperimentItem) => (
+    const descriptionRenderer = (value: string, record: ExperimentItem) => {
+      const { setTextCellHovered } = React.useContext(RowContext)
+      return (
       <InlineEditor
+          onMouseEnter={() => setTextCellHovered(true)}
+          onContextMenu={stopPropagation}
+          onMouseLeave={() => setTextCellHovered(false)}
         disabled={record.archived}
         placeholder="Add description..."
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
       />
     );
+    }
 
     const forkedFromRenderer = (
       value: string | number | undefined,
     ): React.ReactNode => (
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
+
+    const experimentNameRenderer = (
+      value: string | number | undefined,
+      record: ExperimentItem
+    ): React.ReactNode => {
+      const {setTextCellHovered } = React.useContext(RowContext)
+      return (
+        <Link
+          onMouseEnter={() => setTextCellHovered(true)}
+          onMouseLeave={() => setTextCellHovered(false)}
+          onContextMenu={stopPropagation}
+          path={paths.experimentDetails(record.id)}
+        >
+          {value === undefined ? '' : value}
+        </Link>
+      );
+    };
 
     const tableColumns: ColumnsType<ExperimentItem> = [
       {

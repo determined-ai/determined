@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 
@@ -138,13 +139,6 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
   <TimeDuration duration={getDuration(record)} />
-);
-
-export const experimentNameRenderer = (
-  value: string | number | undefined,
-  record: ExperimentItem,
-): React.ReactNode => (
-  <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
 );
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
