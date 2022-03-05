@@ -12,6 +12,7 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_cpu_postgres
 @pytest.mark.e2e_gpu
 @pytest.mark.timeout(300)
 def test_trial_logs() -> None:
