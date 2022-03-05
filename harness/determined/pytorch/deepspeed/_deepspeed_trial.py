@@ -1,10 +1,11 @@
 import abc
+import contextlib
 import logging
 import pathlib
 import pickle
 import random
 import time
-from typing import Any, Dict, Iterator, List, Optional, Type, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
 import deepspeed
 import numpy as np
@@ -36,14 +37,6 @@ class DeepSpeedTrialController(det.TrialController):
                 "This might be caused by not wrapping your model with wrap_model_engine()"
             )
 
-        # Training and validation dataloders are not built for every slot when model parallelism
-        # is used.
-        self.training_loader = None  # type: Optional[torch.utils.data.DataLoader]
-        self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
-        self.num_validation_batches = None  # type: Optional[int]
-        self.validation_batch_size = None  # type: Optional[int]
-        self._set_data_loaders()
-
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
@@ -60,7 +53,7 @@ class DeepSpeedTrialController(det.TrialController):
     ) -> None:
         # DeepSpeed's init_distributed handles situations in which only 1 gpu is used and
         # also handles multiple calls to init in one process.
-        deepspeed.init_distributed()
+        deepspeed.init_distributed(auto_mpi_discovery=False)
 
         # Set identical random seeds on all training processes.
         # When data parallel world size > 1, each data parallel rank will start at a unique
@@ -84,6 +77,13 @@ class DeepSpeedTrialController(det.TrialController):
 
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.latest_batch
+
+        # Training and validation dataloders are not built for every slot when model parallelism
+        # is used.
+        self.training_loader = None  # type: Optional[torch.utils.data.DataLoader]
+        self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
+        self.num_validation_batches = None  # type: Optional[int]
+        self.validation_batch_size = None  # type: Optional[int]
 
         # We currently only allow one model parallel strategy per DeepSpeedTrial.
         # We also assume that the dataloader is tied to this one parallelization strategy.
@@ -204,16 +204,49 @@ class DeepSpeedTrialController(det.TrialController):
         )
 
     def run(self) -> None:
-        # We create the dataloading iterators here rather than in __init__ because we have to be
-        # careful to trigger its shutdown explicitly, to avoid hangs when the user is using
-        # multiprocessing-based parallelism for their dataloader.
-        #
-        # We create it before loading state because we don't want the training_iterator shuffling
-        # values after we load state.
-        self.training_iterator = (
-            iter(self.training_loader) if self.training_loader is not None else None
-        )
-        try:
+        @contextlib.contextmanager
+        def defer(fn: Callable, *args: Any) -> Iterator[None]:
+            try:
+                yield
+            finally:
+                fn(*args)
+
+        # We define on_shutdown here instead of inside the `for callback in...` loop to ensure we
+        # don't bind a the loop iteration variable `callback`, which would likely cause us to call
+        # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
+        def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
+            with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
+                on_trial_shutdown()
+
+        with contextlib.ExitStack() as exit_stack:
+            for callback in self.callbacks.values():
+                with self.prof.record_timing(
+                    f"callbacks.{callback.__class__.__name__}.on_trial_startup"
+                ):
+                    callback.on_trial_startup(self.latest_batch, self.env.latest_checkpoint)
+                exit_stack.enter_context(
+                    defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
+                )
+
+            self._set_data_loaders()
+
+            # We create the training_iterator here rather than in __init__ because we have to be
+            # careful to trigger its shutdown explicitly, to avoid hangs in when the user is using
+            # multiprocessing-based parallelism for their dataloader.
+            #
+            # We create it before loading state because we don't want the training_iterator
+            # shuffling values after we load state.
+            self.training_iterator = (
+                iter(self.training_loader) if self.training_loader is not None else None
+            )
+
+            def cleanup_iterator() -> None:
+                # Explicitly trigger the training iterator's shutdown (which happens in __del__).
+                # See the rather long note in pytorch/torch/utils/data/dataloader.py.
+                del self.training_iterator
+
+            exit_stack.enter_context(defer(cleanup_iterator))
+
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
                 logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
@@ -229,12 +262,6 @@ class DeepSpeedTrialController(det.TrialController):
                     ):
                         callback.on_training_start()
                 self._run()
-
-        finally:
-            # Explicitly trigger the dataloader iterator shutdowns (which happens in __del__).
-            # See the rather long note in pytorch/torch/utils/data/dataloader.py.
-            if self.training_iterator is not None:
-                del self.training_iterator
 
     def _run(self) -> None:
         assert self.workloads is not None
@@ -482,6 +509,12 @@ class DeepSpeedTrialController(det.TrialController):
             # and no pipeline parallel when building the datalaoders.
             vld_metrics = self.trial.evaluate_batch(validation_iterator, idx)
             if self.context.mpu.should_report_metrics():
+                if not isinstance(vld_metrics, dict):
+                    raise det.errors.InvalidExperimentException(
+                        "validation_metrics() must return a "
+                        "dictionary of string names to Tensor "
+                        "metrics",
+                    )
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
@@ -490,20 +523,17 @@ class DeepSpeedTrialController(det.TrialController):
                         raise det.errors.InvalidExperimentException(
                             "Validation metric names must match across all batches of data.",
                         )
-                if not isinstance(vld_metrics, dict):
-                    raise det.errors.InvalidExperimentException(
-                        "validation_metrics() must return a "
-                        "dictionary of string names to Tensor "
-                        "metrics",
-                    )
                 # TODO: For performance perform -> cpu() only at the end of validation.
                 batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
             if self.env.test_mode:
                 break
 
-        all_keys = self.context.distributed._zmq_gather(keys and list(keys))
+        # keys and list(keys) does not satisfy all cases because it will return dict_keys type if
+        # keys is an empty dict. this will then break when passed to zmq_broadcast since it does
+        # not know how to serialize dict_keys type.
+        all_keys = self.context.distributed._zmq_gather(keys if keys is None else list(keys))
         if self.is_chief:
-            all_keys = [k for k in all_keys if k]
+            all_keys = [k for k in all_keys if k is not None]
             keys = all_keys[0]
         keys = self.context.distributed._zmq_broadcast(keys)
 
@@ -569,9 +599,11 @@ class DeepSpeedTrialController(det.TrialController):
             return
 
         checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
-        assert isinstance(
-            checkpoint, dict
-        ), f"Expected checkpoint at {maybe_ckpt} to be a dictionary."
+        if not isinstance(checkpoint, dict):
+            raise det.errors.InvalidExperimentException(
+                f"Expected checkpoint at {maybe_ckpt} to be a dict "
+                f"but got {type(checkpoint).__name__}."
+            )
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_load_start(checkpoint)

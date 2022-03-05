@@ -2,4 +2,6 @@
 pytest>=6.0.1
 mypy==0.910
 pytorch_lightning==1.5.9
+deepspeed==0.5.10
+attrdict
 requests_mock

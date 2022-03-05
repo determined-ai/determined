@@ -34,9 +34,9 @@ hyperparameters:
   user_script: null
   eval_tasks: null
 environment:
-    #force_pull_image: true
+    force_pull_image: true
     image:
-        gpu: liamdetermined/development:gpt-neox
+      gpu: liamdetermined/gpt-neox
 resources:
   slots_per_trial: 16 
 searcher:

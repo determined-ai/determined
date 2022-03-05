@@ -1,4 +1,5 @@
 py_bindings_dest=determined/common/api/bindings.py
+cuda_available=$(shell python -c "import torch; print(torch.cuda.is_available())") \
 
 .PHONY: build
 build: gen
@@ -20,8 +21,17 @@ check: check-gen
 	flake8
 	mypy .
 
+.PHONY: test-cpu
+test-cpu: gen
+	pytest -v --runslow --durations=0 -m "not gpu" tests
+
+.PHONY: test-gpu
+test-gpu: gen
+	# We will use this target in circleci once we have access to gpu instances.
+	pytest -v --runslow --durations=0 -m "gpu" tests
+
 .PHONY: test
-test: gen
+test: 
 	pytest -v --runslow --durations=0 tests
 
 .PHONY: test-tf2

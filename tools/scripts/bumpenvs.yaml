@@ -34,12 +34,6 @@ ap_southeast_2_bastion_ami:
 ap_southeast_2_master_ami:
   new: ami-0154c902f0267d0ce
   old: ami-0a00eef8760c6eddc
-deepspeed_gpu_hashed:
-  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-5158dec
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-4a7d07f
-deepspeed_gpu_versioned:
-  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-0.17.10
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-deepspeed-0.5.10-gpu-0.17.9
 eu_central_1_agent_ami:
   new: ami-0398336cc6fccd568
   old: ami-0dd55476dc1c0d4ae
@@ -70,12 +64,6 @@ eu_west_2_master_ami:
 gcp_env:
   new: det-environments-5158dec
   old: det-environments-4a7d07f
-gpt_neox_deepspeed_gpu_hashed:
-  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpt-neox-deepspeed-gpu-5158dec
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpt-neox-deepspeed-gpu-4a7d07f
-gpt_neox_deepspeed_gpu_versioned:
-  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpt-neox-deepspeed-gpu-0.17.10
-  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpt-neox-deepspeed-gpu-0.17.9
 pytorch19_tf25_rocm_hashed:
   new: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-5158dec
   old: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-4a7d07f
@@ -142,6 +130,18 @@ tf2_gpu_hashed:
 tf2_gpu_versioned:
   new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10
   old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.9
+deepspeed_gpu_hashed:
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-5158dec
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-4a7d07f
+deepspeed_gpu_versioned:
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-0.17.10
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-deepspeed-0.5.10-gpu-0.17.9
+gpt_neox_deepspeed_gpu_hashed:
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpt-neox-deepspeed-gpu-5158dec
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpt-neox-deepspeed-gpu-4a7d07f
+gpt_neox_deepspeed_gpu_versioned:
+  new: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpt-neox-deepspeed-gpu-0.17.10
+  old: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpt-neox-deepspeed-gpu-0.17.9
 us_east_1_agent_ami:
   new: ami-0c8ff8691b6483ead
   old: ami-0ab86c1d4d2dec827

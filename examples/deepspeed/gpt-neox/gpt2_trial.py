@@ -13,9 +13,19 @@ from megatron.checkpointing import save_checkpoint, load_checkpoint
 
 from determined.pytorch import DataLoader
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
-from determined.pytorch.deepspeed import DeepSpeedMPU, DeepSpeedTrial, DeepSpeedTrialContext
+from determined.pytorch.deepspeed import (
+    DeepSpeedMPU,
+    DeepSpeedTrial,
+    DeepSpeedTrialContext,
+)
 from determined import InvalidHP
-from det_utils import get_neox_args, TensorboardWriter, EarlyStoppingCallback, LMReducers, EvalHarness
+from det_utils import (
+    get_neox_args,
+    TensorboardWriter,
+    EarlyStoppingCallback,
+    LMReducers,
+    EvalHarness,
+)
 
 
 class GPT2Trial(DeepSpeedTrial):
@@ -29,7 +39,7 @@ class GPT2Trial(DeepSpeedTrial):
             self.neox_args = get_neox_args(self.context)
         except:
             traceback.print_exc()
-            raise InvalidHP('Could not parse neox_args.')
+            raise InvalidHP("Could not parse neox_args.")
         self.wrapped_writer = TorchWriter()
         self.neox_args.tensorboard_writer = self.wrapped_writer.writer
         self.neox_args.configure_distributed_args()
@@ -41,11 +51,16 @@ class GPT2Trial(DeepSpeedTrial):
 
         # Model, optimizer, and learning rate.
         self.timers("model and optimizer").start()
-        model, self.optimizer, self.lr_scheduler = megatron_train.setup_model_and_optimizer(
+        (
+            model,
+            self.optimizer,
+            self.lr_scheduler,
+        ) = megatron_train.setup_model_and_optimizer(
             neox_args=self.neox_args, inference=False, get_key_value=True
         )
         self.model = self.context.wrap_model_engine(model)
-        self.mpu = self.context.wrap_mpu(DeepSpeedMPU(model.mpu))
+        if self.neox_args.is_pipe_parallel:
+            self.mpu = self.context.wrap_mpu(DeepSpeedMPU(model.mpu))
         self.timers("model and optimizer").stop()
 
         # Print setup timing.
@@ -96,6 +111,7 @@ class GPT2Trial(DeepSpeedTrial):
                     model=self.model,
                 )
                 self.timers("forward").stop()
+                losses.append(loss)
                 # Calculate gradients, reduce across processes, and clip.
                 self.timers("backward").start()
                 megatron_train.backward_step(
@@ -113,8 +129,7 @@ class GPT2Trial(DeepSpeedTrial):
                 else:
                     raise ValueError("Must be using deepspeed to run neox")
                 self.timers("optimizer").stop()
-                losses.append(loss)
-            reduced_loss = {"lm_loss": np.mean(losses)}
+            reduced_loss = {"lm_loss": megatron_utils.reduce_losses(losses).mean()}
 
         if self.neox_args.precision == "fp16" and self.model.optimizer.overflow:
             skipped_iter = 1
@@ -149,14 +164,14 @@ class GPT2Trial(DeepSpeedTrial):
             model=self.model,
             optimizer=self.optimizer,
             noise_scale_logger=self.noise_scale_logger,
-            return_metrics=True
+            return_metrics=True,
         )
         if (
-                additional_metrics is not None and
-                additional_metrics['num_nans']==0 and
-                additional_metrics['num_skipped']==0
+            additional_metrics is not None
+            and additional_metrics["num_nans"] == 0
+            and additional_metrics["num_skipped"] == 0
         ):
-            self.tflops = additional_metrics['flops_per_sec_per_gpu'] / 10**12
+            self.tflops = additional_metrics["flops_per_sec_per_gpu"] / 10 ** 12
 
         if (
             self.neox_args.exit_interval
@@ -181,7 +196,7 @@ class GPT2Trial(DeepSpeedTrial):
         if self.args.search_world_size:
             if self.tflops > 0:
                 self.reported_flops = True
-            return {'tflops': self.tflops}
+            return {"tflops": self.tflops}
 
         if data_iterator is not None:
             if self.neox_args.char_level_ppl:
@@ -204,10 +219,7 @@ class GPT2Trial(DeepSpeedTrial):
             else:
                 self.reducer.update(loss.item())
 
-        if (
-            self.neox_args.deepspeed
-            and self.neox_args.checkpoint_activations
-        ):
+        if self.neox_args.deepspeed and self.neox_args.checkpoint_activations:
             deepspeed.checkpointing.reset()
 
         return {"lm_loss": loss}

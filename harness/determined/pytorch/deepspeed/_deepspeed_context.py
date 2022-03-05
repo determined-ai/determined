@@ -203,41 +203,44 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # Pipeline parallel model engine has its own MPU that we will use here.
         if isinstance(model, deepspeed.PipelineEngine):
             self._use_pipeline_parallel = True
+            # If a user does not pass an MPU when using a PipelineEngine, the experiment will still
+            # run but more workers will create dataloaders and dataloading workers than needed.
             logging.info(
                 "Model engine uses pipeline parallelism, please remember to pass a "
                 "ModelParallelUnit to the context by calling e.g. "
                 "context.wrap_mpu(determined.pytorch.deepspeed.DeepSpeedMPU(model_engine.mpu)."
             )
 
-        recompute_batch_size = False
+        if len(self.models) == 0:
+            recompute_batch_size = False
+            # Check to make sure that Determined's global batch size matches the model engine's.
+            # If not, overwrite Determined's batch size.
+            if self.get_global_batch_size() != model.train_batch_size():
+                logging.warning(
+                    f"Setting global batch size to {model.train_batch_size()} to match the "
+                    "deepspeed config."
+                )
+                self._global_batch_size = model.train_batch_size()
+                recompute_batch_size = True
 
-        # Check to make sure that Determined's global batch size matches the model engine's.
-        # If not, overwrite Determined's batch size.
-        if self.get_global_batch_size() != model.train_batch_size():
-            logging.warning(
-                f"Setting global batch size to {model.train_batch_size()} to match the "
-                "deepspeed config. To prevent this from happening, you can use "
-                "determined.pytorch.deepspeed.overwrite_deepspeed_config to overwrite values "
-                "in a base deepspeed config dict using values from a source deepspeed config dict "
-                "and passing that config to deepspeed.initialize to build the model engine."
-            )
-            self._global_batch_size = model.train_batch_size()
-            recompute_batch_size = True
+            if self._train_micro_batch_size_per_gpu is None:
+                self._train_micro_batch_size_per_gpu = int(model.train_micro_batch_size_per_gpu())
+                recompute_batch_size = True
 
-        if self._train_micro_batch_size_per_gpu is None:
-            self._train_micro_batch_size_per_gpu = int(model.train_micro_batch_size_per_gpu())
-            recompute_batch_size = True
-        # If multiple model engines are wrapped, we will make sure that they have the same
-        # micro batch size.
-        assert (
-            self._train_micro_batch_size_per_gpu == model.train_micro_batch_size_per_gpu()
-        ), "micro batch size do not match across DeepSpeed model engines."
-
-        if recompute_batch_size:
-            (
-                self._per_slot_batch_size,
-                self._global_batch_size,
-            ) = self._calculate_batch_sizes()
+            if recompute_batch_size:
+                (
+                    self._per_slot_batch_size,
+                    self._global_batch_size,
+                ) = self._calculate_batch_sizes()
+        else:
+            # If multiple model engines are wrapped, we will raise a warning if the micro batch
+            # size for additional model engines does not match that of the first model engine.
+            if model.train_micro_batch_size_per_gpu() != self._train_micro_batch_size_per_gpu:
+                logging.warning(
+                    f"Train micro batch size for wrapped model engine {len(self.models) + 1} does "
+                    "not match that for the first wrapped engine.  Num sample reporting will only "
+                    "apply to wrapped model engine 1."
+                )
 
         self.models.append(model)
         return model

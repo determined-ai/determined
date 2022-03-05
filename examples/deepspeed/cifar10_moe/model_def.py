@@ -12,7 +12,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from determined.pytorch import DataLoader
-from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, overwrite_deepspeed_config
+from determined.pytorch.deepspeed import (
+    DeepSpeedTrial,
+    DeepSpeedTrialContext,
+    overwrite_deepspeed_config,
+)
 
 
 class Net(nn.Module):
@@ -92,8 +96,7 @@ class CIFARTrial(DeepSpeedTrial):
             parameters = create_moe_param_groups(model)
 
         ds_config = overwrite_deepspeed_config(
-            self.args.deepspeed_config, 
-            self.args.get("overwrite_deepspeed_args", {})
+            self.args.deepspeed_config, self.args.get("overwrite_deepspeed_args", {})
         )
 
         model_engine, optimizer, __, __ = deepspeed.initialize(
@@ -105,6 +108,11 @@ class CIFARTrial(DeepSpeedTrial):
         self.model_engine = self.context.wrap_model_engine(model_engine)
 
         self.criterion = nn.CrossEntropyLoss().to(self.context.device)
+        self.reducer = self.context.wrap_reducer(
+            lambda x: sum([m[0] for m in x]) / sum([m[1] for m in x]),
+            "accuracy",
+            for_training=False,
+        )
 
     def train_batch(
         self, iter_dataloader, epoch_idx, batch_idx
@@ -118,7 +126,7 @@ class CIFARTrial(DeepSpeedTrial):
 
         self.model_engine.backward(loss)
         self.model_engine.step()
-        return {"loss": float(loss)}
+        return {"loss": loss.item()}
 
     def evaluate_batch(self, iter_dataloader, batch_idx) -> Dict[str, Any]:
         """
@@ -133,8 +141,8 @@ class CIFARTrial(DeepSpeedTrial):
         _, predicted = torch.max(outputs.data, 1)
         total = labels.size(0)
         correct = (predicted == labels).sum().item()
-
-        return {"accuracy": float(correct / total)}
+        self.reducer.update((correct, total))
+        return {}
 
     def build_training_data_loader(self) -> Any:
         transform = transforms.Compose(
@@ -171,7 +179,7 @@ class CIFARTrial(DeepSpeedTrial):
 
         return DataLoader(
             testset,
-            batch_size=self.context.train_micro_batch_size_per_gpu,
+            batch_size=4,
             shuffle=False,
             num_workers=2,
         )

@@ -7,7 +7,7 @@ import random
 import time
 from abc import abstractmethod
 from inspect import signature
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
 import numpy as np
 import torch

@@ -14,7 +14,7 @@ from determined.pytorch.deepspeed import (
     DeepSpeedMPU,
     DeepSpeedTrial,
     DeepSpeedTrialContext,
-    overwrite_deepspeed_config
+    overwrite_deepspeed_config,
 )
 
 
@@ -26,18 +26,6 @@ def join_layers(vision_model):
         *vision_model.classifier,
     ]
     return layers
-
-
-class BatchDataset(torch.utils.data.Dataset):
-    def __init__(self, batch):
-        self.images = batch[0]
-        self.labels = batch[1]
-
-    def __getitem__(self, idx):
-        return [self.images[idx], self.labels[idx]]
-
-    def __len__(self):
-        return len(self.images)
 
 
 class CIFARTrial(DeepSpeedTrial):
@@ -54,8 +42,7 @@ class CIFARTrial(DeepSpeedTrial):
         )
 
         ds_config = overwrite_deepspeed_config(
-            self.args.deepspeed_config, 
-            self.args.get("overwrite_deepspeed_args", {})
+            self.args.deepspeed_config, self.args.get("overwrite_deepspeed_args", {})
         )
         model_engine, optimizer, _, _ = deepspeed.initialize(
             args=self.args,
@@ -72,7 +59,7 @@ class CIFARTrial(DeepSpeedTrial):
         self, iter_dataloader, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         loss = self.model_engine.train_batch(iter_dataloader)
-        return {"loss": float(loss)}
+        return {"loss": loss.item()}
 
     def evaluate_batch(self, iter_dataloader, batch_idx) -> Dict[str, Any]:
         """
@@ -80,7 +67,7 @@ class CIFARTrial(DeepSpeedTrial):
         This method is not necessary if the user defines evaluate_full_dataset().
         """
         loss = self.model_engine.eval_batch(iter_dataloader)
-        return {"loss": loss}
+        return {"loss": loss.item()}
 
     def build_training_data_loader(self) -> Any:
         transform = transforms.Compose(
@@ -103,8 +90,8 @@ class CIFARTrial(DeepSpeedTrial):
             trainset,
             batch_size=self.context.train_micro_batch_size_per_gpu,
             shuffle=True,
-            num_workers=2,
             drop_last=True,
+            num_workers=2
         )
 
     def build_validation_data_loader(self) -> Any:
@@ -127,6 +114,6 @@ class CIFARTrial(DeepSpeedTrial):
             testset,
             batch_size=self.context.train_micro_batch_size_per_gpu,
             shuffle=False,
-            num_workers=2,
             drop_last=True,
+            num_workers=2
         )

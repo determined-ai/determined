@@ -40,8 +40,7 @@ class Context:
         self.distributed.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
-            if self.distributed._is_chief:
-                self.training.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.training.report_early_exit(_core.EarlyExitReason.INVALID_HP)
             logger.info("InvalidHP detected during Trial init, converting InvalidHP to exit(0)")
             exit(0)
 

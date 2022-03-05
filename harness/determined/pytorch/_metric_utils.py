@@ -10,8 +10,8 @@ from determined import pytorch, util
 def _process_combined_metrics_and_batches(
     combined_metrics_and_batches: List[Any],
 ) -> Tuple[Dict[str, Any], List[int]]:
-    # Remove items without keys in dictionary. These are from intermediate model parallel nodes.
-    combined_metrics_and_batches = [a for a in combined_metrics_and_batches if len(a[0])]
+    # Remove entries with 0 num batches. These are from ranks that do not repoort metrics.
+    combined_metrics_and_batches = [a for a in combined_metrics_and_batches if a[1]]
 
     # Reshape so e.g. all_metrics = [metrics, metrics, ...].
     all_metrics, all_num_batches = zip(*combined_metrics_and_batches)
@@ -157,7 +157,8 @@ def _reduce_metrics(
         )
         if context.rank == 0:
             # Only the chief collects all the metrics.
-            combined_metrics = _convert_metrics_to_numpy(cast(Dict[str, Any], combined_metrics))
+            assert combined_metrics is not None
+            combined_metrics = _convert_metrics_to_numpy(combined_metrics)
             metrics = {
                 name: pytorch._simple_reduce_metrics(
                     reducer=metrics_reducers[name],

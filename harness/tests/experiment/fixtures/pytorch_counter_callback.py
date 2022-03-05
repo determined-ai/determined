@@ -13,6 +13,8 @@ class Counter(pytorch.PyTorchCallback):
         self.training_started_times = 0
         self.training_epochs_started = 0
         self.training_epochs_ended = 0
+        self.trial_startups = 0
+        self.trial_shutdowns = 0
 
     def on_validation_start(self) -> None:
         self.validation_steps_started += 1
@@ -40,3 +42,9 @@ class Counter(pytorch.PyTorchCallback):
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         self.__dict__ = state_dict
+
+    def on_trial_startup(self, *arg):
+        self.trial_startups += 1
+
+    def on_trial_shutdown(self):
+        self.trial_shutdowns += 1

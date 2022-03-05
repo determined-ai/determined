@@ -15,10 +15,6 @@ class ModelParallelUnit:
     """
 
     @abc.abstractmethod
-    def __init__(self) -> None:
-        pass
-
-    @abc.abstractmethod
     def get_data_parallel_rank(self) -> int:
         pass
 
@@ -95,7 +91,8 @@ class DeepSpeedMPU(ModelParallelUnit):
         )
 
     def should_report_metrics(self) -> bool:
-        return self.is_last_pipeline_stage()
+        # DeepSpeed allreduces losses for pipeline parallel across all ranks.
+        return True
 
     def should_build_data_loader(self) -> bool:
         return cast(int, self.mpu.get_slice_parallel_rank()) == 0 and (
