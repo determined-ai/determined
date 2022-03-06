@@ -120,12 +120,14 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
-  allocation: number;
+  allocation?: number;
   available: number;
   total: number;
 }
 
 export type ClusterOverview = Record<ResourceType, ClusterOverviewResource>;
+
+export type PoolOverview = Record<string, ClusterOverviewResource>;
 
 export interface EndTimes {
   endTime?: string;

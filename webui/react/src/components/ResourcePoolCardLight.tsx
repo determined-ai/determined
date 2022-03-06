@@ -7,9 +7,10 @@ import staticLogo from 'assets/images/on-prem-logo.svg';
 import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
+import { useStore } from 'contexts/Store';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
-import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
+import { ResourcePool, ResourceState, ResourceType } from 'types';
 import { clone } from 'utils/data';
 
 import Json from './Json';
@@ -72,9 +73,10 @@ const ResourcePoolCardLight: React.FC<Props> = ({
   computeContainerStates,
   resourcePool: pool,
   totalComputeSlots,
-  resourceType,
 }: Props) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
+
+  const { pool: poolOverview } = useStore();
 
   const descriptionClasses = [ css.description ];
 
@@ -100,11 +102,13 @@ const ResourcePoolCardLight: React.FC<Props> = ({
         attribute.render(processedPool) :
         processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
-      if (isAux && attribute.key === 'slotsPerAgent') delete acc[attribute.label];
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
+      if (pool.type === V1ResourcePoolType.K8S && attribute.key !== 'type') {
+        delete acc[attribute.label];
+      }
       return acc;
     }, {} as SafeRawJson);
-  }, [ processedPool, isAux ]);
+  }, [ processedPool, isAux, pool ]);
 
   const toggleModal = useCallback(() => setDetailVisible((cur: boolean) => !cur), []);
 
@@ -121,19 +125,33 @@ const ResourcePoolCardLight: React.FC<Props> = ({
       </div>
       <div className={css.body}>
         <section>
-          <SlotAllocationBar
-            footer={{
-              auxRunning: pool.auxContainersRunning,
-              auxTotal: pool.auxContainerCapacity,
-              isAux: isAux,
-              queued: pool?.stats?.queuedCount,
-            }}
-            hideHeader
-            resourceStates={computeContainerStates}
-            size={ShirtSize.large}
-            title={deviceTypes.has(resourceType) ? resourceType : undefined}
-            totalSlots={totalComputeSlots}
-          />
+          {poolOverview[pool.name]?.total > 0 && (
+            <SlotAllocationBar
+              footer={{
+                isAux: false,
+                queued: pool?.stats?.queuedCount,
+              }}
+              hideHeader
+              poolType={pool.type}
+              resourceStates={computeContainerStates}
+              size={ShirtSize.large}
+              totalSlots={poolOverview[pool.name]?.total}
+            />
+          )}
+          {isAux && (
+            <SlotAllocationBar
+              footer={{
+                auxRunning: pool.auxContainersRunning,
+                auxTotal: pool.auxContainerCapacity,
+                isAux: true,
+              }}
+              hideHeader
+              poolType={pool.type}
+              resourceStates={computeContainerStates}
+              size={ShirtSize.large}
+              totalSlots={totalComputeSlots}
+            />
+          )}
         </section>
         <section className={css.details}>
           <Json hideDivider json={shortDetails} />

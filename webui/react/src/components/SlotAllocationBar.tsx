@@ -5,6 +5,7 @@ import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import { resourceStateToLabel } from 'constants/states';
+import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
 import { floatToPercent } from 'utils/string';
@@ -17,6 +18,7 @@ export interface Props {
   className?: string;
   footer?: AllocationBarFooterProps;
   hideHeader?: boolean;
+  poolType?: V1ResourcePoolType;
   resourceStates: ResourceState[];
   showLegends?: boolean;
   size?: ShirtSize;
@@ -68,6 +70,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   hideHeader,
   footer,
   title,
+  poolType,
   ...barProps
 }: Props) => {
 
@@ -159,17 +162,25 @@ const SlotAllocationBar: React.FC<Props> = ({
       </ConditionalWrapper>
       {footer && (
         <div className={css.footer}>
-          <header>{`${footer.isAux ?
-            `${footer.auxRunning}/${footer.auxTotal} Aux Container Running` :
-            `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
-          </header>
-          { (footer.queued ? (
+          {poolType === V1ResourcePoolType.K8S ? (
+            <header>{`${footer.isAux ?
+              `${footer.auxRunning} Aux Container Running` :
+              `${stateTallies.RUNNING} Compute Slots Allocated`}`}
+            </header>
+          )
+            : (
+              <header>{`${footer.isAux ?
+                `${footer.auxRunning}/${footer.auxTotal} Aux Container Running` :
+                `${stateTallies.RUNNING} Compute Slots Allocated`}`}
+              </header>
+            )}
+          {footer.queued ? (
             <span className={css.queued}>{`${footer.queued > 100 ?
               '100+' :
-              footer.queued} Jobs Queued`}
+              footer.queued} ${footer.queued === 1 ? 'Job' : 'Jobs'} Queued`}
             </span>
           ) :
-            <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>)}
+            !footer.isAux && <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>}
         </div>
       )}
       {showLegends && (

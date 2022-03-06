@@ -114,15 +114,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("")
 				ctx.Respond(err)
 			}
-			jobStatsResp := ctx.Ask(a.pools[pool.PoolName], job.GetJobQStats{})
-			if err := jobStatsResp.Error(); err != nil {
-				return fmt.Errorf("unexpected response type from jobStats: %s", err)
+
+			jobStats, err := a.getPoolJobStats(ctx, pool)
+			if err != nil {
+				ctx.Respond(err)
 			}
-			jobStats, ok := jobStatsResp.Get().(jobv1.QueueStats)
-			if !ok {
-				return fmt.Errorf("unexpected response type from jobStats")
-			}
-			summary.Stats = &jobStats
+
+			summary.Stats = jobStats
 			summaries = append(summaries, summary)
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
@@ -245,6 +243,18 @@ func (a *agentResourceManager) forwardToAllPools(
 	}
 	ctx.TellAll(msg, ctx.Children()...)
 	return nil
+}
+
+func (a *agentResourceManager) getPoolJobStats(ctx *actor.Context, pool ResourcePoolConfig) (*jobv1.QueueStats, error) {
+	jobStatsResp := ctx.Ask(a.pools[pool.PoolName], job.GetJobQStats{})
+	if err := jobStatsResp.Error(); err != nil {
+		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
+	}
+	jobStats, ok := jobStatsResp.Get().(jobv1.QueueStats)
+	if !ok {
+		return nil, fmt.Errorf("unexpected response type from jobStats")
+	}
+	return &jobStats, nil
 }
 
 func (a *agentResourceManager) aggregateTaskHandler(

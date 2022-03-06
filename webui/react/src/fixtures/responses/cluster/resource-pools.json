@@ -218,5 +218,42 @@
             "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
             "schedulerFittingPolicy": "FITTING_POLICY_WORST"
         }
-    }
+    },{
+		"name": "kubernetes",
+		"description": "Kubernetes-managed pool of resources",
+		"type": "RESOURCE_POOL_TYPE_K8S",
+		"numAgents": 1,
+		"slotsAvailable": 1,
+		"slotsUsed": 8,
+		"slotType": "TYPE_CUDA",
+		"auxContainerCapacity": 1,
+		"auxContainersRunning": 0,
+		"defaultComputePool": true,
+		"defaultAuxPool": true,
+		"preemptible": false,
+		"minAgents": 0,
+		"maxAgents": 0,
+		"slotsPerAgent": 1,
+		"auxContainerCapacityPerAgent": 1,
+		"schedulerType": "SCHEDULER_TYPE_KUBERNETES",
+		"schedulerFittingPolicy": "FITTING_POLICY_KUBERNETES",
+		"location": "kubernetes",
+		"imageId": "",
+		"instanceType": "kubernetes",
+		"masterUrl": "",
+		"masterCertName": "",
+		"startupScript": "",
+		"containerStartupScript": "",
+		"agentDockerNetwork": "",
+		"agentDockerRuntime": "",
+		"agentDockerImage": "",
+		"agentFluentImage": "",
+		"maxIdleAgentPeriod": 0,
+		"maxAgentStartingPeriod": 0,
+		"details": {
+			"aws": null,
+			"gcp": null,
+			"priorityScheduler": null
+		}
+	}
 ]
