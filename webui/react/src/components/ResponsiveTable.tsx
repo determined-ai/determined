@@ -2,7 +2,7 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useEffect, useRef, useState, createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 
@@ -18,29 +18,26 @@ interface Settings {
   tableOffset: number;
 }
 
-
 interface ContextMenuProps {
-  record: object;
   onVisibleChange: (visible: boolean) => void;
+  record: Record<string, unknown>;
 }
 
 interface ResponsiveTableProps<RecordType> extends TableProps<RecordType> {
-  areRowsRightClickable?: boolean;
   ContextMenu?: React.FC<ContextMenuProps>;
+  areRowsRightClickable?: boolean;
   areRowsSelected?: boolean;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type ResponsiveTable = <T extends object>(props: ResponsiveTableProps<T>) => JSX.Element;
 
-
 interface RowProps {
-  className?: string;
-  children?: React.ReactNode;
-  record: object;
-  isRowRightClickable?: boolean;
   ContextMenu: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+  record: Record<string, unknown>;
 }
 
 interface CellProps {
@@ -59,18 +56,18 @@ const Row = ({
   ...props
 }: RowProps) => {
 
-  const [rowHovered, setRowHovered] = useState(false);
-  const [rightClickableCellHovered, setRightClickableCellHovered] = useState(false);
-  const [contextMenuOpened, setContextMenuOpened] = useState(false);
-  
+  const [ rowHovered, setRowHovered ] = useState(false);
+  const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
+  const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
+
   if (areRowsSelected) {
-    return <tr className={className} {...props }>{children}</tr>;
+    return <tr className={className} {...props}>{children}</tr>;
   }
 
   const rightClickableCellProps = {
+    onContextMenu: (e : React.MouseEvent) => e.stopPropagation(),
     onMouseEnter: () => setRightClickableCellHovered(true),
     onMouseLeave: () => setRightClickableCellHovered(false),
-    onContextMenu: (e : React.MouseEvent) => e.stopPropagation(),
   };
 
   const rowContextMenuActive =
@@ -80,23 +77,22 @@ const Row = ({
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr
+          className={rowContextMenuActive ? `${className} ant-table-row-selected` : className}
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
-          className={rowContextMenuActive ? `${className} ant-table-row-selected` :className}
-          {...props}
-        >
+          {...props}>
           {children}
         </tr>
       </ContextMenu>
     </RightClickableRowContext.Provider>
   ) : (
-    <tr {...{ className, children, ...props }} />
+    <tr {...{ children, className, ...props }} />
   );
-}
+};
 
-const Cell = ({ children, isCellRightClickable,...props }: CellProps) => {
+const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
+  const rightClickableCellProps = useContext(RightClickableRowContext);
   if (!isCellRightClickable) return <td {...props}>{children}</td>;
-  const rightClickableCellProps = useContext(RightClickableRowContext)
   return (
     <td {...props}>
       <div {...rightClickableCellProps}>
@@ -104,8 +100,7 @@ const Cell = ({ children, isCellRightClickable,...props }: CellProps) => {
       </div>
     </td>
   );
-}
-
+};
 
 export const handleTableChange = (
   columns: {key?: Comparable}[],
@@ -177,21 +172,21 @@ const ResponsiveTable: ResponsiveTable = ({
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
         <Table
-          onRow={(record) => ({
-            record,
-            areRowsSelected,
-            ContextMenu,
-          }  as React.HTMLAttributes<HTMLElement>)} // put the record in the row props so RightClickableRow can grab it
           components={
             areRowsRightClickable ? {
               body: {
-                row: Row,
                 cell: Cell,
+                row: Row,
               },
             } : undefined
           }
           scroll={tableScroll}
           tableLayout="auto"
+          onRow={(record) => ({
+            areRowsSelected,
+            ContextMenu,
+            record,
+          } as React.HTMLAttributes<HTMLElement>)}
           {...props}
         />
       </Spinner>

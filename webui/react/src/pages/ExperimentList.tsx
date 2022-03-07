@@ -312,47 +312,47 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'id',
         key: V1GetExperimentsRequestSortBy.ID,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>) ,
       },
       {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.NAME,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
         width: 240,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         dataIndex: 'description',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: descriptionRenderer,
         title: 'Description',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
         filters: labels.map(label => ({ text: label, value: label })),
         key: 'labels',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
         render: tagsRenderer,
         title: 'Tags',
         width: 120,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         dataIndex: 'forkedFrom',
         key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: forkedFromRenderer,
         sorter: true,
         title: 'Forked From',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
@@ -429,10 +429,10 @@ const ExperimentList: React.FC = () => {
         className: 'fullCell',
         fixed: 'right',
         key: 'action',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: actionRenderer,
         title: '',
         width: 40,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
     ];
 
@@ -607,12 +607,11 @@ const ExperimentList: React.FC = () => {
         curUser={user}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
-        onVisibleChange={onVisibleChange}
-      >
+        onVisibleChange={onVisibleChange}>
         {children}
       </TaskActionDropdown>
     ),
-    [user, handleActionComplete]
+    [ user, handleActionComplete ],
   );
 
   return (
@@ -643,7 +642,10 @@ const ExperimentList: React.FC = () => {
         onClear={clearSelected}
       />
       <ResponsiveTable<ExperimentItem>
+        areRowsRightClickable={true}
+        areRowsSelected={!!settings.row}
         columns={visibleColumns}
+        ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
         pagination={getFullPaginationConfig({
@@ -660,9 +662,6 @@ const ExperimentList: React.FC = () => {
         showSorterTooltip={false}
         size="small"
         onChange={handleTableChange(columns, settings, updateSettings)}
-        areRowsRightClickable={true}
-        areRowsSelected={!!settings.row}
-        ContextMenu={ExperimentActionDropdown}
       />
     </Page>
   );

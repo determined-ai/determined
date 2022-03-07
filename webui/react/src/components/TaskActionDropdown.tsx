@@ -182,11 +182,10 @@ const TaskActionDropdown: React.FC<Props> = ({
 
   return children ? (
     <Dropdown
-      onVisibleChange={onVisibleChange}
       overlay={menu}
       placement="bottomLeft"
-      trigger={['contextMenu']}
-    >
+      trigger={[ 'contextMenu' ]}
+      onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>
   ) : (
