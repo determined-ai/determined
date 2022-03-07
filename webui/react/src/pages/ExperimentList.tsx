@@ -649,7 +649,7 @@ const ExperimentList: React.FC = () => {
         pagination={getFullPaginationConfig({
           limit: settings.tableLimit,
           offset: settings.tableOffset,
-          }, total)}
+        }, total)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{
