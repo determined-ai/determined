@@ -15,13 +15,13 @@ A Determined cluster has the following requirements.
 Software
 ========
 
--  The Determined agent and master nodes must be configured with Ubuntu 16.04 or higher, CentOS 7,
-   or macOS 10.13 or higher.
+-  The Determined agent and master nodes must be configured with Ubuntu 20.04 or later, CentOS 7,
+   or macOS 10.13 or later.
 
 -  The agent nodes must have :ref:`Docker installed <install-docker>`.
 
 -  To run jobs with GPUs, the Nvidia drivers must be installed on each Determined agent. Determined
-   requires a version greater than or equal to 384.81 of the Nvidia drivers. The Nvidia drivers can
+   requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia drivers can
    be installed as part of a CUDA installation but the rest of the CUDA toolkit is not required.
 
 -  Determined supports the `supported Python versions <https://endoflife.date/python>`__.
@@ -53,7 +53,7 @@ have Docker installed to run containerized workloads.
 Install on Linux
 ================
 
-#. Install Docker. Docker version 19.03 or newer is required on the machine where the agent is
+#. Install Docker. Docker version 20.10 or later is required on the machine where the agent is
    running.
 
    On Ubuntu:
