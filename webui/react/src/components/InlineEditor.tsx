@@ -129,11 +129,7 @@ const InlineEditor: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} {...props}>
-      <div
-        className={css.growWrap}
-        ref={growWrapRef}
-        onClick={handleWrapperClick}
-      >
+      <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
         <textarea
           maxLength={maxLength}
           placeholder={placeholder}

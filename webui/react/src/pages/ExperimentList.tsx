@@ -58,7 +58,7 @@ const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
-  const [labels, setLabels] = useState<string[]>([]);
+  const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
 
@@ -170,7 +170,6 @@ const ExperimentList: React.FC = () => {
   }, [ fetchExperiments, fetchLabels, fetchUsers ]);
 
   usePolling(fetchAll);
-  
 
   const experimentTags = useExperimentTags(fetchAll);
 
@@ -275,10 +274,7 @@ const ExperimentList: React.FC = () => {
       setIsLoading(false);
       return e;
     }
-  }, []);
-  
-
-
+  }, [ ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
@@ -289,10 +285,6 @@ const ExperimentList: React.FC = () => {
       />
     );
 
-
-      
-    
-
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
@@ -301,7 +293,7 @@ const ExperimentList: React.FC = () => {
       />
     );
 
-    const descriptionRenderer = (value: string, record: ExperimentItem) => {
+    const descriptionRenderer = (value:string, record:ExperimentItem) => {
       return (
         <InlineEditor
           disabled={record.archived}
@@ -317,8 +309,6 @@ const ExperimentList: React.FC = () => {
     ): React.ReactNode => (
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
-
-    
 
     const experimentNameRenderer = (
       value: string | number | undefined,
@@ -345,7 +335,7 @@ const ExperimentList: React.FC = () => {
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.NAME,
-        onHeaderCell: () => (settings.search ? { className: tableCss.headerFilterOn } : {}),
+        onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
@@ -361,9 +351,9 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
-        filters: labels.map((label) => ({ text: label, value: label })),
+        filters: labels.map(label => ({ text: label, value: label })),
         key: 'labels',
-        onHeaderCell: () => (settings.label ? { className: tableCss.headerFilterOn } : {}),
+        onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
         render: tagsRenderer,
         title: 'Tags',
         width: 120,
@@ -398,21 +388,19 @@ const ExperimentList: React.FC = () => {
       {
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
-          .filter((value) =>
-            [
+          .filter((value) => [
               RunState.Active,
               RunState.Paused,
               RunState.Canceled,
               RunState.Completed,
               RunState.Errored,
-            ].includes(value)
-          )
+            ].includes(value))
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           })),
         key: V1GetExperimentsRequestSortBy.STATE,
-        onHeaderCell: () => (settings.state ? { className: tableCss.headerFilterOn } : {}),
+        onHeaderCell: () => settings.state ? { className: tableCss.headerFilterOn } : {},
         render: stateRenderer,
         sorter: true,
         title: 'State',
@@ -672,8 +660,8 @@ const ExperimentList: React.FC = () => {
         dataSource={experiments}
         loading={isLoading}
         pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
           }, total)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"

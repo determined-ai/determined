@@ -2,7 +2,7 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
-import { createContext, useEffect, useRef, useState, useContext } from 'react';
+import React, { useEffect, useRef, useState, createContext, useContext } from 'react';
 
 import useResize from 'hooks/useResize';
 
