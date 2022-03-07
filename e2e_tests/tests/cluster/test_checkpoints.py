@@ -2,7 +2,7 @@ import json
 import sys
 import tempfile
 import time
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Set, Tuple
 
 import pytest
 import yaml
@@ -83,7 +83,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
         ),
     ]
 
-    all_checkpoints = []
+    all_checkpoints: List[Tuple[Any, List[bindings.v1CheckpointWorkload]]] = []
     for base_conf_path, result in fixtures:
         config = conf.load_config(str(base_conf_path))
         config["checkpoint_storage"].update(checkpoint_storage)
@@ -144,8 +144,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
-                    if not checkpoint.uuid:
-                        continue
+                    assert checkpoint.uuid
                     storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
                     if checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED:

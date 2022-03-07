@@ -342,7 +342,7 @@ def describe(args: Namespace) -> None:
             wl_output: Dict[int, List[Any]] = {}
             for workload in workloads:
                 t_metrics_fields = []
-                wl_detail: bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload = None
+                wl_detail: bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload | None = None
                 if workload.training:
                     wl_detail = workload.training
                     for name in t_metrics_names:
