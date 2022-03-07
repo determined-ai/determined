@@ -71,14 +71,16 @@ const Row = ({
     onMouseLeave: () => setRightClickableCellHovered(false),
   };
 
-  const rowContextMenuActive =
+  const rowContextMenuTriggerableOrOpen =
     (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
 
   return record ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr
-          className={rowContextMenuActive ? `${className} ant-table-row-selected` : className}
+          className={
+            rowContextMenuTriggerableOrOpen ? `${className} ant-table-row-selected` : className
+          }
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
           {...props}>
@@ -87,7 +89,7 @@ const Row = ({
       </ContextMenu>
     </RightClickableRowContext.Provider>
   ) : (
-    <tr {...{ children, className, ...props }} />
+    <tr className={className} {...props}>{children}</tr>
   );
 };
 

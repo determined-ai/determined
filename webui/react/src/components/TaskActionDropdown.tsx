@@ -3,7 +3,7 @@ import { isNumber } from 'util';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import Icon from 'components/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
@@ -25,7 +25,6 @@ import css from './ActionDropdown.module.scss';
 import Link from './Link';
 
 interface Props {
-  children?: React.ReactNode;
   curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
@@ -40,7 +39,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   curUser,
   onVisibleChange,
   children,
-}: Props) => {
+}: PropsWithChildren<Props>) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
   const isExperiment = isExperimentTask(task);
   const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
@@ -167,9 +166,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   }
 
   if (menuItems.length === 0) {
-    return children ? (
-      <>{children}</>
-    ) : (
+    return (children as JSX.Element) ?? (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
         <button disabled>
           <Icon name="overflow-vertical" />
