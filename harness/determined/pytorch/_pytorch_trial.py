@@ -186,11 +186,18 @@ class PyTorchTrialController(det.TrialController):
 
     def run(self) -> None:
         @contextlib.contextmanager
-        def defer(fn: Callable) -> Iterator[None]:
+        def defer(fn: Callable, *args: Any) -> Iterator[None]:
             try:
                 yield
             finally:
-                fn()
+                fn(*args)
+
+        # We define on_shutdown here instead of inside the `for callback in...` loop to ensure we
+        # don't bind a the loop iteration variable `callback`, which would likely cause us to call
+        # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
+        def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
+            with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
+                on_trial_shutdown()
 
         with contextlib.ExitStack() as exit_stack:
             for callback in self.callbacks.values():
@@ -198,7 +205,9 @@ class PyTorchTrialController(det.TrialController):
                     f"callbacks.{callback.__class__.__name__}.on_trial_startup"
                 ):
                     callback.on_trial_startup(self.latest_batch, self.env.latest_checkpoint)
-                    exit_stack.enter_context(defer(callback.on_trial_shutdown))
+                exit_stack.enter_context(
+                    defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
+                )
 
             self._set_data_loaders()
 

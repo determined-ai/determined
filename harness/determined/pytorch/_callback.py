@@ -21,7 +21,7 @@ class PyTorchCallback:
 
     def on_trial_startup(self, first_batch_idx: int, checkpoint_uuid: Optional[str]) -> None:
         """
-        Runs before, training, validation, or building dataloaders.
+        Runs before training, validation, or building dataloaders.
 
         Arguments:
             first_batch_idx (int):  The first batch index to be trained.  If the trial has already
@@ -30,8 +30,9 @@ class PyTorchCallback:
             checkpoint_uuid (str or None):  The checkpoint from which weight, optimizer state, etc
                 will be loaded.  When ``first_batch_idx > 0`` this will contain the uuid of the
                 most recent checkpoint saved by this trial.  Otherwise, it will contain the uuid of
-                the checkpoint from which this trial was configured to warm_start from, or None if
-                no warm start was configured.
+                the checkpoint from which this trial was configured to warm start from (via
+                ``source_trial_id`` or ``source_checkpoint_uuid`` in the searcher config), or None
+                if no warm start was configured.
         """
         pass
 
