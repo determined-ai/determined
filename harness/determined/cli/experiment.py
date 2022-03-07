@@ -233,19 +233,16 @@ def delete_experiment(args: Namespace) -> None:
 @authentication.required
 def describe(args: Namespace) -> None:
     session = setup_session(args)
-    docs = []
+    exps = []
     for experiment_id in args.experiment_ids.split(","):
-        if args.metrics:
-            r = bindings.get_GetExperiment(session, experimentId=experiment_id)
-        else:
-            r = bindings.get_GetExperiment(session, experimentId=experiment_id)
+        r = bindings.get_GetExperiment(session, experimentId=experiment_id)
         if args.json:
-            docs.append(r.to_json())
+            exps.append(r.to_json())
         else:
-            docs.append(r.experiment)
+            exps.append(r.experiment)
 
     if args.json:
-        print(json.dumps(docs, indent=4))
+        print(json.dumps(exps, indent=4))
         return
 
     # Display overall experiment information.
@@ -263,18 +260,18 @@ def describe(args: Namespace) -> None:
     ]
     values = [
         [
-            doc.id,
-            doc.state,
-            render.format_percent(doc.progress),
-            render.format_time(doc.startTime),
-            render.format_time(doc.endTime),
-            doc.name,
-            doc.description,
-            doc.archived,
-            doc.resourcePool,
-            ", ".join(sorted(doc.labels or [])),
+            exp.id,
+            exp.state.value.replace("STATE_", ""),
+            render.format_percent(exp.progress),
+            render.format_time(exp.startTime),
+            render.format_time(exp.endTime),
+            exp.name,
+            exp.description,
+            exp.archived,
+            exp.resourcePool,
+            ", ".join(sorted(exp.labels or [])),
         ]
-        for doc in docs
+        for exp in exps
     ]
     if not args.outdir:
         outfile = None
@@ -285,23 +282,23 @@ def describe(args: Namespace) -> None:
 
     # Display trial-related information.
     trials_for_experiment: Dict[str, Sequence[bindings.trialv1Trial]] = {}
-    for doc in docs:
-        trials_for_experiment[doc.id] = bindings.get_GetExperimentTrials(
-            session, experimentId=doc.id
+    for exp in exps:
+        trials_for_experiment[exp.id] = bindings.get_GetExperimentTrials(
+            session, experimentId=exp.id
         ).trials
 
     headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
     values = [
         [
             trial.id,
-            doc.id,
-            trial.state,
+            exp.id,
+            trial.state.value.replace("STATE_", ""),
             render.format_time(trial.startTime),
             render.format_time(trial.endTime),
             json.dumps(trial.hparams, indent=4),
         ]
-        for doc in docs
-        for trial in trials_for_experiment[doc.id]
+        for exp in exps
+        for trial in trials_for_experiment[exp.id]
     ]
     if not args.outdir:
         outfile = None
@@ -317,9 +314,8 @@ def describe(args: Namespace) -> None:
     v_metrics_names: List[str] = []
     if args.metrics:
         # Accumulate the scalar training and validation metric names from all provided experiments.
-        for doc in docs:
-            # if len(trials_for_experiment[doc.id]) == 0:
-            sample_trial = trials_for_experiment[doc.id][0]
+        for exp in exps:
+            sample_trial = trials_for_experiment[exp.id][0]
             sample_workloads = bindings.get_GetTrial(session, trialId=sample_trial.id).workloads
             t_metrics_names += scalar_training_metrics_names(sample_workloads)
             v_metrics_names += scalar_validation_metrics_names(sample_workloads)
@@ -340,13 +336,13 @@ def describe(args: Namespace) -> None:
         + v_metrics_headers
     )
 
-    for doc in docs:
-        for trial in trials_for_experiment[doc.id]:
+    for exp in exps:
+        for trial in trials_for_experiment[exp.id]:
             workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
             wl_output: Dict[int, List[Any]] = {}
             for workload in workloads:
                 t_metrics_fields = []
-                wl_detail = None
+                wl_detail: bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload = None
                 if workload.training:
                     wl_detail = workload.training
                     for name in t_metrics_names:
@@ -358,9 +354,7 @@ def describe(args: Namespace) -> None:
                     t_metrics_fields = [None for name in t_metrics_names]
 
                 if workload.checkpoint:
-                    ckpt = workload.checkpoint.to_json()
-                    ckpt["numInputs"] = 0
-                    wl_detail = bindings.v1MetricsWorkload.from_json(ckpt)
+                    wl_detail = workload.checkpoint
 
                 if workload.checkpoint and wl_detail:
                     checkpoint_state = wl_detail.state.value
@@ -418,9 +412,9 @@ def describe(args: Namespace) -> None:
                             ]
                             + t_metrics_fields
                             + [
-                                checkpoint_state,
+                                checkpoint_state.replace("STATE_", ""),
                                 render.format_time(checkpoint_end_time),
-                                validation_state,
+                                validation_state.replace("STATE_", ""),
                                 render.format_time(validation_end_time),
                             ]
                             + v_metrics_fields
