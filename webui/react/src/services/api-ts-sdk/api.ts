@@ -4674,6 +4674,12 @@ export interface V1ResourcePool {
      * @memberof V1ResourcePool
      */
     accelerator?: string;
+    /**
+     * 
+     * @type {V1QueueStats}
+     * @memberof V1ResourcePool
+     */
+    stats?: V1QueueStats;
 }
 
 /**
