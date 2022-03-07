@@ -215,7 +215,12 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		if err := a.rendezvous.ReceiveMsg(ctx); err != nil {
+		switch err := a.rendezvous.ReceiveMsg(ctx).(type) {
+		case nil:
+			return nil
+		case ErrTimeoutExceeded:
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+		default:
 			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
 		}
