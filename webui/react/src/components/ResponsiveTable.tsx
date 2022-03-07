@@ -8,6 +8,8 @@ import useResize from 'hooks/useResize';
 
 import Spinner from './Spinner';
 
+import css from './ResponsiveTable.module.scss'
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
 
@@ -95,7 +97,7 @@ const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
   if (!isCellRightClickable) return <td {...props}>{children}</td>;
   return (
     <td {...props}>
-      <div {...rightClickableCellProps}>
+      <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
         {children}
       </div>
     </td>

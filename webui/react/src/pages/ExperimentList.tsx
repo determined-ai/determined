@@ -356,6 +356,7 @@ const ExperimentList: React.FC = () => {
       },
       {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
@@ -364,11 +365,13 @@ const ExperimentList: React.FC = () => {
       {
         key: 'duration',
         render: expermentDurationRenderer,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         title: 'Duration',
       },
       {
         dataIndex: 'numTrials',
         key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
         title: 'Trials',
       },
@@ -395,11 +398,13 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'searcherType',
         key: 'searcherType',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         title: 'Searcher Type',
       },
       {
         dataIndex: 'resourcePool',
         key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
         title: 'Resource Pool',
       },
