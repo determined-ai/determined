@@ -364,8 +364,8 @@ const ExperimentList: React.FC = () => {
       },
       {
         key: 'duration',
-        render: expermentDurationRenderer,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: expermentDurationRenderer,
         title: 'Duration',
       },
       {

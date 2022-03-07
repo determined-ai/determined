@@ -6,9 +6,8 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 
 import useResize from 'hooks/useResize';
 
+import css from './ResponsiveTable.module.scss';
 import Spinner from './Spinner';
-
-import css from './ResponsiveTable.module.scss'
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
