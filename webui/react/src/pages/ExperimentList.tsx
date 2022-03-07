@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState, useContext } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
@@ -339,7 +338,7 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
-        onCell: () => ({ isCellRightClickable: true }),
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>) ,
       },
       {
         dataIndex: 'name',
@@ -351,13 +350,13 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'Name',
         width: 240,
-        onCell: () => ({ isCellRightClickable: true }),
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         dataIndex: 'description',
         render: descriptionRenderer,
         title: 'Description',
-        onCell: () => ({ isCellRightClickable: true }),
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         dataIndex: 'labels',
@@ -368,7 +367,7 @@ const ExperimentList: React.FC = () => {
         render: tagsRenderer,
         title: 'Tags',
         width: 120,
-        onCell: () => ({ isCellRightClickable: true }),
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         dataIndex: 'forkedFrom',
@@ -376,7 +375,7 @@ const ExperimentList: React.FC = () => {
         render: forkedFromRenderer,
         sorter: true,
         title: 'Forked From',
-        onCell: () => ({ isCellRightClickable: true }),
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
       {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
@@ -445,7 +444,7 @@ const ExperimentList: React.FC = () => {
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: V1GetExperimentsRequestSortBy.USER,
-        onHeaderCell: () => (settings.user ? { className: tableCss.headerFilterOn } : {}),
+        onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         sorter: true,
         title: 'User',
@@ -458,7 +457,7 @@ const ExperimentList: React.FC = () => {
         render: actionRenderer,
         title: '',
         width: 40,
-        onCell: () => ({ isCellRightClickable: true }),
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
       },
     ];
 
@@ -573,7 +572,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ submitBatchAction, showConfirmation ]);
 
-  const handleTableRowSelect = useCallback((rowKeys) => {
+  const handleTableRowSelect = useCallback(rowKeys => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
@@ -625,7 +624,7 @@ const ExperimentList: React.FC = () => {
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [canceler]);
+  }, [ canceler ]);
 
   const ExperimentActionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
@@ -644,16 +643,15 @@ const ExperimentList: React.FC = () => {
   return (
     <Page
       id="experiments"
-      options={
+      options={(
         <Space>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
-      }
-      title="Experiments"
-    >
+      )}
+      title="Experiments">
       <TableBatch
         actions={[
           { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
@@ -673,13 +671,10 @@ const ExperimentList: React.FC = () => {
         columns={visibleColumns}
         dataSource={experiments}
         loading={isLoading}
-        pagination={getFullPaginationConfig(
-          {
+        pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
-          },
-          total
-        )}
+          }, total)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{
@@ -692,7 +687,7 @@ const ExperimentList: React.FC = () => {
         onChange={handleTableChange(columns, settings, updateSettings)}
         areRowsRightClickable={true}
         areRowsSelected={!!settings.row}
-        DropdownComponent={ExperimentActionDropdown}
+        ContextMenu={ExperimentActionDropdown}
       />
     </Page>
   );

@@ -47,21 +47,21 @@ const TaskActionDropdown: React.FC<Props> = ({
   const isArchivable = isExperiment && isExperimentTerminal && !(task as ExperimentTask).archived;
   const isUnarchivable = isExperiment && isExperimentTerminal && (task as ExperimentTask).archived;
   const isKillable = isTaskKillable(task);
-  const isPausable = isExperiment && pausableRunStates.has(task.state as RunState);
-  const isResumable = isExperiment && task.state === RunState.Paused;
-  const isCancelable = isExperiment && cancellableRunStates.has(task.state as RunState);
-  const isDeletable =
+  const isPausable = isExperiment
+    && pausableRunStates.has(task.state as RunState);
+  const isResumable = isExperiment
+    && task.state === RunState.Paused;
+  const isCancelable = isExperiment
+    && cancellableRunStates.has(task.state as RunState);
+  const isDeletable = (
     isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
-      ? deletableRunStates.has(task.state)
-      : false;
+    ) ? deletableRunStates.has(task.state) : false;
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
       const action = params.key as Action;
-      switch (
-        action // Cases should match menu items.
-      ) {
+      switch (action) { // Cases should match menu items.
         case Action.Activate:
           await activateExperiment({ experimentId: id });
           if (onComplete) onComplete(action);
@@ -76,7 +76,7 @@ const TaskActionDropdown: React.FC<Props> = ({
           if (onComplete) onComplete(action);
           break;
         case Action.OpenTensorBoard: {
-          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
+          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
         }
@@ -162,19 +162,19 @@ const TaskActionDropdown: React.FC<Props> = ({
     menuItems.push(
       <Menu.Item key="viewLogs">
         <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
-      </Menu.Item>
+      </Menu.Item>,
     );
   }
 
   if (menuItems.length === 0) {
-    return (
-      children || (
-        <div className={css.base} title="No actions available" onClick={stopPropagation}>
-          <button disabled>
-            <Icon name="overflow-vertical" />
-          </button>
-        </div>
-      )
+    return children ? (
+      <>{children}</>
+    ) : (
+      <div className={css.base} title="No actions available" onClick={stopPropagation}>
+        <button disabled>
+          <Icon name="overflow-vertical" />
+        </button>
+      </div>
     );
   }
 
@@ -184,14 +184,14 @@ const TaskActionDropdown: React.FC<Props> = ({
     <Dropdown
       onVisibleChange={onVisibleChange}
       overlay={menu}
-      placement={'bottomLeft'}
+      placement="bottomLeft"
       trigger={['contextMenu']}
     >
       {children}
     </Dropdown>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement={'bottomRight'} trigger={['click']}>
+      <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>
