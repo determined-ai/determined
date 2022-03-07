@@ -1,4 +1,5 @@
 import contextlib
+import logging
 import os
 import pathlib
 import shutil
@@ -20,6 +21,7 @@ from tests.filetree import FileTree
 
 EXPECT_TIMEOUT = 5
 ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
@@ -346,6 +348,50 @@ def test_login_as_non_existent_user(clean_auth: None) -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_auth_inside_shell() -> None:
+    creds = create_test_user(ADMIN_CREDENTIALS, True)
+
+    with logged_in_user(creds):
+        # start a shell
+        child = det_spawn(["shell", "start"])
+        child.setecho(True)
+        child.expect(r".*Permanently added \'\[(.*)\]:\d+.+known hosts\.", timeout=EXPECT_TIMEOUT)
+        shell_id = child.match.group(1).decode("utf-8")
+
+        def check_whoami(expected_username: str):
+            child.sendline("det user whoami")
+            child.expect("You are logged in as user \\'(.*)\\'", timeout=EXPECT_TIMEOUT)
+            username = child.match.group(1).decode("utf-8")
+            logger.debug(f"They are logged in as user {username}")
+            assert username == expected_username
+
+        # check the current user
+        check_whoami(creds.username)
+
+        # log in as admin
+        child.sendline(f"det user login {ADMIN_CREDENTIALS.username}")
+        child.expect(f"Password for user '{ADMIN_CREDENTIALS.username}'", timeout=EXPECT_TIMEOUT)
+        child.sendline(ADMIN_CREDENTIALS.password)
+
+        # check that whoami responds with the new user
+        check_whoami(ADMIN_CREDENTIALS.username)
+
+        # log out
+        child.sendline("det user logout")
+        child.expect("#", timeout=EXPECT_TIMEOUT)
+
+        # check that we are back to who we were
+        check_whoami(creds.username)
+
+        child.sendline("exit")
+
+        child = det_spawn(["shell", "kill", shell_id])
+        child.read()
+        child.wait()
+        assert child.exitstatus == 0
+
+
+@pytest.mark.e2e_cpu
 def test_login_as_non_active_user(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -418,6 +464,10 @@ def start_notebook() -> str:
     assert child.exitstatus == 0
 
     return notebook_id
+
+
+def start_shell() -> str:
+    child = det_spawn("notebook", "start",)
 
 
 def start_tensorboard(experiment_id: int) -> str:
