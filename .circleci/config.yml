@@ -1330,7 +1330,11 @@ jobs:
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C harness test
+      - run: COVERAGE_FILE=$PWD/test-unit-harness-pycov make -C harness test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -1342,7 +1346,11 @@ jobs:
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C harness test-tf2
+      - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-tf2-pycov
 
   test-unit-storage:
     docker:
@@ -1354,7 +1362,11 @@ jobs:
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-storage-pycov
 
   test-unit-model-hub:
     docker:
@@ -1367,7 +1379,32 @@ jobs:
           extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C model_hub test
+      - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-model-hub-pycov
+
+  python-coverage:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined: false
+          model-hub: false
+          extras-requires: "coverage"
+          executor: <<pipeline.parameters.docker-image>>
+      - attach_workspace:
+          at: .
+      - run: coverage combine *-pycov
+      - run: coverage report --include 'harness/determined/*' --skip-covered
+      - run: coverage report --include 'model_hub/model_hub/*' --skip-covered
+      - run: coverage html --include 'harness/determined/*' --skip-covered -d cov-html/harness
+      - run: coverage html --include 'model_hub/model_hub/*' --skip-covered -d cov-html/model_hub
+      - store_artifacts:
+          path: cov-html
+          destination: cov-html
 
   test-examples:
     docker:
@@ -1853,10 +1890,16 @@ workflows:
       - test-unit-harness
       - test-unit-harness-tf2
       - test-unit-model-hub
-      - test-examples
       - test-unit-storage:
           context: storage-unit-tests
           filters: *upstream-feature-branch
+      - test-examples
+      - python-coverage:
+          requires:
+            - test-unit-harness
+            - test-unit-harness-tf2
+            - test-unit-model-hub
+            - test-unit-storage
 
   test-intg:
     jobs:
