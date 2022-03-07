@@ -4,7 +4,9 @@ import React, { useMemo } from 'react';
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Link from 'components/Link';
 import { resourceStateToLabel } from 'constants/states';
+import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
@@ -22,13 +24,14 @@ export interface Props {
   resourceStates: ResourceState[];
   showLegends?: boolean;
   size?: ShirtSize;
+  slotsPotential?:number;
   title?: string;
   totalSlots: number;
 }
 
 export interface AllocationBarFooterProps {
-  auxRunning ?: number;
-  auxTotal?:number
+  auxContainerCapacity?:number
+  auxContainersRunning ?: number;
   isAux?: boolean;
   queued?: number;
 }
@@ -71,6 +74,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   footer,
   title,
   poolType,
+  slotsPotential,
   ...barProps
 }: Props) => {
 
@@ -93,23 +97,30 @@ const SlotAllocationBar: React.FC<Props> = ({
   const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
 
   const barParts = useMemo(() => {
+    const slotsAvaiablePer = slotsPotential && slotsPotential > totalSlots
+      ? (totalSlots / slotsPotential) : 1;
     const parts = {
       free: {
         color: getStateColorCssVar(SlotState.Free),
-        percent: totalSlots < 1 ? 0 : freeSlots / totalSlots,
+        percent: totalSlots < 1 ? 0 : (freeSlots / totalSlots) * slotsAvaiablePer,
       },
       pending: {
         color: getStateColorCssVar(SlotState.Pending),
-        percent: totalSlots < 1 ? 0 : pendingSlots / totalSlots,
+        percent: totalSlots < 1 ? 0 : (pendingSlots / totalSlots) * slotsAvaiablePer,
+      },
+      potential: {
+        borded: true,
+        color: getStateColorCssVar(SlotState.Potential),
+        percent: 1 - slotsAvaiablePer,
       },
       running: {
         color: getStateColorCssVar(SlotState.Running),
-        percent: totalSlots < 1 ? 0 : stateTallies.RUNNING / totalSlots,
+        percent: totalSlots < 1 ? 0 : (stateTallies.RUNNING / totalSlots) * slotsAvaiablePer,
       },
     };
 
-    return [ parts.running, parts.pending, parts.free ];
-  }, [ totalSlots, stateTallies, pendingSlots, freeSlots ]);
+    return [ parts.running, parts.pending, parts.free, parts.potential ];
+  }, [ totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential ]);
 
   const stateDetails = useMemo(() => {
     const states = [
@@ -164,21 +175,24 @@ const SlotAllocationBar: React.FC<Props> = ({
         <div className={css.footer}>
           {poolType === V1ResourcePoolType.K8S ? (
             <header>{`${footer.isAux ?
-              `${footer.auxRunning} Aux Container Running` :
+              `${footer.auxContainersRunning} Aux Container Running` :
               `${stateTallies.RUNNING} Compute Slots Allocated`}`}
             </header>
           )
             : (
               <header>{`${footer.isAux ?
-                `${footer.auxRunning}/${footer.auxTotal} Aux Container Running` :
-                `${stateTallies.RUNNING} Compute Slots Allocated`}`}
+                `${footer.
+                  auxContainersRunning}/${footer.auxContainerCapacity} Aux Container Running` :
+                `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
               </header>
             )}
           {footer.queued ? (
-            <span className={css.queued}>{`${footer.queued > 100 ?
-              '100+' :
-              footer.queued} ${footer.queued === 1 ? 'Job' : 'Jobs'} Queued`}
-            </span>
+            <Link path={paths.jobs()}>
+              <span className={css.queued}>{`${footer.queued > 100 ?
+                '100+' :
+                footer.queued} ${footer.queued === 1 ? 'Job' : 'Jobs'} Queued`}
+              </span>
+            </Link>
           ) :
             !footer.isAux && <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>}
         </div>

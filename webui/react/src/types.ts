@@ -87,6 +87,7 @@ export enum SlotState {
   Running = 'RUNNING',
   Free = 'FREE',
   Pending = 'PENDING',
+  Potential = 'POTENTIAL'
 }
 
 export const resourceStates: ResourceState[] = [

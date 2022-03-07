@@ -135,14 +135,15 @@ const ResourcePoolCardLight: React.FC<Props> = ({
               poolType={pool.type}
               resourceStates={computeContainerStates}
               size={ShirtSize.large}
-              totalSlots={poolOverview[pool.name]?.total}
+              slotsPotential={totalComputeSlots}
+              totalSlots={pool.slotsAvailable}
             />
           )}
           {isAux && (
             <SlotAllocationBar
               footer={{
-                auxRunning: pool.auxContainersRunning,
-                auxTotal: pool.auxContainerCapacity,
+                auxContainerCapacity: pool.auxContainerCapacity,
+                auxContainersRunning: pool.auxContainersRunning,
                 isAux: true,
               }}
               hideHeader
