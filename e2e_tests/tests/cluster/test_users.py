@@ -468,7 +468,10 @@ def start_notebook() -> str:
 
 
 def start_shell() -> str:
-    child = det_spawn("notebook", "start",)
+    child = det_spawn(
+        "notebook",
+        "start",
+    )
 
 
 def start_tensorboard(experiment_id: int) -> str:
