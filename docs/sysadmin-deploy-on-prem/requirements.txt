@@ -24,7 +24,7 @@ Software
    requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia drivers can
    be installed as part of a CUDA installation but the rest of the CUDA toolkit is not required.
 
--  Determined supports the `supported Python versions <https://endoflife.date/python>`__.
+-  Determined supports the `active Python versions <https://endoflife.date/python>`__.
 
 Hardware
 ========
