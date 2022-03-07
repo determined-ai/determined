@@ -446,10 +446,6 @@ func (rp *ResourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 	}
 }
 
-func (rp *ResourcePool) GetTaskList(ctx *actor.Context) *taskList {
-	return rp.taskList
-}
-
 // containerReservation contains information for tasks have been allocated but not yet started.
 type containerReservation struct {
 	req       *sproto.AllocateRequest

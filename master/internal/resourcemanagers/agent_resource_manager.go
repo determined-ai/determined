@@ -245,7 +245,9 @@ func (a *agentResourceManager) forwardToAllPools(
 	return nil
 }
 
-func (a *agentResourceManager) getPoolJobStats(ctx *actor.Context, pool ResourcePoolConfig) (*jobv1.QueueStats, error) {
+func (a *agentResourceManager) getPoolJobStats(
+	ctx *actor.Context, pool ResourcePoolConfig,
+) (*jobv1.QueueStats, error) {
 	jobStatsResp := ctx.Ask(a.pools[pool.PoolName], job.GetJobQStats{})
 	if err := jobStatsResp.Error(); err != nil {
 		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
