@@ -63,7 +63,8 @@ const setup = async () => {
     </StoreProvider>,
   );
   userEvent.click(await screen.findByText(OPEN_MODAL_TEXT));
-  userEvent.click(await screen.findByText(LOAD_USERS_TEXT));
+  userEvent.click(screen.getByText(LOAD_USERS_TEXT));
+  userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 };
 
 jest.mock('services/api', () => ({
@@ -75,7 +76,6 @@ jest.mock('services/api', () => ({
 describe('useModalChangeName', () => {
   it('opens modal with correct values', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: CHANGE_NAME_TEXT })).toBeInTheDocument();
@@ -85,7 +85,6 @@ describe('useModalChangeName', () => {
 
   it('validates the display name update request', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 
     await waitFor(() => {
       userEvent.type(screen.getByRole('textbox', { name: 'Display name' }), 'a'.repeat(81));
@@ -99,7 +98,6 @@ describe('useModalChangeName', () => {
 
   it('submits a valid display name update request', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 
     await waitFor(() => {
       userEvent.type(
@@ -124,7 +122,6 @@ describe('useModalChangeName', () => {
 
   it('closes the modal and returns to User Settings modal', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 
     await waitFor(() => {
       userEvent.click(screen.getAllByRole('button', { name: /cancel/i })[1]);

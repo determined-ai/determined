@@ -67,7 +67,8 @@ const setup = async () => {
     </StoreProvider>,
   );
   userEvent.click(await screen.findByText(OPEN_MODAL_TEXT));
-  userEvent.click(await screen.findByText(LOAD_USERS_TEXT));
+  userEvent.click(screen.getByText(LOAD_USERS_TEXT));
+  userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
 };
 
 const mockSetUserPassword = jest.fn((params) => {
@@ -92,7 +93,6 @@ jest.mock('services/api', () => {
 describe('useModalChangePassword', () => {
   it('opens modal with correct values', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: CHANGE_PASSWORD_TEXT })).toBeInTheDocument();
@@ -104,7 +104,6 @@ describe('useModalChangePassword', () => {
 
   it('validates the password update request', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
 
     await waitFor(() => {
       userEvent.type(screen.getByLabelText(OLD_PASSWORD_LABEL), ',');
@@ -120,7 +119,6 @@ describe('useModalChangePassword', () => {
 
   it('submits a valid password update request', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
 
     await waitFor(() => {
       userEvent.type(screen.getByLabelText(OLD_PASSWORD_LABEL), FIRST_PASSWORD_VALUE);
@@ -143,7 +141,6 @@ describe('useModalChangePassword', () => {
 
   it('closes the modal and returns to User Settings modal', async () => {
     await setup();
-    userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
 
     await waitFor(() => {
       userEvent.click(screen.getAllByRole('button', { name: /cancel/i })[1]);
