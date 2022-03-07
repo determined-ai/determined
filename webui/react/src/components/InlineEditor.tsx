@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, {
   ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
 } from 'react';
@@ -31,9 +30,6 @@ const InlineEditor: React.FC<Props> = ({
   value,
   onCancel,
   onSave,
-  onContextMenu,
-  onMouseEnter,
-  onMouseLeave,
   ...props
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
@@ -137,9 +133,6 @@ const InlineEditor: React.FC<Props> = ({
         className={css.growWrap}
         ref={growWrapRef}
         onClick={handleWrapperClick}
-        onContextMenu={onContextMenu}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
       >
         <textarea
           maxLength={maxLength}

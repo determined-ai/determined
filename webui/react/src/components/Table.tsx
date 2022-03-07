@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 

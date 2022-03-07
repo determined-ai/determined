@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { MouseEvent, PropsWithChildren, useCallback } from 'react';
 
 import { AnyMouseEventHandler, handlePath, linkPath, windowOpenFeatures } from 'routes/utils';
@@ -24,9 +23,6 @@ const Link: React.FC<Props> = ({
   external,
   popout,
   onClick,
-  onContextMenu,
-  onMouseEnter,
-  onMouseLeave,
   ...props
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
@@ -47,9 +43,6 @@ const Link: React.FC<Props> = ({
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
     <a
-        onContextMenu={onContextMenu}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
       aria-label={props.label}
       className={classes.join(' ')}
       href={href}

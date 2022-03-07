@@ -2,7 +2,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
@@ -53,15 +53,13 @@ import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
 
-const stopPropagation = event => event.stopPropagation()
-export const RowContext = React.createContext({});
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
-  const [ labels, setLabels ] = useState<string[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
 
@@ -173,6 +171,7 @@ const ExperimentList: React.FC = () => {
   }, [ fetchExperiments, fetchLabels, fetchUsers ]);
 
   usePolling(fetchAll);
+  
 
   const experimentTags = useExperimentTags(fetchAll);
 
@@ -277,68 +276,10 @@ const ExperimentList: React.FC = () => {
       setIsLoading(false);
       return e;
     }
-  }, [ ]);
+  }, []);
+  
 
-  const rowWrapper = /* useCallback( */
-    (rowProps, recordsDict) => {
-      
 
-      const [rowHovered, setRowHovered] = useState(false);
-      const [textCellHovered, setTextCellHovered] = useState(false);
-      const [contextOpen, setContextMenuOpened] = useState(false);
-
-      const context ={
-        textCellHovered,
-        setTextCellHovered,
-      };
-      
-
-      const { onMouseEnter, onMouseLeave, className, 'data-row-key': key, children, ...rest } = rowProps;
-      const wrappedOnMouseEnter = useCallback((e) => {
-        setRowHovered(true);
-        onMouseEnter(e);
-      });
-      const wrappedOnMouseLeave = useCallback((e) => {
-        setRowHovered(false);
-        onMouseLeave(e);
-      });
-      const record = recordsDict?.[key];
-      // console.log({ textCellHovered });
-      const contextActiveOrTriggerable = (rowHovered && !textCellHovered) || contextOpen;
-    return record ? (
-        <RowContext.Provider value={context}>
-      <TaskActionDropdown
-        curUser={user}
-        task={taskFromExperiment(record)}
-            onComplete={handleActionComplete}
-            setContextMenuOpened={setContextMenuOpened}
-          >
-            <tr
-              onMouseEnter={wrappedOnMouseEnter}
-              onMouseLeave={wrappedOnMouseLeave}
-              className={
-                contextActiveOrTriggerable ? `${className} ant-table-row-selected` : className
-              }
-              {...rest}
-            >
-              {children}
-              </tr>
-{/*               // .map(({props, ...stuff }) => ({
-                // props: {
-                //   onMouseEnter: (e) => setTextCellHovered(true),
-                //   onMouseLeave: (e) => e.setTextCellHovered(false),
-                //   ...props,
-                // },
-                // ...stuff,
-              // }))} */}
-      </TaskActionDropdown>
-        </RowContext.Provider>
-    ) : (
-        <tr {...{ className, onMouseEnter, onMouseLeave, ...rowProps }} />
-    );
-    }/* ,
-    [user, taskFromExperiment, handleActionComplete]
-  ); */
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
@@ -349,6 +290,10 @@ const ExperimentList: React.FC = () => {
       />
     );
 
+
+      
+    
+
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
@@ -358,18 +303,14 @@ const ExperimentList: React.FC = () => {
     );
 
     const descriptionRenderer = (value: string, record: ExperimentItem) => {
-      const { setTextCellHovered } = React.useContext(RowContext)
       return (
-      <InlineEditor
-          onMouseEnter={() => setTextCellHovered(true)}
-          onContextMenu={stopPropagation}
-          onMouseLeave={() => setTextCellHovered(false)}
-        disabled={record.archived}
-        placeholder="Add description..."
-        value={value}
-        onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
-      />
-    );
+        <InlineEditor
+          disabled={record.archived}
+          placeholder="Add description..."
+          value={value}
+          onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
+        />
+      );
     }
 
     const forkedFromRenderer = (
@@ -378,18 +319,14 @@ const ExperimentList: React.FC = () => {
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
 
+    
+
     const experimentNameRenderer = (
       value: string | number | undefined,
       record: ExperimentItem
     ): React.ReactNode => {
-      const {setTextCellHovered } = React.useContext(RowContext)
       return (
-        <Link
-          onMouseEnter={() => setTextCellHovered(true)}
-          onMouseLeave={() => setTextCellHovered(false)}
-          onContextMenu={stopPropagation}
-          path={paths.experimentDetails(record.id)}
-        >
+        <Link path={paths.experimentDetails(record.id)}>
           {value === undefined ? '' : value}
         </Link>
       );
@@ -402,28 +339,36 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
+        onCell: () => ({ isCellRightClickable: true }),
       },
       {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.NAME,
-        onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => (settings.search ? { className: tableCss.headerFilterOn } : {}),
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
         width: 240,
+        onCell: () => ({ isCellRightClickable: true }),
       },
-      { dataIndex: 'description', render: descriptionRenderer, title: 'Description' },
+      {
+        dataIndex: 'description',
+        render: descriptionRenderer,
+        title: 'Description',
+        onCell: () => ({ isCellRightClickable: true }),
+      },
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
-        filters: labels.map(label => ({ text: label, value: label })),
+        filters: labels.map((label) => ({ text: label, value: label })),
         key: 'labels',
-        onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => (settings.label ? { className: tableCss.headerFilterOn } : {}),
         render: tagsRenderer,
         title: 'Tags',
         width: 120,
+        onCell: () => ({ isCellRightClickable: true }),
       },
       {
         dataIndex: 'forkedFrom',
@@ -431,6 +376,7 @@ const ExperimentList: React.FC = () => {
         render: forkedFromRenderer,
         sorter: true,
         title: 'Forked From',
+        onCell: () => ({ isCellRightClickable: true }),
       },
       {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
@@ -453,19 +399,21 @@ const ExperimentList: React.FC = () => {
       {
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
-          .filter(value => [
-            RunState.Active,
-            RunState.Paused,
-            RunState.Canceled,
-            RunState.Completed,
-            RunState.Errored,
-          ].includes(value))
+          .filter((value) =>
+            [
+              RunState.Active,
+              RunState.Paused,
+              RunState.Canceled,
+              RunState.Completed,
+              RunState.Errored,
+            ].includes(value)
+          )
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           })),
         key: V1GetExperimentsRequestSortBy.STATE,
-        onHeaderCell: () => settings.state ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => (settings.state ? { className: tableCss.headerFilterOn } : {}),
         render: stateRenderer,
         sorter: true,
         title: 'State',
@@ -497,7 +445,7 @@ const ExperimentList: React.FC = () => {
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: V1GetExperimentsRequestSortBy.USER,
-        onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => (settings.user ? { className: tableCss.headerFilterOn } : {}),
         render: userRenderer,
         sorter: true,
         title: 'User',
@@ -510,6 +458,7 @@ const ExperimentList: React.FC = () => {
         render: actionRenderer,
         title: '',
         width: 40,
+        onCell: () => ({ isCellRightClickable: true }),
       },
     ];
 
@@ -624,7 +573,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ submitBatchAction, showConfirmation ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => {
+  const handleTableRowSelect = useCallback((rowKeys) => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
@@ -676,20 +625,35 @@ const ExperimentList: React.FC = () => {
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
+
+  const ExperimentActionDropdown = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <TaskActionDropdown
+        curUser={user}
+        task={taskFromExperiment(record)}
+        onComplete={handleActionComplete}
+        onVisibleChange={onVisibleChange}
+      >
+        {children}
+      </TaskActionDropdown>
+    ),
+    [user, handleActionComplete]
+  );
 
   return (
     <Page
       id="experiments"
-      options={(
+      options={
         <Space>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
-      )}
-      title="Experiments">
+      }
+      title="Experiments"
+    >
       <TableBatch
         actions={[
           { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
@@ -709,10 +673,13 @@ const ExperimentList: React.FC = () => {
         columns={visibleColumns}
         dataSource={experiments}
         loading={isLoading}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, total)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          total
+        )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{
@@ -720,10 +687,12 @@ const ExperimentList: React.FC = () => {
           preserveSelectedRowKeys: true,
           selectedRowKeys: settings.row ?? [],
         }}
-        rowWrapper={rowWrapper}
         showSorterTooltip={false}
         size="small"
         onChange={handleTableChange(columns, settings, updateSettings)}
+        areRowsRightClickable={true}
+        areRowsSelected={!!settings.row}
+        DropdownComponent={ExperimentActionDropdown}
       />
     </Page>
   );
