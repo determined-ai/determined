@@ -328,7 +328,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 	if a.req.DoRendezvous {
 		a.rendezvous = NewRendezvous(a.model.AllocationID, a.reservations)
-		a.rendezvous.PreStart(ctx)
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
