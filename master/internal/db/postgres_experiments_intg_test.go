@@ -6,15 +6,270 @@ package db
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
+
+func TestGetExperiments(t *testing.T) {
+	etc.SetRootPath(rootFromDB)
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, migrationsFromDB)
+
+	// Add a mock user.
+	user := requireMockUser(t, db)
+	const (
+		adesc     = "a description"
+		alabel    = "a label"
+		aname     = "a name"
+		orderByID = "id ASC"
+	)
+
+	tests := []struct {
+		name           string
+		numResults     int
+		exps           []model.Experiment
+		require        func(*testing.T, *experimentv1.Experiment)
+		stateFilter    string
+		archivedFilter string
+		labelFilter    string
+		descFilter     string
+		nameFilter     string
+		offset, limit  int
+	}{
+		{
+			name:       "empty result",
+			numResults: 0,
+			exps:       func() []model.Experiment { return nil }(),
+		},
+		{
+			name:       "unfiltered result",
+			numResults: 3,
+			exps: func() []model.Experiment {
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exps = append(exps, mockModelExperiment(user, mockExpconf()))
+				}
+				return exps
+			}(),
+		},
+		{
+			name:       "filter by state",
+			numResults: 3,
+			exps: func() []model.Experiment {
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exp := mockModelExperiment(user, mockExpconf())
+					exp.State = model.CanceledState
+					exps = append(exps, exp)
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Equal(t, experimentv1.State_STATE_CANCELED, e.State)
+			},
+			stateFilter: string(model.CanceledState),
+		},
+		{
+			name:       "filter by archived",
+			numResults: 3,
+			exps: func() []model.Experiment {
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exp := mockModelExperiment(user, mockExpconf())
+					exp.Archived = true
+					exps = append(exps, exp)
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Equal(t, true, e.Archived)
+			},
+			archivedFilter: "true",
+		},
+		{
+			name:       "filter by labels",
+			numResults: 3,
+			exps: func() []model.Experiment {
+				cfg := mockExpconf()
+				cfg.SetLabels(expconf.LabelsV0{alabel: true})
+
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exps = append(exps, mockModelExperiment(user, cfg))
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Len(t, e.Labels, 1)
+				require.Equal(t, alabel, e.Labels[0])
+			},
+			labelFilter: alabel,
+		},
+		{
+			name:       "filter by description",
+			numResults: 3,
+			exps: func() []model.Experiment {
+				cfg := mockExpconf()
+				cfg.SetDescription(ptrs.StringPtr(adesc))
+
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exps = append(exps, mockModelExperiment(user, cfg))
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Contains(t, adesc, e.Description)
+			},
+			descFilter: adesc,
+		},
+		{
+			name:       "filter by name",
+			numResults: 3,
+			exps: func() []model.Experiment {
+				cfg := mockExpconf()
+				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname)})
+
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exps = append(exps, mockModelExperiment(user, cfg))
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Contains(t, aname, e.Name)
+			},
+			nameFilter: aname,
+		},
+		{
+			// Offset 1 in and expect 2 back.
+			name:       "filter by name, with offset",
+			numResults: 2,
+			exps: func() []model.Experiment {
+				cfg := mockExpconf()
+				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname + "1")})
+
+				var exps []model.Experiment
+				for i := 0; i < 3; i++ {
+					exps = append(exps, mockModelExperiment(user, cfg))
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Contains(t, aname+"1", e.Name)
+			},
+			nameFilter: aname + "1",
+			offset:     1,
+		},
+		{
+			// Limit 2 and expect 2 back.
+			name:       "filter by name, with limit",
+			numResults: 2,
+			exps: func() []model.Experiment {
+				cfg := mockExpconf()
+				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname + "1")})
+
+				var exps []model.Experiment
+				for i := 0; i < 6; i++ {
+					exps = append(exps, mockModelExperiment(user, cfg))
+				}
+				return exps
+			}(),
+			require: func(t *testing.T, e *experimentv1.Experiment) {
+				require.Contains(t, aname+"1", e.Name)
+			},
+			nameFilter: aname + "1",
+			limit:      2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Add mock experiments.
+			for _, exp := range tt.exps {
+				err := db.AddExperiment(&exp)
+				require.NoError(t, err, "failed to add experiment")
+			}
+
+			resp := &apiv1.GetExperimentsResponse{}
+			err := db.QueryProtof(
+				"get_experiments",
+				[]interface{}{orderByID},
+				resp,
+				tt.stateFilter,
+				tt.archivedFilter,
+				user.Username, // Always filter by a random user so the state is inconsequential.
+				tt.labelFilter,
+				tt.descFilter,
+				tt.nameFilter,
+				tt.offset,
+				tt.limit,
+			)
+			require.NoError(t, err)
+			require.Len(t, resp.Experiments, tt.numResults)
+			if tt.require != nil {
+				for _, e := range resp.Experiments {
+					tt.require(t, e)
+				}
+			}
+		})
+	}
+}
+
+func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) model.Experiment {
+	return model.Experiment{
+		JobID:                model.NewJobID(),
+		State:                model.ActiveState,
+		Config:               expConf,
+		ModelDefinitionBytes: []byte{1, 0, 1, 0, 1, 0},
+		StartTime:            time.Now().Add(-time.Hour),
+		OwnerID:              &user.ID,
+		Username:             user.Username,
+		Archived:             false,
+	}
+}
+
+func mockExpconf() expconf.ExperimentConfig {
+	return schemas.WithDefaults(expconf.ExperimentConfigV0{
+		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
+			RawSharedFSConfig: &expconf.SharedFSConfigV0{
+				RawHostPath: ptrs.StringPtr("/home/ckpts"),
+			},
+		},
+		RawEntrypoint: &expconf.EntrypointV0{
+			RawEntrypoint: ptrs.StringPtr("model.Classifier"),
+		},
+		RawHyperparameters: map[string]expconf.HyperparameterV0{
+			"global_batch_size": {
+				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
+					RawVal: ptrs.IntPtr(1),
+				},
+			},
+		},
+		RawSearcher: &expconf.SearcherConfigV0{
+			RawSingleConfig: &expconf.SingleConfigV0{
+				RawMaxLength: &expconf.LengthV0{
+					Unit:  expconf.Batches,
+					Units: 1,
+				},
+			},
+			RawMetric: ptrs.StringPtr(defaultSearcherMetric),
+		},
+	}).(expconf.ExperimentConfigV0)
+}
 
 func TestCheckpointMetadata(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
