@@ -467,13 +467,6 @@ def start_notebook() -> str:
     return notebook_id
 
 
-def start_shell() -> str:
-    child = det_spawn(
-        "notebook",
-        "start",
-    )
-
-
 def start_tensorboard(experiment_id: int) -> str:
     child = det_spawn(["tensorboard", "start", "-d", str(experiment_id)])
     tensorboard_id = cast(str, child.readline().decode().rstrip())
