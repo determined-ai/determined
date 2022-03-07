@@ -4,6 +4,8 @@ import { Button, Modal } from 'antd';
 import React, { useCallback } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { V1LoginRequest } from 'services/api-ts-sdk';
+import { SetUserPasswordParams } from 'services/types';
 import { DetailedUser } from 'types';
 
 import useModalUserSettings from './useModalUserSettings';
@@ -11,12 +13,16 @@ import useModalUserSettings from './useModalUserSettings';
 const OPEN_MODAL_TEXT = 'Open Modal';
 const LOAD_USERS_TEXT = 'Load Users';
 const USERNAME = 'test_username1';
-const DISPLAY_NAME = 'Test Name';
 const CHANGE_PASSWORD_TEXT = 'Change password';
 const USER_SETTINGS_HEADER = 'Account';
+const FIRST_PASSWORD_VALUE = 'Password';
+const SECOND_PASSWORD_VALUE = 'Password2';
+const OLD_PASSWORD_LABEL = 'Old Password';
+const NEW_PASSWORD_LABEL = 'New Password';
+const CONFIRM_PASSWORD_LABEL = 'Confirm Password';
 
 const currentUser: DetailedUser = {
-  displayName: DISPLAY_NAME,
+  displayName: 'Test name',
   id: 1,
   isActive: true,
   isAdmin: false,
@@ -64,6 +70,25 @@ const setup = async () => {
   userEvent.click(await screen.findByText(LOAD_USERS_TEXT));
 };
 
+const mockSetUserPassword = jest.fn((params) => {
+  return Promise.resolve(params);
+});
+
+jest.mock('services/api', () => {
+  return {
+    login: ({ password, username }: V1LoginRequest) => {
+      if (password === FIRST_PASSWORD_VALUE && username === USERNAME) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject();
+      }
+    },
+    setUserPassword: (params: SetUserPasswordParams) => {
+      mockSetUserPassword(params);
+    },
+  };
+});
+
 describe('useModalChangePassword', () => {
   it('opens modal with correct values', async () => {
     await setup();
@@ -71,9 +96,48 @@ describe('useModalChangePassword', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: CHANGE_PASSWORD_TEXT })).toBeInTheDocument();
-      expect(screen.getByLabelText('Old Password')).toBeInTheDocument();
-      expect(screen.getByLabelText('New Password')).toBeInTheDocument();
-      expect(screen.getByLabelText('Confirm Password')).toBeInTheDocument();
+      expect(screen.getByLabelText(OLD_PASSWORD_LABEL)).toBeInTheDocument();
+      expect(screen.getByLabelText(NEW_PASSWORD_LABEL)).toBeInTheDocument();
+      expect(screen.getByLabelText(CONFIRM_PASSWORD_LABEL)).toBeInTheDocument();
+    });
+  });
+
+  it('validates the password update request', async () => {
+    await setup();
+    userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
+
+    await waitFor(() => {
+      userEvent.type(screen.getByLabelText(OLD_PASSWORD_LABEL), ',');
+      userEvent.type(screen.getByLabelText(NEW_PASSWORD_LABEL), '.');
+      userEvent.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), '/');
+      userEvent.click(screen.getAllByRole('button', { name: CHANGE_PASSWORD_TEXT })[1]);
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('alert')).toHaveLength(6);
+    });
+  });
+
+  it('submits a valid password update request', async () => {
+    await setup();
+    userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
+
+    await waitFor(() => {
+      userEvent.type(screen.getByLabelText(OLD_PASSWORD_LABEL), FIRST_PASSWORD_VALUE);
+      userEvent.type(screen.getByLabelText(NEW_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
+      userEvent.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
+      userEvent.click(screen.getAllByRole('button', { name: CHANGE_PASSWORD_TEXT })[1]);
+    });
+
+    // TODO: test for toast message appearance?
+
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT })).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+      expect(mockSetUserPassword).toHaveBeenCalledWith({
+        password: SECOND_PASSWORD_VALUE,
+        username: USERNAME,
+      });
     });
   });
 
@@ -87,7 +151,7 @@ describe('useModalChangePassword', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT })).not.toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
     });
   });
 });

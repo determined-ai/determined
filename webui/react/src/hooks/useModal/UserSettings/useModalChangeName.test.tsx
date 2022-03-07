@@ -83,7 +83,7 @@ describe('useModalChangeName', () => {
     });
   });
 
-  it('validates display name', async () => {
+  it('validates the display name update request', async () => {
     await setup();
     userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 
@@ -97,7 +97,7 @@ describe('useModalChangeName', () => {
     });
   });
 
-  it('updates display name', async () => {
+  it('submits a valid display name update request', async () => {
     await setup();
     userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 

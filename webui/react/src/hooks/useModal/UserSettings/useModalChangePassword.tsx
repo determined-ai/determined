@@ -1,4 +1,4 @@
-import { Button, Form, Input } from 'antd';
+import { Button, Form, Input, message } from 'antd';
 import React, { useCallback } from 'react';
 
 import { useStore } from 'contexts/Store';
@@ -26,8 +26,11 @@ const useModalChangePassword = (): ModalHooks => {
         password: form.getFieldValue('newPassword'),
         username,
       });
+      message.success('Password updated');
+      form.resetFields();
       modalClose();
     } catch (e) {
+      message.error('Could not update password');
       handleError(e);
     }
   }, [ form, modalClose, username ]);
@@ -104,7 +107,7 @@ const useModalChangePassword = (): ModalHooks => {
             <div className={css.buttons}>
               <Button onClick={handleFormCancel}>Cancel</Button>
               <Button htmlType="submit" type="primary">
-                Change Password
+                Change password
               </Button>
             </div>
           </Form.Item>
