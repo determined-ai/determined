@@ -13,7 +13,7 @@ import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  checkmarkRenderer, defaultRowClassName, experimentProgressRenderer,
+  checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
   ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig,
   relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
@@ -293,33 +293,20 @@ const ExperimentList: React.FC = () => {
       />
     );
 
-    const descriptionRenderer = (value:string, record:ExperimentItem) => {
-      return (
-        <InlineEditor
-          disabled={record.archived}
-          placeholder="Add description..."
-          value={value}
-          onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
-        />
-      );
-    }
+    const descriptionRenderer = (value:string, record: ExperimentItem) => (
+      <InlineEditor
+        disabled={record.archived}
+        placeholder="Add description..."
+        value={value}
+        onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
+      />
+    );
 
     const forkedFromRenderer = (
       value: string | number | undefined,
     ): React.ReactNode => (
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
-
-    const experimentNameRenderer = (
-      value: string | number | undefined,
-      record: ExperimentItem
-    ): React.ReactNode => {
-      return (
-        <Link path={paths.experimentDetails(record.id)}>
-          {value === undefined ? '' : value}
-        </Link>
-      );
-    };
 
     const tableColumns: ColumnsType<ExperimentItem> = [
       {
@@ -388,13 +375,13 @@ const ExperimentList: React.FC = () => {
       {
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
-          .filter((value) => [
-              RunState.Active,
-              RunState.Paused,
-              RunState.Canceled,
-              RunState.Completed,
-              RunState.Errored,
-            ].includes(value))
+          .filter(value => [
+            RunState.Active,
+            RunState.Paused,
+            RunState.Canceled,
+            RunState.Completed,
+            RunState.Errored,
+          ].includes(value))
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,

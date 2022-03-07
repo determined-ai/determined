@@ -140,6 +140,13 @@ export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
   <TimeDuration duration={getDuration(record)} />
 );
 
+export const experimentNameRenderer = (
+  value: string | number | undefined,
+  record: ExperimentItem,
+): React.ReactNode => (
+  <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+);
+
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   return record.progress ? (
     <ProgressBar percent={record.progress * 100} state={record.state} />
