@@ -1856,7 +1856,6 @@ workflows:
       - test-examples
       - test-unit-storage:
           context: storage-unit-tests
-          filters: *upstream-feature-branch
 
   test-intg:
     jobs:
