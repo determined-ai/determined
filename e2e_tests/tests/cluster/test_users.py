@@ -359,7 +359,7 @@ def test_auth_inside_shell() -> None:
         child.expect(r".*Permanently added \'\[(.*)\]:\d+.+known hosts\.")
         shell_id = child.match.group(1).decode("utf-8")
 
-        def check_whoami(expected_username: str):
+        def check_whoami(expected_username: str) -> None:
             child.sendline("det user whoami")
             child.expect("You are logged in as user \\'(.*)\\'", timeout=EXPECT_TIMEOUT)
             username = child.match.group(1).decode("utf-8")
