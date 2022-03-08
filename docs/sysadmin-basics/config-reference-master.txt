@@ -1,0 +1,254 @@
+.. _master-configuration:
+
+################################
+ Master Configuration Reference
+################################
+
+The Determined master supports a range of configuration settings that can be set via a :ref:`YAML
+configuration file <topic-guides_yaml>`, environment variables, or command-line options. The
+configuration file is normally located at ``/etc/determined/master.yaml`` on the master and is read
+when the master starts.
+
+The configuration of an active master can be examined using the Determined CLI with the command
+``det master config``.
+
+The master supports the following configuration settings:
+
+-  ``config_file``: Path to the master configuration file. Normally this should only be set via an
+   environment variable or command-line option. Defaults to ``/etc/determined/master.yaml``.
+-  ``port``: The TCP port on which the master accepts all incoming connections. Defaults to
+   ``8080``.
+
+***********************
+task_container_defaults
+***********************
+
++------------------------------+-------------------------------------------------------------------+
+| Key                          | Description                                                       |
++==============================+===================================================================+
+| ``shm_size_bytes``           | Size of ``/dev/shm`` for Determined task containers (bytes). |br| |
+|                              | Default = ``4294967296``                                          |
++------------------------------+-------------------------------------------------------------------+
+| ``network_mode``             | Docker network to use for the Determined task containers. If set  |
+|                              | to ``host``, `Docker host-mode networking                         |
+|                              | <https://docs.docker.com/network/host/>`__ is used instead. |br|  |
+|                              | Default = ``bridge``                                              |
++------------------------------+-------------------------------------------------------------------+
+| ``dtrain_network_interface`` | Network interface to use during :ref:`multi-gpu-training`. If not |
+|                              | set, Determined automatically determines the network interface to |
+|                              | use. |br|                                                         |
+|                              | When training a model with multiple machines, the host network    |
+|                              | interface used by each machine must have the same interface name  |
+|                              | across machines. The network interface to use can be determined   |
+|                              | automatically, but there may be issues if there is an interface   |
+|                              | name common to all machines but it is not routable between        |
+|                              | machines. Determined already filters out common interfaces like   |
+|                              | ``lo`` and ``docker0``, but agent machines may have others. If    |
+|                              | interface detection is not finding the appropriate interface, the |
+|                              | ``dtrain_network_interface`` option can be used to set it         |
+|                              | explicitly, such as ``eth11``.                                    |
++------------------------------+-------------------------------------------------------------------+
+| ``nccl_port_range``          | Range of ports that NCCL can use during distributed training. A   |
+|                              | valid port range has the format ``MIN:MAX``. By default, no       |
+|                              | restrictions are placed on the NCCL port range.                   |
++------------------------------+-------------------------------------------------------------------+
+|  ``gloo_port_range``         | Range of ports that Gloo can use during distributed training.     |
+|                              | A valid port range is in the format of ``MIN:MAX``. By default,   |
+|                              | no restrictions are placed on the Gloo port range.                |
++------------------------------+-------------------------------------------------------------------+
+| ``cpu_pod_spec``             | Default pod spec applied to all CPU-only tasks when running on    |
+|                              | Kubernetes. See :ref:`custom-pod-specs` for details.              |
++------------------------------+-------------------------------------------------------------------+
+| ``gpu_pod_spec``             | default pod spec applied to all GPU tasks when running on         |
+|                              | Kubernetes. See :ref:`custom-pod-specs` for details.              |
++------------------------------+-------------------------------------------------------------------+
+| ``image``                    | tbd                                                               |
++------------------------------+-------------------------------------------------------------------+
+|                              | Default docker image to use when executing the workload. If a     |
+|                              | docker image is specified in the :ref:`experiment config          |
+|                              | <exp-environment-image>`, this default is overriden. This image   |
+|                              | must be accessible using ``docker pull`` to every Determined      |
+|                              | agent machinein the cluster. You can configure different          |
+|                              | container images for NVIDIA GPU tasks using the ``cuda`` key      |
+|                              | (``gpu`` before version 0.17.6), CPU tasks using ``cpu`` key,     |
+|                              | and ROCm (AMD GPU) tasks using the ``rocm`` key. |br|             |
+|                              | Default values: |br|                                              |
+|                              | |ol| determinedai/ environments:cuda-11.1-pytorch-1.9-lightning-  |
+|                              | 1.5-tf-2.4-gpu-0.17.10 forNVIDIA GPUs. |br|                       |
+|                              | |ol| determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-       |
+|                              | rocm-0.17.10 for ROCm. |br|                                       |
+|                              | |ol| determinedai/environments:py-3.8-pytorch-1.9-lightning-      |
+|                              | 1.5-tf-2.4-cpu-0.17.10 for CPUs.                                  |
++------------------------------+-------------------------------------------------------------------+
+| ``force_pull_image``         | default policy for forcibly pulling images from the docker        |
+|                              | registry and bypassing the docker cache. If a pull policy is      |
+|                              | specified in the :ref:`experiment config <exp-environment-image>` |
+|                              | this default value is overriden. Please note that as of           |
+|                              | November 1st, 2020 unauthenticated users will be  capped at 100   |
+|                              | pulls from Docker per 6 hours. |br|                               |
+|                              | Default = ``false``                                               |
++------------------------------+-------------------------------------------------------------------+
+| ``registry_auth``            | Default docker registry credentials                               |
+|                              | to use when pulling a custom base docker image if                 |
+|                              | needed. If credentials are specified in the experiment            |
+|                              | configuration, this default value is overriden.                   |
+|                              | Credentials are specified using the following nested fields: |br| |
+|                              | |ol| ``username`` (required) |br|                                 |
+|                              | |ol| ``password`` (required) |br|                                 |
+|                              | |ol| ``serveraddress`` (optional) |br|                            |
+|                              | |ol| ``email`` (optional)                                         |
++------------------------------+-------------------------------------------------------------------+
+| ``add_capabilities``         | Default list of Linux capabilities to grant to task containers.   |
+|                              | Ignored by resource managers of type ``kubernetes``. See          |
+|                              | environment.add_capabilities for more details.                    |
++------------------------------+-------------------------------------------------------------------+
+|  ``drop_capabilities``       | Same as ``add_capabilities`` but for dropping capabilities.       |
++------------------------------+-------------------------------------------------------------------+
+| ``devices``                  | Default list of devices to pass to the Docker daemon. Ignored by  |
+|                              | resource managers of type ``kubernetes``. See resources.devices   |
+|                              | for more details.                                                 |
++------------------------------+-------------------------------------------------------------------+
+| ``bind_mounts``              | default bind mounts to pass to the Docker container. Ignored by   |
+|                              | resource managers of type ``kubernetes``. See resources.devices   |
+|                              | for more details.                                                 |
++------------------------------+-------------------------------------------------------------------+
+
+****
+root
+****
+
+Specifies the root directory of the state files.
+
+Defaults: ``/usr/share/determined/master``.
+
+************
+cluster_name
+************
+
+Specifies a human readable name for this cluster. (optional)
+
+*******************
+tensorboard_timeout
+*******************
+
+Specifies the duration before idle TensorBoard instances are
+automatically terminated, in seconds. A TensorBoard instance is considered to be idle if it does
+not receive HTTP traffic.
+
+Default: ``300`` (five minutes)
+
+****************
+resource_manager
+****************
+
+The resource manager to use to acquire resources.
+
+Default ``type`` = ``agent``
+
+agent
+=====
+
+The agent type resource manager includes static and dynamic agents.
+
++-----------------------------------+--------------------------------------------------------------+
+| Key                               | Description                                                  |
++===================================+==============================================================+
+| ``scheduler``                     | Specifies how Determined schedules tasks to agents on        |
+|                                   | resource pools. If a resource pool is specified with an      |
+|                                   | individual scheduler configuration, that will override the   |
+|                                   | default scheduling behavior specified here. For more on      |
+|                                   | scheduling behavior in Determined, see :ref:`scheduling`.    |
+|                                   | |br| |br|                                                    |
+|                                   | |ol| ``type``: Scheduling policy to use when allocating      |
+|                                   | resources between different tasks, such as experiments and   |
+|                                   | notebooks. Default = ``fair_share``.                         |
+|                                   | |ol2| ``fair_share``: Tasks receive a proportional amount of |
+|                                   | the available resources depending on the resource they       |
+|                                   | require and their weight.                                    |
+|                                   | |ol2| ``round_robin``: Tasks are scheduled in the order      |
+|                                   | which they arrive at the cluster.                            |
+|                                   | |ol2| ``priority``: Tasks are scheduled based on priority    |
+|                                   | priority, which can range from ``1`` to ``99``, inclusive.   |
+|                                   | Lower priority numbers indicate higher priority tasks. A     |
+|                                   | lower priority task is never scheduled if a higher priority  |
+|                                   | task is pending. Zero-slot tasks, such as CPU-only notebooks |
+|                                   | and tensorboards, are prioritized separately from tasks that |
+|                                   | require slots, such as experiments running on GPUs. Task     |
+|                                   | priority can be assigned using the ``resources.priority``    |
+|                                   | field. If a task does not specify a priority it is assigned  |
+|                                   | the ``default_priority``.                                    |
+|                                   | |ol| ``fitting_policy``: Scheduling policy to use when       |
+|                                   | assigning tasks to agents in the cluster. Default = ``best`` |
+|                                   | |br|                                                         |
+|                                   | |ol2| ``best``: Best-fit policy ensures that tasks are       |
+|                                   | preferentially "packed" together on the smallest number of   |
+|                                   | agents.                                                      |
+|                                   | |ol2|  ``worst``: Worst-fit policy ensures that tasks are    |
+|                                   | placed on under-utilized agents.                             |
++-----------------------------------+--------------------------------------------------------------+
+| ``default_aux_resource_pool``     | Default resource pool to use for tasks that do not need      |
+|                                   | dedicated compute resources, auxiliary, or systems tasks.    |
+|                                   | Defaults to ``default`` if no resource pool is specified.    |
+|                                   | Prior to 0.16.1, this field was called                       |
+|                                   | ``default_cpu_resource_pool``.                               |
++-----------------------------------+--------------------------------------------------------------+
+| ``default_compute_resource_pool`` | Default resource pool to use for tasks that require compute  |
+|                                   | resources, e.g. GPUs or dedicated CPUs. Defaults to          |
+|                                   | ``default`` if no resource pool is specified. Before version |
+|                                   | 0.16.1, this field was called ``default_gpu_resource_pool``. |
++-----------------------------------+--------------------------------------------------------------+
+
+kubernetes
+==========
+
+The ``kubernetes`` resource manager launches tasks on a Kubernetes cluster. The Determined master
+must be running within the Kubernetes cluster. When using the ``kubernetes`` resource provider, it
+is recommended that you deploy Determined using the :ref:` Helm Chart <install-on-kubernetes>`. When installed using Helm, the following configuration settings are automatically set.
+
++------------------------------+-------------------------------------------------------------------+
+| Key                          | Description                                                       |
++==============================+===================================================================+
+| ``namespace``                | Namespace where Determined deploys Pods and ConfigMaps.           |
++------------------------------+-------------------------------------------------------------------+
+| ``max_slots_per_pod``        | Each multi-slot (distributed training) task is scheduled as       |
+|                              | a set of ``slots_per_task / max_slots_per_pod`` separate pods,    |
+|                              | with each pod assigned up to``max_slots_per_pod`` slots.          |
+|                              | Distributed tasks with sizes that are not divisible by            |
+|                              | ``max_slots_per_pod`` are never scheduled. If you have a cluster  |
+|                              | of different size nodes, set ``max_slots_per_pod`` to the         |
+|                              | greatest common divisor of the sizes of all nodes. For example,   |
+|                              | if you have some nodes with four GPUs and other nodes with        |
+|                              | eight GPUs, set ``maxSlotsPerPod`` to``4`` so that all            |
+|                              | distributed experiments launch with four GPUs per pod (with two   |
+|                              | pods on 8-GPU nodes).                                             |
++------------------------------+-------------------------------------------------------------------+
+| ``slot_type``                | Resource type used for compute tasks. |br|                        |
+|                              | Default = ``cuda`` |br| |br|                                      |
+|                              | |ol| ``cuda`` =  One NVIDIA GPU is requested per compute slot.    |
+|                              | Before version 0.17.6, this option was called ``gpu``. |br|       |
+|                              | |ol| ``cpu`` = CPU resources is requested for each compute slot.  |
+|                              | The ``slot_resource_requests.cpu`` option is required to specify  |
+|                              | the specific number of resources.                                 |
++------------------------------+-------------------------------------------------------------------+
+| ``slot_resource_requests``   | For ``slot_type`` = ``cpu``, the number of kubernetes CPUs to     |
+|                              | request per compute slot.                                         |
++------------------------------+-------------------------------------------------------------------+
+| ``master_service_name``      | Service account Determined uses to interact with the Kubernetes   |
+|                              | API.                                                              |
++------------------------------+-------------------------------------------------------------------+
+| ``fluent``                   | Options to configure how Fluent Bit sidecars are run: |br|        |
+|                              | ``image`` = Fluent Bit image to use. |br|                         |
+|                              | Default = ``fluent/fluent-bit:1.6``                               |
++------------------------------+-------------------------------------------------------------------+
+
+.. |br| raw:: html
+
+   <br />
+
+.. |ol| raw:: html
+
+   &nbsp;&nbsp;&nbsp;&nbsp;&#x2022;
+
+.. |ol2| raw:: html
+
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2022;
