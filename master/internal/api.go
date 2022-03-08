@@ -130,13 +130,13 @@ func (a *apiServer) sort(
 					return t1.Seconds < t2.Seconds
 				case *wrapperspb.DoubleValue:
 					t2 := v2.(*wrapperspb.DoubleValue)
-					if t1 != nil && t2 != nil {
+					switch {
+					case t1 != nil && t2 != nil:
 						return t1.Value < t2.Value
-					} else if t1 == nil && t2 != nil {
+					case t1 == nil && t2 != nil:
 						return true
-					} else {
-						return false
 					}
+					return false
 				default:
 					panic(fmt.Sprintf("incomparable message type: %T", t1))
 				}
