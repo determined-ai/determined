@@ -50,7 +50,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
     };
   }, [ options ]);
 
-  const show = useMemo(() => {
+  const moreThanOne = useMemo(() => {
     return Object.keys(selectOptions).reduce((acc, key) => {
       const filterKey = key as keyof Filters;
       const options = selectOptions[filterKey];
@@ -84,7 +84,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
   return (
     <>
       <Space>
-        {show.allocationIds && (
+        {moreThanOne.allocationIds && (
           <MultiSelect
             itemName={LABELS.allocationIds}
             value={values.allocationIds}
@@ -92,7 +92,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {show.agentIds && (
+        {moreThanOne.agentIds && (
           <MultiSelect
             itemName={LABELS.agentIds}
             value={values.agentIds}
@@ -100,7 +100,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             {selectOptions?.agentIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {show.containerIds && (
+        {moreThanOne.containerIds && (
           <MultiSelect
             itemName={LABELS.containerIds}
             style={{ width: 150 }}
@@ -111,7 +111,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             ))}
           </MultiSelect>
         )}
-        {show.rankIds && (
+        {moreThanOne.rankIds && (
           <MultiSelect
             itemName={LABELS.rankIds}
             value={values.rankIds}
