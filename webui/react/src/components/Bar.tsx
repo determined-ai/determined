@@ -28,7 +28,7 @@ const partStyle = (part: BarPart) => {
     width: floatToPercent(part.percent, 0),
   };
 
-  if(part.bordered){
+  if (part.bordered) {
     style = { ...style, borderStyle: 'dashed dashed dashed none' };
   }
 
