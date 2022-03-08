@@ -22,6 +22,7 @@ type DB interface {
 	UserByExternalToken(token string, ext *model.ExternalSessions) (*model.User,
 		*model.UserSession, error)
 	DeleteUserSessionByID(sessionID model.SessionID) error
+	DeleteUserSessionByToken(userSessionToken string) error
 	UserByUsername(username string) (*model.User, error)
 	AddUser(user *model.User, ug *model.AgentUserGroup) error
 	UpdateUser(updated *model.User, toUpdate []string, ug *model.AgentUserGroup) error

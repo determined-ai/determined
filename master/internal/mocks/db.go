@@ -446,6 +446,20 @@ func (_m *DB) DeleteUserSessionByID(sessionID model.SessionID) error {
 	return r0
 }
 
+// DeleteUserSessionByToken provides a mock function with given fields: userSessionToken
+func (_m *DB) DeleteUserSessionByToken(userSessionToken string) error {
+	ret := _m.Called(userSessionToken)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(userSessionToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ExperimentBestSearcherValidation provides a mock function with given fields: id
 func (_m *DB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	ret := _m.Called(id)

@@ -42,6 +42,18 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 	return token, nil
 }
 
+// DeleteUserSessionByToken deletes user session if found
+// (externally managed sessions are not stored in the DB and will not be found
+func (db *PgDB) DeleteUserSessionByToken(token string) error {
+	v2 := paseto.NewV2()
+	var session model.UserSession
+	// verification will fail when using external token (Jwt instead of Paseto)
+	if err := v2.Verify(token, db.tokenKeys.PublicKey, &session, nil); err != nil {
+		return nil
+	}
+	return db.DeleteUserSessionByID(session.ID)
+}
+
 // UserByToken returns a user session given an authentication token.
 func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
 	*model.User, *model.UserSession, error) {
