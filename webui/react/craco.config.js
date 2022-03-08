@@ -58,20 +58,6 @@ module.exports = {
       }),
       {},
     ),
-    configure: {
-      module: {
-        rules: [
-          /*
-           * Plotly needs browserify transformation applied when building production files.
-           * https://github.com/plotly/plotly.js/blob/master/BUILDING.md#webpack
-           */
-          {
-            loader: 'ify-loader',
-            test: /\.js$/,
-          },
-        ],
-      },
-    },
     plugins: [
       new DefinePlugin({
         'process.env.IS_DEV': JSON.stringify(IS_DEV),
