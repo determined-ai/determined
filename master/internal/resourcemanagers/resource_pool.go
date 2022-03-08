@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/check"
+
 	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -380,19 +382,125 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) moveJob(msg job.MoveJob) (job.RegisterJobPosition, error) {
+func (rp *ResourcePool) processJobPosition(jobID model.JobID, anchor1 model.JobID, anchor2 model.JobID) (job.RegisterJobPosition, error) {
 	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now())
-	newPos, err := computeNewJobPos(msg, rp.queuePositions)
+	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, rp.queuePositions)
 	if err != nil {
 		return job.RegisterJobPosition{}, err
 	}
-	rp.queuePositions[msg.ID] = newPos
+	rp.queuePositions[jobID] = newPos
 
-	// actors.NotifyAfter(ctx, 0, schedulerTick{}) ?
 	return job.RegisterJobPosition{
-		JobID:       msg.ID,
+		JobID:       jobID,
 		JobPosition: newPos.String(),
 	}, nil
+}
+
+func (rp *ResourcePool) moveJob(
+	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+) error {
+	if rp.config.Scheduler.GetType() != priorityScheduling {
+		return nil
+	}
+
+	if anchorID == "" || jobID == "" || anchorID == jobID {
+		return nil
+	}
+
+	if _, ok := rp.queuePositions[jobID]; !ok {
+		return nil
+	}
+
+	groupAddr, ok := rp.IDToGroupActor[jobID]
+	if !ok {
+		return job.ErrJobNotFound(jobID)
+	}
+
+	if _, ok := rp.queuePositions[anchorID]; !ok {
+		return job.ErrJobNotFound(anchorID)
+	}
+
+	var secondAnchor model.JobID
+	targetPriority := 0
+	anchorPriority := 0
+	anchorIdx := 0
+	anchorPos, _ := rp.queuePositions[anchorID]
+
+	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
+
+	for i, req := range sortedReqs {
+		if req.JobID == jobID {
+			targetPriority = *rp.groups[req.Group].priority
+		} else if req.JobID == anchorID {
+			anchorPriority = *rp.groups[req.Group].priority
+			anchorIdx = i
+		}
+	}
+
+	if aheadOf {
+		if anchorIdx == 0 {
+			secondAnchor = job.HeadAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx-1].JobID
+			if rp.queuePositions[secondAnchor].GreaterThanOrEqual(anchorPos) {
+				secondAnchor = job.HeadAnchor
+			}
+		}
+	} else {
+		if anchorIdx >= len(sortedReqs)-1 {
+			secondAnchor = job.TailAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx+1].JobID
+			if rp.queuePositions[secondAnchor].LessThanOrEqual(anchorPos) {
+				secondAnchor = job.TailAnchor
+			}
+		}
+	}
+
+	check.Panic(check.True(secondAnchor != ""))
+
+	if secondAnchor == jobID {
+		return nil
+	}
+
+	if targetPriority != anchorPriority {
+		resp := ctx.Self().System().AskAt(job.JobsActorAddr, job.SetJobPriority{ID: jobID, Priority: anchorPriority})
+		if resp.Error() != nil {
+			return resp.Error()
+		}
+		if needMove(
+			rp.queuePositions[jobID],
+			anchorPos,
+			rp.queuePositions[secondAnchor],
+			aheadOf,
+		) {
+			return nil
+		}
+	}
+
+	msg, err := rp.processJobPosition(jobID, anchorID, secondAnchor)
+
+	if err != nil {
+		return err
+	}
+
+	ctx.Tell(groupAddr, msg)
+
+	return nil
+}
+
+func needMove(jobPos decimal.Decimal, anchorPos decimal.Decimal, secondPos decimal.Decimal, aheadOf bool) bool {
+	if aheadOf {
+		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
+			return false
+		}
+		return true
+	}
+	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
+		return false
+	}
+
+	return true
 }
 
 func (rp *ResourcePool) recoverJobPosition(msg job.RecoverJobPosition) error {
@@ -414,20 +522,10 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
+
 	case job.MoveJob:
-		response, err := rp.moveJob(msg)
-		if err != nil {
-			ctx.Respond(err)
-			return nil
-		}
-
-		addr, ok := rp.IDToGroupActor[response.JobID]
-		if !ok {
-			return nil
-		}
-
-		ctx.Tell(addr, response)
-
+		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
+		ctx.Respond(err)
 
 	case job.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight

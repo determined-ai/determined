@@ -294,7 +294,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case job.RegisterJobPosition:
-		err := e.db.UpdateJobPosition(msg.JobID,msg.JobPosition)
+		err := e.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
 		}

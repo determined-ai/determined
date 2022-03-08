@@ -81,24 +81,24 @@ func initalizeJobSortState() jobSortState {
 	return state
 }
 
-func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal, error) {
-	if msg.Anchor1 == msg.ID || msg.Anchor2 == msg.ID {
+func computeNewJobPos(jobID model.JobID, anchor1 model.JobID, anchor2 model.JobID, qPositions jobSortState) (decimal.Decimal, error) {
+	if anchor1 == jobID || anchor2 == jobID {
 		return decimal.NewFromInt(0), fmt.Errorf("cannot move job relative to itself")
 	}
 
-	qPos1, ok := qPositions[msg.Anchor1]
+	qPos1, ok := qPositions[anchor1]
 	if !ok {
-		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", msg.Anchor1)
+		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", anchor1)
 	}
 
-	qPos2, ok := qPositions[msg.Anchor2]
+	qPos2, ok := qPositions[anchor2]
 	if !ok {
-		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", msg.Anchor2)
+		return decimal.NewFromInt(0), fmt.Errorf("could not find anchor job %s", anchor2)
 	}
 
-	qPos3, ok := qPositions[msg.ID]
+	qPos3, ok := qPositions[jobID]
 	if !ok {
-		return decimal.NewFromInt(0), fmt.Errorf("could not find job %s", msg.ID)
+		return decimal.NewFromInt(0), fmt.Errorf("could not find job %s", jobID)
 	}
 
 	// check if qPos3 is between qPos1 and qPos2
@@ -112,7 +112,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 
 	if newPos.Equal(qPos1) || newPos.Equal(qPos2) {
 		return decimal.NewFromInt(0), fmt.Errorf("unable to compute a new job position for job %s",
-			msg.ID)
+			jobID)
 	}
 
 	return newPos, nil
