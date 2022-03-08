@@ -215,7 +215,12 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		if err := a.rendezvous.ReceiveMsg(ctx); err != nil {
+		switch err := a.rendezvous.ReceiveMsg(ctx).(type) {
+		case nil:
+			return nil
+		case ErrTimeoutExceeded:
+			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+		default:
 			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
 			a.Error(ctx, err)
 		}
@@ -323,7 +328,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 
 	if a.req.DoRendezvous {
 		a.rendezvous = NewRendezvous(a.model.AllocationID, a.reservations)
-		a.rendezvous.PreStart(ctx)
 	}
 
 	if cfg := a.req.IdleTimeout; cfg != nil {
