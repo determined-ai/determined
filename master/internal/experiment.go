@@ -346,7 +346,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				"failure to delete snapshots for experiment: %d", e.Experiment.ID)
 		}
 
-		e.db.DeleteUserSessionByToken(taskSpec.UserSessionToken)
+		if err := e.db.DeleteUserSessionByToken(taskSpec.UserSessionToken); err != nil {
+			ctx.Log().WithError(err).Errorf(
+				"failure to delete user session for experiment: %d", e.Experiment.ID)
+		}
 
 		ctx.Log().Info("experiment shut down successfully")
 

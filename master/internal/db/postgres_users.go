@@ -43,7 +43,7 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 }
 
 // DeleteUserSessionByToken deletes user session if found
-// (externally managed sessions are not stored in the DB and will not be found
+// (externally managed sessions are not stored in the DB and will not be found).
 func (db *PgDB) DeleteUserSessionByToken(token string) error {
 	v2 := paseto.NewV2()
 	var session model.UserSession
