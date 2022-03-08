@@ -345,7 +345,7 @@ func TestCheckpointMetadata(t *testing.T) {
 					LatestBatch:       actual.BatchNumber,
 				})
 				if tt.hasValidation {
-					require.Equal(t, metricValue, actual.SearcherMetric.Value)
+					require.Equal(t, metricValue, actual.SearcherMetric)
 					require.Equal(t, checkpointv1.State_STATE_COMPLETED, actual.ValidationState)
 					require.NotNil(t, actual.Metrics)
 				} else {

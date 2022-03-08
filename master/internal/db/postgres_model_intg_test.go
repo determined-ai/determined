@@ -111,8 +111,8 @@ func TestModels(t *testing.T) {
 				require.Equal(t, expected.Checkpoint.Uuid, actual.Checkpoint.Uuid)
 				if tt.hasValidation {
 					require.Equal(t,
-						expected.Checkpoint.SearcherMetric.Value,
-						actual.Checkpoint.SearcherMetric.Value)
+						expected.Checkpoint.SearcherMetric,
+						actual.Checkpoint.SearcherMetric)
 					require.Equal(t,
 						expected.Checkpoint.ValidationState, actual.Checkpoint.ValidationState)
 					require.NotNil(t, actual.Checkpoint.Metrics)
