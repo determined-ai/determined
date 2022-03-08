@@ -199,6 +199,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
 			JobID: c.jobID,
 		})
+		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+			ctx.Log().WithError(err).Errorf(
+				"failure to delete user session for task: %d", c.taskID)
+		}
 
 	case actor.ChildStopped:
 	case actor.ChildFailed:
@@ -225,6 +229,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.exitStatus = msg
 		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
+		}
+		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+			ctx.Log().WithError(err).Errorf(
+				"failure to delete user session for task: %d", c.taskID)
 		}
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 
