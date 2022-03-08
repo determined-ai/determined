@@ -41,11 +41,21 @@ def test_trial_logs() -> None:
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize(
     "task_type,task_config,log_regex",
-    [   
+    [
         # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
-        (command.TaskTypeCommand, {"entrypoint": [
-            "echo", "hello", "&&", "sleep", "10",
-        ]}, re.compile("^.*hello.*$")),
+        (
+            command.TaskTypeCommand,
+            {
+                "entrypoint": [
+                    "echo",
+                    "hello",
+                    "&&",
+                    "sleep",
+                    "10",
+                ]
+            },
+            re.compile("^.*hello.*$"),
+        ),
         (command.TaskTypeNotebook, {}, re.compile("^.*Jupyter Server .* is running.*$")),
         (command.TaskTypeShell, {}, re.compile("^.*Server listening on.*$")),
         (command.TaskTypeTensorBoard, {}, re.compile("^.*TensorBoard .* at .*$")),
