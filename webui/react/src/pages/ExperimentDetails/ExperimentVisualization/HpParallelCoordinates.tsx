@@ -1,9 +1,8 @@
 import { Alert } from 'antd';
-import { DimensionType } from 'hermes-parallel-coordinates';
+import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
-import { Constraint } from 'components/ParallelCoordinates';
 import PCoordinates from 'components/PCoordinates';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
@@ -85,11 +84,43 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
+  const handleFilterChange = useCallback((filters: Hermes.Filters) => {
+    // Skip if there aren't any chart data.
+    if (!chartData) return;
+
+    // Initialize a new trial id filter map.
+    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
+      acc[trialId] = true;
+      return acc;
+    }, {} as Record<number, boolean>);
+
+    // Figure out which trials are filtered out based on user filters.
+    Object.entries(filters).forEach(([ key, list ]) => {
+      if (!chartData.data[key] || list.length === 0) return;
+
+      chartData.data[key].forEach((value, index) => {
+        let isWithinFilter = false;
+
+        list.forEach((filter: Hermes.Filter) => {
+          if (value >= filter[0] && value <= filter[1]) isWithinFilter = true;
+        });
+
+        if (!isWithinFilter) {
+          const trialId = chartData.trialIds[index];
+          newFilteredTrialIdMap[trialId] = false;
+        }
+      });
+    });
+
+    setFilteredTrialIdMap(newFilteredTrialIdMap);
+  }, [ chartData ]);
+
   const colorScale = useMemo(() => {
     return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData?.metricRange, smallerIsBetter ]);
 
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(() => ({
+    hooks: { onFilterChange: handleFilterChange },
     style: {
       data: {
         colorScale: {
@@ -98,7 +129,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         },
       },
     },
-  }), [ colorScale, selectedMetric ]);
+  }), [ colorScale, handleFilterChange, selectedMetric ]);
 
   const dimensions = useMemo(() => {
     const newDimensions = selectedHParams.map(key => {
@@ -121,32 +152,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
     return newDimensions;
   }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
-
-  const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
-    if (!chartData) return;
-
-    // Figure out which trials fit within the user provided constraints.
-    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
-      acc[trialId] = true;
-      return acc;
-    }, {} as Record<number, boolean>);
-
-    Object.entries(constraints).forEach(([ key, constraint ]) => {
-      if (!constraint) return;
-      if (!chartData.data[key]) return;
-
-      const range = constraint.range;
-      const values = chartData.data[key];
-      values.forEach((value, index) => {
-        if (constraint.values?.includes(value)) return;
-        if (!constraint.values && value >= range[0] && value <= range[1]) return;
-        const trialId = chartData.trialIds[index];
-        newFilteredTrialIdMap[trialId] = false;
-      });
-    });
-
-    setFilteredTrialIdMap(newFilteredTrialIdMap);
-  }, [ chartData ]);
 
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
