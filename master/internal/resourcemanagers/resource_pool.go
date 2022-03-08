@@ -416,13 +416,18 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 	case job.MoveJob:
 		response, err := rp.moveJob(msg)
-		ctx.Respond(err)
-		if err == nil {
-			addr, ok := rp.IDToGroupActor[response.JobID]
-			if ok {
-				ctx.Tell(addr, response)
-			}
+		if err != nil {
+			ctx.Respond(err)
+			return nil
 		}
+
+		addr, ok := rp.IDToGroupActor[response.JobID]
+		if !ok {
+			return nil
+		}
+
+		ctx.Tell(addr, response)
+
 
 	case job.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight

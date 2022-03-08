@@ -105,7 +105,7 @@ func computeNewJobPos(msg job.MoveJob, qPositions jobSortState) (decimal.Decimal
 	smallPos := decimal.Min(qPos1, qPos2)
 	bigPos := decimal.Max(qPos1, qPos2)
 	if qPos3.GreaterThan(smallPos) && qPos3.LessThan(bigPos) {
-		return decimal.NewFromInt(0), nil // no op. Job is already in the correct position.
+		return qPos3, nil // no op. Job is already in the correct position.
 	}
 
 	newPos := decimal.Avg(qPos1, qPos2)

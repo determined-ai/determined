@@ -294,12 +294,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case job.RegisterJobPosition:
-		err := e.db.UpdateJob(&model.Job{
-			JobID: msg.JobID,
-			QPos:  msg.JobPosition,
-		})
+		err := e.db.UpdateJobPosition(msg.JobID,msg.JobPosition)
 		if err != nil {
-			ctx.Log().Errorf("persisting position for job %s failed", msg.JobID)
+			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
 		}
 
 	// Experiment shutdown logic.

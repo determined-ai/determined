@@ -35,14 +35,14 @@ VALUES (:job_id, :job_type, :owner_id, :q_position)
 	return nil
 }
 
-// UpdateJob propagates the new queue position to the job.
-func (db *PgDB) UpdateJob(job *model.Job) error {
-	if job.JobID.String() == "" {
+// UpdateJobPosition propagates the new queue position to the job.
+func (db *PgDB) UpdateJobPosition(jobID model.JobID, position string) error {
+	if jobID.String() == "" {
 		return errors.Errorf("error modifying job with empty id")
 	}
-	query := `
+	_, err := db.sql.Exec(`
 UPDATE jobs
-SET q_position = :q_position
-WHERE job_id = :job_id`
-	return db.namedExecOne(query, job)
+SET q_position = $2
+WHERE job_id = $1`, jobID, position)
+	return err
 }
