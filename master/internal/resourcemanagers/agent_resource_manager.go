@@ -246,7 +246,7 @@ func (a *agentResourceManager) forwardToAllPools(
 }
 
 func (a *agentResourceManager) getPoolJobStats(
-	ctx *actor.Context, pool ResourcePoolConfig,
+	ctx *actor.Context, pool config.ResourcePoolConfig,
 ) (*jobv1.QueueStats, error) {
 	jobStatsResp := ctx.Ask(a.pools[pool.PoolName], job.GetJobQStats{})
 	if err := jobStatsResp.Error(); err != nil {
