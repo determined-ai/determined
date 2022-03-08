@@ -252,10 +252,6 @@ ORDER BY l.id %s LIMIT $2
 		return nil, nil, err
 	}
 
-	for _, l := range b {
-		l.FlatLog = l.Message()
-	}
-
 	if len(b) > 0 {
 		lastLog := b[len(b)-1]
 		followState = &taskLogsFollowState{id: int64(*lastLog.ID)}

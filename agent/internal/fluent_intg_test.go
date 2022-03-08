@@ -272,8 +272,6 @@ func assertLogEquals(t *testing.T, actual, expected model.TaskLog) {
 	// IDs are assigned unpredictably by the backend, so don't compare them.
 	actual.ID = nil
 	actual.StringID = nil
-	// We don't fill out the flat log in expected.
-	actual.FlatLog = ""
 	assert.DeepEqual(t, actual, expected)
 }
 
