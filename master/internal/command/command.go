@@ -201,7 +201,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
-				"failure to delete user session for task: %d", c.taskID)
+				"failure to delete user session for task: %v", c.taskID)
 		}
 
 	case actor.ChildStopped:
@@ -232,7 +232,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 			ctx.Log().WithError(err).Errorf(
-				"failure to delete user session for task: %d", c.taskID)
+				"failure to delete user session for task: %v", c.taskID)
 		}
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 
