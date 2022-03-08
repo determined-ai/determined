@@ -4,8 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/check"
-
 	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -385,7 +383,7 @@ func (rp *ResourcePool) moveJob(
 	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
 ) error {
 	if rp.config.Scheduler.GetType() != priorityScheduling {
-		return nil
+		return fmt.Errorf("unable to perform operation on resource pool with %s", rp.config.Scheduler.GetType())
 	}
 
 	if anchorID == "" || jobID == "" || anchorID == jobID {
@@ -407,7 +405,9 @@ func (rp *ResourcePool) moveJob(
 
 	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
 
-	check.Panic(check.True(secondAnchor != ""))
+	if secondAnchor != "" {
+		return fmt.Errorf("unable to move job with ID %s", jobID)
+	}
 
 	if secondAnchor == jobID {
 		return nil
@@ -429,7 +429,6 @@ func (rp *ResourcePool) moveJob(
 	}
 
 	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor)
-
 	if err != nil {
 		return err
 	}
@@ -536,10 +535,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		// thus no need to reinitialize its queue position.
 
 	case job.RecoverJobPosition:
-		err := rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
-		if err != nil {
-			ctx.Log().Errorf("failed to recover job position for job: %s", msg.JobID)
-		}
+		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

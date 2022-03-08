@@ -88,16 +88,8 @@ func (j jobSortState) SetJobPosition(jobID model.JobID, anchor1 model.JobID, anc
 	}, nil
 }
 
-func (j jobSortState) RecoverJobPosition(jobID model.JobID, positionStr string) error {
-	if positionStr == "" {
-		return nil
-	}
-	position, err := decimal.NewFromString(positionStr)
-	if err != nil {
-		return err
-	}
+func (j jobSortState) RecoverJobPosition(jobID model.JobID, position decimal.Decimal) {
 	j[jobID] = position
-	return nil
 }
 
 func initalizeJobSortState() jobSortState {

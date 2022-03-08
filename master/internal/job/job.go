@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -92,7 +94,7 @@ type RegisterJobPosition struct {
 // Notifies the resource pool of the position of the job.
 type RecoverJobPosition struct {
 	JobID        model.JobID
-	JobPosition  string
+	JobPosition  decimal.Decimal
 	ResourcePool string
 }
 

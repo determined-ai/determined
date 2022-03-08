@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 
 	"github.com/google/uuid"
@@ -180,16 +182,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		})
 
 		if e.restored {
-			e.restoreTrials(ctx)
 			j, err := e.db.JobByID(e.JobID)
 			if err != nil {
 				return err
 			}
-			ctx.Tell(e.rm, job.RecoverJobPosition{
-				JobID:        e.JobID,
-				JobPosition:  j.QPos,
-				ResourcePool: e.Config.Resources().ResourcePool(),
-			})
+			if j.QPos != "-1" || j.QPos == "" {
+				position, err := decimal.NewFromString(j.QPos)
+				if err != nil {
+					return err
+				}
+				ctx.Tell(e.rm, job.RecoverJobPosition{
+					JobID:        e.JobID,
+					JobPosition:  position,
+					ResourcePool: e.Config.Resources().ResourcePool(),
+				})
+			}
+			e.restoreTrials(ctx)
 			return nil
 		}
 
