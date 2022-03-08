@@ -3,7 +3,7 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
-import PCoordinates from 'components/PCoordinates';
+import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
@@ -292,14 +292,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
-            {/* <ParallelCoordinates
-              colorScale={colorScale}
-              colorScaleKey={metricNameToStr(selectedMetric)}
-              data={chartData?.data || {}}
-              dimensions={dimensions}
-              onFilter={handleChartFilter}
-            /> */}
-            <PCoordinates
+            <ParallelCoordinates
               config={config}
               data={chartData?.data ?? {}}
               dimensions={dimensions}
