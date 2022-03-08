@@ -3,7 +3,6 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
-	"time"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 
@@ -382,20 +381,6 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) processJobPosition(jobID model.JobID, anchor1 model.JobID, anchor2 model.JobID) (job.RegisterJobPosition, error) {
-	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now())
-	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, rp.queuePositions)
-	if err != nil {
-		return job.RegisterJobPosition{}, err
-	}
-	rp.queuePositions[jobID] = newPos
-
-	return job.RegisterJobPosition{
-		JobID:       jobID,
-		JobPosition: newPos.String(),
-	}, nil
-}
-
 func (rp *ResourcePool) moveJob(
 	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
 ) error {
@@ -478,7 +463,7 @@ func (rp *ResourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.processJobPosition(jobID, anchorID, secondAnchor)
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor)
 
 	if err != nil {
 		return err
@@ -501,18 +486,6 @@ func needMove(jobPos decimal.Decimal, anchorPos decimal.Decimal, secondPos decim
 	}
 
 	return true
-}
-
-func (rp *ResourcePool) recoverJobPosition(msg job.RecoverJobPosition) error {
-	if msg.JobPosition == "" {
-		return nil
-	}
-	position, err := decimal.NewFromString(msg.JobPosition)
-	if err != nil {
-		return err
-	}
-	rp.queuePositions[msg.JobID] = position
-	return nil
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
@@ -552,7 +525,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		// thus no need to reinitialize its queue position.
 
 	case job.RecoverJobPosition:
-		err := rp.recoverJobPosition(msg)
+		err := rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 		if err != nil {
 			ctx.Log().Errorf("failed to recover job position for job: %s", msg.JobID)
 		}

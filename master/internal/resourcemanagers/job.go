@@ -72,7 +72,33 @@ func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 
 // could be swapped for another job order representation
 // 0 or nonexisting keys mean that it needs to initialize.
-type jobSortState = map[model.JobID]decimal.Decimal
+type jobSortState map[model.JobID]decimal.Decimal
+
+func (j jobSortState) SetJobPosition(jobID model.JobID, anchor1 model.JobID, anchor2 model.JobID) (job.RegisterJobPosition, error) {
+	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, j)
+	if err != nil {
+		return job.RegisterJobPosition{}, err
+	}
+	j[job.TailAnchor] = initalizeQueuePosition(time.Now())
+	j[jobID] = newPos
+
+	return job.RegisterJobPosition{
+		JobID:       jobID,
+		JobPosition: newPos.String(),
+	}, nil
+}
+
+func (j jobSortState) RecoverJobPosition(jobID model.JobID, positionStr string) error {
+	if positionStr == "" {
+		return nil
+	}
+	position, err := decimal.NewFromString(positionStr)
+	if err != nil {
+		return err
+	}
+	j[jobID] = position
+	return nil
+}
 
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
