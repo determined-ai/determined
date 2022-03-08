@@ -175,14 +175,14 @@ const SlotAllocationBar: React.FC<Props> = ({
         <div className={css.footer}>
           {poolType === V1ResourcePoolType.K8S ? (
             <header>{`${footer.isAux ?
-              `${footer.auxContainersRunning} Aux Container Running` :
+              `${footer.auxContainersRunning} Aux Containers Running` :
               `${stateTallies.RUNNING} Compute Slots Allocated`}`}
             </header>
           )
             : (
               <header>{`${footer.isAux ?
                 `${footer.
-                  auxContainersRunning}/${footer.auxContainerCapacity} Aux Container Running` :
+                  auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
                 `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
               </header>
             )}
