@@ -405,11 +405,47 @@ func (rp *ResourcePool) moveJob(
 		return job.ErrJobNotFound(anchorID)
 	}
 
+	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
+
+	check.Panic(check.True(secondAnchor != ""))
+
+	if secondAnchor == jobID {
+		return nil
+	}
+
+	if prioChange {
+		resp := ctx.Self().System().AskAt(job.JobsActorAddr, job.SetJobPriority{ID: jobID, Priority: anchorPriority})
+		if resp.Error() != nil {
+			return resp.Error()
+		}
+		if needMove(
+			rp.queuePositions[jobID],
+			rp.queuePositions[anchorID],
+			rp.queuePositions[secondAnchor],
+			aheadOf,
+		) {
+			return nil
+		}
+	}
+
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor)
+
+	if err != nil {
+		return err
+	}
+
+	ctx.Tell(groupAddr, msg)
+
+	return nil
+}
+
+func (rp *ResourcePool) findAnchor(jobID model.JobID, anchorID model.JobID, aheadOf bool) (bool, model.JobID, int) {
 	var secondAnchor model.JobID
 	targetPriority := 0
 	anchorPriority := 0
 	anchorIdx := 0
 	anchorPos, _ := rp.queuePositions[anchorID]
+	prioChange := false
 
 	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
 
@@ -442,36 +478,11 @@ func (rp *ResourcePool) moveJob(
 		}
 	}
 
-	check.Panic(check.True(secondAnchor != ""))
-
-	if secondAnchor == jobID {
-		return nil
-	}
-
 	if targetPriority != anchorPriority {
-		resp := ctx.Self().System().AskAt(job.JobsActorAddr, job.SetJobPriority{ID: jobID, Priority: anchorPriority})
-		if resp.Error() != nil {
-			return resp.Error()
-		}
-		if needMove(
-			rp.queuePositions[jobID],
-			anchorPos,
-			rp.queuePositions[secondAnchor],
-			aheadOf,
-		) {
-			return nil
-		}
+		prioChange = true
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor)
-
-	if err != nil {
-		return err
-	}
-
-	ctx.Tell(groupAddr, msg)
-
-	return nil
+	return prioChange, secondAnchor, anchorPriority
 }
 
 func needMove(jobPos decimal.Decimal, anchorPos decimal.Decimal, secondPos decimal.Decimal, aheadOf bool) bool {
