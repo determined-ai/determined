@@ -11,6 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -19,26 +21,37 @@ import (
 type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair
 	sql       *sqlx.DB
+	bun       *bun.DB
 	queries   *staticQueryMap
 	url       string
 }
 
+const maxConnectTries = 15
+
 // ConnectPostgres connects to a Postgres database.
 func ConnectPostgres(url string) (*PgDB, error) {
-	numTries := 0
-	for {
-		sql, err := sqlx.Connect("pgx", url)
+	var sql *sqlx.DB
+	var err error
+	for numTries := 0; numTries < maxConnectTries; numTries++ {
+		sql, err = sqlx.Connect("pgx", url)
 		if err == nil {
-			return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}, url: url}, err
+			break
 		}
-		numTries++
-		if numTries >= 15 {
-			return nil, errors.Wrapf(err, "could not connect to database after %v tries", numTries)
-		}
+
 		toWait := 4 * time.Second
 		time.Sleep(toWait)
 		log.WithError(err).Warnf("failed to connect to postgres, trying again in %s", toWait)
 	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not connect to database after %v tries", maxConnectTries)
+	}
+
+	return &PgDB{
+		sql:     sql,
+		bun:     bun.NewDB(sql.DB, pgdialect.New()),
+		queries: &staticQueryMap{queries: make(map[string]string)},
+		url:     url,
+	}, nil
 }
 
 const (

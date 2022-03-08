@@ -1,6 +1,8 @@
 package db
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -12,16 +14,12 @@ func (db *PgDB) AddJob(j *model.Job) error {
 }
 
 // JobByID retrieves a job by ID.
-func (db *PgDB) JobByID(jID model.JobID) (*model.Job, error) {
+func (db *PgDB) JobByID(ctx context.Context, jID model.JobID) (*model.Job, error) {
 	var j model.Job
-	if err := db.query(`
-SELECT *
-FROM jobs
-WHERE job_id = $1
-`, &j, jID); err != nil {
-		return nil, errors.Wrap(err, "querying job")
-	}
-	return &j, nil
+	return &j, db.bun.NewSelect().
+		Model(&j).
+		Where("job_id = ?", jID).
+		Scan(ctx)
 }
 
 // addJob persists the existence of a job from a tx.

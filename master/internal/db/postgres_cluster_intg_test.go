@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -53,7 +54,7 @@ func TestClusterAPI(t *testing.T) {
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
 
-	err = db.AddTask(tIn)
+	err = db.AddTask(context.TODO(), tIn)
 	require.NoError(t, err, "failed to add task")
 
 	// Add an allocation

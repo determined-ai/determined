@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/uptrace/bun"
 
 	"github.com/jmoiron/sqlx"
 
@@ -32,21 +34,21 @@ type queryHandler interface {
 }
 
 // CheckTaskExists checks if the task exists.
-func (db *PgDB) CheckTaskExists(id model.TaskID) (bool, error) {
-	var exists bool
-	err := db.sql.QueryRow(`
-SELECT
-EXISTS(
-  SELECT task_id
-  FROM tasks
-  WHERE task_id = $1
-)`, id).Scan(&exists)
-	return exists, err
+func (db *PgDB) CheckTaskExists(ctx context.Context, tID model.TaskID) (bool, error) {
+	return db.bun.NewSelect().
+		Table("tasks").
+		Where("task_id = ?", tID).
+		Exists(ctx)
 }
 
 // AddTask persists the existence of a task.
-func (db *PgDB) AddTask(t *model.Task) error {
-	return addTask(db.sql, t)
+func (db *PgDB) AddTask(ctx context.Context, t *model.Task) error {
+	tx, err := db.bun.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	return addTaskBun(ctx, tx, t)
 }
 
 func addTask(q queryHandler, t *model.Task) error {
@@ -59,17 +61,20 @@ VALUES (:task_id, :task_type, :start_time, :job_id, :log_version)
 	return nil
 }
 
+func addTaskBun(ctx context.Context, tx bun.Tx, t *model.Task) error {
+	_, err := tx.NewInsert().
+		Model(t).
+		Exec(ctx)
+	return err
+}
+
 // TaskByID returns a task by its ID.
-func (db *PgDB) TaskByID(tID model.TaskID) (*model.Task, error) {
+func (db *PgDB) TaskByID(ctx context.Context, tID model.TaskID) (*model.Task, error) {
 	var t model.Task
-	if err := db.query(`
-SELECT *
-FROM tasks
-WHERE task_id = $1
-`, &t, tID); err != nil {
-		return nil, errors.Wrap(err, "querying task")
-	}
-	return &t, nil
+	return &t, db.bun.NewSelect().
+		Model(&t).
+		Where("task_id = ?", tID).
+		Scan(ctx)
 }
 
 // CompleteTask persists the completion of a task.

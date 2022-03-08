@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -110,7 +111,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return errors.Wrapf(err, "persisting job %v", c.taskID)
 		}
 
-		if err := c.db.AddTask(&model.Task{
+		if err := c.db.AddTask(context.TODO(), &model.Task{
 			TaskID:     c.taskID,
 			TaskType:   c.taskType,
 			StartTime:  c.registeredTime,

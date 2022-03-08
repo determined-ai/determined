@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -42,7 +43,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.NoError(t, err, "failed to add job")
 
 	// Retrieve it back and make sure the mapping is exhaustive.
-	jOut, err := db.JobByID(jID)
+	jOut, err := db.JobByID(context.TODO(), jID)
 	require.NoError(t, err, "failed to retrieve job")
 	require.True(t, reflect.DeepEqual(jIn, jOut), pprintedExpect(jIn, jOut))
 
@@ -54,11 +55,11 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	err = db.AddTask(tIn)
+	err = db.AddTask(context.TODO(), tIn)
 	require.NoError(t, err, "failed to add task")
 
 	// Retrieve it back and make sure the mapping is exhaustive.
-	tOut, err := db.TaskByID(tID)
+	tOut, err := db.TaskByID(context.TODO(), tID)
 	require.NoError(t, err, "failed to retrieve task")
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
@@ -68,7 +69,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.NoError(t, err, "failed to mark task completed")
 
 	// Re-retrieve it back and make sure the mapping is still exhaustive.
-	tOut, err = db.TaskByID(tID)
+	tOut, err = db.TaskByID(context.TODO(), tID)
 	require.NoError(t, err, "failed to re-retrieve task")
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 

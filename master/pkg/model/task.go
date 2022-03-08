@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
+	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 
@@ -61,13 +62,15 @@ const (
 
 // Task is the model for a task in the database.
 type Task struct {
-	TaskID    TaskID     `db:"task_id"`
-	JobID     JobID      `db:"job_id"`
-	TaskType  TaskType   `db:"task_type"`
-	StartTime time.Time  `db:"start_time"`
-	EndTime   *time.Time `db:"end_time"`
+	bun.BaseModel `bun:"table:tasks,alias:tk"`
+
+	TaskID    TaskID     `db:"task_id" bun:"task_id"`
+	JobID     JobID      `db:"job_id" bun:"job_id"`
+	TaskType  TaskType   `db:"task_type" bun:"task_type"`
+	StartTime time.Time  `db:"start_time" bun:"start_time"`
+	EndTime   *time.Time `db:"end_time" bun:"end_time"`
 	// LogVersion indicates how the logs were stored.
-	LogVersion TaskLogVersion `db:"log_version"`
+	LogVersion TaskLogVersion `db:"log_version" bun:"log_version"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form

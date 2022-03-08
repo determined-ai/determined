@@ -57,7 +57,7 @@ func (a *apiServer) TaskLogs(
 	}
 
 	taskID := model.TaskID(req.TaskId)
-	switch exists, err := a.m.db.CheckTaskExists(taskID); {
+	switch exists, err := a.m.db.CheckTaskExists(resp.Context(), taskID); {
 	case err != nil:
 		return err
 	case !exists:
