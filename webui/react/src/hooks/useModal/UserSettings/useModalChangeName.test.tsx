@@ -9,6 +9,12 @@ import { DetailedUser } from 'types';
 
 import useModalUserSettings from './useModalUserSettings';
 
+jest.mock('services/api', () => ({
+  patchUser: ({ userParams }: PatchUserParams) => {
+    return Promise.resolve({ displayName: userParams.displayName });
+  },
+}));
+
 const OPEN_MODAL_TEXT = 'Open Modal';
 const LOAD_USERS_TEXT = 'Load Users';
 const USERNAME = 'test_username1';
@@ -66,12 +72,6 @@ const setup = async () => {
   userEvent.click(screen.getByText(LOAD_USERS_TEXT));
   userEvent.click(screen.getByText(CHANGE_NAME_TEXT));
 };
-
-jest.mock('services/api', () => ({
-  patchUser: ({ userParams }: PatchUserParams) => {
-    return Promise.resolve({ displayName: userParams.displayName });
-  },
-}));
 
 describe('useModalChangeName', () => {
   it('opens modal with correct values', async () => {

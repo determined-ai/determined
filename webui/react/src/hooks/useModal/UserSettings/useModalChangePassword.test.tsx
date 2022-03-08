@@ -10,6 +10,25 @@ import { DetailedUser } from 'types';
 
 import useModalUserSettings from './useModalUserSettings';
 
+const mockSetUserPassword = jest.fn((params) => {
+  return Promise.resolve(params);
+});
+
+jest.mock('services/api', () => {
+  return {
+    login: ({ password, username }: V1LoginRequest) => {
+      if (password === FIRST_PASSWORD_VALUE && username === USERNAME) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject();
+      }
+    },
+    setUserPassword: (params: SetUserPasswordParams) => {
+      mockSetUserPassword(params);
+    },
+  };
+});
+
 const OPEN_MODAL_TEXT = 'Open Modal';
 const LOAD_USERS_TEXT = 'Load Users';
 const USERNAME = 'test_username1';
@@ -70,25 +89,6 @@ const setup = async () => {
   userEvent.click(screen.getByText(LOAD_USERS_TEXT));
   userEvent.click(screen.getByText(CHANGE_PASSWORD_TEXT));
 };
-
-const mockSetUserPassword = jest.fn((params) => {
-  return Promise.resolve(params);
-});
-
-jest.mock('services/api', () => {
-  return {
-    login: ({ password, username }: V1LoginRequest) => {
-      if (password === FIRST_PASSWORD_VALUE && username === USERNAME) {
-        return Promise.resolve();
-      } else {
-        return Promise.reject();
-      }
-    },
-    setUserPassword: (params: SetUserPasswordParams) => {
-      mockSetUserPassword(params);
-    },
-  };
-});
 
 describe('useModalChangePassword', () => {
   it('opens modal with correct values', async () => {
