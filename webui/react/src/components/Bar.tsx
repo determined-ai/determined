@@ -7,7 +7,7 @@ import { floatToPercent } from 'utils/string';
 import css from './Bar.module.scss';
 
 export interface BarPart {
-  borded?: string;
+  bordered?: string;
   color: string; // css color
   label?: string;
   percent: number; // between 0-1
@@ -28,7 +28,7 @@ const partStyle = (part: BarPart) => {
     width: floatToPercent(part.percent, 0),
   };
 
-  if(part.borded){
+  if(part.bordered){
     style = { ...style, borderStyle: 'dashed dashed dashed none' };
   }
 

@@ -109,7 +109,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         percent: totalSlots < 1 ? 0 : (pendingSlots / totalSlots) * slotsAvaiablePer,
       },
       potential: {
-        borded: true,
+        bordered: true,
         color: getStateColorCssVar(SlotState.Potential),
         percent: 1 - slotsAvaiablePer,
       },
