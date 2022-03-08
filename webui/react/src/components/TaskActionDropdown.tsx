@@ -143,6 +143,8 @@ const TaskActionDropdown: React.FC<Props> = ({
         silent: false,
         type: ErrorType.Server,
       });
+    } finally {
+      onVisibleChange?.(false);
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
