@@ -11,11 +11,15 @@ import useModal, { ModalHooks } from '../useModal';
 
 import css from './useModalUserSettings.module.scss';
 
-const UserSettings: React.FC = () => {
+interface Props {
+  modal: Omit<ModalStaticFunctions, 'warn'>
+}
+
+const UserSettings: React.FC<Props> = ({ modal }) => {
   const { auth } = useStore();
 
-  const { modalOpen: openChangeDisplayNameModal } = useModalChangeName();
-  const { modalOpen: openChangePasswordModal } = useModalChangePassword();
+  const { modalOpen: openChangeDisplayNameModal } = useModalChangeName(modal);
+  const { modalOpen: openChangePasswordModal } = useModalChangePassword(modal);
 
   const handlePasswordClick = useCallback(() => {
     openChangePasswordModal();
@@ -68,11 +72,11 @@ const useModalUserSettings = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalH
     openOrUpdate({
       className: css.noFooter,
       closable: true,
-      content: <UserSettings />,
+      content: <UserSettings modal={modal} />,
       icon: null,
       title: <h5>Account</h5>,
     });
-  }, [ openOrUpdate ]);
+  }, [ modal, openOrUpdate ]);
 
   return { modalClose, modalOpen, modalRef };
 };
