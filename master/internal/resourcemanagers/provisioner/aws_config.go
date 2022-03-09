@@ -241,28 +241,34 @@ func (t ec2InstanceType) Slots() int {
 // source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
 func (t ec2InstanceType) Accelerator() string {
 	instanceType := t.name()
+	numGpu := t.Slots()
+	accelerator := ""
 	if strings.HasPrefix(instanceType, "p2") {
-		return "NVIDIA Tesla K80"
+		accelerator = "NVIDIA Tesla K80"
 	}
 	if strings.HasPrefix(instanceType, "p3") {
-		return "NVIDIA Tesla V100"
+		accelerator = "NVIDIA Tesla V100"
 	}
 	if strings.HasPrefix(instanceType, "p4d") {
-		return "NVIDIA A100"
+		accelerator = "NVIDIA A100"
 	}
 	if strings.HasPrefix(instanceType, "g3") {
-		return "NVIDIA Tesla M60"
+		accelerator = "NVIDIA Tesla M60"
 	}
 	if strings.HasPrefix(instanceType, "g5g") {
-		return "NVIDIA T4G"
+		accelerator = "NVIDIA T4G"
 	}
 	if strings.HasPrefix(instanceType, "g5") {
-		return "NVIDIA A10G"
+		accelerator = "NVIDIA A10G"
 	}
 	if strings.HasPrefix(instanceType, "g4dn") {
-		return "NVIDIA T4 Tensor Core"
+		accelerator = "NVIDIA T4 Tensor Core"
 	}
-	return ""
+	if accelerator == "" {
+		return ""
+	}
+	return fmt.Sprintf("%d x %s", numGpu, accelerator)
+
 }
 
 // This map tracks how many slots are available in each instance type. It also
