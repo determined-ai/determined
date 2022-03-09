@@ -63,11 +63,15 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
 @authentication.required
 def list_checkpoints(args: Namespace) -> None:
+    if args.best:
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_SEARCHER_METRIC
+    else:
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_END_TIME
     r = bindings.get_GetExperimentCheckpoints(
         setup_session(args),
         id=args.experiment_id,
         limit=args.best,
-        sortBy=bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_SEARCHER_METRIC,
+        sortBy=sorter,
     )
     checkpoints = r.checkpoints or []
     searcher_metric = ""
