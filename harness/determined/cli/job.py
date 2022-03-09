@@ -118,7 +118,7 @@ def _single_update(
 
 def is_priority_rm(config: dict) -> bool:
     try:
-        if config["resource_manager"]["scheduler"]["type"] == "fair_share":
+        if config["resource_manager"]["scheduler"]["type"] != "priority":
             return False
     except KeyError:
         pass
@@ -128,7 +128,7 @@ def is_priority_rm(config: dict) -> bool:
 def check_is_priority(config: dict, resource_pool: str) -> bool:
     try:
         for pool in config["resource_pools"]:
-            if pool["pool_name"] == resource_pool and pool["scheduler"]["type"] == "fair_share":
+            if pool["pool_name"] == resource_pool and pool["scheduler"]["type"] != "priority":
                 return False
         return is_priority_rm(config)
 
@@ -138,6 +138,7 @@ def check_is_priority(config: dict, resource_pool: str) -> bool:
 
 
 def validate_operation_args(operation: str) -> dict:
+    valid_cmds = ("priority", "weight", "resource_pool", "ahead_of", "behind_of")
     replacements = {
         "resource-pool": "resource_pool",
         "ahead-of": "ahead_of",
@@ -147,22 +148,27 @@ def validate_operation_args(operation: str) -> dict:
     values = operation.split(".")
     if len(values) != 2:
         raise ValueError(
-            f"Invalid operation specified for job {values[0]}. "
-            f"Please ensure the operation is formatted as <jobID>.<operation>=<value>."
+            f"Job {values[0]} and its operation have an invalid format. "
+            f"Please ensure the update is formatted as <jobID>.<operation>=<value>."
         )
     args["job_id"] = values[0]
     operation = values[1].split("=")
     if len(operation) != 2:
         raise ValueError(
             f"The operation for job {values[0]} has invalid format. "
-            f"Please ensure it is formatted as <operation>=<value>."
+            f"Please ensure the operation is formatted as <operation>=<value>."
         )
-    if operation[0] in replacements:
-        args[replacements[operation[0]]] = operation[1]
-    else:
-        args[operation[0]] = operation[1]
+
+    if operation[0] not in valid_cmds:
+        raise ValueError(
+            f"Invalid operation {operation[0]} specified for job {values[0]}. "
+            f"Supported commands include: {valid_cmds}."
+        )
+
+    args[replacements.get(operation[0], operation[0])] = operation[1]
 
     return args
+
 
 args_description = [
     Cmd(
