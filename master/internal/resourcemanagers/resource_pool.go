@@ -443,6 +443,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) persist() error {
+	// exlude head and tail?
 	fmt.Println("TODO persist rp", rp.config.PoolName)
 	return nil // TODO
 }

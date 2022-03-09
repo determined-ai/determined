@@ -98,19 +98,19 @@ def process_updates(args: Namespace) -> None:
 def _single_update(
     job_id: str,
     session: Session,
-    priority: str = None,
-    weight: str = None,
-    resource_pool: str = None,
-    behind_of: str = None,
-    ahead_of: str = None,
+    priority: str = "",
+    weight: str = "",
+    resource_pool: str = "",
+    behind_of: str = "",
+    ahead_of: str = "",
 ) -> None:
     update = bindings.v1QueueControl(
         jobId=job_id,
-        priority=priority,
-        weight=int(weight) if weight else None,
-        resourcePool=resource_pool,
-        behindOf=behind_of,
-        aheadOf=ahead_of,
+        priority=int(priority) if priority != "" else None,
+        weight=int(weight) if weight != "" else None,
+        resourcePool=resource_pool if resource_pool != "" else None,
+        behindOf=behind_of if behind_of != "" else None,
+        aheadOf=ahead_of if ahead_of != "" else None,
     )
     bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest([update]))
     return
@@ -152,20 +152,20 @@ def validate_operation_args(operation: str) -> dict:
             f"Please ensure the update is formatted as <jobID>.<operation>=<value>."
         )
     args["job_id"] = values[0]
-    operation = values[1].split("=")
-    if len(operation) != 2:
+    operand = values[1].split("=")
+    if len(operand) != 2:
         raise ValueError(
             f"The operation for job {values[0]} has invalid format. "
             f"Please ensure the operation is formatted as <operation>=<value>."
         )
 
-    if operation[0] not in valid_cmds:
+    if operand[0] not in valid_cmds and operand[0] not in replacements:
         raise ValueError(
-            f"Invalid operation {operation[0]} specified for job {values[0]}. "
+            f"Invalid operation {operand[0]} specified for job {values[0]}. "
             f"Supported commands include: {valid_cmds}."
         )
 
-    args[replacements.get(operation[0], operation[0])] = operation[1]
+    args[replacements.get(operand[0], operand[0])] = operand[1]
 
     return args
 
