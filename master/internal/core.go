@@ -58,6 +58,8 @@ import (
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 const (
@@ -639,6 +641,20 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	return "", nil
 }
 
+/*func (m * Master) initTracer(ctx context.Context) error {
+	exporter, err := stdout.New(stdout.WithPrettyPrint())
+	if err != nil {
+		log.Fatal(err)
+	}
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exporter),
+	)
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+	return tp
+}*/
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 func (m *Master) Run(ctx context.Context) error {
 	log.Infof("Determined master %s (built with %s)", version.Version, runtime.Version())
@@ -738,6 +754,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
+	m.echo.Use(otelecho.Middleware("my-server"))
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
