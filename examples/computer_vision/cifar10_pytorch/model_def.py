@@ -2,7 +2,8 @@
 CNN on Cifar10 from Keras example:
 https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 """
-
+import filelock
+import os
 import tempfile
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
@@ -43,36 +44,39 @@ class CIFARTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
-        # Create a unique download directory for each rank so they don't overwrite each
-        # other when doing distributed training.
-        self.download_directory = tempfile.mkdtemp()
+        self.download_directory = "data"
+        os.makedirs(self.download_directory, exist_ok=True)
 
-        self.model = self.context.wrap_model(nn.Sequential(
-            nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2)),
-            nn.Dropout2d(self.context.get_hparam("layer1_dropout")),
-            nn.Conv2d(32, 64, (3, 3), padding=1),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, (3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2)),
-            nn.Dropout2d(self.context.get_hparam("layer2_dropout")),
-            Flatten(),
-            nn.Linear(2304, 512),
-            nn.ReLU(),
-            nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
-            nn.Linear(512, NUM_CLASSES),
-        ))
+        self.model = self.context.wrap_model(
+            nn.Sequential(
+                nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
+                nn.ReLU(),
+                nn.Conv2d(32, 32, kernel_size=(3, 3)),
+                nn.ReLU(),
+                nn.MaxPool2d((2, 2)),
+                nn.Dropout2d(self.context.get_hparam("layer1_dropout")),
+                nn.Conv2d(32, 64, (3, 3), padding=1),
+                nn.ReLU(),
+                nn.Conv2d(64, 64, (3, 3)),
+                nn.ReLU(),
+                nn.MaxPool2d((2, 2)),
+                nn.Dropout2d(self.context.get_hparam("layer2_dropout")),
+                Flatten(),
+                nn.Linear(2304, 512),
+                nn.ReLU(),
+                nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
+                nn.Linear(512, NUM_CLASSES),
+            )
+        )
 
-        self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(  # type: ignore
-            self.model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            weight_decay=self.context.get_hparam("learning_rate_decay"),
-            alpha=0.9,
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.RMSprop(  # type: ignore
+                self.model.parameters(),
+                lr=self.context.get_hparam("learning_rate"),
+                weight_decay=self.context.get_hparam("learning_rate_decay"),
+                alpha=0.9,
+            )
+        )
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -104,17 +108,19 @@ class CIFARTrial(PyTorchTrial):
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
-        trainset = torchvision.datasets.CIFAR10(
-            root=self.download_directory, train=True, download=True, transform=transform
-        )
+        with filelock.FileLock(os.path.join(self.download_directory, "train_lock")):
+            trainset = torchvision.datasets.CIFAR10(
+                root=self.download_directory, train=True, download=True, transform=transform
+            )
         return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> Any:
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
-        valset = torchvision.datasets.CIFAR10(
-            root=self.download_directory, train=False, download=True, transform=transform
-        )
+        with filelock.FileLock(os.path.join(self.download_directory, "validation_lock")):
+            valset = torchvision.datasets.CIFAR10(
+                root=self.download_directory, train=False, download=True, transform=transform
+            )
 
         return DataLoader(valset, batch_size=self.context.get_per_slot_batch_size())
