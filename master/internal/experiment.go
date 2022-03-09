@@ -186,7 +186,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			if err != nil {
 				return err
 			}
-			if j.QPos != "-1" || j.QPos == "" {
+			if j.QPos != "-1" || j.QPos != "" {
 				position, err := decimal.NewFromString(j.QPos)
 				if err != nil {
 					return err
