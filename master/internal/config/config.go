@@ -166,6 +166,7 @@ type Config struct {
 	Scim         ScimConfig         `json:"scim"`
 	SAML         SAMLConfig         `json:"saml"`
 	OIDC         OIDCConfig         `json:"oidc"`
+	DetCloud     DetCloudConfig     `json:"det_cloud"`
 	Integrations IntegrationsConfig `json:"integrations"`
 }
 
