@@ -268,7 +268,6 @@ func (t ec2InstanceType) Accelerator() string {
 		return ""
 	}
 	return fmt.Sprintf("%d x %s", numGpu, accelerator)
-
 }
 
 // This map tracks how many slots are available in each instance type. It also
