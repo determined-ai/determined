@@ -6,7 +6,7 @@ const DISPLAY_NAME_VALUE = 'Display Name';
 const USERNAME_VALUE = 'username_1';
 const DEFAULT_VALUE = 'Unavailable';
 
-const users : Array<DetailedUser> = [
+const users: Array<DetailedUser> = [
   {
     displayName: DISPLAY_NAME_VALUE,
     id: 1,

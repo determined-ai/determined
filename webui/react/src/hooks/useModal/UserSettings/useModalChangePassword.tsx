@@ -54,7 +54,7 @@ const ChangePassword: React.FC<Props> = ({ onComplete }) => {
               message: 'Incorrect password',
               validator: async (rule, value) => {
                 return await login({
-                  password: value || '',
+                  password: value ?? '',
                   username,
                 });
               },
@@ -70,11 +70,11 @@ const ChangePassword: React.FC<Props> = ({ onComplete }) => {
             { message: 'New password required', required: true },
             { message: "Your new password isn't long enough", min: 8 },
             {
-              message: 'Your new password must include an uppercase',
+              message: 'Your new password must include an uppercase letter',
               pattern: /[A-Z]+/,
             },
             {
-              message: 'Your new password must include a lowercase',
+              message: 'Your new password must include a lowercase letter',
               pattern: /[a-z]+/,
             },
             {

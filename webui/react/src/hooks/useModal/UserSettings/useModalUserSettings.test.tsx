@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button, Modal } from 'antd';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { DetailedUser } from 'types';
@@ -9,7 +9,6 @@ import { DetailedUser } from 'types';
 import useModalUserSettings from './useModalUserSettings';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
-const LOAD_USERS_TEXT = 'Load Users';
 const USERNAME = 'test_username1';
 const DISPLAY_NAME = 'Test Name';
 const CHANGE_NAME_TEXT = 'Change name';
@@ -42,14 +41,15 @@ const TestApp: React.FC = () => {
     });
   }, [ storeDispatch ]);
 
+  useEffect(() => {
+    loadUsers();
+  });
+
   return (
     <div>
       {contextHolder}
       <Button onClick={() => openUserSettingsModal()}>
         {OPEN_MODAL_TEXT}
-      </Button>
-      <Button onClick={() => loadUsers()}>
-        {LOAD_USERS_TEXT}
       </Button>
     </div>
   );
@@ -62,14 +62,13 @@ const setup = async () => {
     </StoreProvider>,
   );
   userEvent.click(await screen.findByText(OPEN_MODAL_TEXT));
-  userEvent.click(await screen.findByText(LOAD_USERS_TEXT));
 };
 
 describe('useModalUserSettings', () => {
   it('opens modal with correct values', async () => {
     await setup();
 
-    expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: USER_SETTINGS_HEADER });
     expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
     expect(screen.getByText(USERNAME)).toBeInTheDocument();
     expect(screen.getByText(CHANGE_NAME_TEXT)).toBeInTheDocument();
@@ -79,7 +78,9 @@ describe('useModalUserSettings', () => {
   it('closes the modal', async () => {
     await setup();
 
-    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await waitFor(() => {
+      userEvent.click(screen.getByRole('button', { name: /close/i }));
+    });
 
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: USER_SETTINGS_HEADER })).not.toBeInTheDocument();
