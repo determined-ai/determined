@@ -283,10 +283,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
-		if err := e.setPriority(ctx, &msg.Priority); err != nil {
-			ctx.Respond(err)
-			ctx.Log().WithError(err)
-		}
+		err := e.setPriority(ctx, &msg.Priority)
+		ctx.Respond(err)
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 

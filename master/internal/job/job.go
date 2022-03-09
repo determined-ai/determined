@@ -65,11 +65,6 @@ type (
 		ResourcePool string // TODO are we using this?
 		Handler      *actor.Ref
 	}
-	// SetJobPriority is received by the jobs actor and sets the priority of a job.
-	SetJobPriority struct {
-		ID       model.JobID
-		Priority int
-	}
 	// SetResourcePool switches the resource pool that the job belongs to.
 	SetResourcePool struct {
 		ResourcePool string
@@ -230,11 +225,6 @@ func (j *Jobs) SetJobPriority(ctx *actor.Context, jobID model.JobID, priority in
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
-
-	case SetJobPriority:
-		if err := j.SetJobPriority(ctx, msg.ID, msg.Priority); err != nil {
-			ctx.Respond(err)
-		}
 
 	case RegisterJob:
 		j.actorByID[msg.JobID] = msg.JobActor

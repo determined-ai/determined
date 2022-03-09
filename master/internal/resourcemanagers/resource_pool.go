@@ -414,7 +414,10 @@ func (rp *ResourcePool) moveJob(
 	}
 
 	if prioChange {
-		resp := ctx.Self().System().AskAt(job.JobsActorAddr, job.SetJobPriority{ID: jobID, Priority: anchorPriority})
+		resp := ctx.Ask(rp.IDToGroupActor[jobID], job.SetGroupPriority{
+			Priority:     anchorPriority,
+			ResourcePool: rp.config.PoolName,
+		})
 		if resp.Error() != nil {
 			return resp.Error()
 		}
