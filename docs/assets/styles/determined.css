@@ -2,6 +2,10 @@
 
 table.align-default {
     margin-left: inherit !important;
+}
+td {
+    vertical-align: top;
+}
 
 /* fonts */
 @font-face {

@@ -45,8 +45,8 @@ More information on a Determined cluster can be found:
 
    network-requirements
    cluster-config
-   cluster-reference-master
-   cluster-reference-agent
+   config-reference-master
+   config-reference-agent
    elasticsearch-logging-backend
    historical-cluster-usage-data
    upgrades
