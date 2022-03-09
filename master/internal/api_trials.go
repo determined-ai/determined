@@ -746,9 +746,9 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	case err != nil:
 		return nil, err
 	}
-	exp := actor.Addr("experiments", eID)
+	trial := actor.Addr("experiments", eID, rID)
 
-	if err = a.ask(exp, trialReportEarlyExit{
+	if err = a.ask(trial, userInitiatedEarlyExit{
 		requestID: rID,
 		reason:    model.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {
