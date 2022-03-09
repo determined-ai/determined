@@ -125,6 +125,15 @@ func createAgentUserGroup() *model.AgentUserGroup {
 	}
 }
 
+func createUser() *model.User {
+	return &model.User{
+		ID:       1,
+		Username: "determined",
+		Active:   true,
+		Admin:    false,
+	}
+}
+
 func createPodWithMockQueue() (
 	*actor.System,
 	*pod,
@@ -134,10 +143,12 @@ func createPodWithMockQueue() (
 ) {
 	commandSpec := tasks.GenericCommandSpec{
 		Base: tasks.TaskSpec{
-			AllocationID:   "task",
-			ContainerID:    "container",
-			ClusterID:      "cluster",
-			AgentUserGroup: createAgentUserGroup(),
+			AllocationID:     "task",
+			ContainerID:      "container",
+			ClusterID:        "cluster",
+			AgentUserGroup:   createAgentUserGroup(),
+			Owner:            createUser(),
+			UserSessionToken: "bogus",
 		},
 		Config: model.CommandConfig{Description: "test-config"},
 	}
