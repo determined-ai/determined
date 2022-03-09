@@ -476,6 +476,7 @@ func (p k8sPodResources) Start(
 	}
 	spec.LoggingFields["allocation_id"] = spec.AllocationID
 	spec.LoggingFields["task_id"] = spec.TaskID
+	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	ctx.Tell(p.podsActor, kubernetes.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,

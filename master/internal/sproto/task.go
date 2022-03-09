@@ -40,7 +40,6 @@ type (
 
 		// Behavioral configuration.
 		Preemptible  bool
-		DoRendezvous bool
 		IdleTimeout  *IdleTimeoutConfig
 		ProxyPort    *PortProxyConfig
 		StreamEvents *EventStreamConfig
@@ -139,6 +138,8 @@ type (
 )
 
 const (
+	// ResourcesTypeEnvVar is the name of the env var indicating the resource type to a task.
+	ResourcesTypeEnvVar = "DET_RESOURCES_TYPE"
 	// ResourcesTypeK8sPod indicates the resources are a handle for a k8s pod.
 	ResourcesTypeK8sPod ResourcesType = "k8s-pod"
 	// ResourcesTypeDockerContainer indicates the resources are a handle for a docker container.

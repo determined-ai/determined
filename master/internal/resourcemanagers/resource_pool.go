@@ -482,6 +482,7 @@ func (c containerResources) Start(
 	}
 	spec.LoggingFields["allocation_id"] = spec.AllocationID
 	spec.LoggingFields["task_id"] = spec.TaskID
+	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskContainer{
