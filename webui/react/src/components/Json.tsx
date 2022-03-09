@@ -8,6 +8,7 @@ import css from './Json.module.scss';
 type TextTransfomer = (key: string) => string;
 
 interface Props {
+  hideDivider?: boolean;
   json: RawJson;
   translateLabel?: TextTransfomer;
 }
@@ -40,10 +41,11 @@ const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => 
   );
 };
 
-const Json: React.FC<Props> = ({ json, translateLabel }: Props) => {
-
+const Json: React.FC<Props> = ({ json, translateLabel, hideDivider }: Props) => {
+  const classes = [ css.base ];
+  if(hideDivider) classes.push(css.hideDivider);
   return (
-    <ul className={css.base}>
+    <ul className={classes.join(' ')}>
       {Object.entries(json).map(([ label, value ]) => (
         <Row key={label} label={label} translateLabel={translateLabel} value={value} />
       ))}

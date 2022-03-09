@@ -52,3 +52,13 @@ ul.detailedLegends {
     margin-top: 0;
   }
 }
+.footer {
+  display: flex;
+  font-size: var(--theme-sizes-font-small);
+  justify-content: space-between;
+  margin-bottom: 8px;
+
+  .queued {
+    color: var(--theme-colors-states-pending)
+  }
+}

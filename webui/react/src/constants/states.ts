@@ -144,6 +144,7 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
   [SlotState.Pending]: 'Pending',
   [SlotState.Running]: 'Running',
   [SlotState.Free]: 'Free',
+  [SlotState.Potential]: 'Potential',
 };
 
 export function stateToLabel(

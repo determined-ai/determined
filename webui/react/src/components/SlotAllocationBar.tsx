@@ -4,7 +4,10 @@ import React, { useMemo } from 'react';
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import Link from 'components/Link';
 import { resourceStateToLabel } from 'constants/states';
+import { paths } from 'routes/utils';
+import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
 import { floatToPercent } from 'utils/string';
@@ -15,12 +18,22 @@ import css from './SlotAllocation.module.scss';
 export interface Props {
   barOnly?: boolean;
   className?: string;
+  footer?: AllocationBarFooterProps;
   hideHeader?: boolean;
+  poolType?: V1ResourcePoolType;
   resourceStates: ResourceState[];
   showLegends?: boolean;
   size?: ShirtSize;
+  slotsPotential?:number;
   title?: string;
   totalSlots: number;
+}
+
+export interface AllocationBarFooterProps {
+  auxContainerCapacity?:number
+  auxContainersRunning ?: number;
+  isAux?: boolean;
+  queued?: number;
 }
 
 interface LegendProps {
@@ -58,7 +71,10 @@ const SlotAllocationBar: React.FC<Props> = ({
   showLegends,
   className,
   hideHeader,
+  footer,
   title,
+  poolType,
+  slotsPotential,
   ...barProps
 }: Props) => {
 
@@ -81,23 +97,30 @@ const SlotAllocationBar: React.FC<Props> = ({
   const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
 
   const barParts = useMemo(() => {
+    const slotsAvaiablePer = slotsPotential && slotsPotential > totalSlots
+      ? (totalSlots / slotsPotential) : 1;
     const parts = {
       free: {
         color: getStateColorCssVar(SlotState.Free),
-        percent: totalSlots < 1 ? 0 : freeSlots / totalSlots,
+        percent: totalSlots < 1 ? 0 : (freeSlots / totalSlots) * slotsAvaiablePer,
       },
       pending: {
         color: getStateColorCssVar(SlotState.Pending),
-        percent: totalSlots < 1 ? 0 : pendingSlots / totalSlots,
+        percent: totalSlots < 1 ? 0 : (pendingSlots / totalSlots) * slotsAvaiablePer,
+      },
+      potential: {
+        bordered: true,
+        color: getStateColorCssVar(SlotState.Potential),
+        percent: 1 - slotsAvaiablePer,
       },
       running: {
         color: getStateColorCssVar(SlotState.Running),
-        percent: totalSlots < 1 ? 0 : stateTallies.RUNNING / totalSlots,
+        percent: totalSlots < 1 ? 0 : (stateTallies.RUNNING / totalSlots) * slotsAvaiablePer,
       },
     };
 
-    return [ parts.running, parts.pending, parts.free ];
-  }, [ totalSlots, stateTallies, pendingSlots, freeSlots ]);
+    return [ parts.running, parts.pending, parts.free, parts.potential ];
+  }, [ totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential ]);
 
   const stateDetails = useMemo(() => {
     const states = [
@@ -148,6 +171,32 @@ const SlotAllocationBar: React.FC<Props> = ({
           <Bar {...barProps} parts={barParts} />
         </div>
       </ConditionalWrapper>
+      {footer && (
+        <div className={css.footer}>
+          {poolType === V1ResourcePoolType.K8S ? (
+            <header>{`${footer.isAux ?
+              `${footer.auxContainersRunning} Aux Containers Running` :
+              `${stateTallies.RUNNING} Compute Slots Allocated`}`}
+            </header>
+          )
+            : (
+              <header>{`${footer.isAux ?
+                `${footer.
+                  auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
+                `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
+              </header>
+            )}
+          {footer.queued ? (
+            <Link path={paths.jobs()}>
+              <span className={css.queued}>{`${footer.queued > 100 ?
+                '100+' :
+                footer.queued} ${footer.queued === 1 ? 'Job' : 'Jobs'} Queued`}
+              </span>
+            </Link>
+          ) :
+            !footer.isAux && <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>}
+        </div>
+      )}
       {showLegends && (
         <div className={css.overallLegends}>
           <Popover content={stateDetails} placement="bottom">
