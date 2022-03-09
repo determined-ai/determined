@@ -133,30 +133,46 @@ def main(train_entrypoint: str) -> int:
         )
         return subprocess.Popen(pid_server_cmd + run_sshd_command).wait()
 
-    # Chief machine waits for every worker's sshd to be available.  All machines should be pretty
-    # close to in-step by now because all machines just finished synchronizing rendezvous info.
-    deadline = time.time() + 20
-    for peer in info.container_addrs[1:]:
-        while True:
-            with socket.socket() as sock:
-                sock.settimeout(1)
-                try:
-                    # Connect to a socket to ensure sshd is listening.
-                    sock.connect((peer, constants.DTRAIN_SSH_PORT))
-                    # The ssh protocol requires the server to serve an initial greeting.
-                    # Receive part of that greeting to know that sshd is accepting/responding.
-                    data = sock.recv(1)
-                    if not data:
-                        raise ValueError("no sshd greeting")
-                    # This peer is ready.
-                    break
-                except Exception:
-                    if time.time() > deadline:
-                        raise ValueError(
-                            f"Chief machine was unable to connect to sshd on peer machine at "
-                            f"{peer}:{constants.DTRAIN_SSH_PORT}"
-                        )
-                    time.sleep(0.1)
+    os.environ["USE_DEEPSPEED"] = "1"
+
+    # Chief worker runs sshd
+    if len(info.container_addrs) > 1:
+        # Create the environment file that will be passed by deepspeed to individual ranks.
+        create_deepspeed_env_file()
+        # Set custom PDSH args:
+        # * bypass strict host checking
+        # * -p our custom port
+        # * other args are default ssh args for pdsh
+        os.environ["PDSH_SSH_ARGS"] = (
+            "-o PasswordAuthentication=no -o StrictHostKeyChecking=no "
+            f"-p {constants.DTRAIN_SSH_PORT} -2 -a -x %h"
+        )
+        subprocess.Popen(run_sshd_command)
+
+        # Chief machine waits for every worker's sshd to be available.  All machines should be pretty
+        # close to in-step by now because all machines just finished synchronizing rendezvous info.
+        deadline = time.time() + 20
+        for peer in info.container_addrs:
+            while True:
+                with socket.socket() as sock:
+                    sock.settimeout(1)
+                    try:
+                        # Connect to a socket to ensure sshd is listening.
+                        sock.connect((peer, constants.DTRAIN_SSH_PORT))
+                        # The ssh protocol requires the server to serve an initial greeting.
+                        # Receive part of that greeting to know that sshd is accepting/responding.
+                        data = sock.recv(1)
+                        if not data:
+                            raise ValueError("no sshd greeting")
+                        # This peer is ready.
+                        break
+                    except Exception:
+                        if time.time() > deadline:
+                            raise ValueError(
+                                f"Chief machine was unable to connect to sshd on peer machine at "
+                                f"{peer}:{constants.DTRAIN_SSH_PORT}"
+                            )
+                        time.sleep(0.1)
 
     # The chief has several layers of wrapper processes:
     # - a top-level pid_server, which causes the whole container to exit if any local worker dies.
@@ -215,20 +231,6 @@ def main(train_entrypoint: str) -> int:
     logging.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
 
     full_cmd = pid_server_cmd + cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
-
-    os.environ["USE_DEEPSPEED"] = "1"
-    if len(info.container_addrs) > 1:
-        # Create the environment file that will be passed by deepspeed to individual ranks.
-        create_deepspeed_env_file()
-        # Set custom PDSH args:
-        # * bypass strict host checking
-        # * -p our custom port
-        # * other args are default ssh args for pdsh
-        os.environ["PDSH_SSH_ARGS"] = (
-            "-o PasswordAuthentication=no -o StrictHostKeyChecking=no "
-            f"-p {constants.DTRAIN_SSH_PORT} -2 -a -x %h"
-        )
-        subprocess.Popen(run_sshd_command)
 
     return subprocess.Popen(full_cmd).wait()
 
