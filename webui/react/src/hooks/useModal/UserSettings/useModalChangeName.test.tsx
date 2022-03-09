@@ -91,9 +91,7 @@ describe('useModalChangeName', () => {
       userEvent.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
     });
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
   });
 
   it('submits a valid display name update request', async () => {
@@ -112,12 +110,10 @@ describe('useModalChangeName', () => {
 
     // TODO: test for toast message appearance?
 
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
-      expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
-      expect(screen.getByText(UPDATED_DISPLAY_NAME)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(UPDATED_DISPLAY_NAME)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+    expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
   });
 
   it('closes the modal and returns to User Settings modal', async () => {

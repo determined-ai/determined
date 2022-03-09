@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button, Modal } from 'antd';
 import React, { useCallback } from 'react';
@@ -11,7 +11,7 @@ import { DetailedUser } from 'types';
 import useModalUserSettings from './useModalUserSettings';
 
 const mockSetUserPassword = jest.fn((params) => {
-  return Promise.resolve(params);
+  return setTimeout(() => Promise.resolve(params), 1000000);
 });
 
 jest.mock('services/api', () => {
@@ -129,13 +129,15 @@ describe('useModalChangePassword', () => {
 
     // TODO: test for toast message appearance?
 
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT })).not.toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
-      expect(mockSetUserPassword).toHaveBeenCalledWith({
-        password: SECOND_PASSWORD_VALUE,
-        username: USERNAME,
-      });
+    if (screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT })) {
+      await waitForElementToBeRemoved(
+        () => screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT }),
+      );
+    }
+    expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+    expect(mockSetUserPassword).toHaveBeenCalledWith({
+      password: SECOND_PASSWORD_VALUE,
+      username: USERNAME,
     });
   });
 
