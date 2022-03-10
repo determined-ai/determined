@@ -22,18 +22,18 @@ check: check-gen
 
 .PHONY: test
 test: gen
-	pytest -v --runslow --durations=0 tests
+	coverage run -m pytest -v --runslow --durations=0 tests
 
 .PHONY: test-tf2
 test-tf2:
 	pip freeze | grep "tensorflow==2.*"
-	pytest -v --runslow --durations=0 tests/experiment/tensorflow
+	coverage run -m pytest -v --runslow --durations=0 tests/experiment/tensorflow
 	# We must run these tests separately becuase estimators need to disable v2
 	# behavior (a global operation). We are explicitly testing eager execution
 	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
 	# anywhere but the "start" of your program. See:
 	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
-	pytest -v --runslow --durations=0 tests/experiment/keras
+	coverage run -a -m pytest -v --runslow --durations=0 tests/experiment/keras
 
 .PHONY: clean
 clean: ungen
@@ -43,6 +43,7 @@ clean: ungen
 	rm -rf pip-wheel-metadata/
 	rm -rf dist/
 	rm -rf build/
+	rm -f .coverage
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
 AWS_TEMPLATES_PATH := determined/deploy/aws/templates

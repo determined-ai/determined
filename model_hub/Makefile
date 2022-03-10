@@ -8,7 +8,7 @@ ARTIFACTS_DIR := /tmp/artifacts
 DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-5158dec
 
 ############REMINDER############
-# When bumping third-party library versions, remember to bump versions in 
+# When bumping third-party library versions, remember to bump versions in
 # tests/requirements.txt and docs/requirements.txt to match.
 ############REMINDER############
 
@@ -37,6 +37,7 @@ clean:
 	rm -rf dist/
 	rm -rf build/
 	rm -rf build-examples/
+	rm -f .coverage
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 	find . -type d -name .mypy_cache -prune -exec rm -rf {} \;
 
@@ -47,12 +48,12 @@ build:
 .PHONY: examples
 examples: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
 
-build-examples/%.tgz: examples/*/%/ 
+build-examples/%.tgz: examples/*/%/
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
-build-examples/%.tgz: examples/%/ 
+build-examples/%.tgz: examples/%/
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
@@ -75,7 +76,7 @@ check:
 
 .PHONY: test
 test:
-	pytest -v -s --durations=0 tests
+	coverage run -m pytest -v -s --durations=0 tests
 
 # We will only use HASH for dev environments.
 .PHONY: build-transformers-dev
