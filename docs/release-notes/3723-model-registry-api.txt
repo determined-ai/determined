@@ -1,0 +1,6 @@
+:orphan:
+
+**API Changes**
+
+The model registry API now will accept either the ID or Model Name in ``/api/v1/models/:name`` or
+``/api/v1/models/:id``. This applies to all API routes for Models and Model Versions.
