@@ -22,12 +22,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    chartRef.current = new Hermes(
-      containerRef.current,
-      dimensions,
-      config,
-      { key: [] },
-    );
+    chartRef.current = new Hermes(containerRef.current);
 
     return () => {
       chartRef.current?.destroy();
@@ -36,8 +31,28 @@ const ParallelCoordinates: React.FC<Props> = ({
   }, [ config, dimensions ]);
 
   useEffect(() => {
-    if (chartRef.current) chartRef.current.setData(data);
-  }, [ data ]);
+    let redraw = true;
+
+    try {
+      chartRef.current?.setDimensions(dimensions, false);
+    } catch (e) {
+      redraw = false;
+    }
+
+    try {
+      if (config) chartRef.current?.setConfig(config, false);
+    } catch (e) {
+      redraw = false;
+    }
+
+    try {
+      chartRef.current?.setData(data, false);
+    } catch (e) {
+      redraw = false;
+    }
+
+    if (redraw) chartRef.current?.redraw();
+  }, [ config, data, dimensions ]);
 
   return (
     <div className={css.base}>

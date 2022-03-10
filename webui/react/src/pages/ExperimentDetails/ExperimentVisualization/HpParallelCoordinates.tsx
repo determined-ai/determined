@@ -15,7 +15,7 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range, RecordKey,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
@@ -84,7 +84,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
-  const handleFilterChange = useCallback((filters: Hermes.Filters) => {
+  const handleFilterChange = useCallback((hermesFilters: Hermes.Filters) => {
     // Skip if there aren't any chart data.
     if (!chartData) return;
 
@@ -95,7 +95,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }, {} as Record<number, boolean>);
 
     // Figure out which trials are filtered out based on user filters.
-    Object.entries(filters).forEach(([ key, list ]) => {
+    Object.entries(hermesFilters).forEach(([ key, list ]) => {
       if (!chartData.data[key] || list.length === 0) return;
 
       chartData.data[key].forEach((value, index) => {
@@ -153,9 +153,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return newDimensions;
   }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
 
-  const clearSelected = useCallback(() => {
-    setSelectedRowKeys([]);
-  }, []);
+  const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
   useEffect(() => {
     if (ui.isPageHidden) return;
@@ -268,8 +266,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTrialUnselect = useCallback((trialId: number) =>
-    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+  const handleTrialUnselect = useCallback((trialId: number) => {
+    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId));
+  }, []);
+
+  // Reset filtered trial ids when HP Viz filters changes.
+  useEffect(() => {
+    setFilteredTrialIdMap(undefined);
+  }, [ selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
