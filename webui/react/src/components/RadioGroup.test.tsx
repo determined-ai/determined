@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { RadioGroupOption } from 'types';
@@ -18,40 +19,39 @@ const setup = (options: RadioGroupOption[], iconOnly = false) => {
 };
 
 describe('RadioGroup', () => {
+  const firstOption = 'First Option';
+  const secondOption = 'Second Option';
+
   const radioOptions: RadioGroupOption[] = [
-    { icon: 'learning', id: '1st', label: 'First Option' },
-    { icon: 'heat', id: '2nd', label: 'Second Option' },
+    { icon: 'learning', id: '1st', label: firstOption },
+    { icon: 'heat', id: '2nd', label: secondOption },
   ];
 
   it('displays two radio button options with labels', () => {
     setup(radioOptions);
-    expect(screen.getByText('First Option')).toBeInTheDocument();
-    expect(screen.getByText('Second Option')).toBeInTheDocument();
+    expect(screen.getByText(firstOption)).toBeInTheDocument();
+    expect(screen.getByText(secondOption)).toBeInTheDocument();
   });
 
   it('displays two radio button options without labels (icon only)', () => {
     setup(radioOptions, true);
-    expect(() => screen.getByText('First Option')).toThrow();
-    expect(() => screen.getByText('Second Option')).toThrow();
+    expect(() => screen.getByText(firstOption)).toThrow();
+    expect(() => screen.getByText(secondOption)).toThrow();
   });
 
   it('updates state when radio button labels are clicked', async () => {
     const { handleOnChange, view } = setup(radioOptions);
-    fireEvent.click(await view.findByText('First Option'));
-    expect(handleOnChange.mock.calls).toHaveLength(1);
-    expect(handleOnChange.mock.calls[0][0]).toBe('1st');
-    fireEvent.click(await view.findByText('Second Option'));
-    expect(handleOnChange.mock.calls).toHaveLength(2);
-    expect(handleOnChange.mock.calls[1][0]).toBe('2nd');
+    userEvent.click(await view.findByText(firstOption));
+    expect(handleOnChange).toHaveBeenCalledWith('1st');
+    userEvent.click(await view.findByText(secondOption));
+    expect(handleOnChange).toHaveBeenCalledWith('2nd');
   });
 
   it('updates state when icon-only radio buttons are clicked', () => {
     const { handleOnChange } = setup(radioOptions, true);
-    fireEvent.click(document.querySelectorAll('.ant-radio-button')[0]);
-    expect(handleOnChange.mock.calls).toHaveLength(1);
-    expect(handleOnChange.mock.calls[0][0]).toBe('1st');
-    fireEvent.click(document.querySelectorAll('.ant-radio-button')[1]);
-    expect(handleOnChange.mock.calls).toHaveLength(2);
-    expect(handleOnChange.mock.calls[1][0]).toBe('2nd');
+    userEvent.click(document.querySelectorAll('.ant-radio-button')[0]);
+    expect(handleOnChange).toHaveBeenCalledWith('1st');
+    userEvent.click(document.querySelectorAll('.ant-radio-button')[1]);
+    expect(handleOnChange).toHaveBeenCalledWith('2nd');
   });
 });
