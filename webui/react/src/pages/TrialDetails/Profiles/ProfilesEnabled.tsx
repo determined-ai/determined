@@ -160,7 +160,6 @@ const ProfilesEnabled: React.FC = () => {
     return uPlotData;
   }, [ metrics, settings.name ]);
 
-
   if (isLoading) {
     return <Spinner spinning tip="Waiting for profiler data..." />;
   } else if (isEmpty) {
@@ -168,7 +167,7 @@ const ProfilesEnabled: React.FC = () => {
   }
 
   return (
-    <div> 
+    <div>
       <Section
         bodyBorder
         bodyNoPadding
