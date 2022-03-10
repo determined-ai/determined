@@ -11,18 +11,6 @@ import (
 // HParamSample is a sampling of the hyperparameters for a model.
 type HParamSample map[string]interface{}
 
-// GlobalBatchSize returns the `global_batch_size` hyperparameter as an integer.
-func (h HParamSample) GlobalBatchSize() int {
-	// If the hyperparameters.global_batch_size is configured as a const hyperparameter,
-	// we infer its type to be a float but in some cases, its type can be specified and an
-	// int is also valid.
-	f, ok := h[expconf.GlobalBatchSize].(float64)
-	if ok {
-		return int(f)
-	}
-	return h[expconf.GlobalBatchSize].(int)
-}
-
 func sampleAll(h expconf.Hyperparameters, rand *nprand.State) HParamSample {
 	results := make(HParamSample)
 	h.Each(func(name string, param expconf.Hyperparameter) {

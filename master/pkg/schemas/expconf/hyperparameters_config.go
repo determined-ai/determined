@@ -7,9 +7,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-// GlobalBatchSize is the name of the hyperparameter for global_batch_size.
-const GlobalBatchSize = "global_batch_size"
-
 //go:generate ../gen.sh
 // HyperparametersV0 is a versioned hyperparameters config.
 type HyperparametersV0 map[string]HyperparameterV0
