@@ -247,77 +247,6 @@ schemas = {
 
 """
     ),
-    "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json",
-    "title": "CheckGlobalBatchSize",
-    "union": {
-        "defaultMessage": "is neither a positive integer nor an int hyperparameter",
-        "items": [
-            {
-                "unionKey": "const:type=int",
-                "allOf": [
-                    {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-int.json"
-                    },
-                    {
-                        "properties": {
-                            "minval": {
-                                "type": "number",
-                                "minimum": 1
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "unionKey": "const:type=const",
-                "allOf": [
-                    {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-const.json"
-                    },
-                    {
-                        "properties": {
-                            "val": {
-                                "type": "number",
-                                "minimum": 1
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "unionKey": "const:type=categorical",
-                "allOf": [
-                    {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json"
-                    },
-                    {
-                        "properties": {
-                            "vals": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                }
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "unionKey": "never",
-                "type": "integer",
-                "minimum": 1
-            }
-        ]
-    }
-}
-
-"""
-    ),
     "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json": json.loads(
         r"""
 {
@@ -1160,7 +1089,7 @@ schemas = {
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
         "internal": {
@@ -1742,20 +1671,6 @@ schemas = {
     "$id": "http://determined.ai/schemas/expconf/v0/hyperparameters.json",
     "title": "Hyperparameters",
     "type": "object",
-    "eventuallyRequired": [
-        "global_batch_size"
-    ],
-    "properties": {
-        "global_batch_size": {
-            "type": [
-                "integer",
-                "object",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
-        }
-    },
     "additionalProperties": {
         "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter.json"
     }
