@@ -113,7 +113,6 @@ describe('useModalChangeName', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
     });
-    expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
     expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
     expect(screen.getByText(UPDATED_DISPLAY_NAME)).toBeInTheDocument();
