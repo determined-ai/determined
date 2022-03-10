@@ -34,7 +34,8 @@ func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return p.prioritySchedule(rp.taskList, rp.groups, rp.queuePositions, rp.agentStatesCache, rp.fittingMethod)
+	return p.prioritySchedule(rp.taskList, rp.groups, rp.queuePositions,
+		rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group,

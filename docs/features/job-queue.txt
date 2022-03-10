@@ -35,10 +35,10 @@ job, users can see the state of the jobs and how many slots each job is using.
 
 Jobs can be in the Queued or Scheduled states. Queued jobs have been received by Determined but have
 not been allocated resources yet. Any change made to those experiments in the Job Queue should take
-effect as soon as they are received. A job in the Scheduled state has selected to run by the scheduler;
-it may or may not have acquired resources or be running at that moment. Once it has started running, a
-progress bar like the one in the experiments tab should appear. A job that has already started to run
-will not reflect changes immediately and will instead need to be preempted.
+effect as soon as they are received. A job in the Scheduled state has selected to run by the
+scheduler; it may or may not have acquired resources or be running at that moment. Once it has
+started running, a progress bar like the one in the experiments tab should appear. A job that has
+already started to run will not reflect changes immediately and will instead need to be preempted.
 
 Jobs that have completed or errored out are not counted as active and are omitted from this list.
 
