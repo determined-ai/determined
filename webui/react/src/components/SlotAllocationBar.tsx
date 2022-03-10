@@ -20,6 +20,7 @@ export interface Props {
   className?: string;
   footer?: AllocationBarFooterProps;
   hideHeader?: boolean;
+  isAux?: boolean;
   poolType?: V1ResourcePoolType;
   resourceStates: ResourceState[];
   showLegends?: boolean;
@@ -31,8 +32,7 @@ export interface Props {
 
 export interface AllocationBarFooterProps {
   auxContainerCapacity?:number
-  auxContainersRunning ?: number;
-  isAux?: boolean;
+  auxContainersRunning?: number;
   queued?: number;
 }
 
@@ -72,6 +72,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   className,
   hideHeader,
   footer,
+  isAux,
   title,
   poolType,
   slotsPotential,
@@ -97,6 +98,23 @@ const SlotAllocationBar: React.FC<Props> = ({
   const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
 
   const barParts = useMemo(() => {
+    if (isAux && footer) {
+      const freePerc = footer.auxContainerCapacity && footer.auxContainersRunning &&
+      footer.auxContainerCapacity - footer.auxContainersRunning > 0 ?
+        (footer.auxContainerCapacity - footer.auxContainersRunning) / footer.auxContainerCapacity
+        : 1;
+      const parts = {
+        free: {
+          color: getStateColorCssVar(SlotState.Free),
+          percent: freePerc,
+        },
+        running: {
+          color: getStateColorCssVar(SlotState.Running),
+          percent: 1 - freePerc,
+        },
+      };
+      return [ parts.running, parts.free ];
+    }
     const slotsAvaiablePer = slotsPotential && slotsPotential > totalSlots
       ? (totalSlots / slotsPotential) : 1;
     const parts = {
@@ -120,7 +138,7 @@ const SlotAllocationBar: React.FC<Props> = ({
     };
 
     return [ parts.running, parts.pending, parts.free, parts.potential ];
-  }, [ totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential ]);
+  }, [ totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential, footer, isAux ]);
 
   const stateDetails = useMemo(() => {
     const states = [
@@ -174,13 +192,13 @@ const SlotAllocationBar: React.FC<Props> = ({
       {footer && (
         <div className={css.footer}>
           {poolType === V1ResourcePoolType.K8S ? (
-            <header>{`${footer.isAux ?
+            <header>{`${isAux ?
               `${footer.auxContainersRunning} Aux Containers Running` :
               `${stateTallies.RUNNING} Compute Slots Allocated`}`}
             </header>
           )
             : (
-              <header>{`${footer.isAux ?
+              <header>{`${isAux ?
                 `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
                 `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
@@ -194,7 +212,7 @@ const SlotAllocationBar: React.FC<Props> = ({
               </span>
             </Link>
           ) :
-            !footer.isAux && <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>}
+            !isAux && <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>}
         </div>
       )}
       {showLegends && (

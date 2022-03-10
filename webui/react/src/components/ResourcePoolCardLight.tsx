@@ -127,10 +127,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({
         <section>
           {poolOverview[pool.name]?.total > 0 && (
             <SlotAllocationBar
-              footer={{
-                isAux: false,
-                queued: pool?.stats?.queuedCount,
-              }}
+              footer={{ queued: pool?.stats?.queuedCount }}
               hideHeader
               poolType={pool.type}
               resourceStates={computeContainerStates}
@@ -144,9 +141,9 @@ const ResourcePoolCardLight: React.FC<Props> = ({
               footer={{
                 auxContainerCapacity: pool.auxContainerCapacity,
                 auxContainersRunning: pool.auxContainersRunning,
-                isAux: true,
               }}
               hideHeader
+              isAux={true}
               poolType={pool.type}
               resourceStates={computeContainerStates}
               size={ShirtSize.large}
