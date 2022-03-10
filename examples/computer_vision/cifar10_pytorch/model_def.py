@@ -104,23 +104,22 @@ class CIFARTrial(PyTorchTrial):
         accuracy = accuracy_rate(output, labels)
         return {"validation_accuracy": accuracy, "validation_error": 1.0 - accuracy}
 
-    def build_training_data_loader(self) -> Any:
+    def _download_dataset(self, train: bool) -> Any:
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
+        # Use a file lock so that workers on the same node attempt the download one at a time.
+        # The first worker will actually perform the download, while the subsequent workers will
+        # see that the dataset is downloaded and skip.
         with filelock.FileLock(os.path.join(self.download_directory, "lock")):
-            trainset = torchvision.datasets.CIFAR10(
-                root=self.download_directory, train=True, download=True, transform=transform
+            return torchvision.datasets.CIFAR10(
+                root=self.download_directory, train=train, download=True, transform=transform
             )
+
+    def build_training_data_loader(self) -> Any:
+        trainset = self._download_dataset(train=True)
         return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> Any:
-        transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-        )
-        with filelock.FileLock(os.path.join(self.download_directory, "lock")):
-            valset = torchvision.datasets.CIFAR10(
-                root=self.download_directory, train=False, download=True, transform=transform
-            )
-
+        valset = self._download_dataset(train=False)
         return DataLoader(valset, batch_size=self.context.get_per_slot_batch_size())
