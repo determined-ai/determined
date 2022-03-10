@@ -13,35 +13,26 @@ from determined.common.api import request as req
 from determined.common.experimental import session
 
 
-def patch_experiment_v1(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
-    path = "/api/v1/experiments/{}".format(exp_id)
-    headers = {"Content-Type": "application/merge-patch+json"}
-    req.patch(master_url, path, json=patch_doc, headers=headers)
-
-
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
     path = "experiments/{}".format(exp_id)
     headers = {"Content-Type": "application/merge-patch+json"}
     req.patch(master_url, path, json=patch_doc, headers=headers)
 
 
-def activate_experiment(master_url: str, exp_id: int) -> None:
-    path = "/api/v1/experiments/{}/activate".format(exp_id)
-    headers = {"Content-Type": "application/merge-patch+json"}
-    req.post(master_url, path, headers=headers)
-
-
 def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
     print("Waiting for first trial to begin...")
+    certs.cli_cert = certs.default_load(master_url)
+    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
+    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
     while True:
-        r = api.get(master_url, "experiments/{}".format(exp_id))
-        if len(r.json()["trials"]) > 0:
+        trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
+        if len(trials) > 0:
             break
         else:
             time.sleep(0.1)
 
-    first_trial_id = sorted(t_id["id"] for t_id in r.json()["trials"])[0]
+    first_trial_id = sorted(t_id.id for t_id in trials)[0]
     print("Following first trial with ID {}".format(first_trial_id))
     logs.pprint_trial_logs(master_url, first_trial_id, follow=True)
 
@@ -164,7 +155,10 @@ def create_experiment(
     experiment_id = int(new_resource.split("/")[-1])
 
     if activate:
-        activate_experiment(master_url, experiment_id)
+        certs.cli_cert = certs.default_load(master_url)
+        authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
+        sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+        bindings.post_ActivateExperiment(sess, id=experiment_id)
 
     return experiment_id
 

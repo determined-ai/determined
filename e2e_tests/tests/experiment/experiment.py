@@ -243,13 +243,6 @@ def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
     return trials
 
 
-def num_experiments() -> int:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "experiments")
-    return len(r.json())
-
-
 def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
     cancel_experiment(experiment_id)
 
