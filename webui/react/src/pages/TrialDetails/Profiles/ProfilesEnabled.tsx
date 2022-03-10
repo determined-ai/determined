@@ -1,12 +1,11 @@
 import { Alert } from 'antd';
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import useScroll from 'hooks/useScroll';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
 import { convertMetricsToUplotData, getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
@@ -66,11 +65,8 @@ const seriesMapping = (name: string, index: number) => ({
 const fillerMapping = () => ({ class: css.hiddenLegend, scale: 'y', show: false });
 
 const ProfilesEnabled: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
-  const scroll = useScroll(containerRef);
-  const scrollTop = useRef(0);
 
   const isLoading = (
     metrics[MetricType.System].isLoading ||
@@ -164,16 +160,6 @@ const ProfilesEnabled: React.FC = () => {
     return uPlotData;
   }, [ metrics, settings.name ]);
 
-  /*
-   * Preserve and restore scroll position upon re-render.
-   */
-  useEffect(() => {
-    if (containerRef.current && scroll.scrollTop === 0 && scrollTop.current !== 0) {
-      containerRef.current.scrollTop = scrollTop.current;
-    } else {
-      scrollTop.current = scroll.scrollTop;
-    }
-  }, [ scroll ]);
 
   if (isLoading) {
     return <Spinner spinning tip="Waiting for profiler data..." />;
@@ -182,7 +168,7 @@ const ProfilesEnabled: React.FC = () => {
   }
 
   return (
-    <div ref={containerRef}>
+    <div> 
       <Section
         bodyBorder
         bodyNoPadding
