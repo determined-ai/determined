@@ -19,6 +19,7 @@ from layers import Flatten
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 import data
+import time
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -26,6 +27,8 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 class MNistTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
+
+        self._batch_num_to_hang = 2000
 
         # Create a unique download directory for each rank so they don't overwrite each
         # other when doing distributed training.
@@ -78,6 +81,13 @@ class MNistTrial(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
+
+        if batch_idx >= self._batch_num_to_hang:
+            # raise ValueError("Testing trial error")  # uncomment to test
+            while True:
+                time.sleep(1)
+                print("sleeping to simulate a hung trial")
+
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 

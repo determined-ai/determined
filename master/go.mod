@@ -48,7 +48,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.10.0
-	github.com/ryanbressler/CloudForest v0.0.0-20161201194407-d014dc32840a
+	github.com/ryanbressler/CloudForest v0.0.0-20220205065429-8f151e494fd2
 	github.com/santhosh-tekuri/jsonschema/v2 v2.2.0
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sirupsen/logrus v1.6.0
