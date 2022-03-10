@@ -20,10 +20,12 @@ var DefaultAllGatherTimeout = 10 * time.Minute
 type (
 	// AllGather performs an all gather for an allocation.
 	AllGather struct {
-		id           uuid.UUID
-		watchers     map[uuid.UUID]chan<- AllGatherInfoOrError
-		data         []*structpb.Struct
-		numPeers     *int
+		id       uuid.UUID
+		watchers map[uuid.UUID]chan<- AllGatherInfoOrError
+		data     []*structpb.Struct
+		numPeers *int
+
+		readyPassed  bool
 		lastPeerJoin time.Time
 	}
 
@@ -58,7 +60,10 @@ type (
 
 // NewAllGather returns a new all gather component.
 func NewAllGather() *AllGather {
-	return &AllGather{id: uuid.New()}
+	return &AllGather{
+		id:       uuid.New(),
+		watchers: map[uuid.UUID]chan<- AllGatherInfoOrError{},
+	}
 }
 
 // PreStart just steps up the rendezvous watcher.
@@ -70,7 +75,7 @@ func (g *AllGather) PreStart(ctx *actor.Context) {
 func (g *AllGather) ReceiveMsg(ctx *actor.Context) (bool, error) {
 	switch msg := ctx.Message().(type) {
 	case WatchAllGather:
-		g.watch(msg.WatcherID, msg.NumPeers, msg.Data)
+		ctx.Respond(g.watch(msg.WatcherID, msg.NumPeers, msg.Data))
 	case UnwatchAllGather:
 		g.unwatch(msg.WatcherID)
 	case allGatherTimeout:
@@ -87,6 +92,7 @@ func (g *AllGather) watch(id uuid.UUID, count int, data *structpb.Struct) AllGat
 	// Channel is size 1 since data info will only ever be sent once and we'd rather not block.
 	w := make(chan AllGatherInfoOrError, 1)
 	g.watchers[id] = w
+	g.data = append(g.data, data)
 	g.numPeers = ptrs.IntPtr(count)
 	g.lastPeerJoin = time.Now().UTC()
 	if g.ready() {
@@ -108,7 +114,13 @@ func (g *AllGather) ready() bool {
 	if g == nil {
 		return false
 	}
-	return g.numPeers != nil && len(g.watchers) == *g.numPeers
+
+	if g.readyPassed {
+		return true
+	}
+
+	g.readyPassed = g.numPeers != nil && len(g.watchers) == *g.numPeers
+	return g.readyPassed
 }
 
 // push gathers up the external addresses for the exposed ports and sends them to all the
