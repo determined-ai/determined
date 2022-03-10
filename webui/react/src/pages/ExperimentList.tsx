@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
@@ -10,7 +11,12 @@ import InlineEditor from 'components/InlineEditor';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
+// import DragSortingTable/*,  { handleTableChange }  */from 'components/DragSortingTable';
+// import ResponsiveTable,  { handleTableChange } from 'components/ResponsiveTable';
+import ResponsiveTable from 'components/ColumnDraggingTable';
+// import  ResponsiveTable,  { handleTableChange } from 'components/InteractiveTable';
+import  { handleTableChange } from 'components/InteractiveTable';
+
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
   checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
@@ -316,6 +322,7 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
+        
       },
       {
         dataIndex: 'name',
@@ -438,6 +445,7 @@ const ExperimentList: React.FC = () => {
         render: actionRenderer,
         title: '',
         width: 40,
+        fixed: true
       },
     ];
 
@@ -646,7 +654,8 @@ const ExperimentList: React.FC = () => {
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
-      <ResponsiveTable<ExperimentItem>
+      {/* <DragSortingTable */}
+      <ResponsiveTable
         areRowsRightClickable={true}
         areRowsSelected={!!settings.row}
         columns={visibleColumns}
