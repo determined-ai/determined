@@ -1,0 +1,17 @@
+.react-resizable {
+  background-clip: padding-box;
+  position: relative;
+}
+.react-resizable-handle {
+  bottom: 0;
+  cursor: col-resize;
+  height: 100%;
+  position: absolute;
+  right: -5px;
+  width: 10px;
+  z-index: 1;
+}
+.dragHandler:hover {
+  background-color: #ccc;
+  cursor: move;
+}
