@@ -25,7 +25,16 @@ import (
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
 	m := &modelv1.Model{}
-	switch err := a.m.db.QueryProto("get_model", m, req.ModelName); err {
+	var err error
+
+	allNumbers, _ := regexp.MatchString("^\\d+$", req.ModelName)
+	if allNumbers {
+		err = a.m.db.QueryProto("get_model_by_id", m, req.ModelName)
+	} else {
+		err = a.m.db.QueryProto("get_model", m, req.ModelName)
+	}
+
+	switch err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "model \"%s\" not found", req.ModelName)
