@@ -108,7 +108,7 @@ class CIFARTrial(PyTorchTrial):
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
-        with filelock.FileLock(os.path.join(self.download_directory, "train_lock")):
+        with filelock.FileLock(os.path.join(self.download_directory, "lock")):
             trainset = torchvision.datasets.CIFAR10(
                 root=self.download_directory, train=True, download=True, transform=transform
             )
@@ -118,7 +118,7 @@ class CIFARTrial(PyTorchTrial):
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
-        with filelock.FileLock(os.path.join(self.download_directory, "validation_lock")):
+        with filelock.FileLock(os.path.join(self.download_directory, "lock")):
             valset = torchvision.datasets.CIFAR10(
                 root=self.download_directory, train=False, download=True, transform=transform
             )
