@@ -252,8 +252,13 @@ func (a *apiServer) PatchModel(
 
 func (a *apiServer) ArchiveModel(
 	ctx context.Context, req *apiv1.ArchiveModelRequest) (*apiv1.ArchiveModelResponse, error) {
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &modelv1.Model{}
-	err := a.m.db.QueryProto("archive_model", holder, req.ModelName)
+	err = a.m.db.QueryProto("archive_model", holder, getResp.Model.Name)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model \"%s\" was not found and cannot be archived",
@@ -266,8 +271,13 @@ func (a *apiServer) ArchiveModel(
 
 func (a *apiServer) UnarchiveModel(
 	ctx context.Context, req *apiv1.UnarchiveModelRequest) (*apiv1.UnarchiveModelResponse, error) {
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &modelv1.Model{}
-	err := a.m.db.QueryProto("unarchive_model", holder, req.ModelName)
+	err = a.m.db.QueryProto("unarchive_model", holder, getResp.Model.Name)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model \"%s\" was not found and cannot be un-archived",
@@ -286,8 +296,13 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("delete_model", holder, req.ModelName, user.User.Id,
+	err = a.m.db.QueryProto("delete_model", holder, getResp.Model.Name, user.User.Id,
 		user.User.Admin)
 
 	if holder.Id == 0 {
