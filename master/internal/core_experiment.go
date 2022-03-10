@@ -221,6 +221,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		agentUserGroup = &m.config.Security.DefaultTask
 	}
 
+	ownerFullUser, err := m.db.UserByID(*dbExp.OwnerID)
+	if err != nil {
+		return nil, errors.Errorf("cannot find user %v who owns experiment", dbExp.OwnerID)
+	}
+
 	if patch.Resources != nil {
 		resources := dbExp.Config.Resources()
 		if patch.Resources.MaxSlots.IsPresent {
@@ -279,6 +284,10 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 		taskSpec := *m.taskSpec
 		taskSpec.AgentUserGroup = agentUserGroup
+		taskSpec.Owner = &model.User{
+			ID:       ownerFullUser.ID,
+			Username: ownerFullUser.Username,
+		}
 
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
@@ -384,6 +393,14 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 				compressErr, "unable to find compress model definition")
 		}
 	}
+
+	token, createSessionErr := m.db.StartUserSession(user)
+	if createSessionErr != nil {
+		return nil, false, nil, errors.Wrapf(
+			createSessionErr, "unable to create user session inside task")
+	}
+	taskSpec.UserSessionToken = token
+	taskSpec.Owner = user
 
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,

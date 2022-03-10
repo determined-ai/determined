@@ -3846,6 +3846,7 @@ class v1ResourcePool:
         type: "v1ResourcePoolType",
         accelerator: "typing.Optional[str]" = None,
         slotsPerAgent: "typing.Optional[int]" = None,
+        stats: "typing.Optional[v1QueueStats]" = None,
     ):
         self.name = name
         self.description = description
@@ -3880,6 +3881,7 @@ class v1ResourcePool:
         self.maxAgentStartingPeriod = maxAgentStartingPeriod
         self.details = details
         self.accelerator = accelerator
+        self.stats = stats
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourcePool":
@@ -3917,6 +3919,7 @@ class v1ResourcePool:
             maxAgentStartingPeriod=float(obj["maxAgentStartingPeriod"]),
             details=v1ResourcePoolDetail.from_json(obj["details"]),
             accelerator=obj.get("accelerator", None),
+            stats=v1QueueStats.from_json(obj["stats"]) if obj.get("stats", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -3954,6 +3957,7 @@ class v1ResourcePool:
             "maxAgentStartingPeriod": dump_float(self.maxAgentStartingPeriod),
             "details": self.details.to_json(),
             "accelerator": self.accelerator if self.accelerator is not None else None,
+            "stats": self.stats.to_json() if self.stats is not None else None,
         }
 
 class v1ResourcePoolAwsDetail:

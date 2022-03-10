@@ -3,6 +3,7 @@
         "name": "perception-cpu-aws",
         "description": "AWS CPU-only resource pool for tensorboard AWS CPU-only resource pool for tensorboard AWS CPU-only resource pool for tensorboards AWS CPU-only resource pool for tensorboards AWS CPU-only resource pool for tensorboards",
         "type": "RESOURCE_POOL_TYPE_AWS",
+        "accelerator": "",
         "numAgents": 1,
         "slotsAvailable": 0,
         "slotsUsed": 0,
@@ -20,6 +21,7 @@
         "location": "us-east-1",
         "imageId": "ami-0e4b739ea71222f80",
         "instanceType": "m5.large",
+        "stats": {"queuedCount": 2, "scheduledCount": 1},
         "details": {
             "poolName": "perception-cpu-aws",
             "description": "AWS CPU-only resource pool for tensorboards",
@@ -68,6 +70,7 @@
         "name": "v100-gcp",
         "description": "GCP resource pool with V100s",
         "type": "RESOURCE_POOL_TYPE_GCP",
+        "accelerator": "nvidia-tesla-v100",
         "numAgents": 1,
         "slotsAvailable": 8,
         "slotsUsed": 4,
@@ -139,6 +142,7 @@
         "name": "on-prem-1",
         "description": "On prem cluster with K80s. Use for prototyping",
         "type": "RESOURCE_POOL_TYPE_STATIC",
+        "accelerator": "",
         "numAgents": 3,
         "slotsAvailable": 12,
         "slotsUsed": 2,
@@ -155,6 +159,7 @@
         "location": "",
         "imageId": "",
         "instanceType": "",
+        "stats": {"queuedCount": 0, "scheduledCount": 0},
         "details": {
             "poolName": "on-prem-1",
             "description": "On prem cluster with K80s. Use for prototyping",
@@ -179,6 +184,7 @@
         "name": "on-prem-2",
         "description": "On prem cluster 2 with K80s. Use for prototyping",
         "type": "RESOURCE_POOL_TYPE_STATIC",
+        "accelerator": "",
         "numAgents": 0,
         "slotsAvailable": 12,
         "slotsUsed": 2,
@@ -195,6 +201,7 @@
         "location": "",
         "imageId": "",
         "instanceType": "",
+        "stats": {"queuedCount": 201, "scheduledCount": 10},
         "details": {
             "poolName": "on-prem-2",
             "description": "On prem cluster with K80s. Use for prototyping",
@@ -214,5 +221,42 @@
             "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
             "schedulerFittingPolicy": "FITTING_POLICY_WORST"
         }
-    }
+    },{
+		"name": "kubernetes",
+		"description": "Kubernetes-managed pool of resources",
+		"type": "RESOURCE_POOL_TYPE_K8S",
+		"numAgents": 1,
+		"slotsAvailable": 1,
+		"slotsUsed": 8,
+		"slotType": "TYPE_CUDA",
+		"auxContainerCapacity": 1,
+		"auxContainersRunning": 0,
+		"defaultComputePool": true,
+		"defaultAuxPool": true,
+		"preemptible": false,
+		"minAgents": 0,
+		"maxAgents": 0,
+		"slotsPerAgent": 1,
+		"auxContainerCapacityPerAgent": 1,
+		"schedulerType": "SCHEDULER_TYPE_KUBERNETES",
+		"schedulerFittingPolicy": "FITTING_POLICY_KUBERNETES",
+		"location": "kubernetes",
+		"imageId": "",
+		"instanceType": "kubernetes",
+		"masterUrl": "",
+		"masterCertName": "",
+		"startupScript": "",
+		"containerStartupScript": "",
+		"agentDockerNetwork": "",
+		"agentDockerRuntime": "",
+		"agentDockerImage": "",
+		"agentFluentImage": "",
+		"maxIdleAgentPeriod": 0,
+		"maxAgentStartingPeriod": 0,
+		"details": {
+			"aws": null,
+			"gcp": null,
+			"priorityScheduler": null
+		}
+	}
 ]

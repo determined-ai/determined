@@ -3,7 +3,7 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 import { globalStorage } from 'globalStorage';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, ResourcePool, ResourceType,
+  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
 } from 'types';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
@@ -29,6 +29,7 @@ export interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  pool: PoolOverview
   resourcePools: ResourcePool[];
   ui: UI;
   users: DetailedUser[];
@@ -124,6 +125,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  pool: {},
   resourcePools: [],
   ui: initUI,
   users: [],
@@ -162,6 +164,29 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   return overview;
 };
 
+export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
+  const overview: PoolOverview = {};
+  agents.forEach(agent => {
+    const pname = agent.resourcePool;
+    overview[pname] = clone(initResourceTally);
+    agent.resources
+      .filter(resource => resource.enabled)
+      .forEach(resource => {
+        const isResourceFree = resource.container == null;
+        const availableResource = isResourceFree ? 1 : 0;
+        overview[pname].available = availableResource;
+        overview[pname].total += 1;
+      });
+  });
+
+  for (const key in overview) {
+    overview[key].allocation = overview[key].total !== 0 ?
+      percent((overview[key].total - overview[key].available) / overview[key].total) : 0;
+  }
+
+  return overview;
+};
+
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
@@ -169,7 +194,8 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetAgents: {
       if (isEqual(state.agents, action.value)) return state;
       const cluster = agentsToOverview(action.value);
-      return { ...state, agents: action.value, cluster };
+      const pool = agentsToPoolOverview(action.value);
+      return { ...state, agents: action.value, cluster, pool };
     }
     case StoreAction.ResetAuth:
       clearAuthCookie();

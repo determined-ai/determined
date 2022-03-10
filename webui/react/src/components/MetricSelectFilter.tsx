@@ -162,7 +162,6 @@ const MetricSelectFilter: React.FC<Props> = ({
   return (
     <SelectFilter
       autoClearSearchValue={false}
-      className="metric-search"
       disableTags
       dropdownMatchSelectWidth={dropdownMatchSelectWidth}
       filterOption={handleFiltering}

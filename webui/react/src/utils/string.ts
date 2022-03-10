@@ -43,6 +43,16 @@ export const generateAlphaNumeric = (
   return result;
 };
 
+export const generateUUID = (): string => {
+  return [
+    generateAlphaNumeric(8),
+    generateAlphaNumeric(4),
+    generateAlphaNumeric(4),
+    generateAlphaNumeric(4),
+    generateAlphaNumeric(12),
+  ].join('-');
+};
+
 export const generateLetters = (length = DEFAULT_ALPHA_NUMERIC_LENGTH): string => {
   return generateAlphaNumeric(length, LETTERS);
 };

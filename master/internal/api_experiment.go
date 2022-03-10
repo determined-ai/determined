@@ -147,7 +147,7 @@ func (a *apiServer) DeleteExperiment(
 		return nil, errors.Wrapf(err, "transitioning to %s", e.State)
 	}
 	go func() {
-		if err := a.deleteExperiment(e); err != nil {
+		if err := a.deleteExperiment(e, curUser); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
 			if err := a.m.db.SaveExperimentState(e); err != nil {
@@ -161,7 +161,7 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
+func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) error {
 	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to read config for experiment: %w", err)
@@ -177,6 +177,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
 
 	taskSpec := *a.m.taskSpec
 	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = user
 	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
 		exp.ID,
 		0,

@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.10-dev0
+    default: 0.17.11-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
@@ -1262,6 +1262,10 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C master test-intg
+      - persist_to_workspace:
+          root: .
+          paths:
+            - master/coverage.out
 
   test-intg-agent:
     machine:
@@ -1276,6 +1280,29 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
+      - persist_to_workspace:
+          root: .
+          paths:
+            - agent/coverage.out
+
+  go-coverage:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - run: cd master && go tool cover -func coverage.out
+      - run: cd master && go tool cover -html coverage.out -o coverage.html
+      - run: cd agent && go tool cover -func coverage.out
+      - run: cd agent && go tool cover -html coverage.out -o coverage.html
+      - run: mkdir go-coverage
+      - run: mv master/coverage.html go-coverage/master-coverage.html
+      - run: mv agent/coverage.html go-coverage/agent-coverage.html
+      - store_artifacts:
+          path: go-coverage
+          destination: go-coverage
 
   lint-docs:
     docker:
@@ -1330,7 +1357,11 @@ jobs:
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C harness test
+      - run: COVERAGE_FILE=$PWD/test-unit-harness-pycov make -C harness test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -1342,7 +1373,11 @@ jobs:
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C harness test-tf2
+      - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-tf2-pycov
 
   test-unit-storage:
     docker:
@@ -1354,7 +1389,11 @@ jobs:
           extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-storage-pycov
 
   test-unit-model-hub:
     docker:
@@ -1367,7 +1406,32 @@ jobs:
           extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: make -C model_hub test
+      - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-model-hub-pycov
+
+  python-coverage:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined: false
+          model-hub: false
+          extras-requires: "coverage"
+          executor: <<pipeline.parameters.docker-image>>
+      - attach_workspace:
+          at: .
+      - run: coverage combine *-pycov
+      - run: coverage report --include 'harness/determined/*' --skip-covered
+      - run: coverage report --include 'model_hub/model_hub/*' --skip-covered
+      - run: coverage html --include 'harness/determined/*' --skip-covered -d cov-html/harness
+      - run: coverage html --include 'model_hub/model_hub/*' --skip-covered -d cov-html/model_hub
+      - store_artifacts:
+          path: cov-html
+          destination: cov-html
 
   test-examples:
     docker:
@@ -1431,10 +1495,15 @@ jobs:
       managed-devcluster:
         type: boolean
         default: false
+      postgres-version:
+        type: string
+        default: '10'
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
+    environment:
+      DET_POSTGRES_VERSION: <<parameters.postgres-version>>
     steps:
       - checkout
       - attach_workspace:
@@ -1848,15 +1917,25 @@ workflows:
       - test-unit-harness
       - test-unit-harness-tf2
       - test-unit-model-hub
-      - test-examples
       - test-unit-storage:
           context: storage-unit-tests
           filters: *upstream-feature-branch
+      - test-examples
+      - python-coverage:
+          requires:
+            - test-unit-harness
+            - test-unit-harness-tf2
+            - test-unit-model-hub
+            - test-unit-storage
 
   test-intg:
     jobs:
       - test-intg-master
       - test-intg-agent
+      - go-coverage:
+          requires:
+            - test-intg-master
+            - test-intg-agent
 
   test-e2e:
     jobs:
@@ -1943,6 +2022,26 @@ workflows:
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
 
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: '10'
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: '14'
+
       - deploy:
           enable-cors: true
           context: aws
@@ -1967,21 +2066,6 @@ workflows:
           max-dynamic-agents: 1
           cluster-id: determined-preview
           compute-agent-instance-type: t2.medium
-
-      - deploy:
-          name: deploy-release-party
-          context: aws
-          filters:
-            branches:
-              only:
-                - /release-.*/
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [8]
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel

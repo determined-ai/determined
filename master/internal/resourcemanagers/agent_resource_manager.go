@@ -114,6 +114,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("")
 				ctx.Respond(err)
 			}
+
+			jobStats, err := a.getPoolJobStats(ctx, pool)
+			if err != nil {
+				ctx.Respond(err)
+			}
+
+			summary.Stats = jobStats
 			summaries = append(summaries, summary)
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
@@ -238,6 +245,20 @@ func (a *agentResourceManager) forwardToAllPools(
 	return nil
 }
 
+func (a *agentResourceManager) getPoolJobStats(
+	ctx *actor.Context, pool config.ResourcePoolConfig,
+) (*jobv1.QueueStats, error) {
+	jobStatsResp := ctx.Ask(a.pools[pool.PoolName], job.GetJobQStats{})
+	if err := jobStatsResp.Error(); err != nil {
+		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
+	}
+	jobStats, ok := jobStatsResp.Get().(jobv1.QueueStats)
+	if !ok {
+		return nil, fmt.Errorf("unexpected response type from jobStats")
+	}
+	return &jobStats, nil
+}
+
 func (a *agentResourceManager) aggregateTaskHandler(
 	resps map[*actor.Ref]actor.Message,
 ) (*actor.Ref, error) {
@@ -323,15 +344,9 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 			slotsPerAgent = pool.Provider.GCP.SlotsPerInstance()
 			slotType = pool.Provider.GCP.SlotType()
-			accelerator = pool.Provider.GCP.Accelerator()
-			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
-				instanceType = pool.Provider.GCP.InstanceType.MachineType
-			} else {
-				instanceType = fmt.Sprintf("%s, %d x %s",
-					pool.Provider.GCP.InstanceType.MachineType,
-					pool.Provider.GCP.InstanceType.GPUNum,
-					pool.Provider.GCP.InstanceType.GPUType,
-				)
+			instanceType = pool.Provider.GCP.InstanceType.MachineType
+			if pool.Provider.GCP.InstanceType.GPUNum > 0 {
+				accelerator = pool.Provider.GCP.Accelerator()
 			}
 		}
 	}

@@ -40,14 +40,14 @@ fmt:
 
 .PHONY: test
 test:
-	go test ./...
+	go test -coverprofile=coverage.out -covermode count ./...
 
 .PHONY: test-intg
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
-	go test -tags=integration ./...
+	go test -tags=integration -coverprofile=coverage.out -covermode count ./...
 
 packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py agent $@

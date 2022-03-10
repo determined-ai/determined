@@ -1,9 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Now supports setting root certificates for the DB via the determined helm chart. This allows
-   determined to use SSL to connect to the DB without having to replace the master config manually.
-   To use this feature, save the certificate in a configmap or secret and fill out the following
-   fields from ``values.yaml``: ``sslMode``, ``sslRootCert``, ``resourceType``, and
-   ``certResourceName``

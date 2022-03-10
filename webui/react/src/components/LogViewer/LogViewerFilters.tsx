@@ -21,9 +21,19 @@ export interface Filters {
   containerIds?: string[],
   levels?: LogLevelFromApi[],
   rankIds?: number[],
-  sources?: string[],
-  stdtypes?: string[],
+  // sources?: string[],
+  // stdtypes?: string[],
 }
+
+export const ARIA_LABEL_RESET = 'Reset';
+
+export const LABELS: Record<keyof Filters, string> = {
+  agentIds: 'Agent',
+  allocationIds: 'Allocation',
+  containerIds: 'Container',
+  levels: 'Level',
+  rankIds: 'Rank',
+};
 
 const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
   const selectOptions = useMemo(() => {
@@ -40,7 +50,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
     };
   }, [ options ]);
 
-  const show = useMemo(() => {
+  const moreThanOne = useMemo(() => {
     return Object.keys(selectOptions).reduce((acc, key) => {
       const filterKey = key as keyof Filters;
       const options = selectOptions[filterKey];
@@ -74,25 +84,25 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
   return (
     <>
       <Space>
-        {show.allocationIds && (
+        {moreThanOne.allocationIds && (
           <MultiSelect
-            itemName="Allocation"
+            itemName={LABELS.allocationIds}
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
             {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {show.agentIds && (
+        {moreThanOne.agentIds && (
           <MultiSelect
-            itemName="Agent"
+            itemName={LABELS.agentIds}
             value={values.agentIds}
             onChange={handleChange('agentIds', String)}>
             {selectOptions?.agentIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
-        {show.containerIds && (
+        {moreThanOne.containerIds && (
           <MultiSelect
-            itemName="Container"
+            itemName={LABELS.containerIds}
             style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
@@ -101,23 +111,23 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             ))}
           </MultiSelect>
         )}
-        {show.rankIds && (
+        {moreThanOne.rankIds && (
           <MultiSelect
-            itemName="Rank"
+            itemName={LABELS.rankIds}
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map(id => <Option key={id} value={id}>{id}</Option>)}
           </MultiSelect>
         )}
         <MultiSelect
-          itemName="Level"
+          itemName={LABELS.levels}
           value={values.levels}
           onChange={handleChange('levels', String)}>
           {selectOptions?.levels.map((level) => (
             <Option key={level.value} value={level.value}>{level.label}</Option>
           ))}
         </MultiSelect>
-        {isResetShown && <Button onClick={handleReset}>Reset</Button>}
+        {isResetShown && <Button onClick={handleReset}>{ARIA_LABEL_RESET}</Button>}
       </Space>
     </>
   );

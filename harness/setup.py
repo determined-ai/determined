@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.17.10-dev0",
+    version="0.17.11-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -31,6 +31,8 @@ setup(
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
         "azure-storage-blob",
+        # azure-core 1.23 requires typing-extensions 4.x which is incompatible with TF2.4
+        "azure-core<1.23",
         "termcolor>=1.1.0",
         "boto3",
         # CLI:

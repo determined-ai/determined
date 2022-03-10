@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class PyTorchCallback:
@@ -18,6 +18,35 @@ class PyTorchCallback:
         :meth:`on_checkpoint_end`). To configure a callback implementation to execute on a subset of
         GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
     """
+
+    def on_trial_startup(self, first_batch_idx: int, checkpoint_uuid: Optional[str]) -> None:
+        """
+        Runs before training, validation, or building dataloaders.
+
+        Arguments:
+            first_batch_idx (int):  The first batch index to be trained.  If the trial has already
+                completed some amount of training in a previous allocation on the cluster, this will
+                be nonzero.
+            checkpoint_uuid (str or None):  The checkpoint from which weight, optimizer state, etc
+                will be loaded.  When ``first_batch_idx > 0`` this will contain the uuid of the
+                most recent checkpoint saved by this trial.  Otherwise, it will contain the uuid of
+                the checkpoint from which this trial was configured to warm start from (via
+                ``source_trial_id`` or ``source_checkpoint_uuid`` in the searcher config), or None
+                if no warm start was configured.
+        """
+        pass
+
+    def on_trial_shutdown(self) -> None:
+        """
+        Runs just before shutting down training to get off of the cluster.  This does not imply that
+        the trial is complete; it may just be paused or preempted by a higher-priority task.
+
+        .. warning::
+            This callback runs each time a Trial shuts down gracefully to come off the cluster.
+            This callback does not mean that the Trial is done training.  Additionally, if the trial
+            is killed the container will be destroyed without this callback running.
+        """
+        pass
 
     def on_validation_start(self) -> None:
         """

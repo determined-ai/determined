@@ -12,6 +12,7 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_cpu_postgres
 @pytest.mark.e2e_gpu
 @pytest.mark.timeout(300)
 def test_trial_logs() -> None:
@@ -41,7 +42,20 @@ def test_trial_logs() -> None:
 @pytest.mark.parametrize(
     "task_type,task_config,log_regex",
     [
-        (command.TaskTypeCommand, {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
+        # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
+        (
+            command.TaskTypeCommand,
+            {
+                "entrypoint": [
+                    "echo",
+                    "hello",
+                    "&&",
+                    "sleep",
+                    "10",
+                ]
+            },
+            re.compile("^.*hello.*$"),
+        ),
         (command.TaskTypeNotebook, {}, re.compile("^.*Jupyter Server .* is running.*$")),
         (command.TaskTypeShell, {}, re.compile("^.*Server listening on.*$")),
         (command.TaskTypeTensorBoard, {}, re.compile("^.*TensorBoard .* at .*$")),

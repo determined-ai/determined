@@ -1,0 +1,10 @@
+:orphan:
+
+**New Features**
+
+-  Add ``on_trial_startup()`` and ``on_trial_shutdown()`` methods to
+   :class:`~determined.pytorch.PyTorchCallback`. Whenever ``on_trial_startup()`` is called,
+   ``on_trial_shutdown()`` is always called before the trial container shuts down. These callbacks
+   make it possible to do reliable resource management in a training container, such as if you wish
+   to start a background thread or process for data loading and shut it down before the process
+   exits.

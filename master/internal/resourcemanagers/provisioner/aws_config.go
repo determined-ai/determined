@@ -241,28 +241,33 @@ func (t ec2InstanceType) Slots() int {
 // source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
 func (t ec2InstanceType) Accelerator() string {
 	instanceType := t.name()
+	numGpu := t.Slots()
+	accelerator := ""
 	if strings.HasPrefix(instanceType, "p2") {
-		return "NVIDIA Tesla K80"
+		accelerator = "NVIDIA Tesla K80"
 	}
 	if strings.HasPrefix(instanceType, "p3") {
-		return "NVIDIA Tesla V100"
+		accelerator = "NVIDIA Tesla V100"
 	}
 	if strings.HasPrefix(instanceType, "p4d") {
-		return "NVIDIA A100"
+		accelerator = "NVIDIA A100"
 	}
 	if strings.HasPrefix(instanceType, "g3") {
-		return "NVIDIA Tesla M60"
+		accelerator = "NVIDIA Tesla M60"
 	}
 	if strings.HasPrefix(instanceType, "g5g") {
-		return "NVIDIA T4G"
+		accelerator = "NVIDIA T4G"
 	}
 	if strings.HasPrefix(instanceType, "g5") {
-		return "NVIDIA A10G"
+		accelerator = "NVIDIA A10G"
 	}
 	if strings.HasPrefix(instanceType, "g4dn") {
-		return "NVIDIA T4 Tensor Core"
+		accelerator = "NVIDIA T4 Tensor Core"
 	}
-	return ""
+	if accelerator == "" {
+		return ""
+	}
+	return fmt.Sprintf("%d x %s", numGpu, accelerator)
 }
 
 // This map tracks how many slots are available in each instance type. It also
@@ -277,6 +282,14 @@ var ec2InstanceSlots = map[ec2InstanceType]int{
 	"g4dn.16xlarge": 1,
 	"g4dn.12xlarge": 4,
 	"g4dn.metal":    8,
+	"g5.xlarge":     1,
+	"g5.2xlarge":    1,
+	"g5.4xlarge":    1,
+	"g5.8xlarge":    1,
+	"g5.16xlarge":   1,
+	"g5.12xlarge":   4,
+	"g5.24xlarge":   4,
+	"g5.48xlarge":   8,
 	"p2.xlarge":     1,
 	"p2.8xlarge":    8,
 	"p2.16xlarge":   16,
@@ -284,6 +297,7 @@ var ec2InstanceSlots = map[ec2InstanceType]int{
 	"p3.8xlarge":    4,
 	"p3.16xlarge":   8,
 	"p3dn.24xlarge": 8,
+	"p4d.24xlarge":  8,
 	"t2.medium":     0,
 	"t2.large":      0,
 	"t2.xlarge":     0,

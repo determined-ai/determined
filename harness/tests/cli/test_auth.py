@@ -1,14 +1,94 @@
+import contextlib
 import json
+import os
 import shutil
 from pathlib import Path
+from typing import Iterator, Optional
 
-from determined.common.api.authentication import TokenStore
+import pytest
+import requests_mock
+
+from determined.common.api.authentication import Authentication, TokenStore
 from determined.common.api.certs import default_load as certs_default_load
+from determined.common.api.errors import UnauthenticatedException
 from tests.confdir import use_test_config_dir
 
 MOCK_MASTER_URL = "http://localhost:8080"
 AUTH_V0_PATH = Path(__file__).parent / "auth_v0.json"
 UNTRUSTED_CERT_PATH = Path(__file__).parents[1] / "common" / "untrusted-root" / "127.0.0.1-ca.crt"
+AUTH_JSON = {
+    "version": 1,
+    "masters": {
+        "http://localhost:8080": {
+            "active_user": "bob",
+            "tokens": {
+                "determined": "det.token",
+                "bob": "bob.token",
+            },
+        }
+    },
+}
+
+
+@pytest.mark.parametrize("user", [None, "Bob"])
+def test_auth_no_store_no_reauth(user: Optional[str]) -> None:
+    with use_test_config_dir():
+        with pytest.raises(UnauthenticatedException):
+            Authentication(MOCK_MASTER_URL, user)
+
+
+@pytest.mark.parametrize("user", [None, "bob", "determined"])
+def test_auth_with_store(requests_mock: requests_mock.Mocker, user: Optional[str]) -> None:
+    with use_test_config_dir() as config_dir:
+        auth_json_path = config_dir / "auth.json"
+        with open(auth_json_path, "w") as f:
+            json.dump(AUTH_JSON, f)
+
+        expected_user = "determined" if user == "determined" else "bob"
+        expected_token = "det.token" if user == "determined" else "bob.token"
+        requests_mock.get(
+            "/users/me",
+            status_code=200,
+            json={"username": expected_user},
+        )
+        authentication = Authentication(MOCK_MASTER_URL, user)
+        assert authentication.session.username == expected_user
+        assert authentication.session.token == expected_token
+
+
+@contextlib.contextmanager
+def set_container_env_vars() -> Iterator[None]:
+    try:
+        os.environ["DET_USER"] = "alice"
+        os.environ["DET_USER_TOKEN"] = "alice.token"
+        yield
+    finally:
+        del os.environ["DET_USER"]
+        del os.environ["DET_USER_TOKEN"]
+
+
+@pytest.mark.parametrize("user", [None, "bob", "determined"])
+@pytest.mark.parametrize("has_token_store", [True, False])
+def test_auth_user_from_env(
+    requests_mock: requests_mock.Mocker, user: Optional[str], has_token_store: bool
+) -> None:
+    with use_test_config_dir() as config_dir, set_container_env_vars():
+        if has_token_store:
+            auth_json_path = config_dir / "auth.json"
+            with open(auth_json_path, "w") as f:
+                json.dump(AUTH_JSON, f)
+
+        requests_mock.get("/users/me", status_code=200, json={"username": "alice"})
+
+        authentication = Authentication(MOCK_MASTER_URL, user)
+        if has_token_store:
+            assert authentication.session.username == user or "determined"
+            assert authentication.session.token == (
+                "det.token" if user == "determined" else "bob.token"
+            )
+        else:
+            assert authentication.session.username == "alice"
+            assert authentication.session.token == "alice.token"
 
 
 def test_auth_json_v0_upgrade() -> None:

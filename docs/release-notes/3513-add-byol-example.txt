@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Added self-supervised image classification example in PyTorch using Bootstrap Your Own Latent
-   (BYOL).

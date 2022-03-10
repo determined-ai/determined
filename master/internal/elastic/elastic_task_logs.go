@@ -160,7 +160,6 @@ func (e *Elastic) TaskLogs(
 		// the same address and all logs having identical IDs.
 		h := resp.Hits.Hits[i]
 		h.Source.StringID = &h.ID
-		h.Source.FlatLog = h.Source.Message()
 		logs = append(logs, h.Source)
 	}
 

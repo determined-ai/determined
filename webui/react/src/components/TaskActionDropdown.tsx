@@ -3,7 +3,7 @@ import { isNumber } from 'util';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import Icon from 'components/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
@@ -27,12 +27,19 @@ import Link from './Link';
 interface Props {
   curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
+  onVisibleChange?: (visible: boolean) => void;
   task: AnyTask;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Props) => {
+const TaskActionDropdown: React.FC<Props> = ({
+  task,
+  onComplete,
+  curUser,
+  onVisibleChange,
+  children,
+}: PropsWithChildren<Props>) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
   const isExperiment = isExperimentTask(task);
   const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
@@ -136,6 +143,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
         silent: false,
         type: ErrorType.Server,
       });
+    } finally {
+      onVisibleChange?.(false);
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
@@ -159,7 +168,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
   }
 
   if (menuItems.length === 0) {
-    return (
+    return (children as JSX.Element) ?? (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
         <button disabled>
           <Icon name="overflow-vertical" />
@@ -170,7 +179,15 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
 
   const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
 
-  return (
+  return children ? (
+    <Dropdown
+      overlay={menu}
+      placement="bottomLeft"
+      trigger={[ 'contextMenu' ]}
+      onVisibleChange={onVisibleChange}>
+      {children}
+    </Dropdown>
+  ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
