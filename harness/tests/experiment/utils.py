@@ -422,3 +422,23 @@ def create_trial_instance(trial_def: Type[det.Trial]) -> None:
             checkpoint_dir=td,
         )
     check.check_isinstance(trial_instance, det.Trial)
+
+
+def ensure_requires_global_batch_size(
+    trial_class: Type[det.Trial],
+    hparams: Dict[str, Any],
+) -> None:
+    bad_hparams = dict(hparams)
+    del bad_hparams["global_batch_size"]
+
+    def make_workloads() -> workload.Stream:
+        trainer = TrainAndValidate()
+        yield from trainer.send(steps=1, validation_freq=1)
+
+    # Catch missing global_batch_size.
+    with pytest.raises(det.errors.InvalidExperimentException, match="is a required hyperparameter"):
+        _ = make_trial_controller_from_trial_implementation(
+            trial_class,
+            bad_hparams,
+            make_workloads(),
+        )

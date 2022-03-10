@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined import profiler, pytorch
+from determined import profiler, pytorch, util
 from determined.common import check
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
@@ -51,6 +51,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         det.TrialContext.__init__(self, *args, **kwargs)
         pytorch._PyTorchReducerContext.__init__(self, self.distributed._zmq_allgather)
+        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
+            self.get_hparams(),
+            self.env.experiment_config.slots_per_trial(),
+            "PyTorchTrial",
+        )
 
         self._init_device()
 
@@ -91,6 +96,20 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._average_training_metrics = cast(
             bool, optimizations_config.get("average_training_metrics")
         )
+
+    def get_global_batch_size(self) -> int:
+        """
+        Return the global batch size.
+        """
+        return self._global_batch_size
+
+    def get_per_slot_batch_size(self) -> int:
+        """
+        Return the per-slot batch size. When a model is trained with a single GPU, this is equal to
+        the global batch size. When multi-GPU training is used, this is equal to the global batch
+        size divided by the number of GPUs used to train the model.
+        """
+        return self._per_slot_batch_size
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:

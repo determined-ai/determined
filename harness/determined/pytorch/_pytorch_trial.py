@@ -54,7 +54,9 @@ class PyTorchTrialController(det.TrialController):
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._core, self.env
+                self.context._core,
+                self.env,
+                self.context.get_global_batch_size(),
             )
 
         self.latest_batch = self.env.latest_batch
