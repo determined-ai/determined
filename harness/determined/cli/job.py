@@ -113,7 +113,6 @@ def _single_update(
         aheadOf=ahead_of if ahead_of != "" else None,
     )
     bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest([update]))
-    return
 
 
 def is_priority_rm(config: dict) -> bool:
