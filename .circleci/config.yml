@@ -1434,12 +1434,16 @@ jobs:
       postgres-version:
         type: string
         default: '10'
+      agent-version:
+        type: string
+        default: ''
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
     environment:
       DET_POSTGRES_VERSION: <<parameters.postgres-version>>
+      DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
       - attach_workspace:
@@ -1967,6 +1971,18 @@ workflows:
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
           postgres-version: '14'
+
+      - test-e2e:
+          name: test-e2e-old-agent-versions
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: custom-agent-version.devcluster.yaml
+          target-stage: agent
+          matrix:
+            parameters:
+              agent-version: ['0.17.10']
 
       - deploy:
           enable-cors: true

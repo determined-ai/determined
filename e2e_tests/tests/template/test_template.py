@@ -17,6 +17,7 @@ def test_set_template() -> None:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_cross_version
 def test_start_notebook_with_template() -> None:
     template_name = "test_start_notebook_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
@@ -27,6 +28,7 @@ def test_start_notebook_with_template() -> None:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_cross_version
 def test_start_command_with_template() -> None:
     template_name = "test_start_command_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
@@ -39,6 +41,7 @@ def test_start_command_with_template() -> None:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_cross_version
 def test_start_shell_with_template() -> None:
     template_name = "test_start_shell_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))

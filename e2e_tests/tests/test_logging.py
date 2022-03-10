@@ -13,6 +13,7 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
 @pytest.mark.e2e_cpu_postgres
+@pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu
 @pytest.mark.timeout(300)
 def test_trial_logs() -> None:
@@ -37,6 +38,7 @@ def test_trial_logs() -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize(
