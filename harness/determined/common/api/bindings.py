@@ -2242,6 +2242,35 @@ class v1GetUsersResponse:
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
         }
 
+class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
+    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
+    SORT_BY_LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
+    SORT_BY_NAME = "SORT_BY_NAME"
+    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
+
+class v1GetWorkspaceProjectsResponse:
+    def __init__(
+        self,
+        pagination: "typing.Optional[v1Pagination]" = None,
+        projects: "typing.Optional[typing.Sequence[v1Project]]" = None,
+    ):
+        self.projects = projects
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspaceProjectsResponse":
+        return cls(
+            projects=[v1Project.from_json(x) for x in obj["projects"]] if obj.get("projects", None) is not None else None,
+            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "projects": [x.to_json() for x in self.projects] if self.projects is not None else None,
+            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+        }
+
 class v1GetWorkspaceResponse:
     def __init__(
         self,
@@ -6736,6 +6765,40 @@ def get_GetWorkspace(
     if _resp.status_code == 200:
         return v1GetWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspace", _resp)
+
+def get_GetWorkspaceProjects(
+    session: "client.Session",
+    *,
+    id: int,
+    archived: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetWorkspaceProjectsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
+) -> "v1GetWorkspaceProjectsResponse":
+    _params = {
+        "archived": archived,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
+        "users": users,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{id}/projects",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspaceProjectsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspaceProjects", _resp)
 
 def get_GetWorkspaces(
     session: "client.Session",

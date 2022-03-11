@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
+import "determined/project/v1/model.proto";
 import "determined/workspace/v1/model.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -19,6 +20,52 @@ message GetWorkspaceRequest {
 message GetWorkspaceResponse {
   // The workspace requested.
   determined.workspace.v1.Workspace workspace = 1;
+}
+
+// Get a list of projects associated with a workspace.
+message GetWorkspaceProjectsRequest {
+  // Sort associated projects by the given field.
+  enum SortBy {
+    // Returns projects in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns projects sorted by time that they were created.
+    SORT_BY_CREATION_TIME = 1;
+    // Returns projects sorted by most recent start of an experiment.
+    SORT_BY_LAST_EXPERIMENT_START_TIME = 2;
+    // Returns projects sorted by name.
+    SORT_BY_NAME = 3;
+    // Returns projects sorted by description.
+    SORT_BY_DESCRIPTION = 4;
+  }
+
+  // Sort the projects by the given field.
+  SortBy sort_by = 1;
+  // Order projects in either ascending or descending order.
+  OrderBy order_by = 2;
+
+  // Skip the number of workspaces before returning results. Negative values
+  // denote number of workspaces to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of workspaces. A value of 0 denotes no limit.
+  int32 limit = 4;
+
+  // The id of the workspace.
+  int32 id = 5;
+
+  // Limit the projects to those matching the name.
+  string name = 6;
+  // Limit the projects to those with an archived status.
+  google.protobuf.BoolValue archived = 7;
+  // Limit the projects to those from particular users.
+  repeated string users = 8;
+}
+
+// Response to GetWorkspaceProjectsRequest.
+message GetWorkspaceProjectsResponse {
+  // The projects associated with the workspace.
+  repeated determined.project.v1.Project projects = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get a list of workspaces.

@@ -8,5 +8,9 @@ FROM projects as p
   LEFT JOIN users as u ON u.id = p.user_id
   LEFT JOIN notes my_notes ON my_notes.project_id = p.id
   LEFT JOIN experiments pe ON pe.project_id = p.id
-WHERE p.id = $1
-GROUP BY p.id, pe.project_id, my_notes.id, u.username;
+  WHERE p.workspace_id = $1
+  AND ($2 = '' OR (u.username IN (SELECT unnest(string_to_array($2, ',')))))
+  AND ($3 = '' OR p.name ILIKE $3)
+  AND ($4 = '' OR p.archived = $4::BOOL)
+GROUP BY p.id, pe.project_id, my_notes.id, u.username
+ORDER BY %s;
