@@ -6,7 +6,7 @@ from typing import Any, Dict
 import numpy as np
 
 import determined as det
-from determined import layers, workload
+from determined import layers, util, workload
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -56,6 +56,26 @@ def structure_equal(a: Any, b: Any) -> bool:
     return a == b
 
 
+class MetricMakerTrialContext(det.TrialContext):
+    """
+    MetricMakerTrial needs batch sizes.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
+            self.get_hparams(),
+            self.env.experiment_config.slots_per_trial(),
+            "MetricMakerTrial",
+        )
+
+    def get_per_slot_batch_size(self) -> int:
+        return self._per_slot_batch_size
+
+    def get_global_batch_size(self) -> int:
+        return self._global_batch_size
+
+
 class MetricMaker(det.TrialController):
     """
     MetricMaker is a class designed to test that metrics reported from a trial
@@ -81,7 +101,7 @@ class MetricMaker(det.TrialController):
         self.wlsq = None
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._core, self.env
+                self.context._core, self.env, self.context.get_global_batch_size()
             )
 
         self.latest_batch = self.env.latest_batch
@@ -177,6 +197,7 @@ class MetricMaker(det.TrialController):
 
 class MetricMakerTrial(det.Trial):
     trial_controller_class = MetricMaker
+    trial_context_class = MetricMakerTrialContext
 
     def __init__(self, context: det.TrialContext) -> None:
         self.context = context
@@ -203,7 +224,7 @@ class NANMetricMaker(MetricMaker):
         self.wlsq = None
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._core, self.env
+                self.context._core, self.env, self.context.get_global_batch_size()
             )
 
     @staticmethod
@@ -213,6 +234,7 @@ class NANMetricMaker(MetricMaker):
 
 class NANMetricMakerTrial(det.Trial):
     trial_controller_class = NANMetricMaker
+    trial_context_class = MetricMakerTrialContext
 
     def __init__(self, context: det.TrialContext) -> None:
         self.context = context

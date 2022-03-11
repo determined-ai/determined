@@ -17,12 +17,12 @@ from determined.common import check
 
 class NoOpTrialContext(det.TrialContext):
     """
-    NoOpTrial needs a context that has a global batch size
+    NoOpTrial needs batch sizes.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._per_slot_batch_size, _ = util.calculate_batch_sizes(
+        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
             self.get_hparams(),
             self.env.experiment_config.slots_per_trial(),
             "NoOpTrial",
@@ -30,6 +30,9 @@ class NoOpTrialContext(det.TrialContext):
 
     def get_per_slot_batch_size(self) -> int:
         return self._per_slot_batch_size
+
+    def get_global_batch_size(self) -> int:
+        return self._global_batch_size
 
 
 class NoOpTrialController(det.TrialController):
@@ -80,7 +83,7 @@ class NoOpTrialController(det.TrialController):
         self.wlsq = None
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._core, self.env
+                self.context._core, self.env, self.context.get_global_batch_size()
             )
 
         self.latest_batch = self.env.latest_batch
