@@ -11,8 +11,25 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import layers, workload
+from determined import layers, util, workload
 from determined.common import check
+
+
+class NoOpTrialContext(det.TrialContext):
+    """
+    NoOpTrial needs a context that has a global batch size
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._per_slot_batch_size, _ = util.calculate_batch_sizes(
+            self.get_hparams(),
+            self.env.experiment_config.slots_per_trial(),
+            "NoOpTrial",
+        )
+
+    def get_per_slot_batch_size(self) -> int:
+        return self._per_slot_batch_size
 
 
 class NoOpTrialController(det.TrialController):
@@ -211,6 +228,7 @@ class NoOpTrialController(det.TrialController):
 
 
 class NoOpTrial(det.Trial):
+    trial_context_class = NoOpTrialContext
     trial_controller_class = NoOpTrialController
 
     def __init__(self, context: det.TrialContext) -> None:
