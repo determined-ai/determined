@@ -1,7 +1,7 @@
 # Release Notes
 
-Release notes are to be accurate and comprehensive, with the objective that
-Determined users can understand what has changed and the impact it has on
+This process is intended to ensure accurate and comprehensive release notes,
+so Determined users can understand what has changed and the impact it has on
 their use of the product.
 
 The work required to write high-quality release notes is intended to be
@@ -39,23 +39,23 @@ classifying the release note according to one of the following categories:
      and must start with the `:orphan:` metadata string to avoid errors when building the docs.
    * Specify one or more of the following categories, depending on the extent of the change:
 
-     * Bug Fixes
-     * Breaking Changes
-     * Improvements
-     * New Features
+     * `**Bug Fixes**`
+     * `**Breaking Changes**`
+     * `**Improvements**`
+     * `**New Features**`
 
    * Enter a title for the change, or titles for each change, as one or more list elements.
 
      Begin each title with a prefix for the affected component:
 
-     * WebUI
-     * Notebook
-     * TensorBoard
-     * Command
-     * Shell
-     * Experiment
-     * API
-     * Images
+     * `WebUI`
+     * `Notebook`
+     * `TensorBoard`
+     * `Command`
+     * `Shell`
+     * `Experiment`
+     * `API`
+     * `Images`
      * or other applicable component.
 
    * Provide a short, descriptive, summary title.
@@ -90,8 +90,7 @@ classifying the release note according to one of the following categories:
 
    -  Running workloads on A100 chips currently requires building a custom task
       environment with CUDA 11, because the default task environments provided by
-      Determined contain either CUDA 10.0 or CUDA 10.1. Refer to the
-      :ref:`custom-env` documentation for more details. The default task
+      Determined contain either CUDA 10.0 or CUDA 10.1. The default task
       environments will be upgraded to CUDA 11 in a future release of Determined.
 ```
 
@@ -100,4 +99,4 @@ classifying the release note according to one of the following categories:
 1. As part of the release process, the release manager merges the individual release note files
 together into the `docs/release-notes.txt` file, creating a new version heading.
 2. Delete the individual files from `docs/release-notes/`.
-3. Do additional copy editing and formatting as needed.
+3. Additional copy editing and formatting as needed.
