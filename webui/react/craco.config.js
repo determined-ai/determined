@@ -76,7 +76,7 @@ module.exports = {
       new DefinePlugin({
         'process.env.IS_DEV': JSON.stringify(IS_DEV),
         'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-        'process.env.VERSION': '"0.17.11-rc0"',
+        'process.env.VERSION': '"0.17.11-rc1"',
       }),
       /*
        * Add theme override support for antd. For more options:
