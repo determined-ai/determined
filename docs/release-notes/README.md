@@ -27,7 +27,7 @@ classifying the release note according to one of the following categories:
    aware of any caveats or additional context that users should be informed about.
 
 2. Write the release note entry as a separate file and add it to the
-   `determined/docs/release-notes` directory. See the [example](release-note-example), below.
+   `determined/docs/release-notes` directory. See the [example](#release-note-example), below.
 
    Writing guidelines can be relaxed for a release note to be more conversational than might
    be acceptable in the core documentation. Spelling, grammar, coherence, and completeness
