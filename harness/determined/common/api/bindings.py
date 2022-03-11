@@ -1857,6 +1857,24 @@ class v1GetNotebooksResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetProjectResponse:
+    def __init__(
+        self,
+        project: "typing.Optional[v1Project]" = None,
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectResponse":
+        return cls(
+            project=v1Project.from_json(obj["project"]) if obj.get("project", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "project": self.project.to_json() if self.project is not None else None,
+        }
+
 class v1GetResourcePoolsResponse:
     def __init__(
         self,
@@ -2222,6 +2240,51 @@ class v1GetUsersResponse:
     def to_json(self) -> typing.Any:
         return {
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
+        }
+
+class v1GetWorkspaceResponse:
+    def __init__(
+        self,
+        workspace: "typing.Optional[v1Workspace]" = None,
+    ):
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspaceResponse":
+        return cls(
+            workspace=v1Workspace.from_json(obj["workspace"]) if obj.get("workspace", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspace": self.workspace.to_json() if self.workspace is not None else None,
+        }
+
+class v1GetWorkspacesRequestSortBy(enum.Enum):
+    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    SORT_BY_ID = "SORT_BY_ID"
+    SORT_BY_NAME = "SORT_BY_NAME"
+
+class v1GetWorkspacesResponse:
+    def __init__(
+        self,
+        pagination: "v1Pagination",
+        workspaces: "typing.Sequence[v1Workspace]",
+    ):
+        self.workspaces = workspaces
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspacesResponse":
+        return cls(
+            workspaces=[v1Workspace.from_json(x) for x in obj["workspaces"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspaces": [x.to_json() for x in self.workspaces],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1IdleNotebookRequest:
@@ -2996,6 +3059,28 @@ class v1ModelVersion:
             "notes": self.notes if self.notes is not None else None,
         }
 
+class v1Note:
+    def __init__(
+        self,
+        contents: str,
+        name: str,
+    ):
+        self.name = name
+        self.contents = contents
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Note":
+        return cls(
+            name=obj["name"],
+            contents=obj["contents"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "contents": self.contents,
+        }
+
 class v1Notebook:
     def __init__(
         self,
@@ -3625,6 +3710,60 @@ class v1PreviewHPSearchResponse:
     def to_json(self) -> typing.Any:
         return {
             "simulation": self.simulation.to_json() if self.simulation is not None else None,
+        }
+
+class v1Project:
+    def __init__(
+        self,
+        archived: bool,
+        description: str,
+        id: int,
+        lastExperimentStartedAt: str,
+        name: str,
+        notes: "typing.Sequence[v1Note]",
+        numActiveExperiments: int,
+        numExperiments: int,
+        username: str,
+        workspaceId: int,
+    ):
+        self.id = id
+        self.name = name
+        self.workspaceId = workspaceId
+        self.description = description
+        self.lastExperimentStartedAt = lastExperimentStartedAt
+        self.notes = notes
+        self.numExperiments = numExperiments
+        self.numActiveExperiments = numActiveExperiments
+        self.archived = archived
+        self.username = username
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Project":
+        return cls(
+            id=obj["id"],
+            name=obj["name"],
+            workspaceId=obj["workspaceId"],
+            description=obj["description"],
+            lastExperimentStartedAt=obj["lastExperimentStartedAt"],
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+            numExperiments=obj["numExperiments"],
+            numActiveExperiments=obj["numActiveExperiments"],
+            archived=obj["archived"],
+            username=obj["username"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "workspaceId": self.workspaceId,
+            "description": self.description,
+            "lastExperimentStartedAt": self.lastExperimentStartedAt,
+            "notes": [x.to_json() for x in self.notes],
+            "numExperiments": self.numExperiments,
+            "numActiveExperiments": self.numActiveExperiments,
+            "archived": self.archived,
+            "username": self.username,
         }
 
 class v1PutTemplateResponse:
@@ -5209,6 +5348,36 @@ class v1ValidationHistoryEntry:
             "searcherMetric": dump_float(self.searcherMetric),
         }
 
+class v1Workspace:
+    def __init__(
+        self,
+        archived: bool,
+        id: int,
+        name: str,
+        username: str,
+    ):
+        self.id = id
+        self.name = name
+        self.archived = archived
+        self.username = username
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Workspace":
+        return cls(
+            id=obj["id"],
+            name=obj["name"],
+            archived=obj["archived"],
+            username=obj["username"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "archived": self.archived,
+            "username": self.username,
+        }
+
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",
     *,
@@ -6201,6 +6370,25 @@ def get_GetNotebooks(
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
 
+def get_GetProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> "v1GetProjectResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProject", _resp)
+
 def get_GetResourcePools(
     session: "client.Session",
     *,
@@ -6529,6 +6717,56 @@ def get_GetUsers(
     if _resp.status_code == 200:
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
+
+def get_GetWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> "v1GetWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspace", _resp)
+
+def get_GetWorkspaces(
+    session: "client.Session",
+    *,
+    archived: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetWorkspacesRequestSortBy]" = None,
+) -> "v1GetWorkspacesResponse":
+    _params = {
+        "archived": archived,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy else None,
+        "sortBy": sortBy.value if sortBy else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/workspaces",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspacesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspaces", _resp)
 
 def put_IdleNotebook(
     session: "client.Session",

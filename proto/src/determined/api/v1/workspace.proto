@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+import "determined/api/v1/pagination.proto";
+import "determined/workspace/v1/model.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Get the requested workspace.
+message GetWorkspaceRequest {
+  // The id of the workspace.
+  int32 id = 1;
+}
+
+// Response to GetWorkspaceRequest.
+message GetWorkspaceResponse {
+  // The workspace requested.
+  determined.workspace.v1.Workspace workspace = 1;
+}
+
+// Get a list of workspaces.
+message GetWorkspacesRequest {
+  // Sort workspaces by the given field.
+  enum SortBy {
+    // Returns workspaces in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns workspaces sorted by id.
+    SORT_BY_ID = 1;
+    // Returns workspaces sorted by name.
+    SORT_BY_NAME = 2;
+  }
+
+  // Sort the workspaces by the given field.
+  SortBy sort_by = 1;
+  // Order workspaces in either ascending or descending order.
+  OrderBy order_by = 2;
+
+  // Skip the number of workspaces before returning results. Negative values
+  // denote number of workspaces to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of workspaces. A value of 0 denotes no limit.
+  int32 limit = 4;
+
+  // Limit the workspaces to those matching the name.
+  google.protobuf.StringValue name = 5;
+  // Limit the workspaces to those with an archived status.
+  google.protobuf.BoolValue archived = 6;
+  // Limit the workspaces to those from particular users.
+  google.protobuf.ListValue users = 7;
+}
+
+// Response to GetWorkspacesRequest.
+message GetWorkspacesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspaces", "pagination" ] }
+  };
+  // The list of returned workspaces.
+  repeated determined.workspace.v1.Workspace workspaces = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}

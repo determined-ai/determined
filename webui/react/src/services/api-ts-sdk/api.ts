@@ -2402,6 +2402,20 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
+ * Response to GetProjectRequest.
+ * @export
+ * @interface V1GetProjectResponse
+ */
+export interface V1GetProjectResponse {
+    /**
+     * The project requested.
+     * @type {V1Project}
+     * @memberof V1GetProjectResponse
+     */
+    project?: V1Project;
+}
+
+/**
  * Response to GetResourcePoolsRequest.
  * @export
  * @interface V1GetResourcePoolsResponse
@@ -2740,6 +2754,51 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     users?: Array<V1User>;
+}
+
+/**
+ * Response to GetWorkspaceRequest.
+ * @export
+ * @interface V1GetWorkspaceResponse
+ */
+export interface V1GetWorkspaceResponse {
+    /**
+     * The workspace requested.
+     * @type {V1Workspace}
+     * @memberof V1GetWorkspaceResponse
+     */
+    workspace?: V1Workspace;
+}
+
+/**
+ * Sort workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+ * @export
+ * @enum {string}
+ */
+export enum V1GetWorkspacesRequestSortBy {
+    UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
+    ID = <any> 'SORT_BY_ID',
+    NAME = <any> 'SORT_BY_NAME'
+}
+
+/**
+ * Response to GetWorkspacesRequest.
+ * @export
+ * @interface V1GetWorkspacesResponse
+ */
+export interface V1GetWorkspacesResponse {
+    /**
+     * The list of returned workspaces.
+     * @type {Array<V1Workspace>}
+     * @memberof V1GetWorkspacesResponse
+     */
+    workspaces: Array<V1Workspace>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetWorkspacesResponse
+     */
+    pagination: V1Pagination;
 }
 
 /**
@@ -3595,6 +3654,26 @@ export interface V1ModelVersion {
 }
 
 /**
+ * Note is a user comment connected to a project.
+ * @export
+ * @interface V1Note
+ */
+export interface V1Note {
+    /**
+     * The name or title of the note.
+     * @type {string}
+     * @memberof V1Note
+     */
+    name: string;
+    /**
+     * The text contents of the note.
+     * @type {string}
+     * @memberof V1Note
+     */
+    contents: string;
+}
+
+/**
  * Notebook is a Jupyter notebook in a containerized environment.
  * @export
  * @interface V1Notebook
@@ -4241,6 +4320,74 @@ export interface V1PreviewHPSearchResponse {
      * @memberof V1PreviewHPSearchResponse
      */
     simulation?: V1ExperimentSimulation;
+}
+
+/**
+ * Project is a named collection of experiments.
+ * @export
+ * @interface V1Project
+ */
+export interface V1Project {
+    /**
+     * The unique id of the project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    id: number;
+    /**
+     * The unique name of the project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    name: string;
+    /**
+     * The id of the associated workspace.
+     * @type {number}
+     * @memberof V1Project
+     */
+    workspaceId: number;
+    /**
+     * The description of the project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    description: string;
+    /**
+     * Time of most recently started experiment within this project.
+     * @type {Date}
+     * @memberof V1Project
+     */
+    lastExperimentStartedAt: Date;
+    /**
+     * Notes associated with this project.
+     * @type {Array<V1Note>}
+     * @memberof V1Project
+     */
+    notes: Array<V1Note>;
+    /**
+     * Count of experiments associated with this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    numExperiments: number;
+    /**
+     * Count of active experiments associated with this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    numActiveExperiments: number;
+    /**
+     * Whether this project is archived or not.
+     * @type {boolean}
+     * @memberof V1Project
+     */
+    archived: boolean;
+    /**
+     * User who created this project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    username: string;
 }
 
 /**
@@ -6053,6 +6200,38 @@ export interface V1ValidationHistoryEntry {
      * @memberof V1ValidationHistoryEntry
      */
     searcherMetric: number;
+}
+
+/**
+ * Workspace is a named collection of projects.
+ * @export
+ * @interface V1Workspace
+ */
+export interface V1Workspace {
+    /**
+     * The unique id of the workspace.
+     * @type {number}
+     * @memberof V1Workspace
+     */
+    id: number;
+    /**
+     * The unique name of the workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    name: string;
+    /**
+     * Whether this workspace is archived or not.
+     * @type {boolean}
+     * @memberof V1Workspace
+     */
+    archived: boolean;
+    /**
+     * User who created this workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    username: string;
 }
 
 
@@ -15273,6 +15452,120 @@ export class ProfilerApi extends BaseAPI {
 }
 
 /**
+ * ProjectsApi - fetch parameter creator
+ * @export
+ */
+export const ProjectsApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get the requested project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProject(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProject.');
+            }
+            const localVarPath = `/api/v1/projects/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * ProjectsApi - functional programming interface
+ * @export
+ */
+export const ProjectsApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get the requested project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * ProjectsApi - factory interface
+ * @export
+ */
+export const ProjectsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Get the requested project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProject(id, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * ProjectsApi - object-oriented interface
+ * @export
+ * @class ProjectsApi
+ * @extends {BaseAPI}
+ */
+export class ProjectsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get the requested project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
  * ShellsApi - fetch parameter creator
  * @export
  */
@@ -17983,6 +18276,237 @@ export class UsersApi extends BaseAPI {
      */
     public setUserPassword(username: string, body: string, options?: any) {
         return UsersApiFp(this.configuration).setUserPassword(username, body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * WorkspacesApi - fetch parameter creator
+ * @export
+ */
+export const WorkspacesApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get the requested workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspace(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of workspaces.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/workspaces`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * WorkspacesApi - functional programming interface
+ * @export
+ */
+export const WorkspacesApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get the requested workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspace(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of workspaces.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * WorkspacesApi - factory interface
+ * @export
+ */
+export const WorkspacesApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Get the requested workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspace(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of workspaces.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * WorkspacesApi - object-oriented interface
+ * @export
+ * @class WorkspacesApi
+ * @extends {BaseAPI}
+ */
+export class WorkspacesApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get the requested workspace.
+     * @param {number} id The id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public getWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspace(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of workspaces.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+     * @param {string} [name] Limit the workspaces to those matching the name.
+     * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, options)(this.fetch, this.basePath);
     }
 
 }

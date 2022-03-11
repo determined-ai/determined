@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/project/v1/model.proto";
+
+// Get the requested project.
+message GetProjectRequest {
+  // The id of the project.
+  int32 id = 1;
+}
+
+// Response to GetProjectRequest.
+message GetProjectResponse {
+  // The project requested.
+  determined.project.v1.Project project = 1;
+}
