@@ -6746,6 +6746,7 @@ def get_GetWorkspaces(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetWorkspacesRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspacesResponse":
     _params = {
         "archived": archived,
@@ -6754,6 +6755,7 @@ def get_GetWorkspaces(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",

@@ -45,11 +45,11 @@ message GetWorkspacesRequest {
   int32 limit = 4;
 
   // Limit the workspaces to those matching the name.
-  google.protobuf.StringValue name = 5;
+  string name = 5;
   // Limit the workspaces to those with an archived status.
   google.protobuf.BoolValue archived = 6;
   // Limit the workspaces to those from particular users.
-  google.protobuf.ListValue users = 7;
+  repeated string users = 7;
 }
 
 // Response to GetWorkspacesRequest.
