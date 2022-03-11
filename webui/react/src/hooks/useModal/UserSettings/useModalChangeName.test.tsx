@@ -9,9 +9,11 @@ import { DetailedUser } from 'types';
 
 import useModalUserSettings from './useModalUserSettings';
 
+const mockPatchUser = jest.fn();
+
 jest.mock('services/api', () => ({
-  patchUser: ({ userParams }: PatchUserParams) => {
-    return Promise.resolve({ ...getCurrentUser(), displayName: userParams.displayName });
+  patchUser: (params: PatchUserParams) => {
+    return mockPatchUser(params);
   },
 }));
 
@@ -28,10 +30,6 @@ const currentUser: DetailedUser = {
   isActive: true,
   isAdmin: false,
   username: USERNAME,
-};
-
-const getCurrentUser = () => {
-  return currentUser;
 };
 
 const users: Array<DetailedUser> = [ currentUser ];
@@ -106,14 +104,28 @@ describe('useModalChangeName', () => {
     );
     userEvent.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
 
+    mockPatchUser.mockResolvedValue({
+      ...currentUser,
+      displayName: UPDATED_DISPLAY_NAME,
+    });
+
     // TODO: test for toast message appearance?
 
-    // TODO: also test that currentUser's displayName is updated?
-
+    // modal closes:
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
     });
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+
+    // api method was called:
+    expect(mockPatchUser).toHaveBeenCalledWith(
+      {
+        username: USERNAME,
+        userParams: { displayName: UPDATED_DISPLAY_NAME },
+      },
+    );
+
+    // store was updated:
     expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
     expect(screen.getByText(UPDATED_DISPLAY_NAME)).toBeInTheDocument();
   });
@@ -128,7 +140,6 @@ describe('useModalChangeName', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
     });
-
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
   });
 });

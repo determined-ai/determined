@@ -10,24 +10,20 @@ import { DetailedUser } from 'types';
 
 import useModalUserSettings from './useModalUserSettings';
 
-const mockSetUserPassword = jest.fn((params) => {
-  return Promise.resolve(params);
-});
+const mockSetUserPassword = jest.fn();
 
-jest.mock('services/api', () => {
-  return {
-    login: ({ password, username }: V1LoginRequest) => {
-      if (password === FIRST_PASSWORD_VALUE && username === USERNAME) {
-        return Promise.resolve();
-      } else {
-        return Promise.reject();
-      }
-    },
-    setUserPassword: (params: SetUserPasswordParams) => {
-      mockSetUserPassword(params);
-    },
-  };
-});
+jest.mock('services/api', () => ({
+  login: ({ password, username }: V1LoginRequest) => {
+    if (password === FIRST_PASSWORD_VALUE && username === USERNAME) {
+      return Promise.resolve();
+    } else {
+      return Promise.reject();
+    }
+  },
+  setUserPassword: (params: SetUserPasswordParams) => {
+    return mockSetUserPassword(params);
+  },
+}));
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
@@ -124,10 +120,13 @@ describe('useModalChangePassword', () => {
 
     // TODO: test for toast message appearance?
 
+    // modal closes:
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT })).not.toBeInTheDocument();
     });
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
+
+    // api method was called:
     expect(mockSetUserPassword).toHaveBeenCalledWith({
       password: SECOND_PASSWORD_VALUE,
       username: USERNAME,
@@ -144,7 +143,6 @@ describe('useModalChangePassword', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: CHANGE_PASSWORD_TEXT })).not.toBeInTheDocument();
     });
-
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
   });
 });
