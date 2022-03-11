@@ -84,7 +84,7 @@ func (j jobSortState) SetJobPosition(jobID model.JobID, anchor1 model.JobID, anc
 
 	return job.RegisterJobPosition{
 		JobID:       jobID,
-		JobPosition: newPos.String(),
+		JobPosition: newPos,
 	}, nil
 }
 
@@ -94,7 +94,7 @@ func (j jobSortState) RecoverJobPosition(jobID model.JobID, position decimal.Dec
 
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
-	state[job.HeadAnchor] = decimal.New(0, job.DecimalExp)
+	state[job.HeadAnchor] = decimal.New(1, job.DecimalExp)
 	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	return state
 }

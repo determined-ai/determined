@@ -82,7 +82,7 @@ type (
 // It notifies the task of its new position.
 type RegisterJobPosition struct {
 	JobID       model.JobID
-	JobPosition string
+	JobPosition decimal.Decimal
 }
 
 // RecoverJobPosition gets sent from the experiment or command actor to the resource pool.

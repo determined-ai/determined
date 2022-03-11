@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -36,7 +37,7 @@ VALUES (:job_id, :job_type, :owner_id, :q_position)
 }
 
 // UpdateJobPosition propagates the new queue position to the job.
-func (db *PgDB) UpdateJobPosition(jobID model.JobID, position string) error {
+func (db *PgDB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error {
 	if jobID.String() == "" {
 		return errors.Errorf("error modifying job with empty id")
 	}
