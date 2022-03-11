@@ -15,7 +15,7 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range, RecordKey,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
@@ -122,12 +122,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(() => ({
     hooks: { onFilterChange: handleFilterChange },
     style: {
+      axes: { label: { placement: 'after' } },
       data: {
         colorScale: {
           colors: colorScale.map(scale => scale.color),
           dimensionKey: metricNameToStr(selectedMetric),
         },
       },
+      dimension: { label: { angle: Math.PI / 4 } },
+      padding: [ 16, 64, 16, 8 ],
     },
   }), [ colorScale, handleFilterChange, selectedMetric ]);
 
