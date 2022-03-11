@@ -124,7 +124,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
         # handles the case where logs is not present (see BaseLogger callback).  I (rb) can't
         # figure out where that would originate from, so we will include reasonable fallback
         # behavior for that case.
-        num_inputs = logs.get("size", self.trial_controller.context.per_slot_batch_size())
+        num_inputs = logs.get("size", self.trial_controller.context.get_per_slot_batch_size())
 
         self.trial_controller._post_train_batch_end(num_inputs, logs)
 
@@ -136,7 +136,9 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
     def on_test_batch_end(self, batch: int, logs: Optional[Dict] = None) -> None:
         super().on_test_batch_end(batch, logs)
         assert isinstance(logs, dict)
-        self.test_inputs += logs.get("size", self.trial_controller.context.per_slot_batch_size())
+        self.test_inputs += logs.get(
+            "size", self.trial_controller.context.get_per_slot_batch_size()
+        )
         self.test_batches += 1
 
     def _corrected_test_end(self, logs: Dict) -> None:
