@@ -27,7 +27,7 @@ classifying the release note according to one of the following categories:
    aware of any caveats or additional context that users should be informed about.
 
 2. Write the release note entry as a separate file and add it to the
-   `determined/docs/release-notes` directory. See the example, below.
+   `determined/docs/release-notes` directory. See the [example](release-note-example), below.
 
    Writing guidelines can be relaxed for a release note to be more conversational than might
    be acceptable in the core documentation. Spelling, grammar, coherence, and completeness
@@ -36,7 +36,7 @@ classifying the release note according to one of the following categories:
 
    * Name the file with the PR number as a prefix. For example, `1097-nvidia-a100-support.txt`.
    * The file should be in [reStructuredText](https://determinedai.atlassian.net/l/c/53h3PrPo) format
-     and should start with `:orphan:` metadata string to avoid errors when building the docs.
+     and must start with the `:orphan:` metadata string to avoid errors when building the docs.
    * Specify one or more of the following categories, depending on the extent of the change:
 
      * Bug Fixes
@@ -66,7 +66,7 @@ classifying the release note according to one of the following categories:
      If there is a Jira issue associated with the change, the Jira description can be
      helpful as a guide to what context should also be provided in the release note.
 
-     Be sure to highlight API changes and backward incompatibilities, discuss any steps
+     Be sure to highlight API changes and backward incompatibility, and describe any steps
      that must be taken to upgrade safely.
 
      Do not include:
@@ -95,8 +95,9 @@ classifying the release note according to one of the following categories:
       environments will be upgraded to CUDA 11 in a future release of Determined.
 ```
 
-## How to Create the Release Notes for a Release
+## How to Collect and Publish the Release Notes for a Release
 
-As part of the release process, the release manager will merge these files
-together into `docs/release-notes.txt`, delete the individual files from
-`docs/release-notes/`, and then do additional copy-editing and formatting as necessary.
+1. As part of the release process, the release manager merges the individual release note files
+together into the `docs/release-notes.txt` file, creating a new version heading.
+2. Delete the individual files from `docs/release-notes/`.
+3. Do additional copy editing and formatting as needed.
