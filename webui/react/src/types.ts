@@ -18,6 +18,7 @@ export type RawJson = Record<string, any>;
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
 export interface User {
+  displayName?: string;
   username: string;
 }
 
@@ -86,6 +87,7 @@ export enum SlotState {
   Running = 'RUNNING',
   Free = 'FREE',
   Pending = 'PENDING',
+  Potential = 'POTENTIAL'
 }
 
 export const resourceStates: ResourceState[] = [
@@ -119,12 +121,14 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
-  allocation: number;
+  allocation?: number;
   available: number;
   total: number;
 }
 
 export type ClusterOverview = Record<ResourceType, ClusterOverviewResource>;
+
+export type PoolOverview = Record<string, ClusterOverviewResource>;
 
 export interface EndTimes {
   endTime?: string;
@@ -645,6 +649,7 @@ export interface Template {
 }
 
 export interface ResourcePool {
+  accelerator?: string;
   auxContainerCapacity: number;
   auxContainerCapacityPerAgent: number;
   auxContainersRunning: number;
@@ -666,6 +671,7 @@ export interface ResourcePool {
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;
+  stats?: Api.V1QueueStats;
   type: Api.V1ResourcePoolType;
 }
 

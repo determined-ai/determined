@@ -7,10 +7,6 @@
 This document describes how Determined runs on Google Cloud Platform (GCP). For installation, see
 :ref:`install-gcp`.
 
-**********
- Overview
-**********
-
 At a high level, Determined uses Google Compute Engine (GCE) instances as the base unit. The cluster
 is managed by a `master` node (a single, non-GPU instance), which in turn provisions and
 deprovisions other `agent` nodes (GPU instances) depending on the current volume of experiments
@@ -88,12 +84,9 @@ Periphery Resources
    (assuming it has the correct associated permissions), or the Terraform script can create a bucket
    with the cluster.
 
-************
- Learn More
-************
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   install-gcp
+   dynamic-agents-gcp

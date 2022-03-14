@@ -147,7 +147,7 @@ func (a *apiServer) DeleteExperiment(
 		return nil, errors.Wrapf(err, "transitioning to %s", e.State)
 	}
 	go func() {
-		if err := a.deleteExperiment(e); err != nil {
+		if err := a.deleteExperiment(e, curUser); err != nil {
 			logrus.WithError(err).Errorf("deleting experiment %d", e.ID)
 			e.State = model.DeleteFailedState
 			if err := a.m.db.SaveExperimentState(e); err != nil {
@@ -161,7 +161,7 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
+func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) error {
 	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to read config for experiment: %w", err)
@@ -177,6 +177,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
 
 	taskSpec := *a.m.taskSpec
 	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = user
 	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
 		exp.ID,
 		0,
@@ -242,21 +243,23 @@ func (a *apiServer) GetExperiments(
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
-		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED: "id",
-		apiv1.GetExperimentsRequest_SORT_BY_ID:          "id",
-		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION: "description",
-		apiv1.GetExperimentsRequest_SORT_BY_NAME:        "name",
-		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:  "start_time",
-		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
-		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
-		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
+		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:   "id",
+		apiv1.GetExperimentsRequest_SORT_BY_ID:            "id",
+		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:   "description",
+		apiv1.GetExperimentsRequest_SORT_BY_NAME:          "name",
+		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "start_time",
+		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "end_time",
+		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
+		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
+		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
+		apiv1.GetExperimentsRequest_SORT_BY_USER:          "username",
+		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
+		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
 	orderExpr := ""
 	switch _, ok := orderColMap[req.SortBy]; {

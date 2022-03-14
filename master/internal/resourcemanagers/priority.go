@@ -8,6 +8,7 @@ import (
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -27,15 +28,15 @@ type AllocReqs = []*sproto.AllocateRequest
 // associated with a job, eg GC tasks that aren't related to a job.
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
-func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
+func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	return &priorityScheduler{
 		preemptionEnabled: config.Priority.Preemption,
 	}
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return p.prioritySchedule(rp.taskList, rp.groups,
-		rp.queuePositions, rp.agentStatesCache, rp.fittingMethod)
+	return p.prioritySchedule(rp.taskList, rp.groups, rp.queuePositions,
+		rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group,

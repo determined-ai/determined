@@ -27,6 +27,7 @@ enum StateColors {
   suspended = 'suspended',
   free = 'free',
   pending = 'pending',
+  potential = 'potential'
 }
 
 export interface Theme {
@@ -164,6 +165,7 @@ const lightDeterminedTheme: Theme = {
       free: '#eee',
       inactive: '#666666',
       pending: '#6666cc',
+      potential: '#ffffff',
       success: '#009900',
       suspended: '#cc9900',
     },
@@ -266,6 +268,7 @@ const stateColorMapping = {
   [SlotState.Free]: 'free',
   [SlotState.Pending]: 'pending',
   [SlotState.Running]: 'active',
+  [SlotState.Potential]: 'potential',
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'suspended',

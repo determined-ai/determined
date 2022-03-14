@@ -9,22 +9,23 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestResourceManagerForwardMessage(t *testing.T) {
 	system := actor.NewSystem(t.Name())
-	conf := &ResourceConfig{
-		ResourceManager: &ResourceManagerConfig{
-			AgentRM: &AgentResourceManagerConfig{
-				Scheduler: &SchedulerConfig{
-					FairShare:     &FairShareSchedulerConfig{},
+	conf := &config.ResourceConfig{
+		ResourceManager: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Scheduler: &config.SchedulerConfig{
+					FairShare:     &config.FairShareSchedulerConfig{},
 					FittingPolicy: best,
 				},
 			},
 		},
-		ResourcePools: []ResourcePoolConfig{
+		ResourcePools: []config.ResourcePoolConfig{
 			{
 				PoolName:                 defaultResourcePoolName,
 				MaxAuxContainersPerAgent: 100,
@@ -43,16 +44,16 @@ func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
 	// but initializing either of these in the test is not viable. So let's at least
 	// check if we properly return "unknown" for on-prem-like setups.
 	system := actor.NewSystem(t.Name())
-	conf := &ResourceConfig{
-		ResourceManager: &ResourceManagerConfig{
-			AgentRM: &AgentResourceManagerConfig{
-				Scheduler: &SchedulerConfig{
-					FairShare:     &FairShareSchedulerConfig{},
+	conf := &config.ResourceConfig{
+		ResourceManager: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Scheduler: &config.SchedulerConfig{
+					FairShare:     &config.FairShareSchedulerConfig{},
 					FittingPolicy: best,
 				},
 			},
 		},
-		ResourcePools: []ResourcePoolConfig{
+		ResourcePools: []config.ResourcePoolConfig{
 			{
 				PoolName:                 defaultResourcePoolName,
 				MaxAuxContainersPerAgent: 100,

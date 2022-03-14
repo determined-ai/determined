@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.10-dev0
+    default: 0.17.11-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
@@ -1431,10 +1431,15 @@ jobs:
       managed-devcluster:
         type: boolean
         default: false
+      postgres-version:
+        type: string
+        default: '10'
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
     parallelism: <<parameters.parallelism>>
+    environment:
+      DET_POSTGRES_VERSION: <<parameters.postgres-version>>
     steps:
       - checkout
       - attach_workspace:
@@ -1607,7 +1612,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.6-gke.1500"
+        default: "1.21.6"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1690,7 +1695,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.6-gke.1500"
+        default: "1.21.6"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1943,6 +1948,26 @@ workflows:
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
 
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: '10'
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: '14'
+
       - deploy:
           enable-cors: true
           context: aws
@@ -1967,21 +1992,6 @@ workflows:
           max-dynamic-agents: 1
           cluster-id: determined-preview
           compute-agent-instance-type: t2.medium
-
-      - deploy:
-          name: deploy-release-party
-          context: aws
-          filters:
-            branches:
-              only:
-                - /release-.*/
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [8]
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel

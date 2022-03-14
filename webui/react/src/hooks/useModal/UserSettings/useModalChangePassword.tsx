@@ -5,13 +5,14 @@ import { useStore } from 'contexts/Store';
 import { login, setUserPassword } from 'services/api';
 import handleError from 'utils/error';
 
-import useModal, { ModalHooks } from './useModal';
+import useModal, { ModalHooks } from '../useModal';
+
 import css from './useModalChangePassword.module.scss';
 
 const useModalChangePassword = (): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const { auth } = useStore();
-  const username = auth.user?.username || 'Anonymous';
+  const username = auth.user?.username ?? '';
   const [ form ] = Form.useForm();
 
   const handleFormCancel = useCallback(() => {
@@ -118,7 +119,6 @@ const useModalChangePassword = (): ModalHooks => {
       closable: true,
       content: getModalContent(),
       icon: null,
-      okText: 'Change Password',
       title: 'Change Password',
     });
   }, [ getModalContent, openOrUpdate ]);

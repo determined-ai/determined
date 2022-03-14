@@ -105,17 +105,17 @@ func (a *apiServer) GetModelLabels(
 
 func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
 	if len(strings.ReplaceAll(modelName, " ", "")) == 0 {
-		return errors.Errorf("model names cannot be blank")
+		return status.Errorf(codes.InvalidArgument, "model names cannot be blank")
 	}
 	if strings.Contains(modelName, "  ") {
-		return errors.Errorf("model names cannot have excessive spacing")
+		return status.Errorf(codes.InvalidArgument, "model names cannot have excessive spacing")
 	}
 	if strings.Contains(modelName, "/") || strings.Contains(modelName, "\\") {
-		return errors.Errorf("model names cannot have slashes")
+		return status.Errorf(codes.InvalidArgument, "model names cannot have slashes")
 	}
 	re := regexp.MustCompile(`^\d+$`)
 	if len(re.FindAllString(modelName, 1)) > 0 {
-		return errors.Errorf("model names cannot be only numbers")
+		return status.Errorf(codes.InvalidArgument, "model names cannot be only numbers")
 	}
 	getResp, err := a.GetModels(ctx,
 		&apiv1.GetModelsRequest{Name: modelName, NameCaseInsensitive: true})
@@ -123,7 +123,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 		return err
 	}
 	if len(getResp.Models) > 0 {
-		return errors.Errorf("avoid using model names with case-sensitive similar names")
+		return status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
 	if err := a.clearModelName(ctx, req.Name); err != nil {
-		return nil, errors.Wrap(err, "error setting model name")
+		return nil, err
 	}
 
 	b, err := protojson.Marshal(req.Metadata)
@@ -173,7 +173,7 @@ func (a *apiServer) PatchModel(
 		log.Infof("model (%d) name changing from \"%s\" to \"%s\"",
 			currModel.Id, currModel.Name, req.Model.Name.Value)
 		if err = a.clearModelName(ctx, req.Model.Name.Value); err != nil {
-			return nil, errors.Wrap(err, "error renaming model")
+			return nil, err
 		}
 		madeChanges = true
 		currModel.Name = req.Model.Name.Value

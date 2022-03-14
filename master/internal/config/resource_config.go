@@ -1,4 +1,4 @@
-package resourcemanagers
+package config
 
 import "github.com/pkg/errors"
 

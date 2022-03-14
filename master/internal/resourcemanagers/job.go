@@ -2,9 +2,8 @@ package resourcemanagers
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/shopspring/decimal"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"

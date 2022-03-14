@@ -78,13 +78,6 @@ func NewRendezvous(allocationID model.AllocationID, rs reservations) *Rendezvous
 	}
 }
 
-// PreStart just steps up the rendezvous watcher.
-func (r *Rendezvous) PreStart(ctx *actor.Context) {
-	actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{
-		AllocationID: r.allocationID,
-	})
-}
-
 // ReceiveMsg receives rendezvous-specific messages.
 func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 	if r == nil {
@@ -93,6 +86,12 @@ func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 
 	switch msg := ctx.Message().(type) {
 	case WatchRendezvousInfo:
+		if len(r.watchers) == 0 {
+			actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{
+				AllocationID: r.allocationID,
+			})
+		}
+
 		if w, err := r.watch(msg.AllocationID, msg.ContainerID); err != nil {
 			ctx.Respond(err)
 		} else {

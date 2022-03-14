@@ -9,9 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -29,6 +26,10 @@ var (
 var once sync.Once
 var masterConfig *Config
 
+// KubernetesDefaultPriority is the default K8 resource manager priority.
+const KubernetesDefaultPriority = 50
+const sslModeDisable = "disable"
+
 type (
 	// ExperimentConfigPatch is the updatedble fields for patching an experiment.
 	ExperimentConfigPatch struct {
@@ -36,12 +37,40 @@ type (
 	}
 )
 
+// DefaultDBConfig returns the default configuration of the database.
+func DefaultDBConfig() *DBConfig {
+	return &DBConfig{
+		Migrations: "file://static/migrations",
+		SSLMode:    sslModeDisable,
+	}
+}
+
+// HPImportanceConfig is the configuration in the master for hyperparameter importance.
+type HPImportanceConfig struct {
+	WorkersLimit   uint `json:"workers_limit"`
+	QueueLimit     uint `json:"queue_limit"`
+	CoresPerWorker uint `json:"cores_per_worker"`
+	MaxTrees       uint `json:"max_trees"`
+}
+
+// DBConfig hosts configuration fields of the database.
+type DBConfig struct {
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	Migrations  string `json:"migrations"`
+	Host        string `json:"host"`
+	Port        string `json:"port"`
+	Name        string `json:"name"`
+	SSLMode     string `json:"ssl_mode"`
+	SSLRootCert string `json:"ssl_root_cert"`
+}
+
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{
 		ConfigFile:            "",
 		Log:                   *logger.DefaultConfig(),
-		DB:                    *db.DefaultConfig(),
+		DB:                    *DefaultDBConfig(),
 		TaskContainerDefaults: *model.DefaultTaskContainerDefaults(),
 		TensorBoardTimeout:    5 * 60,
 		Security: SecurityConfig{
@@ -69,13 +98,13 @@ func DefaultConfig() *Config {
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
-		HPImportance: hpimportance.HPImportanceConfig{
+		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
 			CoresPerWorker: 1,
 			MaxTrees:       100,
 		},
-		ResourceConfig: resourcemanagers.DefaultResourceConfig(),
+		ResourceConfig: DefaultResourceConfig(),
 	}
 }
 
@@ -86,7 +115,7 @@ func DefaultConfig() *Config {
 type Config struct {
 	ConfigFile            string                            `json:"config_file"`
 	Log                   logger.Config                     `json:"log"`
-	DB                    db.Config                         `json:"db"`
+	DB                    DBConfig                          `json:"db"`
 	TensorBoardTimeout    int                               `json:"tensorboard_timeout"`
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     expconf.CheckpointStorageConfig   `json:"checkpoint_storage"`
@@ -98,9 +127,9 @@ type Config struct {
 	EnableCors            bool                              `json:"enable_cors"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
-	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
+	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
-	*resourcemanagers.ResourceConfig
+	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
@@ -167,7 +196,7 @@ func (c *Config) Resolve() error {
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
 
 	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
-		c.ResourceManager.AgentRM.Scheduler = resourcemanagers.DefaultSchedulerConfig()
+		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 	}
 
 	if err := c.ResolveResource(); err != nil {
@@ -247,7 +276,7 @@ type ObservabilityConfig struct {
 	EnablePrometheus bool `json:"enable_prometheus"`
 }
 
-func readPriorityFromScheduler(conf *resourcemanagers.SchedulerConfig) *int {
+func readPriorityFromScheduler(conf *SchedulerConfig) *int {
 	if conf == nil || conf.Priority == nil {
 		return nil
 	}
@@ -300,7 +329,7 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 		return *prio
 	}
 
-	var schedulerConf *resourcemanagers.SchedulerConfig
+	var schedulerConf *SchedulerConfig
 
 	// if not found, fall back to the resource pools config
 	for _, rpConfig := range config.ResourcePools {
@@ -324,10 +353,10 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 	}
 
 	if config.ResourceManager.KubernetesRM != nil {
-		return resourcemanagers.KubernetesDefaultPriority
+		return KubernetesDefaultPriority
 	}
 
-	return resourcemanagers.DefaultSchedulingPriority
+	return DefaultSchedulingPriority
 }
 
 // ReadWeight resolves the weight value for a job.

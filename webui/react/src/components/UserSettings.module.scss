@@ -1,16 +1,15 @@
-.noFooter :global(.ant-modal-confirm-btns) {
-  display: none;
-}
 .base,
 .field {
   display: flex;
   flex-direction: column;
   
-  .value {
+  .body {
     color: var(--theme-colors-monochrome-8);
-    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
   }
-  .label {
+  .header {
     margin-bottom: 8px;
   }
 }

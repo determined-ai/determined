@@ -22,15 +22,6 @@ func TestClusterAPI(t *testing.T) {
 	_, err := db.GetOrCreateClusterID()
 	require.NoError(t, err, "failed to get or create cluster id")
 
-	currentTime := time.Now().UTC().Truncate(time.Millisecond)
-	db.UpdateClusterHeartBeat(currentTime)
-
-	var clusterHeartbeat time.Time
-	err = db.sql.QueryRow("SELECT cluster_heartbeat FROM cluster_id").Scan(&clusterHeartbeat)
-	require.NoError(t, err, "error reading cluster_heartbeat from cluster_id table")
-
-	require.Equal(t, currentTime, clusterHeartbeat, "Retrieved cluster heartbeat doesn't match the correct time")
-
 	// Add a mock user
 	user := requireMockUser(t, db)
 
@@ -70,6 +61,16 @@ func TestClusterAPI(t *testing.T) {
 
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
+
+	// Add a cluster heartbeat after allocation, so it is as if the master died with it open.
+	currentTime := time.Now().UTC().Truncate(time.Millisecond)
+	db.UpdateClusterHeartBeat(currentTime)
+
+	var clusterHeartbeat time.Time
+	err = db.sql.QueryRow("SELECT cluster_heartbeat FROM cluster_id").Scan(&clusterHeartbeat)
+	require.NoError(t, err, "error reading cluster_heartbeat from cluster_id table")
+
+	require.Equal(t, currentTime, clusterHeartbeat, "Retrieved cluster heartbeat doesn't match the correct time")
 
 	// Don't complete the above allocation and call CloseOpenAllocations
 	db.CloseOpenAllocations()

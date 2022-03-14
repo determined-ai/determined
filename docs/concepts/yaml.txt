@@ -11,9 +11,9 @@ for configuring tasks such as :ref:`experiments <experiment-configuration>` and 
 Determined. This is not a full description of YAML; see the `specification
 <https://yaml.org/spec/1.2/spec.html>`__ or other online guides for more details.
 
-**********
- Overview
-**********
+************
+ YAML Types
+************
 
 A value in YAML can be a scalar (``null`` or a number, string, or Boolean) or a collection (an array
 or map). Collections can contain other collections nested to any depth (though Determined's YAML
@@ -85,9 +85,9 @@ block represents a list containing several values whose types are listed in the 
    - foo:bar       # string
    - foo bar       # string
 
-*************************
- Putting It All Together
-*************************
+**********************************
+ Example Experiment Configuration
+**********************************
 
 A Determined configuration file consists of a YAML object with a particular structure: a map at the
 top level that is expected to have certain keys, with the value for each key expected to have a

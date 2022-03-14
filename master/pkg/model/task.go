@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -260,48 +261,55 @@ type TaskLog struct {
 	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
 	Level       *string    `db:"level" json:"level"`
 	Log         string     `db:"log" json:"log"`
-	FlatLog     string     `db:"message" json:"message,omitempty"`
 	Source      *string    `db:"source" json:"source,omitempty"`
 	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
 }
+
+const (
+	// RFC3339MicroTrailingZeroes unlike time.RFC3339Nano is a time format specifier that preserves
+	// trailing zeroes.
+	RFC3339MicroTrailingZeroes = "2006-01-02T15:04:05.000000Z07:00"
+	// containerIDMaxLength is the max display length for a container ID in logs.
+	containerIDMaxLength = 8
+)
 
 // Message resolves the flat version of the log that UIs have shown historically.
 // TODO(task-unif): Should we just.. stop doing this? And send the log as is and let the
 // UIs handle display (yes, IMO).
 func (t *TaskLog) Message() string {
-	if t.FlatLog != "" {
-		return t.FlatLog
-	}
+	var parts []string
 
-	var timestamp string
+	// e.g., "[2022-03-02T02:15:18.299569Z]"
 	if t.Timestamp != nil {
-		timestamp = t.Timestamp.Format(time.RFC3339Nano)
+		parts = append(parts, fmt.Sprintf("[%s]", t.Timestamp.Format(RFC3339MicroTrailingZeroes)))
 	} else {
-		timestamp = defaultTaskLogTime
+		parts = append(parts, fmt.Sprintf("[%s]", defaultTaskLogTime))
 	}
 
-	// This is just to match postgres.
-	const containerIDMaxLength = 8
-	var containerID string
+	// e.g., " f6114bb3"
 	if t.ContainerID != nil && *t.ContainerID != "" {
-		containerID = *t.ContainerID
+		containerID := *t.ContainerID
 		if len(containerID) > containerIDMaxLength {
 			containerID = containerID[:containerIDMaxLength]
 		}
-		containerID = fmt.Sprintf("%s ", containerID)
+		parts = append(parts, containerID)
 	}
 
-	var rankID string
+	// e.g., " [rank=1]"
 	if t.RankID != nil {
-		rankID = fmt.Sprintf("[rank=%d] ", *t.RankID)
+		parts = append(parts, fmt.Sprintf("[rank=%d]", *t.RankID))
 	}
 
-	var level string
+	parts = append(parts, ("||"))
+
+	// e.g., " INFO"
 	if t.Level != nil {
-		level = fmt.Sprintf("%s: ", *t.Level)
+		parts = append(parts, fmt.Sprintf("%s:", *t.Level))
 	}
 
-	return fmt.Sprintf("[%s] %s%s|| %s %s", timestamp, containerID, rankID, level, t.Log)
+	parts = append(parts, t.Log)
+
+	return strings.Join(parts, " ")
 }
 
 // Proto converts a task log to its protobuf representation.
@@ -332,7 +340,7 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 		Id:        id,
 		Timestamp: ts,
 		Level:     level,
-		Message:   t.FlatLog,
+		Message:   t.Message(),
 	}, nil
 }
 

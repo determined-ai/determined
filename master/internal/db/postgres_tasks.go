@@ -194,7 +194,8 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 func (db *PgDB) CloseOpenAllocations() error {
 	if _, err := db.sql.Exec(`
 UPDATE allocations
-SET end_time = cluster_heartbeat FROM cluster_id
+SET end_time = greatest(cluster_heartbeat, start_time)
+FROM cluster_id
 WHERE end_time IS NULL`); err != nil {
 		return errors.Wrap(err, "closing old allocations")
 	}
@@ -235,6 +236,7 @@ SELECT
     l.allocation_id,
     l.agent_id,
     l.container_id,
+    l.rank_id,
     l.timestamp,
     l.level,
     l.stdtype,
@@ -249,10 +251,6 @@ ORDER BY l.id %s LIMIT $2
 	var b []*model.TaskLog
 	if err := db.queryRows(query, &b, params...); err != nil {
 		return nil, nil, err
-	}
-
-	for _, l := range b {
-		l.FlatLog = l.Message()
 	}
 
 	if len(b) > 0 {

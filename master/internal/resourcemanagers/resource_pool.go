@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
@@ -25,7 +26,7 @@ import (
 
 // ResourcePool manages the agent and task lifecycles.
 type ResourcePool struct {
-	config *ResourcePoolConfig
+	config *config.ResourcePoolConfig
 	cert   *tls.Certificate
 
 	scheduler        Scheduler
@@ -55,7 +56,7 @@ type GetResourceSummary struct{}
 
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
-	config *ResourcePoolConfig,
+	config *config.ResourcePoolConfig,
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
@@ -382,7 +383,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 func (rp *ResourcePool) moveJob(
 	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
 ) error {
-	if rp.config.Scheduler.GetType() != priorityScheduling {
+	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
 		return fmt.Errorf("unable to perform operation on resource pool with %s", rp.config.Scheduler.GetType())
 	}
 
@@ -543,6 +544,17 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (rp *ResourcePool) persist() error {
+	// exlude head and tail?
+	fmt.Println("TODO persist rp", rp.config.PoolName)
+	return nil // TODO
+}
+
+func (rp *ResourcePool) restore() error {
+	fmt.Println("TODO restore rp", rp.config.PoolName)
+	return nil // TODO
 }
 
 func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {

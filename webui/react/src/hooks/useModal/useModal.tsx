@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Modal } from 'antd';
-import { ModalFunc } from 'antd/es/modal/confirm';
+import { ModalFunc, ModalStaticFunctions } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -40,10 +40,11 @@ const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
 
 type AntModalPromise = (...args: any[]) => any;
 
-const useModal = (
+const useModal = (config: {
+  modal?: Omit<ModalStaticFunctions, 'warn'>,
   onClose?: (reason: ModalCloseReason) => void,
   options?: ModalOptions,
-): ModalHooks => {
+} = {}): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const componentUnmounting = useRef(false);
   const [ modalProps, setModalProps ] = useState<ModalFuncProps>();
@@ -57,8 +58,8 @@ const useModal = (
     if (!modalRef.current) return;
     modalRef.current.destroy();
     modalRef.current = undefined;
-    if (reason) onClose?.(reason);
-  }, [ onClose ]);
+    if (reason) config.onClose?.(reason);
+  }, [ config ]);
 
   /*
    * Adds `modalClose` to event handlers `onOk` and `onCancel`.
@@ -91,10 +92,10 @@ const useModal = (
     const completeModalProps: ModalFuncProps = {
       ...DEFAULT_MODAL_PROPS,
       ...modalProps,
-      onCancel: options?.rawCancel
+      onCancel: config.options?.rawCancel
         ? modalProps.onCancel
         : extendEventHandler(modalProps.onCancel, ModalCloseReason.Cancel),
-      onOk: options?.rawOk
+      onOk: config.options?.rawOk
         ? modalProps.onOk
         : extendEventHandler(modalProps.onOk, ModalCloseReason.Ok),
     };
@@ -103,9 +104,20 @@ const useModal = (
     if (modalRef.current) {
       modalRef.current.update(completeModalProps);
     } else {
-      modalRef.current = Modal.confirm(completeModalProps);
+      modalRef.current = (config.modal || Modal).confirm(completeModalProps);
     }
-  }, [ extendEventHandler, modalProps, options, prevModalProps ]);
+  }, [ config, extendEventHandler, modalProps, prevModalProps ]);
+
+  /**
+   * Sets componentUnmounting to true only when the parent component is unmounting so that the next
+   * useEffect only runs modalClose on unmount, rather than every time modalClose updates.
+   * The order of these two useEffects matters, this one has to be first.
+   */
+  useEffect(() => {
+    return () => {
+      componentUnmounting.current = true;
+    };
+  }, []);
 
   /**
    * Sets componentUnmounting to true only when the parent component is unmounting so that the next

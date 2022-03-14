@@ -20,6 +20,12 @@ from determined.common import check, util
 
 @util.preserve_random_state
 def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: int = 32) -> Any:
+    from google.cloud import storage
+
+    if not (isinstance(blob, storage.Blob)):
+        raise Exception(
+            f"Called download_gcs_blob_with_backoff with object of type {type(blob).__name__}"
+        )
     for n in range(n_retries):
         try:
             return blob.download_as_string()

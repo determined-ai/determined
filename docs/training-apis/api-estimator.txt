@@ -89,14 +89,8 @@ Example usage of :class:`determined.estimator.RunHook` which adds custom metadat
                hooks=[MyHook(self.context, "my_metadata")],
            )
 
-************
- Learn More
-************
-
-See the full list of documents.
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
    api-estimator-reference

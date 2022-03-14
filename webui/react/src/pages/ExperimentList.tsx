@@ -47,6 +47,7 @@ import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
+import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
@@ -311,6 +312,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'id',
         key: V1GetExperimentsRequestSortBy.ID,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
@@ -320,25 +322,41 @@ const ExperimentList: React.FC = () => {
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.NAME,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
         width: 240,
       },
-      { dataIndex: 'description', render: descriptionRenderer, title: 'Description' },
+      {
+        dataIndex: 'description',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: descriptionRenderer,
+        title: 'Description',
+      },
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
         filters: labels.map(label => ({ text: label, value: label })),
         key: 'labels',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
         render: tagsRenderer,
         title: 'Tags',
         width: 120,
       },
       {
+        dataIndex: 'forkedFrom',
+        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: forkedFromRenderer,
+        sorter: true,
+        title: 'Forked From',
+      },
+      {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
@@ -346,12 +364,14 @@ const ExperimentList: React.FC = () => {
       },
       {
         key: 'duration',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: expermentDurationRenderer,
         title: 'Duration',
       },
       {
         dataIndex: 'numTrials',
         key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
         title: 'Trials',
       },
@@ -378,11 +398,13 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'searcherType',
         key: 'searcherType',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         title: 'Searcher Type',
       },
       {
         dataIndex: 'resourcePool',
-        key: 'resourcePool',
+        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
         title: 'Resource Pool',
       },
@@ -399,14 +421,8 @@ const ExperimentList: React.FC = () => {
         title: 'Archived',
       },
       {
-        dataIndex: 'forkedFrom',
-        key: 'forkedFrom',
-        render: forkedFromRenderer,
-        title: 'Forked From',
-      },
-      {
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: user.username, value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: V1GetExperimentsRequestSortBy.USER,
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
@@ -418,6 +434,7 @@ const ExperimentList: React.FC = () => {
         className: 'fullCell',
         fixed: 'right',
         key: 'action',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: actionRenderer,
         title: '',
         width: 40,
@@ -589,6 +606,19 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const ExperimentActionDropdown = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <TaskActionDropdown
+        curUser={user}
+        task={taskFromExperiment(record)}
+        onComplete={handleActionComplete}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </TaskActionDropdown>
+    ),
+    [ user, handleActionComplete ],
+  );
+
   return (
     <Page
       id="experiments"
@@ -617,7 +647,10 @@ const ExperimentList: React.FC = () => {
         onClear={clearSelected}
       />
       <ResponsiveTable<ExperimentItem>
+        areRowsRightClickable={true}
+        areRowsSelected={!!settings.row}
         columns={visibleColumns}
+        ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
         pagination={getFullPaginationConfig({

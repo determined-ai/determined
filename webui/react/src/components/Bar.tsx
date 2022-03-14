@@ -7,6 +7,7 @@ import { floatToPercent } from 'utils/string';
 import css from './Bar.module.scss';
 
 export interface BarPart {
+  bordered?: string;
   color: string; // css color
   label?: string;
   percent: number; // between 0-1
@@ -19,10 +20,19 @@ export interface Props {
 }
 
 const partStyle = (part: BarPart) => {
-  return {
+  let style = {
     backgroundColor: part.color,
+    borderColor: 'var(--theme-colors-monochrome-11)',
+    borderStyle: 'none',
+    borderWidth: 1,
     width: floatToPercent(part.percent, 0),
   };
+
+  if (part.bordered) {
+    style = { ...style, borderStyle: 'dashed dashed dashed none' };
+  }
+
+  return style;
 };
 
 const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {

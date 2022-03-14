@@ -58,7 +58,8 @@
    :caption: Integrations
    :hidden:
 
-   ecosystem-integration
+   integrations/ecosystem-integration
+   integrations/prometheus
 
 .. toctree::
    :caption: Further

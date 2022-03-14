@@ -151,7 +151,7 @@ export const columns: ColumnType<Job>[] = [
     dataIndex: 'user',
     key: 'user',
     render: (_: unknown, record: Job): ReactNode => {
-      const cell = <Avatar name={record.username || 'Unavailable'} />; // FIXME
+      const cell = <Avatar username={record.username} />;
       return cell;
     },
     title: 'User',

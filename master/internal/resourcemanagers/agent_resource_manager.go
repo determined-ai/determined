@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -18,15 +19,22 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+const (
+	best             = "best"
+	worst            = "worst"
+	defaultFitPolicy = best
+)
+
 type agentResourceManager struct {
-	config      *AgentResourceManagerConfig
-	poolsConfig []ResourcePoolConfig
+	config      *config.AgentResourceManagerConfig
+	poolsConfig []config.ResourcePoolConfig
 	cert        *tls.Certificate
 
 	pools map[string]*actor.Ref
 }
 
-func newAgentResourceManager(config *ResourceConfig, cert *tls.Certificate) *agentResourceManager {
+func newAgentResourceManager(config *config.ResourceConfig,
+	cert *tls.Certificate) *agentResourceManager {
 	return &agentResourceManager{
 		config:      config.ResourceManager.AgentRM,
 		poolsConfig: config.ResourcePools,
@@ -110,6 +118,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("")
 				ctx.Respond(err)
 			}
+
+			jobStats, err := a.getPoolJobStats(ctx, pool)
+			if err != nil {
+				ctx.Respond(err)
+			}
+
+			summary.Stats = jobStats
 			summaries = append(summaries, summary)
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
@@ -172,7 +187,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 }
 
 func (a *agentResourceManager) createResourcePool(
-	ctx *actor.Context, config ResourcePoolConfig, cert *tls.Certificate,
+	ctx *actor.Context, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
 
@@ -234,6 +249,20 @@ func (a *agentResourceManager) forwardToAllPools(
 	return nil
 }
 
+func (a *agentResourceManager) getPoolJobStats(
+	ctx *actor.Context, pool config.ResourcePoolConfig,
+) (*jobv1.QueueStats, error) {
+	jobStatsResp := ctx.Ask(a.pools[pool.PoolName], job.GetJobQStats{})
+	if err := jobStatsResp.Error(); err != nil {
+		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
+	}
+	jobStats, ok := jobStatsResp.Get().(jobv1.QueueStats)
+	if !ok {
+		return nil, fmt.Errorf("unexpected response type from jobStats")
+	}
+	return &jobStats, nil
+}
+
 func (a *agentResourceManager) aggregateTaskHandler(
 	resps map[*actor.Ref]actor.Message,
 ) (*actor.Ref, error) {
@@ -272,13 +301,14 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 	return summaries
 }
 
-func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourcePoolConfig, error) {
+func (a *agentResourceManager) getResourcePoolConfig(poolName string) (
+	config.ResourcePoolConfig, error) {
 	for i := range a.poolsConfig {
 		if a.poolsConfig[i].PoolName == poolName {
 			return a.poolsConfig[i], nil
 		}
 	}
-	return ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
+	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
 }
 
 func (a *agentResourceManager) createResourcePoolSummary(

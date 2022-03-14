@@ -153,6 +153,14 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		config.WorkDir = nil
 	}
 
+	token, createSessionErr := a.m.db.StartUserSession(user)
+	if createSessionErr != nil {
+		return nil, status.Errorf(codes.Internal,
+			errors.Wrapf(createSessionErr,
+				"unable to create user session inside task").Error())
+	}
+	taskSpec.UserSessionToken = token
+
 	return &tasks.GenericCommandSpec{
 		Base:      taskSpec,
 		Config:    config,

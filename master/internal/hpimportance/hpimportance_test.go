@@ -7,13 +7,14 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestComputeHPImportance(t *testing.T) {
-	masterConfig := HPImportanceConfig{
+	masterConfig := config.HPImportanceConfig{
 		WorkersLimit:   2,
 		QueueLimit:     16,
 		CoresPerWorker: 1,

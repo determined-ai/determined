@@ -92,11 +92,7 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 	var user *model.User
 	var session *model.UserSession
 	var err error
-	if extConfig.JwtKey != "" {
-		user, session, err = d.UserByExternalToken(token, extConfig.JwtKey)
-	} else {
-		user, session, err = d.UserByToken(token)
-	}
+	user, session, err = d.UserByToken(token, extConfig)
 	switch err {
 	case nil:
 		if !user.Active {

@@ -1,4 +1,4 @@
-package resourcemanagers
+package config
 
 import (
 	"encoding/json"
@@ -12,9 +12,12 @@ const (
 	// DefaultSchedulingPriority is the default resource manager priority.
 	DefaultSchedulingPriority = 42
 
-	fairShareScheduling  = "fair_share"
-	priorityScheduling   = "priority"
-	roundRobinScheduling = "round_robin"
+	// FairShareScheduling schedules tasks proportional to the available resources.
+	FairShareScheduling = "fair_share"
+	// PriorityScheduling schedules tasks based on their priority.
+	PriorityScheduling = "priority"
+	// RoundRobinScheduling schedules tasks based on the order in which they arrive.
+	RoundRobinScheduling = "round_robin"
 
 	best             = "best"
 	worst            = "worst"
@@ -81,11 +84,11 @@ func (s SchedulerConfig) Validate() []error {
 func (s *SchedulerConfig) GetType() string {
 	switch {
 	case s.FairShare != nil:
-		return fairShareScheduling
+		return FairShareScheduling
 	case s.Priority != nil:
-		return priorityScheduling
+		return PriorityScheduling
 	case s.RoundRobin != nil:
-		return roundRobinScheduling
+		return RoundRobinScheduling
 	default:
 		panic("neither scheduler type configured")
 	}

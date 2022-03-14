@@ -320,16 +320,19 @@ class TestPyTorchTrial:
 
         def make_workloads1() -> workload.Stream:
             nonlocal controller
+            assert controller.trial.counter.trial_startups == 1
 
             yield workload.train_workload(1, 1, 0, 4), workload.ignore_workload_response
             assert controller is not None, "controller was never set!"
             assert controller.trial.counter.__dict__ == {
+                "trial_startups": 1,
                 "validation_steps_started": 0,
                 "validation_steps_ended": 0,
                 "checkpoints_ended": 0,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "trial_shutdowns": 0,
             }
             assert controller.trial.legacy_counter.__dict__ == {
                 "legacy_on_training_epochs_start_calls": 2
@@ -337,12 +340,14 @@ class TestPyTorchTrial:
 
             yield workload.validation_workload(), workload.ignore_workload_response
             assert controller.trial.counter.__dict__ == {
+                "trial_startups": 1,
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
                 "checkpoints_ended": 0,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "trial_shutdowns": 0,
             }
             assert controller.trial.legacy_counter.__dict__ == {
                 "legacy_on_training_epochs_start_calls": 2
@@ -354,12 +359,14 @@ class TestPyTorchTrial:
             latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = 1
             assert controller.trial.counter.__dict__ == {
+                "trial_startups": 1,
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
                 "checkpoints_ended": 1,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "trial_shutdowns": 0,
             }
             assert controller.trial.legacy_counter.__dict__ == {
                 "legacy_on_training_epochs_start_calls": 2
@@ -374,6 +381,7 @@ class TestPyTorchTrial:
             checkpoint_dir=str(checkpoint_dir),
         )
         controller.run()
+        assert controller.trial.counter.trial_shutdowns == 1
 
         # Verify the checkpoint loading callback works.
 
@@ -390,12 +398,16 @@ class TestPyTorchTrial:
         )
         controller.run()
         assert controller.trial.counter.__dict__ == {
+            # Note: trial_startups will get reset by the loading logic.
+            "trial_startups": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
             "checkpoints_ended": 0,
             "training_started_times": 2,
             "training_epochs_started": 3,
             "training_epochs_ended": 3,
+            # Note: trial_shutdowns cannot be persisted, since it is called after checkpointing.
+            "trial_shutdowns": 1,
         }
         assert controller.trial.legacy_counter.__dict__ == {
             "legacy_on_training_epochs_start_calls": 1
@@ -534,12 +546,13 @@ class TestPyTorchTrial:
         hparams["disable_dataset_reproducibility_checks"] = False
 
         with pytest.raises(RuntimeError, match="you can disable this check by calling"):
-            _ = utils.make_trial_controller_from_trial_implementation(
+            controller = utils.make_trial_controller_from_trial_implementation(
                 trial_class=pytorch_onevar_model.OneVarTrial,
                 hparams=hparams,
                 workloads=make_workloads(),
                 trial_seed=self.trial_seed,
             )
+            controller.run()
 
     def test_custom_dataloader(self) -> None:
         def make_workloads() -> workload.Stream:

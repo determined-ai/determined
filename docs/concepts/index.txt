@@ -4,10 +4,6 @@
  Concepts
 ##########
 
-**********
- Overview
-**********
-
 Deep learning practitioners come from a variety of disciplines. Depending on their background, some
 practitioners have strong foundations in engineering, while others focus on statistics and domain
 expertise. Determined AI is a deep learning training platform that simplifies infrastructure
@@ -109,11 +105,11 @@ For each experiment, you can configure a **searcher** or a **searching algorithm
 algorithm determines how many trials will be run for a particular experiment and how the
 hyperparameters will be set. More information can be found at :doc:`/training-hyperparameter/index`.
 
-Below are additional concepts that may be useful to understand but not required for general use of
-Determined:
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   elastic-infrastructure
+   resource-pool
+   scheduling
+   yaml

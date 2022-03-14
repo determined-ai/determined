@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -168,24 +169,24 @@ func (m *mockAgent) Receive(ctx *actor.Context) error {
 func setupResourcePool(
 	t *testing.T,
 	system *actor.System,
-	config *ResourcePoolConfig,
+	conf *config.ResourcePoolConfig,
 	mockTasks []*mockTask,
 	mockGroups []*mockGroup,
 	mockAgents []*mockAgent,
 ) (*ResourcePool, *actor.Ref) {
-	if config == nil {
-		config = &ResourcePoolConfig{PoolName: "pool"}
+	if conf == nil {
+		conf = &config.ResourcePoolConfig{PoolName: "pool"}
 	}
-	if config.Scheduler == nil {
-		config.Scheduler = &SchedulerConfig{
-			FairShare:     &FairShareSchedulerConfig{},
+	if conf.Scheduler == nil {
+		conf.Scheduler = &config.SchedulerConfig{
+			FairShare:     &config.FairShareSchedulerConfig{},
 			FittingPolicy: best,
 		}
 	}
 
 	rp := NewResourcePool(
-		config, nil, MakeScheduler(config.Scheduler),
-		MakeFitFunction(config.Scheduler.FittingPolicy))
+		conf, nil, MakeScheduler(conf.Scheduler),
+		MakeFitFunction(conf.Scheduler.FittingPolicy))
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)

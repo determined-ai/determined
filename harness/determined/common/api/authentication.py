@@ -70,6 +70,16 @@ class Authentication:
             self.token_store.drop_user(session_user)
             token = None
 
+        # util.get_container_user_name() and util.get_container_user_token()
+        # are either both None or both strings
+        if (
+            token is None
+            and util.get_container_user_name() is not None
+            and util.get_container_user_token() is not None
+        ):
+            session_user = util.get_container_user_name()  # type: ignore
+            token = util.get_container_user_token()
+
         if token is not None:
             return Session(session_user, token)
 

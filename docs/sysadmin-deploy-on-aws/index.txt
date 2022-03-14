@@ -4,12 +4,8 @@
  Deploy on AWS
 ###############
 
-This document describes how Determined runs on Amazon Web Services (AWS). For installation, see
+This section describes how Determined runs on Amazon Web Services (AWS). For installation, see
 :ref:`install-aws`.
-
-**********
- Overview
-**********
 
 A master node (a single, non-GPU instance) manages the cluster, provisioning and terminating agent
 nodes dynamically as new workloads are started by users. The master stores metadata in an external
@@ -72,12 +68,10 @@ Periphery Resources
    bucket (assuming it has the correct associated permissions), or the CloudFormation script can
    create a bucket with the cluster.
 
-************
- Learn More
-************
-
 .. toctree::
    :maxdepth: 1
-   :glob:
+   :hidden:
 
-   *
+   install-on-aws
+   dynamic-agents-aws
+   aws-spot
