@@ -66,3 +66,11 @@ func (s SlotSummary) ToProto() *agentv1.Slot {
 		Draining:  s.Draining,
 	}
 }
+
+type RawAgent struct {
+	ResourcePool string           `db:"resource_pool"`
+	AgentID      *string          `db:"agent_id"`
+	Slots        int              `db:"slots"`
+	StartTime    time.Time        `db:"start_time"`
+	EndTime      *time.Time       `db:"end_time"`
+}

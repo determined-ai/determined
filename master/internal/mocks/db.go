@@ -28,6 +28,20 @@ type DB struct {
 	mock.Mock
 }
 
+// AddAgent provides a mock function with given fields: a
+func (_m *DB) AddAgent(a *model.RawAgent) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.RawAgent) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddAllocation provides a mock function with given fields: a
 func (_m *DB) AddAllocation(a *model.Allocation) error {
 	ret := _m.Called(a)
@@ -1464,6 +1478,20 @@ func (_m *DB) RawQuery(queryName string, params ...interface{}) ([]byte, error) 
 	}
 
 	return r0, r1
+}
+
+// RemoveAgent provides a mock function with given fields: a
+func (_m *DB) RemoveAgent(a *model.RawAgent) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.RawAgent) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SaveExperimentArchiveStatus provides a mock function with given fields: experiment

@@ -96,7 +96,7 @@ SELECT
     trials.experiment_id,
     workloads.kind,
     users.username,
-    experiments.config -> 'resources' ->> 'slots_per_trial' AS slots,
+    (experiments.config -> 'resources' ->> 'slots_per_trial')::smallint AS slots,
     experiments.config -> 'labels' AS labels,
     workloads.start_time,
     workloads.end_time,
@@ -110,5 +110,23 @@ WHERE
     workloads.trial_id = trials.id
     AND trials.experiment_id = experiments.id
     AND experiments.owner_id = users.id
+UNION 
+SELECT
+    NULL AS experiment_id,
+    'agent' AS kind,
+    NULL AS username,
+    slots,
+    NULL AS labels,
+    start_time,
+    end_time,
+    extract(
+            epoch
+            FROM
+                -- `*` computes the intersection of the two ranges.
+                upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
+        ) AS seconds
+FROM
+    raw_agent, const
+WHERE const.period && tstzrange(start_time, end_time)
 ORDER BY
     start_time

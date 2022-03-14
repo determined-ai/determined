@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
@@ -43,6 +45,8 @@ type ResourcePool struct {
 	// Track notifyOnStop for testing purposes.
 	saveNotifications bool
 	notifications     []<-chan struct{}
+
+	db *db.PgDB
 }
 
 // GetResourceSummary is a message to request a summary of the resources used by the
@@ -52,6 +56,7 @@ type GetResourceSummary struct{}
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
 	config *config.ResourcePoolConfig,
+	db *db.PgDB,
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
@@ -69,6 +74,7 @@ func NewResourcePool(
 		scalingInfo: &sproto.ScalingInfo{},
 
 		reschedule: false,
+		db:         db,
 	}
 	return d
 }
@@ -342,14 +348,28 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
+
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
-		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
+		agentID := msg.Agent.Address().Local()
+		ctx.Log().Infof("adding agent: %s", agentID)
 		rp.agents[msg.Agent] = true
+		rp.db.AddAgent(&model.RawAgent{
+			ResourcePool: rp.config.PoolName,
+			AgentID:      &agentID,
+			Slots:        getResourceSummary(rp.agentStatesCache).numTotalSlots,
+			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
+		})
 
 	case sproto.RemoveAgent:
-		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
+		agentID := msg.Agent.Address().Local()
+		ctx.Log().Infof("removing agent: %s", agentID)
 		delete(rp.agents, msg.Agent)
+		end_time := time.Now().UTC().Truncate(time.Millisecond)
+		rp.db.RemoveAgent(&model.RawAgent{
+			EndTime: &end_time,
+			AgentID: &agentID,
+		})
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
