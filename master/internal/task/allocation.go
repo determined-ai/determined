@@ -134,7 +134,7 @@ func NewAllocation(
 			Slots:        req.SlotsNeeded,
 			AgentLabel:   req.Name,
 			ResourcePool: req.ResourcePool,
-			StartTime:    time.Now().UTC(),
+			StartTime:    time.Time{},
 		},
 
 		reservations: reservations{},
@@ -181,7 +181,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			} else {
 				ctx.Respond(*v.container)
 			}
-			ctx.Respond(*v.container)
 		} else {
 			ctx.Respond(errors.New(fmt.Sprintf("unknown container %s", msg.ContainerID)))
 		}
@@ -396,6 +395,7 @@ func (a *Allocation) TaskContainerStateChanged(
 	switch msg.Container.State {
 	case cproto.Pulling:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
+		a.model.StartTime = time.Now().UTC().Truncate(time.Millisecond)
 	case cproto.Starting:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateStarting)
 	case cproto.Running:
