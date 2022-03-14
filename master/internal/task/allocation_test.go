@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
@@ -102,8 +103,14 @@ func TestAllocation(t *testing.T) {
 				}
 				db.On("UpdateAllocationState", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+
+				before_pulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.Container.State = cproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				after_pulling := time.Now().UTC().Truncate(time.Millisecond)
+				out_of_range := a.model.StartTime.Before(before_pulling) || a.model.StartTime.After(after_pulling)
+				require.False(t, out_of_range, "Expected start time of open allocation should be in between %q and %q but it is = %q instead", before_pulling.String(), after_pulling.String(), a.model.StartTime.String())
+
 				containerStateChanged.Container.State = cproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.Container.State = cproto.Running
@@ -209,6 +216,7 @@ func setup(t *testing.T) (
 		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
+	require.Equal(t, a.(*Allocation).model.StartTime, time.Time{}, "Expected start time of a newly initialized allocation is = %q but it is = %q instead", time.Time{}.String(), (a.(*Allocation).model.StartTime).String())
 
 	// Pre-scheduled stage.
 	system.Ask(self, actor.Ping{}).Get()
