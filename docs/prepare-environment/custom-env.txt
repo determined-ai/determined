@@ -116,8 +116,8 @@ hyperparameters for the current trial.
 
    The default images are
    ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12`` and
-   ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12`` for GPU and CPU
-   respectively.
+   ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12`` for GPU and
+   CPU respectively.
 
 Older Images
 ============
