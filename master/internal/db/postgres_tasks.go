@@ -102,7 +102,8 @@ func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 UPDATE allocations
 SET start_time = cluster_heartbeat FROM cluster_id
 WHERE start_time = $1`, time.Time{}); err != nil {
-		return errors.Wrap(err, "setting start time to cluster heartbeat when it's assigned to zero value")
+		return errors.Wrap(err,
+			"setting start time to cluster heartbeat when it's assigned to zero value")
 	}
 
 	err := db.namedExecOne(`
@@ -206,7 +207,8 @@ func (db *PgDB) CloseOpenAllocations() error {
 UPDATE allocations
 SET start_time = cluster_heartbeat FROM cluster_id
 WHERE start_time = $1`, time.Time{}); err != nil {
-		return errors.Wrap(err, "setting start time to cluster heartbeat when it's assigned to zero value")
+		return errors.Wrap(err,
+			"setting start time to cluster heartbeat  when it's assigned to zero value")
 	}
 
 	if _, err := db.sql.Exec(`

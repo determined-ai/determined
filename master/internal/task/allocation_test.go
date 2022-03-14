@@ -104,12 +104,14 @@ func TestAllocation(t *testing.T) {
 				db.On("UpdateAllocationState", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 
-				before_pulling := time.Now().UTC().Truncate(time.Millisecond)
+				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.Container.State = cproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
-				after_pulling := time.Now().UTC().Truncate(time.Millisecond)
-				out_of_range := a.model.StartTime.Before(before_pulling) || a.model.StartTime.After(after_pulling)
-				require.False(t, out_of_range, "Expected start time of open allocation should be in between %q and %q but it is = %q instead", before_pulling.String(), after_pulling.String(), a.model.StartTime.String())
+				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
+				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
+				require.False(t, outOfRange,
+					"Expected start time of open allocation should be in between %q and %q but it is = %q instead",
+					beforePulling.String(), afterPulling.String(), a.model.StartTime.String())
 
 				containerStateChanged.Container.State = cproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
@@ -217,7 +219,6 @@ func setup(t *testing.T) (
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
 	require.Equal(t, a.(*Allocation).model.StartTime, time.Time{}, "Expected start time of a newly initialized allocation is = %q but it is = %q instead", time.Time{}.String(), (a.(*Allocation).model.StartTime).String())
-
 	// Pre-scheduled stage.
 	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)
