@@ -918,10 +918,10 @@ class ExperimentConfigV0(schemas.SchemaBase):
     # .from_dict().
 
     # Fields which must be defined by the user.
-    hyperparameters: Dict[str, HyperparameterV0_Type]
     searcher: SearcherConfigV0
 
     # Fields which can be omitted or defined at the cluster level.
+    hyperparameters: Optional[Dict[str, HyperparameterV0_Type]] = None
     bind_mounts: Optional[List[BindMountV0]] = None
     checkpoint_policy: Optional[str] = None
     checkpoint_storage: Optional[CheckpointStorageConfigV0_Type] = None
@@ -950,8 +950,8 @@ class ExperimentConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
-        hyperparameters: Dict[str, HyperparameterV0_Type],
         searcher: SearcherConfigV0,
+        hyperparameters: Optional[Dict[str, HyperparameterV0_Type]] = None,
         bind_mounts: Optional[List[BindMountV0]] = None,
         checkpoint_policy: Optional[str] = None,
         checkpoint_storage: Optional[CheckpointStorageConfigV0_Type] = None,

@@ -92,7 +92,7 @@
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
         "internal": {

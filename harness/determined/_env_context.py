@@ -1,8 +1,6 @@
-import logging
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional
 
 import determined as det
-from determined.common import check
 
 
 class EnvContext:
@@ -53,52 +51,3 @@ class EnvContext:
         self.managed_training = managed_training
         self.test_mode = test_mode
         self.on_cluster = on_cluster
-
-        self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
-
-    def _calculate_batch_sizes(self) -> Tuple[int, int]:
-        if "global_batch_size" not in self.hparams.keys():
-            raise AssertionError(
-                "Please specify `global_batch_size` under `hyperparameters` "
-                "in experiment config."
-            )
-
-        if "batch_size" in self.hparams.keys():
-            logging.warning(
-                "Use `global_batch_size` not `batch_size` under `hyperparameters` "
-                "in experiment config."
-            )
-
-        global_batch_size = self.hparams["global_batch_size"]
-        check.is_instance(global_batch_size, int, "`global_batch_size` hparam must be an int.")
-        global_batch_size = cast(int, global_batch_size)
-
-        if self.experiment_config.native_parallel_enabled():
-            return global_batch_size, global_batch_size
-
-        # Configure batch sizes.
-        slots_per_trial = self.experiment_config.slots_per_trial()
-        if global_batch_size < slots_per_trial:
-            raise AssertionError(
-                "Please set the `global_batch_size` hyperparameter to be greater or equal to the "
-                f"number of slots. Current batch_size: {global_batch_size}, slots_per_trial: "
-                f"{slots_per_trial}."
-            )
-
-        per_gpu_batch_size = global_batch_size // slots_per_trial
-        effective_batch_size = per_gpu_batch_size * slots_per_trial
-        if effective_batch_size != global_batch_size:
-            logging.warning(
-                f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} "
-                f"to divide equally across {slots_per_trial} slots."
-            )
-
-        return per_gpu_batch_size, effective_batch_size
-
-    @property
-    def per_slot_batch_size(self) -> int:
-        return self._per_slot_batch_size
-
-    @property
-    def global_batch_size(self) -> int:
-        return self._global_batch_size

@@ -38,11 +38,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 			},
 		},
 		RawEntrypoint: &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
-		RawHyperparameters: expconf.Hyperparameters{
-			expconf.GlobalBatchSize: expconf.Hyperparameter{
-				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 64},
-			},
-		},
+		RawHyperparameters: expconf.Hyperparameters{},
 		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
 			RawSharedFSConfig: &expconf.SharedFSConfig{
 				RawHostPath: ptrs.StringPtr("/"),
