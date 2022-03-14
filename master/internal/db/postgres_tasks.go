@@ -98,11 +98,21 @@ VALUES (:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_t
 
 // CompleteAllocation persists the end of an allocation lifetime.
 func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
-	return db.namedExecOne(`
+	if _, err := db.sql.Exec(`
+UPDATE allocations
+SET start_time = cluster_heartbeat FROM cluster_id
+WHERE start_time = $1`, time.Time{}); err != nil {
+		return errors.Wrap(err, "setting start time to cluster heartbeat when it's assigned to zero value")
+	}
+
+	err := db.namedExecOne(`
 UPDATE allocations
 SET end_time = :end_time
 WHERE allocation_id = :allocation_id
 `, a)
+
+	return err
+
 }
 
 // CompleteAllocationTelemetry returns the analytics of an allocation for the telemetry.
@@ -192,6 +202,13 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 // CloseOpenAllocations finds all allocations that were open when the master crashed
 // and adds an end time.
 func (db *PgDB) CloseOpenAllocations() error {
+	if _, err := db.sql.Exec(`
+UPDATE allocations
+SET start_time = cluster_heartbeat FROM cluster_id
+WHERE start_time = $1`, time.Time{}); err != nil {
+		return errors.Wrap(err, "setting start time to cluster heartbeat when it's assigned to zero value")
+	}
+
 	if _, err := db.sql.Exec(`
 UPDATE allocations
 SET end_time = greatest(cluster_heartbeat, start_time)
