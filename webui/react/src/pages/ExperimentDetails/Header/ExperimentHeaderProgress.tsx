@@ -10,7 +10,7 @@ interface Props {
 }
 
 const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
-  if (!experiment.progress) {
+  if (typeof experiment.progress === 'undefined') {
     return null;
   }
 
