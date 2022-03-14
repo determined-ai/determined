@@ -7,7 +7,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import ReactDOM from 'react-dom';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import update from 'immutability-helper';
+// import update from 'immutability-helper';
 
 import useResize from 'hooks/useResize';
 

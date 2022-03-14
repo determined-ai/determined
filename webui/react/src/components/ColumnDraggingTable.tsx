@@ -104,7 +104,7 @@ const ResizableTitle = ({ onResize, width, ...restProps }) => {
   );
 };
 
-const Demo = ({
+const ResponsiveTable = ({
   dataSource,
   columns,
   ...props
@@ -117,44 +117,51 @@ const Demo = ({
     setData(dataSource);
   }, [dataSource]);
 
-  // useEffect(() => {
-  //   setColumnOrder(columns);
-  // }, [columns]);
+  useEffect(() => {
+    setColumnOrder(columns);
+  }, [columns]);
 
-  const dragProps = {
-    onDragEnd: (fromIndex, toIndex) => {
+  // const dragProps = {
+  //   onDragEnd: (fromIndex, toIndex) => {
     
-      const reorderedColumns = [...columnOrder];
-      const item = reorderedColumns.splice(fromIndex- 1, 1)[0];
-      console.log({  fromIndex, toIndex })
-      reorderedColumns.splice(toIndex-1, 0, item);
-      setColumnOrder(reorderedColumns);
-    },
-    //nodeSelector: 'th',
-    //handleSelector: '.anticon-drag',
-    // handleSelector: 'th',
-    ignoreSelector: 'react-resizable-handle',
-  };
+  //     const reorderedColumns = [...columnOrder];
+  //     const item = reorderedColumns.splice(fromIndex- 1, 1)[0];
+  //     console.log({  fromIndex, toIndex })
+  //     reorderedColumns.splice(toIndex-1, 0, item);
+  //     setColumnOrder(reorderedColumns);
+  //   },
+  //   nodeSelector: 'th',
+  //   //handleSelector: '.anticon-drag',
+  //   handleSelector: 'th',
+  //   ignoreSelector: 'react-resizable-handle',
+  // };
 
-  const components = {
-    header: {
-      cell: ResizableTitle,
-    },
-  };
+  // const components = {
+  //   header: {
+  //     cell: ResizableTitle,
+  //   },
+  // };
 
-  const handleResize = (index) => (e, { size }) => {
-    setColumnOrder(
-      columnOrder.map((col, i) => (index === i ? { ...col, width: size.width } : col))
-    );
-  };
+  // const handleResize = (index) => (e, { size }) => {
+  //   setColumnOrder(
+  //     columnOrder.map((col, i) => (index === i ? { ...col, width: size.width } : col))
+  //   );
+  // };
 
-  const renderColumns = columnOrder.map((col, index) => ({
-    ...col,
-    // onHeaderCell: (column) => ({
-    //   width: column.width ?? 1,
-    //   onResize: handleResize(index),
-    // }),
-  }));
+  // const renderColumns = columnOrder.map((col, index) => ({
+  //   ...col,
+  //   onHeaderCell: (column) => {
+  //     console.log({ column })
+  //     // const columnProps = column.onHeaderCell ? column.onHeaderCell(column) : {}
+
+  //     return{
+  //       width: column.width ?? 1,
+  //       onResize: handleResize(index),
+  //       ...column,
+  //       // ...columnProps
+  //     }
+  //   },
+  // }));
 
   return (
     // <ReactDragListView.DragColumn {...dragProps}>
@@ -162,15 +169,15 @@ const Demo = ({
         bordered
         // components={components}
         // columns={renderColumns}
-        columns={columns}
+        columns={columnOrder}
         dataSource={data}
         // scroll={tableScroll}
         tableLayout="auto"
         {...props}
       />
-    // </ReactDragListView.DragColumn>
+    //  </ReactDragListView.DragColumn>
   );
 };
 
 
-export default Demo
+export default ResponsiveTable

@@ -9,7 +9,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Resizable } from "react-resizable";
 import ReactDragListView from "react-drag-listview";
-import update from 'immutability-helper';
+// import update from 'immutability-helper';
 
 import useResize from 'hooks/useResize';
 
