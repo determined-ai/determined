@@ -120,7 +120,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 
     config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
-        print("Error: invalid experiment config file {}".format(config_file.name))
+        print("Error: invalid experiment config file {!r}".format(config_file.name))
         sys.exit(1)
 
     parse_config_overrides(experiment_config, config_overrides)
