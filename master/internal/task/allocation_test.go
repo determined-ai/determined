@@ -218,7 +218,8 @@ func setup(t *testing.T) (
 		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
-	require.Equal(t, a.(*Allocation).model.StartTime, time.Time{}, "Expected start time of a newly initialized allocation is = %q but it is = %q instead", time.Time{}.String(), (a.(*Allocation).model.StartTime).String())
+	require.Equal(t, a.(*Allocation).model.StartTime, time.Time{},
+		"Expected start time of a newly initialized allocation is = %q but it is = %q instead", time.Time{}.String(), (a.(*Allocation).model.StartTime).String())
 	// Pre-scheduled stage.
 	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)
