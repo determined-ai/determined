@@ -105,7 +105,7 @@ func (s *Service) callback(c echo.Context) error {
 
 	c.SetCookie(user.NewCookieFromToken(token))
 	redirectPath := defaultRedirectPath
-	switch relayState := c.FormValue("RelayState"); relayState {
+	switch relayState := c.QueryParam("relayState"); relayState {
 	case cliRelayState:
 		redirectPath = cliRedirectPath + fmt.Sprintf("?token=%s", url.QueryEscape(token))
 	case "":
@@ -133,7 +133,8 @@ func (s *Service) initiate(c echo.Context) error {
 		HttpOnly: true,
 	})
 
-	return c.Redirect(http.StatusFound, s.oauth2Config.AuthCodeURL(state))
+	relayState := map[string]string{"relayState": c.QueryParam("relayState")}
+	return c.Redirect(http.StatusFound, authCodeURLWithParams(s.oauth2Config, state, relayState))
 }
 
 // randString generates n randomized chars.
@@ -143,4 +144,21 @@ func randString(n int) (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// authCodeURLWithParams attaches the specified key:value pairs as querystring
+// parameters to the redirect URL used by AuthCodeURL.
+func authCodeURLWithParams(conf oauth2.Config, state string, kv map[string]string) string {
+	u, err := url.Parse(conf.RedirectURL)
+	if err != nil {
+		return conf.AuthCodeURL(state)
+	}
+	queries := u.Query()
+	for k, v := range kv {
+		queries.Add(k, v)
+	}
+
+	u.RawQuery = queries.Encode()
+	conf.RedirectURL = u.String()
+	return conf.AuthCodeURL(state)
 }
