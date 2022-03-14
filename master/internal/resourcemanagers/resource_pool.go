@@ -442,7 +442,11 @@ func (rp *ResourcePool) moveJob(
 	return nil
 }
 
-func (rp *ResourcePool) findAnchor(jobID model.JobID, anchorID model.JobID, aheadOf bool) (bool, model.JobID, int) {
+func (rp *ResourcePool) findAnchor(
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
+	) (bool, model.JobID, int) {
 	var secondAnchor model.JobID
 	targetPriority := 0
 	anchorPriority := 0
@@ -544,17 +548,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
-}
-
-func (rp *ResourcePool) persist() error {
-	// exlude head and tail?
-	fmt.Println("TODO persist rp", rp.config.PoolName)
-	return nil // TODO
-}
-
-func (rp *ResourcePool) restore() error {
-	fmt.Println("TODO restore rp", rp.config.PoolName)
-	return nil // TODO
 }
 
 func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
