@@ -130,7 +130,7 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
             pass
         avg_metrics[name] = m
 
-    metrics = {"batch_metrics": batch_metrics, "avg_metrics": avg_metrics}
+    metrics = {"batch_metrics": batch_metrics, "avg_metrics": avg_metrics}  # type: Dict[str, Any]
     if num_inputs is not None:
         metrics["num_inputs"] = num_inputs
 

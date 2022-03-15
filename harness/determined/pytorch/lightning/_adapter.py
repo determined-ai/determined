@@ -285,7 +285,8 @@ class LightningAdapter(PyTorchTrial):
                 else LRScheduler.StepMode.STEP_EVERY_BATCH
             )
 
-            wrapped_opt = optimizers_dict[getattr(lrs["scheduler"], "optimizer", None)]
+            opt_key = cast(Optimizer, getattr(lrs["scheduler"], "optimizer", None))
+            wrapped_opt = optimizers_dict.get(opt_key)
             if wrapped_opt is None:
                 raise InvalidModelException(
                     "An LRScheduler is returned in `configure_optimizers` without having "
