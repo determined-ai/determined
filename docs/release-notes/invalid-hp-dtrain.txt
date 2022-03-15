@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Allow multiple ranks within a distributed training job to report invalid hyperparameter exits.
+   Previously, if more than one report was received, the experiment would fail.
