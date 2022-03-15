@@ -42,18 +42,19 @@ func (a *apiServer) ModelFromIdentifier(identifier string) (*modelv1.Model, erro
 	}
 }
 
-func (a *apiServer) ModelVersionFromID(model_ident string, version_id int32) (*modelv1.ModelVersion, error) {
+func (a *apiServer) ModelVersionFromID(modelIdentifier string,
+	versionID int32) (*modelv1.ModelVersion, error) {
 	mv := &modelv1.ModelVersion{}
-	parentModel, err := a.ModelFromIdentifier(model_ident)
+	parentModel, err := a.ModelFromIdentifier(modelIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
 	switch err = a.m.db.QueryProto(
-		"get_model_version", mv, parentModel.Id, version_id); {
+		"get_model_version", mv, parentModel.Id, versionID); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s version %d not found", model_ident, version_id)
+			codes.NotFound, "model %s version %d not found", modelIdentifier, versionID)
 	default:
 		return mv, err
 	}
