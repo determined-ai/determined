@@ -18,7 +18,7 @@ def test_mnist_estimator_load() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    model = Determined(conf.make_master_url()).get_trial(trials[0]["id"]).top_checkpoint().load()
+    model = Determined(conf.make_master_url()).get_trial(trials[0].trial.id).top_checkpoint().load()
     assert isinstance(model, AutoTrackable)
 
 
@@ -57,10 +57,13 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     assert len(trials) == 1
 
     first_trial = trials[0]
-    first_trial_id = first_trial["id"]
+    first_trial_id = first_trial.trial.id
 
-    assert len(first_trial["steps"]) == 1
-    first_checkpoint_id = first_trial["steps"][0]["checkpoint"]["id"]
+    assert len(first_trial.workloads or []) == 3
+    checkpoint_workloads = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
+    assert len(checkpoint_workloads)
+    assert checkpoint_workloads[0].checkpoint
+    first_checkpoint_uuid = checkpoint_workloads[0].checkpoint.uuid
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
 
@@ -73,7 +76,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
-    assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
+    assert trials[0].trial.warmStartCheckpointUuid == first_checkpoint_uuid
 
 
 @pytest.mark.tensorflow2
@@ -103,8 +106,9 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     )
 
     trial = exp.experiment_trials(experiment_id)[0]
-    last_validation = trial["steps"][len(trial["steps"]) - 1]["validation"]
-    metrics = last_validation["metrics"]["validation_metrics"]
+    last_validation = exp.workloads_for_mode(trial.workloads, "validation")[-1].validation
+    assert last_validation and last_validation.metrics
+    metrics = last_validation.metrics
     label_sum = 2 * sum(range(16))
     assert metrics["label_sum_fn"] == label_sum
     assert metrics["label_sum_cls"] == label_sum
@@ -174,5 +178,5 @@ def test_on_trial_close_callback() -> None:
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("estimator_no_op"), 1)
 
     assert exp.check_if_string_present_in_trial_logs(
-        exp.experiment_trials(exp_id)[0]["id"], "rank 0 has completed on_trial_close"
+        exp.experiment_trials(exp_id)[0].trial.id, "rank 0 has completed on_trial_close"
     )

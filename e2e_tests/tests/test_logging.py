@@ -24,9 +24,10 @@ def test_trial_logs() -> None:
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trial = exp.experiment_trials(experiment_id)[0]
-    trial_id = trial["id"]
-    task_id = trial["task_id"]
+    trial = exp.experiment_trials(experiment_id)[0].trial
+    trial_id = trial.id
+    task_id = trial.taskId
+    assert task_id != ""
 
     log_regex = re.compile("^.*New trial runner.*$")
     # Trial-specific APIs should work just fine.

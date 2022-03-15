@@ -23,15 +23,15 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
     trials = exp.experiment_trials(experiment_id)
     (
         Determined(conf.make_master_url())
-        .get_trial(trials[0]["id"])
+        .get_trial(trials[0].trial.id)
         .select_checkpoint(latest=True)
         .load(map_location="cpu")
     )
 
-    collect_trial_profiles(trials[0]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
     assert exp.check_if_string_present_in_trial_logs(
-        trials[0]["id"], "container exited successfully with a zero exit code"
+        trials[0].trial.id, "container exited successfully with a zero exit code"
     )
 
 
@@ -46,10 +46,10 @@ def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> Non
         config, conf.cv_examples_path("cifar10_pytorch")
     )
     trials = exp.experiment_trials(experiment_id)
-    Determined(conf.make_master_url()).get_trial(trials[0]["id"])
+    Determined(conf.make_master_url()).get_trial(trials[0].trial.id)
 
-    collect_trial_profiles(trials[0]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
     assert exp.check_if_string_present_in_trial_logs(
-        trials[0]["id"], "container failed with non-zero exit code: 1"
+        trials[0].trial.id, "container failed with non-zero exit code: 1"
     )

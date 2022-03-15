@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -74,57 +73,6 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	return &queries, nil
 }
 
-func (m *Master) getExperiment(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	return m.db.ExperimentRaw(args.ExperimentID)
-}
-
-func (m *Master) getExperimentCheckpoints(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int  `path:"experiment_id"`
-		NumBest      *int `query:"best"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	return m.db.ExperimentCheckpointsRaw(args.ExperimentID, args.NumBest)
-}
-
-func (m *Master) getExperimentSummary(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	return m.db.ExperimentWithTrialSummariesRaw(args.ExperimentID)
-}
-
-func (m *Master) getExperimentConfig(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	return m.db.ExperimentConfigRaw(args.ExperimentID)
-}
-
-func (m *Master) getExperimentSummaryMetrics(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	return m.db.ExperimentWithSummaryMetricsRaw(args.ExperimentID)
-}
-
 func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, error) {
 	args := struct {
 		ExperimentID   int `path:"experiment_id"`
@@ -137,45 +85,6 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	}
 	return m.db.ExperimentCheckpointsToGCRaw(
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest, false)
-}
-
-func (m *Master) getExperimentModelDefinition(c echo.Context) error {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return err
-	}
-
-	modelDef, err := m.db.ExperimentModelDefinitionRaw(args.ExperimentID)
-	if err != nil {
-		return err
-	}
-
-	expConfig, err := m.db.ExperimentConfig(args.ExperimentID)
-	if err != nil {
-		return err
-	}
-
-	// Make a Regex to remove everything but a whitelist of characters.
-	reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
-	cleanName := reg.ReplaceAllString(expConfig.Name().String(), "")
-
-	// Truncate name to a smaller size to both accommodate file name and path size
-	// limits on different platforms as well as get users more accustom to picking shorter
-	// names as we move toward "name as mnemonic for an experiment".
-	maxNameLength := 50
-	if len(cleanName) > maxNameLength {
-		cleanName = cleanName[0:maxNameLength]
-	}
-
-	c.Response().Header().Set(
-		"Content-Disposition",
-		fmt.Sprintf(
-			`attachment; filename="exp%d_%s_model_def.tar.gz"`,
-			args.ExperimentID,
-			cleanName))
-	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
 func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
@@ -191,7 +100,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
 	patch := struct {
-		State     *model.State `json:"state"`
 		Resources *struct {
 			MaxSlots api.MaybeInt `json:"max_slots"`
 			Weight   *float64     `json:"weight"`
@@ -249,10 +157,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 	if err := m.db.SaveExperimentConfig(dbExp); err != nil {
 		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
-	}
-
-	if patch.State != nil {
-		m.system.TellAt(actor.Addr("experiments", args.ExperimentID), *patch.State)
 	}
 
 	if patch.Resources != nil {

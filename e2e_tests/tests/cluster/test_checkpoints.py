@@ -1,16 +1,15 @@
 import json
-import operator
 import sys
 import tempfile
 import time
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Set, Tuple
 
 import pytest
 import yaml
 
 from determined import errors
 from determined.common import api, storage
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from tests import config as conf
 from tests import experiment as exp
 
@@ -50,15 +49,41 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     fixtures = [
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
-            {"COMPLETED": {800, 900, 1000}, "DELETED": {100, 200, 300, 400, 500, 600, 700}},
+            {
+                (bindings.determinedexperimentv1State.STATE_COMPLETED.value): {800, 900, 1000},
+                (bindings.determinedexperimentv1State.STATE_DELETED.value): {
+                    100,
+                    200,
+                    300,
+                    400,
+                    500,
+                    600,
+                    700,
+                },
+            },
         ),
         (
             conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
-            {"COMPLETED": {100, 200, 300, 900, 1000}, "DELETED": {400, 500, 600, 700, 800}},
+            {
+                (bindings.determinedexperimentv1State.STATE_COMPLETED.value): {
+                    100,
+                    200,
+                    300,
+                    900,
+                    1000,
+                },
+                (bindings.determinedexperimentv1State.STATE_DELETED.value): {
+                    400,
+                    500,
+                    600,
+                    700,
+                    800,
+                },
+            },
         ),
     ]
 
-    all_checkpoints = []
+    all_checkpoints: List[Tuple[Any, List[bindings.v1CheckpointWorkload]]] = []
     for base_conf_path, result in fixtures:
         config = conf.load_config(str(base_conf_path))
         config["checkpoint_storage"].update(checkpoint_storage)
@@ -69,7 +94,9 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
-        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+        exp.wait_for_experiment_state(
+            experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+        )
 
         # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
         # be spun up still.  So we'll wait for it to run.
@@ -81,17 +108,21 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             trials = exp.experiment_trials(experiment_id)
             assert len(trials) == 1
 
-            checkpoints = sorted(
-                (step["checkpoint"] for step in trials[0]["steps"]),
-                key=operator.itemgetter("total_batches"),
+            cpoints = []
+            for cpoint in exp.workloads_for_mode(trials[0].workloads, "checkpoint"):
+                if cpoint.checkpoint:
+                    cpoints.append(cpoint.checkpoint)
+            sorted_checkpoints = sorted(
+                cpoints,
+                key=lambda ckp: int(ckp.totalBatches),
             )
-            assert len(checkpoints) == 10
+            assert len(sorted_checkpoints) == 10
             by_state = {}  # type: Dict[str, Set[int]]
-            for checkpoint in checkpoints:
-                by_state.setdefault(checkpoint["state"], set()).add(checkpoint["total_batches"])
+            for ckpt in sorted_checkpoints:
+                by_state.setdefault(ckpt.state.value, set()).add(ckpt.totalBatches)
 
             if by_state == result:
-                all_checkpoints.append((config, checkpoints))
+                all_checkpoints.append((config, sorted_checkpoints))
                 break
 
             if retry + 1 == retries:
@@ -113,16 +144,17 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
-                    storage_id = checkpoint["uuid"]
+                    assert checkpoint.uuid
+                    storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
-                    if checkpoint["state"] == "COMPLETED":
+                    if checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED:
                         storage_state[storage_id]["found"] = False
                         try:
                             with storage_manager.restore_path(storage_id):
                                 storage_state[storage_id]["found"] = True
                         except errors.CheckpointNotFound:
                             pass
-                    elif checkpoint["state"] == "DELETED":
+                    elif checkpoint.state == bindings.determinedcheckpointv1State.STATE_DELETED:
                         storage_state[storage_id] = {"deleted": False, "checkpoint": checkpoint}
                         try:
                             with storage_manager.restore_path(storage_id):

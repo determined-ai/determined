@@ -3,6 +3,7 @@ from typing import Callable, List
 
 import pytest
 
+from determined.common.api.bindings import determinedexperimentv1State
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -35,7 +36,7 @@ def test_pytorch_11_const(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
     )
-    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -54,7 +55,7 @@ def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
         .top_checkpoint()
         .load(map_location="cpu")
     )
-    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -75,10 +76,13 @@ def test_pytorch_const_warm_start() -> None:
     assert len(trials) == 1
 
     first_trial = trials[0]
-    first_trial_id = first_trial["id"]
+    first_trial_id = first_trial.trial.id
 
-    assert len(first_trial["steps"]) == 2
-    first_checkpoint_id = first_trial["steps"][-1]["checkpoint"]["id"]
+    assert len(first_trial.workloads or []) == 4
+    checkpoints = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
+    first_checkpoint = checkpoints[-1]
+    assert first_checkpoint and first_checkpoint.checkpoint
+    first_checkpoint_uuid = first_checkpoint.checkpoint.uuid
 
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
 
@@ -95,8 +99,8 @@ def test_pytorch_const_warm_start() -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 3
-    for trial in trials:
-        assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
+    for t in trials:
+        assert t.trial.warmStartCheckpointUuid == first_checkpoint_uuid
 
 
 @pytest.mark.e2e_gpu
@@ -112,7 +116,7 @@ def test_pytorch_const_with_amp(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("pytorch_amp"), 1
     )
-    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
     collect_trial_profiles(trial_id)
 
 
@@ -129,12 +133,12 @@ def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None])
     trials = exp.experiment_trials(experiment_id)
     (
         Determined(conf.make_master_url())
-        .get_trial(trials[0]["id"])
+        .get_trial(trials[0].trial.id)
         .select_checkpoint(latest=True)
         .load(map_location="cpu")
     )
 
-    collect_trial_profiles(trials[0]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
 
 @pytest.mark.parallel
@@ -150,11 +154,11 @@ def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> 
     trials = exp.experiment_trials(experiment_id)
     (
         Determined(conf.make_master_url())
-        .get_trial(trials[0]["id"])
+        .get_trial(trials[0].trial.id)
         .select_checkpoint(latest=True)
         .load(map_location="cpu")
     )
-    collect_trial_profiles(trials[0]["id"])
+    collect_trial_profiles(trials[0].trial.id)
 
 
 @pytest.mark.e2e_cpu
@@ -162,7 +166,7 @@ def test_pytorch_native_api() -> None:
     exp_id = exp.create_native_experiment(
         conf.fixtures_path("pytorch_no_op"), [sys.executable, "model_def.py"]
     )
-    exp.wait_for_experiment_state(exp_id, "COMPLETED")
+    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.parallel
@@ -172,10 +176,11 @@ def test_pytorch_gradient_aggregation() -> None:
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
-    steps = trials[0]["steps"]
-    actual_weights = [
-        step["validation"]["metrics"]["validation_metrics"]["weight"] for step in steps
-    ]
+    workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
+    actual_weights = []
+    for wl in workloads:
+        if wl.validation and wl.validation.metrics:
+            actual_weights.append(wl.validation.metrics["weight"])
 
     # independently compute expected metrics
     batch_size = 4
@@ -242,7 +247,7 @@ def test_pytorch_parallel() -> None:
         f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
-    trial_id = exp.experiment_trials(exp_id)[0]["id"]
+    trial_id = exp.experiment_trials(exp_id)[0].trial.id
     exp.assert_patterns_in_trial_logs(trial_id, patterns)
 
 
@@ -253,7 +258,7 @@ def test_distributed_logging() -> None:
     config = conf.set_max_length(config, {"batches": 1})
 
     e_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
-    t_id = exp.experiment_trials(e_id)[0]["id"]
+    t_id = exp.experiment_trials(e_id)[0].trial.id
 
     for i in range(config["resources"]["slots_per_trial"]):
         assert exp.check_if_string_present_in_trial_logs(
@@ -267,4 +272,4 @@ def test_pytorch_native_api_parallel() -> None:
         conf.fixtures_path("pytorch_no_op"),
         [sys.executable, "model_def.py", "--slots-per-trial", "8"],
     )
-    exp.wait_for_experiment_state(exp_id, "COMPLETED")
+    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
