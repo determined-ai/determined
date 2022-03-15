@@ -770,6 +770,40 @@ export interface V1ActivateExperimentResponse {
 }
 
 /**
+ * Request for adding a note to a project.
+ * @export
+ * @interface V1AddProjectNoteRequest
+ */
+export interface V1AddProjectNoteRequest {
+    /**
+     * The note to add.
+     * @type {V1Note}
+     * @memberof V1AddProjectNoteRequest
+     */
+    note: V1Note;
+    /**
+     * The id of the project.
+     * @type {number}
+     * @memberof V1AddProjectNoteRequest
+     */
+    id?: number;
+}
+
+/**
+ * Response to AddProjectNoteRequest.
+ * @export
+ * @interface V1AddProjectNoteResponse
+ */
+export interface V1AddProjectNoteResponse {
+    /**
+     * The complete list of notes on a project.
+     * @type {Array<V1Note>}
+     * @memberof V1AddProjectNoteResponse
+     */
+    notes?: Array<V1Note>;
+}
+
+/**
  * Agent is a pool of resources where containers are run.
  * @export
  * @interface V1Agent
@@ -15604,6 +15638,52 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
     return {
         /**
          * 
+         * @summary Add a note to a project.
+         * @param {number} id The id of the project.
+         * @param {V1AddProjectNoteRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addProjectNote(id: number, body: V1AddProjectNoteRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling addProjectNote.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling addProjectNote.');
+            }
+            const localVarPath = `/api/v1/projects/{id}/notes`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AddProjectNoteRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -15777,6 +15857,26 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Add a note to a project.
+         * @param {number} id The id of the project.
+         * @param {V1AddProjectNoteRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addProjectNote(id: number, body: V1AddProjectNoteRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).addProjectNote(id, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -15853,6 +15953,17 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
     return {
         /**
          * 
+         * @summary Add a note to a project.
+         * @param {number} id The id of the project.
+         * @param {V1AddProjectNoteRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addProjectNote(id: number, body: V1AddProjectNoteRequest, options?: any) {
+            return ProjectsApiFp(configuration).addProjectNote(id, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -15901,6 +16012,19 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
  * @extends {BaseAPI}
  */
 export class ProjectsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Add a note to a project.
+     * @param {number} id The id of the project.
+     * @param {V1AddProjectNoteRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public addProjectNote(id: number, body: V1AddProjectNoteRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).addProjectNote(id, body, options)(this.fetch, this.basePath);
+    }
+
     /**
      * 
      * @summary Get the requested project.

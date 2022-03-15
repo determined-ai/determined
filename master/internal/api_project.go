@@ -114,3 +114,21 @@ func (a *apiServer) PostProject(
 	return &apiv1.PostProjectResponse{Project: p},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)
 }
+
+func (a *apiServer) AddProjectNote(
+	ctx context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
+	p, err := a.GetProjectFromID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	notes := append(p.Notes, &projectv1.Note{
+		Name:     req.Note.Name,
+		Contents: req.Note.Contents,
+	})
+
+	newp := &projectv1.Project{}
+	err = a.m.db.QueryProto("insert_project_note", newp, req.Id, notes)
+	return &apiv1.AddProjectNoteResponse{Notes: newp.Notes},
+		errors.Wrapf(err, "error adding project note")
+}

@@ -103,3 +103,20 @@ message PostProjectResponse {
   // The project created.
   determined.project.v1.Project project = 1;
 }
+
+// Request for adding a note to a project.
+message AddProjectNoteRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "note" ] }
+  };
+  // The note to add.
+  determined.project.v1.Note note = 1;
+  // The id of the project.
+  int32 id = 2;
+}
+
+// Response to AddProjectNoteRequest.
+message AddProjectNoteResponse {
+  // The complete list of notes on a project.
+  repeated determined.project.v1.Note notes = 1;
+}
