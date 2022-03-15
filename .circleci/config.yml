@@ -1333,7 +1333,6 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "torch==1.9.0"
           model-hub: true
           extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>

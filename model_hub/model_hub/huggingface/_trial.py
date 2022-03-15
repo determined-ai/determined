@@ -1,6 +1,6 @@
 import dataclasses
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union, cast, no_type_check
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import attrdict
 import datasets as hf_datasets
@@ -26,7 +26,6 @@ MODEL_MODES = {
 }
 
 
-@no_type_check
 def build_using_auto(
     config_kwargs: Union[Dict, attrdict.AttrDict],
     tokenizer_kwargs: Union[Dict, attrdict.AttrDict],
@@ -94,7 +93,6 @@ def group_parameters_for_optimizer(
     ]
 
 
-@no_type_check
 def build_default_optimizer(
     model: torch.nn.Module, optimizer_kwargs: hf_parse.OptimizerKwargs
 ) -> Union[hf_opt.Adafactor, hf_opt.AdamW]:
@@ -126,7 +124,6 @@ def build_default_optimizer(
     )
 
 
-@no_type_check
 def build_default_lr_scheduler(
     optimizer: torch.optim.Optimizer,
     scheduler_kwargs: hf_parse.LRSchedulerKwargs,
