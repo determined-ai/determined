@@ -230,12 +230,12 @@ def experiment_state(experiment_id: int) -> determinedexperimentv1State:
 
 
 def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
-    r = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
-    src_trials = r.trials or []
+    r1 = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
+    src_trials = r1.trials or []
     trials = []
     for trial in src_trials:
-        r = bindings.get_GetTrial(test_session(), trialId=trial.id)
-        trials.append(r)  # includes trial and workload
+        r2 = bindings.get_GetTrial(test_session(), trialId=trial.id)
+        trials.append(r2)  # includes trial and workload
     return trials
 
 
