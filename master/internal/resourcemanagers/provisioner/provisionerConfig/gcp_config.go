@@ -1,4 +1,4 @@
-package provisioner
+package provisionerConfig
 
 import (
 	"encoding/json"
@@ -79,7 +79,7 @@ func (c GCPClusterConfig) Validate() []error {
 	}
 }
 
-func (c *GCPClusterConfig) initDefaultValues() error {
+func (c *GCPClusterConfig) InitDefaultValues() error {
 	var err error
 
 	if len(c.Project) == 0 {
@@ -123,7 +123,7 @@ func (c *GCPClusterConfig) initDefaultValues() error {
 	return nil
 }
 
-func (c *GCPClusterConfig) merge() *compute.Instance {
+func (c *GCPClusterConfig) Merge() *compute.Instance {
 	rb := &compute.Instance{}
 	if c.BaseConfig != nil {
 		*rb = *c.BaseConfig
@@ -231,7 +231,7 @@ func (c GCPClusterConfig) Accelerator() string {
 	)
 }
 
-func (c GCPClusterConfig) buildDockerLogString() string {
+func (c GCPClusterConfig) BuildDockerLogString() string {
 	if c.UseCloudLogging {
 		return "--log-driver gcplogs"
 	}
@@ -272,7 +272,7 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
 }
 
-func getCPUPlatform(machineType string) string {
+func GetCPUPlatform(machineType string) string {
 	fields := strings.Split(machineType, "/")
 	instanceType := fields[len(fields)-1]
 
@@ -297,7 +297,7 @@ type gceInstanceType struct {
 	Preemptible bool   `json:"preemptible"`
 }
 
-func (t gceInstanceType) name() string {
+func (t gceInstanceType) Name() string {
 	return fmt.Sprintf("%s-%s-%d", t.MachineType, t.GPUType, t.GPUNum)
 }
 

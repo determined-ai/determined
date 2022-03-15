@@ -17,7 +17,7 @@ type TestInstanceType struct {
 	NumSlots int
 }
 
-func (t TestInstanceType) name() string {
+func (t TestInstanceType) Name() string {
 	return t.Name
 }
 func (t TestInstanceType) Slots() int {
@@ -52,11 +52,13 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
+			"default",
 			time.Duration(setup.MaxIdleAgentPeriod),
 			time.Duration(setup.MaxAgentStartingPeriod),
 			setup.maxDisconnectPeriod,
 			setup.MinInstances,
 			setup.MaxInstances,
+			nil,
 		),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)

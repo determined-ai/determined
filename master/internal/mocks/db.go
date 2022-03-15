@@ -98,6 +98,20 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	return r0
 }
 
+// AddInstance provides a mock function with given fields: a
+func (_m *DB) AddInstance(a *model.RawInstance) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.RawInstance) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddTrainingMetrics provides a mock function with given fields: ctx, m
 func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	ret := _m.Called(ctx, m)
@@ -1486,6 +1500,20 @@ func (_m *DB) RemoveAgent(a *model.RawAgent) error {
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.RawAgent) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveInstance provides a mock function with given fields: a
+func (_m *DB) RemoveInstance(a *model.RawInstance) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.RawInstance) error); ok {
 		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)

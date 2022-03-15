@@ -177,6 +177,8 @@ type DB interface {
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 	AddAgent(a *model.RawAgent) error
 	RemoveAgent(a *model.RawAgent) error
+	AddInstance(a *model.RawInstance) error
+	RemoveInstance(a *model.RawInstance) error
 }
 
 // ErrNotFound is returned if nothing is found.

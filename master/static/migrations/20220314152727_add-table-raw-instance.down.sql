@@ -1,0 +1,1 @@
+DROP TABLE public.raw_instance

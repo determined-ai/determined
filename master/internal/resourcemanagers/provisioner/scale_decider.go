@@ -4,7 +4,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -44,13 +46,18 @@ type scaleDecider struct {
 	idle             map[string]time.Time
 	longDisconnected map[string]bool
 	longIdle         map[string]bool
+
+	db           *db.PgDB
+	resourcePool string
 }
 
 func newScaleDecider(
+	resourcePool string,
 	maxIdlePeriod, maxStartingPeriod,
 	maxDisconnectPeriod time.Duration,
 	minInstanceNum int,
 	maxInstanceNum int,
+	db *db.PgDB,
 ) *scaleDecider {
 	return &scaleDecider{
 		maxStartingPeriod:      maxStartingPeriod,
@@ -69,6 +76,7 @@ func newScaleDecider(
 		idle:                   make(map[string]time.Time),
 		longDisconnected:       make(map[string]bool),
 		longIdle:               make(map[string]bool),
+		db:                     db,
 	}
 }
 
@@ -104,6 +112,31 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 		}
 	}
 	return false
+}
+
+func (s *scaleDecider) recordRawInstance() {
+	for _, inst := range s.instances {
+		instID := inst.ID
+		s.db.AddInstance(&model.RawInstance{
+			ResourcePool: s.resourcePool,
+			InstanceID:   &instID,
+			Slots:        0,
+			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
+		})
+	}
+	end_time := time.Now().UTC().Truncate(time.Millisecond)
+	for instID, _ := range s.disconnected {
+		s.db.RemoveInstance(&model.RawInstance{
+			InstanceID: &instID,
+			EndTime:    &end_time,
+		})
+	}
+	for instID, _ := range s.stopped {
+		s.db.RemoveInstance(&model.RawInstance{
+			InstanceID: &instID,
+			EndTime:    &end_time,
+		})
+	}
 }
 
 func (s *scaleDecider) calculateInstanceStates() {

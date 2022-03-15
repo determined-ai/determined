@@ -1,4 +1,4 @@
-package provisioner
+package provisionerConfig
 
 import (
 	"encoding/json"

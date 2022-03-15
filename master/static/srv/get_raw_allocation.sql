@@ -127,6 +127,23 @@ SELECT
         ) AS seconds
 FROM
     raw_agent, const
+UNION 
+SELECT
+    NULL AS experiment_id,
+    'instance' AS kind,
+    NULL AS username,
+    slots,
+    NULL AS labels,
+    start_time,
+    end_time,
+    extract(
+            epoch
+            FROM
+                -- `*` computes the intersection of the two ranges.
+                upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
+        ) AS seconds
+FROM
+    raw_instance, const
 WHERE const.period && tstzrange(start_time, end_time)
 ORDER BY
     start_time

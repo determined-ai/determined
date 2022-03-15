@@ -1,4 +1,4 @@
-package provisioner
+package provisionerConfig
 
 import (
 	"encoding/json"
@@ -104,7 +104,7 @@ func (c Config) mustParseMasterURL() url.URL {
 	return *masterURL
 }
 
-func (c *Config) initMasterAddress() error {
+func (c *Config) InitMasterAddress() error {
 	masterURL := c.mustParseMasterURL()
 	scheme, host, port := masterURL.Scheme, masterURL.Hostname(), masterURL.Port()
 
