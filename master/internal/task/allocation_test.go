@@ -106,6 +106,7 @@ func TestAllocation(t *testing.T) {
 
 				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.Container.State = cproto.Pulling
+				db.On("UpdateAllocationStartTime", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
 				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
