@@ -1302,11 +1302,31 @@ service Determined {
       tags: "Workspaces"
     };
   }
+  // Create a workspace.
+  rpc PostWorkspace(PostWorkspaceRequest) returns (PostWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
 
   // Get the requested project.
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
     option (google.api.http) = {
       get: "/api/v1/projects/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Create a project.
+  rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

@@ -3643,6 +3643,50 @@ class v1PostModelVersionResponse:
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
         }
 
+class v1PostProjectRequest:
+    def __init__(
+        self,
+        name: str,
+        description: "typing.Optional[str]" = None,
+        username: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.username = username
+        self.description = description
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostProjectRequest":
+        return cls(
+            name=obj["name"],
+            username=obj.get("username", None),
+            description=obj.get("description", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "username": self.username if self.username is not None else None,
+            "description": self.description if self.description is not None else None,
+        }
+
+class v1PostProjectResponse:
+    def __init__(
+        self,
+        project: "typing.Optional[v1Project]" = None,
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostProjectResponse":
+        return cls(
+            project=v1Project.from_json(obj["project"]) if obj.get("project", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "project": self.project.to_json() if self.project is not None else None,
+        }
+
 class v1PostTrialProfilerMetricsBatchRequest:
     def __init__(
         self,
@@ -3699,6 +3743,46 @@ class v1PostUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
+        }
+
+class v1PostWorkspaceRequest:
+    def __init__(
+        self,
+        name: str,
+        username: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.username = username
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostWorkspaceRequest":
+        return cls(
+            name=obj["name"],
+            username=obj.get("username", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "username": self.username if self.username is not None else None,
+        }
+
+class v1PostWorkspaceResponse:
+    def __init__(
+        self,
+        workspace: "typing.Optional[v1Workspace]" = None,
+    ):
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostWorkspaceResponse":
+        return cls(
+            workspace=v1Workspace.from_json(obj["workspace"]) if obj.get("workspace", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspace": self.workspace.to_json() if self.workspace is not None else None,
         }
 
 class v1PreviewHPSearchRequest:
@@ -7259,6 +7343,25 @@ def post_PostModelVersion(
         return v1PostModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("post_PostModelVersion", _resp)
 
+def post_PostProject(
+    session: "client.Session",
+    *,
+    body: "v1PostProjectRequest",
+) -> "v1PostProjectResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/projects",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PostProjectResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostProject", _resp)
+
 def post_PostTrialProfilerMetricsBatch(
     session: "client.Session",
     *,
@@ -7316,6 +7419,25 @@ def post_PostUser(
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
+
+def post_PostWorkspace(
+    session: "client.Session",
+    *,
+    body: "v1PostWorkspaceRequest",
+) -> "v1PostWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/workspaces",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PostWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostWorkspace", _resp)
 
 def post_PreviewHPSearch(
     session: "client.Session",

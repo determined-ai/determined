@@ -125,3 +125,17 @@ func (a *apiServer) GetWorkspaces(
 	}
 	return resp, a.paginate(&resp.Pagination, &resp.Workspaces, req.Offset, req.Limit)
 }
+
+func (a *apiServer) PostWorkspace(
+	ctx context.Context, req *apiv1.PostWorkspaceRequest) (*apiv1.PostWorkspaceResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	w := &workspacev1.Workspace{}
+	err = a.m.db.QueryProto("insert_workspace", w, req.Name, user.User.Id)
+
+	return &apiv1.PostWorkspaceResponse{Workspace: w},
+		errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+}

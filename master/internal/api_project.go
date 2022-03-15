@@ -24,3 +24,17 @@ func (a *apiServer) GetProject(
 			errors.Wrapf(err, "error fetching project \"%d\" from database", req.Id)
 	}
 }
+
+func (a *apiServer) PostProject(
+	ctx context.Context, req *apiv1.PostProjectRequest) (*apiv1.PostProjectResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	p := &projectv1.Project{}
+	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description, user.User.Id)
+
+	return &apiv1.PostProjectResponse{Project: p},
+		errors.Wrapf(err, "error creating project %s in database", req.Name)
+}

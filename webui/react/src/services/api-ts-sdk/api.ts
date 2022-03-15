@@ -4258,6 +4258,46 @@ export interface V1PostModelVersionResponse {
 }
 
 /**
+ * Request for creating a project.
+ * @export
+ * @interface V1PostProjectRequest
+ */
+export interface V1PostProjectRequest {
+    /**
+     * The name of the project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    name: string;
+    /**
+     * User who is creating this project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    username?: string;
+    /**
+     * Description of the project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    description?: string;
+}
+
+/**
+ * Response to PostProjectRequest.
+ * @export
+ * @interface V1PostProjectResponse
+ */
+export interface V1PostProjectResponse {
+    /**
+     * The project created.
+     * @type {V1Project}
+     * @memberof V1PostProjectResponse
+     */
+    project?: V1Project;
+}
+
+/**
  * Create a batch of trial profiler metrics.
  * @export
  * @interface V1PostTrialProfilerMetricsBatchRequest
@@ -4319,6 +4359,40 @@ export interface V1PostUserResponse {
      * @memberof V1PostUserResponse
      */
     user?: V1User;
+}
+
+/**
+ * Request for creating a workspace.
+ * @export
+ * @interface V1PostWorkspaceRequest
+ */
+export interface V1PostWorkspaceRequest {
+    /**
+     * The name of the workspace.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    name: string;
+    /**
+     * User who is creating this workspace.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    username?: string;
+}
+
+/**
+ * Response to PostWorkspaceRequest.
+ * @export
+ * @interface V1PostWorkspaceResponse
+ */
+export interface V1PostWorkspaceResponse {
+    /**
+     * The workspace created.
+     * @type {V1Workspace}
+     * @memberof V1PostWorkspaceResponse
+     */
+    workspace?: V1Workspace;
 }
 
 /**
@@ -15527,6 +15601,46 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Create a project.
+         * @param {V1PostProjectRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postProject(body: V1PostProjectRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postProject.');
+            }
+            const localVarPath = `/api/v1/projects`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostProjectRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -15545,6 +15659,25 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          */
         getProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create a project.
+         * @param {V1PostProjectRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postProject(body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -15574,6 +15707,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         getProject(id: number, options?: any) {
             return ProjectsApiFp(configuration).getProject(id, options)(fetch, basePath);
         },
+        /**
+         * 
+         * @summary Create a project.
+         * @param {V1PostProjectRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postProject(body: V1PostProjectRequest, options?: any) {
+            return ProjectsApiFp(configuration).postProject(body, options)(fetch, basePath);
+        },
     };
 };
 
@@ -15594,6 +15737,18 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create a project.
+     * @param {V1PostProjectRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public postProject(body: V1PostProjectRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).postProject(body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -18494,6 +18649,46 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Create a workspace.
+         * @param {V1PostWorkspaceRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWorkspace(body: V1PostWorkspaceRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostWorkspaceRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -18573,6 +18768,25 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Create a workspace.
+         * @param {V1PostWorkspaceRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWorkspace(body: V1PostWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).postWorkspace(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -18624,6 +18838,16 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          */
         getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
             return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create a workspace.
+         * @param {V1PostWorkspaceRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
+            return WorkspacesApiFp(configuration).postWorkspace(body, options)(fetch, basePath);
         },
     };
 };
@@ -18682,6 +18906,18 @@ export class WorkspacesApi extends BaseAPI {
      */
     public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
         return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create a workspace.
+     * @param {V1PostWorkspaceRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
+        return WorkspacesApiFp(this.configuration).postWorkspace(body, options)(this.fetch, this.basePath);
     }
 
 }

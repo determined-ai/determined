@@ -109,3 +109,20 @@ message GetWorkspacesResponse {
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
+
+// Request for creating a workspace.
+message PostWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
+  // The name of the workspace.
+  string name = 1;
+  // User who is creating this workspace.
+  string username = 2;
+}
+
+// Response to PostWorkspaceRequest.
+message PostWorkspaceResponse {
+  // The workspace created.
+  determined.workspace.v1.Workspace workspace = 1;
+}

@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/project/v1/model.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested project.
 message GetProjectRequest {
@@ -14,5 +15,24 @@ message GetProjectRequest {
 // Response to GetProjectRequest.
 message GetProjectResponse {
   // The project requested.
+  determined.project.v1.Project project = 1;
+}
+
+// Request for creating a project.
+message PostProjectRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
+  // The name of the project.
+  string name = 1;
+  // User who is creating this project.
+  string username = 2;
+  // Description of the project.
+  string description = 3;
+}
+
+// Response to PostProjectRequest.
+message PostProjectResponse {
+  // The project created.
   determined.project.v1.Project project = 1;
 }
