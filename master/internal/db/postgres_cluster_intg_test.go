@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 func TestClusterAPI(t *testing.T) {
@@ -56,7 +57,7 @@ func TestClusterAPI(t *testing.T) {
 		Slots:        8,
 		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
-		StartTime:    time.Now().UTC().Truncate(time.Millisecond),
+		StartTime:    ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
 
 	err = db.AddAllocation(aIn)
