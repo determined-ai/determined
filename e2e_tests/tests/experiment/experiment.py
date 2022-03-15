@@ -224,18 +224,14 @@ def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
     return r.config
 
 
-def experiment_trials_json(experiment_id: int) -> Sequence[bindings.trialv1Trial]:
-    r = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
-    return r.trials or []
-
-
 def experiment_state(experiment_id: int) -> determinedexperimentv1State:
     r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
     return r.experiment.state
 
 
 def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
-    src_trials = experiment_trials_json(experiment_id)
+    r = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
+    src_trials = r.trials or []
     trials = []
     for trial in src_trials:
         r = bindings.get_GetTrial(test_session(), trialId=trial.id)
