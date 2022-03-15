@@ -21,7 +21,7 @@ type (
 	// AllGather performs an all gather for an allocation.
 	AllGather struct {
 		id       uuid.UUID
-		watchers map[uuid.UUID]chan<- AllGatherInfoOrError
+		watchers map[uuid.UUID]chan AllGatherInfoOrError
 		data     []*structpb.Struct
 		numPeers *int
 
@@ -62,7 +62,7 @@ type (
 func NewAllGather() *AllGather {
 	return &AllGather{
 		id:       uuid.New(),
-		watchers: map[uuid.UUID]chan<- AllGatherInfoOrError{},
+		watchers: map[uuid.UUID]chan AllGatherInfoOrError{},
 	}
 }
 
@@ -89,6 +89,12 @@ func (g *AllGather) ReceiveMsg(ctx *actor.Context) (bool, error) {
 }
 
 func (g *AllGather) watch(id uuid.UUID, count int, data *structpb.Struct) AllGatherWatcher {
+	if _, ok := g.watchers[id]; ok {
+		// If this peer has already connected, just respond with the watcher again. This is only
+		// possible if it disconnects and reconnects since the original actor ask blocks forever.
+		return AllGatherWatcher{C: g.watchers[id]}
+	}
+
 	// Channel is size 1 since data info will only ever be sent once and we'd rather not block.
 	w := make(chan AllGatherInfoOrError, 1)
 	g.watchers[id] = w

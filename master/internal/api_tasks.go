@@ -60,8 +60,12 @@ func (a *apiServer) AllocationAllGather(
 		return nil, err
 	}
 
+	wID, err := uuid.Parse(req.RequestUuid)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	var w task.AllGatherWatcher
-	wID := uuid.New()
 	if err = a.ask(handler.Address(), task.WatchAllGather{
 		WatcherID: wID,
 		NumPeers:  int(req.NumPeers),

@@ -339,10 +339,12 @@ message AllocationAllGatherRequest {
   };
   // The ID of the allocation.
   string allocation_id = 1;
+  // The UUID of the participant in an all gather.
+  string request_uuid = 2;
   // The number of process to wait for.
-  int32 num_peers = 2;
+  int32 num_peers = 3;
   // The data from this process.
-  google.protobuf.Struct data = 3;
+  google.protobuf.Struct data = 4;
 }
 // Response to AllocationAllGatherResponse
 message AllocationAllGatherResponse {
