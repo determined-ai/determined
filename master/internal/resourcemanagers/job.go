@@ -70,15 +70,27 @@ func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
 }
 
-// could be swapped for another job order representation
-// 0 or nonexisting keys mean that it needs to initialize.
 type jobSortState map[model.JobID]decimal.Decimal
 
-func (j jobSortState) SetJobPosition(jobID model.JobID, anchor1 model.JobID, anchor2 model.JobID) (job.RegisterJobPosition, error) {
+func (j jobSortState) SetJobPosition(
+	jobID model.JobID,
+	anchor1 model.JobID,
+	anchor2 model.JobID,
+	aheadOf bool,
+) (job.RegisterJobPosition, error) {
 	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, j)
 	if err != nil {
 		return job.RegisterJobPosition{}, err
 	}
+
+	// if the calculated position results in the wrong order
+	// we subtract a minimal decimal amount instead.
+	if aheadOf && newPos.GreaterThanOrEqual(j[anchor1]) {
+		newPos = j[anchor1].Sub(decimal.New(1, job.DecimalExp))
+	} else if !aheadOf && newPos.LessThanOrEqual(j[anchor1]) {
+		newPos = j[anchor1].Add(decimal.New(1, job.DecimalExp))
+	}
+
 	j[job.TailAnchor] = initalizeQueuePosition(time.Now())
 	j[jobID] = newPos
 
@@ -99,7 +111,12 @@ func initalizeJobSortState() jobSortState {
 	return state
 }
 
-func computeNewJobPos(jobID model.JobID, anchor1 model.JobID, anchor2 model.JobID, qPositions jobSortState) (decimal.Decimal, error) {
+func computeNewJobPos(
+	jobID model.JobID,
+	anchor1 model.JobID,
+	anchor2 model.JobID,
+	qPositions jobSortState,
+) (decimal.Decimal, error) {
 	if anchor1 == jobID || anchor2 == jobID {
 		return decimal.NewFromInt(0), fmt.Errorf("cannot move job relative to itself")
 	}

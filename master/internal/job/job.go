@@ -114,6 +114,7 @@ type Jobs struct {
 // AQueue is a map of jobID to RMJobInfo.
 type AQueue = map[model.JobID]*RMJobInfo
 
+// ErrJobNotFound returns a standard job error.
 func ErrJobNotFound(jobID model.JobID) error {
 	return fmt.Errorf("job %s not found", jobID)
 }
@@ -210,7 +211,7 @@ func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*j
 	return jobsInRM, nil
 }
 
-func (j *Jobs) SetJobPriority(ctx *actor.Context, jobID model.JobID, priority int) error {
+func (j *Jobs) setJobPriority(ctx *actor.Context, jobID model.JobID, priority int) error {
 	if priority < 1 || priority > 99 {
 		return errors.New("priority must be between 1 and 99")
 	}
@@ -251,7 +252,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
-				if err := j.SetJobPriority(ctx, jobID, priority); err != nil {
+				if err := j.setJobPriority(ctx, jobID, priority); err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_Weight:

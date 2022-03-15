@@ -384,7 +384,8 @@ func (rp *ResourcePool) moveJob(
 	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
 ) error {
 	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
-		return fmt.Errorf("unable to perform operation on resource pool with %s", rp.config.Scheduler.GetType())
+		return fmt.Errorf("unable to perform operation on resource pool with %s",
+			rp.config.Scheduler.GetType())
 	}
 
 	if anchorID == "" || jobID == "" || anchorID == jobID {
@@ -432,7 +433,7 @@ func (rp *ResourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor)
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
 	if err != nil {
 		return err
 	}
@@ -446,12 +447,11 @@ func (rp *ResourcePool) findAnchor(
 	jobID model.JobID,
 	anchorID model.JobID,
 	aheadOf bool,
-	) (bool, model.JobID, int) {
+) (bool, model.JobID, int) {
 	var secondAnchor model.JobID
 	targetPriority := 0
 	anchorPriority := 0
 	anchorIdx := 0
-	anchorPos, _ := rp.queuePositions[anchorID]
 	prioChange := false
 
 	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
@@ -470,18 +470,12 @@ func (rp *ResourcePool) findAnchor(
 			secondAnchor = job.HeadAnchor
 		} else {
 			secondAnchor = sortedReqs[anchorIdx-1].JobID
-			if rp.queuePositions[secondAnchor].GreaterThanOrEqual(anchorPos) {
-				secondAnchor = job.HeadAnchor
-			}
 		}
 	} else {
 		if anchorIdx >= len(sortedReqs)-1 {
 			secondAnchor = job.TailAnchor
 		} else {
 			secondAnchor = sortedReqs[anchorIdx+1].JobID
-			if rp.queuePositions[secondAnchor].LessThanOrEqual(anchorPos) {
-				secondAnchor = job.TailAnchor
-			}
 		}
 	}
 
@@ -492,7 +486,12 @@ func (rp *ResourcePool) findAnchor(
 	return prioChange, secondAnchor, anchorPriority
 }
 
-func needMove(jobPos decimal.Decimal, anchorPos decimal.Decimal, secondPos decimal.Decimal, aheadOf bool) bool {
+func needMove(
+	jobPos decimal.Decimal,
+	anchorPos decimal.Decimal,
+	secondPos decimal.Decimal,
+	aheadOf bool,
+) bool {
 	if aheadOf {
 		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
 			return false
