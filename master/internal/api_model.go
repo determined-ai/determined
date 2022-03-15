@@ -22,26 +22,48 @@ import (
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
 
-func (a *apiServer) GetModel(
-	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
-	m := &modelv1.Model{}
+func (a *apiServer) ModelFromIdentifier(identifier string) (*modelv1.Model, error) {
 	var err error
+	m := &modelv1.Model{}
 
-	allNumbers, _ := regexp.MatchString("^\\d+$", req.ModelName)
+	allNumbers, _ := regexp.MatchString("^\\d+$", identifier)
 	if allNumbers {
-		err = a.m.db.QueryProto("get_model_by_id", m, req.ModelName)
+		err = a.m.db.QueryProto("get_model_by_id", m, identifier)
 	} else {
-		err = a.m.db.QueryProto("get_model", m, req.ModelName)
+		err = a.m.db.QueryProto("get_model", m, identifier)
 	}
-
 	switch err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model \"%s\" not found", req.ModelName)
+			codes.NotFound, "model \"%s\" not found", identifier)
 	default:
-		return &apiv1.GetModelResponse{Model: m},
-			errors.Wrapf(err, "error fetching model \"%s\" from database", req.ModelName)
+		return m, errors.Wrapf(err,
+			"error fetching model \"%s\" from database", identifier)
 	}
+}
+
+func (a *apiServer) ModelVersionFromId(model_ident string, version_id int32) (*modelv1.ModelVersion, error) {
+	mv := &modelv1.ModelVersion{}
+	parentModel, err := a.ModelFromIdentifier(model_ident)
+	if err != nil {
+		return nil, err
+	}
+
+	switch err = a.m.db.QueryProto(
+		"get_model_version", mv, parentModel.Id, version_id); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "model %s version %d not found", model_ident, version_id)
+	default:
+		return mv, err
+	}
+}
+
+func (a *apiServer) GetModel(
+	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
+
+	m, err := a.ModelFromIdentifier(req.ModelName)
+	return &apiv1.GetModelResponse{Model: m}, err
 }
 
 func (a *apiServer) GetModels(
@@ -166,11 +188,10 @@ func (a *apiServer) PostModel(
 
 func (a *apiServer) PatchModel(
 	ctx context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
-	currModel := getResp.Model
 
 	if currModel.Archived {
 		return nil, errors.Errorf("model \"%s\" is archived and cannot have attributes updated.",
@@ -252,13 +273,13 @@ func (a *apiServer) PatchModel(
 
 func (a *apiServer) ArchiveModel(
 	ctx context.Context, req *apiv1.ArchiveModelRequest) (*apiv1.ArchiveModelResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("archive_model", holder, getResp.Model.Name)
+	err = a.m.db.QueryProto("archive_model", holder, currModel.Name)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model \"%s\" was not found and cannot be archived",
@@ -271,13 +292,13 @@ func (a *apiServer) ArchiveModel(
 
 func (a *apiServer) UnarchiveModel(
 	ctx context.Context, req *apiv1.UnarchiveModelRequest) (*apiv1.UnarchiveModelResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("unarchive_model", holder, getResp.Model.Name)
+	err = a.m.db.QueryProto("unarchive_model", holder, currModel.Name)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model \"%s\" was not found and cannot be un-archived",
@@ -296,13 +317,13 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("delete_model", holder, getResp.Model.Name, user.User.Id,
+	err = a.m.db.QueryProto("delete_model", holder, currModel.Name, user.User.Id,
 		user.User.Admin)
 
 	if holder.Id == 0 {
@@ -316,33 +337,21 @@ func (a *apiServer) DeleteModel(
 
 func (a *apiServer) GetModelVersion(
 	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
-	parentModel, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
-	if err != nil {
-		return nil, err
-	}
-
+	mv, err := a.ModelVersionFromId(req.ModelName, req.ModelVersion)
 	resp := &apiv1.GetModelVersionResponse{}
-	resp.ModelVersion = &modelv1.ModelVersion{}
-
-	switch err := a.m.db.QueryProto(
-		"get_model_version", resp.ModelVersion, parentModel.Model.Id, req.ModelVersion); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "model %s version %d not found", req.ModelName, req.ModelVersion)
-	default:
-		return resp, err
-	}
+	resp.ModelVersion = mv
+	return resp, err
 }
 
 func (a *apiServer) GetModelVersions(
 	ctx context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	parentModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &apiv1.GetModelVersionsResponse{Model: getResp.Model}
-	err = a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, getResp.Model.Id)
+	resp := &apiv1.GetModelVersionsResponse{Model: parentModel}
+	err = a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, parentModel.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -354,14 +363,14 @@ func (a *apiServer) GetModelVersions(
 func (a *apiServer) PostModelVersion(
 	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
-	modelResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	modelResp, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
 
-	if modelResp.Model.Archived {
+	if modelResp.Archived {
 		return nil, errors.Errorf("model \"%s\" is archived and cannot register new versions.",
-			modelResp.Model.Name)
+			modelResp.Name)
 	}
 
 	// make sure the checkpoint exists
@@ -400,7 +409,7 @@ func (a *apiServer) PostModelVersion(
 	err = a.m.db.QueryProto(
 		"insert_model_version",
 		respModelVersion.ModelVersion,
-		modelResp.Model.Id,
+		modelResp.Id,
 		c.Uuid,
 		req.Name,
 		req.Comment,
@@ -411,24 +420,18 @@ func (a *apiServer) PostModelVersion(
 	)
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model \"%s\"",
-		modelResp.Model.Name)
+		req.ModelName)
 }
 
 func (a *apiServer) PatchModelVersion(
 	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
 	error) {
-	getResp, err := a.GetModelVersion(ctx,
-		&apiv1.GetModelVersionRequest{ModelName: req.ModelName, ModelVersion: req.ModelVersionId})
+	currModelVersion, err := a.ModelVersionFromId(req.ModelName, req.ModelVersionId)
 	if err != nil {
 		return nil, err
 	}
 
-	parentModel, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
-	if err != nil {
-		return nil, err
-	}
-
-	currModelVersion := getResp.ModelVersion
+	parentModel := currModelVersion.Model
 	madeChanges := false
 
 	if req.ModelVersion.Name != nil && req.ModelVersion.Name.Value != currModelVersion.Name {
@@ -493,7 +496,7 @@ func (a *apiServer) PatchModelVersion(
 
 	finalModelVersion := &modelv1.ModelVersion{}
 	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersionId,
-		parentModel.Model.Id, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Notes,
+		parentModel.Id, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Notes,
 		currMeta, currLabels)
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
