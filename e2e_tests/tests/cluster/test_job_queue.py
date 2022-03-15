@@ -1,4 +1,5 @@
 import subprocess
+from time import sleep
 from typing import Dict, List, Tuple
 
 import pytest
@@ -18,20 +19,19 @@ def test_job_queue_ahead_of(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
+    ok = jobs.refresh_until_populated(10)
+    assert ok
+
     ordered_ids = jobs.get_ids()
     subprocess.run(["det", "job", "update", ordered_ids[-1], "--ahead-of", ordered_ids[-2]])
 
     ordered_ids.insert(2, ordered_ids.pop(-1))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
     subprocess.run(["det", "job", "update-batch", f"{ordered_ids[-1]}.ahead-of={ordered_ids[-2]}"])
 
     ordered_ids.insert(2, ordered_ids.pop(-1))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
 
 @pytest.mark.e2e_cpu
@@ -44,20 +44,19 @@ def test_job_queue_ahead_of_first(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
+    ok = jobs.refresh_until_populated(10)
+    assert ok
+
     ordered_ids = jobs.get_ids()
     subprocess.run(["det", "job", "update", ordered_ids[-1], "--ahead-of", ordered_ids[0]])
 
     ordered_ids.insert(0, ordered_ids.pop(-1))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
     subprocess.run(["det", "job", "update-batch", f"{ordered_ids[-1]}.ahead-of={ordered_ids[0]}"])
 
     ordered_ids.insert(0, ordered_ids.pop(-1))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
 
 @pytest.mark.e2e_cpu
@@ -70,20 +69,19 @@ def test_job_queue_behind_of(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
+    ok = jobs.refresh_until_populated(10)
+    assert ok
+
     ordered_ids = jobs.get_ids()
     subprocess.run(["det", "job", "update", ordered_ids[0], "--behind-of", ordered_ids[1]])
 
     ordered_ids.insert(0, ordered_ids.pop(-1))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
-    subprocess.run(["det", "job", "update-batch", f"{ordered_ids[0]}.behind-of={ordered_ids[-1]}"])
+    subprocess.run(["det", "job", "update-batch", f"{ordered_ids[0]}.behind-of={ordered_ids[1]}"])
 
     ordered_ids.insert(0, ordered_ids.pop(-1))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
 
 @pytest.mark.e2e_cpu
@@ -96,20 +94,19 @@ def test_job_queue_behind_of_last(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
+    ok = jobs.refresh_until_populated(10)
+    assert ok
+
     ordered_ids = jobs.get_ids()
     subprocess.run(["det", "job", "update", ordered_ids[0], "--behind-of", ordered_ids[-1]])
 
     ordered_ids.append(ordered_ids.pop(0))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
     subprocess.run(["det", "job", "update-batch", f"{ordered_ids[0]}.behind-of={ordered_ids[-1]}"])
 
     ordered_ids.append(ordered_ids.pop(0))
-    jobs.refresh()
-    reordered_ids = jobs.get_ids()
-    assert reordered_ids == ordered_ids
+    assert jobs.check_order_equals(ordered_ids, 10)
 
 
 @pytest.mark.e2e_cpu
@@ -120,14 +117,20 @@ def test_job_queue_adjust_weight() -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
+    ok = jobs.refresh_until_populated(10)
+    assert ok
+
     ordered_ids = jobs.get_ids()
     subprocess.run(["det", "job", "update", ordered_ids[0], "--weight", "10"])
 
+    sleep(2)
     jobs.refresh()
     new_weight = jobs.get_job_weight(ordered_ids[0])
     assert new_weight == "10"
 
     subprocess.run(["det", "job", "update-batch", f"{ordered_ids[1]}.weight=10"])
+
+    sleep(2)
     jobs.refresh()
     new_weight = jobs.get_job_weight(ordered_ids[1])
     assert new_weight == "10"
@@ -160,6 +163,14 @@ class JobInfo:
     def refresh(self) -> None:
         self.values, self.ids = get_raw_data()
 
+    def refresh_until_populated(self, retries: int) -> bool:
+        while len(self.ids) == 0:
+            if retries <= 0:
+                return False
+            sleep(0.5)
+            self.refresh()
+        return True
+
     def get_ids(self) -> List:
         return self.ids
 
@@ -169,3 +180,16 @@ class JobInfo:
                 continue
             return value_dict["Weight"]
         return ""
+
+    def check_order_equals(self, expected: List, retries: int) -> bool:
+        if self.ids == expected:
+            return True
+
+        while retries > 0:
+            retries -= 1
+            sleep(0.5)
+            self.refresh()
+            if self.ids == expected:
+                return True
+
+        return False
