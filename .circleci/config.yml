@@ -30,6 +30,9 @@ parameters:
   machine-image:
     type: string
     default: ubuntu-2004:202101-01
+  gpu-machine-image:
+    type: string
+    default: ubuntu-2004-cuda-11.2:202103-01 
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -1346,7 +1349,7 @@ jobs:
       - run: make -C tools check
       - run: make -C schemas check
 
-  test-unit-harness:
+  test-unit-harness-cpu:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1356,11 +1359,28 @@ jobs:
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-harness-pycov make -C harness test
+      - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-pycov
+            - test-unit-harness-cpu-pycov
+
+  test-unit-harness-gpu:
+    machine:
+      resource_class: gpu.nvidia.small
+      image: <<pipeline.parameters.gpu-machine-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined: true
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
+          extra-requirements-file: "harness/tests/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-unit-harness-gpu-pycov
 
   test-unit-harness-tf2:
     docker:
@@ -1917,7 +1937,9 @@ workflows:
     jobs:
       - test-unit-go
       - test-unit-react
-      - test-unit-harness
+      - test-unit-harness-cpu
+      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
+      #- test-unit-harness-gpu 
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -1926,7 +1948,7 @@ workflows:
       - test-examples
       - python-coverage:
           requires:
-            - test-unit-harness
+            - test-unit-harness-cpu
             - test-unit-harness-tf2
             - test-unit-model-hub
             - test-unit-storage
@@ -2217,6 +2239,27 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
+      - request-deepspeed-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+        # DeepSpeed tests do not work on K80s so we need V100 instances.
+      - test-e2e-aws:
+          name: test-e2e-deepspeed
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-deepspeed-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p3.16xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["deepspeed"]
+              mark: ["deepspeed"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
           context: gcp
@@ -2470,7 +2513,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["g4dn.8xlarge"] # k80 not supported for deepspeed
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
 
@@ -2529,6 +2572,17 @@ workflows:
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+        # DeepSpeed tests do not work on K80s so we need V100 instances.
+      - test-e2e-aws:
+          name: test-e2e-gpu-deepspeed
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["transformers"]
+              mark: ["deepspeed"]
+              compute-agent-instance-type: ["p3.16xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:

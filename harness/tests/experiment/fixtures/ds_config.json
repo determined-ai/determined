@@ -1,0 +1,16 @@
+{
+  "train_batch_size": 16,
+  "train_micro_batch_size_per_gpu": 4,
+  "optimizer": {"type": "SGD", "params": {"lr": 0.001, "weight_decay": 3e-7}},
+  "scheduler": {
+    "type": "WarmupLR",
+    "params": {"warmup_min_lr": 0, "warmup_max_lr": 0.001, "warmup_num_steps": 1000}
+  },
+  "prescale_gradients": false,
+  "fp16": {
+    "enabled": false
+  },
+  "zero_optimization": {
+    "stage": 0
+  }
+}
