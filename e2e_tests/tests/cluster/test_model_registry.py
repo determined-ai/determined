@@ -32,7 +32,7 @@ def test_model_registry() -> None:
         # Confirm we can look up a model by its ID
         db_model = d.get_model_by_id(mnist.model_id)
         assert db_model.name == "mnist"
-        db_model = d.get_model(str(mnist.model_id))
+        db_model = d.get_model(mnist.model_id)
         assert db_model.name == "mnist"
 
         # Confirm DB assigned username

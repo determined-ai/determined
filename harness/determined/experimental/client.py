@@ -233,7 +233,7 @@ def get_model_by_id(model_id: int) -> Model:
         model_id (int): The unique id of the model.
     """
     assert _determined is not None
-    return _determined.get_model_by_id(model_id=model_id)
+    return _determined.get_model_by_id(model_id)
 
 
 @_require_singleton

@@ -155,14 +155,15 @@ class Determined:
 
         return model.Model._from_json(r.json().get("model"), self._session)
 
-    def get_model(self, name: str) -> model.Model:
+    def get_model(self, identifier: Union[str, int]) -> model.Model:
         """
         Get the :class:`~determined.experimental.Model` from the model registry
-        with the provided name. If no model with that id is found in the registry,
+        with the provided name or ID. If no corresponding model is found in the registry,
         an exception is raised.
         """
-        r = self._session.get("/api/v1/models/{}".format(name))
-        return model.Model._from_json(r.json().get("model"), self._session)
+        r = self._session.get("/api/v1/models/{}".format(identifier)).json()
+        assert r.get("model", False)
+        return model.Model._from_json(r.get("model"), self._session)
 
     def get_model_by_id(self, model_id: int) -> model.Model:
         """
@@ -170,10 +171,7 @@ class Determined:
         with the provided id. If no model with that id is found in the registry,
         an exception is raised.
         """
-        r = self._session.get("/api/v1/models?id={}".format(model_id))
-        models = r.json().get("models")
-        assert len(models) == 1
-        return model.Model._from_json(models[0], self._session)
+        return self.get_model(model_id)
 
     def get_models(
         self,
