@@ -67,7 +67,7 @@ func (s SlotSummary) ToProto() *agentv1.Slot {
 	}
 }
 
-type RawAgent struct {
+type AgentStats struct {
 	ResourcePool string           `db:"resource_pool"`
 	AgentID      *string          `db:"agent_id"`
 	Slots        int              `db:"slots"`

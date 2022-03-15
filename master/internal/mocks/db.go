@@ -29,11 +29,11 @@ type DB struct {
 }
 
 // AddAgent provides a mock function with given fields: a
-func (_m *DB) AddAgent(a *model.RawAgent) error {
+func (_m *DB) AddAgent(a *model.AgentStats) error {
 	ret := _m.Called(a)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.RawAgent) error); ok {
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
 		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
@@ -99,11 +99,11 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 }
 
 // AddInstance provides a mock function with given fields: a
-func (_m *DB) AddInstance(a *model.RawInstance) error {
+func (_m *DB) AddInstance(a *model.InstanceStats) error {
 	ret := _m.Called(a)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.RawInstance) error); ok {
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
 		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
@@ -1495,11 +1495,11 @@ func (_m *DB) RawQuery(queryName string, params ...interface{}) ([]byte, error) 
 }
 
 // RemoveAgent provides a mock function with given fields: a
-func (_m *DB) RemoveAgent(a *model.RawAgent) error {
+func (_m *DB) RemoveAgent(a *model.AgentStats) error {
 	ret := _m.Called(a)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.RawAgent) error); ok {
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
 		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
@@ -1509,11 +1509,11 @@ func (_m *DB) RemoveAgent(a *model.RawAgent) error {
 }
 
 // RemoveInstance provides a mock function with given fields: a
-func (_m *DB) RemoveInstance(a *model.RawInstance) error {
+func (_m *DB) RemoveInstance(a *model.InstanceStats) error {
 	ret := _m.Called(a)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.RawInstance) error); ok {
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
 		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)

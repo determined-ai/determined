@@ -126,7 +126,7 @@ SELECT
                 upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
         ) AS seconds
 FROM
-    raw_agent, const
+    agent_stats, const
 UNION 
 SELECT
     NULL AS experiment_id,
@@ -143,7 +143,7 @@ SELECT
                 upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
         ) AS seconds
 FROM
-    raw_instance, const
+    instance_stats, const
 WHERE const.period && tstzrange(start_time, end_time)
 ORDER BY
     start_time

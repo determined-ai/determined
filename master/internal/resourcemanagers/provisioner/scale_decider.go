@@ -117,7 +117,7 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 func (s *scaleDecider) recordRawInstance() {
 	for _, inst := range s.instances {
 		instID := inst.ID
-		s.db.AddInstance(&model.RawInstance{
+		s.db.AddInstance(&model.InstanceStats{
 			ResourcePool: s.resourcePool,
 			InstanceID:   &instID,
 			Slots:        0,
@@ -126,13 +126,13 @@ func (s *scaleDecider) recordRawInstance() {
 	}
 	end_time := time.Now().UTC().Truncate(time.Millisecond)
 	for instID, _ := range s.disconnected {
-		s.db.RemoveInstance(&model.RawInstance{
+		s.db.RemoveInstance(&model.InstanceStats{
 			InstanceID: &instID,
 			EndTime:    &end_time,
 		})
 	}
 	for instID, _ := range s.stopped {
-		s.db.RemoveInstance(&model.RawInstance{
+		s.db.RemoveInstance(&model.InstanceStats{
 			InstanceID: &instID,
 			EndTime:    &end_time,
 		})

@@ -354,7 +354,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		agentID := msg.Agent.Address().Local()
 		ctx.Log().Infof("adding agent: %s", agentID)
 		rp.agents[msg.Agent] = true
-		rp.db.AddAgent(&model.RawAgent{
+		rp.db.AddAgent(&model.AgentStats{
 			ResourcePool: rp.config.PoolName,
 			AgentID:      &agentID,
 			Slots:        getResourceSummary(rp.agentStatesCache).numTotalSlots,
@@ -366,7 +366,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		ctx.Log().Infof("removing agent: %s", agentID)
 		delete(rp.agents, msg.Agent)
 		end_time := time.Now().UTC().Truncate(time.Millisecond)
-		rp.db.RemoveAgent(&model.RawAgent{
+		rp.db.RemoveAgent(&model.AgentStats{
 			EndTime: &end_time,
 			AgentID: &agentID,
 		})
