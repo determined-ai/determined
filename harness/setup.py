@@ -26,7 +26,6 @@ setup(
         "certifi",
         "filelock",
         "google-cloud-storage",
-        "google-cloud-core",
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
