@@ -54,10 +54,18 @@ type (
 	trialGetSearcherState struct {
 		requestID model.RequestID
 	}
-	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
-	// its actor.PostStop and when the experiment snapshots the trial closed.
+
+	// trialClosed is used to replay closes missed when the master dies between when a trial closing
+	// in its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
 		requestID model.RequestID
+	}
+
+	// userInitiatedEarlyExit is a user-injected message, provided through the early exit API. It
+	// _should_ indicate the user is exiting, but in the event they don't, we will clean them up.
+	userInitiatedEarlyExit struct {
+		requestID model.RequestID
+		reason    model.ExitedReason
 	}
 )
 
