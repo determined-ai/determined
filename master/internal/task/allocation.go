@@ -394,7 +394,7 @@ func (a *Allocation) TaskContainerStateChanged(
 	switch msg.Container.State {
 	case cproto.Pulling:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
-		a.model.StartTime = time.Now().UTC().Truncate(time.Millisecond)
+		a.model.StartTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
 		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 			a.Error(ctx, err)
 		}
