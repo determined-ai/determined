@@ -8,7 +8,6 @@ Removed these endpoints from the legacy experiments API:
 -  /:experiment_id/checkpoints
 -  /:experiment_id/config,
 -  /:experiment_id/model_def
--  /:experiment_id/preview_gc
 -  /:experiment_id/summary
 -  /:experiment_id/metrics/summary
 

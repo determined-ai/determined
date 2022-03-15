@@ -73,6 +73,20 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	return &queries, nil
 }
 
+func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, error) {
+	args := struct {
+		ExperimentID   int `path:"experiment_id"`
+		ExperimentBest int `query:"save_experiment_best"`
+		TrialBest      int `query:"save_trial_best"`
+		TrialLatest    int `query:"save_trial_latest"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	return m.db.ExperimentCheckpointsToGCRaw(
+		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest, false)
+}
+
 func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	// Allow clients to apply partial updates to an experiment via the JSON Merge Patch format
 	// (RFC 7386). Clients can only update certain fields of the experiment.

@@ -884,6 +884,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
+	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
