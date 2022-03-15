@@ -42,7 +42,7 @@ func (a *apiServer) ModelFromIdentifier(identifier string) (*modelv1.Model, erro
 	}
 }
 
-func (a *apiServer) ModelVersionFromId(model_ident string, version_id int32) (*modelv1.ModelVersion, error) {
+func (a *apiServer) ModelVersionFromID(model_ident string, version_id int32) (*modelv1.ModelVersion, error) {
 	mv := &modelv1.ModelVersion{}
 	parentModel, err := a.ModelFromIdentifier(model_ident)
 	if err != nil {
@@ -61,7 +61,6 @@ func (a *apiServer) ModelVersionFromId(model_ident string, version_id int32) (*m
 
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
-
 	m, err := a.ModelFromIdentifier(req.ModelName)
 	return &apiv1.GetModelResponse{Model: m}, err
 }
@@ -337,7 +336,7 @@ func (a *apiServer) DeleteModel(
 
 func (a *apiServer) GetModelVersion(
 	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
-	mv, err := a.ModelVersionFromId(req.ModelName, req.ModelVersion)
+	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersion)
 	resp := &apiv1.GetModelVersionResponse{}
 	resp.ModelVersion = mv
 	return resp, err
@@ -426,7 +425,7 @@ func (a *apiServer) PostModelVersion(
 func (a *apiServer) PatchModelVersion(
 	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
 	error) {
-	currModelVersion, err := a.ModelVersionFromId(req.ModelName, req.ModelVersionId)
+	currModelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionId)
 	if err != nil {
 		return nil, err
 	}
