@@ -1,7 +1,7 @@
 WITH p AS (
-  INSERT INTO projects (name, description, user_id)
-  VALUES ($1, $2, $3)
-  RETURNING id, name, description, archived, user_id
+  INSERT INTO projects (name, description, workspace_id, user_id)
+  VALUES ($1, $2, $3, $4)
+  RETURNING id, name, description, archived, workspace_id, user_id
 )
 SELECT p.id, p.name, p.description, p.archived, u.username
 FROM p

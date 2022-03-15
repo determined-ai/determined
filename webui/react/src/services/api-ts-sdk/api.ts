@@ -4353,6 +4353,12 @@ export interface V1PostProjectRequest {
      * @memberof V1PostProjectRequest
      */
     description?: string;
+    /**
+     * Id of the associated workspace.
+     * @type {number}
+     * @memberof V1PostProjectRequest
+     */
+    workspaceId: number;
 }
 
 /**
@@ -15809,16 +15815,22 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Create a project.
+         * @param {number} workspaceId Id of the associated workspace.
          * @param {V1PostProjectRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postProject(body: V1PostProjectRequest, options: any = {}): FetchArgs {
+        postProject(workspaceId: number, body: V1PostProjectRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling postProject.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postProject.');
             }
-            const localVarPath = `/api/v1/projects`;
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/projects`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -15926,12 +15938,13 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a project.
+         * @param {number} workspaceId Id of the associated workspace.
          * @param {V1PostProjectRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postProject(body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(body, options);
+        postProject(workspaceId: number, body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(workspaceId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -15995,12 +16008,13 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Create a project.
+         * @param {number} workspaceId Id of the associated workspace.
          * @param {V1PostProjectRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postProject(body: V1PostProjectRequest, options?: any) {
-            return ProjectsApiFp(configuration).postProject(body, options)(fetch, basePath);
+        postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
+            return ProjectsApiFp(configuration).postProject(workspaceId, body, options)(fetch, basePath);
         },
     };
 };
@@ -16062,13 +16076,14 @@ export class ProjectsApi extends BaseAPI {
     /**
      * 
      * @summary Create a project.
+     * @param {number} workspaceId Id of the associated workspace.
      * @param {V1PostProjectRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public postProject(body: V1PostProjectRequest, options?: any) {
-        return ProjectsApiFp(this.configuration).postProject(body, options)(this.fetch, this.basePath);
+    public postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).postProject(workspaceId, body, options)(this.fetch, this.basePath);
     }
 
 }

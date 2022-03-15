@@ -109,7 +109,8 @@ func (a *apiServer) PostProject(
 	}
 
 	p := &projectv1.Project{}
-	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description, user.User.Id)
+	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
+		req.WorkspaceId, user.User.Id)
 
 	return &apiv1.PostProjectResponse{Project: p},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)

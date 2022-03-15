@@ -1336,7 +1336,7 @@ service Determined {
   // Create a project.
   rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects"
+      post: "/api/v1/workspaces/{workspace_id}/projects"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

@@ -3,7 +3,7 @@ WITH pe AS (
   FROM experiments
 )
 SELECT p.id, p.name, p.workspace_id, p.description, p.archived, p.notes,
-  COUNT(pe) AS num_experiments,
+  SUM(case when pe.project_id = p.id then 1 else 0 end) AS num_experiments,
   SUM(case when pe.project_id = p.id AND pe.state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,
   MAX(case when pe.project_id = p.id then pe.start_time else TO_TIMESTAMP(0) end) AS last_experiment_started_at,
   u.username
