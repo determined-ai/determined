@@ -111,6 +111,19 @@ def main(train_entrypoint: Optional[str]) -> int:
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
+        elif distributed_backend.use_deepspeed():
+            # World size and rank information set as environment variables in deepspeed launcher.
+            # We pull the relevant fields here and pass them to create the DistributedContext.
+            distributed = _core.DistributedContext(
+                rank=int(os.environ["RANK"]),
+                size=int(os.environ["WORLD_SIZE"]),
+                local_rank=int(os.environ["LOCAL_RANK"]),
+                local_size=int(os.environ["LOCAL_SIZE"]),
+                cross_rank=int(os.environ["CROSS_RANK"]),
+                cross_size=int(os.environ["CROSS_SIZE"]),
+                chief_ip=chief_ip,
+                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
+            )
         else:
             distributed = _core.DummyDistributed()
 

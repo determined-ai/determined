@@ -244,7 +244,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 const (
 	// InvalidHPKillDelay the delay before we forcibly kill a trial that said it had an invalid HP.
-	InvalidHPKillDelay = 3 * time.Second
+	InvalidHPKillDelay = 10 * time.Second
 )
 
 func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEarlyExit) error {

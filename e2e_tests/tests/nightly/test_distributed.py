@@ -173,3 +173,54 @@ def test_byol_pytorch_distributed() -> None:
     config = conf.set_max_length(config, {"epochs": 1})
 
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("byol_pytorch"), 1)
+
+
+@pytest.mark.deepspeed
+@pytest.mark.gpu_required
+def test_deepspeed_moe() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("cifar10_moe/moe.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("cifar10_moe"), 1)
+
+
+@pytest.mark.deepspeed
+@pytest.mark.gpu_required
+def test_deepspeed_zero() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("cifar10_moe/zero_stages.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 100})
+
+    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("cifar10_moe"), 1)
+
+
+@pytest.mark.deepspeed
+@pytest.mark.gpu_required
+def test_deepspeed_pipeline_parallel() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("pipeline_parallelism/distributed.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 100})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.deepspeed_examples_path("pipeline_parallelism"), 1
+    )
+
+
+@pytest.mark.deepspeed
+@pytest.mark.gpu_required
+def test_gpt_neox_zero_medium() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("gpt-neox/zero3_medium.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 100})
+
+    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt-neox"), 1)
+
+
+@pytest.mark.deepspeed
+@pytest.mark.gpu_required
+def test_gpt_neox_zero_3D_parallel() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("gpt-neox/zero1_3d_parallel.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 100})
+
+    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt-neox"), 1)

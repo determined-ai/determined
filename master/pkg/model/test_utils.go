@@ -37,7 +37,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 				RawMaxLength: &maxLength,
 			},
 		},
-		RawEntrypoint: &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
+		RawEntrypoint:      &expconf.Entrypoint{RawEntrypoint: "model_def:SomeTrialClass"},
 		RawHyperparameters: expconf.Hyperparameters{},
 		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
 			RawSharedFSConfig: &expconf.SharedFSConfig{
