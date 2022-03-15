@@ -1,4 +1,5 @@
 import subprocess
+from typing import Dict, List, Tuple
 
 import pytest
 
@@ -13,7 +14,33 @@ def test_job_queue_ahead_of(using_k8s: bool) -> None:
         return
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     model = conf.tutorials_path("mnist_pytorch")
-    for _ in range(2):
+    for _ in range(4):
+        exp.run_basic_test_with_temp_config(config, model, 1)
+
+    jobs = JobInfo()
+    ordered_ids = jobs.get_ids()
+    subprocess.run(["det", "job", "update", ordered_ids[-1], "--ahead-of", ordered_ids[-2]])
+
+    ordered_ids.insert(2, ordered_ids.pop(-1))
+    jobs.refresh()
+    reordered_ids = jobs.get_ids()
+    assert reordered_ids == ordered_ids
+
+    subprocess.run(["det", "job", "update-batch", f"{ordered_ids[-1]}.ahead-of={ordered_ids[-2]}"])
+
+    ordered_ids.insert(2, ordered_ids.pop(-1))
+    jobs.refresh()
+    reordered_ids = jobs.get_ids()
+    assert reordered_ids == ordered_ids
+
+
+@pytest.mark.e2e_cpu
+def test_job_queue_ahead_of_first(using_k8s: bool) -> None:
+    if using_k8s:
+        return
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
+    model = conf.tutorials_path("mnist_pytorch")
+    for _ in range(4):
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
@@ -60,6 +87,32 @@ def test_job_queue_behind_of(using_k8s: bool) -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_job_queue_behind_of_last(using_k8s: bool) -> None:
+    if using_k8s:
+        return
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
+    model = conf.tutorials_path("mnist_pytorch")
+    for _ in range(2):
+        exp.run_basic_test_with_temp_config(config, model, 1)
+
+    jobs = JobInfo()
+    ordered_ids = jobs.get_ids()
+    subprocess.run(["det", "job", "update", ordered_ids[0], "--behind-of", ordered_ids[-1]])
+
+    ordered_ids.append(ordered_ids.pop(0))
+    jobs.refresh()
+    reordered_ids = jobs.get_ids()
+    assert reordered_ids == ordered_ids
+
+    subprocess.run(["det", "job", "update-batch", f"{ordered_ids[0]}.behind-of={ordered_ids[-1]}"])
+
+    ordered_ids.append(ordered_ids.pop(0))
+    jobs.refresh()
+    reordered_ids = jobs.get_ids()
+    assert reordered_ids == ordered_ids
+
+
+@pytest.mark.e2e_cpu
 def test_job_queue_adjust_weight() -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     model = conf.tutorials_path("mnist_pytorch")
@@ -68,7 +121,7 @@ def test_job_queue_adjust_weight() -> None:
 
     jobs = JobInfo()
     ordered_ids = jobs.get_ids()
-    subprocess.run(["det", "job", "update", ordered_ids[0], "--weight", 10])
+    subprocess.run(["det", "job", "update", ordered_ids[0], "--weight", "10"])
 
     jobs.refresh()
     new_weight = jobs.get_job_weight(ordered_ids[0])
@@ -82,12 +135,12 @@ def test_job_queue_adjust_weight() -> None:
     return
 
 
-def get_raw_data() -> (list, list):
+def get_raw_data() -> Tuple[List[Dict[str, str]], List[str]]:
     data = []
     ordered_ids = []
     output = subprocess.check_output(["det", "job", "list"]).decode("utf-8")
     lines = output.split("\n")
-    keys = lines[0].split("|").strip()
+    keys = [line.strip() for line in lines[0].split("|")]
 
     for line in lines[2:]:
         line_dict = {}
@@ -101,18 +154,18 @@ def get_raw_data() -> (list, list):
 
 
 class JobInfo:
-    def __init__(self):
+    def __init__(self) -> None:
         self.values, self.ids = get_raw_data()
 
     def refresh(self) -> None:
         self.values, self.ids = get_raw_data()
 
-    def get_ids(self):
+    def get_ids(self) -> List:
         return self.ids
 
-    def get_job_weight(self, id: str) -> str:
+    def get_job_weight(self, jobID: str) -> str:
         for value_dict in self.values:
-            if value_dict["ID"] != id:
+            if value_dict["ID"] != jobID:
                 continue
             return value_dict["Weight"]
         return ""
