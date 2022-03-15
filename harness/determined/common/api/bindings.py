@@ -491,8 +491,10 @@ class v1AllocationAllGatherRequest:
         allocationId: str,
         data: "typing.Dict[str, typing.Any]",
         numPeers: "typing.Optional[int]" = None,
+        requestUuid: "typing.Optional[str]" = None,
     ):
         self.allocationId = allocationId
+        self.requestUuid = requestUuid
         self.numPeers = numPeers
         self.data = data
 
@@ -500,6 +502,7 @@ class v1AllocationAllGatherRequest:
     def from_json(cls, obj: Json) -> "v1AllocationAllGatherRequest":
         return cls(
             allocationId=obj["allocationId"],
+            requestUuid=obj.get("requestUuid", None),
             numPeers=obj.get("numPeers", None),
             data=obj["data"],
         )
@@ -507,6 +510,7 @@ class v1AllocationAllGatherRequest:
     def to_json(self) -> typing.Any:
         return {
             "allocationId": self.allocationId,
+            "requestUuid": self.requestUuid if self.requestUuid is not None else None,
             "numPeers": self.numPeers if self.numPeers is not None else None,
             "data": self.data,
         }

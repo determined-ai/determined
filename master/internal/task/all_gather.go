@@ -14,8 +14,16 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-// DefaultAllGatherTimeout is the default timeout for all gather.
-var DefaultAllGatherTimeout = 10 * time.Minute
+var (
+	// DefaultAllGatherTimeout is the default timeout for all gather.
+	DefaultAllGatherTimeout = 10 * time.Minute
+	// AllGatherTimeoutMessage is the error returned when an all gather times out.
+	AllGatherTimeoutMessage = "some ranks are taking a long time to connect to master" +
+		"during all gather; when running on kubernetes this may happen " +
+		"because only some of the pods have been scheduled; it is possible " +
+		"that some pods will never be scheduled without adding compute " +
+		"resources or pausing / killing other experiments in the cluster"
+)
 
 type (
 	// AllGather performs an all gather for an allocation.
@@ -25,8 +33,7 @@ type (
 		data     []*structpb.Struct
 		numPeers *int
 
-		readyPassed  bool
-		lastPeerJoin time.Time
+		readyPassed bool
 	}
 
 	// AllGatherWatcher contains a channel which can be polled for all gather completion.
@@ -59,16 +66,15 @@ type (
 )
 
 // NewAllGather returns a new all gather component.
-func NewAllGather() *AllGather {
+func NewAllGather(ctx *actor.Context) *AllGather {
+	id := uuid.New()
+	if ctx != nil {
+		actors.NotifyAfter(ctx, DefaultAllGatherTimeout, allGatherTimeout{id: id})
+	}
 	return &AllGather{
-		id:       uuid.New(),
+		id:       id,
 		watchers: map[uuid.UUID]chan AllGatherInfoOrError{},
 	}
-}
-
-// PreStart just steps up the rendezvous watcher.
-func (g *AllGather) PreStart(ctx *actor.Context) {
-	actors.NotifyAfter(ctx, DefaultAllGatherTimeout, allGatherTimeout{id: g.id})
 }
 
 // ReceiveMsg receives rendezvous-specific messages.
@@ -79,8 +85,8 @@ func (g *AllGather) ReceiveMsg(ctx *actor.Context) (bool, error) {
 	case UnwatchAllGather:
 		g.unwatch(msg.WatcherID)
 	case allGatherTimeout:
-		if err := g.checkTimeout(msg.id); err != nil {
-			return false, err
+		if msg.id == g.id {
+			return false, ErrTimeoutExceeded{Message: AllGatherTimeoutMessage}
 		}
 	default:
 		return false, actor.ErrUnexpectedMessage(ctx)
@@ -100,7 +106,6 @@ func (g *AllGather) watch(id uuid.UUID, count int, data *structpb.Struct) AllGat
 	g.watchers[id] = w
 	g.data = append(g.data, data)
 	g.numPeers = ptrs.IntPtr(count)
-	g.lastPeerJoin = time.Now().UTC()
 	if g.ready() {
 		g.push()
 	}
@@ -141,24 +146,6 @@ func (g AllGather) push() bool {
 		delete(g.watchers, id)
 	}
 	return true
-}
-
-// checkTimeout checks if the task should timeout waiting for rendezvous.
-func (g *AllGather) checkTimeout(id uuid.UUID) error {
-	if g == nil {
-		return nil
-	}
-
-	if g.id == id && time.Now().UTC().After(g.lastPeerJoin.Add(DefaultAllGatherTimeout)) {
-		return ErrTimeoutExceeded{
-			Message: "some ranks are taking a long time to connect to master" +
-				"during all gather; when running on kubernetes this may happen " +
-				"because only some of the pods have been scheduled; it is possible " +
-				"that some pods will never be scheduled without adding compute " +
-				"resources or pausing / killing other experiments in the cluster",
-		}
-	}
-	return nil
 }
 
 // Close closes rendezvous by letting still active watchers know they were terminated.

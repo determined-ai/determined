@@ -231,8 +231,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if a.allGather == nil {
 			switch msg.(type) {
 			case WatchAllGather:
-				a.allGather = NewAllGather()
-				a.allGather.PreStart(ctx)
+				a.allGather = NewAllGather(ctx)
 			case UnwatchAllGather, allGatherTimeout:
 				// Ignore without active all gather.
 				return nil

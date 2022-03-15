@@ -175,21 +175,21 @@ func TestAllocationAllGather(t *testing.T) {
 	system, _, rm, trialImpl, _, db, a, self := setup(t)
 
 	// Pre-allocated stage.
-	mockRsvn := func(cID cproto.ID, agentID string) sproto.Reservation {
-		rsrv := &mocks.Reservation{}
+	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
+		rsrv := &mocks.Resources{}
 		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
-		rsrv.On("Summary").Return(sproto.ContainerSummary{
+		rsrv.On("Summary").Return(sproto.ResourcesSummary{
 			AllocationID: a.req.AllocationID,
-			ID:           cID,
-			Agent:        agentID,
+			ResourcesID:  rID,
+			AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 		})
 		rsrv.On("Kill", mock.Anything).Return()
 		return rsrv
 	}
 
-	reservations := []sproto.Reservation{
-		mockRsvn(cproto.NewID(), "agent-1"),
-		mockRsvn(cproto.NewID(), "agent-2"),
+	resources := []sproto.Resources{
+		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
+		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
 	}
 	db.On("AddAllocation", mock.Anything).Return(nil)
 	db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
@@ -201,7 +201,7 @@ func TestAllocationAllGather(t *testing.T) {
 		Msg: sproto.ResourcesAllocated{
 			ID:           a.req.AllocationID,
 			ResourcePool: "default",
-			Reservations: reservations,
+			Resources:    resources,
 		},
 	}).Error())
 	system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()

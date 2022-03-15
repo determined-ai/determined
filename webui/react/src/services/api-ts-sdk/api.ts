@@ -908,6 +908,12 @@ export interface V1AllocationAllGatherRequest {
      */
     allocationId: string;
     /**
+     * The UUID of the participant in an all gather.
+     * @type {string}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    requestUuid?: string;
+    /**
      * The number of process to wait for.
      * @type {number}
      * @memberof V1AllocationAllGatherRequest
