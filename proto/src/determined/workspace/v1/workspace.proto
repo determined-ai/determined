@@ -8,14 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Workspace is a named collection of projects.
 message Workspace {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "id",
-        "name",
-        "archived",
-        "username"
-      ]
-    }
+    json_schema: { required: [ "id", "name", "archived", "username" ] }
   };
   // The unique id of the workspace.
   int32 id = 1;

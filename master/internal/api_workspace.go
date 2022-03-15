@@ -39,11 +39,11 @@ func (a *apiServer) GetWorkspaceProjects(
 	userFilterExpr := strings.Join(req.Users, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:       "id",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME:     "created_at",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:                "id",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME:              "created_at",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME: "last_experiment_started_at",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:              "name",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:			"description",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:                       "name",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:                "description",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -92,8 +92,8 @@ func (a *apiServer) GetWorkspaces(
 	userFilterExpr := strings.Join(req.Users, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetWorkspacesRequest_SortBy]string{
-		apiv1.GetWorkspacesRequest_SORT_BY_UNSPECIFIED:       "id",
-		apiv1.GetWorkspacesRequest_SORT_BY_NAME:              "name",
+		apiv1.GetWorkspacesRequest_SORT_BY_UNSPECIFIED: "id",
+		apiv1.GetWorkspacesRequest_SORT_BY_NAME:        "name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",

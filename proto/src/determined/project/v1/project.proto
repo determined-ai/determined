@@ -11,12 +11,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Note is a user comment connected to a project.
 message Note {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "name",
-        "contents"
-      ]
-    }
+    json_schema: { required: [ "name", "contents" ] }
   };
   // The name or title of the note.
   string name = 1;
@@ -69,12 +64,7 @@ message Project {
 // ProjectModel is a checkpoint associated with a project.
 message ProjectModel {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "name",
-        "checkpoint"
-      ]
-    }
+    json_schema: { required: [ "name", "checkpoint" ] }
   };
   // Name of the saved checkpoint.
   string name = 1;

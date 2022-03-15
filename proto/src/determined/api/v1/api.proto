@@ -1285,7 +1285,8 @@ service Determined {
     };
   }
   // Get projects associated with a workspace.
-  rpc GetWorkspaceProjects(GetWorkspaceProjectsRequest) returns (GetWorkspaceProjectsResponse) {
+  rpc GetWorkspaceProjects(GetWorkspaceProjectsRequest)
+      returns (GetWorkspaceProjectsResponse) {
     option (google.api.http) = {
       get: "/api/v1/workspaces/{id}/projects"
     };
@@ -1317,6 +1318,16 @@ service Determined {
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
     option (google.api.http) = {
       get: "/api/v1/projects/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Get experiments associated with a project.
+  rpc GetProjectExperiments(GetProjectExperimentsRequest)
+      returns (GetProjectExperimentsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{id}/experiments"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

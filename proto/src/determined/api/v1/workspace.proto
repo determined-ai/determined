@@ -6,8 +6,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
-import "determined/project/v1/model.proto";
-import "determined/workspace/v1/model.proto";
+import "determined/project/v1/project.proto";
+import "determined/workspace/v1/workspace.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested workspace.
@@ -43,10 +43,10 @@ message GetWorkspaceProjectsRequest {
   // Order projects in either ascending or descending order.
   OrderBy order_by = 2;
 
-  // Skip the number of workspaces before returning results. Negative values
-  // denote number of workspaces to skip from the end before returning results.
+  // Skip the number of projects before returning results. Negative values
+  // denote number of projects to skip from the end before returning results.
   int32 offset = 3;
-  // Limit the number of workspaces. A value of 0 denotes no limit.
+  // Limit the number of projects. A value of 0 denotes no limit.
   int32 limit = 4;
 
   // The id of the workspace.
