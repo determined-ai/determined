@@ -894,6 +894,9 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
+	searcherGroup := m.echo.Group("/searcher", authFuncs...)
+	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
+
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
