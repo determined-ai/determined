@@ -1,0 +1,22 @@
+:orphan:
+
+**Breaking Changes**
+
+Removed these endpoints from the legacy experiments API:
+
+-  /:experiment_id
+-  /:experiment_id/checkpoints
+-  /:experiment_id/config,
+-  /:experiment_id/model_def
+-  /:experiment_id/summary
+-  /:experiment_id/metrics/summary
+
+This data is available in the REST API's ``/api/v1/experiments/:experiment_id``.
+
+Removed these endpoints from the legacy trials API:
+
+-  /:trial_id/details
+-  /:trial_id/metrics
+
+This data is available in the REST API endpoints ``/api/v1/experiments/:experiment_id/trials``, and
+``/api/v1/experiments/:experiment_id/checkpoints``, and ``/api/v1/trials``

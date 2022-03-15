@@ -50,7 +50,7 @@ def test_metric_gathering() -> None:
     scheduling_unit = 100
 
     # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0]["id"])
+    full_trial_metrics = exp.trial_metrics(trials[0].trial.id)
     batches_trained = 0
     for step in full_trial_metrics["steps"]:
         metrics = step["metrics"]
@@ -65,11 +65,12 @@ def test_metric_gathering() -> None:
         batches_trained = step["total_batches"]
 
     # Check validation metrics.
-    for step in trials[0]["steps"]:
-        validation = step["validation"]
-        metrics = validation["metrics"]
-        actual = metrics["validation_metrics"]
-        batches_trained = step["total_batches"]
+    validation_workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
+    for val in validation_workloads:
+        validation = val.validation
+        assert validation
+        actual = validation.metrics
+        batches_trained = validation.totalBatches
 
         value = base_value + batches_trained
         expected = structure_to_metrics(value, validation_structure)
@@ -99,7 +100,7 @@ def test_nan_metrics() -> None:
     validation_structure["neg_inf"] = "-Infinity"
 
     # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0]["id"])
+    full_trial_metrics = exp.trial_metrics(trials[0].trial.id)
     batches_trained = 0
     for step in full_trial_metrics["steps"]:
         metrics = step["metrics"]
@@ -111,11 +112,12 @@ def test_nan_metrics() -> None:
         batches_trained = step["total_batches"]
 
     # Check validation metrics.
-    for step in trials[0]["steps"]:
-        validation = step["validation"]
-        metrics = validation["metrics"]
-        actual = metrics["validation_metrics"]
-        batches_trained = step["total_batches"]
+    validation_workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
+    for val in validation_workloads:
+        validation = val.validation
+        assert validation and validation.metrics
+        actual = validation.metrics
+        batches_trained = validation.totalBatches
         expected = structure_to_metrics(base_value, validation_structure)
         assert structure_equal(expected, actual)
 
@@ -139,7 +141,7 @@ def test_experiment_archive_unarchive() -> None:
     # Check that the experiment is initially unarchived.
     infos = json.loads(subprocess.check_output(describe_args))
     assert len(infos) == 1
-    assert not infos[0]["archived"]
+    assert not infos[0]["experiment"]["archived"]
 
     # Check that archiving a non-terminal experiment fails, then terminate it.
     with pytest.raises(subprocess.CalledProcessError):
@@ -156,14 +158,14 @@ def test_experiment_archive_unarchive() -> None:
     )
     infos = json.loads(subprocess.check_output(describe_args))
     assert len(infos) == 1
-    assert infos[0]["archived"]
+    assert infos[0]["experiment"]["archived"]
 
     subprocess.check_call(
         ["det", "-m", conf.make_master_url(), "experiment", "unarchive", str(experiment_id)]
     )
     infos = json.loads(subprocess.check_output(describe_args))
     assert len(infos) == 1
-    assert not infos[0]["archived"]
+    assert not infos[0]["experiment"]["archived"]
 
 
 @pytest.mark.e2e_cpu
@@ -203,7 +205,7 @@ def test_trial_logs() -> None:
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
     subprocess.check_call(["det", "-m", conf.make_master_url(), "trial", "logs", str(trial_id)])
     subprocess.check_call(
         ["det", "-m", conf.make_master_url(), "trial", "logs", "--head", "10", str(trial_id)],
@@ -252,9 +254,10 @@ def test_end_to_end_adaptive() -> None:
     trials = exp.experiment_trials(exp_id)
     best = None
     for trial in trials:
-        assert len(trial["steps"])
-        last_step = trial["steps"][-1]
-        accuracy = last_step["validation"]["metrics"]["validation_metrics"]["accuracy"]
+        assert len(trial.workloads or [])
+        last_validation = exp.workloads_for_mode(trial.workloads, "validation")[-1]
+        assert last_validation.validation and last_validation.validation.metrics
+        accuracy = last_validation.validation.metrics["accuracy"]
         if not best or accuracy > best:
             best = accuracy
 
@@ -278,7 +281,10 @@ def test_end_to_end_adaptive() -> None:
     assert top_2_uuids == top_k_uuids[:2]
 
     # Check that metrics are truly in sorted order.
-    metrics = [c.validation["metrics"]["validationMetrics"]["validation_loss"] for c in top_k]
+    try:
+        metrics = [c.validation["metrics"]["validationMetrics"]["validation_loss"] for c in top_k]
+    except Exception:
+        metrics = [c.validation["metrics"]["validation_loss"] for c in top_k]
 
     assert metrics == sorted(metrics)
 
@@ -323,7 +329,7 @@ def test_log_null_bytes() -> None:
 
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
-    logs = exp.trial_logs(trials[0]["id"])
+    logs = exp.trial_logs(trials[0].trial.id)
     assert len(logs) > 0
 
 

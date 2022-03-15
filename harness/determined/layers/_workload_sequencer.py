@@ -89,6 +89,7 @@ class WorkloadSequencer(workload.Source):
         self,
         core_context: _core.Context,
         env: det.EnvContext,
+        global_batch_size: int,
     ) -> None:
         self.core_context = core_context
         self.env = env
@@ -118,7 +119,7 @@ class WorkloadSequencer(workload.Source):
 
         # precalculated periods, in batches
         self.records_per_epoch = env.experiment_config.get_records_per_epoch()
-        self.global_batch_size = env.global_batch_size
+        self.global_batch_size = global_batch_size
         self.min_val_period_batches = self.as_batches(
             **env.experiment_config.get_min_validation_period()
         )
@@ -431,6 +432,7 @@ class WorkloadSequencer(workload.Source):
 def make_compatibility_workloads(
     core_context: _core.Context,
     env: det.EnvContext,
+    global_batch_size: int,
 ) -> Tuple[workload.Stream, Optional[WorkloadSequencer]]:
     """
     make_compatibility_workloads will create a stream of workloads to allow a pre-push-architecture
@@ -439,7 +441,9 @@ def make_compatibility_workloads(
     """
 
     if core_context.distributed.get_rank() == 0:
-        wlsq = WorkloadSequencer(core_context, env)  # type: Optional[WorkloadSequencer]
+        wlsq = WorkloadSequencer(
+            core_context, env, global_batch_size
+        )  # type: Optional[WorkloadSequencer]
     else:
         wlsq = None
 

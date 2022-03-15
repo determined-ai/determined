@@ -135,8 +135,6 @@
   default_as:
     http://determined.ai/schemas/expconf/v0/experiment.json
   case:
-    hyperparameters:
-      global_batch_size: 32
     searcher:
       name: single
       metric: loss
@@ -171,10 +169,7 @@
       registry_auth: null
       add_capabilities: []
       drop_capabilities: []
-    hyperparameters:
-      global_batch_size:
-        type: const
-        val: 32
+    hyperparameters: {}
     labels: []
     max_restarts: 5
     min_checkpoint_period:
@@ -225,8 +220,7 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
-    hyperparameters:
-      global_batch_size: 32
+    hyperparameters: {}
     entrypoint: model_def:MyTrial
     searcher:
       name: single

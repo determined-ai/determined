@@ -83,20 +83,6 @@ class TrialContext(metaclass=abc.ABCMeta):
         """
         return int(self.env.det_experiment_id)
 
-    def get_global_batch_size(self) -> int:
-        """
-        Return the global batch size.
-        """
-        return self.env.global_batch_size
-
-    def get_per_slot_batch_size(self) -> int:
-        """
-        Return the per-slot batch size. When a model is trained with a single GPU, this is equal to
-        the global batch size. When multi-GPU training is used, this is equal to the global batch
-        size divided by the number of GPUs used to train the model.
-        """
-        return self.env.per_slot_batch_size
-
     def get_trial_id(self) -> int:
         """
         Return the trial ID of the current trial.

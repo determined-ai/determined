@@ -5,17 +5,22 @@ from determined import _core, _data_layer
 
 
 class DataLayerContext:
-    def __init__(self, env: det.EnvContext, distributed_context: _core.DistributedContext) -> None:
+    def __init__(
+        self,
+        env: det.EnvContext,
+        distributed_context: _core.DistributedContext,
+        per_slot_batch_size: int,
+    ) -> None:
         self._training_cacheable = _data_layer._CacheableDecorator(
             env=env,
             training=True,
-            per_slot_batch_size=env.per_slot_batch_size,
+            per_slot_batch_size=per_slot_batch_size,
             distributed_context=distributed_context,
         )
         self._validation_cacheable = _data_layer._CacheableDecorator(
             env=env,
             training=False,
-            per_slot_batch_size=env.per_slot_batch_size,
+            per_slot_batch_size=per_slot_batch_size,
             distributed_context=distributed_context,
         )
 

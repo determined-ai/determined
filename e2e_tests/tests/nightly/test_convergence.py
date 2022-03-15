@@ -12,7 +12,7 @@ def test_mnist_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["accuracy"]
@@ -38,7 +38,7 @@ def test_fashion_mnist_tf_keras() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["val_accuracy"]
@@ -63,7 +63,7 @@ def test_imagenet_pytorch() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_loss = [
         step["validation"]["metrics"]["validation_metrics"]["val_loss"]
@@ -88,7 +88,7 @@ def test_cifar10_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["validation_accuracy"]
@@ -114,7 +114,7 @@ def test_fasterrcnn_coco_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_iou = [
         step["validation"]["metrics"]["validation_metrics"]["val_avg_iou"]
@@ -139,7 +139,7 @@ def test_mnist_estimator_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["accuracy"]
@@ -164,7 +164,7 @@ def test_mnist_tf_layers_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_errors = [
         step["validation"]["metrics"]["validation_metrics"]["error"]
@@ -189,7 +189,7 @@ def test_cifar10_tf_keras_accuracy() -> None:
         config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 6000
     )
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["val_categorical_accuracy"]
@@ -215,7 +215,7 @@ def test_iris_tf_keras_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["val_categorical_accuracy"]
@@ -241,7 +241,7 @@ def test_unets_tf_keras_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["val_accuracy"]
@@ -266,7 +266,7 @@ def test_gbt_titanic_estimator_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["accuracy"]
@@ -291,7 +291,7 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["accuracy"]
@@ -316,7 +316,7 @@ def test_data_layer_mnist_tf_keras_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["val_sparse_categorical_accuracy"]
@@ -345,7 +345,7 @@ def test_cifar10_byol_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
+    trial_metrics = exp.trial_metrics(trials[0].trial.id)
 
     validation_accuracies = [
         step["validation"]["metrics"]["validation_metrics"]["test_accuracy"]

@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 import re
@@ -6,14 +5,14 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
-import dateutil.parser
 import pytest
-import requests
 
 from determined.common import api, yaml
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
+from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.experimental import session
 from tests import config as conf
 from tests.cluster import utils as cluster_utils
 
@@ -88,36 +87,14 @@ def activate_experiment(experiment_id: int) -> None:
     subprocess.check_call(command)
 
 
-def change_experiment_state(experiment_id: int, new_state: str) -> None:
-    # TODO(DET-5678): refactor tests to not use cli singleton auth.
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.patch(
-        conf.make_master_url(),
-        "experiments/{}".format(experiment_id),
-        headers={"Content-Type": "application/merge-patch+json"},
-        json={"state": new_state},
-    )
-    assert r.status_code == requests.codes.no_content, r.text
-
-
 def cancel_experiment(experiment_id: int) -> None:
-    change_experiment_state(experiment_id, "STOPPING_CANCELED")
-    # We may never observe the STOPPING_CANCELED state.
-    wait_for_experiment_state(experiment_id, "CANCELED")
-
-
-def cancel_experiment_v1(experiment_id: int) -> None:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.post(conf.make_master_url(), "/api/v1/experiments/{}/cancel".format(experiment_id))
-    r.raise_for_status()
-    wait_for_experiment_state(experiment_id, "CANCELED")
+    bindings.post_CancelExperiment(test_session(), id=experiment_id)
+    wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_CANCELED)
 
 
 def wait_for_experiment_state(
     experiment_id: int,
-    target_state: str,
+    target_state: determinedexperimentv1State,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     log_every: int = 60,
 ) -> None:
@@ -134,6 +111,13 @@ def wait_for_experiment_state(
             )
             time.sleep(1)
             continue
+        except api.errors.NotFoundException:
+            logging.warning(
+                "Experiment not yet available to check state: "
+                "experiment {}".format(experiment_id)
+            )
+            time.sleep(0.25)
+            continue
 
         if state == target_state:
             return
@@ -143,24 +127,25 @@ def wait_for_experiment_state(
                 report_failed_experiment(experiment_id)
 
             pytest.fail(
-                f"Experiment {experiment_id} terminated in {state} state, expected {target_state}"
+                f"Experiment {experiment_id} terminated in {state.value} state, "
+                f"expected {target_state.value}"
             )
 
         if seconds_waited > 0 and seconds_waited % log_every == 0:
             print(
                 f"Waited {seconds_waited} seconds for experiment {experiment_id} "
-                f"(currently {state}) to reach {target_state}"
+                f"(currently {state.value}) to reach {target_state.value}"
             )
 
         time.sleep(1)
 
     else:
-        if target_state == "COMPLETED":
+        if target_state == determinedexperimentv1State.STATE_COMPLETED:
             cancel_experiment(experiment_id)
         report_failed_experiment(experiment_id)
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
-                target_state, max_wait_secs
+                target_state.value, max_wait_secs
             )
         )
 
@@ -197,7 +182,7 @@ def wait_for_experiment_workload_progress(
         trials = experiment_trials(experiment_id)
         if len(trials) > 0:
             only_trial = trials[0]
-            if len(only_trial["steps"]) > 1:
+            if len(only_trial.workloads or []) > 1:
                 return
         time.sleep(1)
 
@@ -214,75 +199,71 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     if not any(trials):
         return False
 
-    return any(any(s["state"] == "COMPLETED" for s in t["steps"]) for t in trials)
+    for t in trials:
+        for s in t.workloads or []:
+            if (
+                s.training is not None
+                and s.training.state == determinedexperimentv1State.STATE_COMPLETED
+            ) or (
+                s.validation is not None
+                and s.validation.state == determinedexperimentv1State.STATE_COMPLETED
+            ):
+                return True
+    return False
 
 
-def experiment_json(experiment_id: int) -> Dict[str, Any]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "experiments/{}".format(experiment_id))
-    assert r.status_code == requests.codes.ok, r.text
-    json = r.json()  # type: Dict[str, Any]
-    return json
+def test_session() -> session.Session:
+    murl = conf.make_master_url()
+    certs.cli_cert = certs.default_load(murl)
+    authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
+    return session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
 
 
-def experiment_state(experiment_id: int) -> str:
-    state = experiment_json(experiment_id)["state"]  # type: str
-    return state
+def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
+    r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
+    return r.config
 
 
-def experiment_trials(experiment_id: int) -> List[Dict[str, Any]]:
-    trials = experiment_json(experiment_id)["trials"]  # type: List[Dict[str, Any]]
+def experiment_state(experiment_id: int) -> determinedexperimentv1State:
+    r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
+    return r.experiment.state
+
+
+def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
+    r1 = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
+    src_trials = r1.trials or []
+    trials = []
+    for trial in src_trials:
+        r2 = bindings.get_GetTrial(test_session(), trialId=trial.id)
+        trials.append(r2)  # includes trial and workload
     return trials
-
-
-def num_experiments() -> int:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "experiments")
-    assert r.status_code == requests.codes.ok, r.text
-    return len(r.json())
 
 
 def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
     cancel_experiment(experiment_id)
 
-    trials = experiment_trials(experiment_id)
-    if should_have_trial or len(trials) > 0:
+    if should_have_trial:
+        trials = experiment_trials(experiment_id)
         assert len(trials) == 1, len(trials)
 
-        trial = trials[0]
-        assert trial["state"] == "CANCELED", trial["state"]
+        trial = trials[0].trial
+        assert trial.state == determinedexperimentv1State.STATE_CANCELED
 
 
-def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> None:
-    cancel_experiment_v1(experiment_id)
-
-    trials = experiment_trials(experiment_id)
-    if should_have_trial or len(trials) > 0:
-        assert len(trials) == 1, len(trials)
-
-        trial = trials[0]
-        assert trial["state"] == "CANCELED", trial["state"]
-
-
-def is_terminal_state(state: str) -> bool:
-    return state in ("CANCELED", "COMPLETED", "ERROR")
+def is_terminal_state(state: determinedexperimentv1State) -> bool:
+    return state in (
+        determinedexperimentv1State.STATE_CANCELED,
+        determinedexperimentv1State.STATE_COMPLETED,
+        determinedexperimentv1State.STATE_ERROR,
+    )
 
 
 def trial_metrics(trial_id: int) -> Dict[str, Any]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
-    assert r.status_code == requests.codes.ok, r.text
     json = r.json()  # type: Dict[str, Any]
     return json
-
-
-def get_flat_metrics(trial_id: int, metric: str) -> List:
-    full_trial_metrics = trial_metrics(trial_id)
-    metrics = [m for step in full_trial_metrics["steps"] for m in step["metrics"]["batch_metrics"]]
-    return [v[metric] for v in metrics]
 
 
 def num_trials(experiment_id: int) -> int:
@@ -290,21 +271,40 @@ def num_trials(experiment_id: int) -> int:
 
 
 def num_active_trials(experiment_id: int) -> int:
-    return sum(1 if t["state"] == "ACTIVE" else 0 for t in experiment_trials(experiment_id))
+    return sum(
+        1 if t.trial.state == determinedexperimentv1State.STATE_ACTIVE else 0
+        for t in experiment_trials(experiment_id)
+    )
 
 
 def num_completed_trials(experiment_id: int) -> int:
-    return sum(1 if t["state"] == "COMPLETED" else 0 for t in experiment_trials(experiment_id))
+    return sum(
+        1 if t.trial.state == determinedexperimentv1State.STATE_COMPLETED else 0
+        for t in experiment_trials(experiment_id)
+    )
 
 
 def num_error_trials(experiment_id: int) -> int:
-    return sum(1 if t["state"] == "ERROR" else 0 for t in experiment_trials(experiment_id))
+    return sum(
+        1 if t.trial.state == determinedexperimentv1State.STATE_ERROR else 0
+        for t in experiment_trials(experiment_id)
+    )
 
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
+
+
+def workloads_for_mode(
+    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]], mode: str
+) -> Sequence[bindings.GetTrialResponseWorkloadContainer]:
+    if workloads is None:
+        return []
+    if mode not in ["training", "validation", "checkpoint"]:
+        raise Exception("Mode must be one of (training, validation, checkpoint)")
+    return list(filter(lambda w: w.__getattribute__(mode) is not None, workloads) or [])
 
 
 def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> bool:
@@ -342,8 +342,8 @@ def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> N
     full_trial_metrics1 = trial_metrics(A)
     full_trial_metrics2 = trial_metrics(B)
 
-    assert len(full_trial_metrics1["steps"]) == len(full_trial_metrics2["steps"])
-    for step1, step2 in zip(full_trial_metrics1["steps"], full_trial_metrics2["steps"]):
+    assert len(full_trial_metrics1["workloads"]) == len(full_trial_metrics2["workloads"])
+    for step1, step2 in zip(full_trial_metrics1["workloads"], full_trial_metrics2["workloads"]):
         metric1 = step1["metrics"]["batch_metrics"]
         metric2 = step2["metrics"]["batch_metrics"]
         for batch1, batch2 in zip(metric1, metric2):
@@ -364,27 +364,43 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     trials = experiment_trials(exp_id)
 
     assert len(trials) > 0
-    steps = trials[0]["steps"]
+    workloads = trials[0].workloads
 
-    assert len(steps) > 0
-    zeroth_step = steps[0]
+    assert len(workloads or []) > 0
+    zeroth_step = workloads_for_mode(workloads, "validation")[0]
 
-    assert zeroth_step["validation"] is not None
-    assert zeroth_step["validation"]["total_batches"] == 0
-    assert zeroth_step["validation"]["state"] == "COMPLETED"
+    assert zeroth_step.validation
+    assert zeroth_step.validation.totalBatches == 0
+    assert zeroth_step.validation.state == determinedexperimentv1State.STATE_COMPLETED
+
+
+def last_workload_matches_last_checkpoint(
+    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+) -> None:
+    assert (workloads is not None) and len(workloads) > 0
+
+    checkpoint_workloads = workloads_for_mode(workloads, "checkpoint")
+    assert len(checkpoint_workloads) > 0
+    last_checkpoint = checkpoint_workloads[-1]
+    assert last_checkpoint.checkpoint
+    assert last_checkpoint.checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
+
+    last_workload = workloads[-1]
+    if last_workload.training or last_workload.validation:
+        last_workload_detail = last_workload.training or last_workload.validation
+        assert last_workload_detail
+        assert last_workload_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
+        assert last_workload_detail.state == determinedexperimentv1State.STATE_COMPLETED
+    elif last_workload.checkpoint:
+        last_checkpoint_detail = last_workload.checkpoint
+        assert last_checkpoint_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
+        assert last_checkpoint_detail.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
 
 
 def assert_performed_final_checkpoint(exp_id: int) -> None:
     trials = experiment_trials(exp_id)
-
     assert len(trials) > 0
-    steps = trials[0]["steps"]
-
-    assert len(steps) > 0
-    last_step = steps[-1]
-
-    assert last_step["checkpoint"] is not None
-    assert last_step["checkpoint"]["state"] == "COMPLETED"
+    last_workload_matches_last_checkpoint(trials[0].workloads)
 
 
 def run_describe_cli_tests(experiment_id: int) -> None:
@@ -462,15 +478,25 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t["state"] == "ACTIVE")
-    paused = sum(1 for t in trials if t["state"] == "PAUSED")
-    stopping_completed = sum(1 for t in trials if t["state"] == "STOPPING_COMPLETED")
-    stopping_canceled = sum(1 for t in trials if t["state"] == "STOPPING_CANCELED")
-    stopping_error = sum(1 for t in trials if t["state"] == "STOPPING_ERROR")
-    completed = sum(1 for t in trials if t["state"] == "COMPLETED")
-    canceled = sum(1 for t in trials if t["state"] == "CANCELED")
-    errored = sum(1 for t in trials if t["state"] == "ERROR")
-    stopping_killed = sum(1 for t in trials if t["state"] == "STOPPING_KILLED")
+    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ACTIVE)
+    paused = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_PAUSED)
+    stopping_completed = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_COMPLETED
+    )
+    stopping_canceled = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_CANCELED
+    )
+    stopping_error = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_ERROR
+    )
+    completed = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_COMPLETED
+    )
+    canceled = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_CANCELED)
+    errored = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ERROR)
+    stopping_killed = sum(
+        1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_KILLED
+    )
 
     print(
         f"Experiment {experiment_id}: {len(trials)} trials, {completed} completed, "
@@ -481,7 +507,7 @@ def report_failed_experiment(experiment_id: int) -> None:
     )
 
     for trial in trials:
-        print_trial_logs(trial["id"])
+        print_trial_logs(trial.trial.id)
 
 
 def report_failed_trial(trial_id: int, state: str) -> None:
@@ -504,7 +530,11 @@ def run_basic_test(
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
-    wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
+    wait_for_experiment_state(
+        experiment_id,
+        determinedexperimentv1State.STATE_COMPLETED,
+        max_wait_secs=max_wait_secs,
+    )
     assert num_active_trials(experiment_id) == 0
 
     verify_completed_experiment_metadata(experiment_id, expected_trials)
@@ -525,36 +555,38 @@ def verify_completed_experiment_metadata(
     trials = experiment_trials(experiment_id)
     assert len(trials) > 0
 
-    for trial in trials:
-        if trial["state"] != "COMPLETED":
-            report_failed_trial(trial["id"], trial["state"])
-            pytest.fail(f"Trial {trial['id']} was not COMPLETED but {trial['state']}")
+    for t in trials:
+        trial = t.trial
+        if trial.state != determinedexperimentv1State.STATE_COMPLETED:
+            report_failed_trial(trial.id, trial.state.value)
+            pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
 
-        if len(trial["steps"]) == 0:
-            print_trial_logs(trial["id"])
+        if len(t.workloads or []) == 0:
+            print_trial_logs(trial.id)
             raise AssertionError(
-                f"trial {trial['id']} is in {trial['state']} state but has 0 steps"
+                f"trial {trial.id} is in {trial.state.value} state but has 0 steps/workloads"
             )
 
         # Check that batches appear in increasing order.
-        batch_ids = [s["total_batches"] for s in trial["steps"]]
+        batch_ids = []
+        for s in t.workloads or []:
+            if s.training:
+                batch_ids.append(s.training.totalBatches)
+                assert s.training.state == determinedexperimentv1State.STATE_COMPLETED
+            if s.validation:
+                batch_ids.append(s.validation.totalBatches)
+                assert s.validation.state == determinedexperimentv1State.STATE_COMPLETED
+            if s.checkpoint:
+                batch_ids.append(s.checkpoint.totalBatches)
+                assert s.checkpoint.state in {
+                    bindings.determinedcheckpointv1State.STATE_COMPLETED,
+                    bindings.determinedcheckpointv1State.STATE_DELETED,
+                }
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
-        for step in trial["steps"]:
-            assert step["state"] == "COMPLETED"
-
-            if step["validation"]:
-                validation = step["validation"]
-                assert validation["state"] == "COMPLETED"
-
-            if step["checkpoint"]:
-                checkpoint = step["checkpoint"]
-                assert checkpoint["state"] in {"COMPLETED", "DELETED"}
-
-    # The last step of every trial should have a checkpoint.
-    for trial in trials:
-        last_step = trial["steps"][-1]
-        assert last_step["checkpoint"]
+    # The last step of every trial should be the same batch number as the last checkpoint.
+    for t in trials:
+        last_workload_matches_last_checkpoint(t.workloads or [])
 
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might
@@ -577,7 +609,7 @@ def verify_completed_experiment_metadata(
 def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[str] = None) -> int:
     experiment_id = create_experiment(config_file, model_def_file)
 
-    wait_for_experiment_state(experiment_id, "ERROR")
+    wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_ERROR)
 
     # The searcher is configured with a `max_trials` of 8. Since the
     # first step of each trial results in an error, there should be no
@@ -595,71 +627,15 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
     # For each failed trial, check for the expected error in the logs.
     trials = experiment_trials(experiment_id)
     for t in trials:
-        if t["state"] != "ERROR":
+        trial = t.trial
+        if trial.state != determinedexperimentv1State.STATE_ERROR:
             continue
 
-        trial_id = t["id"]
-        logs = trial_logs(trial_id)
+        logs = trial_logs(trial.id)
         if error_str is not None:
             assert any(error_str in line for line in logs)
 
     return experiment_id
-
-
-def get_validation_metric_from_last_step(
-    experiment_id: int, trial_id: int, validation_metric_name: str
-) -> float:
-    trial = experiment_trials(experiment_id)[trial_id]
-    last_validation = trial["steps"][len(trial["steps"]) - 1]["validation"]
-    return last_validation["metrics"]["validation_metrics"][validation_metric_name]  # type: ignore
-
-
-class ExperimentDurations:
-    def __init__(
-        self,
-        experiment_duration: datetime.timedelta,
-        training_duration: datetime.timedelta,
-        validation_duration: datetime.timedelta,
-        checkpoint_duration: datetime.timedelta,
-    ):
-        self.experiment_duration = experiment_duration
-        self.training_duration = training_duration
-        self.validation_duration = validation_duration
-        self.checkpoint_duration = checkpoint_duration
-
-    def __str__(self) -> str:
-        duration_strs = []
-        duration_strs.append(f"experiment duration: {self.experiment_duration}")
-        duration_strs.append(f"training duration: {self.training_duration}")
-        duration_strs.append(f"validation duration: {self.validation_duration}")
-        duration_strs.append(f"checkpoint duration: {self.checkpoint_duration}")
-        return "\n".join(duration_strs)
-
-
-def get_experiment_durations(experiment_id: int, trial_idx: int) -> ExperimentDurations:
-    experiment_metadata = experiment_json(experiment_id)
-    end_time = dateutil.parser.parse(experiment_metadata["end_time"])
-    start_time = dateutil.parser.parse(experiment_metadata["start_time"])
-    experiment_duration = end_time - start_time
-
-    training_duration = datetime.timedelta(seconds=0)
-    validation_duration = datetime.timedelta(seconds=0)
-    checkpoint_duration = datetime.timedelta(seconds=0)
-    for step in experiment_metadata["trials"][trial_idx]["steps"]:
-        end_time = dateutil.parser.parse(step["end_time"])
-        start_time = dateutil.parser.parse(step["start_time"])
-        training_duration += end_time - start_time
-        if "validation" in step and step["validation"]:
-            end_time = dateutil.parser.parse(step["validation"]["end_time"])
-            start_time = dateutil.parser.parse(step["validation"]["start_time"])
-            validation_duration += end_time - start_time
-        if "checkpoint" in step and step["checkpoint"]:
-            end_time = dateutil.parser.parse(step["checkpoint"]["end_time"])
-            start_time = dateutil.parser.parse(step["checkpoint"]["start_time"])
-            checkpoint_duration += end_time - start_time
-    return ExperimentDurations(
-        experiment_duration, training_duration, validation_duration, checkpoint_duration
-    )
 
 
 def run_basic_test_with_temp_config(

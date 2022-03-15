@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	pref "google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/pkg/errors"
 
@@ -127,6 +128,15 @@ func (a *apiServer) sort(
 						return t1.Nanos < t2.Nanos
 					}
 					return t1.Seconds < t2.Seconds
+				case *wrapperspb.DoubleValue:
+					t2 := v2.(*wrapperspb.DoubleValue)
+					switch {
+					case t1 != nil && t2 != nil:
+						return t1.Value < t2.Value
+					case t1 == nil && t2 != nil:
+						return true
+					}
+					return false
 				default:
 					panic(fmt.Sprintf("incomparable message type: %T", t1))
 				}

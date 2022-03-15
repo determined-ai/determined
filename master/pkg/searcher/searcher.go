@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/determined-ai/determined/master/internal/api"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -93,7 +91,9 @@ func (s *Searcher) TrialExitedEarly(
 	requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	if s.Exits[requestID] {
-		return nil, api.AsValidationError("trial %d reported an exit twice", requestID)
+		// If a trial reports an early exit twice, just ignore it (it can be convenient for each
+		// rank to be allowed to report it without synchronization).
+		return nil, nil
 	}
 
 	switch exitedReason {

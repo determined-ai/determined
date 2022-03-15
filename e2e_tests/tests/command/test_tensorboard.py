@@ -140,7 +140,7 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
             str(multi_trial_config), conf.fixtures_path("no_op"), 3
         )
 
-        trial_ids = [str(t["id"]) for t in exp.experiment_trials(multi_trial_exp_id)]
+        trial_ids = [str(t.trial.id) for t in exp.experiment_trials(multi_trial_exp_id)]
 
     command = [
         "tensorboard",

@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 import tensorflow as tf
 
 import determined as det
-from determined import _core, _data_layer, errors, keras
+from determined import _data_layer, errors, keras, util
 from determined.common import check
 from determined.horovod import hvd
 
@@ -36,8 +36,16 @@ class TFKerasTrialContext(det.TrialContext):
 
         self.dataset_initialized = False
 
+        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
+            self.get_hparams(),
+            self.env.experiment_config.slots_per_trial(),
+            "TFKerasTrial",
+        )
+
         self.experimental = TFKerasExperimentalContext(
-            env=self.env, distributed_context=self.distributed
+            self.env,
+            self.distributed,
+            self._per_slot_batch_size,
         )
 
         # The following three attributes are initialized during the lifetime of a
@@ -66,6 +74,20 @@ class TFKerasTrialContext(det.TrialContext):
         self._fit_max_queue_size = 10
         self._fit_shuffle = True
         self._fit_validation_steps = None
+
+    def get_global_batch_size(self) -> int:
+        """
+        Return the global batch size.
+        """
+        return self._global_batch_size
+
+    def get_per_slot_batch_size(self) -> int:
+        """
+        Return the per-slot batch size. When a model is trained with a single GPU, this is equal to
+        the global batch size. When multi-GPU training is used, this is equal to the global batch
+        size divided by the number of GPUs used to train the model.
+        """
+        return self._per_slot_batch_size
 
     def configure_fit(
         self,
@@ -152,7 +174,7 @@ class TFKerasTrialContext(det.TrialContext):
 
                 validation_data = keras._adapt_data_from_data_loader(
                     input_data=fit_generator_args.arguments["validation_data"],
-                    batch_size=self.env.per_slot_batch_size,
+                    batch_size=self._per_slot_batch_size,
                 )
 
                 self.train_config = TFKerasTrainConfig(
@@ -214,7 +236,7 @@ class TFKerasTrialContext(det.TrialContext):
                     x=fit_args.arguments["x"],
                     y=fit_args.arguments["y"],
                     sample_weight=fit_args.arguments["sample_weight"],
-                    batch_size=self.env.per_slot_batch_size,
+                    batch_size=self._per_slot_batch_size,
                 )
 
                 if fit_args.arguments["validation_data"] is None:
@@ -224,7 +246,7 @@ class TFKerasTrialContext(det.TrialContext):
 
                 validation_data = keras._adapt_data_from_data_loader(
                     input_data=fit_args.arguments["validation_data"],
-                    batch_size=self.env.per_slot_batch_size,
+                    batch_size=self._per_slot_batch_size,
                 )
 
                 self.train_config = TFKerasTrainConfig(
@@ -413,9 +435,8 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     Context class that contains experimental runtime information and features
     for any Determined workflow that uses the ``tf.keras`` API.
 
-    ``TFKerasExperimentalContext`` extends ``EstimatorTrialContext`` under
+    ``TFKerasExperimentalContext`` extends ``TFKerasTrialContext`` under
     the ``context.experimental`` namespace.
     """
 
-    def __init__(self, env: det.EnvContext, distributed_context: _core.DistributedContext) -> None:
-        super().__init__(env=env, distributed_context=distributed_context)
+    pass
