@@ -183,9 +183,9 @@ class Determined:
            an integer-type model ID.
         """
         warnings.warn(
-            "Determined.get_model_by_id() has been deprecated and will be removed",
-            "in a future version.\n",
-            "Please call Determined.get_model() with either a string-type name or",
+            "Determined.get_model_by_id() has been deprecated and will be removed"
+            "in a future version.\n"
+            "Please call Determined.get_model() with either a string-type name or"
             "an integer-type model ID.",
             FutureWarning,
         )
