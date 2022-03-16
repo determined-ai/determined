@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -450,9 +451,9 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 		AllocationID:  p.req.AllocationID,
 		ResourcesID:   sproto.ResourcesID(p.container.id),
 		ResourcesType: sproto.ResourcesTypeK8sPod,
-		AgentDevices: map[string][]device.Device{
+		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
-			p.podsActor.Address().Local(): nil,
+			aproto.ID(p.podsActor.Address().Local()): nil,
 		},
 
 		ContainerID: &p.container.id,

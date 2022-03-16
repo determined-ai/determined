@@ -460,7 +460,8 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 		ResourcesID:   sproto.ResourcesID(c.container.id),
 		ResourcesType: sproto.ResourcesTypeDockerContainer,
 		AllocationID:  c.req.AllocationID,
-		AgentDevices:  map[string][]device.Device{c.agent.Handler.Address().Local(): c.devices},
+		AgentDevices: map[aproto.ID][]device.Device{
+			aproto.ID(c.agent.Handler.Address().Local()): c.devices},
 
 		ContainerID: &c.container.id,
 	}

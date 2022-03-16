@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 
 	"github.com/stretchr/testify/mock"
@@ -63,7 +64,7 @@ func TestAllocation(t *testing.T) {
 				rsrv.On("Summary").Return(sproto.ResourcesSummary{
 					AllocationID: a.req.AllocationID,
 					ResourcesID:  rID,
-					AgentDevices: map[string][]device.Device{agentID: nil},
+					AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 				})
 				rsrv.On("Kill", mock.Anything).Return()
 				return rsrv

@@ -6,6 +6,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -148,10 +149,10 @@ const (
 // allocation is granted, but for k8s it is granted before being scheduled so it isn't really much
 // and `agent_devices` are missing for k8s.
 type ResourcesSummary struct {
-	ResourcesID   ResourcesID                `json:"resources_id"`
-	ResourcesType ResourcesType              `json:"resources_type"`
-	AllocationID  model.AllocationID         `json:"allocation_id"`
-	AgentDevices  map[string][]device.Device `json:"agent_devices"`
+	ResourcesID   ResourcesID                   `json:"resources_id"`
+	ResourcesType ResourcesType                 `json:"resources_type"`
+	AllocationID  model.AllocationID            `json:"allocation_id"`
+	AgentDevices  map[aproto.ID][]device.Device `json:"agent_devices"`
 
 	// Available if the RM can give information on the container level.
 	ContainerID *cproto.ID `json:"container_id"`
