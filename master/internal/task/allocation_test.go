@@ -110,7 +110,7 @@ func TestAllocation(t *testing.T) {
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
 				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
-				require.False(t, outOfRange,
+				require.Falsef(t, outOfRange,
 					"Expected start time of open allocation should be in between %q and %q but it is = %q instead",
 					beforePulling.String(), afterPulling.String(), a.model.StartTime.String())
 

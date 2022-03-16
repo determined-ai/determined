@@ -103,9 +103,9 @@ func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 	}
 
 	_, err := db.sql.Exec(`
-	UPDATE allocations
-	SET start_time = $2, end_time = $3 
-	WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
+UPDATE allocations
+SET start_time = $2, end_time = $3 
+WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
 
 	return err
 }
@@ -198,7 +198,7 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 func (db *PgDB) UpdateAllocationStartTime(a model.Allocation) error {
 	_, err := db.sql.Exec(`
 		UPDATE allocations
-		SET state=$2
+		SET start_time=$2
 		WHERE allocation_id=$1
 	`, a.AllocationID, a.StartTime)
 	return err
@@ -216,10 +216,10 @@ func (db *PgDB) CloseOpenAllocations() error {
 	}
 
 	if _, err := db.sql.Exec(`
-UPDATE allocations
-SET end_time = greatest(cluster_heartbeat, start_time)
-FROM cluster_id
-WHERE end_time IS NULL`); err != nil {
+	UPDATE allocations
+	SET end_time = greatest(cluster_heartbeat, start_time)
+	FROM cluster_id
+	WHERE end_time IS NULL`); err != nil {
 		return errors.Wrap(err, "closing old allocations")
 	}
 	return nil
