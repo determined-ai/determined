@@ -45,6 +45,7 @@ See :ref:`use-trained-models` for more ideas on what to do next.
 
 import functools
 import pathlib
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from determined.common.experimental.checkpoint import Checkpoint
@@ -209,17 +210,18 @@ def create_model(
 
 
 @_require_singleton
-def get_model(name: str) -> Model:
+def get_model(identifier: Union[str, int]) -> Model:
     """
     Get the :class:`~determined.experimental.client.Model` from the model registry
-    with the provided name. If no model with that name is found in the registry,
-    an exception is raised.
+    with the provided identifier, which is either a string-type name or an
+    integer-type model ID.
+    If no model with that name is found in the registry, an exception is raised.
 
     Arguments:
-        name (str): The unique name of the model.
+        identifier (string, int): The unique name or ID of the model.
     """
     assert _determined is not None
-    return _determined.get_model(name)
+    return _determined.get_model(identifier)
 
 
 @_require_singleton
@@ -231,9 +233,22 @@ def get_model_by_id(model_id: int) -> Model:
 
     Arguments:
         model_id (int): The unique id of the model.
+
+    .. warning::
+       client.get_model_by_id() has been deprecated and will be removed
+       in a future version.
+       Please call client.get_model() with either a string-type name or
+       an integer-type model ID.
     """
+    warnings.warn(
+        "client.get_model_by_id() has been deprecated and will be removed",
+        "in a future version.\n",
+        "Please call client.get_model() with either a string-type name or",
+        "an integer-type model ID.",
+        FutureWarning,
+    )
     assert _determined is not None
-    return _determined.get_model_by_id(model_id)
+    return _determined.get_model(model_id)
 
 
 @_require_singleton
