@@ -36,7 +36,7 @@ func TestProtoGetTrial(t *testing.T) {
 		a := &model.Allocation{
 			AllocationID: model.NewAllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
 			TaskID:       tr.TaskID,
-			StartTime:    ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond)),
+			StartTime:    ptrs.TimePtr(startTime.Add(time.Duration(i) * time.Second)),
 			EndTime:      ptrs.TimePtr(startTime.Add(time.Duration(i+1) * time.Second)),
 		}
 		err = db.AddAllocation(a)

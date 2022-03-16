@@ -99,20 +99,14 @@ VALUES (:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_t
 // CompleteAllocation persists the end of an allocation lifetime.
 func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 	if a.StartTime == nil {
-		if _, err := db.sql.Exec(`
-		UPDATE allocations
-		SET start_time = $2
-		WHERE allocation_id = $1`, a.AllocationID, a.EndTime); err != nil {
-			return errors.Wrap(err,
-				"setting start time to cluster heartbeat when it's assigned to zero value")
-		}
+		a.StartTime = a.EndTime
 	}
 
-	err := db.namedExecOne(`
-UPDATE allocations
-SET end_time = :end_time
-WHERE allocation_id = :allocation_id
-`, a)
+	_, err := db.sql.Exec(`
+	UPDATE allocations
+	SET start_time = $2, end_time = $3 
+	WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
+
 	return err
 }
 
