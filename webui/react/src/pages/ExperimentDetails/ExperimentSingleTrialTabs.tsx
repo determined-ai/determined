@@ -1,11 +1,8 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import LoadingWrapper from 'components/LoadingWrapper';
 import NotesCard from 'components/NotesCard';
-import SkeletonSection, { ContentType } from 'components/Skeleton/SkeletonSection';
-import SkeletonTable from 'components/Skeleton/SkeletonTable';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -63,11 +60,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const basePath = paths.experimentDetails(experiment.id);
-
-  const loadingState = useMemo(() => ({
-    isEmpty: wontHaveTrials,
-    isLoading: !trialDetails,
-  }), [ trialDetails, wontHaveTrials ]);
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
@@ -178,39 +170,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       onViewLogs={handleViewLogs}>
       <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
-          <LoadingWrapper
-            skeleton={(
-              <>
-                <SkeletonSection contentType={ContentType.Chart} filters={2} size="large" title />
-                <SkeletonTable filters={2} title />
-              </>
-            )}
-            state={loadingState}>
-            <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
-          </LoadingWrapper>
+          <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">
-          <LoadingWrapper
-            skeleton={(
-              <SkeletonTable
-                columns={([
-                  { flexGrow: 0.25 },
-                  { flexGrow: 0.5 },
-                  { flexGrow: 1.5 },
-                  { flexGrow: 1 },
-                  { flexGrow: 0.5 },
-                  { flexGrow: 1 },
-                  { flexGrow: 0.5 },
-                  { flexGrow: 0.25 },
-                ])}
-              />
-            )}
-            state={loadingState}>
-            <TrialDetailsHyperparameters
-              experiment={experiment}
-              trial={trialDetails as TrialDetails}
-            />
-          </LoadingWrapper>
+          <TrialDetailsHyperparameters
+            experiment={experiment}
+            trial={trialDetails as TrialDetails}
+          />
         </TabPane>
         <TabPane key="configuration" tab="Configuration">
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
@@ -225,27 +191,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           />
         </TabPane>
         <TabPane key="profiler" tab="Profiler">
-          <LoadingWrapper
-            skeleton={(
-              <>
-                <SkeletonSection contentType={ContentType.Chart} title />
-                <SkeletonSection contentType={ContentType.Chart} title />
-                <SkeletonSection contentType={ContentType.Chart} title />
-              </>
-            )}
-            state={loadingState}>
-            <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
-          </LoadingWrapper>
+          <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
         <TabPane key="logs" tab="Logs">
-          <LoadingWrapper
-            maxHeight
-            skeleton={(
-              <SkeletonSection contentType={ContentType.Logs} filters={2} size="max" title />
-            )}
-            state={loadingState}>
-            <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
-          </LoadingWrapper>
+          <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
       </Tabs>
     </TrialLogPreview>
