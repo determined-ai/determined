@@ -293,7 +293,6 @@ func containerEnvVars(cont cproto.Container) []string {
 		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
 	}
 	return []string{
-		fmt.Sprintf("DET_RESOURCES_ID=%s", cont.ID),
 		fmt.Sprintf("DET_CONTAINER_ID=%s", cont.ID),
 		fmt.Sprintf("DET_SLOT_IDS=[%s]", strings.Join(slotIds, ",")),
 	}

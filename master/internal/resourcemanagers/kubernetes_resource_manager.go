@@ -465,6 +465,7 @@ func (p k8sPodResources) Start(
 	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) {
 	spec.ContainerID = string(p.container.id)
+	spec.ResourcesID = string(p.container.id)
 	spec.AllocationID = string(p.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)

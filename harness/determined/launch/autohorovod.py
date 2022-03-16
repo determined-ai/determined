@@ -24,7 +24,7 @@ def main(train_entrypoint: str) -> int:
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    # Hack: get the container id from the environment.
+    # Hack: get the resources id from the environment.
     resources_id = os.environ.get("DET_RESOURCES_ID")
     assert resources_id is not None, "Unable to run with DET_RESOURCES_ID unset"
 

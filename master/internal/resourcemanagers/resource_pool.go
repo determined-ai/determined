@@ -473,6 +473,7 @@ func (c containerResources) Start(
 ) {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.container.id)
+	spec.ResourcesID = string(c.container.id)
 	spec.AllocationID = string(c.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(c.req.TaskID)
