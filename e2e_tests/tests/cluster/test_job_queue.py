@@ -19,7 +19,7 @@ def test_job_queue_ahead_of(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
-    ok = jobs.refresh_until_populated(10)
+    ok = jobs.refresh_until_populated(30)
     assert ok
 
     ordered_ids = jobs.get_ids()
@@ -44,7 +44,7 @@ def test_job_queue_ahead_of_first(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
-    ok = jobs.refresh_until_populated(10)
+    ok = jobs.refresh_until_populated(30)
     assert ok
 
     ordered_ids = jobs.get_ids()
@@ -69,7 +69,7 @@ def test_job_queue_behind_of(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
-    ok = jobs.refresh_until_populated(10)
+    ok = jobs.refresh_until_populated(30)
     assert ok
 
     ordered_ids = jobs.get_ids()
@@ -94,7 +94,7 @@ def test_job_queue_behind_of_last(using_k8s: bool) -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
-    ok = jobs.refresh_until_populated(10)
+    ok = jobs.refresh_until_populated(30)
     assert ok
 
     ordered_ids = jobs.get_ids()
@@ -117,7 +117,7 @@ def test_job_queue_adjust_weight() -> None:
         exp.run_basic_test_with_temp_config(config, model, 1)
 
     jobs = JobInfo()
-    ok = jobs.refresh_until_populated(10)
+    ok = jobs.refresh_until_populated(30)
     assert ok
 
     ordered_ids = jobs.get_ids()
