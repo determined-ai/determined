@@ -28,9 +28,9 @@ func (a *apiServer) GetWorkspace(
 	}
 }
 
-func (a *apiServer) GetWorkspaceProjects(
-	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest) (*apiv1.GetWorkspaceProjectsResponse, error) {
-
+func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
+	req *apiv1.GetWorkspaceProjectsRequest) (*apiv1.GetWorkspaceProjectsResponse,
+	error) {
 	nameFilter := req.Name
 	archFilterExpr := ""
 	if req.Archived != nil {
@@ -38,12 +38,13 @@ func (a *apiServer) GetWorkspaceProjects(
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	// Construct the ordering expression.
+	start_time := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:                "id",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME:              "created_at",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME: "last_experiment_started_at",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:                       "name",
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:                "description",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "id",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "created_at",
+		start_time: "last_experiment_started_at",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "name",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "description",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -77,7 +78,8 @@ func (a *apiServer) GetWorkspaceProjects(
 		return nil, err
 	}
 
-	a.sort(resp.Projects, req.OrderBy, req.SortBy, apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED)
+	a.sort(resp.Projects, req.OrderBy, req.SortBy,
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED)
 	return resp, a.paginate(&resp.Pagination, &resp.Projects, req.Offset, req.Limit)
 }
 

@@ -33,8 +33,9 @@ func (a *apiServer) GetProject(
 	return &apiv1.GetProjectResponse{Project: p}, err
 }
 
-func (a *apiServer) GetProjectExperiments(
-	_ context.Context, req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse, error) {
+func (a *apiServer) GetProjectExperiments(_ context.Context,
+	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
+	error) {
 	// Verify that project exists.
 	if _, err := a.GetProjectFromID(req.Id); err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func (a *apiServer) GetProjectExperiments(
 	switch _, ok := orderColMap[req.SortBy]; {
 	case !ok:
 		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case orderColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
+	case orderColMap[req.SortBy] != "id":
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
 			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
@@ -123,7 +124,8 @@ func (a *apiServer) AddProjectNote(
 		return nil, err
 	}
 
-	notes := append(p.Notes, &projectv1.Note{
+	notes := p.Notes
+	notes = append(notes, &projectv1.Note{
 		Name:     req.Note.Name,
 		Contents: req.Note.Contents,
 	})
