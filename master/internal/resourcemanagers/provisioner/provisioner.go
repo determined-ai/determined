@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerConfig"
+	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -117,7 +117,11 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	p.scaleDecider.calculateInstanceStates()
-	p.scaleDecider.recordRawInstance()
+	err = p.scaleDecider.recordRawInstance(p.SlotsPerInstance())
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot record instance state")
+		return
+	}
 
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
 		ctx.Log().Infof("decided to terminate %d instances: %s",

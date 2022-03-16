@@ -13,8 +13,8 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -165,7 +165,7 @@ func (m *mockAgent) Receive(ctx *actor.Context) error {
 
 func setupResourcePool(
 	t *testing.T,
-	db *mocks.DB,
+	db db.DB,
 	system *actor.System,
 	conf *config.ResourcePoolConfig,
 	mockTasks []*mockTask,

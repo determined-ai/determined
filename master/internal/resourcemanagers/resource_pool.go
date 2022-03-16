@@ -348,28 +348,33 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
-
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
 		agentID := msg.Agent.Address().Local()
 		ctx.Log().Infof("adding agent: %s", agentID)
 		rp.agents[msg.Agent] = true
-		rp.db.AddAgent(&model.AgentStats{
+		err := rp.db.AddAgent(&model.AgentStats{
 			ResourcePool: rp.config.PoolName,
 			AgentID:      &agentID,
-			Slots:        getResourceSummary(rp.agentStatesCache).numTotalSlots,
+			Slots:        msg.Slots,
 			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
 		})
+		if err != nil {
+			ctx.Respond(err)
+		}
 
 	case sproto.RemoveAgent:
 		agentID := msg.Agent.Address().Local()
 		ctx.Log().Infof("removing agent: %s", agentID)
 		delete(rp.agents, msg.Agent)
-		end_time := time.Now().UTC().Truncate(time.Millisecond)
-		rp.db.RemoveAgent(&model.AgentStats{
-			EndTime: &end_time,
+		endTime := time.Now().UTC().Truncate(time.Millisecond)
+		err := rp.db.RemoveAgent(&model.AgentStats{
+			EndTime: &endTime,
 			AgentID: &agentID,
 		})
+		if err != nil {
+			ctx.Respond(err)
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

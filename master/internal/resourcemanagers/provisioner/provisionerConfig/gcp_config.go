@@ -1,4 +1,4 @@
-package provisionerConfig
+package provisionerconfig
 
 import (
 	"encoding/json"
@@ -79,6 +79,7 @@ func (c GCPClusterConfig) Validate() []error {
 	}
 }
 
+// InitDefaultValues init default values.
 func (c *GCPClusterConfig) InitDefaultValues() error {
 	var err error
 
@@ -123,6 +124,7 @@ func (c *GCPClusterConfig) InitDefaultValues() error {
 	return nil
 }
 
+// Merge GCP cluster config.
 func (c *GCPClusterConfig) Merge() *compute.Instance {
 	rb := &compute.Instance{}
 	if c.BaseConfig != nil {
@@ -231,6 +233,7 @@ func (c GCPClusterConfig) Accelerator() string {
 	)
 }
 
+// BuildDockerLogString add log driver if necessary.
 func (c GCPClusterConfig) BuildDockerLogString() string {
 	if c.UseCloudLogging {
 		return "--log-driver gcplogs"
@@ -272,6 +275,7 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
 }
 
+// GetCPUPlatform returns CPU platform.
 func GetCPUPlatform(machineType string) string {
 	fields := strings.Split(machineType, "/")
 	instanceType := fields[len(fields)-1]

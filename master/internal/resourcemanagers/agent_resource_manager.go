@@ -186,7 +186,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 }
 
 func (a *agentResourceManager) createResourcePool(
-	ctx *actor.Context, db *db.PgDB, config config.ResourcePoolConfig, cert *tls.Certificate,
+	ctx *actor.Context, db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
 

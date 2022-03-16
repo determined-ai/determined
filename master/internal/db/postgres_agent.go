@@ -4,7 +4,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// AddAllocation persists the existence of an allocation.
+// AddAgent insert a record of instance start time if instance has not been
+// started or already ended.
 func (db *PgDB) AddAgent(a *model.AgentStats) error {
 	return db.namedExecOne(`
 INSERT INTO agent_stats (resource_pool, agent_id, slots, start_time)
@@ -15,7 +16,7 @@ WHERE NOT EXISTS (
 `, a)
 }
 
-// CompleteAllocation persists the end of an allocation lifetime.
+// RemoveAgent updates the end time of an instance.
 func (db *PgDB) RemoveAgent(a *model.AgentStats) error {
 	return db.namedExecOne(`
 UPDATE agent_stats

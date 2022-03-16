@@ -7,18 +7,19 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
+	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type TestInstanceType struct {
-	Name     string
+	name     string
 	NumSlots int
 }
 
 func (t TestInstanceType) Name() string {
-	return t.Name
+	return t.name
 }
 func (t TestInstanceType) Slots() int {
 	return t.NumSlots
@@ -151,7 +152,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		},
 		Config: &Config{
@@ -166,7 +167,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		}, 4),
 	})
@@ -176,7 +177,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		},
 		Config: &Config{
@@ -191,7 +192,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		}, 1),
 	})
@@ -201,7 +202,7 @@ func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		},
 		Config: &Config{
@@ -251,7 +252,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		},
 		Config: &Config{
@@ -323,7 +324,7 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 50 * time.Millisecond,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
+			name:     "test.instanceType",
 			NumSlots: 4,
 		},
 		Config: &Config{

@@ -17,7 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 
-	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerConfig"
+	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
 )
 
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:

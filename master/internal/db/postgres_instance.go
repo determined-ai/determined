@@ -4,7 +4,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// AddAllocation persists the existence of an allocation.
+// AddInstance insert a record of instance start time if instance has not been
+// started or already ended.
 func (db *PgDB) AddInstance(a *model.InstanceStats) error {
 	return db.namedExecOne(`
 INSERT INTO instance_stats (resource_pool, instance_id, slots, start_time)
@@ -15,7 +16,7 @@ WHERE NOT EXISTS (
 `, a)
 }
 
-// CompleteAllocation persists the end of an allocation lifetime.
+// RemoveInstance updates the end time of an instance.
 func (db *PgDB) RemoveInstance(a *model.InstanceStats) error {
 	return db.namedExecOne(`
 UPDATE instance_stats

@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerConfig"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,7 +23,7 @@ func defaultRPConfig() ResourcePoolConfig {
 type ResourcePoolConfig struct {
 	PoolName                 string                             `json:"pool_name"`
 	Description              string                             `json:"description"`
-	Provider                 *provisionerConfig.Config                `json:"provider"`
+	Provider                 *provisionerconfig.Config          `json:"provider"`
 	Scheduler                *SchedulerConfig                   `json:"scheduler,omitempty"`
 	MaxAuxContainersPerAgent int                                `json:"max_aux_containers_per_agent"`
 	TaskContainerDefaults    *model.TaskContainerDefaultsConfig `json:"task_container_defaults"`

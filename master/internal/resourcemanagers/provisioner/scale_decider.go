@@ -114,29 +114,39 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 	return false
 }
 
-func (s *scaleDecider) recordRawInstance() {
+func (s *scaleDecider) recordRawInstance(slots int) error {
 	for _, inst := range s.instances {
 		instID := inst.ID
-		s.db.AddInstance(&model.InstanceStats{
+		err := s.db.AddInstance(&model.InstanceStats{
 			ResourcePool: s.resourcePool,
 			InstanceID:   &instID,
-			Slots:        0,
+			Slots:        slots,
 			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
 		})
+		if err != nil {
+			return err
+		}
 	}
-	end_time := time.Now().UTC().Truncate(time.Millisecond)
+	endTime := time.Now().UTC().Truncate(time.Millisecond)
 	for instID, _ := range s.disconnected {
-		s.db.RemoveInstance(&model.InstanceStats{
+		err := s.db.RemoveInstance(&model.InstanceStats{
 			InstanceID: &instID,
-			EndTime:    &end_time,
+			EndTime:    &endTime,
 		})
+		if err != nil {
+			return err
+		}
 	}
 	for instID, _ := range s.stopped {
-		s.db.RemoveInstance(&model.InstanceStats{
+		err := s.db.RemoveInstance(&model.InstanceStats{
 			InstanceID: &instID,
-			EndTime:    &end_time,
+			EndTime:    &endTime,
 		})
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (s *scaleDecider) calculateInstanceStates() {

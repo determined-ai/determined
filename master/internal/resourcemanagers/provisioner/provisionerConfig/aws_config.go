@@ -1,4 +1,4 @@
-package provisionerConfig
+package provisionerconfig
 
 import (
 	"encoding/json"
@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
+// SpotPriceNotSetPlaceholder set placeholder.
 const SpotPriceNotSetPlaceholder = "OnDemand"
 
 // AWSClusterConfig describes the configuration for an EC2 cluster managed by Determined.
@@ -72,6 +73,7 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	CPUSlotsAllowed: false,
 }
 
+// BuildDockerLogString build docker log string.
 func (c *AWSClusterConfig) BuildDockerLogString() string {
 	logString := ""
 	if c.LogGroup != "" {
@@ -83,6 +85,7 @@ func (c *AWSClusterConfig) BuildDockerLogString() string {
 	return logString
 }
 
+// InitDefaultValues init default values.
 func (c *AWSClusterConfig) InitDefaultValues() error {
 	metadata, err := getEC2MetadataSess()
 	if err != nil {
@@ -228,12 +231,15 @@ type ec2Tag struct {
 	Value string `json:"value"`
 }
 
+// Ec2InstanceType is Ec2InstanceType.
 type Ec2InstanceType string
 
+// Name returns the string representation of instance type.
 func (t Ec2InstanceType) Name() string {
 	return string(t)
 }
 
+// Slots returns number of slots.
 func (t Ec2InstanceType) Slots() int {
 	if s, ok := ec2InstanceSlots[t]; ok {
 		return s
@@ -241,7 +247,8 @@ func (t Ec2InstanceType) Slots() int {
 	return 0
 }
 
-// source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
+// Accelerator source:
+// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
 func (t Ec2InstanceType) Accelerator() string {
 	instanceType := t.Name()
 	numGpu := t.Slots()
