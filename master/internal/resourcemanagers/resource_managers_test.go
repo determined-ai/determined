@@ -32,7 +32,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 			},
 		},
 	}
-	rpActor := Setup(system, echo.New(), conf, nil, nil)
+	rpActor := Setup(system, nil, echo.New(), conf, nil, nil)
 
 	taskSummary := system.Ask(rpActor, sproto.GetTaskSummaries{}).Get()
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]TaskSummary))
@@ -61,7 +61,7 @@ func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
 		},
 	}
 
-	Setup(system, echo.New(), conf, nil, nil)
+	Setup(system, nil, echo.New(), conf, nil, nil)
 	value, err := sproto.ValidateRPResources(system, defaultResourcePoolName, 1)
 	assert.Assert(t, err == nil)
 	assert.Assert(t, value)

@@ -16,7 +16,7 @@ func Setup(
 	config *Config,
 	resourcePool string,
 	cert *tls.Certificate,
-	db *db.PgDB,
+	db db.DB,
 ) (*Provisioner, *actor.Ref, error) {
 	ctx.Log().Info("found provisioner configuration")
 	if config.AWS != nil {

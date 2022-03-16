@@ -46,7 +46,7 @@ type ResourcePool struct {
 	saveNotifications bool
 	notifications     []<-chan struct{}
 
-	db *db.PgDB
+	db db.DB
 }
 
 // GetResourceSummary is a message to request a summary of the resources used by the
@@ -56,7 +56,7 @@ type GetResourceSummary struct{}
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
 	config *config.ResourcePoolConfig,
-	db *db.PgDB,
+	db db.DB,
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,

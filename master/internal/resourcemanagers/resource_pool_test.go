@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/google/uuid"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -20,7 +22,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -43,7 +45,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -66,7 +68,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -88,7 +90,7 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -115,7 +117,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 		{id: "unallocated-gpu-task4", slotsNeeded: 1},
 		{id: "unallocated-gpu-task5", slotsNeeded: 5},
 	}
-	rp, _ := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, _ := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 	rp.slotsPerInstance = 4
 
 	// Test basic.
@@ -193,7 +195,7 @@ func TestSettingGroupPriority(t *testing.T) {
 		},
 	}
 
-	rp, ref := setupResourcePool(t, system, &config, nil, nil, nil)
+	rp, ref := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	// Test setting a non-default priority for a group.
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
@@ -207,4 +209,18 @@ func TestSettingGroupPriority(t *testing.T) {
 
 	assert.NilError(t, ref.StopAndAwaitTermination())
 	assert.Equal(t, *rp.groups[groupRefOne].priority, updatedPriority)
+}
+
+func TestAddRemoveAgent(t *testing.T) {
+	system := actor.NewSystem(t.Name())
+	db := &mocks.DB{}
+	_, ref := setupResourcePool(t, db, system, nil, nil, nil, nil)
+	agentRef, created := system.ActorOf(actor.Addr("agent"), &mockAgent{id: "agent", slots: 2})
+	assert.Assert(t, created)
+
+	system.Tell(ref, sproto.AddAgent{Agent: agentRef})
+	db.On("AddAgent", mock.Anything).Return(nil)
+
+	system.Tell(ref, sproto.RemoveAgent{Agent: agentRef})
+	db.On("RemoveAgent", mock.Anything).Return(nil)
 }

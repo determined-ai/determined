@@ -47,7 +47,7 @@ type scaleDecider struct {
 	longDisconnected map[string]bool
 	longIdle         map[string]bool
 
-	db           *db.PgDB
+	db           db.DB
 	resourcePool string
 }
 
@@ -57,7 +57,7 @@ func newScaleDecider(
 	maxDisconnectPeriod time.Duration,
 	minInstanceNum int,
 	maxInstanceNum int,
-	db *db.PgDB,
+	db db.DB,
 ) *scaleDecider {
 	return &scaleDecider{
 		maxStartingPeriod:      maxStartingPeriod,

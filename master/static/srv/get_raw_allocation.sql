@@ -114,7 +114,7 @@ UNION
 SELECT
     NULL AS experiment_id,
     'agent' AS kind,
-    NULL AS username,
+    agent_id AS username,
     slots,
     NULL AS labels,
     start_time,
@@ -131,7 +131,7 @@ UNION
 SELECT
     NULL AS experiment_id,
     'instance' AS kind,
-    NULL AS username,
+    instance_id AS username,
     slots,
     NULL AS labels,
     start_time,

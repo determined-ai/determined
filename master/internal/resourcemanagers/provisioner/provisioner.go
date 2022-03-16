@@ -46,7 +46,7 @@ type provider interface {
 }
 
 // New creates a new Provisioner.
-func New(resourcePool string, config *Config, cert *tls.Certificate, db *db.PgDB) (*Provisioner, error) {
+func New(resourcePool string, config *Config, cert *tls.Certificate, db db.DB) (*Provisioner, error) {
 	if err := config.InitMasterAddress(); err != nil {
 		return nil, err
 	}
