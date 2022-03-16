@@ -39,9 +39,13 @@ def test_workspace_org() -> None:
     bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS"))
     list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
     assert ["Uncategorized", "_TestOnly", "_TestWS"] == list(map(lambda w: w.name, list_test_1))
-    list_test_2 = bindings.get_GetWorkspaces(sess, orderBy=bindings.v1OrderBy.ORDER_BY_DESC).workspaces
+    list_test_2 = bindings.get_GetWorkspaces(
+        sess, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
+    ).workspaces
     assert ["_TestWS", "_TestOnly", "Uncategorized"] == list(map(lambda w: w.name, list_test_2))
-    list_test_3 = bindings.get_GetWorkspaces(sess, sortBy=bindings.v1GetWorkspacesRequestSortBy.SORT_BY_NAME).workspaces
+    list_test_3 = bindings.get_GetWorkspaces(
+        sess, sortBy=bindings.v1GetWorkspacesRequestSortBy.SORT_BY_NAME
+    ).workspaces
     assert ["_TestOnly", "_TestWS", "Uncategorized"] == list(map(lambda w: w.name, list_test_3))
 
     # Add a test project to a workspace.
@@ -67,9 +71,13 @@ def test_workspace_org() -> None:
     )
     list_test_1 = bindings.get_GetWorkspaceProjects(sess, id=madeWorkspace.id).projects
     assert ["_TestOnly", "_TestPRJ", "_TestEarly"] == list(map(lambda w: w.name, list_test_1))
-    list_test_2 = bindings.get_GetWorkspaceProjects(sess, id=madeWorkspace.id, orderBy=bindings.v1OrderBy.ORDER_BY_DESC).projects
+    list_test_2 = bindings.get_GetWorkspaceProjects(
+        sess, id=madeWorkspace.id, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
+    ).projects
     assert ["_TestEarly", "_TestPRJ", "_TestOnly"] == list(map(lambda w: w.name, list_test_2))
-    list_test_3 = bindings.get_GetWorkspaceProjects(sess, id=madeWorkspace.id, sortBy=bindings.v1GetWorkspacesRequestSortBy.SORT_BY_NAME).projects
+    list_test_3 = bindings.get_GetWorkspaceProjects(
+        sess, id=madeWorkspace.id, sortBy=bindings.v1GetWorkspacesRequestSortBy.SORT_BY_NAME
+    ).projects
     assert ["_TestEarly", "_TestOnly", "_TestPRJ"] == list(map(lambda w: w.name, list_test_3))
 
     # Add a test note to a project.
