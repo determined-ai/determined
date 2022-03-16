@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"net/http"
 	"strconv"
 
@@ -378,7 +379,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 	switch msg := ctx.Message().(type) {
 	case SetPodOrder:
-		if msg.QPosition > 0 {
+		if msg.QPosition.GreaterThan(decimal.Zero) {
 			podName, ok := p.containerIDToPodName[msg.PodID.String()]
 			if !ok {
 				ctx.Log().WithField("pod-id", msg.PodID).Debug(
@@ -395,7 +396,7 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 			payload := []patchStringValue{{
 				Op:    "replace",
 				Path:  "/metadata/labels/determined-queue-position",
-				Value: fmt.Sprintf("%f", msg.QPosition),
+				Value: msg.QPosition.String(),
 			}}
 
 			payloadBytes, _ := json.Marshal(payload)

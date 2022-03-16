@@ -418,13 +418,11 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) moveJob(
-	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+	ctx *actor.Context,
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
 ) error {
-	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
-		return fmt.Errorf("unable to perform operation on resource pool with %s",
-			rp.config.Scheduler.GetType())
-	}
-
 	if anchorID == "" || jobID == "" || anchorID == jobID {
 		return nil
 	}
@@ -441,7 +439,7 @@ func (rp *ResourcePool) moveJob(
 		return job.ErrJobNotFound(anchorID)
 	}
 
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, rp.taskList, rp.groups, rp.queuePositions, false)
 
 	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
@@ -493,10 +491,14 @@ func (rp *ResourcePool) moveJob(
 	return nil
 }
 
-func (rp *ResourcePool) findAnchor(
+func findAnchor(
 	jobID model.JobID,
 	anchorID model.JobID,
 	aheadOf bool,
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	queuePositions jobSortState,
+	k8s bool,
 ) (bool, model.JobID, int) {
 	var secondAnchor model.JobID
 	targetPriority := 0
@@ -504,13 +506,13 @@ func (rp *ResourcePool) findAnchor(
 	anchorIdx := 0
 	prioChange := false
 
-	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
+	sortedReqs := sortTasksWithPosition(taskList, groups, queuePositions, k8s)
 
 	for i, req := range sortedReqs {
 		if req.JobID == jobID {
-			targetPriority = *rp.groups[req.Group].priority
+			targetPriority = *groups[req.Group].priority
 		} else if req.JobID == anchorID {
-			anchorPriority = *rp.groups[req.Group].priority
+			anchorPriority = *groups[req.Group].priority
 			anchorIdx = i
 		}
 	}
@@ -564,6 +566,10 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
 	case job.MoveJob:
+		if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+			return fmt.Errorf("unable to perform operation on resource pool with %s",
+				rp.config.Scheduler.GetType())
+		}
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
 		ctx.Respond(err)
 

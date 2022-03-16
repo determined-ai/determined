@@ -5,6 +5,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/shopspring/decimal"
 )
 
 // Incoming pods actor messages; pods actors must accept these messages.
@@ -35,7 +36,7 @@ type (
 
 	// SetPodOrder notifies the pods actor to set the queue position of a pod.
 	SetPodOrder struct {
-		QPosition float64
+		QPosition decimal.Decimal
 		PodID     cproto.ID
 	}
 )

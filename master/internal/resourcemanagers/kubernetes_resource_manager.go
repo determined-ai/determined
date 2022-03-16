@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
@@ -34,6 +35,10 @@ type kubernetesResourceManager struct {
 	groups            map[*actor.Ref]*group
 	addrToContainerID map[*actor.Ref]cproto.ID
 	containerIDtoAddr map[string]*actor.Ref
+	jobIDtoAddr 	  map[model.JobID]*actor.Ref
+	addrToJobID		  map[*actor.Ref]model.JobID
+	groupActorToID 	  map[*actor.Ref]model.JobID
+	IDToGroupActor 	  map[model.JobID]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
 	podsActor *actor.Ref
@@ -59,6 +64,10 @@ func newKubernetesResourceManager(
 		groups:            make(map[*actor.Ref]*group),
 		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
+		jobIDtoAddr: 	   make(map[model.JobID]*actor.Ref),
+		addrToJobID:	   make(map[*actor.Ref]model.JobID),
+		groupActorToID:    make(map[*actor.Ref]model.JobID),
+		IDToGroupActor:    make(map[model.JobID]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
 		queuePositions:    initalizeJobSortState(),
 
@@ -228,6 +237,13 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case groupActorStopped:
 		delete(k.slotsUsedPerGroup, k.groups[msg.Ref])
 		delete(k.groups, msg.Ref)
+		if jobID, ok := k.groupActorToID[msg.Ref]; ok {
+			delete(k.queuePositions, jobID)
+			delete(k.addrToJobID, k.jobIDtoAddr[jobID])
+			delete(k.jobIDtoAddr, jobID)
+			delete(k.groupActorToID, msg.Ref)
+			delete(k.IDToGroupActor, jobID)
+		}
 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
@@ -278,6 +294,15 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
+	if msg.IsUserVisible {
+		if _, ok := k.queuePositions[msg.JobID]; !ok {
+			k.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
+		}
+		k.jobIDtoAddr[msg.JobID] = msg.TaskActor
+		k.addrToJobID[msg.TaskActor] = msg.JobID
+		k.groupActorToID[msg.Group] = msg.JobID
+		k.IDToGroupActor[msg.JobID] = msg.Group
+	}
 	k.reqList.AddTask(&msg)
 }
 
@@ -299,6 +324,10 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(k.reqList))
 
+	case job.MoveJob:
+		err := k.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
+		ctx.Respond(err)
+		
 	case job.SetGroupWeight:
 		// setting weights in kubernetes is not supported
 
@@ -316,8 +345,8 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 			}
 		}
 
-	case job.MoveJob:
-		ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in Kubernetes"))
+	case job.RecoverJobPosition:
+		k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 
 	case job.DeleteJob:
 		// For now, there is nothing to cleanup in k8s.
@@ -326,6 +355,81 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+	return nil
+}
+
+func (k *kubernetesResourceManager) moveJob(
+	ctx *actor.Context,
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
+) error {
+	if anchorID == "" || jobID == "" || anchorID == jobID {
+		return nil
+	}
+
+	if _, ok := k.queuePositions[jobID]; !ok {
+		return nil
+	}
+
+	groupAddr, ok := k.IDToGroupActor[jobID]
+	if !ok {
+		return job.ErrJobNotFound(jobID)
+	}
+
+	if _, ok := k.queuePositions[anchorID]; !ok {
+		return job.ErrJobNotFound(anchorID)
+	}
+
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList, k.groups, k.queuePositions, false)
+
+	if secondAnchor != "" {
+		return fmt.Errorf("unable to move job with ID %s", jobID)
+	}
+
+	if secondAnchor == jobID {
+		return nil
+	}
+
+	if prioChange {
+		resp := ctx.Ask(k.IDToGroupActor[jobID], job.SetGroupPriority{
+			Priority:     anchorPriority,
+			ResourcePool: kubernetesDummyResourcePool,
+		})
+		if resp.Error() != nil {
+			return resp.Error()
+		}
+		if needMove(
+			k.queuePositions[jobID],
+			k.queuePositions[anchorID],
+			k.queuePositions[secondAnchor],
+			aheadOf,
+		) {
+			return nil
+		}
+	}
+
+	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
+	if err != nil {
+		return err
+	}
+
+	addr, ok := k.jobIDtoAddr[jobID]
+	if !ok {
+		return fmt.Errorf("job with ID %s has no valid task address", jobID)
+	}
+	containerID, ok := k.addrToContainerID[addr]
+	if !ok {
+		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
+	}
+
+	ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
+		QPosition: decimal.Zero,
+		PodID:     containerID,
+	})
+
+	ctx.Tell(groupAddr, msg)
+
 	return nil
 }
 
@@ -385,7 +489,7 @@ func (k *kubernetesResourceManager) assignResources(
 
 		k.addrToContainerID[req.TaskActor] = containerID
 		ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
-			QPosition: -1,
+			QPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
 			PodID:     containerID,
 		})
 
@@ -406,6 +510,7 @@ func (k *kubernetesResourceManager) assignResources(
 func (k *kubernetesResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	k.reqList.RemoveTaskByHandler(handler)
+	delete(k.addrToContainerID, handler)
 
 	deleteID := ""
 	for id, addr := range k.containerIDtoAddr {
