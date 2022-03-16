@@ -164,12 +164,13 @@ class JobInfo:
         self.values, self.ids = get_raw_data()
 
     def refresh_until_populated(self, retries: int) -> bool:
-        while len(self.ids) == 0:
-            if retries <= 0:
-                return False
+        while retries > 0:
+            retries -= 1
+            if len(self.ids) > 0:
+                return True
             sleep(0.5)
             self.refresh()
-        return True
+        return False
 
     def get_ids(self) -> List:
         return self.ids
@@ -182,14 +183,11 @@ class JobInfo:
         return ""
 
     def check_order_equals(self, expected: List, retries: int) -> bool:
-        if self.ids == expected:
-            return True
-
         while retries > 0:
-            retries -= 1
-            sleep(0.5)
             self.refresh()
             if self.ids == expected:
                 return True
+            retries -= 1
+            sleep(0.5)
 
         return False
