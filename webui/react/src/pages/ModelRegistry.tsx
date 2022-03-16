@@ -30,6 +30,7 @@ import { isBoolean, isEqual } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
+import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
 import settingsConfig, { Settings } from './ModelRegistry.settings';
@@ -379,7 +380,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'username',
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: user.username, value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         title: 'User',

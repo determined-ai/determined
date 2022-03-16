@@ -35,6 +35,7 @@ import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
+import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';
@@ -339,7 +340,7 @@ const TaskList: React.FC = () => {
       },
       {
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: user.username, value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: 'user',
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
