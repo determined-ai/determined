@@ -11,12 +11,20 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested model.
 message GetModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name" ] }
+  };
+
   // The name of the model.
   string model_name = 2;
 }
 
 // Response to GetModelRequest.
 message GetModelResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model" ] }
+  };
+
   // The model requested.
   determined.model.v1.Model model = 1;
 }
@@ -87,6 +95,10 @@ message GetModelLabelsRequest {}
 
 // Response to GetModelLabelsRequest.
 message GetModelLabelsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "labels" ] }
+  };
+
   // List of labels used across all models.
   repeated string labels = 1;
 }
@@ -104,20 +116,26 @@ message PostModelRequest {
   google.protobuf.Struct metadata = 3;
   // Labels associated with this model.
   repeated string labels = 4;
-  // User who is creating this model.
-  string username = 5;
   // Notes associated with this model.
   string notes = 6;
 }
 
 // Response to PostModelRequest.
 message PostModelResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model" ] }
+  };
+
   // The model created.
   determined.model.v1.Model model = 1;
 }
 
 // Request for updating a model in the registry.
 message PatchModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model", "model_name" ] }
+  };
+
   // The model desired model fields and values.
   determined.model.v1.PatchModel model = 1;
   // The name of the model being updated.
@@ -126,12 +144,20 @@ message PatchModelRequest {
 
 // Response to PatchModelRequest.
 message PatchModelResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model" ] }
+  };
+
   // The model created.
   determined.model.v1.Model model = 1;
 }
 
 // Request for archiving a model in the registry.
 message ArchiveModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name" ] }
+  };
+
   // The name of the model to archive.
   string model_name = 2;
 }
@@ -141,6 +167,10 @@ message ArchiveModelResponse {}
 
 // Request for un-archiving a model in the registry.
 message UnarchiveModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name" ] }
+  };
+
   // The name of the model to un-archive.
   string model_name = 2;
 }
@@ -150,6 +180,10 @@ message UnarchiveModelResponse {}
 
 // Request for deleting a model in the registry.
 message DeleteModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name" ] }
+  };
+
   // The name of the model to delete.
   string model_name = 2;
 }
@@ -159,6 +193,10 @@ message DeleteModelResponse {}
 
 // Request for a version of a model in the registry.
 message GetModelVersionRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name", "model_version" ] }
+  };
+
   // The name of the model.
   string model_name = 3;
   // The version number.
@@ -167,12 +205,20 @@ message GetModelVersionRequest {
 
 // Response for GetModelVersionRequest.
 message GetModelVersionResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_version" ] }
+  };
+
   // The model version requested.
   determined.model.v1.ModelVersion model_version = 1;
 }
 
 // Get a list of versions of the requested model.
 message GetModelVersionsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name" ] }
+  };
+
   // Sort models by the given field.
   enum SortBy {
     // Returns model versions in an unsorted list.
@@ -198,6 +244,10 @@ message GetModelVersionsRequest {
 
 // Response for GetModelVersionRequest.
 message GetModelVersionsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model", "model_versions", "pagination" ] }
+  };
+
   // The model requested.
   determined.model.v1.Model model = 1;
   // The list of returned model versions.
@@ -229,12 +279,20 @@ message PostModelVersionRequest {
 
 // Response for PostModelVersionRequest.
 message PostModelVersionResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_version" ] }
+  };
+
   // The model version requested.
   determined.model.v1.ModelVersion model_version = 1;
 }
 
 // Request for updating a model version in the registry.
 message PatchModelVersionRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name", "model_version", "model_version_id" ] }
+  };
+
   // The name of the model being updated.
   string model_name = 4;
   // The model version being updated.
@@ -245,15 +303,23 @@ message PatchModelVersionRequest {
 
 // Response to PatchModelVersionRequest.
 message PatchModelVersionResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_version" ] }
+  };
+
   // The model version created.
   determined.model.v1.ModelVersion model_version = 1;
 }
 
 // Request for deleting a model version in the registry.
 message DeleteModelVersionRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_name", "model_version_id" ] }
+  };
+
   // The name of the model associated with the model version.
   string model_name = 3;
-  // THe id of the model version to delete.
+  // The id of the model version to delete.
   int32 model_version_id = 2;
 }
 
