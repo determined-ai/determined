@@ -198,8 +198,8 @@ func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
 func (db *PgDB) UpdateAllocationStartTime(a model.Allocation) error {
 	_, err := db.sql.Exec(`
 		UPDATE allocations
-		SET start_time=$2
-		WHERE allocation_id=$1
+		SET start_time = $2
+		WHERE allocation_id = $1
 	`, a.AllocationID, a.StartTime)
 	return err
 }

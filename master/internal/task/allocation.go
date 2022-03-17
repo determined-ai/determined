@@ -396,9 +396,9 @@ func (a *Allocation) TaskContainerStateChanged(
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
 		a.model.StartTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
 		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
-			ctx.Log().Infof(
-				"this allocation with allocation id: %v may not be properly accounted for",
-				a.model.AllocationID)
+			ctx.Log().
+				WithError(err).
+				Errorf("allocation will not be properly accounted for")
 		}
 
 	case cproto.Starting:
