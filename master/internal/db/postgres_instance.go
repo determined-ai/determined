@@ -11,7 +11,7 @@ func (db *PgDB) AddInstance(a *model.InstanceStats) error {
 INSERT INTO instance_stats (resource_pool, instance_id, slots, start_time)
 SELECT :resource_pool, :instance_id, :slots, :start_time
 WHERE NOT EXISTS (
-	SELECT * FROM agent_stats WHERE instance_id = :instance_id AND end_time IS NULL
+	SELECT * FROM instance_stats WHERE instance_id = :instance_id AND end_time IS NULL
 )
 `, a)
 }
