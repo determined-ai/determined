@@ -34,9 +34,6 @@ export const killableRunStates: CompoundRunState[] =
   ];
 
 export const pausableRunStates: Set<CompoundRunState> = new Set([ RunState.Active, ...jobStates ]);
-export const isProgressingRunStates: Set<CompoundRunState> = new Set([ RunState.Active,
-  JobState.SCHEDULED,
-  JobState.SCHEDULEDBACKFILLED ]);
 
 export const cancellableRunStates: Set<CompoundRunState> = new Set([
   RunState.Active,

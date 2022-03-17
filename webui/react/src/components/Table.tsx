@@ -148,7 +148,7 @@ export const experimentNameRenderer = (
 );
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  return record.progress ? (
+  return typeof record.progress !== 'undefined' ? (
     <ProgressBar percent={record.progress * 100} state={record.state} />
   ) : null;
 };

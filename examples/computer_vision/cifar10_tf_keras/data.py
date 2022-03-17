@@ -7,8 +7,12 @@ import numpy as np
 import tensorflow.keras as keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
-from tensorflow.python.keras.datasets.cifar import load_batch
 from tensorflow.python.keras.utils.data_utils import Sequence
+
+try:
+    from keras.datasets.cifar import load_batch  # TF 2.8+
+except ImportError:
+    from tensorflow.python.keras.datasets.cifar import load_batch
 
 NUM_CLASSES = 10
 
