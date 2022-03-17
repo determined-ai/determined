@@ -150,8 +150,8 @@ func (e *experiment) restoreTrial(
 
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 	t := newTrial(
-		trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State, searcher,
-		e.rm, e.taskLogger, e.db, config, ckpt, e.taskSpec,
+		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
+		searcher, e.rm, e.taskLogger, e.db, config, ckpt, e.taskSpec,
 	)
 	if trialID != nil {
 		t.id = *trialID

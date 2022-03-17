@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -65,6 +66,8 @@ type pod struct {
 	resourcesDeleted bool
 	testLogStreamer  bool
 	containerNames   map[string]bool
+
+	logCtx logger.Context
 }
 
 // PodSlotResourceRequests contains the per-slot container requests.
@@ -147,13 +150,16 @@ func newPod(
 		slotType:                 slotType,
 		slotResourceRequests:     slotResourceRequests,
 		fluentConfig:             fluentConfig,
+		logCtx: logger.MergeContexts(msg.LogContext, logger.Context{
+			"pod": uniqueName,
+		}),
 	}
 }
 
 func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.AddLabel("pod", p.podName)
+		ctx.AddLabels(p.logCtx)
 		if err := p.createPodSpecAndSubmit(ctx); err != nil {
 			return err
 		}

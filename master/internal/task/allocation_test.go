@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
@@ -292,6 +293,7 @@ func setup(t *testing.T) (
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	a := NewAllocation(
+		detLogger.Context{},
 		sproto.AllocateRequest{
 			TaskID:       taskID,
 			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", taskID)),
