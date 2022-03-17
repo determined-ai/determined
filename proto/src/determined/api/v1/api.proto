@@ -1313,6 +1313,25 @@ service Determined {
       tags: "Workspaces"
     };
   }
+  // Update a workspace.
+  rpc PatchWorkspace(PatchWorkspaceRequest) returns (PatchWorkspaceResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/workspaces/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Delete a workspace.
+  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/workspaces/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
 
   // Get the requested project.
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
@@ -1348,6 +1367,25 @@ service Determined {
     option (google.api.http) = {
       post: "/api/v1/projects/{project_id}/notes"
       body: "note"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Update a project.
+  rpc PatchProject(PatchProjectRequest) returns (PatchProjectResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/projects/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Delete a project.
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/projects/{id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

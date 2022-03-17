@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -15,17 +16,22 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetWorkspace(
-	_ context.Context, req *apiv1.GetWorkspaceRequest) (*apiv1.GetWorkspaceResponse, error) {
+func (a *apiServer) GetWorkspaceFromID(id int32) (*workspacev1.Workspace, error) {
 	w := &workspacev1.Workspace{}
-	switch err := a.m.db.QueryProto("get_workspace", w, req.Id); err {
+	switch err := a.m.db.QueryProto("get_workspace", w, id); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "workspace \"%d\" not found", req.Id)
+			codes.NotFound, "workspace (%d) not found", id)
 	default:
-		return &apiv1.GetWorkspaceResponse{Workspace: w},
-			errors.Wrapf(err, "error fetching workspace \"%d\" from database", req.Id)
+		return w, errors.Wrapf(err,
+			"error fetching workspace (%d) from database", id)
 	}
+}
+
+func (a *apiServer) GetWorkspace(
+	_ context.Context, req *apiv1.GetWorkspaceRequest) (*apiv1.GetWorkspaceResponse, error) {
+	w, err := a.GetWorkspaceFromID(req.Id)
+	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
 func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
@@ -140,4 +146,58 @@ func (a *apiServer) PostWorkspace(
 
 	return &apiv1.PostWorkspaceResponse{Workspace: w},
 		errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+}
+
+func (a *apiServer) PatchWorkspace(
+	_ context.Context, req *apiv1.PatchWorkspaceRequest) (*apiv1.PatchWorkspaceResponse, error) {
+
+	// Verify current workspace exists and can be edited.
+	currWorkspace, err := a.GetWorkspaceFromID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if currWorkspace.Archived {
+		return nil, errors.Errorf("workspace (%d) is archived and cannot have attributes updated.",
+			currWorkspace.Id)
+	}
+
+	madeChanges := false
+	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
+		log.Infof("workspace (%d) name changing from \"%s\" to \"%s\"",
+			currWorkspace.Id, currWorkspace.Name, req.Workspace.Name.Value)
+		madeChanges = true
+		currWorkspace.Name = req.Workspace.Name.Value
+	}
+
+	if !madeChanges {
+		return &apiv1.PatchWorkspaceResponse{Workspace: currWorkspace}, nil
+	}
+
+	finalWorkspace := &workspacev1.Workspace{}
+	err = a.m.db.QueryProto("update_workspace",
+		finalWorkspace, currWorkspace.Id, currWorkspace.Name)
+
+	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
+		errors.Wrapf(err, "error updating workspace (%d) in database", currWorkspace.Id)
+}
+
+func (a *apiServer) DeleteWorkspace(
+	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &workspacev1.Workspace{}
+	err = a.m.db.QueryProto("delete_workspace", holder, req.Id, user.User.Id,
+		user.User.Admin)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not delete-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.DeleteWorkspaceResponse{},
+		errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
 }

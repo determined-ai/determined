@@ -135,3 +135,26 @@ message PostWorkspaceResponse {
   // The workspace created.
   determined.workspace.v1.Workspace workspace = 1;
 }
+
+// Request for updating a workspace.
+message PatchWorkspaceRequest {
+  // The id of the workspace.
+  int32 id = 1;
+  // The desired workspace fields and values to update.
+  determined.workspace.v1.PatchWorkspace workspace = 2;
+}
+
+// Response to PatchWorkspaceRequest.
+message PatchWorkspaceResponse {
+  // The updated workspace.
+  determined.workspace.v1.Workspace workspace = 1;
+}
+
+// Request for deleting a workspace.
+message DeleteWorkspaceRequest {
+  // The id of the workspace.
+  int32 id = 1;
+}
+
+// Response to DeleteWorkspaceRequest.
+message DeleteWorkspaceResponse {}
