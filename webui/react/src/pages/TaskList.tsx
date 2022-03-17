@@ -345,7 +345,7 @@ const TaskList: React.FC = () => {
         onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => {
-          return alphaNumericSorter(a.username, b.username);
+          return alphaNumericSorter(getDisplayName(a), getDisplayName(b));
         },
         title: 'User',
       },

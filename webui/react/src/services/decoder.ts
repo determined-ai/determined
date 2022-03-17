@@ -127,12 +127,14 @@ const mapCommonV1Task = (
   type: types.CommandType,
 ): types.CommandTask => {
   return {
+    displayName: task.displayName || '',
     id: task.id,
     name: task.description,
     resourcePool: task.resourcePool,
     startTime: task.startTime as unknown as string,
     state: mapV1TaskState(task.state),
     type,
+    userId: task.userId || 0,
     username: task.username,
   };
 };

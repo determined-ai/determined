@@ -38,6 +38,10 @@ message Tensorboard {
   repeated int32 experiment_ids = 7;
   // The trial ids loaded into this tensorboard instance.
   repeated int32 trial_ids = 8;
+  // The display name of the user that created the tensorboard.
+  string display_name = 15;
+  // The id of the user that created the tensorboard.
+  int32 user_id = 16;
   // The username of the user that created the tensorboard.
   string username = 10;
   // The service address.
