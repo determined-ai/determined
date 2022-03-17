@@ -14,13 +14,14 @@ import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;
-  trial: TrialDetails;
+  trial?: TrialDetails;
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
+    if (!trial) return;
     const cp = trial.bestAvailableCheckpoint;
     if (!cp) return;
 
@@ -30,16 +31,17 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       experimentId: trial.experimentId,
       trialId: trial.id,
     };
-  }, [ trial.bestAvailableCheckpoint, trial.experimentId, trial.id ]);
+  }, [ trial ]);
 
   const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = trial.workloads
+    const totalBytes = trial?.workloads
       .filter(step => step.checkpoint
         && step.checkpoint.state === CheckpointState.Completed)
       .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
+    if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
-  }, [ trial.workloads ]);
+  }, [ trial?.workloads ]);
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
@@ -47,24 +49,28 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   return (
     <Section>
       <Grid gap={ShirtSize.medium} minItemWidth={180} mode={GridMode.AutoFill}>
-        {trial.runnerState && (
+        {trial?.runnerState && (
           <OverviewStats title="Last Runner State">
             {trial.runnerState}
           </OverviewStats>
         )}
-        <OverviewStats title="Start Time">
-          <TimeAgo datetime={trial.startTime} />
-        </OverviewStats>
-        <OverviewStats title="Total Checkpoint Size">
-          {totalCheckpointsSize}
-        </OverviewStats>
+        {trial?.startTime && (
+          <OverviewStats title="Start Time">
+            <TimeAgo datetime={trial.startTime} />
+          </OverviewStats>
+        )}
+        {totalCheckpointsSize && (
+          <OverviewStats title="Total Checkpoint Size">
+            {totalCheckpointsSize}
+          </OverviewStats>
+        )}
         {bestCheckpoint && (
           <OverviewStats title="Best Checkpoint" onClick={handleShowBestCheckpoint}>
             Batch {bestCheckpoint.batch}
           </OverviewStats>
         )}
       </Grid>
-      {bestCheckpoint && (
+      {bestCheckpoint && trial && (
         <CheckpointModal
           checkpoint={bestCheckpoint}
           config={experiment.config}
