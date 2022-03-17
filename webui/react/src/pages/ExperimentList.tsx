@@ -75,7 +75,6 @@ const ExperimentList: React.FC = () => {
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
   
-  // useEffect(() => console.log(settings.lable), [settings.label] )
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -158,7 +157,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ canceler,
     settings.archived,
-    // settings.label,
+    settings.label,
     labelsChangedIndicator,
     settings.search,
     settings.sortDesc,
@@ -612,7 +611,6 @@ const ExperimentList: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    console.log("effecting")
     fetchExperiments();
     setIsLoading(true);
   }, [
@@ -676,7 +674,6 @@ const ExperimentList: React.FC = () => {
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
-      {/* <DragSortingTable */}
       <ResponsiveTable
         areRowsRightClickable={true}
         areRowsSelected={!!settings.row}
@@ -702,8 +699,6 @@ const ExperimentList: React.FC = () => {
         size="small"
         settings={settings}
         updateSettings={updateSettings}
-
-        // onChange={handleTableChange(columns, settings, updateSettings)}
       />
     </Page>
   );

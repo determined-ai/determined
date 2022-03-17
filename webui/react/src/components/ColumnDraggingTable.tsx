@@ -73,7 +73,6 @@ const ResponsiveTable = ({
 
   const handleTableChange = useCallback(
     (tablePagination: any, tableFilters: any, tableSorter: any): void => {
-      console.log("table change")
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
@@ -123,30 +122,21 @@ const ResponsiveTable = ({
     }
   };
 
-  // console.log(widths[0])
-
   const handleResize = useCallback(
     (index) => (e, { size }) => {
       const targetWidth = Math.floor(Math.max(size.width, 80));
-      
-      // if (targetWidth !== settings.columnWidths[index]) {
       const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
       setWidths(newWidths);
-      // updateSettings({ columnWidths: newWidths });
-      // }
     },
     [updateSettings]
   );
 
   const handleResizeStop = useCallback(
     (index) => (e, { size }) => {
-      console.log("resize stop")
-      const targetWidth = Math.floor(Math.max(size.width, 80))
-      // if (targetWidth !== settings.columnWidths[index]) {
-        const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
-        setWidths(newWidths);
-        updateSettings({ columnWidths: newWidths });
-      // }
+      const targetWidth = Math.floor(Math.max(size.width, 80));
+      const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
+      setWidths(newWidths);
+      updateSettings({ columnWidths: newWidths });
     },
     [updateSettings]
   );
@@ -209,9 +199,6 @@ const ResponsiveTable = ({
       }).concat(columnSpec.action),
     [settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec]
   );
-
-    // console.log(renderColumns.map((x) => `${x.width}`));
-    // console.log(renderColumns.map((x) => `${x.title}`));
 
   return (
     <div ref={tableRef}>
