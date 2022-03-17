@@ -38,11 +38,11 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	// Construct the ordering expression.
-	start_time := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
+	startTime := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "id",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "created_at",
-		start_time: "last_experiment_started_at",
+		startTime: "last_experiment_started_at",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "name",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "description",
 	}
