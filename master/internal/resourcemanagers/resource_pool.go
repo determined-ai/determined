@@ -264,7 +264,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case
 		sproto.AddAgent,
-		sproto.RemoveAgent:
+		sproto.RemoveAgent,
+		sproto.EndAgentStats:
 		return rp.receiveAgentMsg(ctx)
 
 	case
@@ -351,7 +352,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
 		agentID := msg.Agent.Address().Local()
-		ctx.Log().Infof("adding agent: %s", agentID)
+		ctx.Log().Infof("adding agent: %+v", agentID)
 		rp.agents[msg.Agent] = true
 		err := rp.db.AddAgent(&model.AgentStats{
 			ResourcePool: rp.config.PoolName,
@@ -367,6 +368,10 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		agentID := msg.Agent.Address().Local()
 		ctx.Log().Infof("removing agent: %s", agentID)
 		delete(rp.agents, msg.Agent)
+		ctx.Tell(ctx.Self(), sproto.EndAgentStats{Agent: msg.Agent})
+
+	case sproto.EndAgentStats:
+		agentID := msg.Agent.Address().Local()
 		endTime := time.Now().UTC().Truncate(time.Millisecond)
 		err := rp.db.RemoveAgent(&model.AgentStats{
 			EndTime: &endTime,

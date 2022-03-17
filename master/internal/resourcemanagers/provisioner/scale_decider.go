@@ -77,6 +77,7 @@ func newScaleDecider(
 		longDisconnected:       make(map[string]bool),
 		longIdle:               make(map[string]bool),
 		db:                     db,
+		resourcePool:           resourcePool,
 	}
 }
 
@@ -114,24 +115,25 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 	return false
 }
 
-func (s *scaleDecider) recordRawInstance(slots int) error {
+func (s *scaleDecider) recordInstanceStats(slots int) error {
+	now := time.Now().UTC().Truncate(time.Millisecond)
 	for _, inst := range s.instances {
 		instID := inst.ID
 		err := s.db.AddInstance(&model.InstanceStats{
 			ResourcePool: s.resourcePool,
 			InstanceID:   &instID,
 			Slots:        slots,
-			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
+			StartTime:    now,
 		})
 		if err != nil {
 			return err
 		}
 	}
-	endTime := time.Now().UTC().Truncate(time.Millisecond)
+
 	for instID, _ := range s.disconnected {
 		err := s.db.RemoveInstance(&model.InstanceStats{
 			InstanceID: &instID,
-			EndTime:    &endTime,
+			EndTime:    &now,
 		})
 		if err != nil {
 			return err
@@ -140,7 +142,7 @@ func (s *scaleDecider) recordRawInstance(slots int) error {
 	for instID, _ := range s.stopped {
 		err := s.db.RemoveInstance(&model.InstanceStats{
 			InstanceID: &instID,
-			EndTime:    &endTime,
+			EndTime:    &now,
 		})
 		if err != nil {
 			return err

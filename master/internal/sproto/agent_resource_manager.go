@@ -21,6 +21,11 @@ type (
 	RemoveAgent struct {
 		Agent *actor.Ref
 	}
+
+	// EndAgentStats update the end time for agent
+	EndAgentStats struct {
+		Agent *actor.Ref
+	}
 )
 
 // Message protocol from the default resource manager to an agent actor.

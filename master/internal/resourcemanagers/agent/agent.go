@@ -274,6 +274,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
+
+		ctx.Tell(a.resourcePool, sproto.EndAgentStats{Agent: ctx.Self()})
+
 		a.socket = nil
 		a.awaitingReconnect = true
 
@@ -290,6 +293,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Enabled: &a.agentState.enabled,
 			Drain:   &a.agentState.draining,
 		})
+
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {

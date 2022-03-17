@@ -114,14 +114,15 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	if p.scaleDecider.updateInstanceSnapshot(instances) {
 		ctx.Log().Infof("found state changes in %d instances: %s",
 			len(instances), fmtInstances(instances))
+
+		err = p.scaleDecider.recordInstanceStats(p.SlotsPerInstance())
+		if err != nil {
+			ctx.Log().WithError(err).Error("cannot record instance stats")
+			return
+		}
 	}
 
 	p.scaleDecider.calculateInstanceStates()
-	err = p.scaleDecider.recordRawInstance(p.SlotsPerInstance())
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot record instance state")
-		return
-	}
 
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
 		ctx.Log().Infof("decided to terminate %d instances: %s",
