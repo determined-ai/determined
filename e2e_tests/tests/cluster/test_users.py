@@ -273,6 +273,7 @@ def test_change_password(clean_auth: None) -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
+@pytest.mark.e2e_cpu_cross_version
 def test_experiment_creation_and_listing(clean_auth: None) -> None:
     # Create 2 users.
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)

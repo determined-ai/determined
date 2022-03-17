@@ -88,6 +88,7 @@ func (a *apiServer) GetUser(
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func (a *apiServer) PostUser(
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
 	}
-	if err = user.UpdatePasswordHash(req.Password); err != nil {
+	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
 	var agentUserGroup *model.AgentUserGroup

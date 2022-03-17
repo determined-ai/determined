@@ -5,7 +5,7 @@
 +--------------------+
 | Supported Versions |
 +====================+
-| Grafana 7.5.0+     |
+| Grafana 8.3.0+     |
 +--------------------+
 | Prometheus 2.14.0  |
 +--------------------+
@@ -37,10 +37,12 @@ file.
 
 The Determined Prometheus endpoint is configured to work with `cAdvisor
 <https://github.com/google/cadvisor>`__ for CPU metrics and `dcgm-exporter
-<https://github.com/NVIDIA/dcgm-exporter>`__ (DCGM) for GPU metrics. Although other monitoring tools
-can be used with the setup, this guide describes only cAdvisor and DCGM tool configuration.
-Prometheus queries on metrics collected by other tools can differ, depending on the format and
-organization of the returned metrics.
+<https://github.com/NVIDIA/dcgm-exporter>`__ (DCGM) for GPU metrics. The default ports for cAdvisor,
+8080, and dcgm-exporter, 9400, are hardcoded into the Prometheus endpoint. If an agent is running on
+the same machine as the master, the master must be running on a port other than 8080 for cAdvisor
+metrics to be scraped. Although other monitoring tools can be used with the setup, this guide
+describes only cAdvisor and DCGM tool configuration. Prometheus queries on metrics collected by
+other tools can differ, depending on the format and organization of the returned metrics.
 
 ***************
  Prerequisites
@@ -123,6 +125,9 @@ This example startup script includes the default setup docker commands provided 
 #. Launch Prometheus with the provided `prometheus.yml
    <https://github.com/determined-ai/works-with-determined#observability-tools>`__ configuration
    file.
+
+#. The Prometheus configuration file needs a manual change to replace the placeholder master
+   address.
 
    The ``metric_relabel_configs`` parameter edits certain label names in jobs for joining in PromQL.
    - The ``scrape_interval`` parameter values can be modified to optimize for resolution/size/time.
