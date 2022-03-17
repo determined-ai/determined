@@ -79,6 +79,10 @@ message GetProjectExperimentsRequest {
 
 // Response to GetProjectExperimentsRequest.
 message GetProjectExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiments", "pagination" ] }
+  };
+
   // The experiments associated with the project.
   repeated determined.experiment.v1.Experiment experiments = 1;
   // Pagination information of the full dataset.
@@ -88,7 +92,7 @@ message GetProjectExperimentsResponse {
 // Request for creating a project.
 message PostProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "workspace_id" ] }
+    json_schema: { required: [ "name", "username" ] }
   };
   // The name of the project.
   string name = 1;
@@ -119,6 +123,10 @@ message AddProjectNoteRequest {
 
 // Response to AddProjectNoteRequest.
 message AddProjectNoteResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notes" ] }
+  };
+
   // The complete list of notes on a project.
   repeated determined.project.v1.Note notes = 1;
 }

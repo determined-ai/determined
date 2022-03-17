@@ -3,7 +3,6 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/project/v1/project.proto";
@@ -62,6 +61,10 @@ message GetWorkspaceProjectsRequest {
 
 // Response to GetWorkspaceProjectsRequest.
 message GetWorkspaceProjectsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "projects", "pagination" ] }
+  };
+
   // The projects associated with the workspace.
   repeated determined.project.v1.Project projects = 1;
   // Pagination information of the full dataset.
@@ -113,7 +116,7 @@ message GetWorkspacesResponse {
 // Request for creating a workspace.
 message PostWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name" ] }
+    json_schema: { required: [ "name", "username" ] }
   };
   // The name of the workspace.
   string name = 1;

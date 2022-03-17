@@ -800,7 +800,7 @@ export interface V1AddProjectNoteResponse {
      * @type {Array<V1Note>}
      * @memberof V1AddProjectNoteResponse
      */
-    notes?: Array<V1Note>;
+    notes: Array<V1Note>;
 }
 
 /**
@@ -2464,13 +2464,13 @@ export interface V1GetProjectExperimentsResponse {
      * @type {Array<V1Experiment>}
      * @memberof V1GetProjectExperimentsResponse
      */
-    experiments?: Array<V1Experiment>;
+    experiments: Array<V1Experiment>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetProjectExperimentsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -2852,13 +2852,13 @@ export interface V1GetWorkspaceProjectsResponse {
      * @type {Array<V1Project>}
      * @memberof V1GetWorkspaceProjectsResponse
      */
-    projects?: Array<V1Project>;
+    projects: Array<V1Project>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetWorkspaceProjectsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -4346,7 +4346,7 @@ export interface V1PostProjectRequest {
      * @type {string}
      * @memberof V1PostProjectRequest
      */
-    username?: string;
+    username: string;
     /**
      * Description of the project.
      * @type {string}
@@ -4358,7 +4358,7 @@ export interface V1PostProjectRequest {
      * @type {number}
      * @memberof V1PostProjectRequest
      */
-    workspaceId: number;
+    workspaceId?: number;
 }
 
 /**
@@ -4456,7 +4456,7 @@ export interface V1PostWorkspaceRequest {
      * @type {string}
      * @memberof V1PostWorkspaceRequest
      */
-    username?: string;
+    username: string;
 }
 
 /**
