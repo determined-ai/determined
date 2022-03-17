@@ -361,7 +361,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
 		})
 		if err != nil {
-			ctx.Respond(err)
+			ctx.Log().WithError(err)
 		}
 
 	case sproto.RemoveAgent:
@@ -378,7 +378,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 			AgentID: &agentID,
 		})
 		if err != nil {
-			ctx.Respond(err)
+			ctx.Log().WithError(err)
 		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
