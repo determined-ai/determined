@@ -1,3 +1,4 @@
+import { Empty } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
@@ -104,7 +105,9 @@ const TrialChart: React.FC<Props> = ({
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        <UPlotChart data={chartData} options={chartOptions} />
+        {chartData[0].length === 0 ?
+          <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} /> :
+          <UPlotChart data={chartData} options={chartOptions} />}
       </div>
     </Section>
   );

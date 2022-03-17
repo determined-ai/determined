@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
@@ -102,8 +103,17 @@ func TestAllocation(t *testing.T) {
 				}
 				db.On("UpdateAllocationState", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+
+				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.Container.State = cproto.Pulling
+				db.On("UpdateAllocationStartTime", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
+				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
+				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
+				require.Falsef(t, outOfRange,
+					"Expected start time of open allocation should be in between %s and %s but it is = %s instead",
+					beforePulling, afterPulling, a.model.StartTime)
+
 				containerStateChanged.Container.State = cproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				containerStateChanged.Container.State = cproto.Running
@@ -209,7 +219,6 @@ func setup(t *testing.T) (
 		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
-
 	// Pre-scheduled stage.
 	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)

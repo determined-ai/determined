@@ -12,7 +12,7 @@ import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
 export interface Props {
   experiment: ExperimentBase;
-  trial: TrialDetails;
+  trial?: TrialDetails;
 }
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
