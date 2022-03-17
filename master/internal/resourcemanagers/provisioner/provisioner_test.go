@@ -14,12 +14,12 @@ import (
 )
 
 type TestInstanceType struct {
-	name     string
-	NumSlots int
+	NameString string
+	NumSlots   int
 }
 
 func (t TestInstanceType) Name() string {
-	return t.name
+	return t.NameString
 }
 func (t TestInstanceType) Slots() int {
 	return t.NumSlots
@@ -152,8 +152,8 @@ func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxInstances: 100,
@@ -167,8 +167,8 @@ func TestProvisionerScaleUp(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		}, 4),
 	})
 }
@@ -177,8 +177,8 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxInstances: 1,
@@ -192,8 +192,8 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		}, 1),
 	})
 }
@@ -202,8 +202,8 @@ func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxIdleAgentPeriod: model.Duration(50 * time.Millisecond),
@@ -252,8 +252,8 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			// If startup period is too short, we might try to re-launch agents.
@@ -324,8 +324,8 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 50 * time.Millisecond,
 		instanceType: TestInstanceType{
-			name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxAgentStartingPeriod: model.Duration(3 * time.Minute),

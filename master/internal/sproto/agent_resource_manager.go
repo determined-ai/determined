@@ -41,6 +41,9 @@ type (
 	}
 )
 
+// EndInstanceStats tells provisioner to update instance stats when master/agent crushes
+type EndInstanceStats struct{}
+
 // AgentSummary contains information about an agent for external display.
 type AgentSummary struct {
 	Name   string

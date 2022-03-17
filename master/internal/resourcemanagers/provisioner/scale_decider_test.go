@@ -7,7 +7,9 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/stretchr/testify/mock"
 )
 
 func assertEqualInstancesMarked(t *testing.T, left, right map[string]time.Time) {
@@ -396,4 +398,35 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 			assert.Equal(t, actual, tc.numToLaunch)
 		})
 	}
+}
+
+func TestRecordInstanceStats(t *testing.T) {
+	db := &mocks.DB{}
+	sd := scaleDecider{
+		db: db,
+		instances: map[string]*Instance{
+			"instance1": {
+				ID:         "instance1",
+				LaunchTime: time.Now().Add(-time.Hour),
+				AgentName:  "agent1",
+				State:      Running,
+			},
+			"instance2": {
+				ID:         "instance2",
+				LaunchTime: time.Now().Add(-time.Hour),
+				AgentName:  "agent1",
+				State:      Running,
+			},
+		},
+		disconnected: map[string]time.Time{
+			"instance3": time.Now(),
+		},
+		stopped: map[string]bool{
+			"instance4": true,
+		},
+	}
+	db.On("AddInstance", mock.Anything).Return(nil)
+	db.On("RemoveInstance", mock.Anything).Return(nil)
+	err := sd.recordInstanceStats(2)
+	assert.NilError(t, err)
 }

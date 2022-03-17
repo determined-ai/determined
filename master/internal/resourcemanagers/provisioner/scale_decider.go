@@ -131,24 +131,33 @@ func (s *scaleDecider) recordInstanceStats(slots int) error {
 	}
 
 	for instID, _ := range s.disconnected {
-		err := s.db.RemoveInstance(&model.InstanceStats{
-			InstanceID: &instID,
-			EndTime:    &now,
-		})
+		err := s.updateInstanceEndStats(instID, &now)
 		if err != nil {
 			return err
 		}
 	}
 	for instID, _ := range s.stopped {
-		err := s.db.RemoveInstance(&model.InstanceStats{
-			InstanceID: &instID,
-			EndTime:    &now,
-		})
+		err := s.updateInstanceEndStats(instID, &now)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (s *scaleDecider) updateInstanceEndStats(instID string, endTime *time.Time) error {
+	return s.db.RemoveInstance(&model.InstanceStats{
+		InstanceID: &instID,
+		EndTime:    endTime,
+	})
+}
+
+func (s *scaleDecider) endInstanceStats() {
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	for _, inst := range s.instances {
+		instID := inst.ID
+		s.updateInstanceEndStats(instID, &now)
+	}
 }
 
 func (s *scaleDecider) calculateInstanceStates() {
