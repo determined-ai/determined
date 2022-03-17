@@ -407,7 +407,7 @@ func (rp *ResourcePool) moveJob(
 
 	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
 
-	if secondAnchor != "" {
+	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
 	}
 
@@ -416,14 +416,24 @@ func (rp *ResourcePool) moveJob(
 	}
 
 	if prioChange {
+		err := rp.setGroupPriority(ctx, job.SetGroupPriority{
+			Priority:     anchorPriority,
+			ResourcePool: rp.config.PoolName,
+			Handler:      rp.IDToGroupActor[jobID],
+		})
+		if err != nil {
+			return err
+		}
+
 		resp := ctx.Ask(rp.IDToGroupActor[jobID], job.SetGroupPriority{
 			Priority:     anchorPriority,
 			ResourcePool: rp.config.PoolName,
+			Handler:      ctx.Self(),
 		})
 		if resp.Error() != nil {
 			return resp.Error()
 		}
-		if needMove(
+		if !needMove(
 			rp.queuePositions[jobID],
 			rp.queuePositions[anchorID],
 			rp.queuePositions[secondAnchor],
@@ -521,23 +531,8 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
 	case job.SetGroupPriority:
-		g := rp.getOrCreateGroup(ctx, msg.Handler)
-		if (g.priority != nil && *g.priority == msg.Priority) ||
-			rp.config.Scheduler.Priority == nil {
-			return nil
-		}
-		ctx.Log().Infof("setting priority for group of %s to %d",
-			msg.Handler.Address().String(), msg.Priority)
-		g.priority = &msg.Priority
-		jobID, ok := rp.groupActorToID[msg.Handler]
-		if ok {
-			time, err := getJobSubmissionTime(rp.taskList, jobID)
-			if err != nil {
-				ctx.Log().Errorf("failed to get job submission time: %s", err)
-				return nil
-			}
-			rp.queuePositions[jobID] = initalizeQueuePosition(time)
-		}
+		err := rp.setGroupPriority(ctx, msg)
+		ctx.Respond(err)
 		// if !ok: we haven't seen the job yet or this group is not IsUserVisible
 		// thus no need to reinitialize its queue position.
 
@@ -545,6 +540,27 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (rp *ResourcePool) setGroupPriority(ctx *actor.Context, msg job.SetGroupPriority) error {
+	g := rp.getOrCreateGroup(ctx, msg.Handler)
+	if (g.priority != nil && *g.priority == msg.Priority) ||
+		rp.config.Scheduler.Priority == nil {
+		return nil
+	}
+	ctx.Log().Infof("setting priority for group of %s to %d",
+		msg.Handler.Address().String(), msg.Priority)
+	g.priority = &msg.Priority
+	jobID, ok := rp.groupActorToID[msg.Handler]
+	if ok {
+		time, err := getJobSubmissionTime(rp.taskList, jobID)
+		if err != nil {
+			ctx.Log().Errorf("failed to get job submission time: %s", err)
+			return nil
+		}
+		rp.queuePositions[jobID] = initalizeQueuePosition(time)
 	}
 	return nil
 }

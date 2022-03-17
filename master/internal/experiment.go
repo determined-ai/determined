@@ -172,7 +172,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
 			return err
 		}
-		if err := e.setPriority(ctx, e.Config.Resources().Priority()); err != nil {
+		if err := e.setPriority(ctx, e.Config.Resources().Priority(), nil); err != nil {
 			return err
 		}
 
@@ -281,7 +281,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
-		err := e.setPriority(ctx, &msg.Priority)
+		err := e.setPriority(ctx, &msg.Priority, msg.Handler)
 		ctx.Respond(err)
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
@@ -607,7 +607,7 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
+func (e *experiment) setPriority(ctx *actor.Context, priority *int, handler *actor.Ref) error {
 	if priority == nil {
 		return nil
 	}
@@ -624,6 +624,9 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 		resources.SetPriority(oldPriorityPtr)
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+	}
+	if handler != nil {
+		return nil
 	}
 	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
 		Priority: *priority,
