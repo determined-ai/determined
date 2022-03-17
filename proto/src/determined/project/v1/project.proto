@@ -27,8 +27,6 @@ message Project {
         "id",
         "name",
         "workspace_id",
-        "description",
-        "last_experiment_started_at",
         "notes",
         "num_experiments",
         "num_active_experiments",

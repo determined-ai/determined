@@ -786,7 +786,7 @@ export interface V1AddProjectNoteRequest {
      * @type {number}
      * @memberof V1AddProjectNoteRequest
      */
-    id?: number;
+    id: number;
 }
 
 /**
@@ -2484,7 +2484,7 @@ export interface V1GetProjectResponse {
      * @type {V1Project}
      * @memberof V1GetProjectResponse
      */
-    project?: V1Project;
+    project: V1Project;
 }
 
 /**
@@ -2872,7 +2872,7 @@ export interface V1GetWorkspaceResponse {
      * @type {V1Workspace}
      * @memberof V1GetWorkspaceResponse
      */
-    workspace?: V1Workspace;
+    workspace: V1Workspace;
 }
 
 /**
@@ -4358,7 +4358,7 @@ export interface V1PostProjectRequest {
      * @type {number}
      * @memberof V1PostProjectRequest
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**
@@ -4372,7 +4372,7 @@ export interface V1PostProjectResponse {
      * @type {V1Project}
      * @memberof V1PostProjectResponse
      */
-    project?: V1Project;
+    project: V1Project;
 }
 
 /**
@@ -4470,7 +4470,7 @@ export interface V1PostWorkspaceResponse {
      * @type {V1Workspace}
      * @memberof V1PostWorkspaceResponse
      */
-    workspace?: V1Workspace;
+    workspace: V1Workspace;
 }
 
 /**
@@ -4536,13 +4536,13 @@ export interface V1Project {
      * @type {string}
      * @memberof V1Project
      */
-    description: string;
+    description?: string;
     /**
      * Time of most recently started experiment within this project.
      * @type {Date}
      * @memberof V1Project
      */
-    lastExperimentStartedAt: Date;
+    lastExperimentStartedAt?: Date;
     /**
      * Notes associated with this project.
      * @type {Array<V1Note>}

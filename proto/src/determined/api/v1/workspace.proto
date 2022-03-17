@@ -17,6 +17,10 @@ message GetWorkspaceRequest {
 
 // Response to GetWorkspaceRequest.
 message GetWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace" ] }
+  };
+
   // The workspace requested.
   determined.workspace.v1.Workspace workspace = 1;
 }
@@ -126,6 +130,10 @@ message PostWorkspaceRequest {
 
 // Response to PostWorkspaceRequest.
 message PostWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace" ] }
+  };
+
   // The workspace created.
   determined.workspace.v1.Workspace workspace = 1;
 }
