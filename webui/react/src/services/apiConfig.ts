@@ -501,7 +501,7 @@ export const patchModel: Service.DetApi<
    request: (params: Service.PatchModelParams) =>
      detApi.Models.patchModel(
        params.modelName,
-       { model: params.body },
+       params.body,
      ),
  };
 

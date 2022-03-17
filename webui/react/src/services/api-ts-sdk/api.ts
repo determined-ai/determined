@@ -3842,26 +3842,6 @@ export interface V1PatchModel {
 }
 
 /**
- * Request for updating a model in the registry.
- * @export
- * @interface V1PatchModelRequest
- */
-export interface V1PatchModelRequest {
-    /**
-     * The model desired model fields and values.
-     * @type {V1PatchModel}
-     * @memberof V1PatchModelRequest
-     */
-    model: V1PatchModel;
-    /**
-     * The name of the model being updated.
-     * @type {string}
-     * @memberof V1PatchModelRequest
-     */
-    modelName: string;
-}
-
-/**
  * Response to PatchModelRequest.
  * @export
  * @interface V1PatchModelResponse
@@ -13614,12 +13594,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {string} modelName An updated name for the model.
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options: any = {}): FetchArgs {
+        patchModel(modelName: string, body: V1PatchModel, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModel.');
@@ -13628,8 +13608,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchModel.');
             }
-            const localVarPath = `/api/v1/models/{modelName}`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{model.name}`
+                .replace(`{${"model.name"}}`, encodeURIComponent(String(modelName)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -13649,7 +13629,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchModelRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchModel" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -14011,12 +13991,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {string} modelName An updated name for the model.
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+        patchModel(modelName: string, body: V1PatchModel, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel(modelName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14214,12 +14194,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {string} modelName An updated name for the model.
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
+        patchModel(modelName: string, body: V1PatchModel, options?: any) {
             return ModelsApiFp(configuration).patchModel(modelName, body, options)(fetch, basePath);
         },
         /**
@@ -14389,13 +14369,13 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {string} modelName The name of the model being updated.
-     * @param {V1PatchModelRequest} body 
+     * @param {string} modelName An updated name for the model.
+     * @param {V1PatchModel} body The model desired model fields and values.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
+    public patchModel(modelName: string, body: V1PatchModel, options?: any) {
         return ModelsApiFp(this.configuration).patchModel(modelName, body, options)(this.fetch, this.basePath);
     }
 

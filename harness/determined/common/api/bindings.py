@@ -3219,28 +3219,6 @@ class v1PatchModel:
             "notes": self.notes if self.notes is not None else None,
         }
 
-class v1PatchModelRequest:
-    def __init__(
-        self,
-        model: "v1PatchModel",
-        modelName: str,
-    ):
-        self.model = model
-        self.modelName = modelName
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchModelRequest":
-        return cls(
-            model=v1PatchModel.from_json(obj["model"]),
-            modelName=obj["modelName"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "model": self.model.to_json(),
-            "modelName": self.modelName,
-        }
-
 class v1PatchModelResponse:
     def __init__(
         self,
@@ -6816,13 +6794,13 @@ def patch_PatchExperiment(
 def patch_PatchModel(
     session: "client.Session",
     *,
-    body: "v1PatchModelRequest",
-    modelName: str,
+    body: "v1PatchModel",
+    model_name: str,
 ) -> "v1PatchModelResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/models/{modelName}",
+        path=f"/api/v1/models/{model_name}",
         params=_params,
         json=body.to_json(),
         data=None,
