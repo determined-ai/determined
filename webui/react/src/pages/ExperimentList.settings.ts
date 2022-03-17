@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -45,6 +46,16 @@ const config: SettingsConfig = {
         baseType: BaseType.String,
         isArray: true,
       },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS.map(_ => 80),
+      key: 'columnWidths',
+      storageKey: 'columnWidths',
+      type: {
+        baseType: BaseType.Float,
+        isArray: true
+      }
+      
     },
     {
       key: 'label',

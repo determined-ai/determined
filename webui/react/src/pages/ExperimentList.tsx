@@ -57,6 +57,7 @@ import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
+import { update } from 'plotly.js/lib/core';
 
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -314,7 +315,8 @@ const ExperimentList: React.FC = () => {
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
 
-    const tableColumns: ColumnsType<ExperimentItem> = [
+    const tableColumns: ColumnsType<ExperimentItem> = {
+      id:
       {
         dataIndex: 'id',
         key: V1GetExperimentsRequestSortBy.ID,
@@ -324,35 +326,40 @@ const ExperimentList: React.FC = () => {
         title: 'ID',
         
       },
+      name:
       {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.NAME,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
+        isFiltered: settings => !!settings.search,
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
         width: 240,
       },
+      description:
       {
         dataIndex: 'description',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: descriptionRenderer,
         title: 'Description',
+        width: 200,
       },
+      tags:
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
         filters: labels.map(label => ({ text: label, value: label })),
         key: 'labels',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        onHeaderCell: () => settings.label ? { className: tableCss.headerFilterOn } : {},
+        isFiltered: settings => !!settings.label,
         render: tagsRenderer,
         title: 'Tags',
         width: 120,
       },
+      forkedFrom:
       {
         dataIndex: 'forkedFrom',
         key: V1GetExperimentsRequestSortBy.FORKEDFROM,
@@ -361,6 +368,7 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'Forked From',
       },
+      startTime:
       {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
@@ -369,12 +377,14 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'Start Time',
       },
+      duration:
       {
         key: 'duration',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: expermentDurationRenderer,
         title: 'Duration',
       },
+      trials:
       {
         dataIndex: 'numTrials',
         key: V1GetExperimentsRequestSortBy.NUMTRIALS,
@@ -382,6 +392,7 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'Trials',
       },
+      state:
       {
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
@@ -397,17 +408,19 @@ const ExperimentList: React.FC = () => {
             value,
           })),
         key: V1GetExperimentsRequestSortBy.STATE,
-        onHeaderCell: () => settings.state ? { className: tableCss.headerFilterOn } : {},
+        isFiltered: () => !!settings.state,
         render: stateRenderer,
         sorter: true,
         title: 'State',
       },
+      searcherType:
       {
         dataIndex: 'searcherType',
         key: 'searcherType',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         title: 'Searcher Type',
       },
+      resourcePool:
       {
         dataIndex: 'resourcePool',
         key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
@@ -415,27 +428,31 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'Resource Pool',
       },
+      progress:
       {
         key: V1GetExperimentsRequestSortBy.PROGRESS,
         render: experimentProgressRenderer,
         sorter: true,
         title: 'Progress',
       },
+      archived:
       {
         dataIndex: 'archived',
         key: 'archived',
         render: checkmarkRenderer,
         title: 'Archived',
       },
+      user:
       {
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         key: V1GetExperimentsRequestSortBy.USER,
-        onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
+        isFiltered: settings => !!settings.user,
         render: userRenderer,
         sorter: true,
         title: 'User',
       },
+      action:
       {
         align: 'right',
         className: 'fullCell',
@@ -445,17 +462,11 @@ const ExperimentList: React.FC = () => {
         render: actionRenderer,
         title: '',
         width: 40,
-        fixed: true
       },
-    ];
+    };
 
-    return tableColumns.map(column => {
-      column.sortOrder = null;
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-      }
-      return column;
-    });
+    return tableColumns
+
   }, [
     user,
     handleActionComplete,
@@ -472,15 +483,21 @@ const ExperimentList: React.FC = () => {
   ]);
 
   const visibleColumns = useMemo(() => {
-    return columns.filter(column => {
-      if (column.key === 'action') return true;
-      if (column.key === 'archived') return settings.archived;
-      return settings.columns?.includes(sentenceToCamelCase(column.title as string));
-    });
+    return settings.columns
+      ?.map((columnName) => ({
+        width: settings.columnWidths?.[columnName] ?? columns[columnName].width,
+        ...columns[columnName],
+      }))
+      .concat(columns.action); 
+    // return columns.filter(column => {
+    //   if (column.key === 'action') return true;
+    //   if (column.key === 'archived') return settings.archived;
+    //   return settings.columns?.includes(sentenceToCamelCase(column.title as string));
+    // });
   }, [ columns, settings.archived, settings.columns ]);
 
   const transferColumns = useMemo(() => {
-    return columns.filter(column => column.title !== '' && column.title !== 'Archived')
+    return Object.values(columns).filter(column => column.title !== '' && column.title !== 'Archived')
       .map(column => sentenceToCamelCase(column.title as string));
   }, [ columns ]);
 
@@ -573,7 +590,18 @@ const ExperimentList: React.FC = () => {
   }, [ resetSettings ]);
 
   const handleUpdateColumns = useCallback((columns: string[]) => {
-    updateSettings({ columns: columns.length === 0 ? [ 'name' ] : columns });
+    console.log("updatecolumns")
+    const previousWidths = settings.columns
+      ?.map((col, i) => ({ [col]: settings.columnWidths?.[i] }))
+      .reduce((a, b) => ({ ...a, ...b }), {});
+    // console.log({ currentWidths })
+    if (columns.length === 0) {
+      updateSettings({ columns: ['name'], columnWidths: [100] })
+    }
+    else {
+      updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths[col] ?? 100) })
+    }
+    // updateSettings({ columns: columns.length === 0 ? [ 'name' ] : columns });
   }, [ updateSettings ]);
 
   const { modalOpen } = useModalCustomizeColumns({
@@ -630,15 +658,16 @@ const ExperimentList: React.FC = () => {
   return (
     <Page
       id="experiments"
-      options={(
+      options={
         <Space>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
-      )}
-      title="Experiments">
+      }
+      title="Experiments"
+    >
       <TableBatch
         actions={[
           { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
@@ -658,14 +687,17 @@ const ExperimentList: React.FC = () => {
       <ResponsiveTable
         areRowsRightClickable={true}
         areRowsSelected={!!settings.row}
-        columns={visibleColumns}
+        columnSpec={columns}
         ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, total)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          total
+        )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{
@@ -675,7 +707,10 @@ const ExperimentList: React.FC = () => {
         }}
         showSorterTooltip={false}
         size="small"
-        onChange={handleTableChange(columns, settings, updateSettings)}
+        settings={settings}
+        updateSettings={updateSettings}
+     
+        // onChange={handleTableChange(columns, settings, updateSettings)}
       />
     </Page>
   );
