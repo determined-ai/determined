@@ -383,6 +383,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
+		ctx.Tell(rp.provisioner, sproto.EndInstanceStats{})
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
