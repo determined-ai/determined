@@ -162,7 +162,7 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
                 if any(
                     a in agent_ids
                     for r in t.get("resources", [])
-                    for a in r["agent_devices"].keys()
+                    for a in r["agent_devices"]
                 )
             }
 

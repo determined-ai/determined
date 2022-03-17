@@ -13,7 +13,7 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
         resources = t.get("resources", [])
         if not resources:
             return "unassigned"
-        agents = [a for r in resources for a in r["agent_devices"].keys()]
+        agents = [a for r in resources for a in r["agent_devices"]]
         if len(agents) == 1:
             agent = agents[0]  # type: str
             return agent
