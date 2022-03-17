@@ -36,8 +36,6 @@ message Notebook {
   determined.container.v1.Container container = 6;
   // The display name of the user that created the notebook.
   string display_name = 15;
-  // The id of the user that created the notebook.
-  int32 user_id = 16;
   // The username of the user that created the notebook.
   string username = 10;
   // The service address.

@@ -555,7 +555,6 @@ export interface CommandTask extends Task {
   resourcePool: string;
   state: CommandState;
   type: CommandType;
-  userId: number;
   username: string;
 }
 

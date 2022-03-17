@@ -75,8 +75,6 @@ message Experiment {
   int32 num_trials = 8;
   // The display name of the user that created the experiment.
   string display_name = 18;
-  // The id of the user that created the experiment.
-  int32 user_id = 19;
   // The username of the user that created the experiment.
   string username = 10;
   // The resource pool the experiment was created in

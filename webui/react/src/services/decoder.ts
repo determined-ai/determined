@@ -134,7 +134,6 @@ const mapCommonV1Task = (
     startTime: task.startTime as unknown as string,
     state: mapV1TaskState(task.state),
     type,
-    userId: task.userId || 0,
     username: task.username,
   };
 };

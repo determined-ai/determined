@@ -64,7 +64,6 @@ export function generateCommandTask(idx: number): Type.RecentCommandTask {
     displayName: user.displayName,
     state: state as Type.CommandState,
     type: getRandomElementOfEnum(Type.CommandType),
-    userId: user.id,
     username: user.username,
   };
 }
