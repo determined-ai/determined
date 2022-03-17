@@ -119,7 +119,7 @@ func (a *apiServer) PostProject(
 
 func (a *apiServer) AddProjectNote(
 	ctx context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
-	p, err := a.GetProjectFromID(req.Id)
+	p, err := a.GetProjectFromID(req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (a *apiServer) AddProjectNote(
 	})
 
 	newp := &projectv1.Project{}
-	err = a.m.db.QueryProto("insert_project_note", newp, req.Id, notes)
+	err = a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, notes)
 	return &apiv1.AddProjectNoteResponse{Notes: newp.Notes},
 		errors.Wrapf(err, "error adding project note")
 }

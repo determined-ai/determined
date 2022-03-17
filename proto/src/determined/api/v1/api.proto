@@ -1346,8 +1346,8 @@ service Determined {
   // Add a note to a project.
   rpc AddProjectNote(AddProjectNoteRequest) returns (AddProjectNoteResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{id}/notes"
-      body: "*"
+      post: "/api/v1/projects/{project_id}/notes"
+      body: "note"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

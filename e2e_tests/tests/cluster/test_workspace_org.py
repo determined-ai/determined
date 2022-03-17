@@ -89,13 +89,13 @@ def test_workspace_org() -> None:
     note2 = bindings.v1Note(name="Hello 2", contents="Hello World")
     bindings.post_AddProjectNote(
         sess,
-        body=bindings.v1AddProjectNoteRequest(note),
-        id=madeProject.id,
+        body=note,
+        projectId=madeProject.id,
     )
     r5 = bindings.post_AddProjectNote(
         sess,
-        body=bindings.v1AddProjectNoteRequest(note2),
-        id=madeProject.id,
+        body=note2,
+        projectId=madeProject.id,
     )
     returned_notes = r5.notes
     assert returned_notes and len(returned_notes) == 2
