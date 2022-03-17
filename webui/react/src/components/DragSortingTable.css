@@ -17,6 +17,7 @@
   display: none;
 }
 .react-resizable-handle {
+  border-radius: 4px;
   bottom: 0;
   cursor: col-resize;
   height: 100%;
@@ -28,7 +29,7 @@
   z-index: 1;
 }
 .react-resizable-handle:hover {
-  background: blue;
+  background: rgb(68, 142, 247);
 }
 
 /* .dragHandler:hover {

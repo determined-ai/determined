@@ -142,6 +142,7 @@ const ResponsiveTable: ResponsiveTable = ({
   areRowsRightClickable,
   ContextMenu,
   areRowsSelected,
+  columnSpec,
   // dataSource,
   ...props
 }) => {

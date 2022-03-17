@@ -11,16 +11,20 @@ import tableCss from 'components/ResponsiveTable.module.scss';
 import useResize from 'hooks/useResize';
 import Spinner from './Spinner';
 
+const Cell = ({ isCellRightClickable, ...props }) => <td {...props}/>
 
-const ResizableTitle = ({ onResize, width, className, columnName, filterActive, style,...restProps }) => {
+const ResizableTitle = ({ onResize, width, className, columnName, filterActive,...restProps }) => {
 
-  if (!columnName) return <th className={`${className} notColumn`} {...restProps} />;
+  if (!columnName) {
+  //   console.log(restProps)
+    return <th className={`${className} notColumn`} {...restProps} />;
+  }
   
   const fullClassName = filterActive ? `${className} ${tableCss.headerFilterOn}` : className
   return (
     <Resizable
-      width={width || 5}
-      // height={0}
+      width={width}
+      height={0}
       handle={
         <span
           className="react-resizable-handle"
@@ -33,7 +37,7 @@ const ResizableTitle = ({ onResize, width, className, columnName, filterActive, 
       draggableOpts={{ enableUserSelectHack: false }}
     >
 
-      <th style={{ cursor: "move", ...style }}>
+      <th style={{ cursor: "move" }}>
         <div  className={fullClassName} {...restProps} title={columnName} />
       </th>
 
@@ -52,8 +56,6 @@ const ResponsiveTable = ({
   loading,
   ...props
 }) => {
-  // const [columns, setColumns] = useState(visibleColumns);
-
   const tableRef = useRef<HTMLDivElement>(null);
   const [hasScrollBeenEnabled, setHasScrollBeenEnabled] = useState<boolean>(false);
   const resize = useResize(tableRef);
@@ -65,7 +67,13 @@ const ResponsiveTable = ({
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (!columnKey || !settings.columns?.find((column) => column.key === columnKey)) return;
+      if (
+        !columnKey ||
+        !settings.columns
+          .find((col) => columnSpec[col]?.key === columnKey)
+      )
+        return;
+
 
       const newSettings = {
         sortDesc: order === 'descend',
@@ -80,10 +88,6 @@ const ResponsiveTable = ({
     [settings, updateSettings]
   );
 
-  // useEffect(() => {
-  //   console.log("columns... changed?")
-  //   setColumnOrder(columns);
-  // }, [columns]);
 
   const dragProps = {
     onDragEnd: (fromIndex, toIndex) => {
@@ -91,10 +95,9 @@ const ResponsiveTable = ({
       const reorderedWidths = [...settings.columnWidths]
       const col = reorderedColumns.splice(fromIndex, 1)[0];
       const width = reorderedWidths.splice(fromIndex, 1)[0];
-      // console.log({ fromIndex, toIndex });
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
-      updateSettings({ columns: reorderedColumns, widths: reorderedWidths });
+      updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
     },
     nodeSelector: 'th',
     handleSelector: '.ant-table-cell',
@@ -105,21 +108,18 @@ const ResponsiveTable = ({
     header: {
       cell: ResizableTitle,
     },
+    body: {
+      cell: Cell
+    }
   };
 
   const handleResize = useCallback(
     (index) => (e, { size }) => {
-      // const newWidth = Math.max(size.width, 100)
-      const newWidth = size.width
-      // const ostensibleTarget = columns[index];
-      // const resizedColumns = columns.map((col, i) =>
-      //   index === i ? { ...col, width: width } : col
-      // );
-      const newWidths = settings.columnWidths.map((w, i) => index === i ? newWidth : w)
-      console.log({newWidths})
-      // const colWidths = resizedColumns.map((c) => `${c.title}: ${c.width}`).join(' // ');
-      // console.log({index,width, ostensibleTarget, colWidths })
-      updateSettings({ columnWidths: newWidths });
+      const targetWidth = Math.floor(Math.max(size.width, 80))
+      if (targetWidth !== settings.columnWidths[index]) {
+        const newWidths = settings.columnWidths.map((w, i) => index === i ? targetWidth : w)
+        updateSettings({ columnWidths: newWidths });
+      }
     },
     [updateSettings]
   );
@@ -131,7 +131,7 @@ const ResponsiveTable = ({
         onResize: handleResize(index),
         columnName: columnSpec.title,
         filterActive,
-        ...column,
+        width: column.width
       };
     };
   };
@@ -167,10 +167,7 @@ const ResponsiveTable = ({
     () =>
       settings.columns.map((columnName, index) => {
         const column = columnSpec[columnName];
-        // console.log(settings.columnWidths.join(" "))
-        const columnWidth = settings.columnWidths?.[index]  ?? 100;
-        // if (columnName === "description")
-        // console.log(`columnwidehthte ${columnWidth} ${index}`)
+        const columnWidth = settings.columnWidths?.[index] ?? 100;
         const sortOrder =
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
@@ -180,13 +177,13 @@ const ResponsiveTable = ({
           onHeaderCell: onHeaderCell(index, column),
           ...column,
         };
-      }),
-    [settings.columns, settings.columnWidth, columnSpec]
+      }).concat(columnSpec.action),
+    [settings.columns, settings.columnWidths, settings.sortKey, settings.sortDesc, columnSpec]
   );
 
-  // console.log(renderColumns.map(x=>x.key))
-  // console.log(renderColumns.map((x) => `${x.title} ${x.width}`));
-  // console.log(settings)
+    // console.log(renderColumns.map((x) => `${x.width}`));
+    // console.log(renderColumns.map((x) => `${x.title}`));
+
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>

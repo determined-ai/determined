@@ -261,7 +261,6 @@ const ResponsiveTable: ResponsiveTable = ({
 
   const dragProps = {
     onDragEnd: (fromIndex, toIndex) => {
-      console.log({fromIndex, toIndex})
       const columns = [...columnOrder];
 
 

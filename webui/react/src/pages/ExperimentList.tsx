@@ -2,7 +2,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
@@ -57,7 +57,6 @@ import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
-import { update } from 'plotly.js/lib/core';
 
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -75,7 +74,8 @@ const ExperimentList: React.FC = () => {
     settings,
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
-
+  
+  // useEffect(() => console.log(settings.lable), [settings.label] )
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -126,6 +126,9 @@ const ExperimentList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
+  const unchangedRef = useRef(null)
+  const labelsChangedIndicator = useMemo(() => settings.label ?? unchangedRef, [settings.label])
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = (settings.state || []).map(state => encodeExperimentState(state as RunState));
@@ -155,14 +158,17 @@ const ExperimentList: React.FC = () => {
     }
   }, [ canceler,
     settings.archived,
-    settings.label,
+    // settings.label,
+    labelsChangedIndicator,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
     settings.state,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user ]);
+    settings.user]);
+  
+
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -337,7 +343,7 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
-        width: 240,
+        // width: 240,
       },
       description:
       {
@@ -345,7 +351,7 @@ const ExperimentList: React.FC = () => {
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: descriptionRenderer,
         title: 'Description',
-        width: 200,
+        // width: 200,
       },
       tags:
       {
@@ -357,7 +363,7 @@ const ExperimentList: React.FC = () => {
         isFiltered: settings => !!settings.label,
         render: tagsRenderer,
         title: 'Tags',
-        width: 120,
+        // width: 120,
       },
       forkedFrom:
       {
@@ -461,7 +467,7 @@ const ExperimentList: React.FC = () => {
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: actionRenderer,
         title: '',
-        width: 40,
+        width: 20,
       },
     };
 
@@ -481,20 +487,6 @@ const ExperimentList: React.FC = () => {
     userFilterDropdown,
     users,
   ]);
-
-  const visibleColumns = useMemo(() => {
-    return settings.columns
-      ?.map((columnName) => ({
-        width: settings.columnWidths?.[columnName] ?? columns[columnName].width,
-        ...columns[columnName],
-      }))
-      .concat(columns.action); 
-    // return columns.filter(column => {
-    //   if (column.key === 'action') return true;
-    //   if (column.key === 'archived') return settings.archived;
-    //   return settings.columns?.includes(sentenceToCamelCase(column.title as string));
-    // });
-  }, [ columns, settings.archived, settings.columns ]);
 
   const transferColumns = useMemo(() => {
     return Object.values(columns).filter(column => column.title !== '' && column.title !== 'Archived')
@@ -590,18 +582,15 @@ const ExperimentList: React.FC = () => {
   }, [ resetSettings ]);
 
   const handleUpdateColumns = useCallback((columns: string[]) => {
-    console.log("updatecolumns")
     const previousWidths = settings.columns
       ?.map((col, i) => ({ [col]: settings.columnWidths?.[i] }))
       .reduce((a, b) => ({ ...a, ...b }), {});
-    // console.log({ currentWidths })
     if (columns.length === 0) {
       updateSettings({ columns: ['name'], columnWidths: [100] })
     }
     else {
       updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths[col] ?? 100) })
     }
-    // updateSettings({ columns: columns.length === 0 ? [ 'name' ] : columns });
   }, [ updateSettings ]);
 
   const { modalOpen } = useModalCustomizeColumns({
