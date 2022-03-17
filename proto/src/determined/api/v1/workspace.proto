@@ -120,12 +120,10 @@ message GetWorkspacesResponse {
 // Request for creating a workspace.
 message PostWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "username" ] }
+    json_schema: { required: [ "name" ] }
   };
   // The name of the workspace.
   string name = 1;
-  // User who is creating this workspace.
-  string username = 2;
 }
 
 // Response to PostWorkspaceRequest.

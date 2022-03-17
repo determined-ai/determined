@@ -95,12 +95,10 @@ message GetProjectExperimentsResponse {
 // Request for creating a project.
 message PostProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "username", "workspace_id" ] }
+    json_schema: { required: [ "name", "workspace_id" ] }
   };
   // The name of the project.
   string name = 1;
-  // User who is creating this project.
-  string username = 2;
   // Description of the project.
   string description = 3;
   // Id of the associated workspace.
@@ -112,7 +110,7 @@ message PostProjectResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "project" ] }
   };
-  
+
   // The project created.
   determined.project.v1.Project project = 1;
 }

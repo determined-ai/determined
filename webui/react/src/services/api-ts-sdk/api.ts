@@ -4342,12 +4342,6 @@ export interface V1PostProjectRequest {
      */
     name: string;
     /**
-     * User who is creating this project.
-     * @type {string}
-     * @memberof V1PostProjectRequest
-     */
-    username: string;
-    /**
      * Description of the project.
      * @type {string}
      * @memberof V1PostProjectRequest
@@ -4451,12 +4445,6 @@ export interface V1PostWorkspaceRequest {
      * @memberof V1PostWorkspaceRequest
      */
     name: string;
-    /**
-     * User who is creating this workspace.
-     * @type {string}
-     * @memberof V1PostWorkspaceRequest
-     */
-    username: string;
 }
 
 /**
