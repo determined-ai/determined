@@ -392,7 +392,6 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.Base.Owner.Username,
 		DisplayName:  c.Base.Owner.DisplayName.ValueOrZero(),
-		UserId:       int32(c.Base.Owner.ID),
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
 		JobId:        c.jobID.String(),
