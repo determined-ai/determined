@@ -70,12 +70,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
       </Grid>
-      {bestCheckpoint && (
+      {bestCheckpoint && trial && (
         <CheckpointModal
           checkpoint={bestCheckpoint}
           config={experiment.config}
           show={showBestCheckpoint}
-          title={`Best Checkpoint for Trial ${trial?.id}`}
+          title={`Best Checkpoint for Trial ${trial.id}`}
           onHide={handleHideBestCheckpoint}
         />
       )}
