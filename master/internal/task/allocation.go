@@ -134,7 +134,6 @@ func NewAllocation(
 			Slots:        req.SlotsNeeded,
 			AgentLabel:   req.Name,
 			ResourcePool: req.ResourcePool,
-			StartTime:    time.Now().UTC(),
 		},
 
 		reservations: reservations{},
@@ -395,6 +394,13 @@ func (a *Allocation) TaskContainerStateChanged(
 	switch msg.Container.State {
 	case cproto.Pulling:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
+		a.model.StartTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
+		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
+			ctx.Log().
+				WithError(err).
+				Errorf("allocation will not be properly accounted for")
+		}
+
 	case cproto.Starting:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateStarting)
 	case cproto.Running:

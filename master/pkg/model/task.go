@@ -92,7 +92,7 @@ type Allocation struct {
 	Slots        int              `db:"slots"`
 	AgentLabel   string           `db:"agent_label"`
 	ResourcePool string           `db:"resource_pool"`
-	StartTime    time.Time        `db:"start_time"`
+	StartTime    *time.Time       `db:"start_time"`
 	EndTime      *time.Time       `db:"end_time"`
 	State        *AllocationState `db:"state"`
 	IsReady      *bool            `db:"is_ready"`
