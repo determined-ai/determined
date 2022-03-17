@@ -5,6 +5,7 @@
 
 .ant-table-cell {
   cursor: 'move';
+  user-select: none;
 }
 .ant-table-filter-trigger {
   cursor: pointer
@@ -21,15 +22,15 @@
   bottom: 0;
   cursor: col-resize;
   height: 100%;
-  margin-left: 8px;
+  margin-left: 6px;
   position: absolute;
   right: -5px;
   user-select: none;
-  width: 10px;
+  width: 8px;
   z-index: 1;
 }
 .react-resizable-handle:hover {
-  background: rgb(68, 142, 247);
+  background: rgba(68, 142, 247, 0.4);
 }
 
 /* .dragHandler:hover {

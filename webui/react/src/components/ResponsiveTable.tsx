@@ -4,10 +4,8 @@ import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
-import ReactDOM from 'react-dom';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-// import update from 'immutability-helper';
 
 import useResize from 'hooks/useResize';
 

@@ -612,6 +612,7 @@ const ExperimentList: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
+    console.log("effecting")
     fetchExperiments();
     setIsLoading(true);
   }, [
@@ -652,6 +653,9 @@ const ExperimentList: React.FC = () => {
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
+          <Button onClick={() => updateSettings({ columnWidths: settings.columns.map(_ => 80) })}>
+            Reset Width
+          </Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
       }
@@ -698,7 +702,7 @@ const ExperimentList: React.FC = () => {
         size="small"
         settings={settings}
         updateSettings={updateSettings}
-     
+
         // onChange={handleTableChange(columns, settings, updateSettings)}
       />
     </Page>

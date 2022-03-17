@@ -13,14 +13,21 @@ import Spinner from './Spinner';
 
 const Cell = ({ isCellRightClickable, ...props }) => <td {...props}/>
 
-const ResizableTitle = ({ onResize, width, className, columnName, filterActive,...restProps }) => {
-
+const ResizableTitle = ({
+  onResize,
+  onResizeStop,
+  width,
+  className,
+  columnName,
+  filterActive,
+  ...restProps
+}) => {
   if (!columnName) {
-  //   console.log(restProps)
+    //   console.log(restProps)
     return <th className={`${className} notColumn`} {...restProps} />;
   }
-  
-  const fullClassName = filterActive ? `${className} ${tableCss.headerFilterOn}` : className
+
+  const fullClassName = filterActive ? `${className} ${tableCss.headerFilterOn}` : className;
   return (
     <Resizable
       width={width}
@@ -34,13 +41,12 @@ const ResizableTitle = ({ onResize, width, className, columnName, filterActive,.
         />
       }
       onResize={onResize}
+      onResizeStop={onResizeStop}
       draggableOpts={{ enableUserSelectHack: false }}
     >
-
-      <th style={{ cursor: "move" }}>
-        <div  className={fullClassName} {...restProps} title={columnName} />
+      <th style={{ cursor: 'move' }}>
+        <div className={fullClassName} {...restProps} title={columnName} />
       </th>
-
     </Resizable>
   );
 };
@@ -61,9 +67,13 @@ const ResponsiveTable = ({
   const resize = useResize(tableRef);
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
   const [tableScroll, setTableScroll] = useState(scroll);
+  const [widths, setWidths] = useState(settings.columnWidths)
+
+  useEffect(() => setWidths(settings.columnWidths), [settings.columnWidths])
 
   const handleTableChange = useCallback(
     (tablePagination: any, tableFilters: any, tableSorter: any): void => {
+      console.log("table change")
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
@@ -113,13 +123,30 @@ const ResponsiveTable = ({
     }
   };
 
+  // console.log(widths[0])
+
   const handleResize = useCallback(
     (index) => (e, { size }) => {
+      const targetWidth = Math.floor(Math.max(size.width, 80));
+      
+      // if (targetWidth !== settings.columnWidths[index]) {
+      const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
+      setWidths(newWidths);
+      // updateSettings({ columnWidths: newWidths });
+      // }
+    },
+    [updateSettings]
+  );
+
+  const handleResizeStop = useCallback(
+    (index) => (e, { size }) => {
+      console.log("resize stop")
       const targetWidth = Math.floor(Math.max(size.width, 80))
-      if (targetWidth !== settings.columnWidths[index]) {
-        const newWidths = settings.columnWidths.map((w, i) => index === i ? targetWidth : w)
+      // if (targetWidth !== settings.columnWidths[index]) {
+        const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
+        setWidths(newWidths);
         updateSettings({ columnWidths: newWidths });
-      }
+      // }
     },
     [updateSettings]
   );
@@ -129,6 +156,7 @@ const ResponsiveTable = ({
       const filterActive = !!columnSpec?.isFiltered?.(settings);
       return {
         onResize: handleResize(index),
+        onResizeStop: handleResizeStop(index),
         columnName: columnSpec.title,
         filterActive,
         width: column.width
@@ -167,7 +195,8 @@ const ResponsiveTable = ({
     () =>
       settings.columns.map((columnName, index) => {
         const column = columnSpec[columnName];
-        const columnWidth = settings.columnWidths?.[index] ?? 100;
+        // const columnWidth = settings.columnWidths?.[index] ?? 100;
+        const columnWidth = widths[index];
         const sortOrder =
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
@@ -178,7 +207,7 @@ const ResponsiveTable = ({
           ...column,
         };
       }).concat(columnSpec.action),
-    [settings.columns, settings.columnWidths, settings.sortKey, settings.sortDesc, columnSpec]
+    [settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec]
   );
 
     // console.log(renderColumns.map((x) => `${x.width}`));
@@ -190,6 +219,7 @@ const ResponsiveTable = ({
         <ReactDragListView.DragColumn {...dragProps}>
           <Table
             bordered
+            // onHeaderRow
             components={components}
             columns={renderColumns}
             dataSource={dataSource}
