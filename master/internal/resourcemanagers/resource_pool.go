@@ -268,6 +268,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.EndAgentStats:
 		return rp.receiveAgentMsg(ctx)
 
+	case sproto.EndInstanceStats:
+		ctx.Tell(rp.provisioner, msg)
+
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
