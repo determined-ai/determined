@@ -1590,6 +1590,12 @@ export interface V1Experiment {
      */
     numTrials: number;
     /**
+     * The display name of the user that created the experiment.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    displayName?: string;
+    /**
      * The username of the user that created the experiment.
      * @type {string}
      * @memberof V1Experiment

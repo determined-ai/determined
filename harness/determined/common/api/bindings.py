@@ -1036,6 +1036,7 @@ class v1Experiment:
         state: "determinedexperimentv1State",
         username: str,
         description: "typing.Optional[str]" = None,
+        displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
@@ -1051,6 +1052,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1071,6 +1073,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1091,6 +1094,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
