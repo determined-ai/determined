@@ -269,7 +269,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return rp.receiveAgentMsg(ctx)
 
 	case sproto.EndInstanceStats:
-		ctx.Tell(rp.provisioner, msg)
+		if rp.provisioner != nil {
+			ctx.Tell(rp.provisioner, msg)
+		}
 
 	case
 		groupActorStopped,
@@ -376,7 +378,9 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
-		ctx.Tell(rp.provisioner, sproto.EndInstanceStats{})
+		if rp.provisioner != nil {
+			ctx.Tell(rp.provisioner, sproto.EndInstanceStats{})
+		}
 
 	case sproto.EndAgentStats:
 		agentID := msg.Agent.Address().Local()
@@ -385,7 +389,9 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
-		ctx.Tell(rp.provisioner, sproto.EndInstanceStats{})
+		if rp.provisioner != nil {
+			ctx.Tell(rp.provisioner, sproto.EndInstanceStats{})
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
