@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
 
-	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -21,7 +21,7 @@ import (
 // 1. A specific key/value pair tag.
 // 2. Names of agents that are equal to the instance IDs.
 type awsCluster struct {
-	*AWSClusterConfig
+	*provconfig.AWSClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	ec2UserData  []byte
@@ -32,7 +32,7 @@ type awsCluster struct {
 }
 
 func newAWSCluster(
-	resourcePool string, config *Config, cert *tls.Certificate,
+	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*awsCluster, error) {
 	if err := config.AWS.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")

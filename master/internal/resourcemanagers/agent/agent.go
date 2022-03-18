@@ -426,7 +426,10 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
 	a.agentState.agentStarted(ctx, agentStarted)
-	ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label, Slots: a.agentState.NumSlots()})
+	ctx.Tell(a.resourcePool, sproto.AddAgent{
+		Agent: ctx.Self(),
+		Label: agentStarted.Label,
+		Slots: a.agentState.NumSlots()})
 
 	// TODO(ilia): Deprecate together with the old slots API.
 	ctx.Tell(a.slots, *agentStarted)

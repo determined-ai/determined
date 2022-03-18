@@ -371,15 +371,17 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		agentID := msg.Agent.Address().Local()
 		ctx.Log().Infof("removing agent: %s", agentID)
 		delete(rp.agents, msg.Agent)
-		ctx.Tell(ctx.Self(), sproto.EndAgentStats{Agent: msg.Agent})
+		endTime := time.Now().UTC().Truncate(time.Millisecond)
+		err := rp.updateAgentEndStats(agentID, &endTime)
+		if err != nil {
+			ctx.Log().WithError(err)
+		}
+		ctx.Tell(rp.provisioner, sproto.EndInstanceStats{})
 
 	case sproto.EndAgentStats:
 		agentID := msg.Agent.Address().Local()
 		endTime := time.Now().UTC().Truncate(time.Millisecond)
-		err := rp.db.RemoveAgent(&model.AgentStats{
-			EndTime: &endTime,
-			AgentID: &agentID,
-		})
+		err := rp.updateAgentEndStats(agentID, &endTime)
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
@@ -437,6 +439,13 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (rp *ResourcePool) updateAgentEndStats(agentID string, endTime *time.Time) error {
+	return rp.db.RemoveAgent(&model.AgentStats{
+		EndTime: endTime,
+		AgentID: &agentID,
+	})
 }
 
 func (rp *ResourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*agent.AgentState {

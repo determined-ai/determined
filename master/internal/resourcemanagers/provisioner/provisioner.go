@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -46,7 +46,9 @@ type provider interface {
 }
 
 // New creates a new Provisioner.
-func New(resourcePool string, config *Config, cert *tls.Certificate, db db.DB) (*Provisioner, error) {
+func New(
+	resourcePool string, config *provconfig.Config, cert *tls.Certificate, db db.DB,
+) (*Provisioner, error) {
 	if err := config.InitMasterAddress(); err != nil {
 		return nil, err
 	}

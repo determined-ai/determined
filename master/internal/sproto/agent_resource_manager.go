@@ -22,7 +22,7 @@ type (
 		Agent *actor.Ref
 	}
 
-	// EndAgentStats update the end time for agent
+	// EndAgentStats update the end time for agent.
 	EndAgentStats struct {
 		Agent *actor.Ref
 	}
@@ -41,7 +41,7 @@ type (
 	}
 )
 
-// EndInstanceStats tells provisioner to update instance stats when master/agent crushes
+// EndInstanceStats tells provisioner to update instance stats when master/agent crushes.
 type EndInstanceStats struct{}
 
 // AgentSummary contains information about an agent for external display.

@@ -156,7 +156,10 @@ func (s *scaleDecider) endInstanceStats() {
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	for _, inst := range s.instances {
 		instID := inst.ID
-		s.updateInstanceEndStats(instID, &now)
+		err := s.updateInstanceEndStats(instID, &now)
+		if err != nil {
+			continue
+		}
 	}
 }
 

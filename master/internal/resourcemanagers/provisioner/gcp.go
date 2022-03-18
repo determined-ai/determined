@@ -17,14 +17,14 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 
-	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
 )
 
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
 // 1. A specific key/value pair label.
 // 2. Names of agents that are equal to the instance names.
 type gcpCluster struct {
-	*GCPClusterConfig
+	*provconfig.GCPClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	metadata     []*compute.MetadataItems
@@ -33,7 +33,7 @@ type gcpCluster struct {
 }
 
 func newGCPCluster(
-	resourcePool string, config *Config, cert *tls.Certificate,
+	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*gcpCluster, error) {
 	if err := config.GCP.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
@@ -209,7 +209,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 		}
 		rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
 
-		rb.MinCpuPlatform = GetCPUPlatform(rb.MachineType)
+		rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
 
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {

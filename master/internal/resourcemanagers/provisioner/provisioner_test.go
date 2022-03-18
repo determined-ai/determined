@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
-	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provisionerconfig"
+	. "github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
