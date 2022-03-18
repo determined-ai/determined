@@ -147,3 +147,77 @@ you find that the built-in context.DataLoader() does not support your use case.
            return torch.utils.data.DataLoader(my_dataset, batch_sampler=batch_sampler)
 
 See the :mod:`determined.pytorch.samplers` for details.
+
+***************************
+ Automatic Mixed Precision
+***************************
+
+Determined supports using the PyTorch Automatic Mixed Precision (AMP) library, which enables a more
+compact representation of models in GPU memory, and for larger batches to be trained.
+
+In typical PyTorch usage, a scaler object, typically an instance of ``torch.cuda.amp.GradScaler``,
+is created and used to scale the loss for the backward pass and step optimizers during training. The
+scaler itself should be updated on each training iteration. The forward pass is wrapped in a
+``torch.cuda.amp.autocast`` context manager, which is done both in training and when doing
+operations such as evaluation and inference. See the
+`PyTorch AMP package documentation <https://pytorch.org/docs/stable/amp.html>`_ and the
+`AMP recipe <https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html>`_ for full details and
+examples.
+
+In the Determined PyTorchTrial API, this usage requires two modifications:
+
+-  The scaler should be wrapped before use with ``PyTorchTrial.wrap_scaler()``.
+
+-  Instead of calling ``scaler.step()``, directly, pass the scaler to
+   ``PyTorchTrialContext.step_optimizer()``, which calls ``scaler.step()``.
+
+For example:
+
+.. code:: python
+
+   from torch.cuda.amp import GradScaler, autocast
+   from determined.pytorch import PyTorchTrial
+
+   class AMPTrial(PyTorchTrial):
+
+       def __init__(self, context):
+           # Other initialization
+
+           self.scaler = context.wrap_scaler(GradScaler())
+           super().__init__(context)
+
+
+       def train_batch(self, ...):
+           with autocast():
+               # Normal forward pass to get loss
+
+           self.context.backward(self.scaler.scale(loss))
+           self.context.step_optimizer(self.optimizer, scaler=self.scaler)
+           self.scaler.update()
+           return {"loss": loss}
+
+
+       def evaluate_batch(self, ...):
+           with autocast():
+               # Normal forward pass to get loss
+
+           return {"validation_loss": loss}
+
+
+If your model invokes the features in ``torch.cuda.amp`` using only the pattern shown in the
+examples and recipes, you might be able to use an experimental feature that has all the above
+functionality without the need for additional code changes. To use the experimental feature, enable
+the feature during model initialization, as shown here:
+
+.. code:: python
+
+   from determined.pytorch import PyTorchTrial
+
+   class AMPTrial(PyTorchTrial):
+
+       def __init__(self, context):
+           # Other initialization
+
+          context.experimental.use_amp()
+          super().__init__(context)
+
