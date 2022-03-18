@@ -302,8 +302,8 @@ func removeTaskFromAgents(
 	agents map[*actor.Ref]*agent.AgentState,
 	resourcesAllocated *sproto.ResourcesAllocated,
 ) {
-	for _, allocation := range resourcesAllocated.Reservations {
-		allocation := allocation.(*containerReservation)
+	for _, allocation := range resourcesAllocated.Resources {
+		allocation := allocation.(*containerResources)
 		if len(allocation.devices) == 0 {
 			// Handle zero-slot containers.
 			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.container.id)

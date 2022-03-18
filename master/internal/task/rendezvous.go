@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	apiutils "github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -36,8 +37,7 @@ type (
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
 	WatchRendezvousInfo struct {
-		AllocationID model.AllocationID
-		ContainerID  cproto.ID
+		ResourcesID sproto.ResourcesID
 	}
 	// RendezvousInfoOrError contains either rendezvous info or an error from failing
 	// to materialize it.
@@ -50,9 +50,11 @@ type (
 		C <-chan RendezvousInfoOrError
 	}
 	// UnwatchRendezvousInfo removes the watcher for the given container.
-	UnwatchRendezvousInfo struct{ ID cproto.ID }
+	UnwatchRendezvousInfo struct {
+		ResourcesID sproto.ResourcesID
+	}
 
-	// RendezvousTimeout tracks the timeout of the allocation reservations rendezvousing.
+	// RendezvousTimeout tracks the timeout of the allocation resources rendezvousing.
 	// It is possible that it takes very long for all containers to be connected after the first
 	// container is connected. This might happen when the k8s cluster waits for new instances
 	// to spin up, which might not happen at all. At the same time, taking up part of all
@@ -62,19 +64,19 @@ type (
 	// Rendezvous encapsulates the rendezvous state of a trial.
 	Rendezvous struct {
 		allocationID      model.AllocationID
-		watchers          map[cproto.ID]chan<- RendezvousInfoOrError
-		reservations      reservations
+		watchers          map[sproto.ResourcesID]chan<- RendezvousInfoOrError
+		resources         resourcesList
 		lastWatchTime     time.Time
 		allReadySucceeded bool
 	}
 )
 
 // NewRendezvous returns a new rendezvous component.
-func NewRendezvous(allocationID model.AllocationID, rs reservations) *Rendezvous {
+func NewRendezvous(allocationID model.AllocationID, rs resourcesList) *Rendezvous {
 	return &Rendezvous{
 		allocationID: allocationID,
-		reservations: rs,
-		watchers:     map[cproto.ID]chan<- RendezvousInfoOrError{},
+		resources:    rs,
+		watchers:     map[sproto.ResourcesID]chan<- RendezvousInfoOrError{},
 	}
 }
 
@@ -92,13 +94,13 @@ func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 			})
 		}
 
-		if w, err := r.watch(msg.AllocationID, msg.ContainerID); err != nil {
+		if w, err := r.watch(msg.ResourcesID); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(w)
 		}
 	case UnwatchRendezvousInfo:
-		r.unwatch(msg.ID)
+		r.unwatch(msg.ResourcesID)
 	case RendezvousTimeout:
 		if err := r.checkTimeout(msg.AllocationID); err != nil {
 			return err
@@ -109,18 +111,13 @@ func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (r *Rendezvous) watch(
-	allocationID model.AllocationID, id cproto.ID,
-) (RendezvousWatcher, error) {
-	if r.allocationID != allocationID {
-		err := ErrStaleAllocation{Received: allocationID, Actual: r.allocationID}
-		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
-	} else if _, ok := r.reservations[id]; !ok {
-		err := ErrStaleContainer{ID: id}
+func (r *Rendezvous) watch(id sproto.ResourcesID) (RendezvousWatcher, error) {
+	if _, ok := r.resources[id]; !ok {
+		err := ErrStaleResources{ID: id}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
 	} else if _, ok := r.watchers[id]; ok {
 		return RendezvousWatcher{}, apiutils.AsValidationError(
-			"rendezvous request from already connected container: %s", id,
+			"resources already rendezvoused: %s", id,
 		)
 	}
 
@@ -134,7 +131,7 @@ func (r *Rendezvous) watch(
 	return RendezvousWatcher{C: w}, nil
 }
 
-func (r *Rendezvous) unwatch(id cproto.ID) {
+func (r *Rendezvous) unwatch(id sproto.ResourcesID) {
 	if r == nil {
 		return
 	}
@@ -164,9 +161,9 @@ func (r *Rendezvous) ready() bool {
 		return true
 	}
 
-	anyExited := len(r.reservations.exited()) > 0
-	allAddressesArrived := len(r.reservations.started()) == len(r.reservations)
-	allWaiting := len(r.watchers) == len(r.reservations)
+	anyExited := len(r.resources.exited()) > 0
+	allAddressesArrived := len(r.resources.started()) == len(r.resources)
+	allWaiting := len(r.watchers) == len(r.resources)
 
 	r.allReadySucceeded = !anyExited && allAddressesArrived && allWaiting
 	return r.allReadySucceeded
@@ -184,7 +181,7 @@ func (r Rendezvous) push() bool {
 		w <- RendezvousInfoOrError{
 			Info: &trialv1.RendezvousInfo{
 				Addresses: raddrs,
-				Rank:      int32(r.reservations[caddr.id].rank),
+				Rank:      int32(r.resources[caddr.id].rank),
 			},
 			Err: err,
 		}
@@ -227,14 +224,14 @@ func (r *Rendezvous) Close() {
 }
 
 type cAddress struct {
-	id        cproto.ID
+	id        sproto.ResourcesID
 	addresses []cproto.Address
 	ordinal   int
 }
 
 func (r *Rendezvous) info() ([]cAddress, []string, error) {
 	var caddrs []cAddress
-	for id, r := range r.reservations {
+	for id, r := range r.resources {
 		caddr := cAddress{
 			id:        id,
 			addresses: r.start.Addresses,

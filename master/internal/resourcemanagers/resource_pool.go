@@ -123,7 +123,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		return false
 	}
 
-	allocations := make([]sproto.Reservation, 0, len(fits))
+	allocations := make([]sproto.Resources, 0, len(fits))
 	for _, fit := range fits {
 		container := newContainer(req, fit.Slots)
 		resp := ctx.Ask(fit.Agent.Handler, agent.AllocateFreeDevices{
@@ -133,7 +133,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		switch resp := resp.(type) {
 		case agent.AllocateFreeDevicesResponse:
 			devices := resp.Devices
-			allocations = append(allocations, &containerReservation{
+			allocations = append(allocations, &containerResources{
 				req:       req,
 				agent:     fit.Agent,
 				container: container,
@@ -143,7 +143,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 			// Rollback previous allocations.
 			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
 			for _, allocation := range allocations {
-				allocation := allocation.(*containerReservation)
+				allocation := allocation.(*containerResources)
 				ctx.Tell(allocation.agent.Handler,
 					agent.DeallocateContainer{ContainerID: allocation.container.id})
 			}
@@ -155,7 +155,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	}
 
 	allocated := sproto.ResourcesAllocated{
-		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Reservations: allocations,
+		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Resources: allocations,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
@@ -163,7 +163,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(allocations))
 	for _, allocation := range allocations {
-		allocation := allocation.(*containerReservation)
+		allocation := allocation.(*containerResources)
 		allocatedAgents = append(allocatedAgents, allocation.agent.Handler)
 	}
 
@@ -182,8 +182,8 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
 		ctx.Log().Infof("resources are released for %s", handler.Address())
-		for _, allocation := range allocated.Reservations {
-			typed := allocation.(*containerReservation)
+		for _, allocation := range allocated.Resources {
+			typed := allocation.(*containerResources)
 			ctx.Tell(typed.agent.Handler, agent.DeallocateContainer{ContainerID: typed.container.id})
 		}
 	}
@@ -446,8 +446,8 @@ func (rp *ResourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 	}
 }
 
-// containerReservation contains information for tasks have been allocated but not yet started.
-type containerReservation struct {
+// containerResources contains information for tasks have been allocated but not yet started.
+type containerResources struct {
 	req       *sproto.AllocateRequest
 	container *container
 	agent     *agent.AgentState
@@ -455,21 +455,25 @@ type containerReservation struct {
 }
 
 // Summary summarizes a container allocation.
-func (c containerReservation) Summary() sproto.ContainerSummary {
-	return sproto.ContainerSummary{
-		AllocationID: c.req.AllocationID,
-		ID:           c.container.id,
-		Agent:        c.agent.Handler.Address().Local(),
-		Devices:      c.devices,
+func (c containerResources) Summary() sproto.ResourcesSummary {
+	return sproto.ResourcesSummary{
+		ResourcesID:   sproto.ResourcesID(c.container.id),
+		ResourcesType: sproto.ResourcesTypeDockerContainer,
+		AllocationID:  c.req.AllocationID,
+		AgentDevices: map[aproto.ID][]device.Device{
+			aproto.ID(c.agent.Handler.Address().Local()): c.devices},
+
+		ContainerID: &c.container.id,
 	}
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerReservation) Start(
-	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
+func (c containerResources) Start(
+	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.container.id)
+	spec.ResourcesID = string(c.container.id)
 	spec.AllocationID = string(c.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(c.req.TaskID)
@@ -495,7 +499,7 @@ func (c containerReservation) Start(
 }
 
 // KillContainer notifies the agent to kill the container.
-func (c containerReservation) Kill(ctx *actor.Context) {
+func (c containerResources) Kill(ctx *actor.Context) {
 	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
 		ContainerID: c.container.id,
 	})

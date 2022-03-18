@@ -55,14 +55,14 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
 
 
 def do_rendezvous(info: det.ClusterInfo, cert: certs.Cert) -> None:
-    # Even though container_id is not part of the ClusterInfo API, we still depend on it in all
+    # Even though resources_id is not part of the ClusterInfo API, we still depend on it in all
     # current Determined backends (agents and k8s).
-    container_id = os.environ.get("DET_CONTAINER_ID")
-    assert container_id, "Unable to complete rendezvous info without DET_CONTAINER_ID"
+    resources_id = os.environ.get("DET_RESOURCES_ID")
+    assert resources_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
 
     r = request.get(
         info.master_url,
-        path=f"/api/v1/allocations/{info.allocation_id}/rendezvous_info/{container_id}",
+        path=f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/rendezvous",
         cert=cert,
     )
 

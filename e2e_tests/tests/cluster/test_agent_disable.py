@@ -241,7 +241,7 @@ def _task_agents(task_id: str) -> List[str]:
     task_data = _task_data(task_id)
     if not task_data:
         return []
-    return [c["agent"] for c in task_data.get("containers", [])]
+    return [a for r in task_data.get("resources", []) for a in r["agent_devices"]]
 
 
 @pytest.mark.e2e_cpu_2a

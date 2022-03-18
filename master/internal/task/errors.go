@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -58,6 +59,15 @@ type ErrStaleContainer struct {
 
 func (e ErrStaleContainer) Error() string {
 	return fmt.Sprintf("stale container %s", e.ID)
+}
+
+// ErrStaleResources is returned when an operation was attempted by a stale resources.
+type ErrStaleResources struct {
+	ID sproto.ResourcesID
+}
+
+func (e ErrStaleResources) Error() string {
+	return fmt.Sprintf("stale resources %s", e.ID)
 }
 
 // All behaviors for allocations.

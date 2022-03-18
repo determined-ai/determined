@@ -21,9 +21,9 @@ import (
 
 const (
 	agentIDEnvVar      = "DET_AGENT_ID"
-	containerIDEnvVar  = "DET_CONTAINER_ID"
 	taskIDEnvVar       = "DET_TASK_ID"
 	allocationIDEnvVar = "DET_ALLOCATION_ID"
+	containerIDEnvVar  = "DET_CONTAINER_ID"
 )
 
 type containerActor struct {

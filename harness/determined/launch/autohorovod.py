@@ -24,9 +24,9 @@ def main(train_entrypoint: str) -> int:
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    # Hack: get the container id from the environment.
-    container_id = os.environ.get("DET_CONTAINER_ID")
-    assert container_id is not None, "Unable to run with DET_CONTAINER_ID unset"
+    # Hack: get the resources id from the environment.
+    resources_id = os.environ.get("DET_RESOURCES_ID")
+    assert resources_id is not None, "Unable to run with DET_RESOURCES_ID unset"
 
     # Hack: read the full config.  The experiment config is not a stable API!
     experiment_config = info.trial._config
@@ -48,11 +48,11 @@ def main(train_entrypoint: str) -> int:
     if info.container_rank > 0:
         # Non-chief machines just run sshd.
 
-        # Mark sshd containers as daemon containers that the master should kill when all non-daemon
+        # Mark sshd containers as daemon resources that the master should kill when all non-daemon
         # contiainers (horovodrun, in this case) have exited.
         api.post(
             info.master_url,
-            path=f"/api/v1/allocations/{info.allocation_id}/containers/{container_id}/daemon",
+            path=f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon",
             cert=cert,
         )
 

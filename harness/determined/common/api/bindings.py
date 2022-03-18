@@ -2675,26 +2675,26 @@ class v1LoginResponse:
             "user": self.user.to_json(),
         }
 
-class v1MarkAllocationReservationDaemonRequest:
+class v1MarkAllocationResourcesDaemonRequest:
     def __init__(
         self,
         allocationId: str,
-        containerId: str,
+        resourcesId: "typing.Optional[str]" = None,
     ):
         self.allocationId = allocationId
-        self.containerId = containerId
+        self.resourcesId = resourcesId
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1MarkAllocationReservationDaemonRequest":
+    def from_json(cls, obj: Json) -> "v1MarkAllocationResourcesDaemonRequest":
         return cls(
             allocationId=obj["allocationId"],
-            containerId=obj["containerId"],
+            resourcesId=obj.get("resourcesId", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "allocationId": self.allocationId,
-            "containerId": self.containerId,
+            "resourcesId": self.resourcesId if self.resourcesId is not None else None,
         }
 
 class v1MasterLogsResponse:
@@ -5226,12 +5226,12 @@ def get_AllocationRendezvousInfo(
     session: "client.Session",
     *,
     allocationId: str,
-    containerId: str,
+    resourcesId: str,
 ) -> "v1AllocationRendezvousInfoResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
+        path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous",
         params=_params,
         json=None,
         data=None,
@@ -6688,17 +6688,17 @@ def post_Logout(
         return
     raise APIHttpError("post_Logout", _resp)
 
-def post_MarkAllocationReservationDaemon(
+def post_MarkAllocationResourcesDaemon(
     session: "client.Session",
     *,
     allocationId: str,
-    body: "v1MarkAllocationReservationDaemonRequest",
-    containerId: str,
+    body: "v1MarkAllocationResourcesDaemonRequest",
+    resourcesId: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
+        path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -6707,7 +6707,7 @@ def post_MarkAllocationReservationDaemon(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_MarkAllocationReservationDaemon", _resp)
+    raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
 def patch_PatchExperiment(
     session: "client.Session",

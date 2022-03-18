@@ -20,7 +20,7 @@ type TaskSummary struct {
 	RegisteredTime time.Time                 `json:"registered_time"`
 	ResourcePool   string                    `json:"resource_pool"`
 	SlotsNeeded    int                       `json:"slots_needed"`
-	Containers     []sproto.ContainerSummary `json:"containers"`
+	Resources      []sproto.ResourcesSummary `json:"resources"`
 	SchedulerType  string                    `json:"scheduler_type"`
 	Priority       *int                      `json:"priority"`
 }
@@ -32,10 +32,10 @@ func newTaskSummary(
 	schedulerType string,
 ) TaskSummary {
 	// Summary returns a new immutable view of the task state.
-	containerSummaries := make([]sproto.ContainerSummary, 0)
+	resourcesSummaries := make([]sproto.ResourcesSummary, 0)
 	if allocated != nil {
-		for _, c := range allocated.Reservations {
-			containerSummaries = append(containerSummaries, c.Summary())
+		for _, r := range allocated.Resources {
+			resourcesSummaries = append(resourcesSummaries, r.Summary())
 		}
 	}
 	summary := TaskSummary{
@@ -45,7 +45,7 @@ func newTaskSummary(
 		RegisteredTime: request.TaskActor.RegisteredTime(),
 		ResourcePool:   request.ResourcePool,
 		SlotsNeeded:    request.SlotsNeeded,
-		Containers:     containerSummaries,
+		Resources:      resourcesSummaries,
 		SchedulerType:  schedulerType,
 	}
 

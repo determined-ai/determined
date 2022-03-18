@@ -47,6 +47,9 @@ type ContainerReattachAck struct {
 	Failure   *ContainerFailure
 }
 
+// ID is an identifier for an agent.
+type ID string
+
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
 	Version              string
