@@ -252,7 +252,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:          "username",
+		apiv1.GetExperimentsRequest_SORT_BY_USER:          "display_name",
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 	}

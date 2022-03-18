@@ -730,6 +730,7 @@ class v1Command:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -737,6 +738,7 @@ class v1Command:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -750,6 +752,7 @@ class v1Command:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -763,6 +766,7 @@ class v1Command:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -1032,6 +1036,7 @@ class v1Experiment:
         state: "determinedexperimentv1State",
         username: str,
         description: "typing.Optional[str]" = None,
+        displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
@@ -1047,6 +1052,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1067,6 +1073,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1087,6 +1094,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -2951,6 +2959,7 @@ class v1Notebook:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         serviceAddress: "typing.Optional[str]" = None,
     ):
@@ -2959,6 +2968,7 @@ class v1Notebook:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -2973,6 +2983,7 @@ class v1Notebook:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -2987,6 +2998,7 @@ class v1Notebook:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -4460,6 +4472,7 @@ class v1Shell:
         addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
         agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         privateKey: "typing.Optional[str]" = None,
         publicKey: "typing.Optional[str]" = None,
@@ -4471,6 +4484,7 @@ class v1Shell:
         self.container = container
         self.privateKey = privateKey
         self.publicKey = publicKey
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -4488,6 +4502,7 @@ class v1Shell:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             privateKey=obj.get("privateKey", None),
             publicKey=obj.get("publicKey", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -4505,6 +4520,7 @@ class v1Shell:
             "container": self.container.to_json() if self.container is not None else None,
             "privateKey": self.privateKey if self.privateKey is not None else None,
             "publicKey": self.publicKey if self.publicKey is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -4670,6 +4686,7 @@ class v1Tensorboard:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         serviceAddress: "typing.Optional[str]" = None,
@@ -4682,6 +4699,7 @@ class v1Tensorboard:
         self.container = container
         self.experimentIds = experimentIds
         self.trialIds = trialIds
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -4698,6 +4716,7 @@ class v1Tensorboard:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             experimentIds=obj.get("experimentIds", None),
             trialIds=obj.get("trialIds", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -4714,6 +4733,7 @@ class v1Tensorboard:
             "container": self.container.to_json() if self.container is not None else None,
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "trialIds": self.trialIds if self.trialIds is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
