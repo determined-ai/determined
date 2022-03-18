@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 
 	"gotest.tools/assert"
 

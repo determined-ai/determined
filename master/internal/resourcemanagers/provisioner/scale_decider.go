@@ -130,13 +130,13 @@ func (s *scaleDecider) recordInstanceStats(slots int) error {
 		}
 	}
 
-	for instID, _ := range s.disconnected {
+	for instID := range s.disconnected {
 		err := s.updateInstanceEndStats(instID, &now)
 		if err != nil {
 			return err
 		}
 	}
-	for instID, _ := range s.stopped {
+	for instID := range s.stopped {
 		err := s.updateInstanceEndStats(instID, &now)
 		if err != nil {
 			return err
