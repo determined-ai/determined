@@ -1,7 +1,8 @@
 import enum
 import logging
 import os
-from time import sleep
+import socket
+import time
 
 import requests
 from determined.common import api
@@ -15,6 +16,28 @@ class IdleType(enum.Enum):
 
 
 last_activity = None
+
+
+def wait_for_jupyter(addr):
+    """
+    Avoid logging enormous stacktraces when the requests library attempts to connect to a server
+    that isn't accepting connections yet.  This is expected as jupyter startup time might take
+    longer than a second, and we don't want to generate scary logs for expected behavior.
+    """
+    i = 0
+    while True:
+        with socket.socket() as s:
+            try:
+                s.connect(addr)
+                # Connection worked, we're done here.
+                return
+            except ConnectionError as e:
+                if (i+1) % 10 == 0:
+                    # Every 10 seconds without reaching jupyter, start telling the user.
+                    # This is beyond the range of expected startup times.
+                    logging.warning(f"jupyter is still not reachable at {addr}")
+            time.sleep(1)
+            i += 1
 
 
 def is_idle(request_address, mode):
@@ -42,7 +65,6 @@ def is_idle(request_address, mode):
         return no_busy_kernels and (last_activity == old_last_activity)
 
 
-
 def main():
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]
@@ -57,21 +79,20 @@ def main():
         )
         idle_type = IdleType.KERNELS_OR_TERMINALS
 
-    while True:
-        sleep(1)
+    wait_for_jupyter(("127.0.0.1", int(port)))
 
+    while True:
         try:
+            idle = is_idle(notebook_server, idle_type)
             api.put(
                 master_url,
                 f"/api/v1/notebooks/{notebook_id}/report_idle",
-                {
-                    "notebook_id": notebook_id,
-                    "idle": is_idle(notebook_server, idle_type),
-                },
+                {"notebook_id": notebook_id, "idle": idle},
                 cert=cert,
             )
         except Exception as e:
             logging.warning("ignoring error communicating with master", exc_info=True)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
