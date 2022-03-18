@@ -6769,12 +6769,12 @@ def patch_PatchModel(
     session: "client.Session",
     *,
     body: "v1PatchModel",
-    model_name: str,
+    modelName: str,
 ) -> "v1PatchModelResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/models/{model_name}",
+        path=f"/api/v1/models/{modelName}",
         params=_params,
         json=body.to_json(),
         data=None,

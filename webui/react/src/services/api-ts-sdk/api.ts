@@ -13568,7 +13568,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName An updated name for the model.
+         * @param {string} modelName The name of the model being updated.
          * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13582,8 +13582,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchModel.');
             }
-            const localVarPath = `/api/v1/models/{model.name}`
-                .replace(`{${"model.name"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelName}`
+                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -13965,7 +13965,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName An updated name for the model.
+         * @param {string} modelName The name of the model being updated.
          * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14168,7 +14168,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName An updated name for the model.
+         * @param {string} modelName The name of the model being updated.
          * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -14343,7 +14343,7 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {string} modelName An updated name for the model.
+     * @param {string} modelName The name of the model being updated.
      * @param {V1PatchModel} body The model desired model fields and values.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

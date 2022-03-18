@@ -290,7 +290,9 @@ message PostModelVersionResponse {
 // Request for updating a model version in the registry.
 message PatchModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "model_name", "model_version", "model_version_id" ] }
+    json_schema: {
+      required: [ "model_name", "model_version", "model_version_id" ]
+    }
   };
 
   // The name of the model being updated.

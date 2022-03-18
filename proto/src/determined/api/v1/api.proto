@@ -1039,7 +1039,7 @@ service Determined {
   // Patch a model's fields.
   rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/models/{model.name}"
+      patch: "/api/v1/models/{model_name}"
       body: "model"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
