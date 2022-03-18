@@ -159,11 +159,7 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
             tasks_data = {
                 k: t
                 for (k, t) in rsp.json().items()
-                if any(
-                    a in agent_ids
-                    for r in t.get("resources", [])
-                    for a in r["agent_devices"]
-                )
+                if any(a in agent_ids for r in t.get("resources", []) for a in r["agent_devices"])
             }
 
             if not (args.json or args.csv):
