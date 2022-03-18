@@ -3275,32 +3275,6 @@ class v1PatchModelVersion:
             "notes": self.notes if self.notes is not None else None,
         }
 
-class v1PatchModelVersionRequest:
-    def __init__(
-        self,
-        modelName: str,
-        modelVersion: "v1PatchModelVersion",
-        modelVersionId: int,
-    ):
-        self.modelName = modelName
-        self.modelVersion = modelVersion
-        self.modelVersionId = modelVersionId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchModelVersionRequest":
-        return cls(
-            modelName=obj["modelName"],
-            modelVersion=v1PatchModelVersion.from_json(obj["modelVersion"]),
-            modelVersionId=obj["modelVersionId"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "modelName": self.modelName,
-            "modelVersion": self.modelVersion.to_json(),
-            "modelVersionId": self.modelVersionId,
-        }
-
 class v1PatchModelVersionResponse:
     def __init__(
         self,
@@ -6814,7 +6788,7 @@ def patch_PatchModel(
 def patch_PatchModelVersion(
     session: "client.Session",
     *,
-    body: "v1PatchModelVersionRequest",
+    body: "v1PatchModelVersion",
     modelName: str,
     modelVersionId: int,
 ) -> "v1PatchModelVersionResponse":

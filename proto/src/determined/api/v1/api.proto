@@ -1128,7 +1128,7 @@ service Determined {
       returns (PatchModelVersionResponse) {
     option (google.api.http) = {
       patch: "/api/v1/models/{model_name}/versions/{model_version_id}"
-      body: "*"
+      body: "model_version"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"

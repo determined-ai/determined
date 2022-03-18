@@ -3900,32 +3900,6 @@ export interface V1PatchModelVersion {
 }
 
 /**
- * Request for updating a model version in the registry.
- * @export
- * @interface V1PatchModelVersionRequest
- */
-export interface V1PatchModelVersionRequest {
-    /**
-     * The name of the model being updated.
-     * @type {string}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelName: string;
-    /**
-     * The model version being updated.
-     * @type {V1PatchModelVersion}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersion: V1PatchModelVersion;
-    /**
-     * The id of the model version being updated.
-     * @type {number}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersionId: number;
-}
-
-/**
  * Response to PatchModelVersionRequest.
  * @export
  * @interface V1PatchModelVersionResponse
@@ -13642,11 +13616,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options: any = {}): FetchArgs {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModelVersion.');
@@ -13681,7 +13655,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchModelVersionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchModelVersion" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -14013,11 +13987,11 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14207,11 +14181,11 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
             return ModelsApiFp(configuration).patchModelVersion(modelName, modelVersionId, body, options)(fetch, basePath);
         },
         /**
@@ -14384,12 +14358,12 @@ export class ModelsApi extends BaseAPI {
      * @summary Patch a model version's fields.
      * @param {string} modelName The name of the model being updated.
      * @param {number} modelVersionId The id of the model version being updated.
-     * @param {V1PatchModelVersionRequest} body 
+     * @param {V1PatchModelVersion} body The model version being updated.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
         return ModelsApiFp(this.configuration).patchModelVersion(modelName, modelVersionId, body, options)(this.fetch, this.basePath);
     }
 
