@@ -136,7 +136,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: curl https://dl.google.com/go/go1.17.5.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: curl https://dl.google.com/go/go1.18.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
 
   install-protoc:
@@ -947,7 +947,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -973,7 +973,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -1007,7 +1007,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -1033,7 +1033,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -1193,7 +1193,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     resource_class: large
@@ -1208,7 +1208,7 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     steps:
@@ -1225,7 +1225,7 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     steps:
@@ -1239,7 +1239,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
     steps:
