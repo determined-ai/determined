@@ -3,6 +3,19 @@
   position: relative;
 } */
 
+/* tr.drop-over-leftward td {
+  border-left: 2px dashed #1890ff;
+}
+tr.drop-over-rightward td {
+  border-right: 2px dashed #1890ff;
+} */
+
+.drop-over-leftward {
+  border-left: 2px dashed #1890ff !important;
+}
+.drop-over-rightward {
+  border-right: 2px dashed #1890ff !important;
+}
 .ant-table-cell {
   cursor: 'move';
   user-select: none;
@@ -26,7 +39,7 @@
   position: absolute;
   right: -5px;
   user-select: none;
-  width: 8px;
+  width: 5px;
   z-index: 1;
 }
 .react-resizable-handle:hover {

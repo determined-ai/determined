@@ -316,7 +316,7 @@ const ResponsiveTable: ResponsiveTable = ({
   const moveRow = useCallback(
     (dragIndex, hoverIndex) => {
       const dragRow = data?.[dragIndex];
-      console.log({dragRow})
+      // console.log({dragRow})
       dragRow &&
         setData(
           update(data, {
