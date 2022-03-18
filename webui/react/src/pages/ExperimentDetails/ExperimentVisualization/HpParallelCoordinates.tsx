@@ -129,13 +129,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
           dimensionKey: metricNameToStr(selectedMetric),
         },
       },
-      dimension: { label: { angle: Math.PI / 4 } },
-      padding: [ 16, 64, 16, 8 ],
+      dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
+      padding: [ 4, 120, 4, 16 ],
     },
   }), [ colorScale, handleFilterChange, selectedMetric ]);
 
   const dimensions = useMemo(() => {
-    const newDimensions = selectedHParams.map(key => {
+    const newDimensions: Hermes.Dimension[] = selectedHParams.map(key => {
       const hp = hyperparameters[key] || {};
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
@@ -150,7 +150,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       const key = metricNameToStr(selectedMetric);
-      newDimensions.push({ key, label: key, type: DimensionType.Linear });
+      newDimensions.push({ disableDrag: true, key, label: key, type: DimensionType.Linear });
     }
 
     return newDimensions;
