@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined import profiler, pytorch
+from determined import profiler, pytorch, util
 from determined.common import check
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
@@ -51,8 +51,13 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         det.TrialContext.__init__(self, *args, **kwargs)
         pytorch._PyTorchReducerContext.__init__(self, self.distributed._zmq_allgather)
+        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
+            self.get_hparams(),
+            self.env.experiment_config.slots_per_trial(),
+            "PyTorchTrial",
+        )
 
-        self._init_device()
+        self.device = self._init_device()
 
         # Track which types we have issued warnings for in to_device().
         self._to_device_warned_types = set()  # type: Set[Type]
@@ -91,6 +96,20 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._average_training_metrics = cast(
             bool, optimizations_config.get("average_training_metrics")
         )
+
+    def get_global_batch_size(self) -> int:
+        """
+        Return the global batch size.
+        """
+        return self._global_batch_size
+
+    def get_per_slot_batch_size(self) -> int:
+        """
+        Return the per-slot batch size. When a model is trained with a single GPU, this is equal to
+        the global batch size. When multi-GPU training is used, this is equal to the global batch
+        size divided by the number of GPUs used to train the model.
+        """
+        return self._per_slot_batch_size
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
@@ -299,21 +318,22 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         opt_params = {p for group in optimizer.param_groups for p in group.get("params", [])}
         return [(name, p) for name, p in self._main_model.named_parameters() if p in opt_params]
 
-    def _init_device(self) -> None:
+    def _init_device(self) -> torch.device:
         self.n_gpus = len(self.env.container_gpus)
         if self.distributed.size > 1:
             if self.n_gpus > 0:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
-                self.device = torch.device("cuda", hvd.local_rank())
-                torch.cuda.set_device(self.device)
+                device = torch.device("cuda", hvd.local_rank())
+                torch.cuda.set_device(device)
             else:
-                self.device = torch.device("cpu")
+                device = torch.device("cpu")
         elif self.n_gpus > 0:
-            self.device = torch.device("cuda", 0)
+            device = torch.device("cuda", 0)
         else:
-            self.device = torch.device("cpu")
-        check.is_not_none(self.device)
+            device = torch.device("cpu")
+        check.is_not_none(device)
+        return device
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.

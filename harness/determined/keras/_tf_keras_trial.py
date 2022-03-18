@@ -124,7 +124,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
         # handles the case where logs is not present (see BaseLogger callback).  I (rb) can't
         # figure out where that would originate from, so we will include reasonable fallback
         # behavior for that case.
-        num_inputs = logs.get("size", self.batch_size)
+        num_inputs = logs.get("size", self.trial_controller.context.get_per_slot_batch_size())
 
         self.trial_controller._post_train_batch_end(num_inputs, logs)
 
@@ -136,7 +136,9 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
     def on_test_batch_end(self, batch: int, logs: Optional[Dict] = None) -> None:
         super().on_test_batch_end(batch, logs)
         assert isinstance(logs, dict)
-        self.test_inputs += logs.get("size", self.batch_size)
+        self.test_inputs += logs.get(
+            "size", self.trial_controller.context.get_per_slot_batch_size()
+        )
         self.test_batches += 1
 
     def _corrected_test_end(self, logs: Dict) -> None:
@@ -365,6 +367,7 @@ class TFKerasTrialController(det.TrialController):
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
                 self.context._core,
                 self.env,
+                self.context.get_global_batch_size(),
             )
 
         # If a load path is provided, load weights and restore the data location.
@@ -515,7 +518,7 @@ class TFKerasTrialController(det.TrialController):
             self,
             callbacks,
             self.is_chief,
-            self.batch_size,
+            self.context.get_per_slot_batch_size(),
             batches_per_epoch,
             self.multiplexer_load_state,
         )
@@ -550,7 +553,7 @@ class TFKerasTrialController(det.TrialController):
             self.callback_list,
             self.model,
             do_validation=False,
-            batch_size=self.batch_size,
+            batch_size=self.context.get_per_slot_batch_size(),
             epochs=None,
             steps_per_epoch=None,
             samples=None,
@@ -1008,7 +1011,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.10``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.12``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

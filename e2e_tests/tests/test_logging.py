@@ -13,6 +13,7 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
 @pytest.mark.e2e_cpu_postgres
+@pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu
 @pytest.mark.timeout(300)
 def test_trial_logs() -> None:
@@ -24,9 +25,10 @@ def test_trial_logs() -> None:
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trial = exp.experiment_trials(experiment_id)[0]
-    trial_id = trial["id"]
-    task_id = trial["task_id"]
+    trial = exp.experiment_trials(experiment_id)[0].trial
+    trial_id = trial.id
+    task_id = trial.taskId
+    assert task_id != ""
 
     log_regex = re.compile("^.*New trial runner.*$")
     # Trial-specific APIs should work just fine.
@@ -37,6 +39,7 @@ def test_trial_logs() -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize(

@@ -29,27 +29,11 @@ type (
 		// on the Killed logs.
 		Level *string
 	}
-	// TaskContainerStarted contains the information needed by tasks from container started.
-	TaskContainerStarted struct {
-		Addresses []cproto.Address
-		// NativeReservationID is the native Docker hex container ID of the Determined container.
-		NativeReservationID string
-	}
-	// TaskContainerStopped contains the information needed by tasks from container stopped.
-	TaskContainerStopped struct {
-		aproto.ContainerStopped
-	}
-	// TaskContainerStateChanged notifies that the task actor container state has been transitioned.
-	// It is used by the resource managers to communicate with the task handlers.
-	TaskContainerStateChanged struct {
-		Container        cproto.Container
-		ContainerStarted *TaskContainerStarted
-		ContainerStopped *TaskContainerStopped
-	}
 
-	// GetTaskContainerState requests cproto.Container state.
-	GetTaskContainerState struct {
-		ContainerID cproto.ID
+	// GetResourcesContainerState requests cproto.Container state for a given clump of resources.
+	// If the resources aren't a container, this request returns a failure.
+	GetResourcesContainerState struct {
+		ResourcesID ResourcesID
 	}
 	// UpdatePodStatus notifies the resource manager of job state changes.
 	UpdatePodStatus struct {

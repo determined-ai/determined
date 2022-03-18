@@ -53,6 +53,9 @@ class TestPyTorchTrial:
             "disable_dataset_reproducibility_checks": False,
         }
 
+    def test_require_global_batch_size(self) -> None:
+        utils.ensure_requires_global_batch_size(pytorch_onevar_model.OneVarTrial, self.hparams)
+
     def test_onevar_single(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()

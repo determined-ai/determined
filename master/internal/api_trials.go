@@ -22,7 +22,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -668,21 +667,21 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
-func (a *apiServer) MarkAllocationReservationDaemon(
-	_ context.Context, req *apiv1.MarkAllocationReservationDaemonRequest,
-) (*apiv1.MarkAllocationReservationDaemonResponse, error) {
+func (a *apiServer) MarkAllocationResourcesDaemon(
+	_ context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
+) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {
 	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.MarkReservationDaemon{
+	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
 		AllocationID: model.AllocationID(req.AllocationId),
-		ContainerID:  cproto.ID(req.ContainerId),
+		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
 	}, nil); err != nil {
 		return nil, err
 	}
-	return &apiv1.MarkAllocationReservationDaemonResponse{}, nil
+	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
 }
 
 func (a *apiServer) GetCurrentTrialSearcherOperation(
@@ -746,9 +745,9 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	case err != nil:
 		return nil, err
 	}
-	exp := actor.Addr("experiments", eID)
+	trial := actor.Addr("experiments", eID, rID)
 
-	if err = a.ask(exp, trialReportEarlyExit{
+	if err = a.ask(trial, userInitiatedEarlyExit{
 		requestID: rID,
 		reason:    model.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {
@@ -828,13 +827,14 @@ func (a *apiServer) AllocationRendezvousInfo(
 
 	var w task.RendezvousWatcher
 	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
-		AllocationID: model.AllocationID(req.AllocationId),
-		ContainerID:  cproto.ID(req.ContainerId),
+		ResourcesID: sproto.ResourcesID(req.ResourcesId),
 	}, &w); err != nil {
 		return nil, err
 	}
 	defer a.m.system.TellAt(
-		handler.Address(), task.UnwatchRendezvousInfo{ID: cproto.ID(req.ContainerId)})
+		handler.Address(), task.UnwatchRendezvousInfo{
+			ResourcesID: sproto.ResourcesID(req.ResourcesId),
+		})
 
 	select {
 	case rsp := <-w.C:

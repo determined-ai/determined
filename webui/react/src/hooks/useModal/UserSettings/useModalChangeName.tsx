@@ -1,5 +1,6 @@
 import { Button, Form, Input, message } from 'antd';
-import React, { useCallback } from 'react';
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
+import React, { useCallback, useState } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { patchUser } from 'services/api';
@@ -9,20 +10,25 @@ import useModal, { ModalHooks } from '../useModal';
 
 import css from './useModalChangeName.module.scss';
 
-const useModalChangeName = (): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+interface Props {
+  onComplete: () => void;
+}
+
+const ChangeName: React.FC<Props> = ({ onComplete }) => {
   const { auth } = useStore();
   const username = auth.user?.username ?? '';
   const existingDisplayName = auth.user?.displayName;
   const [ form ] = Form.useForm();
+  const [ isUpdating, setIsUpdating ] = useState(false);
   const storeDispatch = useStoreDispatch();
 
   const handleFormCancel = useCallback(() => {
     form.resetFields();
-    modalClose();
-  }, [ form, modalClose ]);
+    onComplete();
+  }, [ form, onComplete ]);
 
   const handleFormSubmit = useCallback(async () => {
+    setIsUpdating(true);
     try {
       const user = await patchUser({
         username,
@@ -30,55 +36,58 @@ const useModalChangeName = (): ModalHooks => {
       });
       storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
       message.success('Display name updated');
-      modalClose();
+      onComplete();
     } catch (e) {
       message.error('Could not update display name');
       handleError(e);
     }
-  }, [ form, modalClose, username, storeDispatch ]);
+    setIsUpdating(false);
+  }, [ form, onComplete, username, storeDispatch ]);
 
-  const getModalContent = useCallback(() => {
-    return (
-      <div className={css.base}>
-        <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-          <Form.Item
-            initialValue={existingDisplayName}
-            label="Display name"
-            name="displayName"
-            required
-            rules={[
-              {
-                max: 80,
-                message: 'Name can\'t be longer than 80 characters',
-              },
-            ]}
-            validateTrigger={[ 'onBlur' ]}>
-            <Input />
-          </Form.Item>
-          <Form.Item>
-            {/* override modal buttons with form buttons
-            to ensure form validation works as intended */}
-            <div className={css.buttons}>
-              <Button onClick={handleFormCancel}>Cancel</Button>
-              <Button htmlType="submit" type="primary">
-                Change name
-              </Button>
-            </div>
-          </Form.Item>
-        </Form>
-      </div>
-    );
-  }, [ form, handleFormSubmit, handleFormCancel, existingDisplayName ]);
+  return (
+    <div className={css.base}>
+      <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
+        <Form.Item
+          initialValue={existingDisplayName}
+          label="Display name"
+          name="displayName"
+          required
+          rules={[
+            {
+              max: 80,
+              message: 'Name can\'t be longer than 80 characters',
+            },
+          ]}
+          validateTrigger={[ 'onBlur' ]}>
+          <Input />
+        </Form.Item>
+        <Form.Item>
+          {/* override modal buttons with form buttons
+          to ensure form validation works as intended */}
+          <div className={css.buttons}>
+            <Button onClick={handleFormCancel}>Cancel</Button>
+            <Button htmlType="submit" loading={isUpdating} type="primary">
+              Change name
+            </Button>
+          </div>
+        </Form.Item>
+      </Form>
+    </div>
+  );
+};
+
+const useModalChangeName = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ modal });
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       className: css.noFooter,
       closable: true,
-      content: getModalContent(),
+      content: <ChangeName onComplete={modalClose} />,
       icon: null,
-      title: 'Change name',
+      title: <h5>Change name</h5>,
     });
-  }, [ getModalContent, openOrUpdate ]);
+  }, [ modalClose, openOrUpdate ]);
 
   return { modalClose, modalOpen, modalRef };
 };

@@ -4,8 +4,11 @@ import (
 	"crypto/rand"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -13,9 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -24,7 +25,7 @@ import (
 func TestAllocation(t *testing.T) {
 	cases := []struct {
 		name  string
-		err   *aproto.ContainerFailure
+		err   *sproto.ResourcesFailure
 		acked bool
 		exit  *AllocationExited
 	}{
@@ -41,13 +42,13 @@ func TestAllocation(t *testing.T) {
 		{
 			name:  "container failed",
 			acked: false,
-			err:   &aproto.ContainerFailure{FailureType: aproto.ContainerFailed},
-			exit:  &AllocationExited{Err: aproto.ContainerFailure{FailureType: aproto.ContainerFailed}},
+			err:   &sproto.ResourcesFailure{FailureType: sproto.ContainerFailed},
+			exit:  &AllocationExited{Err: sproto.ResourcesFailure{FailureType: sproto.ContainerFailed}},
 		},
 		{
 			name:  "container failed, but acked preemption",
 			acked: true,
-			err:   &aproto.ContainerFailure{FailureType: aproto.ContainerFailed},
+			err:   &sproto.ResourcesFailure{FailureType: sproto.ContainerFailed},
 			exit:  &AllocationExited{},
 		},
 	}
@@ -57,21 +58,21 @@ func TestAllocation(t *testing.T) {
 			system, _, rm, trialImpl, trial, db, a, self := setup(t)
 
 			// Pre-allocated stage.
-			mockRsvn := func(cID cproto.ID, agentID string) sproto.Reservation {
-				rsrv := &mocks.Reservation{}
+			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
+				rsrv := &mocks.Resources{}
 				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
-				rsrv.On("Summary").Return(sproto.ContainerSummary{
+				rsrv.On("Summary").Return(sproto.ResourcesSummary{
 					AllocationID: a.req.AllocationID,
-					ID:           cID,
-					Agent:        agentID,
+					ResourcesID:  rID,
+					AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 				})
 				rsrv.On("Kill", mock.Anything).Return()
 				return rsrv
 			}
 
-			reservations := []sproto.Reservation{
-				mockRsvn(cproto.NewID(), "agent-1"),
-				mockRsvn(cproto.NewID(), "agent-2"),
+			resources := []sproto.Resources{
+				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
+				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
 			}
 			db.On("AddAllocation", mock.Anything).Return(nil)
 			db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
@@ -83,7 +84,7 @@ func TestAllocation(t *testing.T) {
 				Msg: sproto.ResourcesAllocated{
 					ID:           a.req.AllocationID,
 					ResourcePool: "default",
-					Reservations: reservations,
+					Resources:    resources,
 				},
 			}).Error())
 			system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
@@ -91,37 +92,42 @@ func TestAllocation(t *testing.T) {
 			require.True(t, db.AssertExpectations(t))
 
 			// Pre-ready stage.
-			for _, r := range reservations {
-				containerStateChanged := sproto.TaskContainerStateChanged{
-					Container: cproto.Container{
-						Parent:  actor.Address{},
-						ID:      r.Summary().ID,
-						State:   cproto.Assigned,
-						Devices: []device.Device{},
-					},
+			for _, r := range resources {
+				summary := r.Summary()
+				containerStateChanged := sproto.ResourcesStateChanged{
+					ResourcesID:    summary.ResourcesID,
+					ResourcesState: sproto.Assigned,
 				}
 				db.On("UpdateAllocationState", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
-				containerStateChanged.Container.State = cproto.Pulling
+
+				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
+				containerStateChanged.ResourcesState = sproto.Pulling
+				db.On("UpdateAllocationStartTime", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
-				containerStateChanged.Container.State = cproto.Starting
+				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
+				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
+				require.Falsef(t, outOfRange,
+					"Expected start time of open allocation should be in between %s and %s but it is = %s instead",
+					beforePulling, afterPulling, a.model.StartTime)
+
+				containerStateChanged.ResourcesState = sproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
-				containerStateChanged.Container.State = cproto.Running
-				containerStateChanged.ContainerStarted = &sproto.TaskContainerStarted{
+				containerStateChanged.ResourcesState = sproto.Running
+				containerStateChanged.ResourcesStarted = &sproto.ResourcesStarted{
 					Addresses: []cproto.Address{
 						{
-							ContainerIP:   "0.0.0.0",
+							ContainerIP:   "172.0.0.3",
 							ContainerPort: 1734,
-							HostIP:        r.Summary().Agent,
+							HostIP:        "0.0.0.0",
 							HostPort:      1734,
 						},
 					},
 				}
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
-				containerStateChanged.ContainerStarted = nil
+				containerStateChanged.ResourcesStarted = nil
 				require.NoError(t, system.Ask(self, WatchRendezvousInfo{
-					AllocationID: a.model.AllocationID,
-					ContainerID:  r.Summary().ID,
+					ResourcesID: r.Summary().ResourcesID,
 				}).Error())
 			}
 			require.True(t, a.rendezvous.ready())
@@ -135,18 +141,13 @@ func TestAllocation(t *testing.T) {
 			db.On("DeleteAllocationSession", a.model.AllocationID).Return(nil)
 			db.On("CompleteAllocation", mock.Anything).Return(nil)
 			db.On("CompleteAllocationTelemetry", a.model.AllocationID).Return([]byte{}, nil)
-			for _, r := range reservations {
-				containerStateChanged := sproto.TaskContainerStateChanged{
-					Container: cproto.Container{
-						Parent:  actor.Address{},
-						ID:      r.Summary().ID,
-						State:   cproto.Terminated,
-						Devices: []device.Device{},
-					},
-					ContainerStopped: &sproto.TaskContainerStopped{
-						ContainerStopped: aproto.ContainerStopped{
-							Failure: tc.err,
-						},
+			for _, r := range resources {
+				summary := r.Summary()
+				containerStateChanged := sproto.ResourcesStateChanged{
+					ResourcesID:    summary.ResourcesID,
+					ResourcesState: sproto.Terminated,
+					ResourcesStopped: &sproto.ResourcesStopped{
+						Failure: tc.err,
 					},
 				}
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
@@ -209,7 +210,6 @@ func setup(t *testing.T) (
 		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
-
 	// Pre-scheduled stage.
 	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)

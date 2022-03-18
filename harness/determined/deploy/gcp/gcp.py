@@ -76,7 +76,7 @@ def terraform_write_variables(configs: Dict, variables_to_exclude: List) -> str:
     # Add GCP-friendly version key to configs. We persist this since it's used
     # across the cluster lifecycle: to name resources on provisioning, and to
     # filter for the master and dynamic agents on deprovisioning.
-    configs["det_version_key"] = det_version.replace(".", "-")[0:8]
+    configs["det_version_key"] = det_version.replace(".", "-")[:12].rstrip("-")
 
     # Track the default zone in configuration variables. This is needed
     # during deprovisioning.
@@ -331,7 +331,7 @@ def validate_gcp_credentials(configs: Dict) -> None:
             % colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow"),
             "and re-run the application. ",
             "For more information, please see",
-            "https://docs.determined.ai/latest/how-to/installation/gcp.html#credentials",
+            "https://docs.determined.ai/latest/sysadmin-deploy-on-gcp/install-gcp.html#credentials",
             "and",
             "https://cloud.google.com/docs/authentication/getting-started",
         )

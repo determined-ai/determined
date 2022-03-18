@@ -406,7 +406,9 @@ class EstimatorTrialController(det.TrialController):
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                self.context._core, self.env
+                self.context._core,
+                self.env,
+                self.context.get_global_batch_size(),
             )
 
         self._init_model()
@@ -795,7 +797,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.10``).
+    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

@@ -104,21 +104,33 @@ func AssociateContainerRuntimeID(cID cproto.ID, dcID string) {
 	containerIDToRuntimeID.WithLabelValues(dcID, cID.String()).Inc()
 }
 
-// AddAllocationReservation associates allocation and container and container and GPUs.
-func AddAllocationReservation(summary sproto.ContainerSummary,
-	containerStarted *sproto.TaskContainerStarted) {
-	AssociateAllocationContainer(summary.AllocationID, summary.ID)
-	AssociateContainerRuntimeID(summary.ID, containerStarted.NativeReservationID)
-	for _, d := range summary.Devices {
-		AssociateContainerGPU(summary.ID, d)
+// AddAllocationResources associates allocation and container and container and GPUs.
+func AddAllocationResources(summary sproto.ResourcesSummary,
+	containerStarted *sproto.ResourcesStarted) {
+	if summary.ContainerID == nil {
+		return
+	}
+
+	AssociateAllocationContainer(summary.AllocationID, *summary.ContainerID)
+	AssociateContainerRuntimeID(*summary.ContainerID, containerStarted.NativeResourcesID)
+	for _, ds := range summary.AgentDevices {
+		for _, d := range ds {
+			AssociateContainerGPU(*summary.ContainerID, d)
+		}
 	}
 }
 
-// RemoveAllocationReservation disassociates allocation and container and container and its GPUs.
-func RemoveAllocationReservation(summary sproto.ContainerSummary) {
-	DisassociateAllocationContainer(summary.AllocationID, summary.ID)
-	for _, d := range summary.Devices {
-		DisassociateContainerGPU(summary.ID, d)
+// RemoveAllocationResources disassociates allocation and container and container and its GPUs.
+func RemoveAllocationResources(summary sproto.ResourcesSummary) {
+	if summary.ContainerID == nil {
+		return
+	}
+
+	DisassociateAllocationContainer(summary.AllocationID, *summary.ContainerID)
+	for _, ds := range summary.AgentDevices {
+		for _, d := range ds {
+			DisassociateContainerGPU(*summary.ContainerID, d)
+		}
 	}
 }
 

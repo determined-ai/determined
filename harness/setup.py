@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.17.11-dev0",
+    version="0.17.12-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -26,7 +26,6 @@ setup(
         "certifi",
         "filelock",
         "google-cloud-storage",
-        "google-cloud-core",
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",

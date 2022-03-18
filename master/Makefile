@@ -31,7 +31,7 @@ build/schema_gen.stamp: $(GENERATION_INPUTS)
 
 build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
-	mockery --name=Reservation --dir=internal/sproto --output internal/mocks --filename reservation.go
+	mockery --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks
 	mkdir -p build
@@ -52,7 +52,7 @@ get-deps:
 	go install github.com/goreleaser/goreleaser@v1.1.0
 	go install github.com/ryanbressler/CloudForest/growforest@v0.0.0-20161201194407-d014dc32840a
 	go install github.com/swaggo/swag/cmd/swag@v1.7.0
-	go install github.com/vektra/mockery/v2@v2.9.2
+	go install github.com/vektra/mockery/v2@v2.10.0
 
 .PHONY: build
 build: export DET_SEGMENT_MASTER_KEY ?=

@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/task"
 
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/pkg/errors"
@@ -14,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -64,6 +64,8 @@ type trial struct {
 
 	// a ref to the current allocation
 	allocation *actor.Ref
+	// a note of the user initated exit reason, if any.
+	userInitiatedExit *model.ExitedReason
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -155,6 +157,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		} else {
 			ctx.Respond(spec)
 		}
+	case userInitiatedEarlyExit:
+		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
+			ctx.Respond(err)
+		}
 	case *task.AllocationExited:
 		return t.allocationExited(ctx, msg)
 	case sproto.ContainerLog:
@@ -233,6 +239,25 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		DoRendezvous: true,
 	}, t.db, t.rm, t.taskLogger))
 	return nil
+}
+
+const (
+	// InvalidHPKillDelay the delay before we forcibly kill a trial that said it had an invalid HP.
+	InvalidHPKillDelay = 3 * time.Second
+)
+
+func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEarlyExit) error {
+	switch msg.reason {
+	case model.InvalidHP, model.InitInvalidHP:
+		t.userInitiatedExit = &msg.reason
+		// After a short time, force us to clean up if we're still handling messages.
+		actors.NotifyAfter(ctx, InvalidHPKillDelay, model.StoppingKilledState)
+		return nil
+	case model.UserCanceled, model.Errored:
+		return fmt.Errorf("should not report special exit reason %s to the master", msg.reason)
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
@@ -324,7 +349,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.ErrorState)
 		}
 		return t.transition(ctx, model.CompletedState)
-	case exit.Err != nil && !aproto.IsRestartableSystemError(exit.Err):
+	case exit.Err != nil && !sproto.IsRestartableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
@@ -339,6 +364,12 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 			requestID: t.searcher.Create.RequestID,
 			reason:    model.UserCanceled,
+		})
+		return t.transition(ctx, model.CompletedState)
+	case t.userInitiatedExit != nil:
+		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
+			requestID: t.searcher.Create.RequestID,
+			reason:    *t.userInitiatedExit,
 		})
 		return t.transition(ctx, model.CompletedState)
 	}

@@ -32,7 +32,7 @@ export interface Props {
   metricNames: MetricName[];
   metrics: MetricName[];
   settings: Settings;
-  trial: TrialDetails;
+  trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
 }
 

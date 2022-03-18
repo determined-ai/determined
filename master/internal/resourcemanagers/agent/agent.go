@@ -439,27 +439,19 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	taskActor, ok := a.agentState.containers[sc.Container.ID]
 	check.Panic(check.True(ok, "container not allocated to agent: container %s", sc.Container.ID))
 
-	rsc := sproto.TaskContainerStateChanged{Container: sc.Container}
 	switch sc.Container.State {
 	case cproto.Running:
 		if sc.ContainerStarted.ProxyAddress == "" {
 			sc.ContainerStarted.ProxyAddress = a.address
-		}
-		rsc.ContainerStarted = &sproto.TaskContainerStarted{
-			Addresses:           sc.ContainerStarted.Addresses(),
-			NativeReservationID: sc.ContainerStarted.ContainerInfo.ID,
 		}
 	case cproto.Terminated:
 		ctx.Log().
 			WithError(sc.ContainerStopped.Failure).
 			Infof("container %s terminated", sc.Container.ID)
 		delete(a.agentState.containers, sc.Container.ID)
-		rsc.ContainerStopped = &sproto.TaskContainerStopped{
-			ContainerStopped: *sc.ContainerStopped,
-		}
 	}
 
-	ctx.Tell(taskActor, rsc)
+	ctx.Tell(taskActor, sproto.FromContainerStateChanged(sc))
 	a.agentState.containerStateChanged(ctx, sc)
 }
 
@@ -491,8 +483,8 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.ContainerReattach {
 	result := make([]aproto.ContainerReattach, 0, len(a.agentState.containers))
 	for containerID, allocation := range a.agentState.containers {
-		resp := ctx.Ask(allocation, sproto.GetTaskContainerState{
-			ContainerID: containerID,
+		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
+			ResourcesID: sproto.ResourcesID(containerID),
 		})
 		switch {
 		case resp.Error() != nil:
@@ -546,8 +538,8 @@ func (a *agent) clearNonReattachedContainers(
 			stopped := aproto.ContainerError(aproto.AgentFailed, errors.New(errorMsg))
 			ctx.Log().Infof("killing container that didn't restore: %s", cid.String())
 
-			resp := ctx.Ask(allocation, sproto.GetTaskContainerState{
-				ContainerID: cid,
+			resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
+				ResourcesID: sproto.ResourcesID(cid),
 			})
 			switch {
 			case resp.Error() != nil:

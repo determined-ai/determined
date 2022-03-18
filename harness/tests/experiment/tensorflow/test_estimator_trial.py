@@ -319,6 +319,11 @@ class TestLinearTrial:
             "global_batch_size": 4,
         }
 
+    def test_require_global_batch_size(self) -> None:
+        utils.ensure_requires_global_batch_size(
+            estimator_linear_model.LinearEstimator, self.hparams
+        )
+
     def test_custom_reducer(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()

@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
 from tests import config as conf
 from tests import experiment as exp
 
@@ -43,9 +43,11 @@ def test_streaming_observability_metrics_apis(
             model_def_path,
         )
 
-    exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+    exp.wait_for_experiment_state(
+        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+    )
     trials = exp.experiment_trials(experiment_id)
-    trial_id = trials[0]["id"]
+    trial_id = trials[0].trial.id
 
     gpu_enabled = conf.GPU_ENABLED
 

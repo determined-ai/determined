@@ -2,8 +2,9 @@ import json
 from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
-from determined.common import api, constants, experimental
-from determined.common.api import authentication
+from determined.cli.session import setup_session
+from determined.common import constants, experimental
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Determined
 
@@ -62,16 +63,31 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
 @authentication.required
 def list_checkpoints(args: Namespace) -> None:
-    params = {}
-    if args.best is not None:
-        if args.best < 0:
-            raise AssertionError("--best must be a non-negative integer")
-        params["best"] = args.best
+    if args.best:
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_SEARCHER_METRIC
+    else:
+        sorter = bindings.v1GetExperimentCheckpointsRequestSortBy.SORT_BY_END_TIME
+    r = bindings.get_GetExperimentCheckpoints(
+        setup_session(args),
+        id=args.experiment_id,
+        limit=args.best,
+        sortBy=sorter,
+    )
+    checkpoints = r.checkpoints or []
+    searcher_metric = ""
+    if len(checkpoints) > 0:
+        config = checkpoints[0].experimentConfig or {}
+        if "searcher" in config and "metric" in config["searcher"]:
+            searcher_metric = str(config["searcher"]["metric"])
 
-    r = api.get(
-        args.master, "experiments/{}/checkpoints".format(args.experiment_id), params=params
-    ).json()
-    searcher_metric = r["metric_name"]
+    def get_validation_metric(c: bindings.v1Checkpoint, metric: str) -> str:
+        if (
+            c.metrics
+            and c.metrics.validationMetrics
+            and searcher_metric in c.metrics.validationMetrics
+        ):
+            return str(c.metrics.validationMetrics[searcher_metric])
+        return ""
 
     headers = [
         "Trial ID",
@@ -84,15 +100,15 @@ def list_checkpoints(args: Namespace) -> None:
     ]
     values = [
         [
-            c["trial_id"],
-            c["step"]["total_batches"],
-            c["state"],
-            api.metric.get_validation_metric(searcher_metric, c["step"]["validation"]),
-            c["uuid"],
-            render.format_resources(c["resources"]),
-            render.format_resource_sizes(c["resources"]),
+            c.trialId,
+            c.batchNumber,
+            c.state.value.replace("STATE_", ""),
+            get_validation_metric(c, searcher_metric),
+            c.uuid,
+            render.format_resources(c.resources),
+            render.format_resource_sizes(c.resources),
         ]
-        for c in r["checkpoints"]
+        for c in checkpoints
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)

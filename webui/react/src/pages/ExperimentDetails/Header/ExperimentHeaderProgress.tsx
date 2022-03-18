@@ -1,7 +1,6 @@
 import { Progress, Tooltip } from 'antd';
 import React from 'react';
 
-import { isProgressingRunStates } from 'constants/states';
 import { ExperimentBase } from 'types';
 
 import css from './ExperimentHeaderProgress.module.scss';
@@ -11,7 +10,7 @@ interface Props {
 }
 
 const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
-  if (!isProgressingRunStates.has(experiment.state) || !experiment.progress) {
+  if (typeof experiment.progress === 'undefined') {
     return null;
   }
 

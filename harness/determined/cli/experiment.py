@@ -9,7 +9,7 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import tabulate
 
@@ -120,7 +120,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 
     config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
-        print("Error: invalid experiment config file {}".format(config_file.name))
+        print("Error: invalid experiment config file {!r}".format(config_file.name))
         sys.exit(1)
 
     parse_config_overrides(experiment_config, config_overrides)
@@ -232,16 +232,17 @@ def delete_experiment(args: Namespace) -> None:
 
 @authentication.required
 def describe(args: Namespace) -> None:
-    docs = []
+    session = setup_session(args)
+    exps = []
     for experiment_id in args.experiment_ids.split(","):
-        if args.metrics:
-            r = api.get(args.master, "experiments/{}/metrics/summary".format(experiment_id))
+        r = bindings.get_GetExperiment(session, experimentId=experiment_id)
+        if args.json:
+            exps.append(r.to_json())
         else:
-            r = api.get(args.master, "experiments/{}".format(experiment_id))
-        docs.append(r.json())
+            exps.append(r.experiment)
 
     if args.json:
-        print(json.dumps(docs, indent=4))
+        print(json.dumps(exps, indent=4))
         return
 
     # Display overall experiment information.
@@ -259,18 +260,18 @@ def describe(args: Namespace) -> None:
     ]
     values = [
         [
-            doc["id"],
-            doc["state"],
-            render.format_percent(doc["progress"]),
-            render.format_time(doc.get("start_time")),
-            render.format_time(doc.get("end_time")),
-            doc["config"].get("name"),
-            doc["config"].get("description"),
-            doc["archived"],
-            doc["config"]["resources"].get("resource_pool"),
-            ", ".join(sorted(doc["config"].get("labels") or [])),
+            exp.id,
+            exp.state.value.replace("STATE_", ""),
+            render.format_percent(exp.progress),
+            render.format_time(exp.startTime),
+            render.format_time(exp.endTime),
+            exp.name,
+            exp.description,
+            exp.archived,
+            exp.resourcePool,
+            ", ".join(sorted(exp.labels or [])),
         ]
-        for doc in docs
+        for exp in exps
     ]
     if not args.outdir:
         outfile = None
@@ -280,18 +281,24 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display trial-related information.
+    trials_for_experiment: Dict[str, Sequence[bindings.trialv1Trial]] = {}
+    for exp in exps:
+        trials_for_experiment[exp.id] = bindings.get_GetExperimentTrials(
+            session, experimentId=exp.id
+        ).trials
+
     headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
     values = [
         [
-            trial["id"],
-            doc["id"],
-            trial["state"],
-            render.format_time(trial.get("start_time")),
-            render.format_time(trial.get("end_time")),
-            json.dumps(trial["hparams"], indent=4),
+            trial.id,
+            exp.id,
+            trial.state.value.replace("STATE_", ""),
+            render.format_time(trial.startTime),
+            render.format_time(trial.endTime),
+            json.dumps(trial.hparams, indent=4),
         ]
-        for doc in docs
-        for trial in doc["trials"]
+        for exp in exps
+        for trial in trials_for_experiment[exp.id]
     ]
     if not args.outdir:
         outfile = None
@@ -301,16 +308,21 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display step-related information.
+    t_metrics_headers: List[str] = []
+    t_metrics_names: List[str] = []
+    v_metrics_headers: List[str] = []
+    v_metrics_names: List[str] = []
     if args.metrics:
         # Accumulate the scalar training and validation metric names from all provided experiments.
-        t_metrics_names = sorted({n for doc in docs for n in scalar_training_metrics_names(doc)})
+        for exp in exps:
+            sample_trial = trials_for_experiment[exp.id][0]
+            sample_workloads = bindings.get_GetTrial(session, trialId=sample_trial.id).workloads
+            t_metrics_names += scalar_training_metrics_names(sample_workloads)
+            v_metrics_names += scalar_validation_metrics_names(sample_workloads)
+        t_metrics_names = sorted(set(t_metrics_names))
         t_metrics_headers = ["Training Metric: {}".format(name) for name in t_metrics_names]
-
-        v_metrics_names = sorted({n for doc in docs for n in scalar_validation_metrics_names(doc)})
+        v_metrics_names = sorted(set(v_metrics_names))
         v_metrics_headers = ["Validation Metric: {}".format(name) for name in v_metrics_names]
-    else:
-        t_metrics_headers = []
-        v_metrics_headers = []
 
     headers = (
         ["Trial ID", "# of Batches", "State", "Report Time"]
@@ -324,66 +336,97 @@ def describe(args: Namespace) -> None:
         + v_metrics_headers
     )
 
-    values = []
-    for doc in docs:
-        for trial in doc["trials"]:
-            for step in trial["steps"]:
+    for exp in exps:
+        for trial in trials_for_experiment[exp.id]:
+            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
+            wl_output: Dict[int, List[Any]] = {}
+            for workload in workloads:
                 t_metrics_fields = []
-                if step.get("metrics"):
-                    avg_metrics = step["metrics"]["avg_metrics"]
+                wl_detail: bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload | None = None
+                if workload.training:
+                    wl_detail = workload.training
                     for name in t_metrics_names:
-                        if name in avg_metrics:
-                            t_metrics_fields.append(avg_metrics[name])
+                        if wl_detail.metrics and (name in wl_detail.metrics):
+                            t_metrics_fields.append(wl_detail.metrics[name])
                         else:
                             t_metrics_fields.append(None)
-
-                checkpoint = step.get("checkpoint")
-                if checkpoint:
-                    checkpoint_state = checkpoint["state"]
-                    checkpoint_end_time = checkpoint.get("end_time")
                 else:
-                    checkpoint_state = None
+                    t_metrics_fields = [None for name in t_metrics_names]
+
+                if workload.checkpoint:
+                    wl_detail = workload.checkpoint
+
+                if workload.checkpoint and wl_detail:
+                    checkpoint_state = wl_detail.state.value
+                    checkpoint_end_time = wl_detail.endTime
+                else:
+                    checkpoint_state = ""
                     checkpoint_end_time = None
 
-                validation = step.get("validation")
-                if validation:
-                    validation_state = validation["state"]
-                    validation_end_time = validation.get("end_time")
+                v_metrics_fields = []
+                if workload.validation:
+                    wl_detail = workload.validation
+                    validation_state = wl_detail.state.value
+                    validation_end_time = wl_detail.endTime
+                    for name in v_metrics_names:
+                        if wl_detail.metrics and (name in wl_detail.metrics):
+                            v_metrics_fields.append(wl_detail.metrics[name])
+                        else:
+                            v_metrics_fields.append(None)
                 else:
-                    validation_state = None
+                    validation_state = ""
                     validation_end_time = None
+                    v_metrics_fields = [None for name in v_metrics_names]
 
-                if args.metrics:
-                    v_metrics_fields = [
-                        api.metric.get_validation_metric(name, validation)
-                        for name in v_metrics_names
-                    ]
-                else:
-                    v_metrics_fields = []
-
-                row = (
-                    [
-                        step["trial_id"],
-                        step["total_batches"],
-                        step["state"],
-                        render.format_time(step.get("end_time")),
-                    ]
-                    + t_metrics_fields
-                    + [
-                        checkpoint_state,
-                        render.format_time(checkpoint_end_time),
-                        validation_state,
-                        render.format_time(validation_end_time),
-                    ]
-                    + v_metrics_fields
-                )
-                values.append(row)
+                if wl_detail:
+                    if wl_detail.totalBatches in wl_output:
+                        # condense training, checkpoints, validation workloads into one step-like
+                        # row for compatibility with previous versions of describe
+                        merge_row = wl_output[wl_detail.totalBatches]
+                        merge_row[3] = max(merge_row[3], render.format_time(wl_detail.endTime))
+                        for idx, tfield in enumerate(t_metrics_fields):
+                            if tfield and merge_row[4 + idx] is None:
+                                merge_row[4 + idx] = tfield
+                        start_checkpoint = 4 + len(t_metrics_fields)
+                        if checkpoint_state:
+                            merge_row[start_checkpoint] = checkpoint_state.replace("STATE_", "")
+                            merge_row[start_checkpoint + 1] = render.format_time(
+                                checkpoint_end_time
+                            )
+                        if validation_end_time:
+                            merge_row[start_checkpoint + 3] = render.format_time(
+                                validation_end_time
+                            )
+                        if validation_state:
+                            merge_row[start_checkpoint + 2] = validation_state.replace("STATE_", "")
+                        for idx, vfield in enumerate(v_metrics_fields):
+                            if vfield and merge_row[start_checkpoint + idx + 4] is None:
+                                merge_row[start_checkpoint + idx + 4] = vfield
+                    else:
+                        row = (
+                            [
+                                trial.id,
+                                wl_detail.totalBatches,
+                                wl_detail.state.value.replace("STATE_", ""),
+                                render.format_time(wl_detail.endTime),
+                            ]
+                            + t_metrics_fields
+                            + [
+                                checkpoint_state.replace("STATE_", ""),
+                                render.format_time(checkpoint_end_time),
+                                validation_state.replace("STATE_", ""),
+                                render.format_time(validation_end_time),
+                            ]
+                            + v_metrics_fields
+                        )
+                        wl_output[wl_detail.totalBatches] = row
 
     if not args.outdir:
         outfile = None
         print("\nWorkloads:")
     else:
         outfile = args.outdir.joinpath("workloads.csv")
+    values = sorted(wl_output.values(), key=lambda a: int(a[1]))
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
@@ -431,7 +474,11 @@ def wait(args: Namespace) -> None:
         ).experiment
 
         if r.state.value.replace("STATE_", "") in constants.TERMINAL_STATES:
-            print("Experiment {} terminated with state {}".format(args.experiment_id, r.state))
+            print(
+                "Experiment {} terminated with state {}".format(
+                    args.experiment_id, r.state.value.replace("STATE_", "")
+                )
+            )
             if r.state.value.replace("STATE_", "") == constants.COMPLETED:
                 sys.exit(0)
             else:
@@ -493,7 +540,9 @@ def is_number(value: Any) -> bool:
     return isinstance(value, numbers.Number)
 
 
-def scalar_training_metrics_names(exp: Dict[str, Any]) -> Set[str]:
+def scalar_training_metrics_names(
+    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
     that are associated with scalar, numeric values.
@@ -502,24 +551,25 @@ def scalar_training_metrics_names(exp: Dict[str, Any]) -> Set[str]:
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
     """
-    for trial in exp["trials"]:
-        for step in trial["steps"]:
-            metrics = step.get("metrics")
+    for workload in workloads or []:
+        if workload.training:
+            metrics = workload.training.metrics
             if not metrics:
                 continue
-            return set(metrics.get("avg_metrics", {}).keys())
+            return set(metrics.keys())
 
     return set()
 
 
-def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
-    for trial in exp["trials"]:
-        for step in trial["steps"]:
-            try:
-                v_metrics = step["validation"]["metrics"]["validation_metrics"]
-                return {metric for metric, value in v_metrics.items() if is_number(value)}
-            except Exception:
-                pass
+def scalar_validation_metrics_names(
+    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+) -> Set[str]:
+    for workload in workloads or []:
+        if workload.validation:
+            metrics = workload.validation.metrics
+            if not metrics:
+                continue
+            return set(metrics.keys())
 
     return set()
 
@@ -595,7 +645,7 @@ def remove_label(args: Namespace) -> None:
     session = setup_session(args)
     exp = bindings.get_GetExperiment(session, experimentId=args.experiment_id).experiment
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
-    if (exp_patch.labels is not None) and (args.label in exp_patch.labels):
+    if (exp_patch.labels) and (args.label in exp_patch.labels):
         exp_patch.labels = [label for label in exp_patch.labels if label != args.label]
         bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
@@ -653,7 +703,7 @@ def set_gc_policy(args: Namespace) -> None:
                 render.format_resources(c["resources"]),
             ]
             for c in sorted(checkpoints, key=lambda c: (c["trial_id"], c["end_time"]))
-            if "step" in c and c["step"].get("validation") is not None
+            if "step" in c and c["step"].get("validation")
         ]
 
         if len(values) != 0:

@@ -38,8 +38,17 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         det.TrialContext.__init__(self, *arg, **kwarg)
         estimator._EstimatorReducerContext.__init__(self, self.distributed._zmq_allgather)
 
+        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
+            self.get_hparams(),
+            self.env.experiment_config.slots_per_trial(),
+            "EstimatorTrial",
+        )
+
         self.experimental = EstimatorExperimentalContext(
-            env=self.env, parent=self, distributed_context=self.distributed
+            self.env,
+            self,
+            self.distributed,
+            self._per_slot_batch_size,
         )
 
         if self.distributed.size > 1:
@@ -54,6 +63,20 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
+
+    def get_global_batch_size(self) -> int:
+        """
+        Return the global batch size.
+        """
+        return self._global_batch_size
+
+    def get_per_slot_batch_size(self) -> int:
+        """
+        Return the per-slot batch size. When a model is trained with a single GPU, this is equal to
+        the global batch size. When multi-GPU training is used, this is equal to the global batch
+        size divided by the number of GPUs used to train the model.
+        """
+        return self._per_slot_batch_size
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
@@ -143,8 +166,9 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
         env: det.EnvContext,
         parent: EstimatorTrialContext,
         distributed_context: _core.DistributedContext,
+        per_slot_batch_size: int,
     ) -> None:
-        super().__init__(env=env, distributed_context=distributed_context)
+        super().__init__(env, distributed_context, per_slot_batch_size)
         self._parent = parent
 
     @util.deprecated(

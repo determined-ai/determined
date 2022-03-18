@@ -35,40 +35,7 @@ appropriate IP address. This can be accomplished by setting the ``DET_MASTER`` e
 You may want to place this into the appropriate configuration file for your login shell (e.g.,
 ``.bashrc``).
 
-More information about using the Determined CLI can be found in the :ref:`reference documentation
-<cli>` or by running ``det --help``.
-
-When trying to install the Determined command-line interface, I encounter this ``distutils`` error
-==================================================================================================
-
-.. code::
-
-   Uninstalling a distutils installed project (...) has been deprecated and will be removed in a future version. This is due to the fact that uninstalling a distutils project will only partially uninstall the project.
-
-If a Python library has previously been installed in your environment with `distutils
-<https://docs.python.org/3/library/distutils.html>`__ or `conda <https://conda.io/en/latest/>`__,
-``pip`` may not be able to upgrade or downgrade the library to the version required by Determined.
-There are two recommended solutions:
-
-#. Install the Determined command-line interface into a fresh `virtualenv
-   <https://virtualenv.pypa.io/en/latest/>`__ with no previous Python packages installed.
-
-#. Use ``--ignore-installed`` with ``pip`` to force overwriting the library version(s).
-
-   .. code:: bash
-
-      pip install --ignore-installed determined-cli
-
-After upgrading Determined and trying to use the CLI, I get ``det: command not found`` error
-============================================================================================
-
-When upgrading from a version earlier than 0.15.0, some users may need to uninstall Determined and
-then install it again by running:
-
-.. code::
-
-   pip uninstall -y determined-common determined determined-cli determined-deploy
-   pip install determined
+More information about using the Determined CLI can be found by running ``det --help``.
 
 *******
  Usage

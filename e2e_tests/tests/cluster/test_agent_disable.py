@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterator, List, Optional, cast
 
 import pytest
 
+from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
@@ -127,7 +128,7 @@ def test_drain_agent() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, "ACTIVE")
+    exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_ACTIVE)
     exp.wait_for_experiment_active_workload(experiment_id)
     exp.wait_for_experiment_workload_progress(experiment_id)
 
@@ -143,7 +144,7 @@ def test_drain_agent() -> None:
         None,
     )
     time.sleep(5)
-    exp.wait_for_experiment_state(experiment_id_no_start, "ACTIVE")
+    exp.wait_for_experiment_state(experiment_id_no_start, determinedexperimentv1State.STATE_ACTIVE)
 
     with _disable_agent(agent_id, drain=True):
         # Check for 15 seconds it doesn't get scheduled into the same slot.
@@ -151,11 +152,12 @@ def test_drain_agent() -> None:
             trials = exp.experiment_trials(experiment_id_no_start)
             assert len(trials) == 0
 
-        # Ensure the first one has finished with the correct number of steps.
-        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+        # Ensure the first one has finished with the correct number of workloads.
+        exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_COMPLETED)
         trials = exp.experiment_trials(experiment_id)
         assert len(trials) == 1
-        assert len(trials[0]["steps"]) == 5
+        assert trials[0].workloads is not None
+        assert len(trials[0].workloads) == 7
 
         # Ensure the slot is empty.
         slots = _fetch_slots()
@@ -202,7 +204,7 @@ def test_drain_agent_sched() -> None:
             conf.fixtures_path("no_op"),
             None,
         )
-        exp.wait_for_experiment_state(exp_id2, "ACTIVE")
+        exp.wait_for_experiment_state(exp_id2, determinedexperimentv1State.STATE_ACTIVE)
 
         # Wait for a state when *BOTH* experiments are scheduled.
         for _ in range(20):
@@ -218,13 +220,14 @@ def test_drain_agent_sched() -> None:
                 "while the first agent was draining"
             )
 
-        exp.wait_for_experiment_state(exp_id1, "COMPLETED")
-        exp.wait_for_experiment_state(exp_id2, "COMPLETED")
+        exp.wait_for_experiment_state(exp_id1, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id2, determinedexperimentv1State.STATE_COMPLETED)
 
         trials1 = exp.experiment_trials(exp_id1)
         trials2 = exp.experiment_trials(exp_id2)
         assert len(trials1) == len(trials2) == 1
-        assert len(trials1[0]["steps"]) == len(trials2[0]["steps"]) == 5
+        assert (trials1[0].workloads is not None) and (trials2[0].workloads is not None)
+        assert len(trials1[0].workloads) == len(trials2[0].workloads) == 7
 
 
 def _task_data(task_id: str) -> Optional[Dict[str, Any]]:
@@ -238,7 +241,7 @@ def _task_agents(task_id: str) -> List[str]:
     task_data = _task_data(task_id)
     if not task_data:
         return []
-    return [c["agent"] for c in task_data.get("containers", [])]
+    return [a for r in task_data.get("resources", []) for a in r["agent_devices"]]
 
 
 @pytest.mark.e2e_cpu_2a

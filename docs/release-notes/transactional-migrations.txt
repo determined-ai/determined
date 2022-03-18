@@ -1,0 +1,8 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Ensure database migrations run in transactions. The lack of transactional migrations surfaced as
+   a bug where, if the master was restarted during a migration, it would attempt to rerun the
+   migration when it was already partially or wholy applied, resulting in various SQL errors on
+   non-idempotent DDL statements.
