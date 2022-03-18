@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
+
+	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 func assertEqualInstancesMarked(t *testing.T, left, right map[string]time.Time) {

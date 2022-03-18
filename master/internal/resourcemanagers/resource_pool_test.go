@@ -3,9 +3,10 @@ package resourcemanagers
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"gotest.tools/assert"
 
