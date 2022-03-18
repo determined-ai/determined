@@ -33,7 +33,7 @@ type (
 		data     []*structpb.Struct
 		numPeers *int
 
-		readyPassed bool
+		alreadyDone bool
 	}
 
 	// AllGatherWatcher contains a channel which can be polled for all gather completion.
@@ -77,67 +77,53 @@ func NewAllGather(ctx *actor.Context) *AllGather {
 	}
 }
 
-// ReceiveMsg receives rendezvous-specific messages.
-func (g *AllGather) ReceiveMsg(ctx *actor.Context) (bool, error) {
-	switch msg := ctx.Message().(type) {
-	case WatchAllGather:
-		ctx.Respond(g.watch(msg.WatcherID, msg.NumPeers, msg.Data))
-	case UnwatchAllGather:
-		g.unwatch(msg.WatcherID)
-	case allGatherTimeout:
-		if msg.id == g.id {
-			return false, ErrTimeoutExceeded{Message: AllGatherTimeoutMessage}
-		}
-	default:
-		return false, actor.ErrUnexpectedMessage(ctx)
-	}
-	return g.ready(), nil
-}
-
-func (g *AllGather) watch(id uuid.UUID, count int, data *structpb.Struct) AllGatherWatcher {
-	if _, ok := g.watchers[id]; ok {
+func (g *AllGather) watch(msg WatchAllGather) AllGatherWatcher {
+	if _, ok := g.watchers[msg.WatcherID]; ok {
 		// If this peer has already connected, just respond with the watcher again. This is only
 		// possible if it disconnects and reconnects since the original actor ask blocks forever.
-		return AllGatherWatcher{C: g.watchers[id]}
+		return AllGatherWatcher{C: g.watchers[msg.WatcherID]}
 	}
 
 	// Channel is size 1 since data info will only ever be sent once and we'd rather not block.
 	w := make(chan AllGatherInfoOrError, 1)
-	g.watchers[id] = w
-	g.data = append(g.data, data)
-	g.numPeers = ptrs.IntPtr(count)
-	if g.ready() {
+	g.watchers[msg.WatcherID] = w
+	g.data = append(g.data, msg.Data)
+	g.numPeers = ptrs.IntPtr(msg.NumPeers)
+	if g.done() {
 		g.push()
 	}
 	return AllGatherWatcher{C: w}
 }
 
-func (g *AllGather) unwatch(id uuid.UUID) {
-	delete(g.watchers, id)
+func (g *AllGather) unwatch(msg UnwatchAllGather) {
+	delete(g.watchers, msg.WatcherID)
 }
 
-// ready returns true if and only if all the containers are reported to be started with the
-// ContainerStarted message and their sockets to be connected with the containerConnected
-// message. The two messages are not guaranteed to come in-order. During each run of the
-// trial, once all the containers are ready this function will return true afterward because this
-// function is used in deciding if the trial should be forcibly killed when terminating.
-func (g *AllGather) ready() bool {
+func (g *AllGather) checkTimeout(msg allGatherTimeout) error {
+	if g.id == msg.id {
+		return ErrTimeoutExceeded{Message: AllGatherTimeoutMessage}
+	}
+	return nil
+}
+
+// done returns true if and only if all peers are connected.
+func (g *AllGather) done() bool {
 	if g == nil {
 		return false
 	}
 
-	if g.readyPassed {
+	if g.alreadyDone {
 		return true
 	}
 
-	g.readyPassed = g.numPeers != nil && len(g.watchers) == *g.numPeers
-	return g.readyPassed
+	g.alreadyDone = g.numPeers != nil && len(g.watchers) == *g.numPeers
+	return g.alreadyDone
 }
 
 // push gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
 func (g AllGather) push() bool {
-	if !g.ready() {
+	if !g.done() {
 		return false
 	}
 	for id, c := range g.watchers {

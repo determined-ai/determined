@@ -238,11 +238,22 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		switch finished, err := a.allGather.ReceiveMsg(ctx); {
-		case err != nil:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
-			ctx.Log().WithError(err).Error("performing all gather through master")
-		case finished:
+		switch msg := ctx.Message().(type) {
+		case WatchAllGather:
+			watcher := a.allGather.watch(msg)
+			ctx.Respond(watcher)
+		case UnwatchAllGather:
+			a.allGather.unwatch(msg)
+		case allGatherTimeout:
+			if err := a.allGather.checkTimeout(msg); err != nil {
+				a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+				ctx.Log().WithError(err).Error("performing all gather through master")
+			}
+		default:
+			return actor.ErrUnexpectedMessage(ctx)
+		}
+
+		if a.allGather.done() {
 			a.allGather = nil
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
