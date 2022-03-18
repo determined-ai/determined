@@ -734,8 +734,8 @@ func (a *apiServer) PreviewHPSearch(
 	hc := config.RawHyperparameters
 
 	// Apply any json-schema-defined defaults.
-	sc = schemas.WithDefaults(sc).(expconf.SearcherConfig)
-	hc = schemas.WithDefaults(hc).(expconf.Hyperparameters)
+	sc = schemas.WithDefaults(sc)
+	hc = schemas.WithDefaults(hc)
 
 	// Make sure the searcher config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(sc); err != nil {

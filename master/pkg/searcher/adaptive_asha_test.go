@@ -34,7 +34,7 @@ func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 		RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(6400)),
 		RawMaxTrials: ptrs.Ptr(128),
 	}
-	conf = schemas.WithDefaults(conf).(expconf.AdaptiveASHAConfig)
+	conf = schemas.WithDefaults(conf)
 	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, true) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }

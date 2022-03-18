@@ -18,7 +18,7 @@ func TestASHAStoppingSearcherRecords(t *testing.T) {
 		RawStopOnce:            ptrs.Ptr(true),
 		RawMaxConcurrentTrials: ptrs.Ptr(2),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
+	actual = schemas.WithDefaults(actual)
 	// Stopping-based ASHA will only promote if a trial is in top 1/3 of trials in the rung or if
 	// there have been no promotions so far.  Since trials cannot be restarted and metrics increase
 	// for later trials, only the first trial will be promoted and all others will be stopped on
@@ -42,7 +42,7 @@ func TestASHAStoppingSearcherBatches(t *testing.T) {
 		RawStopOnce:            ptrs.Ptr(true),
 		RawMaxConcurrentTrials: ptrs.Ptr(2),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("1000B 3000B 9000B"),
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
@@ -62,7 +62,7 @@ func TestASHAStoppingSearcherEpochs(t *testing.T) {
 		RawStopOnce:            ptrs.Ptr(true),
 		RawMaxConcurrentTrials: ptrs.Ptr(2),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("1E 4E 12E"),
 		toOps("1E"), toOps("1E"), toOps("1E"),
