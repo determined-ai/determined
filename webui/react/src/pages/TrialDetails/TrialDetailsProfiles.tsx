@@ -1,3 +1,4 @@
+import { Alert } from 'antd';
 import React from 'react';
 
 import ProfilesEnabled from 'pages/TrialDetails/Profiles/ProfilesEnabled';
@@ -9,7 +10,7 @@ import css from './TrialDetailsProfiles.module.scss';
 
 export interface Props {
   experiment: ExperimentBase;
-  trial: TrialDetails;
+  trial?: TrialDetails;
 }
 
 export const CHART_HEIGHT = 400;
@@ -18,6 +19,13 @@ const Profiler: React.FC<Props> = ({ experiment, trial }: Props) => {
   if (!experiment.config.profiling?.enabled) {
     return (
       <ProfilesNotEnabled />
+    );
+  } else if (!trial) {
+    return (
+      <Alert
+        message="Waiting for trial to become available."
+        type="warning"
+      />
     );
   } else {
     return (
