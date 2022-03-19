@@ -1,19 +1,60 @@
 // @ts-nocheck
+
 import { Table } from 'antd';
+import { SpinProps } from 'antd/es/spin';
+import { TableProps } from 'antd/es/table';
+import { SorterResult } from 'antd/es/table/interface';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import 'antd/dist/antd.min.css';
 import './ResponsiveTable.css';
 import { Resizable } from 'react-resizable';
 
-import tableCss from 'components/ResponsiveTable.module.scss';
 import useResize from 'hooks/useResize';
 
+import css from './ResponsiveTable.module.scss';
 import Spinner from './Spinner';
 
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const type = 'DraggableColumn';
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+type Comparable = any;
+
+interface Settings {
+  sortDesc: boolean;
+  sortKey: Comparable;
+  tableLimit: number;
+  tableOffset: number;
+}
+
+interface ContextMenuProps {
+  onVisibleChange: (visible: boolean) => void;
+  record: Record<string, unknown>;
+}
+
+interface ResponsiveTableProps<RecordType> extends TableProps<RecordType> {
+  ContextMenu?: React.FC<ContextMenuProps>;
+  areRowsRightClickable?: boolean;
+  areRowsSelected?: boolean;
+}
+
+/* eslint-disable-next-line @typescript-eslint/ban-types */
+type ResponsiveTable = <T extends object>(props: ResponsiveTableProps<T>) => JSX.Element;
+
+interface RowProps {
+  ContextMenu: React.FC<ContextMenuProps>;
+  areRowsSelected?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+  record: Record<string, unknown>;
+}
+
+interface CellProps {
+  children?: React.ReactNode;
+  isCellRightClickable?: boolean;
+}
 
 const RightClickableRowContext = createContext({});
 
@@ -67,11 +108,35 @@ const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
   if (!isCellRightClickable) return <td {...props}>{children}</td>;
   return (
     <td {...props}>
-      <div className={tableCss.rightClickableCellWrapper} {...rightClickableCellProps}>
+      <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
         {children}
       </div>
     </td>
   );
+};
+
+export const handleTableChange = (
+  columns: {key?: Comparable}[],
+  settings: Settings,
+  updateSettings: (s: Settings, b: boolean) => void,
+) => {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return (tablePagination: any, tableFilters: any, tableSorter: any): void => {
+    if (Array.isArray(tableSorter)) return;
+
+    const { columnKey, order } = tableSorter as SorterResult<unknown>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    const newSettings = {
+      sortDesc: order === 'descend',
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      sortKey: columnKey as any,
+      tableLimit: tablePagination.pageSize,
+      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+    };
+    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+    updateSettings(newSettings, shouldPush);
+  };
 };
 
 const ResizableTitle = ({
@@ -145,7 +210,9 @@ const ResizableTitle = ({
   );
 };
 
-const ResponsiveTable = ({
+const ResponsiveTable: ResponsiveTable = ({
+  loading,
+  scroll,
   dataSource,
   columnSpec,
   settings,
@@ -153,15 +220,15 @@ const ResponsiveTable = ({
   areRowsRightClickable,
   ContextMenu,
   areRowsSelected,
-  loading,
   ...props
 }) => {
-  const tableRef = useRef<HTMLDivElement>(null);
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
-  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
   const [ tableScroll, setTableScroll ] = useState(scroll);
-  const [ widths, setWidths ] = useState(settings.columnWidths);
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [ widths, setWidths ] = useState(settings?.columnWidths);
   const resize = useResize(tableRef);
+  
+  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   useEffect(() => {
     if (!tableRef.current || resize.width === 0) return;
@@ -192,7 +259,7 @@ const ResponsiveTable = ({
 
   useEffect(() => setWidths(settings.columnWidths), [ settings.columnWidths ]);
 
-  const handleTableChange = useCallback(
+  const handleChange = useCallback(
     (tablePagination: any, tableFilters: any, tableSorter: any): void => {
       if (Array.isArray(tableSorter)) return;
 
@@ -297,7 +364,7 @@ const ResponsiveTable = ({
             scroll={tableScroll}
             // tableLayout="fixed"
             tableLayout="auto"
-            onChange={handleTableChange}
+            onChange={handleChange}
             onRow={(record, index) =>
               ({
                 areRowsSelected,

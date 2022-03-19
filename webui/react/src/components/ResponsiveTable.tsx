@@ -1,17 +1,13 @@
-// @ts-nocheck
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 
 import css from './ResponsiveTable.module.scss';
 import Spinner from './Spinner';
-
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
@@ -64,7 +60,6 @@ const Row = ({
   const [ rowHovered, setRowHovered ] = useState(false);
   const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
   const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
-
 
   if (areRowsSelected) {
     return <tr className={className} {...props}>{children}</tr>;
@@ -140,15 +135,12 @@ const ResponsiveTable: ResponsiveTable = ({
   areRowsRightClickable,
   ContextMenu,
   areRowsSelected,
-  columnSpec,
-  // dataSource,
   ...props
 }) => {
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
   const [ tableScroll, setTableScroll ] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
   const resize = useResize(tableRef);
-
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
@@ -179,151 +171,29 @@ const ResponsiveTable: ResponsiveTable = ({
     });
   }, [ hasScrollBeenEnabled, resize, scroll ]);
 
-
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
         <Table
           components={
-            areRowsRightClickable
-              ? {
-                  body: {
-                    cell: Cell,
-                    row: Row,
-                  },
-                }
-              : undefined
+            areRowsRightClickable ? {
+              body: {
+                cell: Cell,
+                row: Row,
+              },
+            } : undefined
           }
           scroll={tableScroll}
           tableLayout="auto"
-          onRow={(record, index) =>
-            ({
-              areRowsSelected,
-              ContextMenu,
-              record,
-              index,
-            } as React.HTMLAttributes<HTMLElement>)
-          }
+          onRow={(record) => ({
+            areRowsSelected,
+            ContextMenu,
+            record,
+          } as React.HTMLAttributes<HTMLElement>)}
           {...props}
         />
       </Spinner>
     </div>
-  );
-};
-
-
-const type = 'DraggableBodyRow';
-
-const DraggableBodyRow = ({ index, moveRow, className, style, ...restProps }) => {
-  const ref = useRef();
-  const [{ isOver, dropClassName }, drop] = useDrop({
-    accept: type,
-    collect: monitor => {
-      const { index: dragIndex } = monitor.getItem() || {};
-      if (dragIndex === index) {
-        return {};
-      }
-      return {
-        isOver: monitor.isOver(),
-        dropClassName: dragIndex < index ? ' drop-over-downward' : ' drop-over-upward',
-      };
-    },
-    drop: item => {
-      moveRow(item.index, index);
-    },
-  });
-  const [, drag] = useDrag({
-    type,
-    item: { index },
-    collect: monitor => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-  drop(drag(ref));
-
-  return (
-    <tr
-      ref={ref}
-      className={`${className}${isOver ? dropClassName : ''}`}
-      style={{ cursor: 'move', ...style }}
-      {...restProps}
-    />
-  );
-};
-
-const columns = [
-  {
-    title: 'Name',
-    dataIndex: 'name',
-    key: 'name',
-  },
-  {
-    title: 'Age',
-    dataIndex: 'age',
-    key: 'age',
-  },
-  {
-    title: 'Address',
-    dataIndex: 'address',
-    key: 'address',
-  },
-];
-
-const DragSortingTable: React.FC = () => {
-  const [data, setData] = useState([
-    {
-      key: '1',
-      name: 'John Brown',
-      age: 32,
-      address: 'New York No. 1 Lake Park',
-    },
-    {
-      key: '2',
-      name: 'Jim Green',
-      age: 42,
-      address: 'London No. 1 Lake Park',
-    },
-    {
-      key: '3',
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sidney No. 1 Lake Park',
-    },
-  ]);
-
-  const components = {
-    body: {
-      row: DraggableBodyRow,
-    },  
-  };
-
-  const moveRow = useCallback(
-    (dragIndex, hoverIndex) => {
-      const dragRow = data[dragIndex];
-      setData(
-        update(data, {
-          $splice: [
-            [dragIndex, 1],
-            [hoverIndex, 0, dragRow],
-          ],
-        }),
-      );
-    },
-    [data],
-  );
-
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <Table
-        columns={columns}
-        dataSource={data}
-        components={components}
-        onRow={(record, index) => ({
-          index,
-          moveRow,
-        })}
-      />
-    </DndProvider>
   );
 };
 

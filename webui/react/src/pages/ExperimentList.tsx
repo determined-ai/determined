@@ -5,18 +5,13 @@ import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import ResponsiveTable from 'components/ColumnDraggingTable';
+import InteractiveTable from 'components/InteractiveTable';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
-import { handleTableChange } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
-// import DragSortingTable/*,  { handleTableChange }  */from 'components/DragSortingTable';
-// import ResponsiveTable,  { handleTableChange } from 'components/ResponsiveTable';
-// import  ResponsiveTable,  { handleTableChange } from 'components/InteractiveTable';
-import tableCss from 'components/ResponsiveTable.module.scss';
 import {
   checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
   ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig,
@@ -123,9 +118,6 @@ const ExperimentList: React.FC = () => {
   }, [ experimentMap, settings.row, user ]);
 
   const fetchUsers = useFetchUsers(canceler);
-
-  const unchangedRef = useRef(null);
-  const labelsChangedIndicator = useMemo(() => settings.label ?? unchangedRef, [ settings.label ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -676,13 +668,10 @@ const ExperimentList: React.FC = () => {
         ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          total,
-        )}
+        pagination={getFullPaginationConfig({
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
+        }, total)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{
