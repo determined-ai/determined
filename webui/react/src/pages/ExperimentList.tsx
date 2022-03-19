@@ -149,7 +149,6 @@ const ExperimentList: React.FC = () => {
   }, [ canceler,
     settings.archived,
     settings.label,
-    labelsChangedIndicator,
     settings.search,
     settings.sortDesc,
     settings.sortKey,
