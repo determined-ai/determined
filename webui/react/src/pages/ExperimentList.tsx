@@ -2,21 +2,20 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import ResponsiveTable from 'components/ColumnDraggingTable';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import { handleTableChange } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 // import DragSortingTable/*,  { handleTableChange }  */from 'components/DragSortingTable';
 // import ResponsiveTable,  { handleTableChange } from 'components/ResponsiveTable';
-import ResponsiveTable from 'components/ColumnDraggingTable';
 // import  ResponsiveTable,  { handleTableChange } from 'components/InteractiveTable';
-import  { handleTableChange } from 'components/InteractiveTable';
-
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
   checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
@@ -74,7 +73,7 @@ const ExperimentList: React.FC = () => {
     settings,
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
-  
+
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -125,8 +124,8 @@ const ExperimentList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const unchangedRef = useRef(null)
-  const labelsChangedIndicator = useMemo(() => settings.label ?? unchangedRef, [settings.label])
+  const unchangedRef = useRef(null);
+  const labelsChangedIndicator = useMemo(() => settings.label ?? unchangedRef, [ settings.label ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -165,9 +164,7 @@ const ExperimentList: React.FC = () => {
     settings.state,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user]);
-  
-
+    settings.user ]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -321,29 +318,6 @@ const ExperimentList: React.FC = () => {
     );
 
     const tableColumns: ColumnsType<ExperimentItem> = {
-      id:
-      {
-        dataIndex: 'id',
-        key: V1GetExperimentsRequestSortBy.ID,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: experimentNameRenderer,
-        sorter: true,
-        title: 'ID',
-        
-      },
-      name:
-      {
-        dataIndex: 'name',
-        filterDropdown: nameFilterSearch,
-        filterIcon: tableSearchIcon,
-        key: V1GetExperimentsRequestSortBy.NAME,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        isFiltered: settings => !!settings.search,
-        render: experimentNameRenderer,
-        sorter: true,
-        title: 'Name',
-        // width: 240,
-      },
       description:
       {
         dataIndex: 'description',
@@ -352,17 +326,19 @@ const ExperimentList: React.FC = () => {
         title: 'Description',
         // width: 200,
       },
-      tags:
+      duration:
       {
-        dataIndex: 'labels',
-        filterDropdown: labelFilterDropdown,
-        filters: labels.map(label => ({ text: label, value: label })),
-        key: 'labels',
+        key: 'duration',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        isFiltered: settings => !!settings.label,
-        render: tagsRenderer,
-        title: 'Tags',
-        // width: 120,
+        render: expermentDurationRenderer,
+        title: 'Duration',
+      },
+      archived:
+      {
+        dataIndex: 'archived',
+        key: 'archived',
+        render: checkmarkRenderer,
+        title: 'Archived',
       },
       forkedFrom:
       {
@@ -373,6 +349,62 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'Forked From',
       },
+      action:
+      {
+        align: 'right',
+        className: 'fullCell',
+        fixed: 'right',
+        key: 'action',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: actionRenderer,
+        title: '',
+        width: 20,
+      },
+      id:
+      {
+        dataIndex: 'id',
+        key: V1GetExperimentsRequestSortBy.ID,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: experimentNameRenderer,
+        sorter: true,
+        title: 'ID',
+
+      },
+      name:
+      {
+        dataIndex: 'name',
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
+        isFiltered: settings => !!settings.search,
+        key: V1GetExperimentsRequestSortBy.NAME,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: experimentNameRenderer,
+        sorter: true,
+        title: 'Name',
+        // width: 240,
+      },
+      progress:
+      {
+        key: V1GetExperimentsRequestSortBy.PROGRESS,
+        render: experimentProgressRenderer,
+        sorter: true,
+        title: 'Progress',
+      },
+      resourcePool:
+      {
+        dataIndex: 'resourcePool',
+        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        sorter: true,
+        title: 'Resource Pool',
+      },
+      searcherType:
+      {
+        dataIndex: 'searcherType',
+        key: 'searcherType',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        title: 'Searcher Type',
+      },
       startTime:
       {
         key: V1GetExperimentsRequestSortBy.STARTTIME,
@@ -381,21 +413,6 @@ const ExperimentList: React.FC = () => {
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
         title: 'Start Time',
-      },
-      duration:
-      {
-        key: 'duration',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: expermentDurationRenderer,
-        title: 'Duration',
-      },
-      trials:
-      {
-        dataIndex: 'numTrials',
-        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        sorter: true,
-        title: 'Trials',
       },
       state:
       {
@@ -412,65 +429,45 @@ const ExperimentList: React.FC = () => {
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           })),
-        key: V1GetExperimentsRequestSortBy.STATE,
         isFiltered: () => !!settings.state,
+        key: V1GetExperimentsRequestSortBy.STATE,
         render: stateRenderer,
         sorter: true,
         title: 'State',
       },
-      searcherType:
+      tags:
       {
-        dataIndex: 'searcherType',
-        key: 'searcherType',
+        dataIndex: 'labels',
+        filterDropdown: labelFilterDropdown,
+        filters: labels.map(label => ({ text: label, value: label })),
+        key: 'labels',
+        isFiltered: settings => !!settings.label,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        title: 'Searcher Type',
+        render: tagsRenderer,
+        title: 'Tags',
+        // width: 120,
       },
-      resourcePool:
+      trials:
       {
-        dataIndex: 'resourcePool',
-        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        dataIndex: 'numTrials',
+        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
-        title: 'Resource Pool',
-      },
-      progress:
-      {
-        key: V1GetExperimentsRequestSortBy.PROGRESS,
-        render: experimentProgressRenderer,
-        sorter: true,
-        title: 'Progress',
-      },
-      archived:
-      {
-        dataIndex: 'archived',
-        key: 'archived',
-        render: checkmarkRenderer,
-        title: 'Archived',
+        title: 'Trials',
       },
       user:
       {
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
-        key: V1GetExperimentsRequestSortBy.USER,
         isFiltered: settings => !!settings.user,
+        key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
         sorter: true,
         title: 'User',
       },
-      action:
-      {
-        align: 'right',
-        className: 'fullCell',
-        fixed: 'right',
-        key: 'action',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: actionRenderer,
-        title: '',
-        width: 20,
-      },
     };
 
-    return tableColumns
+    return tableColumns;
 
   }, [
     user,
@@ -585,10 +582,9 @@ const ExperimentList: React.FC = () => {
       ?.map((col, i) => ({ [col]: settings.columnWidths?.[i] }))
       .reduce((a, b) => ({ ...a, ...b }), {});
     if (columns.length === 0) {
-      updateSettings({ columns: ['name'], columnWidths: [100] })
-    }
-    else {
-      updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths[col] ?? 100) })
+      updateSettings({ columns: [ 'name' ], columnWidths: [ 100 ] });
+    } else {
+      updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths[col] ?? 100) });
     }
   }, [ updateSettings ]);
 
@@ -646,7 +642,7 @@ const ExperimentList: React.FC = () => {
   return (
     <Page
       id="experiments"
-      options={
+      options={(
         <Space>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
@@ -656,9 +652,8 @@ const ExperimentList: React.FC = () => {
           </Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
-      }
-      title="Experiments"
-    >
+      )}
+      title="Experiments">
       <TableBatch
         actions={[
           { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
@@ -686,7 +681,7 @@ const ExperimentList: React.FC = () => {
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           },
-          total
+          total,
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
@@ -695,9 +690,9 @@ const ExperimentList: React.FC = () => {
           preserveSelectedRowKeys: true,
           selectedRowKeys: settings.row ?? [],
         }}
+        settings={settings}
         showSorterTooltip={false}
         size="small"
-        settings={settings}
         updateSettings={updateSettings}
       />
     </Page>

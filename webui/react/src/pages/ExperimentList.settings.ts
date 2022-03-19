@@ -16,6 +16,22 @@ export const DEFAULT_COLUMNS = [
   'user',
 ];
 
+export const DEFAULT_COLUMN_WIDTHS = {
+  description: 139,
+  duration: 63,
+  forkedFrom: 83,
+  id: 41,
+  name: 122,
+  progress: 104,
+  resourcePool: 88,
+  searcherType: 122,
+  startTime: 86,
+  state: 82,
+  tags: 80,
+  trials: 49,
+  user: 80,
+};
+
 export interface Settings {
   archived?: boolean;
   columns?: string[];
@@ -48,14 +64,14 @@ const config: SettingsConfig = {
       },
     },
     {
-      defaultValue: DEFAULT_COLUMNS.map(_ => 80),
+      defaultValue: DEFAULT_COLUMNS.map(col => DEFAULT_COLUMN_WIDTHS[col]),
       key: 'columnWidths',
       storageKey: 'columnWidths',
       type: {
         baseType: BaseType.Float,
-        isArray: true
-      }
-      
+        isArray: true,
+      },
+
     },
     {
       key: 'label',

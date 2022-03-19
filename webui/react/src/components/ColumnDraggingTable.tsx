@@ -1,22 +1,78 @@
 // @ts-nocheck
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import ReactDOM from "react-dom";
-import "antd/dist/antd.min.css";
-import './DragSortingTable.css';
-import { Table } from "antd";
-import { Resizable } from "react-resizable";
-import ReactDragListView from "react-drag-listview";
-import { processApiError } from 'services/utils';
+import { Table } from 'antd';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import 'antd/dist/antd.min.css';
+import './ResponsiveTable.css';
+import { Resizable } from 'react-resizable';
+
 import tableCss from 'components/ResponsiveTable.module.scss';
 import useResize from 'hooks/useResize';
+
 import Spinner from './Spinner';
+
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-
 const type = 'DraggableColumn';
 
-const Cell = ({ isCellRightClickable, ...props }) => <td {...props}/>
+const RightClickableRowContext = createContext({});
+
+const Row = ({
+  className,
+  children,
+  record,
+  ContextMenu,
+  areRowsSelected,
+  ...props
+}: RowProps) => {
+
+  const [ rowHovered, setRowHovered ] = useState(false);
+  const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
+  const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
+
+  if (areRowsSelected) {
+    return <tr className={className} {...props}>{children}</tr>;
+  }
+
+  const rightClickableCellProps = {
+    onContextMenu: (e : React.MouseEvent) => e.stopPropagation(),
+    onMouseEnter: () => setRightClickableCellHovered(true),
+    onMouseLeave: () => setRightClickableCellHovered(false),
+  };
+
+  const rowContextMenuTriggerableOrOpen =
+    (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
+
+  return record ? (
+    <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
+      <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
+        <tr
+          className={
+            rowContextMenuTriggerableOrOpen ? `${className} ant-table-row-selected` : className
+          }
+          onMouseEnter={() => setRowHovered(true)}
+          onMouseLeave={() => setRowHovered(false)}
+          {...props}>
+          {children}
+        </tr>
+      </ContextMenu>
+    </RightClickableRowContext.Provider>
+  ) : (
+    <tr className={className} {...props}>{children}</tr>
+  );
+};
+
+const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
+  const rightClickableCellProps = useContext(RightClickableRowContext);
+  if (!isCellRightClickable) return <td {...props}>{children}</td>;
+  return (
+    <td {...props}>
+      <div className={tableCss.rightClickableCellWrapper} {...rightClickableCellProps}>
+        {children}
+      </div>
+    </td>
+  );
+};
 
 const ResizableTitle = ({
   onResize,
@@ -32,11 +88,11 @@ const ResizableTitle = ({
   if (!columnName) {
     return <th className={`${className} notColumn`} {...restProps} />;
   }
-  const classes = [className];
+  const classes = [ className ];
   if (filterActive) classes.push(tableCss.headerFilterOn);
 
   const ref = useRef();
-  const [{ isOver, dropClassName }, drop] = useDrop({
+  const [ { isOver, dropClassName }, drop ] = useDrop({
     accept: type,
     collect: (monitor) => {
       const { index: dragIndex } = monitor.getItem() || {};
@@ -44,78 +100,46 @@ const ResizableTitle = ({
         return {};
       }
       return {
-        isOver: monitor.isOver(),
         dropClassName: dragIndex > index ? ' drop-over-leftward' : ' drop-over-rightward',
+        isOver: monitor.isOver(),
       };
     },
     drop: (item) => {
       moveColumn(item.index, index);
     },
   });
-  const [, drag] = useDrag({
-    type,
+  const [ , drag ] = useDrag({
     item: { index },
-    collect: (monitor) => ({
-      // isDragging: monitor.isDragging(),
-    }),
+    type,
+    // collect: (monitor) => ({
+    //   isDragging: monitor.isDragging(),
+    // }),
   });
   drop(drag(ref));
 
-  // const sliderRef = useRef()
-
-  // const [{xOffset}, sliderDrag] = useDrag({
-  //   type,
-  //   item: { index },
-  //   collect: (monitor) => ({
-  //     xOffset: monitor.getDifferenceFromInitialOffset()?.x
-  //   }),
-  // });
-  // sliderDrag(sliderRef)
-  // console.log(xOffset)
-
-
-
-
-  //  console.log(classes.join(' '));
-
-/*   return (
-    <th className={isOver ? dropClassName : ''} style={{ cursor: 'move' }}>
-      <div ref={ref} className={classes.join(' ')} {...restProps} title={columnName} />
-      <Draggable
-          axis="x"
-          // defaultClassName="DragHandle"
-          // defaultClassNameDragging="DragHandleActive"
-          onDrag={onResize}
-          onStop={onResizeStop}
-          position={{ x: 0 }}
-          zIndex={999}
-        >
-          <span className="react-resizable-handle"></span>
-        </Draggable>
-      
-    </th>
-  ); */
-  
-
   return (
     <Resizable
-      width={width || 100}
-      height={0}
-      handle={
+      draggableOpts={{ enableUserSelectHack: false }}
+      handle={(
         <span
           className="react-resizable-handle"
           onClick={(e) => {
             e.stopPropagation();
           }}
         />
-      }
+      )}
+      height={0}
+      width={width || 100}
       onResize={onResize}
-      onResizeStop={onResizeStop}
-      draggableOpts={{ enableUserSelectHack: false }}
-    >
-      <th className={isOver ? dropClassName : ''} style={{ cursor: 'move' }}>
-      
-      <div ref={ref} className={classes.join(' ')} {...restProps} title={columnName} />
+      onResizeStop={onResizeStop}>
+      <th className={isOver ? dropClassName : ''}>
+        <div
+          className={classes.join(' ')}
+          ref={ref}
+          style={{ cursor: 'move', marginLeft: 4, marginRight: 12 }}
+          {...restProps}
+          title={columnName}
+        />
       </th>
     </Resizable>
   );
@@ -133,25 +157,47 @@ const ResponsiveTable = ({
   ...props
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [hasScrollBeenEnabled, setHasScrollBeenEnabled] = useState<boolean>(false);
+  const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
-  const [tableScroll, setTableScroll] = useState(scroll);
-  const [widths, setWidths] = useState(settings.columnWidths)
+  const [ tableScroll, setTableScroll ] = useState(scroll);
+  const [ widths, setWidths ] = useState(settings.columnWidths);
+  const resize = useResize(tableRef);
 
-  useEffect(() => setWidths(settings.columnWidths), [settings.columnWidths])
+  useEffect(() => {
+    if (!tableRef.current || resize.width === 0) return;
+
+    const tables = tableRef.current.getElementsByTagName('table');
+    if (tables.length === 0) return;
+
+    const rect = tables[0].getBoundingClientRect();
+
+    /*
+     * ant table scrolling has an odd behaviour. If scroll.x is set to 'max-content' initially
+     * it will show the scroll bar. We need to set it to undefined the first time if scrolling
+     * is not needed, and 'max-content' if we want to disable scrolling after it has been displayed.
+     */
+    let scrollX: 'max-content'|undefined|number = (
+      hasScrollBeenEnabled ? 'max-content' : undefined
+    );
+    if (rect.width > resize.width) {
+      scrollX = rect.width;
+      setHasScrollBeenEnabled(true);
+    }
+
+    setTableScroll({
+      x: scrollX,
+      y: scroll?.y,
+    });
+  }, [ hasScrollBeenEnabled, resize, scroll ]);
+
+  useEffect(() => setWidths(settings.columnWidths), [ settings.columnWidths ]);
 
   const handleTableChange = useCallback(
     (tablePagination: any, tableFilters: any, tableSorter: any): void => {
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (
-        !columnKey ||
-        !settings.columns
-          .find((col) => columnSpec[col]?.key === columnKey)
-      )
-        return;
-
+      if (!columnKey || !settings.columns.find((col) => columnSpec[col]?.key === columnKey)) return;
 
       const newSettings = {
         sortDesc: order === 'descend',
@@ -163,73 +209,55 @@ const ResponsiveTable = ({
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [settings, updateSettings]
+    [ settings, updateSettings ],
   );
-
-
 
   const moveColumn = useCallback(
     (fromIndex, toIndex) => {
-      const reorderedColumns = [...settings.columns];
-      const reorderedWidths = [...settings.columnWidths]
+      const reorderedColumns = [ ...settings.columns ];
+      const reorderedWidths = [ ...settings.columnWidths ];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
     },
-    [settings.columns, settings.columnWidths],
+    [ settings.columns, settings.columnWidths ],
   );
-
-
-
-
 
   const handleResize = useCallback(
     (index) => (e, { size }) => {
-      const targetWidth = Math.floor(Math.max(size.width, 80));
+      const targetWidth = Math.floor(Math.max(size.width, 30));
       const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
       setWidths(newWidths);
     },
-    [updateSettings, settings.columnWidths]
+    [ updateSettings, settings.columnWidths ],
   );
 
   const handleResizeStop = useCallback(
     (index) => (e, { size }) => {
-      const targetWidth = Math.floor(Math.max(size.width, 80));
+      const targetWidth = Math.floor(Math.max(size.width, 30));
       const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
       setWidths(newWidths);
       updateSettings({ columnWidths: newWidths });
     },
-    [updateSettings, settings.columnWidths]
+    [ updateSettings, settings.columnWidths ],
   );
 
   const onHeaderCell = (index, columnSpec) => {
     return (column) => {
       const filterActive = !!columnSpec?.isFiltered?.(settings);
       return {
-        onResize: handleResize(index),
-        onResizeStop: handleResizeStop(index),
-        moveColumn,
         columnName: columnSpec.title,
         filterActive,
+        index,
+        moveColumn,
+        onResize: handleResize(index),
+        onResizeStop: handleResizeStop(index),
         width: column.width,
-        index
       };
     };
   };
-
-  // const widthColumnCount = columns.filter(({ width }) => !width).length;
-  // const mergedColumns = columns.map((column) => {
-  //   if (column.width) {
-  //     return column;
-  //   }
-
-  //   return { ...column, width: Math.floor(tableWidth / widthColumnCount) };
-  // });
-
-
-
 
   const renderColumns = useMemo(
     () =>
@@ -241,46 +269,49 @@ const ResponsiveTable = ({
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
         return {
+          onHeaderCell: onHeaderCell(index, column),
           sortOrder,
           width: columnWidth,
-          onHeaderCell: onHeaderCell(index, column),
           ...column,
         };
       }).concat(columnSpec.action),
-    [settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec]
+    [ settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec ],
   );
 
-
   const components = {
-    header: {
-      cell: ResizableTitle,
-    },
     body: {
       cell: Cell,
+      row: Row,
     },
+    header: { cell: ResizableTitle },
   };
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
-        {/* <ReactDragListView.DragColumn {...dragProps}> */}
         <DndProvider backend={HTML5Backend}>
           <Table
             bordered
-            // onHeaderRow
-            components={components}
             columns={renderColumns}
+            components={components}
             dataSource={dataSource}
             scroll={tableScroll}
-            tableLayout="fixed"
+            // tableLayout="fixed"
+            tableLayout="auto"
             onChange={handleTableChange}
+            onRow={(record, index) =>
+              ({
+                areRowsSelected,
+                ContextMenu,
+                index,
+                record,
+              } as React.HTMLAttributes<HTMLElement>)
+            }
             {...props}
           />
-          </DndProvider>
-        {/* </ReactDragListView.DragColumn> */}
+        </DndProvider>
       </Spinner>
     </div>
   );
 };
 
-
-export default ResponsiveTable
+export default ResponsiveTable;

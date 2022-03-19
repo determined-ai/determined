@@ -35,11 +35,12 @@ tr.drop-over-rightward td {
   bottom: 0;
   cursor: col-resize;
   height: 100%;
-  margin-left: 6px;
+
+  /* margin-left: 4px; */
   position: absolute;
-  right: -5px;
+  right: -2.5px;
   user-select: none;
-  width: 5px;
+  width: 4px;
   z-index: 1;
 }
 .react-resizable-handle:hover {
