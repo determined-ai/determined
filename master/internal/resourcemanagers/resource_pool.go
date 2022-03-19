@@ -400,7 +400,6 @@ func (rp *ResourcePool) moveJob(
 	if !ok {
 		return job.ErrJobNotFound(jobID)
 	}
-
 	if _, ok := rp.queuePositions[anchorID]; !ok {
 		return job.ErrJobNotFound(anchorID)
 	}
@@ -416,6 +415,7 @@ func (rp *ResourcePool) moveJob(
 	}
 
 	if prioChange {
+		oldPriority := *rp.groups[groupAddr].priority
 		err := rp.setGroupPriority(ctx, job.SetGroupPriority{
 			Priority:     anchorPriority,
 			ResourcePool: rp.config.PoolName,
@@ -425,12 +425,15 @@ func (rp *ResourcePool) moveJob(
 			return err
 		}
 
-		resp := ctx.Ask(rp.IDToGroupActor[jobID], job.SetGroupPriority{
-			Priority:     anchorPriority,
-			ResourcePool: rp.config.PoolName,
-			Handler:      ctx.Self(),
+		resp := ctx.Ask(rp.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
+			Priority: anchorPriority,
 		})
 		if resp.Error() != nil {
+			_ = rp.setGroupPriority(ctx, job.SetGroupPriority{
+				Priority:     oldPriority,
+				ResourcePool: rp.config.PoolName,
+				Handler:      rp.IDToGroupActor[jobID],
+			})
 			return resp.Error()
 		}
 		if !needMove(

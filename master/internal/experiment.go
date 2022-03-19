@@ -172,7 +172,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
 			return err
 		}
-		if err := e.setPriority(ctx, e.Config.Resources().Priority(), nil); err != nil {
+		if err := e.setPriority(ctx, e.Config.Resources().Priority(), true); err != nil {
 			return err
 		}
 
@@ -275,13 +275,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
+	case sproto.NotifyRMPriorityChange:
+		err := e.setPriority(ctx, &msg.Priority, false)
+		ctx.Respond(err)
 	case job.SetGroupWeight:
 		if err := e.setWeight(ctx, msg.Weight); err != nil {
 			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
-		err := e.setPriority(ctx, &msg.Priority, msg.Handler)
+		err := e.setPriority(ctx, &msg.Priority, true)
 		ctx.Respond(err)
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
@@ -607,7 +610,7 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int, handler *actor.Ref) error {
+func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) error {
 	if priority == nil {
 		return nil
 	}
@@ -625,20 +628,21 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, handler *act
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
-	if handler != nil {
-		return nil
+
+	if forward {
+		resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+			Priority: *priority,
+			Handler:  ctx.Self(),
+		})
+		err := resp.Error()
+		if err != nil {
+			resources.SetPriority(oldPriorityPtr)
+			e.Config.SetResources(resources)
+			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+		}
 	}
-	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-		Priority: *priority,
-		Handler:  ctx.Self(),
-	})
-	err := resp.Error()
-	if err != nil {
-		resources.SetPriority(oldPriorityPtr)
-		e.Config.SetResources(resources)
-		err = errors.Wrapf(err, "setting experiment %d priority", e.ID)
-	}
-	return err
+
+	return nil
 }
 
 func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {

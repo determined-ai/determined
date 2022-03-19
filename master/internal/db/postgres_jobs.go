@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
@@ -38,8 +36,9 @@ VALUES (:job_id, :job_type, :owner_id, :q_position)
 	return nil
 }
 
+//nolint:interfacer
 // UpdateJobPosition propagates the new queue position to the job.
-func (db *PgDB) UpdateJobPosition(jobID fmt.Stringer, position decimal.Decimal) error {
+func (db *PgDB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error {
 	if jobID.String() == "" {
 		return errors.Errorf("error modifying job with empty id")
 	}

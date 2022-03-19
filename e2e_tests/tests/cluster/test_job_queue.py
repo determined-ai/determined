@@ -35,8 +35,6 @@ def test_job_queue_adjust_weight() -> None:
     new_weight = jobs.get_job_weight(ordered_ids[1])
     assert new_weight == "10"
 
-    return
-
 
 def get_raw_data() -> Tuple[List[Dict[str, str]], List[str]]:
     data = []
