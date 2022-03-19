@@ -19,6 +19,8 @@ from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
 
+hostfile_path = "/tmp/hostfile.txt"
+
 
 def create_hostlist_file(
     hostfile_path: pathlib.Path, num_proc_per_machine: int, ip_addresses: List[str]
@@ -160,7 +162,6 @@ def main(train_entrypoint: str) -> int:
         "--",
     ]
 
-    hostfile_path = "/tmp/hostfile.txt"
     master_address = create_hostlist_file(
         hostfile_path=pathlib.Path(hostfile_path),
         num_proc_per_machine=len(info.slot_ids),
