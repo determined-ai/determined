@@ -150,7 +150,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       const key = metricNameToStr(selectedMetric);
-      newDimensions.push({ disableDrag: true, key, label: key, type: DimensionType.Linear });
+      newDimensions.push({ key, label: key, type: DimensionType.Linear });
     }
 
     return newDimensions;
