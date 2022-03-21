@@ -3,7 +3,6 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
-	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -443,19 +442,15 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 func (rp *ResourcePool) updateAgentStartStats(
 	poolName string, agentID string, slots int) error {
-	startTime := time.Now().UTC().Truncate(time.Millisecond)
 	return rp.db.RecordAgentStats(&model.AgentStats{
 		ResourcePool: poolName,
 		AgentID:      agentID,
 		Slots:        slots,
-		StartTime:    startTime,
 	})
 }
 
 func (rp *ResourcePool) updateAgentEndStats(agentID string) error {
-	endTime := time.Now().UTC().Truncate(time.Millisecond)
 	return rp.db.EndAgentStats(&model.AgentStats{
-		EndTime: &endTime,
 		AgentID: agentID,
 	})
 }

@@ -116,7 +116,6 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 }
 
 func (s *scaleDecider) recordInstanceStats(slots int) error {
-
 	for _, inst := range s.instances {
 		instID := inst.ID
 		err := s.updateInstanceStartStats(s.resourcePool, instID, slots)
@@ -141,20 +140,16 @@ func (s *scaleDecider) recordInstanceStats(slots int) error {
 }
 
 func (s *scaleDecider) updateInstanceStartStats(poolName string, instID string, slots int) error {
-	startTime := time.Now().UTC().Truncate(time.Millisecond)
 	return s.db.RecordInstanceStats(&model.InstanceStats{
 		ResourcePool: poolName,
 		InstanceID:   instID,
 		Slots:        slots,
-		StartTime:    startTime,
 	})
 }
 
 func (s *scaleDecider) updateInstanceEndStats(instID string) error {
-	endTime := time.Now().UTC().Truncate(time.Millisecond)
 	return s.db.EndInstanceStats(&model.InstanceStats{
 		InstanceID: instID,
-		EndTime:    &endTime,
 	})
 }
 

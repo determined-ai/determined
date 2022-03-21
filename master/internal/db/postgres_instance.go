@@ -9,7 +9,7 @@ import (
 func (db *PgDB) RecordInstanceStats(a *model.InstanceStats) error {
 	return db.namedExecOne(`
 INSERT INTO provisioner_instance_stats (resource_pool, instance_id, slots, start_time)
-SELECT :resource_pool, :instance_id, :slots, :start_time
+SELECT :resource_pool, :instance_id, :slots, CURRENT_TIMESTAMP
 WHERE NOT EXISTS (
 	SELECT * FROM provisioner_instance_stats WHERE instance_id = :instance_id AND end_time IS NULL
 )
@@ -20,7 +20,7 @@ WHERE NOT EXISTS (
 func (db *PgDB) EndInstanceStats(a *model.InstanceStats) error {
 	return db.namedExecOne(`
 UPDATE provisioner_instance_stats
-SET end_time = :end_time
+SET end_time = (SELECT CURRENT_TIMESTAMP)
 WHERE instance_id = :instance_id AND end_time IS NULL
 `, a)
 }

@@ -9,7 +9,7 @@ import (
 func (db *PgDB) RecordAgentStats(a *model.AgentStats) error {
 	return db.namedExecOne(`
 INSERT INTO agent_stats (resource_pool, agent_id, slots, start_time)
-SELECT :resource_pool, :agent_id, :slots, :start_time
+SELECT :resource_pool, :agent_id, :slots, CURRENT_TIMESTAMP
 WHERE NOT EXISTS (
 	SELECT * FROM agent_stats WHERE agent_id = :agent_id AND end_time IS NULL
 )
@@ -20,7 +20,7 @@ WHERE NOT EXISTS (
 func (db *PgDB) EndAgentStats(a *model.AgentStats) error {
 	return db.namedExecOne(`
 UPDATE agent_stats
-SET end_time = :end_time
+SET end_time = (SELECT CURRENT_TIMESTAMP)
 WHERE agent_id = :agent_id AND end_time IS NULL
 `, a)
 }
