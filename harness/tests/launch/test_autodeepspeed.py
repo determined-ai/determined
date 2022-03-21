@@ -6,7 +6,8 @@ from typing import Any, Iterator, List
 
 import pytest
 
-from determined import ClusterInfo, RendezvousInfo, constants
+import determined as det
+from determined import constants
 from determined.launch import autodeepspeed
 
 
@@ -25,64 +26,16 @@ def test_launch_multi_slot_chief(
     mock_start_time = time.time()
     mock_time.return_value = mock_start_time
     train_entrypoint = "model_def:TrialClass"
-    sshd_cmd = [
-        "/usr/sbin/sshd",
-        "-p",
-        str(constants.DTRAIN_SSH_PORT),
-        "-f",
-        "/run/determined/ssh/sshd_config",
-        "-D",
-    ]
-
-    pid_server_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_server",
-        "--on-fail",
-        "SIGTERM",
-        "--on-exit",
-        "SIGTERM",
-        "--grace-period",
-        "5",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        str(len(cluster_info.slot_ids)),
-        "--",
-    ]
-
-    deepspeed_cmd = [
-        "deepspeed",
-        "-H",
-        autodeepspeed.hostfile_path,
-        "--master_addr",
-        cluster_info.container_addrs[0],
-        "--no_python",
-        "--no_local_rank",
-        "--",
-    ]
-
-    pid_client_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_client",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        "--",
-    ]
-
-    log_redirect_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-        "RANK",
-        "--",
-    ]
-
-    harness_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
+    sshd_cmd = autodeepspeed.create_sshd_cmd()
+    pid_server_cmd = autodeepspeed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
+    deepspeed_cmd = autodeepspeed.create_run_command(
+        cluster_info.container_addrs[0], autodeepspeed.hostfile_path
+    )
+    pid_client_cmd = autodeepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = autodeepspeed.create_log_redirect_cmd()
+    harness_cmd = autodeepspeed.create_harness_cmd(train_entrypoint)
 
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
@@ -142,64 +95,16 @@ def test_launch_multi_slot_fail(
     mock_check_sshd.side_effect = ValueError("no sshd greeting")
 
     train_entrypoint = "model_def:TrialClass"
-    sshd_cmd = [
-        "/usr/sbin/sshd",
-        "-p",
-        str(constants.DTRAIN_SSH_PORT),
-        "-f",
-        "/run/determined/ssh/sshd_config",
-        "-D",
-    ]
-
-    pid_server_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_server",
-        "--on-fail",
-        "SIGTERM",
-        "--on-exit",
-        "SIGTERM",
-        "--grace-period",
-        "5",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        str(len(cluster_info.slot_ids)),
-        "--",
-    ]
-
-    deepspeed_cmd = [
-        "deepspeed",
-        "-H",
-        autodeepspeed.hostfile_path,
-        "--master_addr",
-        cluster_info.container_addrs[0],
-        "--no_python",
-        "--no_local_rank",
-        "--",
-    ]
-
-    pid_client_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_client",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        "--",
-    ]
-
-    log_redirect_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-        "RANK",
-        "--",
-    ]
-
-    harness_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
+    sshd_cmd = autodeepspeed.create_sshd_cmd()
+    pid_server_cmd = autodeepspeed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
+    deepspeed_cmd = autodeepspeed.create_run_command(
+        cluster_info.container_addrs[0], autodeepspeed.hostfile_path
+    )
+    pid_client_cmd = autodeepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = autodeepspeed.create_log_redirect_cmd()
+    harness_cmd = autodeepspeed.create_harness_cmd(train_entrypoint)
 
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
@@ -216,7 +121,7 @@ def test_launch_multi_slot_fail(
     mock_subprocess.side_effect = mock_process
 
     with set_container_id_env_var():
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="no sshd greeting"):
             autodeepspeed.main(train_entrypoint)
 
     mock_cluster_info.assert_called_once()
@@ -245,47 +150,44 @@ def test_launch_one_slot(
     cluster_info = make_mock_cluster_info(["0.0.0.0"], 0)
     mock_cluster_info.return_value = cluster_info
     train_entrypoint = "model_def:TrialClass"
-
-    launch_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_server",
-        "--on-fail",
-        "SIGTERM",
-        "--on-exit",
-        "SIGTERM",
-        "--grace-period",
-        "5",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        str(len(cluster_info.slot_ids)),
-        "--",
-        "deepspeed",
-        "-H",
-        autodeepspeed.hostfile_path,
-        "--master_addr",
-        "localhost",
-        "--no_python",
-        "--no_local_rank",
-        "--",
-        "python3",
-        "-m",
-        "determined.exec.pid_client",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        "--",
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-        "RANK",
-        "--",
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
+    pid_server_cmd = autodeepspeed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
+    deepspeed_cmd = autodeepspeed.create_run_command("localhost", autodeepspeed.hostfile_path)
+    pid_client_cmd = autodeepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = autodeepspeed.create_log_redirect_cmd()
+    harness_cmd = autodeepspeed.create_harness_cmd(train_entrypoint)
+    launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
     with set_container_id_env_var():
         autodeepspeed.main(train_entrypoint)
+
+    mock_cluster_info.assert_called_once()
+    assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
+    assert os.environ["USE_DEEPSPEED"] == "1"
+
+    mock_subprocess.assert_called_once_with(launch_cmd)
+
+
+@mock.patch("subprocess.Popen")
+@mock.patch("determined.get_cluster_info")
+def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.MagicMock) -> None:
+    cluster_info = make_mock_cluster_info(["0.0.0.0"], 0)
+    mock_cluster_info.return_value = cluster_info
+    mock_subprocess.return_value.wait.return_value = 1
+    train_entrypoint = "model_def:TrialClass"
+    pid_server_cmd = autodeepspeed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
+    deepspeed_cmd = autodeepspeed.create_run_command("localhost", autodeepspeed.hostfile_path)
+    pid_client_cmd = autodeepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = autodeepspeed.create_log_redirect_cmd()
+    harness_cmd = autodeepspeed.create_harness_cmd(train_entrypoint)
+    launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
+
+    with set_container_id_env_var():
+        ret = autodeepspeed.main(train_entrypoint)
+        assert ret == 1
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -309,34 +211,21 @@ def test_launch_worker(
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
 
     mock_api.assert_called_once()
-    expected_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_server",
-        "--on-fail",
-        "SIGTERM",
-        "--on-exit",
-        "SIGTERM",
-        "--grace-period",
-        "3",
-        f"/tmp/pid_server-{cluster_info.allocation_id}",
-        str(len(cluster_info.slot_ids)),
-        "--",
-        "/usr/sbin/sshd",
-        "-p",
-        str(constants.DTRAIN_SSH_PORT),
-        "-f",
-        "/run/determined/ssh/sshd_config",
-        "-D",
-    ]
+
+    pid_server_cmd = autodeepspeed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
+    sshd_cmd = autodeepspeed.create_sshd_cmd()
+
+    expected_cmd = pid_server_cmd + sshd_cmd
     mock_subprocess.assert_called_once_with(expected_cmd)
 
 
-def make_mock_cluster_info(container_addrs: List[str], container_rank: int) -> ClusterInfo:
-    rendezvous_info_mock = RendezvousInfo(
+def make_mock_cluster_info(container_addrs: List[str], container_rank: int) -> det.ClusterInfo:
+    rendezvous_info_mock = det.RendezvousInfo(
         container_addrs=container_addrs, container_rank=container_rank
     )
-    cluster_info_mock = ClusterInfo(
+    cluster_info_mock = det.ClusterInfo(
         master_url="localhost",
         cluster_id="clusterId",
         agent_id="agentId",

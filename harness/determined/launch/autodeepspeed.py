@@ -38,6 +38,64 @@ def create_hostlist_file(
     return trial_runner_hosts[0]
 
 
+def create_pid_server_cmd(allocation_id: str, num_workers: int) -> List[str]:
+    return [
+        "python3",
+        "-m",
+        "determined.exec.pid_server",
+        "--on-fail",
+        "SIGTERM",
+        "--on-exit",
+        "SIGTERM",
+        "--grace-period",
+        "5",
+        f"/tmp/pid_server-{allocation_id}",
+        str(num_workers),
+        "--",
+    ]
+
+
+def create_pid_client_cmd(allocation_id: str) -> List[str]:
+    return [
+        "python3",
+        "-m",
+        "determined.exec.pid_client",
+        f"/tmp/pid_server-{allocation_id}",
+        "--",
+    ]
+
+
+def create_log_redirect_cmd() -> List[str]:
+    return [
+        "python3",
+        "-m",
+        "determined.exec.worker_process_wrapper",
+        "RANK",
+        "--",
+    ]
+
+
+def create_harness_cmd(train_entrypoint: str) -> List[str]:
+    return [
+        "python3",
+        "-m",
+        "determined.exec.harness",
+        "--train-entrypoint",
+        train_entrypoint,
+    ]
+
+
+def create_sshd_cmd() -> List[str]:
+    return [
+        "/usr/sbin/sshd",
+        "-p",
+        str(constants.DTRAIN_SSH_PORT),
+        "-f",
+        "/run/determined/ssh/sshd_config",
+        "-D",
+    ]
+
+
 def create_deepspeed_env_file() -> None:
     """Create an env var export file to pass Determined vars to the deepspeed launcher.
 
@@ -92,14 +150,7 @@ def main(train_entrypoint: str) -> int:
     os.environ["DET_CHIEF_IP"] = chief_ip
 
     # All ranks will need to run sshd.
-    run_sshd_command = [
-        "/usr/sbin/sshd",
-        "-p",
-        str(constants.DTRAIN_SSH_PORT),
-        "-f",
-        "/run/determined/ssh/sshd_config",
-        "-D",
-    ]
+    run_sshd_command = create_sshd_cmd()
 
     if info.container_rank > 0:
         # Non-chief machines just run sshd.
@@ -115,20 +166,7 @@ def main(train_entrypoint: str) -> int:
         # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
         # This is useful for deepspeed which does not have good error handling for remote processes
         # spun up by pdsh.
-        pid_server_cmd = [
-            "python3",
-            "-m",
-            "determined.exec.pid_server",
-            "--on-fail",
-            "SIGTERM",
-            "--on-exit",
-            "SIGTERM",
-            "--grace-period",
-            "3",
-            f"/tmp/pid_server-{info.allocation_id}",
-            str(len(info.slot_ids)),
-            "--",
-        ]
+        pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
 
         logging.debug(
             f"Non-chief [{info.container_rank}] training process launch "
@@ -147,20 +185,7 @@ def main(train_entrypoint: str) -> int:
     #     - worker_process_wrapper, which redirects stdin/stdout to the local container
     #     - harness.py, which actually does the training for the worker
 
-    pid_server_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_server",
-        "--on-fail",
-        "SIGTERM",
-        "--on-exit",
-        "SIGTERM",
-        "--grace-period",
-        "5",
-        f"/tmp/pid_server-{info.allocation_id}",
-        str(len(info.slot_ids)),
-        "--",
-    ]
+    pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
 
     master_address = create_hostlist_file(
         hostfile_path=pathlib.Path(hostfile_path),
@@ -169,29 +194,11 @@ def main(train_entrypoint: str) -> int:
     )
     cmd = create_run_command(master_address, hostfile_path)
 
-    pid_client_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_client",
-        f"/tmp/pid_server-{info.allocation_id}",
-        "--",
-    ]
+    pid_client_cmd = create_pid_client_cmd(info.allocation_id)
 
-    log_redirect_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-        "RANK",
-        "--",
-    ]
+    log_redirect_cmd = create_log_redirect_cmd()
 
-    harness_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
+    harness_cmd = create_harness_cmd(train_entrypoint)
 
     logging.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
 
