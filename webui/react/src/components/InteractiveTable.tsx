@@ -2,6 +2,8 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
+import useResize from 'hooks/useResize';
+import { Settings } from 'pages/ExperimentList.settings';
 import React, {
   createContext,
   useCallback,
@@ -16,9 +18,6 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 import { throttle } from 'throttle-debounce';
-
-import useResize from 'hooks/useResize';
-import { Settings } from 'pages/ExperimentList.settings';
 import {
   ExperimentItem,
 } from 'types';
@@ -69,7 +68,7 @@ interface RowProps {
   record: Record<string, unknown>;
 }
 
-interface ResizableTitleProps {
+interface HeaderCellProps {
   className: string;
   columnName: string;
   filterActive: boolean;
@@ -77,6 +76,7 @@ interface ResizableTitleProps {
   moveColumn: (source: number, destination: number) => void;
   onResize: ResizeCallback;
   onResizeStop: ResizeCallback;
+  title: unknown;
   width: number;
 }
 
@@ -144,7 +144,7 @@ const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
   );
 };
 
-const ResizableTitle = ({
+const HeaderCell = ({
   onResize,
   onResizeStop,
   width,
@@ -153,8 +153,9 @@ const ResizableTitle = ({
   filterActive,
   moveColumn,
   index,
-  ...restProps
-}: ResizableTitleProps) => {
+  title: unusedTitleFromAntd,
+  ...props
+}: HeaderCellProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const classes = [ css.headerCell ];
 
@@ -188,7 +189,7 @@ const ResizableTitle = ({
   if (filterActive) classes.push(css.headerFilterOn);
 
   if (!columnName) {
-    return <th className={className} {...restProps} />;
+    return <th className={className} {...props} />;
   }
   return (
     <Resizable
@@ -210,8 +211,8 @@ const ResizableTitle = ({
         <div
           className={className}
           ref={ref}
-          {...restProps}
           title={columnName}
+          {...props}
         />
       </th>
     </Resizable>
@@ -363,7 +364,7 @@ const InteractiveTable: InteractiveTable = ({
       cell: Cell,
       row: Row,
     },
-    header: { cell: ResizableTitle },
+    header: { cell: HeaderCell },
   };
   return (
     <div ref={tableRef}>
