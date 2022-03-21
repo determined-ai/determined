@@ -12,7 +12,7 @@ import { Resizable } from 'react-resizable';
 
 import useResize from 'hooks/useResize';
 
-import css from './ResponsiveTable.bak.module.scss';
+import css from './ResponsiveTable.module.scss';
 import Spinner from './Spinner';
 
 const type = 'DraggableColumn';
@@ -151,7 +151,7 @@ const ResizableTitle = ({
   if (!columnName) {
     return <th className={className} {...restProps} />;
   }
-  const classes = [ className, css.headerCell ];
+  const classes = [ css.headerCell ];
 
   const ref = useRef();
   const [ { isOver, dropClassName }, drop ] = useDrop({
@@ -179,10 +179,10 @@ const ResizableTitle = ({
   });
   drop(drag(ref));
 
-  // if (isOver) classes.push(dropClassName)
-  classes.push(css.dropOverRightward)
+  if (isOver) classes.push(dropClassName)
+  if (filterActive) classes.push(css.headerFilterOn)
+  // classes.push(css.dropOverRightward)
 
-  console.log(classes.join(' '))
   return (
     <Resizable
       draggableOpts={{ enableUserSelectHack: false }}
@@ -199,16 +199,12 @@ const ResizableTitle = ({
       onResize={onResize}
       onResizeStop={onResizeStop}>
       <th
-        // className={classes.join(' ')}
-        // className={isOver ? dropClassName : ''}
-        className={`${className} ${css.headerCell}`}
+        className={classes.join(' ')}
       >
         <div
-          // className={css.headerCell}
-          className={filterActive ? css.headerFilterOn : ''}
-          // className={classes.join(' ')}
+          className={className}
           ref={ref}
-          style={{ cursor: 'move', marginLeft: 4, marginRight: 12 }}
+          // style={{ cursor: 'move', marginLeft: 4, marginRight: 12 }}
           {...restProps}
           title={columnName}
         />

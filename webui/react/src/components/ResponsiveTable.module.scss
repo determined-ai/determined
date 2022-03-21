@@ -1,61 +1,27 @@
 .headerCell {
   :global(.ant-table-cell) {
     cursor: move;
-    width: 1500px;
-    // user-select: none;
+    user-select: none;
+  }
+  :global(.ant-table-filter-trigger) {
+    cursor: pointer;
+  }
+  :global(.ant-table-column-sorter) {
+    cursor: pointer;
+    z-index: 1;
   }
 }
 
-.headerFilterOn {
-  :global(.ant-table-filter-column .ant-table-filter-trigger) {
-    color: var(--theme-colors-action-normal);
-  }
+.dropOverLeftward {
+  border-left: 2px dashed var(--theme-colors-action-normal) !important;
 }
+.dropOverRightward {
+  border-right: 2px dashed var(--theme-colors-action-normal) !important;
+}
+
 .rightClickableCellWrapper {
   display: inline;
 }
-
-
-.ant-table-cell {
-  cursor: 'move';
-  user-select: none;
-}
-.ant-table-filter-trigger {
-  cursor: pointer
-}
-.ant-table-column-sorter {
-  cursor: pointer;
-  z-index: 1;
-}
-
-
-  // :global(.ant-table-filter-trigger .ant-table-column-sorter) {
-  //   cursor: pointer;
-  // }
-
-
-/* .react-resizable {
-  background-clip: padding-box;
-  position: relative;
-} */
-
-/* tr.drop-over-leftward td {
-  border-left: 2px dashed #1890ff;
-}
-tr.drop-over-rightward td {
-  border-right: 2px dashed #1890ff;
-} */
-
-
-.dropOverLeftward {
-    border-left: 2px dashed #1890ff !important;
-
-}
-.dropOverRightward {
-    border-right: 2px dashed #1890ff !important;
-    
-}
-
 
 .columnResizeHandle {
   border-radius: 4px;
@@ -71,7 +37,11 @@ tr.drop-over-rightward td {
   z-index: 1;
   &:hover {
     background: var(--theme-colors-action-normal);
-
   }
 }
 
+.headerFilterOn {
+  :global(.ant-table-filter-column .ant-table-filter-trigger) {
+    color: var(--theme-colors-action-normal);
+  }
+}
