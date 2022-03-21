@@ -427,8 +427,6 @@ func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
 	if err != nil {
 		return 0, err
 	}
-	// Deferring a close sets off gosec, but it's actually fine for read-only files.
-	//nolint:gosec
 	defer func() {
 		_ = tcp.Close()
 	}()

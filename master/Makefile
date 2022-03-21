@@ -46,7 +46,7 @@ check-gen: force-gen gen
 
 .PHONY: get-deps
 get-deps:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.0
 	go install github.com/bufbuild/buf/cmd/buf@v0.42.1
 	go install golang.org/x/tools/cmd/goimports@v0.1.5
 	go install github.com/goreleaser/goreleaser@v1.1.0
