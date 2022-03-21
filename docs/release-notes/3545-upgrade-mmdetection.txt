@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Model Hub: add support for panoptic segmentation.
