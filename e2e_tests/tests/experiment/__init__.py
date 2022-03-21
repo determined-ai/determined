@@ -26,6 +26,7 @@ from .experiment import (
     s3_checkpoint_config,
     s3_checkpoint_config_no_creds,
     shared_fs_checkpoint_config,
+    test_session,
     trial_logs,
     trial_metrics,
     wait_for_experiment_state,
