@@ -357,14 +357,9 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
 		agentID := msg.Agent.Address().Local()
-		ctx.Log().Infof("adding agent: %+v", agentID)
+		ctx.Log().Infof("adding agent: %s", agentID)
 		rp.agents[msg.Agent] = true
-		err := rp.db.AddAgent(&model.AgentStats{
-			ResourcePool: rp.config.PoolName,
-			AgentID:      &agentID,
-			Slots:        msg.Slots,
-			StartTime:    time.Now().UTC().Truncate(time.Millisecond),
-		})
+		err := rp.updateAgentStartStats(rp.config.PoolName, agentID, msg.Slots)
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
@@ -372,9 +367,9 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	case sproto.RemoveAgent:
 		agentID := msg.Agent.Address().Local()
 		ctx.Log().Infof("removing agent: %s", agentID)
+
 		delete(rp.agents, msg.Agent)
-		endTime := time.Now().UTC().Truncate(time.Millisecond)
-		err := rp.updateAgentEndStats(agentID, &endTime)
+		err := rp.updateAgentEndStats(agentID)
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
@@ -384,8 +379,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 
 	case sproto.EndAgentStats:
 		agentID := msg.Agent.Address().Local()
-		endTime := time.Now().UTC().Truncate(time.Millisecond)
-		err := rp.updateAgentEndStats(agentID, &endTime)
+		err := rp.updateAgentEndStats(agentID)
 		if err != nil {
 			ctx.Log().WithError(err)
 		}
@@ -447,10 +441,22 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) updateAgentEndStats(agentID string, endTime *time.Time) error {
-	return rp.db.RemoveAgent(&model.AgentStats{
-		EndTime: endTime,
-		AgentID: &agentID,
+func (rp *ResourcePool) updateAgentStartStats(
+	poolName string, agentID string, slots int) error {
+	startTime := time.Now().UTC().Truncate(time.Millisecond)
+	return rp.db.RecordAgentStats(&model.AgentStats{
+		ResourcePool: poolName,
+		AgentID:      agentID,
+		Slots:        slots,
+		StartTime:    startTime,
+	})
+}
+
+func (rp *ResourcePool) updateAgentEndStats(agentID string) error {
+	endTime := time.Now().UTC().Truncate(time.Millisecond)
+	return rp.db.EndAgentStats(&model.AgentStats{
+		EndTime: &endTime,
+		AgentID: agentID,
 	})
 }
 

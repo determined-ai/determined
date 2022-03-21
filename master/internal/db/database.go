@@ -164,10 +164,10 @@ type DB interface {
 	DeleteTrialLogs(ids []int) error
 	TrialLogsCount(trialID int, fs []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
-	AddAgent(a *model.AgentStats) error
-	RemoveAgent(a *model.AgentStats) error
-	AddInstance(a *model.InstanceStats) error
-	RemoveInstance(a *model.InstanceStats) error
+	RecordAgentStats(a *model.AgentStats) error
+	EndAgentStats(a *model.AgentStats) error
+	RecordInstanceStats(a *model.InstanceStats) error
+	EndInstanceStats(a *model.InstanceStats) error
 }
 
 // ErrNotFound is returned if nothing is found.

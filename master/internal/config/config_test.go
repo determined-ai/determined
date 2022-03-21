@@ -10,7 +10,7 @@ import (
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"

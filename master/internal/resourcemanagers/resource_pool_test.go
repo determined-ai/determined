@@ -219,8 +219,8 @@ func TestAddRemoveAgent(t *testing.T) {
 	assert.Assert(t, created)
 
 	system.Tell(ref, sproto.AddAgent{Agent: agentRef})
-	db.On("AddAgent", mock.Anything).Return(nil)
+	db.On("RecordAgentStats", mock.Anything).Return(nil)
 
 	system.Tell(ref, sproto.RemoveAgent{Agent: agentRef})
-	db.On("RemoveAgent", mock.Anything).Return(nil)
+	db.On("EndAgentStats", mock.Anything).Return(nil)
 }

@@ -28,20 +28,6 @@ type DB struct {
 	mock.Mock
 }
 
-// AddAgent provides a mock function with given fields: a
-func (_m *DB) AddAgent(a *model.AgentStats) error {
-	ret := _m.Called(a)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
-		r0 = rf(a)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // AddAllocation provides a mock function with given fields: a
 func (_m *DB) AddAllocation(a *model.Allocation) error {
 	ret := _m.Called(a)
@@ -91,20 +77,6 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.Experiment) error); ok {
 		r0 = rf(experiment)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AddInstance provides a mock function with given fields: a
-func (_m *DB) AddInstance(a *model.InstanceStats) error {
-	ret := _m.Called(a)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
-		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -481,6 +453,34 @@ func (_m *DB) DeleteUserSessionByToken(userSessionToken string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string) error); ok {
 		r0 = rf(userSessionToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAgentStats provides a mock function with given fields: a
+func (_m *DB) EndAgentStats(a *model.AgentStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndInstanceStats provides a mock function with given fields: a
+func (_m *DB) EndInstanceStats(a *model.InstanceStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
+		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1287,8 +1287,8 @@ func (_m *DB) RawQuery(queryName string, params ...interface{}) ([]byte, error) 
 	return r0, r1
 }
 
-// RemoveAgent provides a mock function with given fields: a
-func (_m *DB) RemoveAgent(a *model.AgentStats) error {
+// RecordAgentStats provides a mock function with given fields: a
+func (_m *DB) RecordAgentStats(a *model.AgentStats) error {
 	ret := _m.Called(a)
 
 	var r0 error
@@ -1301,8 +1301,8 @@ func (_m *DB) RemoveAgent(a *model.AgentStats) error {
 	return r0
 }
 
-// RemoveInstance provides a mock function with given fields: a
-func (_m *DB) RemoveInstance(a *model.InstanceStats) error {
+// RecordInstanceStats provides a mock function with given fields: a
+func (_m *DB) RecordInstanceStats(a *model.InstanceStats) error {
 	ret := _m.Called(a)
 
 	var r0 error

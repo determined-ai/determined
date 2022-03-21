@@ -143,7 +143,7 @@ SELECT
                 upper(const.period * tstzrange(start_time, end_time)) - lower(const.period * tstzrange(start_time, end_time))
         ) AS seconds
 FROM
-    instance_stats, const
+    provisioner_instance_stats, const
 WHERE const.period && tstzrange(start_time, end_time)
 ORDER BY
     start_time

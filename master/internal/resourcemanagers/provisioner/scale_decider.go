@@ -116,28 +116,23 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 }
 
 func (s *scaleDecider) recordInstanceStats(slots int) error {
-	now := time.Now().UTC().Truncate(time.Millisecond)
+
 	for _, inst := range s.instances {
 		instID := inst.ID
-		err := s.db.AddInstance(&model.InstanceStats{
-			ResourcePool: s.resourcePool,
-			InstanceID:   &instID,
-			Slots:        slots,
-			StartTime:    now,
-		})
+		err := s.updateInstanceStartStats(s.resourcePool, instID, slots)
 		if err != nil {
 			return err
 		}
 	}
 
 	for instID := range s.disconnected {
-		err := s.updateInstanceEndStats(instID, &now)
+		err := s.updateInstanceEndStats(instID)
 		if err != nil {
 			return err
 		}
 	}
 	for instID := range s.stopped {
-		err := s.updateInstanceEndStats(instID, &now)
+		err := s.updateInstanceEndStats(instID)
 		if err != nil {
 			return err
 		}
@@ -145,18 +140,28 @@ func (s *scaleDecider) recordInstanceStats(slots int) error {
 	return nil
 }
 
-func (s *scaleDecider) updateInstanceEndStats(instID string, endTime *time.Time) error {
-	return s.db.RemoveInstance(&model.InstanceStats{
-		InstanceID: &instID,
-		EndTime:    endTime,
+func (s *scaleDecider) updateInstanceStartStats(poolName string, instID string, slots int) error {
+	startTime := time.Now().UTC().Truncate(time.Millisecond)
+	return s.db.RecordInstanceStats(&model.InstanceStats{
+		ResourcePool: poolName,
+		InstanceID:   instID,
+		Slots:        slots,
+		StartTime:    startTime,
+	})
+}
+
+func (s *scaleDecider) updateInstanceEndStats(instID string) error {
+	endTime := time.Now().UTC().Truncate(time.Millisecond)
+	return s.db.EndInstanceStats(&model.InstanceStats{
+		InstanceID: instID,
+		EndTime:    &endTime,
 	})
 }
 
 func (s *scaleDecider) endInstanceStats() {
-	now := time.Now().UTC().Truncate(time.Millisecond)
 	for _, inst := range s.instances {
 		instID := inst.ID
-		err := s.updateInstanceEndStats(instID, &now)
+		err := s.updateInstanceEndStats(instID)
 		if err != nil {
 			continue
 		}

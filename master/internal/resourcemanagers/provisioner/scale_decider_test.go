@@ -425,8 +425,8 @@ func TestRecordInstanceStats(t *testing.T) {
 			"instance4": true,
 		},
 	}
-	db.On("AddInstance", mock.Anything).Return(nil)
-	db.On("RemoveInstance", mock.Anything).Return(nil)
+	db.On("RecordInstanceStats", mock.Anything).Return(nil)
+	db.On("EndInstanceStats", mock.Anything).Return(nil)
 	err := sd.recordInstanceStats(2)
 	assert.NilError(t, err)
 }

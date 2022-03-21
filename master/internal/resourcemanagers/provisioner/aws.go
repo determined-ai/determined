@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 

@@ -1,0 +1,1 @@
+DROP TABLE public.provisioner_instance_stats;

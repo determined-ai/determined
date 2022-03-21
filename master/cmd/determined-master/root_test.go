@@ -10,7 +10,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner/provconfig"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
