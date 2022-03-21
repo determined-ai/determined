@@ -6,16 +6,14 @@ import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import 'antd/dist/antd.min.css';
-import './ResponsiveTable.css';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Resizable } from 'react-resizable';
 
 import useResize from 'hooks/useResize';
 
-import css from './ResponsiveTable.module.scss';
+import css from './ResponsiveTable.bak.module.scss';
 import Spinner from './Spinner';
-
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 
 const type = 'DraggableColumn';
 
@@ -151,10 +149,9 @@ const ResizableTitle = ({
   ...restProps
 }) => {
   if (!columnName) {
-    return <th className={`${className} notColumn`} {...restProps} />;
+    return <th className={className} {...restProps} />;
   }
-  const classes = [ className ];
-  if (filterActive) classes.push(tableCss.headerFilterOn);
+  const classes = [ className, css.headerCell ];
 
   const ref = useRef();
   const [ { isOver, dropClassName }, drop ] = useDrop({
@@ -165,7 +162,7 @@ const ResizableTitle = ({
         return {};
       }
       return {
-        dropClassName: dragIndex > index ? ' drop-over-leftward' : ' drop-over-rightward',
+        dropClassName: dragIndex > index ? css.dropOverLeftward : css.dropOverRightward,
         isOver: monitor.isOver(),
       };
     },
@@ -182,12 +179,16 @@ const ResizableTitle = ({
   });
   drop(drag(ref));
 
+  // if (isOver) classes.push(dropClassName)
+  classes.push(css.dropOverRightward)
+
+  console.log(classes.join(' '))
   return (
     <Resizable
       draggableOpts={{ enableUserSelectHack: false }}
       handle={(
         <span
-          className="react-resizable-handle"
+          className={css.columnResizeHandle}
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -197,9 +198,15 @@ const ResizableTitle = ({
       width={width || 100}
       onResize={onResize}
       onResizeStop={onResizeStop}>
-      <th className={isOver ? dropClassName : ''}>
+      <th
+        // className={classes.join(' ')}
+        // className={isOver ? dropClassName : ''}
+        className={`${className} ${css.headerCell}`}
+      >
         <div
-          className={classes.join(' ')}
+          // className={css.headerCell}
+          className={filterActive ? css.headerFilterOn : ''}
+          // className={classes.join(' ')}
           ref={ref}
           style={{ cursor: 'move', marginLeft: 4, marginRight: 12 }}
           {...restProps}
@@ -227,7 +234,7 @@ const ResponsiveTable: ResponsiveTable = ({
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widths, setWidths ] = useState(settings?.columnWidths);
   const resize = useResize(tableRef);
-  
+
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   useEffect(() => {

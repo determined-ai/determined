@@ -5,10 +5,10 @@ import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import InteractiveTable from 'components/InteractiveTable';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import InteractiveTable from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -309,6 +309,24 @@ const ExperimentList: React.FC = () => {
     );
 
     const tableColumns: ColumnsType<ExperimentItem> = {
+      action:
+      {
+        align: 'right',
+        className: 'fullCell',
+        fixed: 'right',
+        key: 'action',
+        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        render: actionRenderer,
+        title: '',
+        width: 20,
+      },
+      archived:
+      {
+        dataIndex: 'archived',
+        key: 'archived',
+        render: checkmarkRenderer,
+        title: 'Archived',
+      },
       description:
       {
         dataIndex: 'description',
@@ -324,13 +342,6 @@ const ExperimentList: React.FC = () => {
         render: expermentDurationRenderer,
         title: 'Duration',
       },
-      archived:
-      {
-        dataIndex: 'archived',
-        key: 'archived',
-        render: checkmarkRenderer,
-        title: 'Archived',
-      },
       forkedFrom:
       {
         dataIndex: 'forkedFrom',
@@ -339,17 +350,6 @@ const ExperimentList: React.FC = () => {
         render: forkedFromRenderer,
         sorter: true,
         title: 'Forked From',
-      },
-      action:
-      {
-        align: 'right',
-        className: 'fullCell',
-        fixed: 'right',
-        key: 'action',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: actionRenderer,
-        title: '',
-        width: 20,
       },
       id:
       {
@@ -431,8 +431,8 @@ const ExperimentList: React.FC = () => {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
         filters: labels.map(label => ({ text: label, value: label })),
-        key: 'labels',
         isFiltered: settings => !!settings.label,
+        key: 'labels',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: tagsRenderer,
         title: 'Tags',
@@ -660,7 +660,7 @@ const ExperimentList: React.FC = () => {
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
-      <ResponsiveTable
+      <InteractiveTable
         areRowsRightClickable={true}
         areRowsSelected={!!settings.row}
         columnSpec={columns}

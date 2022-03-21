@@ -1,3 +1,11 @@
+.headerCell {
+  :global(.ant-table-cell) {
+    cursor: move;
+    width: 1500px;
+    // user-select: none;
+  }
+}
+
 .headerFilterOn {
   :global(.ant-table-filter-column .ant-table-filter-trigger) {
     color: var(--theme-colors-action-normal);
@@ -6,6 +14,24 @@
 .rightClickableCellWrapper {
   display: inline;
 }
+
+
+.ant-table-cell {
+  cursor: 'move';
+  user-select: none;
+}
+.ant-table-filter-trigger {
+  cursor: pointer
+}
+.ant-table-column-sorter {
+  cursor: pointer;
+  z-index: 1;
+}
+
+
+  // :global(.ant-table-filter-trigger .ant-table-column-sorter) {
+  //   cursor: pointer;
+  // }
 
 
 /* .react-resizable {
@@ -20,27 +46,18 @@ tr.drop-over-rightward td {
   border-right: 2px dashed #1890ff;
 } */
 
-.drop-over-leftward {
-  border-left: 2px dashed #1890ff !important;
+
+.dropOverLeftward {
+    border-left: 2px dashed #1890ff !important;
+
 }
-.drop-over-rightward {
-  border-right: 2px dashed #1890ff !important;
+.dropOverRightward {
+    border-right: 2px dashed #1890ff !important;
+    
 }
-.ant-table-cell {
-  cursor: 'move';
-  user-select: none;
-}
-.ant-table-filter-trigger {
-  cursor: pointer
-}
-.ant-table-column-sorter {
-  cursor: pointer;
-  z-index: 1;
-}
-.ant-notification-notice {
-  display: none;
-}
-.react-resizable-handle {
+
+
+.columnResizeHandle {
   border-radius: 4px;
   bottom: 0;
   cursor: col-resize;
@@ -52,77 +69,9 @@ tr.drop-over-rightward td {
   user-select: none;
   width: 4px;
   z-index: 1;
-}
-.react-resizable-handle:hover {
-  background: rgba(68, 142, 247, 0.4);
+  &:hover {
+    background: var(--theme-colors-action-normal);
+
+  }
 }
 
-/* .dragHandler:hover {
-  background-color: #ccc;
-  cursor: move;
-}
-.react-resizable {
-  position: relative;
-} */
-
-/* .react-resizable-handle {
-  background-origin: content-box;
-  background-position: bottom right;
-  background-repeat: no-repeat;
-  box-sizing: border-box;
-  height: 20px;
-  padding: 0 3px 3px 0;
-  position: absolute;
-  width: 20px;
-}
-.react-resizable-handle-sw {
-  bottom: 0;
-  cursor: sw-resize;
-  left: 0;
-  transform: rotate(90deg);
-}
-.react-resizable-handle-se {
-  bottom: 0;
-  cursor: se-resize;
-  right: 0;
-}
-.react-resizable-handle-nw {
-  cursor: nw-resize;
-  left: 0;
-  top: 0;
-  transform: rotate(180deg);
-}
-.react-resizable-handle-ne {
-  cursor: ne-resize;
-  right: 0;
-  top: 0;
-  transform: rotate(270deg);
-}
-.react-resizable-handle-w,
-.react-resizable-handle-e {
-  cursor: ew-resize;
-  margin-top: -10px;
-  top: 50%;
-}
-.react-resizable-handle-w {
-  left: 0;
-  transform: rotate(135deg);
-}
-.react-resizable-handle-e {
-  right: 0;
-  transform: rotate(315deg);
-}
-.react-resizable-handle-n,
-.react-resizable-handle-s {
-  cursor: ns-resize;
-  left: 50%;
-  margin-left: -10px;
-}
-.react-resizable-handle-n {
-  top: 0;
-  transform: rotate(225deg);
-}
-.react-resizable-handle-s {
-  bottom: 0;
-  transform: rotate(45deg);
-} */
