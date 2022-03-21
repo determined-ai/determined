@@ -96,9 +96,6 @@ func (p *Provisioner) Receive(ctx *actor.Context) error {
 	case sproto.ScalingInfo:
 		p.scaleDecider.updateScalingInfo(&msg)
 
-	case sproto.EndInstanceStats:
-		p.scaleDecider.endInstanceStats()
-
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

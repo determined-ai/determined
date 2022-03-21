@@ -474,6 +474,34 @@ func (_m *DB) EndAgentStats(a *model.AgentStats) error {
 	return r0
 }
 
+// EndAllAgentStats provides a mock function with given fields:
+func (_m *DB) EndAllAgentStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAllInstanceStats provides a mock function with given fields:
+func (_m *DB) EndAllInstanceStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // EndInstanceStats provides a mock function with given fields: a
 func (_m *DB) EndInstanceStats(a *model.InstanceStats) error {
 	ret := _m.Called(a)

@@ -24,3 +24,12 @@ SET end_time = (SELECT CURRENT_TIMESTAMP)
 WHERE agent_id = :agent_id AND end_time IS NULL
 `, a)
 }
+
+// EndAllAgentStats called at master starts, in case master previously crushed
+// If master stops, statistics would treat “live” agents as live until master restarts.
+func (db *PgDB) EndAllAgentStats() error {
+	_, err := db.sql.Exec(`
+UPDATE agent_stats SET end_time = (SELECT CURRENT_TIMESTAMP)
+WHERE end_time IS NULL`)
+	return err
+}

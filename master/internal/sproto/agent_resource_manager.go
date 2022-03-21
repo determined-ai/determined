@@ -21,11 +21,6 @@ type (
 	RemoveAgent struct {
 		Agent *actor.Ref
 	}
-
-	// EndAgentStats update the end time for agent.
-	EndAgentStats struct {
-		Agent *actor.Ref
-	}
 )
 
 // Message protocol from the default resource manager to an agent actor.
@@ -40,9 +35,6 @@ type (
 		ContainerID cproto.ID
 	}
 )
-
-// EndInstanceStats tells provisioner to update instance stats when master/agent crushes.
-type EndInstanceStats struct{}
 
 // AgentSummary contains information about an agent for external display.
 type AgentSummary struct {
