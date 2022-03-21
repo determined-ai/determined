@@ -10,7 +10,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
-def test_experiment_cli(capfd) -> None:
+def test_experiment_cli() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
         conf.tutorials_path("mnist_pytorch"),
@@ -19,7 +19,7 @@ def test_experiment_cli(capfd) -> None:
     master_url = conf.make_master_url()
     sess = exp.test_session()
 
-    def get_experiment(exp_id) -> bindings.v1Experiment:
+    def get_experiment(exp_id: int) -> bindings.v1Experiment:
         return bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
 
     args = Namespace(
@@ -80,10 +80,12 @@ def test_experiment_cli(capfd) -> None:
 
     # commands which write to standard output
     experiment_cli.config(args)
-    experiment_cli.describe(args)
     experiment_cli.download_model_def(args)
-    experiment_cli.list_experiments(args)
-    experiment_cli.list_trials(args)
+
+    # commands tested in e2e_tests/tests/experiment/experiment.py
+    # experiment_cli.describe(args)
+    # experiment_cli.list_experiments(args)
+    # experiment_cli.list_trials(args)
 
     # commands which change state but experiment already completed
     experiment_cli.cancel(args)
@@ -93,5 +95,3 @@ def test_experiment_cli(capfd) -> None:
     experiment_cli.delete_experiment(args)
     with pytest.raises(errors.NotFoundException):
         get_experiment(exp_id)
-
-    assert True
