@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
@@ -49,14 +49,16 @@ import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
-import settingsConfig, { DEFAULT_COLUMNS, DEFAULT_COLUMN_WIDTHS, Settings, ExperimentColumnName } from './ExperimentList.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  DEFAULT_COLUMNS,
+  ExperimentColumnName,
+  Settings,
+} from './ExperimentList.settings';
 
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
-
-
 type ExperimentColumnDefs = ColumnDefs<ExperimentColumnName, ExperimentItem>
-
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -78,9 +80,7 @@ const ExperimentList: React.FC = () => {
       acc[experiment.id] = experiment;
       return acc;
     }, {} as Record<RecordKey, ExperimentItem>);
-  }, [experiments]);
-  
-  
+  }, [ experiments ]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
@@ -265,22 +265,25 @@ const ExperimentList: React.FC = () => {
     />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
-  const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
-    try {
-      await patchExperiment({
-        body: { description: editedDescription },
-        experimentId: id,
-      });
-    } catch (e) {
-      handleError(e, {
-        isUserTriggered: true,
-        publicMessage: 'Unable to save experiment description.',
-        silent: false,
-      });
-      setIsLoading(false);
-      return e;
-    }
-  }, [ ]);
+  const saveExperimentDescription = useCallback(
+    async (editedDescription: string, id: number): Promise<void | Error> => {
+      try {
+        await patchExperiment({
+          body: { description: editedDescription },
+          experimentId: id,
+        });
+      } catch (e) {
+        handleError(e, {
+          isUserTriggered: true,
+          publicMessage: 'Unable to save experiment description.',
+          silent: false,
+        });
+        setIsLoading(false);
+        return e as Error;
+      }
+    },
+    [],
+  );
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
@@ -324,7 +327,6 @@ const ExperimentList: React.FC = () => {
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: actionRenderer,
         title: '',
-        width: 20,
       },
       archived:
       {
@@ -339,7 +341,6 @@ const ExperimentList: React.FC = () => {
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: descriptionRenderer,
         title: 'Description',
-        // width: 200,
       },
       duration:
       {
@@ -365,20 +366,18 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
-
       },
       name:
       {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: s => !!settings.search,
+        isFiltered: settings => !!settings.search,
         key: V1GetExperimentsRequestSortBy.NAME,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
-        // width: 240,
       },
       progress:
       {
@@ -442,7 +441,6 @@ const ExperimentList: React.FC = () => {
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: tagsRenderer,
         title: 'Tags',
-        // width: 120,
       },
       trials:
       {
@@ -581,33 +579,45 @@ const ExperimentList: React.FC = () => {
     if (columns.length === 0) {
       updateSettings({ columns: [ 'name' ], columnWidths: [ DEFAULT_COLUMN_WIDTHS['name'] ] });
     } else {
-      updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths?.[col] ?? DEFAULT_COLUMN_WIDTHS[col]) });
+      updateSettings({
+        columns: columns,
+        columnWidths: columns.map((col) => previousWidths?.[col] ?? DEFAULT_COLUMN_WIDTHS[col]),
+      });
     }
-  }, [ updateSettings ]);
+  }, [ settings.columnWidths, settings.columns, updateSettings ]);
 
   const { modalOpen } = useModalCustomizeColumns({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
-    onSave: (handleUpdateColumns as (columns: string[]) => void)
+    onSave: (handleUpdateColumns as (columns: string[]) => void),
   });
+
+  const resetColumnWidths = useCallback(
+    () =>
+      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
+    [ settings.columns, updateSettings ],
+  );
 
   const openModal = useCallback(() => {
     modalOpen({ initialVisibleColumns: settings.columns });
-  }, [settings.columns, modalOpen]);
-  
+  }, [ settings.columns, modalOpen ]);
+
   const switchShowArchived = useCallback((showArchived: boolean) => {
     if (!showArchived || settings.columns?.includes('archived')) {
       updateSettings({ archived: showArchived, row: undefined });
-    }
-    else
-    {
-      if (!settings.columns?.length || !settings.columnWidths?.length) return
-      const columns = [...settings.columns, 'archived'] as ExperimentColumnName[];
-      const columnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']]
-      updateSettings({ archived: showArchived, columns: columns, columnWidths: columnWidths, row: undefined })
+    } else {
+      if (!settings.columns?.length || !settings.columnWidths?.length) return;
+      const columns = [ ...settings.columns, 'archived' ] as ExperimentColumnName[];
+      const columnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
+      updateSettings({
+        archived: showArchived,
+        columns: columns,
+        columnWidths: columnWidths,
+        row: undefined,
+      });
     }
 
-  }, [settings, updateSettings ]);
+  }, [ settings, updateSettings ]);
 
   /*
    * Get new experiments based on changes to the
@@ -654,9 +664,7 @@ const ExperimentList: React.FC = () => {
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
-          <Button onClick={() => updateSettings({ columnWidths: settings.columns.map(col => DEFAULT_COLUMN_WIDTHS[col]) })}>
-            Reset Width
-          </Button>
+          <Button onClick={resetColumnWidths}>Reset Width</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
       )}
@@ -683,10 +691,13 @@ const ExperimentList: React.FC = () => {
         ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, total)}
+        pagination={getFullPaginationConfig(
+          {
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          },
+          total,
+        )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{

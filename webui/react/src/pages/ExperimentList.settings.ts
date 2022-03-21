@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -21,7 +20,7 @@ export type ExperimentColumnName =
   | 'trials'
   | 'user';
 
-export const DEFAULT_COLUMNS = [
+export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
   'id',
   'name',
   'description',
@@ -33,9 +32,8 @@ export const DEFAULT_COLUMNS = [
   'user',
 ];
 
-
-
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
+  action: 40,
   archived: 90,
   description: 139,
   duration: 90,
@@ -54,8 +52,8 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
 
 export interface Settings {
   archived?: boolean;
+  columnWidths: number[];
   columns: ExperimentColumnName[];
-  columnWidths: float[];
   label?: string[];
   row?: number[];
   search?: string;
@@ -85,7 +83,7 @@ const config: SettingsConfig = {
       },
     },
     {
-      defaultValue: DEFAULT_COLUMNS.map(col => DEFAULT_COLUMN_WIDTHS[col]),
+      defaultValue: DEFAULT_COLUMNS.map((col: ExperimentColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
       key: 'columnWidths',
       storageKey: 'columnWidths',
       type: {

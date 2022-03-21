@@ -13,7 +13,7 @@ export default {
 
 export const Default = (): React.ReactNode => {
   const columns = useMemo(() => {
-    const arr = [ ...DEFAULT_COLUMNS ];
+    const arr = [ ...DEFAULT_COLUMNS ] as string[];
     for (let i = 0; i < 50; i++) {
       arr.push(generateAlphaNumeric());
     }
@@ -36,7 +36,7 @@ export const Default = (): React.ReactNode => {
 
 export const LongList = (): React.ReactNode => {
   const columns = useMemo(() => {
-    const arr = [ ...DEFAULT_COLUMNS ];
+    const arr = [ ...DEFAULT_COLUMNS ] as string[];
     for (let i = 0; i < 50000; i++) {
       arr.push(generateAlphaNumeric());
     }
