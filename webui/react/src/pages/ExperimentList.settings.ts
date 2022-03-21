@@ -17,6 +17,7 @@ export const DEFAULT_COLUMNS = [
 ];
 
 export const DEFAULT_COLUMN_WIDTHS = {
+  archived: 20,
   description: 139,
   duration: 63,
   forkedFrom: 83,

@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
@@ -173,15 +172,11 @@ const ResizableTitle = ({
   const [ , drag ] = useDrag({
     item: { index },
     type,
-    // collect: (monitor) => ({
-    //   isDragging: monitor.isDragging(),
-    // }),
   });
   drop(drag(ref));
 
   if (isOver) classes.push(dropClassName)
   if (filterActive) classes.push(css.headerFilterOn)
-  // classes.push(css.dropOverRightward)
 
   return (
     <Resizable
@@ -204,7 +199,6 @@ const ResizableTitle = ({
         <div
           className={className}
           ref={ref}
-          // style={{ cursor: 'move', marginLeft: 4, marginRight: 12 }}
           {...restProps}
           title={columnName}
         />
@@ -314,7 +308,7 @@ const ResponsiveTable: ResponsiveTable = ({
     [ updateSettings, settings.columnWidths ],
   );
 
-  const onHeaderCell = (index, columnSpec) => {
+  const onHeaderCell = useCallback((index, columnSpec) => {
     return (column) => {
       const filterActive = !!columnSpec?.isFiltered?.(settings);
       return {
@@ -327,7 +321,7 @@ const ResponsiveTable: ResponsiveTable = ({
         width: column.width,
       };
     };
-  };
+  }, [handleResize, handleResizeStop]);
 
   const renderColumns = useMemo(
     () =>

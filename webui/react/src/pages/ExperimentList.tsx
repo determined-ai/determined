@@ -50,7 +50,7 @@ import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
-import settingsConfig, { DEFAULT_COLUMNS, Settings } from './ExperimentList.settings';
+import settingsConfig, { DEFAULT_COLUMNS, DEFAULT_COLUMN_WIDTHS, Settings } from './ExperimentList.settings';
 
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -476,7 +476,7 @@ const ExperimentList: React.FC = () => {
   ]);
 
   const transferColumns = useMemo(() => {
-    return Object.values(columns).filter(column => column.title !== '' && column.title !== 'Archived')
+    return Object.values(columns).filter(column => column.title !== '')
       .map(column => sentenceToCamelCase(column.title as string));
   }, [ columns ]);
 
@@ -588,11 +588,22 @@ const ExperimentList: React.FC = () => {
   const openModal = useCallback(() => {
     modalOpen({ initialVisibleColumns: settings.columns });
   }, [ settings.columns, modalOpen ]);
-
   const switchShowArchived = useCallback((showArchived: boolean) => {
-    updateSettings({ archived: showArchived, row: undefined });
-  }, [ updateSettings ]);
+    if (!showArchived || settings.columns?.includes('archived')) {
+      updateSettings({ archived: showArchived, row: undefined });
+    }
+    else {
+      const columns = [...settings.columns, 'archived']
+      const columnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']]
+      updateSettings({ archived: showArchived, columns: columns, columnWidths: columnWidths, row: undefined })
+    }
 
+  }, [settings, updateSettings ]);
+
+  useEffect(() => {
+    console.log("render")
+
+  }, [settings])
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
