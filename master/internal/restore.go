@@ -85,7 +85,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	owner, err := m.db.UserByUsername(expModel.Username)
 	if err != nil {
-		return errors.Wrap(err, "invalid user")
+		return errors.Wrapf(err, "retrieving full user on restart")
 	}
 	taskSpec.Owner = owner
 
