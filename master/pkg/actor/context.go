@@ -3,8 +3,9 @@ package actor
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/pkg/logger"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 // Context holds contextual information for the context's recipient and the current message.
