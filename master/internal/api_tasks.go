@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -44,6 +46,44 @@ func (a *apiServer) AllocationReady(
 		return nil, err
 	}
 	return &apiv1.AllocationReadyResponse{}, nil
+}
+
+func (a *apiServer) AllocationAllGather(
+	ctx context.Context, req *apiv1.AllocationAllGatherRequest,
+) (*apiv1.AllocationAllGatherResponse, error) {
+	if req.AllocationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+
+	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	if err != nil {
+		return nil, err
+	}
+
+	wID, err := uuid.Parse(req.RequestUuid)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	var w task.AllGatherWatcher
+	if err = a.ask(handler.Address(), task.WatchAllGather{
+		WatcherID: wID,
+		NumPeers:  int(req.NumPeers),
+		Data:      &structpb.Struct{},
+	}, &w); err != nil {
+		return nil, err
+	}
+	defer a.m.system.TellAt(handler.Address(), task.UnwatchAllGather{WatcherID: wID})
+
+	select {
+	case rsp := <-w.C:
+		if rsp.Err != nil {
+			return nil, rsp.Err
+		}
+		return &apiv1.AllocationAllGatherResponse{Data: rsp.Data}, nil
+	case <-ctx.Done():
+		return nil, nil
+	}
 }
 
 func (a *apiServer) TaskLogs(

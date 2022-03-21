@@ -612,6 +612,19 @@ service Determined {
     };
   }
 
+  // AllocationAllGather performs an all gather through the master. An
+  // allocation can only perform once all gather at a time.
+  rpc AllocationAllGather(AllocationAllGatherRequest)
+      returns (AllocationAllGatherResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/all_gather"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the current searcher operation.
   rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
       returns (GetCurrentTrialSearcherOperationResponse) {

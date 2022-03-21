@@ -485,6 +485,54 @@ class v1Allocation:
             "allocationId": self.allocationId if self.allocationId is not None else None,
         }
 
+class v1AllocationAllGatherRequest:
+    def __init__(
+        self,
+        allocationId: str,
+        data: "typing.Dict[str, typing.Any]",
+        numPeers: "typing.Optional[int]" = None,
+        requestUuid: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+        self.requestUuid = requestUuid
+        self.numPeers = numPeers
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherRequest":
+        return cls(
+            allocationId=obj["allocationId"],
+            requestUuid=obj.get("requestUuid", None),
+            numPeers=obj.get("numPeers", None),
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId,
+            "requestUuid": self.requestUuid if self.requestUuid is not None else None,
+            "numPeers": self.numPeers if self.numPeers is not None else None,
+            "data": self.data,
+        }
+
+class v1AllocationAllGatherResponse:
+    def __init__(
+        self,
+        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherResponse":
+        return cls(
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "data": self.data,
+        }
+
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
@@ -5199,6 +5247,26 @@ def post_ActivateExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
+
+def post_AllocationAllGather(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationAllGatherRequest",
+) -> "v1AllocationAllGatherResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/all_gather",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1AllocationAllGatherResponse.from_json(_resp.json())
+    raise APIHttpError("post_AllocationAllGather", _resp)
 
 def get_AllocationPreemptionSignal(
     session: "client.Session",
