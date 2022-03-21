@@ -4,6 +4,23 @@ import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
 
+export type ExperimentColumnName =
+  | 'action'
+  | 'archived'
+  | 'description'
+  | 'duration'
+  | 'forkedFrom'
+  | 'id'
+  | 'name'
+  | 'progress'
+  | 'resourcePool'
+  | 'searcherType'
+  | 'startTime'
+  | 'state'
+  | 'tags'
+  | 'trials'
+  | 'user';
+
 export const DEFAULT_COLUMNS = [
   'id',
   'name',
@@ -16,26 +33,29 @@ export const DEFAULT_COLUMNS = [
   'user',
 ];
 
-export const DEFAULT_COLUMN_WIDTHS = {
-  archived: 20,
+
+
+export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
+  archived: 90,
   description: 139,
-  duration: 63,
-  forkedFrom: 83,
-  id: 41,
+  duration: 90,
+  forkedFrom: 120,
+  id: 55,
   name: 122,
   progress: 104,
-  resourcePool: 88,
+  resourcePool: 120,
   searcherType: 122,
-  startTime: 86,
-  state: 82,
-  tags: 80,
-  trials: 49,
+  startTime: 110,
+  state: 100,
+  tags: 100,
+  trials: 70,
   user: 80,
 };
 
 export interface Settings {
   archived?: boolean;
-  columns?: string[];
+  columns: ExperimentColumnName[];
+  columnWidths: float[];
   label?: string[];
   row?: number[];
   search?: string;

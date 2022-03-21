@@ -1,44 +1,66 @@
-// @ts-nocheck
+
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
-import { SorterResult } from 'antd/es/table/interface';
+import { SorterResult, ColumnType, ColumnsType } from 'antd/es/table/interface';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import 'antd/dist/antd.min.css';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Resizable } from 'react-resizable';
-
+import { Resizable, ResizeCallbackData } from 'react-resizable';
+import { throttle } from 'throttle-debounce';
+import { RunState } from 'types'
 import useResize from 'hooks/useResize';
+
+import {Settings} from "pages/ExperimentList.settings"
 
 import css from './ResponsiveTable.module.scss';
 import Spinner from './Spinner';
+
+const DEFAULT_RESIZE_THROTTLE_TIME = 20 
 
 const type = 'DraggableColumn';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
 
-interface Settings {
-  sortDesc: boolean;
-  sortKey: Comparable;
-  tableLimit: number;
-  tableOffset: number;
-}
+type ResizeCallback  = ((e: React.SyntheticEvent, data: ResizeCallbackData) => any) | undefined;
+// interface Settings {
+//   sortDesc: boolean;
+//   sortKey: Comparable;
+//   tableLimit: number;
+//   tableOffset: number;
+//   label?: string[];
+//   search?: string;
+//   state?: RunState[];
+//   user?: string[];
+//   columns:
+// }
 
+type DndItem = {
+  index?: number;
+}
 interface ContextMenuProps {
   onVisibleChange: (visible: boolean) => void;
   record: Record<string, unknown>;
 }
 
-interface ResponsiveTableProps<RecordType> extends TableProps<RecordType> {
+interface ColumnDef<RecordType> extends ColumnType<RecordType> {
+  isFiltered?: (s: Settings) => boolean;
+}
+export type ColumnDefs<ColumnName extends string, RecordType> = Record<ColumnName, ColumnDef<RecordType>>
+
+interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps>;
   areRowsRightClickable?: boolean;
   areRowsSelected?: boolean;
+  columnSpec: ColumnDefs<string, RecordType>; 
+  settings: Settings;
+  updateSettings: (settings: Partial<Settings>, shouldPush?: boolean) => void;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-type ResponsiveTable = <T extends object>(props: ResponsiveTableProps<T>) => JSX.Element;
+type ResponsiveTable = <T extends object>(props: InteractiveTableProps<T>) => JSX.Element;
 
 interface RowProps {
   ContextMenu: React.FC<ContextMenuProps>;
@@ -47,6 +69,17 @@ interface RowProps {
   className?: string;
   record: Record<string, unknown>;
 }
+
+interface ResizableTitleProps {
+  onResize: ResizeCallback;
+  onResizeStop: ResizeCallback;
+  width: number;
+  className: string;
+  columnName: string;
+  filterActive: boolean;
+  moveColumn: (source: number, destination: number) => void;
+  index: number;
+} 
 
 interface CellProps {
   children?: React.ReactNode;
@@ -112,29 +145,31 @@ const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
   );
 };
 
-export const handleTableChange = (
-  columns: {key?: Comparable}[],
-  settings: Settings,
-  updateSettings: (s: Settings, b: boolean) => void,
-) => {
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  return (tablePagination: any, tableFilters: any, tableSorter: any): void => {
-    if (Array.isArray(tableSorter)) return;
+// export const handleTableChange = (
+//   columns: {key?: Comparable}[],
+//   settings: Settings,
+//   updateSettings: (s: Partial<Settings>, b: boolean) => void,
+// ) => {
+//   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+//   return (tablePagination: any, tableFilters: any, tableSorter: any): void => {
+//     if (Array.isArray(tableSorter)) return;
 
-    const { columnKey, order } = tableSorter as SorterResult<unknown>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+//     const { columnKey, order } = tableSorter as SorterResult<unknown>;
+//     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
-    const newSettings = {
-      sortDesc: order === 'descend',
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortKey: columnKey as any,
-      tableLimit: tablePagination.pageSize,
-      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
-    };
-    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-    updateSettings(newSettings, shouldPush);
-  };
-};
+//     const newSettings = {
+//       sortDesc: order === 'descend',
+//       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+//       sortKey: columnKey as any,
+//       tableLimit: tablePagination.pageSize,
+//       tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+//     };
+//     const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+//     updateSettings(newSettings, shouldPush);
+//   };
+// };
+
+
 
 const ResizableTitle = ({
   onResize,
@@ -146,18 +181,20 @@ const ResizableTitle = ({
   moveColumn,
   index,
   ...restProps
-}) => {
+}: ResizableTitleProps) => {
   if (!columnName) {
     return <th className={className} {...restProps} />;
   }
   const classes = [ css.headerCell ];
 
-  const ref = useRef();
+  const ref = useRef<HTMLDivElement>(null);
   const [ { isOver, dropClassName }, drop ] = useDrop({
     accept: type,
     collect: (monitor) => {
-      const { index: dragIndex } = monitor.getItem() || {};
-      if (dragIndex === index) {
+
+      const dragItem = (monitor.getItem() || {}) as DndItem;
+      const dragIndex = dragItem?.index
+      if (!dragIndex || dragIndex === index) {
         return {};
       }
       return {
@@ -165,8 +202,11 @@ const ResizableTitle = ({
         isOver: monitor.isOver(),
       };
     },
-    drop: (item) => {
-      moveColumn(item.index, index);
+    drop: (item: DndItem) => {
+      if (item.index) {
+        
+        moveColumn(item.index, index);
+      }
     },
   });
   const [ , drag ] = useDrag({
@@ -175,7 +215,7 @@ const ResizableTitle = ({
   });
   drop(drag(ref));
 
-  if (isOver) classes.push(dropClassName)
+  if (isOver) classes.push(dropClassName ?? '')
   if (filterActive) classes.push(css.headerFilterOn)
 
   return (
@@ -290,26 +330,31 @@ const ResponsiveTable: ResponsiveTable = ({
   );
 
   const handleResize = useCallback(
-    (index) => (e, { size }) => {
-      const targetWidth = Math.floor(Math.max(size.width, 30));
-      const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
-      setWidths(newWidths);
-    },
-    [ updateSettings, settings.columnWidths ],
+    (index) =>
+      throttle(
+        DEFAULT_RESIZE_THROTTLE_TIME,
+        (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
+          const targetWidth = Math.floor(Math.max(size.width, 30));
+          const newWidths = widths.map((w: number, i : number) => (index === i ? targetWidth : w));
+          setWidths(newWidths);
+        }
+      ),
+    [updateSettings, settings.columnWidths]
   );
 
   const handleResizeStop = useCallback(
-    (index) => (e, { size }) => {
+    (index) => (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
       const targetWidth = Math.floor(Math.max(size.width, 30));
-      const newWidths = widths.map((w, i) => (index === i ? targetWidth : w));
-      setWidths(newWidths);
+      const newWidths = widths.map((w: number, i : number) => (index === i ? targetWidth : w));
+      // setWidths(newWidths);
       updateSettings({ columnWidths: newWidths });
     },
-    [ updateSettings, settings.columnWidths ],
+    [updateSettings, settings.columnWidths]
   );
 
   const onHeaderCell = useCallback((index, columnSpec) => {
-    return (column) => {
+    return (column: ColumnDef<any>) => {
+      console.log(column)
       const filterActive = !!columnSpec?.isFiltered?.(settings);
       return {
         columnName: columnSpec.title,
@@ -318,14 +363,14 @@ const ResponsiveTable: ResponsiveTable = ({
         moveColumn,
         onResize: handleResize(index),
         onResizeStop: handleResizeStop(index),
-        width: column.width,
+        width: widths[index],
       };
     };
-  }, [handleResize, handleResizeStop]);
+  }, [handleResize, handleResizeStop, widths]);
 
   const renderColumns = useMemo(
-    () =>
-      settings.columns.map((columnName, index) => {
+    () => [
+      ...settings.columns.map((columnName, index) => {
         const column = columnSpec[columnName];
         // const columnWidth = settings.columnWidths?.[index] ?? 100;
         const columnWidth = widths[index];
@@ -338,8 +383,9 @@ const ResponsiveTable: ResponsiveTable = ({
           width: columnWidth,
           ...column,
         };
-      }).concat(columnSpec.action),
-    [ settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec ],
+      }, columnSpec.action),
+    ],
+    [settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec]
   );
 
   const components = {
@@ -355,12 +401,12 @@ const ResponsiveTable: ResponsiveTable = ({
         <DndProvider backend={HTML5Backend}>
           <Table
             bordered
-            columns={renderColumns}
+            columns={renderColumns as ColumnsType<any>}
             components={components}
             dataSource={dataSource}
             scroll={tableScroll}
-            // tableLayout="fixed"
-            tableLayout="auto"
+            tableLayout="fixed"
+            // tableLayout="auto"
             onChange={handleChange}
             onRow={(record, index) =>
               ({

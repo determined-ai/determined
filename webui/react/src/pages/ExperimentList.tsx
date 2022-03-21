@@ -1,14 +1,13 @@
-// @ts-nocheck
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
-import { ColumnsType, FilterDropdownProps } from 'antd/es/table/interface';
+import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDefs } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -50,9 +49,14 @@ import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
-import settingsConfig, { DEFAULT_COLUMNS, DEFAULT_COLUMN_WIDTHS, Settings } from './ExperimentList.settings';
+import settingsConfig, { DEFAULT_COLUMNS, DEFAULT_COLUMN_WIDTHS, Settings, ExperimentColumnName } from './ExperimentList.settings';
 
 const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
+
+
+
+type ExperimentColumnDefs = ColumnDefs<ExperimentColumnName, ExperimentItem>
+
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -74,7 +78,9 @@ const ExperimentList: React.FC = () => {
       acc[experiment.id] = experiment;
       return acc;
     }, {} as Record<RecordKey, ExperimentItem>);
-  }, [ experiments ]);
+  }, [experiments]);
+  
+  
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
@@ -308,7 +314,7 @@ const ExperimentList: React.FC = () => {
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
 
-    const tableColumns: ColumnsType<ExperimentItem> = {
+    const tableColumns: ExperimentColumnDefs = {
       action:
       {
         align: 'right',
@@ -366,7 +372,7 @@ const ExperimentList: React.FC = () => {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: settings => !!settings.search,
+        isFiltered: s => !!settings.search,
         key: V1GetExperimentsRequestSortBy.NAME,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: experimentNameRenderer,
@@ -568,42 +574,41 @@ const ExperimentList: React.FC = () => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
-  const handleUpdateColumns = useCallback((columns: string[]) => {
+  const handleUpdateColumns = useCallback((columns: ExperimentColumnName[]) => {
     const previousWidths = settings.columns
       ?.map((col, i) => ({ [col]: settings.columnWidths?.[i] }))
       .reduce((a, b) => ({ ...a, ...b }), {});
     if (columns.length === 0) {
-      updateSettings({ columns: [ 'name' ], columnWidths: [ 100 ] });
+      updateSettings({ columns: [ 'name' ], columnWidths: [ DEFAULT_COLUMN_WIDTHS['name'] ] });
     } else {
-      updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths[col] ?? 100) });
+      updateSettings({ columns: columns, columnWidths: columns.map(col => previousWidths?.[col] ?? DEFAULT_COLUMN_WIDTHS[col]) });
     }
   }, [ updateSettings ]);
 
   const { modalOpen } = useModalCustomizeColumns({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
-    onSave: handleUpdateColumns,
+    onSave: (handleUpdateColumns as (columns: string[]) => void)
   });
 
   const openModal = useCallback(() => {
     modalOpen({ initialVisibleColumns: settings.columns });
-  }, [ settings.columns, modalOpen ]);
+  }, [settings.columns, modalOpen]);
+  
   const switchShowArchived = useCallback((showArchived: boolean) => {
     if (!showArchived || settings.columns?.includes('archived')) {
       updateSettings({ archived: showArchived, row: undefined });
     }
-    else {
-      const columns = [...settings.columns, 'archived']
+    else
+    {
+      if (!settings.columns?.length || !settings.columnWidths?.length) return
+      const columns = [...settings.columns, 'archived'] as ExperimentColumnName[];
       const columnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']]
       updateSettings({ archived: showArchived, columns: columns, columnWidths: columnWidths, row: undefined })
     }
 
   }, [settings, updateSettings ]);
 
-  useEffect(() => {
-    console.log("render")
-
-  }, [settings])
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -649,7 +654,7 @@ const ExperimentList: React.FC = () => {
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={openModal}>Columns</Button>
-          <Button onClick={() => updateSettings({ columnWidths: settings.columns.map(_ => 80) })}>
+          <Button onClick={() => updateSettings({ columnWidths: settings.columns.map(col => DEFAULT_COLUMN_WIDTHS[col]) })}>
             Reset Width
           </Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />

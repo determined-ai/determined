@@ -88,6 +88,7 @@
     "@types/node": "^15.0.1",
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.3",
+    "@types/react-resizable": "^1.7.4",
     "@types/react-router-dom": "^5.1.6",
     "@types/react-transition-group": "^4.4.0",
     "@types/react-window": "^1.8.5",
