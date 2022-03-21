@@ -377,7 +377,7 @@ const InteractiveTable: InteractiveTable = ({
             components={components}
             dataSource={dataSource}
             scroll={tableScroll}
-            tableLayout="fixed"
+            tableLayout="auto"
             onChange={handleChange}
             onRow={(record, index) => ({
               areRowsSelected,
