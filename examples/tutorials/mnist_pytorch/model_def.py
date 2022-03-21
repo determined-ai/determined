@@ -11,6 +11,7 @@ for training and evaluation respectively.
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import time
 import torch
 from torch import nn
 
@@ -78,6 +79,11 @@ class MNistTrial(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
+        if batch_idx >= 1500:
+            while True:
+                time.sleep(1)
+                print("Sleeping")
+
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 

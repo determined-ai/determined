@@ -12,6 +12,22 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-      batches: 937 #60,000 training images with batch size 64
+      batches: 60000  # training images with batch size 64
   smaller_is_better: true
-entrypoint: model_def:MNistTrial
+entrypoint:
+  - python3
+  - -m
+  - idle_gpu_watcher
+  - --min-percentage
+  - "5"
+  - --sample-freq
+  - "5"
+  - --sample-window
+  - "10"
+  - --startup-delay-samples
+  - "6"
+  - --debug
+  - python3
+  - -m
+  - determined.launch.autohorovod
+  - model_def:MNistTrial
