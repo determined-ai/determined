@@ -5,7 +5,8 @@ import pytest
 
 from determined.cli import command
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
+from determined.common.experimental import session
 from tests import config as conf
 from tests import experiment as exp
 
@@ -57,6 +58,15 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+
+    resp = bindings.get_GetResourcePools(
+        session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    )
+    assert len(resp.resourcePools) > 0, "missing resource pool"
+
+    if resp.resourcePools[0].type == bindings.v1ResourcePoolType.RESOURCE_POOL_TYPE_K8S:
+        # Skip this test for k8s.
+        return
 
     body = {}
     if task_type == command.TaskTypeTensorBoard:
