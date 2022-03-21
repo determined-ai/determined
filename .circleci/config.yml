@@ -37,7 +37,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev10
+    default: v1dev11
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
