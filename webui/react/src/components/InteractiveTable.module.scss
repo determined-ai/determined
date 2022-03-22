@@ -1,12 +1,11 @@
 .headerCell {
   text-overflow: clip;
-  transition: all 0s linear;
   :global(.ant-table-cell) {
-    z-index: 1 ;
-    
+    z-index: 1;
+
     user-select: none;
   }
-  :global(div[class=ant-table-cell]) {
+  :global(div[class='ant-table-cell']) {
     cursor: move;
   }
 
@@ -24,7 +23,6 @@
   svg {
     cursor: pointer;
   }
-
 }
 .dropOverLeftward {
   border-left: 2px dashed var(--theme-colors-action-normal) !important;
@@ -34,7 +32,6 @@
 }
 
 .cell {
-  background: #fafafa;
   .rightClickableCellWrapper {
     display: inline;
   }
@@ -45,8 +42,6 @@
   bottom: 0;
   cursor: col-resize;
   height: 100%;
-
-  /* margin-left: 4px; */
   position: absolute;
   right: -2.5px;
   user-select: none;

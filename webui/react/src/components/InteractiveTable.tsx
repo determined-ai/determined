@@ -2,8 +2,7 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
-import useResize from 'hooks/useResize';
-import { Settings } from 'pages/ExperimentList.settings';
+import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
 import React, {
   createContext,
   useCallback,
@@ -25,7 +24,7 @@ import {
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
 
-const DEFAULT_RESIZE_THROTTLE_TIME = 20;
+const DEFAULT_RESIZE_THROTTLE_TIME = 10;
 const MIN_COLUMN_WIDTH = 40;
 
 const type = 'DraggableColumn';
@@ -95,13 +94,14 @@ const Row = ({
   areRowsSelected,
   ...props
 }: RowProps) => {
+  const classes = [ className, css.row ];
 
   const [ rowHovered, setRowHovered ] = useState(false);
   const [ rightClickableCellHovered, setRightClickableCellHovered ] = useState(false);
   const [ contextMenuOpened, setContextMenuOpened ] = useState(false);
 
   if (areRowsSelected) {
-    return <tr className={className} {...props}>{children}</tr>;
+    return <tr className={classes.join(' ')} {...props}>{children}</tr>;
   }
 
   const rightClickableCellProps = {
@@ -113,12 +113,15 @@ const Row = ({
   const rowContextMenuTriggerableOrOpen =
     (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
 
+  if (rowContextMenuTriggerableOrOpen) {
+    classes.push('ant-table-row-selected');
+  }
   return record ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr
           className={
-            rowContextMenuTriggerableOrOpen ? `${className} ant-table-row-selected` : className
+            classes.join(' ')
           }
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
@@ -128,7 +131,7 @@ const Row = ({
       </ContextMenu>
     </RightClickableRowContext.Provider>
   ) : (
-    <tr className={className} {...props}>{children}</tr>
+    <tr className={classes.join(' ')} {...props}>{children}</tr>
   );
 };
 
@@ -231,40 +234,10 @@ const InteractiveTable: InteractiveTable = ({
   areRowsSelected,
   ...props
 }) => {
-  const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
-  const [ tableScroll, setTableScroll ] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widths, setWidths ] = useState(settings?.columnWidths);
-  const resize = useResize(tableRef);
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
-
-  useEffect(() => {
-    if (!tableRef.current || resize.width === 0) return;
-
-    const tables = tableRef.current.getElementsByTagName('table');
-    if (tables.length === 0) return;
-
-    const rect = tables[0].getBoundingClientRect();
-
-    /*
-     * ant table scrolling has an odd behaviour. If scroll.x is set to 'max-content' initially
-     * it will show the scroll bar. We need to set it to undefined the first time if scrolling
-     * is not needed, and 'max-content' if we want to disable scrolling after it has been displayed.
-     */
-    let scrollX: 'max-content'|undefined|number = (
-      hasScrollBeenEnabled ? 'max-content' : undefined
-    );
-    if (rect.width > resize.width) {
-      scrollX = rect.width;
-      setHasScrollBeenEnabled(true);
-    }
-
-    setTableScroll({
-      x: scrollX,
-      y: scroll?.y,
-    });
-  }, [ hasScrollBeenEnabled, resize, scroll ]);
 
   useEffect(() => setWidths(settings.columnWidths), [ settings.columnWidths ]);
 
@@ -307,22 +280,27 @@ const InteractiveTable: InteractiveTable = ({
       throttle(
         DEFAULT_RESIZE_THROTTLE_TIME,
         (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
-          const targetWidth = Math.floor(Math.max(size.width, MIN_COLUMN_WIDTH));
-          const newWidths = widths.map((w: number, i : number) => (index === i ? targetWidth : w));
+          const column = settings.columns[index];
+          const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
+          const targetWidth = Math.floor(Math.max(size.width, minWidth));
+          const newWidths = settings.columnWidths.map((w: number, i: number) =>
+            index === i ? targetWidth : w);
           setWidths(newWidths);
         },
       ),
-    [ widths ],
+    [ settings.columnWidths, settings.columns ],
   );
 
   const handleResizeStop = useCallback(
     (index) => (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
-      const targetWidth = Math.floor(Math.max(size.width, MIN_COLUMN_WIDTH));
-      const newWidths = widths.map((w: number, i: number) => (index === i ? targetWidth : w));
-      // setWidths(newWidths);
+      const column = settings.columns[index];
+      const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
+      const targetWidth = Math.floor(Math.max(size.width, minWidth));
+      const newWidths = settings.columnWidths.map((w: number, i: number) =>
+        index === i ? targetWidth : w);
       updateSettings({ columnWidths: newWidths });
     },
-    [ updateSettings, widths ],
+    [ updateSettings, settings.columns, settings.columnWidths ],
   );
 
   const onHeaderCell = useCallback((index, columnSpec) => {
@@ -376,7 +354,7 @@ const InteractiveTable: InteractiveTable = ({
             columns={renderColumns as ColumnsType<any>}
             components={components}
             dataSource={dataSource}
-            scroll={tableScroll}
+            // scroll={tableScroll}
             tableLayout="fixed"
             onChange={handleChange}
             onRow={(record, index) => ({
