@@ -4,63 +4,136 @@
  Queue Management
 ##################
 
-The Determined Queue Management system extends the functionality of scheduler options to offer users
-better functionality in scheduling decisions. The primary role of Queue Management is to provide
-better information about job order, which some schedulers are unable to provide. For example, the
-priority scheduler can provide job ordering information via priority, but the info can be inaccurate
-due to backfilling behavior.
+The Determined Queue Management system extends the functionality of the schedulers to offer you
+better functionality regarding scheduling decisions. It does so by providing the Job Queue, which
+can not only provide better information about job ordering, like what jobs are queued up next, but
+can also allow modification of jobs on the fly.
 
-Queue Management is a new feature and is available to the priority scheduler and the Kubernetes
-priority scheduler. It allows users to observe all submitted jobs and their state. It also allow
-users to modify the position of the jobs in the queue either directly or indirectly.
-
-***********************
- Visualizing Job Queue
-***********************
-
-Queue Management's job queue can be viewed from the CLI or from the WebUI. To view it in the WebUI,
-click on the `Job Queue` tab. To view it in the CLI, use the following command:
-
-.. code:: bash
-
-   det job list
-
-Both the WebUI and the CLI will display a table of results, ordered by scheduling order. Note that
-the scheduling order is not necessarily the priority of the job. In addition to the order of the
-job, users can see the state of the jobs and how many slots each job is using.
+Queue Management is a new feature and is available to the fair share scheduler, the priority
+scheduler, and the Kubernetes priority scheduler. To start using it, navigate to the ``Job Queue``
+section of the WebUI or use the ``det job`` family of CLI commands. Queue Management allows you to
+observe all submitted jobs and their states, and provides the ability to modify some configuration
+options, like priority, position in the queue, and resource pool.
 
 ************
  Job States
 ************
 
-Jobs can be in the Queued or Scheduled states. Queued jobs have been received by Determined but have
-not been allocated resources yet. Any change made to those experiments in the Job Queue should take
-effect as soon as they are received. A job in the Scheduled state has selected to run by the
-scheduler; it may or may not have acquired resources or be running at that moment. Once it has
-started running, a progress bar like the one in the experiments tab should appear. A job that has
-already started to run will not reflect changes immediately and will instead need to be preempted.
+Jobs in the Job Queue can be in the ``Queued`` or ``Scheduled`` states. A ``Queued`` job has been
+received by Determined but has not been allocated resources yet. Any change made to queued jobs
+should take effect as soon as they have been received by Determined. A job in the ``Scheduled``
+state has already been chosen by the scheduler to start execution and it may have already acquired
+resources or be running at that moment. Once it has started running, a progress bar like the one
+seen in the experiments section should appear. A job that has already started to run will not be
+able to accept changes immediately and instead needs to be preempted.
 
 Jobs that have completed or errored out are not counted as active and are omitted from this list.
+
+***********************
+ Visualizing Job Queue
+***********************
+
+The Job Queue can be viewed from the CLI or from the WebUI. To view it in the WebUI, click on the
+`Job Queue` tab. To view it in the CLI, use either of the following commands:
+
+.. code::
+
+   $ det job list
+   $ det job ls
+
+The above commands show the queue of the default resource pool. To view the queue of other resource
+pools, specify the ``--resource-pool`` option:
+
+.. code::
+
+   $ det job list --resource-pool compute
+
+For more information about the CLI options, see the CLI documentation or use ``det job list -h``.
+
+Both the WebUI and the CLI will display a table of results, ordered by scheduling order. Note that
+the scheduling order is not necessarily the priority of the job. In addition to the order of the
+job, you can see the state of the jobs and how many slots each job is using.
 
 *********************
  Modifying Job Queue
 *********************
 
-Users may modify the job queue in either the WebUI or the CLI.
+The job queue can be modified in either the WebUI's Job Queue Section or with the CLI's ``det job
+update`` command. You can make changes on a per-job basis by selecting a job and an operation for
+the job. Available operations include changing priorities (for resource pools using the priority
+scheduler), changing weights (for resource pools using the fair share scheduler), changing the order
+of queued jobs, and changing resource pools.
+
+To perform these operations in the Webui, enter the Job Queue Section, find the job to modify, and
+click on the three dots on the right most column of the job. Find and click the ``Manage Job``
+option, make the desired change on the pop up page, and click ``OK``.
+
+You may also perform job queue updates in the CLI, where it is possible to update jobs individually
+or in batches. To update a single job, use the commands shown below. You will need need the jobID of
+the target job, the desired operation, and the argument for the operation.
+
+.. code::
+
+   $ det job update jobID --priority 10
+   $ det job update jobID --resource-pool a100
+   $ det job update jobID --ahead-of jobID-2
+
+Supported CLI operations include ``--priority``, ``--weight``, ``--ahead-of``, ``--behind-of``, and
+``--resource-pool``. See the CLI documentation or use `det job update -h` for more information.
+
+To update a job in batches, select one or more jobIDs of the target job(s) and provide operations
+and values for each of them. However instead of specifying options as arguments, you should provide
+updates as follows:
+
+.. code::
+
+   $ det job update-batch job1.priority=1 job2.resource-pool="compute" job3.ahead-of=job1
+
+An example workflow is shown below:
+
+.. code::
+
+   $ det job list
+      # | ID       | Type            | Job Name   | Priority | Submitted            | Slots (acquired/needed) | Status          | User
+   -----+--------------------------------------+-----------------+--------------------------+------------+---------------------------+---------
+      0 | 0d714127 | TYPE_EXPERIMENT | first_job  |       42 | 2022-01-01 00:01:00  | 1/1                     | STATE_SCHEDULED | user1
+      1 | 73853c5c | TYPE_EXPERIMENT | second_job |       42 | 2022-01-01 00:01:01  | 0/1                     | STATE_QUEUED    | user1
+
+   $ det job update 73853c5c --ahead-of 0d714127
+
+   $ det job list
+      # | ID       | Type            | Job Name   | Priority | Submitted            | Slots (acquired/needed) | Status          | User
+   -----+--------------------------------------+-----------------+--------------------------+------------+---------------------------+---------
+      0 | 73853c5c | TYPE_EXPERIMENT | second_job |       42 | 2022-01-01 00:01:01  | 1/1                     | STATE_SCHEDULED | user1
+      1 | 0d714127 | TYPE_EXPERIMENT | first_job  |       42 | 2022-01-01 00:01:00  | 0/1                     | STATE_QUEUED    | user1
+
+   $ det job update-batch 73853c5c.priority=1 0d714127.priority=1
+
+   $ det job list
+      # | ID       | Type            | Job Name   | Priority | Submitted            | Slots (acquired/needed) | Status          | User
+   -----+--------------------------------------+-----------------+--------------------------+------------+---------------------------+---------
+      0 | 73853c5c | TYPE_EXPERIMENT | second_job |       1 | 2022-01-01 00:01:01  | 1/1                     | STATE_SCHEDULED | user1
+      1 | 0d714127 | TYPE_EXPERIMENT | first_job  |       1 | 2022-01-01 00:01:00  | 0/1                     | STATE_QUEUED    | user1
 
 ***********************
  Job Queue Limitations
 ***********************
 
-.. code:: markdown
+There are several limitations and behaviors to keep in mind when using the Job Queue to modify jobs.
+First, the priority and fair share fields are mutually exclusive; the priority field is only active
+for the priority scheduler, and the fair share field is only active for the fair share scheduler. It
+is not possible for both to be active at the same time. Furthermore, the ``ahead-of``,
+``behind-of``, and the WebUI's ``Move to Top`` operations are only available for the priority
+scheduler and are not possible with the fair share scheduler. Additionally, the change resource pool
+operation can only be performed on experiments. To change the resource pool of other tasks, you must
+instead cancel the task and resubmit it.
 
-   TODO
-   -  define and describe different states and their meanings
-
-   -  define and describe the different actions that can be taken on the job and where they apply
-
-   -  describe limitations:
-         -  what scheduler types are supported to what degree: fairshare vs priority
-         -  what actions are disabled because of: fault tolerance, kubernetes, etc.
-
-   moving resource pools - experiments - commands and fault tolerance
+Furthermore, there are several limitations when using the job queue on Kubernetes. Switching
+resource pools is not supported in k8s because determined does not currently support multiple
+resource pools on kubernetes. You may label and taint nodes to control node selection, but must
+cancel the job and resubmit it with updated tolerations and selectors. Determined does not fully
+support ordering in Kubernetes and only priority can be modified. Pods are mostly immutable once
+submited, so changing priorities requires Determined to first terminate the job in order to update
+its priority. This may cause some shuffling behavior among jobs, where other lower priority jobs may
+be scheduled before the updated job gets resubmitted. Ultimately though, the higher priority job
+should always preempt lower priority jobs and eventually get run.
