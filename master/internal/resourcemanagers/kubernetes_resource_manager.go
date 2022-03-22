@@ -225,23 +225,6 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case job.SetGroupWeight:
-		// setting weights in kubernetes is not supported
-
-	case job.SetGroupPriority:
-		group := k.getOrCreateGroup(ctx, msg.Handler)
-		group.priority = &msg.Priority
-
-		for it := k.reqList.iterator(); it.next(); {
-			if it.value().Group == msg.Handler {
-				taskActor := it.value().TaskActor
-				if id, ok := k.addrToContainerID[taskActor]; ok {
-					ctx.Tell(k.podsActor, kubernetes.ChangePriority{PodID: id})
-					delete(k.addrToContainerID, taskActor)
-				}
-			}
-		}
-
 	case sproto.SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
 

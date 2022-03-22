@@ -276,16 +276,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 	case sproto.NotifyRMPriorityChange:
-		err := e.setPriority(ctx, &msg.Priority, false)
-		ctx.Respond(err)
+		ctx.Respond(e.setPriority(ctx, &msg.Priority, false))
 	case job.SetGroupWeight:
 		if err := e.setWeight(ctx, msg.Weight); err != nil {
 			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
-		err := e.setPriority(ctx, &msg.Priority, true)
-		ctx.Respond(err)
+		ctx.Respond(e.setPriority(ctx, &msg.Priority, true))
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -610,22 +608,33 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) error {
+func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
 	if priority == nil {
 		return nil
 	}
 	oldPriority := resourcemanagers.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.Config.Resources()
+
 	if resources.Priority() != nil {
 		oldPriority = *resources.Priority()
 		oldPriorityPtr = &oldPriority
 	}
 	resources.SetPriority(priority)
 	e.Config.SetResources(resources)
+
+	defer func() {
+		if err != nil {
+			resources.SetPriority(oldPriorityPtr)
+			e.Config.SetResources(resources)
+			err = e.db.SaveExperimentConfig(e.Experiment)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
-		resources.SetPriority(oldPriorityPtr)
-		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
 
@@ -636,8 +645,6 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 		})
 		err := resp.Error()
 		if err != nil {
-			resources.SetPriority(oldPriorityPtr)
-			e.Config.SetResources(resources)
 			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 		}
 	}
