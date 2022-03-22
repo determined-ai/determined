@@ -1,15 +1,30 @@
 .headerCell {
+  text-overflow: clip;
+  transition: all 0s linear;
   :global(.ant-table-cell) {
-    cursor: move;
+    z-index: 1 ;
+    
     user-select: none;
   }
+  :global(div[class=ant-table-cell]) {
+    cursor: move;
+  }
+
   :global(.ant-table-filter-trigger) {
     cursor: pointer;
   }
-  :global(.ant-table-column-sorter) {
-    cursor: pointer;
-    z-index: 1;
+  :global(.ant-table-column-title) {
+    z-index: 0;
+    cursor: move;
   }
+  :global(.ant-table-column-sorters:after) {
+    z-index: -2;
+  }
+
+  svg {
+    cursor: pointer;
+  }
+
 }
 .dropOverLeftward {
   border-left: 2px dashed var(--theme-colors-action-normal) !important;
@@ -17,9 +32,14 @@
 .dropOverRightward {
   border-right: 2px dashed var(--theme-colors-action-normal) !important;
 }
-.rightClickableCellWrapper {
-  display: inline;
+
+.cell {
+  background: #fafafa;
+  .rightClickableCellWrapper {
+    display: inline;
+  }
 }
+
 .columnResizeHandle {
   border-radius: 4px;
   bottom: 0;
