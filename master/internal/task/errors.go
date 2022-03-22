@@ -72,7 +72,6 @@ func (e ErrStaleResources) Error() string {
 
 // All behaviors for allocations.
 const (
-	rendezvous  = "rendezvous"
 	preemption  = "preemption"
 	idleWatcher = "idle_watcher"
 )
@@ -84,6 +83,15 @@ type ErrBehaviorDisabled struct {
 
 func (e ErrBehaviorDisabled) Error() string {
 	return fmt.Sprintf("%s not enabled for this allocation", e.Behavior)
+}
+
+// ErrBehaviorUnsupported is returned an operation is tried without the behavior being supported.
+type ErrBehaviorUnsupported struct {
+	Behavior string
+}
+
+func (e ErrBehaviorUnsupported) Error() string {
+	return fmt.Sprintf("%s not supported for this allocation or resource manager", e.Behavior)
 }
 
 // ErrAlreadyCancelled is returned to the allocation when it tries to take an action but has an

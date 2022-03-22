@@ -211,13 +211,28 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(a.State())
 		}
-	case WatchRendezvousInfo, UnwatchRendezvousInfo, RendezvousTimeout:
-		if !a.req.DoRendezvous {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(ErrBehaviorDisabled{Behavior: rendezvous})
+	case WatchRendezvousInfo, UnwatchRendezvousInfo, rendezvousTimeout:
+		if a.rendezvous == nil {
+			if a.resources == nil {
+				return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", msg)}
 			}
-			return nil
+
+			switch a.resources.first().Summary().ResourcesType {
+			case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
+				break
+			default:
+				return ErrBehaviorUnsupported{Behavior: fmt.Sprintf("%T", msg)}
+			}
+
+			switch msg.(type) {
+			case WatchRendezvousInfo:
+				a.rendezvous = NewRendezvous(ctx, a.model.AllocationID, a.resources)
+			case UnwatchRendezvousInfo, rendezvousTimeout:
+				// Ignore without active rendezvous.
+				return nil
+			}
 		}
+
 		switch err := a.rendezvous.ReceiveMsg(ctx).(type) {
 		case nil:
 			return nil
@@ -358,10 +373,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		a.preemption = NewPreemption(a.model.AllocationID)
 	}
 
-	if a.req.DoRendezvous {
-		a.rendezvous = NewRendezvous(a.model.AllocationID, a.resources)
-	}
-
 	if cfg := a.req.IdleTimeout; cfg != nil {
 		a.idleTimeoutWatcher = NewIdleTimeoutWatcher(a.req.Name, cfg)
 		a.idleTimeoutWatcher.PreStart(ctx)
@@ -444,7 +455,7 @@ func (a *Allocation) ResourcesStateChanged(
 	case sproto.Running:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateRunning)
 		a.resources[msg.ResourcesID].start = msg.ResourcesStarted
-		if a.req.DoRendezvous && a.rendezvous.try() {
+		if a.rendezvous != nil && a.rendezvous.try() {
 			ctx.Log().Info("all containers are connected successfully (task container state changed)")
 		}
 		if a.req.ProxyPort != nil {
@@ -515,7 +526,7 @@ func (a *Allocation) Terminate(ctx *actor.Context) {
 		return
 	}
 	switch {
-	case a.req.Preemptible && a.req.DoRendezvous && a.rendezvous.ready():
+	case a.req.Preemptible && a.rendezvous != nil && a.rendezvous.ready():
 		a.preempt(ctx)
 	default:
 		a.kill(ctx)
@@ -646,7 +657,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	if a.req.Preemptible {
 		defer a.preemption.Close()
 	}
-	if a.req.DoRendezvous {
+	if a.rendezvous != nil {
 		defer a.rendezvous.Close()
 	}
 	switch {
@@ -780,7 +791,7 @@ func (a *Allocation) State() AllocationState {
 		Resources:  resources,
 		Addresses:  addresses,
 		Containers: containers,
-		Ready: a.req.DoRendezvous && a.rendezvous.ready() ||
+		Ready: a.rendezvous != nil && a.rendezvous.ready() ||
 			coalesceBool(a.model.IsReady, false),
 	}
 }

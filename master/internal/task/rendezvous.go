@@ -54,12 +54,12 @@ type (
 		ResourcesID sproto.ResourcesID
 	}
 
-	// RendezvousTimeout tracks the timeout of the allocation resources rendezvousing.
+	// rendezvousTimeout tracks the timeout of the allocation resources rendezvousing.
 	// It is possible that it takes very long for all containers to be connected after the first
 	// container is connected. This might happen when the k8s cluster waits for new instances
 	// to spin up, which might not happen at all. At the same time, taking up part of all
 	// the resources and waiting is wasteful. So we need to detect this situation.
-	RendezvousTimeout struct{ AllocationID model.AllocationID }
+	rendezvousTimeout struct{ AllocationID model.AllocationID }
 
 	// Rendezvous encapsulates the rendezvous state of a trial.
 	Rendezvous struct {
@@ -72,7 +72,16 @@ type (
 )
 
 // NewRendezvous returns a new rendezvous component.
-func NewRendezvous(allocationID model.AllocationID, rs resourcesList) *Rendezvous {
+func NewRendezvous(
+	ctx *actor.Context,
+	allocationID model.AllocationID,
+	rs resourcesList,
+) *Rendezvous {
+	if ctx != nil {
+		actors.NotifyAfter(ctx, RendezvousTimeoutDuration, rendezvousTimeout{
+			AllocationID: allocationID,
+		})
+	}
 	return &Rendezvous{
 		allocationID: allocationID,
 		resources:    rs,
@@ -89,7 +98,7 @@ func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case WatchRendezvousInfo:
 		if len(r.watchers) == 0 {
-			actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{
+			actors.NotifyAfter(ctx, RendezvousTimeoutDuration, rendezvousTimeout{
 				AllocationID: r.allocationID,
 			})
 		}
@@ -101,7 +110,7 @@ func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 		}
 	case UnwatchRendezvousInfo:
 		r.unwatch(msg.ResourcesID)
-	case RendezvousTimeout:
+	case rendezvousTimeout:
 		if err := r.checkTimeout(msg.AllocationID); err != nil {
 			return err
 		}

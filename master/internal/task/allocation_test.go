@@ -65,9 +65,10 @@ func TestAllocation(t *testing.T) {
 				rsrv := &mocks.Resources{}
 				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
 				rsrv.On("Summary").Return(sproto.ResourcesSummary{
-					AllocationID: a.req.AllocationID,
-					ResourcesID:  rID,
-					AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
+					AllocationID:  a.req.AllocationID,
+					ResourcesID:   rID,
+					ResourcesType: sproto.ResourcesTypeDockerContainer,
+					AgentDevices:  map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 				})
 				rsrv.On("Kill", mock.Anything).Return()
 				return rsrv
@@ -179,9 +180,10 @@ func TestAllocationAllGather(t *testing.T) {
 		rsrv := &mocks.Resources{}
 		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
 		rsrv.On("Summary").Return(sproto.ResourcesSummary{
-			AllocationID: a.req.AllocationID,
-			ResourcesID:  rID,
-			AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
+			AllocationID:  a.req.AllocationID,
+			ResourcesID:   rID,
+			ResourcesType: sproto.ResourcesTypeDockerContainer,
+			AgentDevices:  map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 		})
 		rsrv.On("Kill", mock.Anything).Return()
 		return rsrv
@@ -297,7 +299,6 @@ func setup(t *testing.T) (
 			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", taskID)),
 			SlotsNeeded:  2,
 			Preemptible:  true,
-			DoRendezvous: true,
 			// ...
 		},
 		db,
