@@ -354,7 +354,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		rp.agents[msg.Agent] = true
 		err := rp.updateAgentStartStats(rp.config.PoolName, agentID, msg.Slots)
 		if err != nil {
-			ctx.Log().WithError(err)
+			ctx.Log().WithError(err).Error("failed to update agent start stats")
 		}
 
 	case sproto.RemoveAgent:
@@ -364,7 +364,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		delete(rp.agents, msg.Agent)
 		err := rp.updateAgentEndStats(agentID)
 		if err != nil {
-			ctx.Log().WithError(err)
+			ctx.Log().WithError(err).Error("failed to update agent end stats")
 		}
 
 	default:
