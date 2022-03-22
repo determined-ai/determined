@@ -64,13 +64,14 @@ func TestAllocation(t *testing.T) {
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
 				rsrv := &mocks.Resources{}
-				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
+				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return().Times(1)
 				rsrv.On("Summary").Return(sproto.ResourcesSummary{
 					AllocationID: a.req.AllocationID,
 					ResourcesID:  rID,
 					AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 				})
-				rsrv.On("Kill", mock.Anything).Return()
+				rsrv.On("Kill", mock.Anything, mock.Anything).Return()
 				return rsrv
 			}
 
@@ -178,13 +179,14 @@ func TestAllocationAllGather(t *testing.T) {
 	// Pre-allocated stage.
 	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
 		rsrv := &mocks.Resources{}
-		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
+		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return().Times(1)
 		rsrv.On("Summary").Return(sproto.ResourcesSummary{
 			AllocationID: a.req.AllocationID,
 			ResourcesID:  rID,
 			AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 		})
-		rsrv.On("Kill", mock.Anything).Return()
+		rsrv.On("Kill", mock.Anything, mock.Anything).Return()
 		return rsrv
 	}
 
