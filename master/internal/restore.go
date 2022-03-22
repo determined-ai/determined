@@ -83,6 +83,11 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
+	owner, err := m.db.UserByUsername(expModel.Username)
+	if err != nil {
+		return errors.Wrapf(err, "retrieving full user on restart")
+	}
+	taskSpec.Owner = owner
 
 	log.WithField("experiment", expModel.ID).Debug("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)
