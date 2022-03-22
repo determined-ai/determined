@@ -29,7 +29,8 @@ WHERE instance_id = :instance_id AND end_time IS NULL
 // If master stops, statistics would treat “live” instances as live until master restarts.
 func (db *PgDB) EndAllInstanceStats() error {
 	_, err := db.sql.Exec(`
-UPDATE provisioner_instance_stats SET end_time = greatest(cluster_heartbeat, start_time) FROM cluster_id
+UPDATE provisioner_instance_stats SET end_time = greatest(cluster_heartbeat, start_time) 
+FROM cluster_id
 WHERE end_time IS NULL`)
 	return err
 }
