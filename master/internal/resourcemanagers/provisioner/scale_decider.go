@@ -153,16 +153,6 @@ func (s *scaleDecider) updateInstanceEndStats(instID string) error {
 	})
 }
 
-func (s *scaleDecider) endInstanceStats() {
-	for _, inst := range s.instances {
-		instID := inst.ID
-		err := s.updateInstanceEndStats(instID)
-		if err != nil {
-			continue
-		}
-	}
-}
-
 func (s *scaleDecider) calculateInstanceStates() {
 	now := time.Now()
 	pastDisconnected := s.disconnected
