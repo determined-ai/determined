@@ -627,3 +627,7 @@ func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 		PodID: p.containerID,
 	})
 }
+
+func (p k8sPodResources) Persist() error {
+	return nil
+}

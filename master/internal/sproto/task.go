@@ -44,6 +44,7 @@ type (
 		IdleTimeout  *IdleTimeoutConfig
 		ProxyPort    *PortProxyConfig
 		StreamEvents *EventStreamConfig
+		Restore      bool
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.
@@ -127,6 +128,7 @@ type (
 		ResourcePool      string
 		Resources         []Resources
 		JobSubmissionTime time.Time
+		Recovered         bool
 	}
 	// PendingPreemption notifies the task actor that it should release
 	// resources due to a pending system-triggered preemption.

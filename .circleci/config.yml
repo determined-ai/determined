@@ -361,6 +361,9 @@ commands:
       managed-devcluster:
         type: boolean
         default: false
+      extra-pytest-flags:
+        type: string
+        default: ""
     steps:
       - run:
           name: Split tests
@@ -401,6 +404,7 @@ commands:
             --master-port="<<parameters.master-port>>" \
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
+            <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
       - upload-test-job:
           only_on_branch: master
@@ -1559,6 +1563,9 @@ jobs:
       agent-version:
         type: string
         default: ''
+      extra-pytest-flags:
+        type: string
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -1598,6 +1605,7 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
           managed-devcluster: <<parameters.managed-devcluster>>
+          extra-pytest-flags: <<parameters.extra-pytest-flags>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -2076,6 +2084,9 @@ workflows:
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
+          # Managed devcluster restarts the master over the course of the tests,
+          # so `compare_stats` cannot get the full logs from `det master logs`.
+          extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
           name: test-e2e-cpu-elastic

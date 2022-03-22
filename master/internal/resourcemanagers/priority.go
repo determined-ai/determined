@@ -353,21 +353,8 @@ func removeTaskFromAgents(
 ) {
 	for _, allocation := range resourcesAllocated.Resources {
 		allocation := allocation.(*containerResources)
-		if len(allocation.devices) == 0 {
-			// Handle zero-slot containers.
-			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.containerID)
-		}
-
-		for _, allocatedDevice := range allocation.devices {
-			// Local devices are a deep copy of the originals so we loop over trying to find
-			// the device that matches. If we assume that we have homogeneous devices we could
-			// just search for the first used device.
-			for localDevice, localContainer := range agents[allocation.agent.Handler].Devices {
-				if allocatedDevice.ID == localDevice.ID && localContainer != nil {
-					agents[allocation.agent.Handler].Devices[localDevice] = nil
-				}
-			}
-		}
+		agentState := agents[allocation.agent.Handler]
+		agentState.DeallocateContainer(allocation.containerID)
 	}
 }
 

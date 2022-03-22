@@ -22,7 +22,6 @@ type (
 	RemoveAgent struct {
 		Agent *actor.Ref
 	}
-
 	// UpdateAgent notifies the RP on scheduling-related changes in the agent.
 	UpdateAgent struct {
 		Agent *actor.Ref

@@ -24,7 +24,10 @@ require (
 	gotest.tools v2.2.0+incompatible
 )
 
-require github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
+require (
+	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
+	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
+)
 
 require (
 	cloud.google.com/go v0.94.0 // indirect
@@ -133,7 +136,6 @@ require (
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect

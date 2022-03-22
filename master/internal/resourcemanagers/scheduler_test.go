@@ -229,7 +229,8 @@ func forceAddAgent(
 		}
 	}
 	for i := 0; i < numZeroSlotContainers; i++ {
-		state.ZeroSlotContainers[cproto.ID(uuid.New().String())] = true
+		_, err := state.AllocateFreeDevices(0, cproto.NewID())
+		assert.NilError(t, err)
 	}
 	agents[state.Handler] = state
 	return state
@@ -408,7 +409,8 @@ func setupSchedulerStates(
 			devices := make([]device.Device, 0)
 			if mockTask.containerStarted {
 				if mockTask.slotsNeeded == 0 {
-					agentState.ZeroSlotContainers[containerID] = true
+					_, err := agentState.AllocateFreeDevices(0, containerID)
+					assert.NilError(t, err)
 				} else {
 					i := 0
 					for d, currContainerID := range agentState.Devices {

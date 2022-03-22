@@ -1,0 +1,10 @@
+:orphan:
+
+**New Features**
+
+-  Add experimental support for recovering live trials on master process restart. Users can restart
+   the master (with updated configuration options), or upgrade the master software version, and the
+   current running trials will continue running (using the original configuration and harness
+   versions). This requires agent to reconnect within a configurable ``agent_reconnect_wait``
+   period. Only available for ``agent`` resource manager, and can be enabled for each resource pool
+   using ``agent_reattach_enabled`` flag. May only be available for "patch" level releases.

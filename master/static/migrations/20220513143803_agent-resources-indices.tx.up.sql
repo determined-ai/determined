@@ -1,0 +1,2 @@
+CREATE INDEX ix_allocation_resources_allocation_id ON allocation_resources USING btree (allocation_id);
+CREATE INDEX ix_resourcemanagers_agent_containers_resource_id ON resourcemanagers_agent_containers USING btree (resource_id);

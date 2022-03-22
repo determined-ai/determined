@@ -4,13 +4,14 @@ A drop-in replacement for requests.request() which supports server name overridi
 from typing import Any, Optional
 
 import requests
+import urllib3
 
 
 class HTTPAdapter(requests.adapters.HTTPAdapter):
     """A new HTTPAdapter which honors the ServerName as a value for the verify arg."""
 
-    def __init__(self, server_hostname: Optional[str]) -> None:
-        super().__init__()
+    def __init__(self, server_hostname: Optional[str], **kwargs: Any) -> None:
+        super().__init__(**kwargs)
         self.server_hostname = server_hostname
 
     def cert_verify(self, conn: Any, url: Any, verify: Any, cert: Any) -> None:
@@ -21,14 +22,21 @@ class HTTPAdapter(requests.adapters.HTTPAdapter):
 
 
 class Session(requests.sessions.Session):
-    def __init__(self, server_hostname: Optional[str]) -> None:
+    def __init__(
+        self, server_hostname: Optional[str], max_retries: Optional[urllib3.util.retry.Retry]
+    ) -> None:
         super().__init__()
-        # Override the https adapter.
-        self.mount("https://", HTTPAdapter(server_hostname))
+        if max_retries is None:
+            # Override the https adapter.
+            self.mount("https://", HTTPAdapter(server_hostname))
+        else:
+            self.mount("https://", HTTPAdapter(server_hostname, max_retries=max_retries))
+            self.mount("http://", requests.adapters.HTTPAdapter(max_retries=max_retries))
 
 
 def request(method: str, url: str, **kwargs: Any) -> requests.Response:
     server_hostname = kwargs.pop("server_hostname", None)
-    with Session(server_hostname) as session:
+    max_retries = kwargs.pop("max_retries", None)
+    with Session(server_hostname, max_retries) as session:
         out = session.request(method=method, url=url, **kwargs)  # type: requests.Response
         return out

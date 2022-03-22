@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -37,6 +38,37 @@ type agents struct {
 
 func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		reattachEnabled := config.IsAgentRMReattachEnabled()
+		if reattachEnabled {
+			// TODO(ilia): only restore the agents which have some non-zero state.
+			// Currently, if an agent tries to reconnect and it was not restored here,
+			// then it'd be told it must restart and do a fresh connection.
+			agentStates, err := retrieveAgentStates()
+			if err != nil {
+				ctx.Log().WithError(err).Warnf("failed to retrieve agent states")
+			}
+
+			ctx.Log().Debugf("agent states to restore: %d", len(agentStates))
+			badAgentIds := []AgentID{}
+
+			for agentID := range agentStates {
+				agentState := agentStates[agentID]
+				_, err := a.createAgentActor(
+					ctx, agentID, agentState.resourcePoolName, a.opts, &agentState)
+				if err != nil {
+					ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
+					badAgentIds = append(badAgentIds, agentID)
+				}
+			}
+
+			if len(badAgentIds) > 0 {
+				ctx.Log().Debugf("cleaning %d bad agent states", len(badAgentIds))
+				if err := clearAgentStates(badAgentIds); err != nil {
+					ctx.Log().WithError(err).Warnf("failed to clean bad agent states")
+				}
+			}
+		}
 	case api.WebSocketConnected:
 		id := msg.Ctx.QueryParam("id")
 		resourcePool := msg.Ctx.QueryParam("resource_pool")
@@ -71,8 +103,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			return nil
 		}
 
-		version := msg.Ctx.QueryParam("version")
-		if ref, err := a.createAgentActor(ctx, id, version, resourcePool, a.opts); err != nil {
+		if ref, err := a.createAgentActor(ctx, AgentID(id), resourcePool, a.opts, nil); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(ctx.Ask(ref, msg).Get())
@@ -85,7 +116,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		ctx.Respond(response)
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
-	case actor.PreStart, actor.PostStop:
+	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -93,7 +124,8 @@ func (a *agents) Receive(ctx *actor.Context) error {
 }
 
 func (a *agents) createAgentActor(
-	ctx *actor.Context, id, version, resourcePool string, opts *aproto.MasterSetAgentOptions,
+	ctx *actor.Context, id AgentID, resourcePool string, opts *aproto.MasterSetAgentOptions,
+	restoredAgentState *AgentState,
 ) (*actor.Ref, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
@@ -111,11 +143,11 @@ func (a *agents) createAgentActor(
 	ref, ok := ctx.ActorOf(id, &agent{
 		resourcePool:          resourcePoolRef,
 		resourcePoolName:      resourcePool,
-		version:               version,
 		maxZeroSlotContainers: rpConfig.MaxZeroSlotContainers,
 		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
 		agentReattachEnabled:  rpConfig.AgentReattachEnabled,
 		opts:                  opts,
+		agentState:            restoredAgentState,
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

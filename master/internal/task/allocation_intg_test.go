@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -26,13 +27,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 func TestAllocation(t *testing.T) {
 	cases := []struct {
 		name  string
-		err   *sproto.ResourcesFailure
+		err   *sproto.RestoreResourcesFailure
 		acked bool
 		exit  *AllocationExited
 	}{
@@ -49,13 +49,13 @@ func TestAllocation(t *testing.T) {
 		{
 			name:  "container failed",
 			acked: false,
-			err:   &sproto.ResourcesFailure{FailureType: sproto.ContainerFailed},
-			exit:  &AllocationExited{Err: sproto.ResourcesFailure{FailureType: sproto.ContainerFailed}},
+			err:   &sproto.RestoreResourcesFailure{FailureType: sproto.ContainerFailed},
+			exit:  &AllocationExited{Err: sproto.RestoreResourcesFailure{FailureType: sproto.ContainerFailed}},
 		},
 		{
 			name:  "container failed, but acked preemption",
 			acked: true,
-			err:   &sproto.ResourcesFailure{FailureType: sproto.ContainerFailed},
+			err:   &sproto.RestoreResourcesFailure{FailureType: sproto.ContainerFailed},
 			exit:  &AllocationExited{},
 		},
 	}
@@ -267,6 +267,7 @@ func setup(t *testing.T) (
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
+	InitAllocationMap()
 
 	// mock resource manager.
 	rmImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
