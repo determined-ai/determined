@@ -3,7 +3,8 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
-	"time"
+
+	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -39,6 +40,7 @@ type ResourcePool struct {
 	groups           map[*actor.Ref]*group
 	queuePositions   jobSortState // secondary sort key initialized based on job submission time
 	groupActorToID   map[*actor.Ref]model.JobID
+	IDToGroupActor   map[model.JobID]*actor.Ref
 	scalingInfo      *sproto.ScalingInfo
 
 	reschedule bool
@@ -71,6 +73,7 @@ func NewResourcePool(
 		groups:         make(map[*actor.Ref]*group),
 		queuePositions: initalizeJobSortState(),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
+		IDToGroupActor: make(map[model.JobID]*actor.Ref),
 		scalingInfo:    &sproto.ScalingInfo{},
 
 		reschedule: false,
@@ -117,12 +120,9 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
 			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
-			if err := rp.persist(); err != nil {
-				ctx.Log().Errorf("error persisting queue positions: %s", err)
-				// CHECK: fail?
-			}
 		}
 		rp.groupActorToID[msg.Group] = msg.JobID
+		rp.IDToGroupActor[msg.JobID] = msg.Group
 	}
 	rp.taskList.AddTask(&msg)
 }
@@ -275,9 +275,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return err
 		}
-		if err = rp.restore(); err != nil {
-			ctx.Log().Errorf("failed to restore resource pool: %s", err)
-		}
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 		return err
 
@@ -299,7 +296,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		job.GetJobQ,
 		job.GetJobQStats,
 		job.SetGroupWeight,
-		job.SetGroupPriority:
+		job.SetGroupPriority,
+		job.RecoverJobPosition:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -382,25 +380,142 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) moveJob(msg job.MoveJob) error {
-	// REMOVEME
-	fmt.Println(rp.config.PoolName, "moveJob: ", msg)
-	rp.queuePositions[job.TailAnchor] = initalizeQueuePosition(time.Now())
-	newPos, rebalance, err := computeNewJobPos(msg, rp.queuePositions)
+func (rp *ResourcePool) moveJob(
+	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+) error {
+	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+		return fmt.Errorf("unable to perform operation on resource pool with %s",
+			rp.config.Scheduler.GetType())
+	}
+
+	if anchorID == "" || jobID == "" || anchorID == jobID {
+		return nil
+	}
+
+	if _, ok := rp.queuePositions[jobID]; !ok {
+		return nil
+	}
+
+	groupAddr, ok := rp.IDToGroupActor[jobID]
+	if !ok {
+		return job.ErrJobNotFound(jobID)
+	}
+	if _, ok := rp.queuePositions[anchorID]; !ok {
+		return job.ErrJobNotFound(anchorID)
+	}
+
+	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
+
+	if secondAnchor == "" {
+		return fmt.Errorf("unable to move job with ID %s", jobID)
+	}
+
+	if secondAnchor == jobID {
+		return nil
+	}
+
+	if prioChange {
+		oldPriority := *rp.groups[groupAddr].priority
+		err := rp.setGroupPriority(ctx, job.SetGroupPriority{
+			Priority:     anchorPriority,
+			ResourcePool: rp.config.PoolName,
+			Handler:      rp.IDToGroupActor[jobID],
+		})
+		if err != nil {
+			return err
+		}
+
+		resp := ctx.Ask(rp.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
+			Priority: anchorPriority,
+		})
+		if resp.Error() != nil {
+			_ = rp.setGroupPriority(ctx, job.SetGroupPriority{
+				Priority:     oldPriority,
+				ResourcePool: rp.config.PoolName,
+				Handler:      rp.IDToGroupActor[jobID],
+			})
+			return resp.Error()
+		}
+		if !needMove(
+			rp.queuePositions[jobID],
+			rp.queuePositions[anchorID],
+			rp.queuePositions[secondAnchor],
+			aheadOf,
+		) {
+			return nil
+		}
+	}
+
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
 	if err != nil {
 		return err
 	}
-	rp.queuePositions[msg.ID] = newPos
-	// condiontally check if rebalancing is needed.
-	if rebalance {
-		adjustPriorities(&rp.queuePositions)
+
+	ctx.Tell(groupAddr, msg)
+
+	return nil
+}
+
+func (rp *ResourcePool) findAnchor(
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
+) (bool, model.JobID, int) {
+	var secondAnchor model.JobID
+	targetPriority := 0
+	anchorPriority := 0
+	anchorIdx := 0
+	prioChange := false
+
+	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
+
+	for i, req := range sortedReqs {
+		if req.JobID == jobID {
+			targetPriority = *rp.groups[req.Group].priority
+		} else if req.JobID == anchorID {
+			anchorPriority = *rp.groups[req.Group].priority
+			anchorIdx = i
+		}
 	}
 
-	if err := rp.persist(); err != nil {
-		return err
+	if aheadOf {
+		if anchorIdx == 0 {
+			secondAnchor = job.HeadAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx-1].JobID
+		}
+	} else {
+		if anchorIdx >= len(sortedReqs)-1 {
+			secondAnchor = job.TailAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx+1].JobID
+		}
 	}
-	// actors.NotifyAfter(ctx, 0, schedulerTick{}) ?
-	return nil
+
+	if targetPriority != anchorPriority {
+		prioChange = true
+	}
+
+	return prioChange, secondAnchor, anchorPriority
+}
+
+func needMove(
+	jobPos decimal.Decimal,
+	anchorPos decimal.Decimal,
+	secondPos decimal.Decimal,
+	aheadOf bool,
+) bool {
+	if aheadOf {
+		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
+			return false
+		}
+		return true
+	}
+	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
+		return false
+	}
+
+	return true
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
@@ -410,47 +525,47 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
+
 	case job.MoveJob:
-		ctx.Respond(rp.moveJob(msg))
+		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
+		ctx.Respond(err)
+
 	case job.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
 	case job.SetGroupPriority:
-		g := rp.getOrCreateGroup(ctx, msg.Handler)
-		if (g.priority != nil && *g.priority == msg.Priority) ||
-			rp.config.Scheduler.Priority == nil {
-			return nil
-		}
-		ctx.Log().Infof("setting priority for group of %s to %d",
-			msg.Handler.Address().String(), msg.Priority)
-		g.priority = &msg.Priority
-		jobID, ok := rp.groupActorToID[msg.Handler]
-		if ok {
-			time, err := getJobSubmissionTime(rp.taskList, jobID)
-			if err != nil {
-				ctx.Log().Errorf("failed to get job submission time: %s", err)
-				return nil
-			}
-			rp.queuePositions[jobID] = initalizeQueuePosition(time)
-		}
+		err := rp.setGroupPriority(ctx, msg)
+		ctx.Respond(err)
 		// if !ok: we haven't seen the job yet or this group is not IsUserVisible
 		// thus no need to reinitialize its queue position.
 
+	case job.RecoverJobPosition:
+		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
 
-func (rp *ResourcePool) persist() error {
-	// exlude head and tail?
-	fmt.Println("TODO persist rp", rp.config.PoolName)
-	return nil // TODO
-}
-
-func (rp *ResourcePool) restore() error {
-	fmt.Println("TODO restore rp", rp.config.PoolName)
-	return nil // TODO
+func (rp *ResourcePool) setGroupPriority(ctx *actor.Context, msg job.SetGroupPriority) error {
+	g := rp.getOrCreateGroup(ctx, msg.Handler)
+	if (g.priority != nil && *g.priority == msg.Priority) ||
+		rp.config.Scheduler.Priority == nil {
+		return nil
+	}
+	ctx.Log().Infof("setting priority for group of %s to %d",
+		msg.Handler.Address().String(), msg.Priority)
+	g.priority = &msg.Priority
+	jobID, ok := rp.groupActorToID[msg.Handler]
+	if ok {
+		time, err := getJobSubmissionTime(rp.taskList, jobID)
+		if err != nil {
+			ctx.Log().Errorf("failed to get job submission time: %s", err)
+			return nil
+		}
+		rp.queuePositions[jobID] = initalizeQueuePosition(time)
+	}
+	return nil
 }
 
 func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
@@ -459,10 +574,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		if jobID, ok := rp.groupActorToID[msg.Ref]; ok {
 			delete(rp.queuePositions, jobID)
 			delete(rp.groupActorToID, msg.Ref)
-			if err := rp.persist(); err != nil {
-				ctx.Log().Errorf("error persisting queuePositions: %s", err)
-				// CHECK fail?
-			}
+			delete(rp.IDToGroupActor, jobID)
 		} else {
 			ctx.Log().Errorf("group actor stopped but no job id found for group: %s", msg.Ref)
 		}

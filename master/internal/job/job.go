@@ -5,14 +5,18 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
+
+// DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.
+const DecimalExp = 1000
 
 var (
 	// JobsActorAddr is the address of the jobs actor.
@@ -68,11 +72,26 @@ type (
 	}
 	// MoveJob requests the job to be moved within a priority queue relative to another job.
 	MoveJob struct {
-		ID      model.JobID
-		Anchor1 model.JobID
-		Anchor2 model.JobID
+		ID     model.JobID
+		Anchor model.JobID
+		Ahead  bool
 	}
 )
+
+// RegisterJobPosition gets sent from the resource pool to experiment/command actors.
+// It notifies the task of its new position.
+type RegisterJobPosition struct {
+	JobID       model.JobID
+	JobPosition decimal.Decimal
+}
+
+// RecoverJobPosition gets sent from the experiment or command actor to the resource pool.
+// Notifies the resource pool of the position of the job.
+type RecoverJobPosition struct {
+	JobID        model.JobID
+	JobPosition  decimal.Decimal
+	ResourcePool string
+}
 
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
@@ -95,7 +114,8 @@ type Jobs struct {
 // AQueue is a map of jobID to RMJobInfo.
 type AQueue = map[model.JobID]*RMJobInfo
 
-func errJobNotFound(jobID model.JobID) error {
+// ErrJobNotFound returns a standard job error.
+func ErrJobNotFound(jobID model.JobID) error {
 	return fmt.Errorf("job %s not found", jobID)
 }
 
@@ -139,145 +159,6 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, er
 		return nil, err
 	}
 	return jobQ, nil
-}
-
-// figure out what changes are needed to move the job to the desired position.
-// Later we can support cross RP moving this way as well.
-func moveJobMessages(
-	jobs []*jobv1.Job,
-	target *jobv1.Job,
-	anchor *jobv1.Job,
-	anchorIdx int,
-	aheadOf bool,
-) (*SetGroupPriority, *MoveJob, error) {
-	// validate anchorIdx
-	if anchorIdx < 0 || anchorIdx > len(jobs) {
-		return nil, nil, fmt.Errorf("invalid anchor index %d", anchorIdx)
-	}
-	// validate anchor and target
-	if anchor == nil {
-		return nil, nil, fmt.Errorf("missing anchor job")
-	}
-	if target == nil {
-		return nil, nil, fmt.Errorf("missing target job")
-	}
-	if target.JobId == anchor.JobId {
-		return nil, nil, fmt.Errorf("target and anchor jobs are the same")
-	}
-
-	// sanity check
-	lastJob := int32(-1)
-	for _, job := range jobs {
-		check.Panic(check.GreaterThanOrEqualTo(job.Summary.JobsAhead, lastJob))
-		lastJob = job.Summary.JobsAhead
-	}
-
-	var priorityMsg *SetGroupPriority
-	if target.Priority != anchor.Priority {
-		priorityMsg = &SetGroupPriority{
-			Priority: int(anchor.Priority),
-		}
-	}
-
-	var moveMsg *MoveJob
-	// find the next or previous job based on aheadOf in the same priority lane
-	var secondAnchor model.JobID
-	if aheadOf {
-		for idx := anchorIdx - 1; idx >= 0; idx-- {
-			if jobs[idx].Priority == anchor.Priority {
-				secondAnchor = model.JobID(jobs[idx].JobId)
-				break
-			}
-		}
-		if secondAnchor == model.JobID("") {
-			secondAnchor = HeadAnchor
-		}
-	} else {
-		for idx := anchorIdx + 1; idx < len(jobs); idx++ {
-			if jobs[idx].Priority == anchor.Priority {
-				secondAnchor = model.JobID(jobs[idx].JobId)
-				break
-			}
-		}
-		if secondAnchor == model.JobID("") {
-			secondAnchor = TailAnchor
-		}
-	}
-
-	check.Panic(check.True(secondAnchor != model.JobID("")))
-	if secondAnchor.String() != target.JobId {
-		moveMsg = &MoveJob{
-			ID:      model.JobID(target.JobId),
-			Anchor1: model.JobID(anchor.JobId),
-			Anchor2: secondAnchor,
-		}
-	}
-
-	return priorityMsg, moveMsg, nil
-}
-
-func (j *Jobs) moveJob(
-	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
-) error {
-	if anchorID == jobID {
-		return nil
-	}
-	// find the job resource pool
-	aResp := ctx.Ask(j.actorByID[jobID], GetJob{})
-	if err := aResp.Error(); err != nil {
-		return err
-	}
-	targetJob, ok := aResp.Get().(*jobv1.Job)
-	if !ok {
-		return fmt.Errorf("unexpected response type: %T", aResp.Get())
-	}
-	jobs, err := j.getJobs(ctx, targetJob.ResourcePool, false)
-	if err != nil {
-		return err
-	}
-	// WARN assuming all job rp and priority changes goes through jobsActor
-	// and thus is synchoronzed here.
-
-	// find anchorJob by matching ID
-	var anchorJob *jobv1.Job
-	anchorIdx := -1
-	for idx, job := range jobs {
-		if job.JobId == anchorID.String() {
-			anchorJob = job
-			anchorIdx = idx
-			break
-		}
-	}
-	if anchorJob == nil || anchorIdx == -1 {
-		return errJobNotFound(anchorID)
-	}
-
-	// we might wanna limit the scope of this to just generating the moveJob message.
-	prioChange, moveJob, err := moveJobMessages(
-		jobs,
-		targetJob,
-		anchorJob,
-		anchorIdx,
-		aheadOf,
-	)
-
-	if prioChange != nil {
-		err = j.setJobPriority(ctx, jobID, prioChange.Priority)
-		if err != nil {
-			return err
-		}
-
-		// FIXME after this priority change we could be in the situation
-		// where the job is placed in the correct position as is. Right now
-		// the RM checks and handles this case as a no op.
-	}
-
-	if moveJob != nil {
-		resp := ctx.Ask(j.RMRef, *moveJob)
-		err = resp.Error()
-	}
-
-	return err
 }
 
 func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*jobv1.Job, error) {
@@ -365,7 +246,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			jobID := model.JobID(update.JobId)
 			jobActor := j.actorByID[jobID]
 			if jobActor == nil {
-				ctx.Respond(errJobNotFound(jobID))
+				ctx.Respond(ErrJobNotFound(jobID))
 				return nil
 			}
 			switch action := update.GetAction().(type) {
@@ -398,12 +279,22 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_AheadOf:
-				err := j.moveJob(ctx, jobID, model.JobID(action.AheadOf), true)
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:     jobID,
+					Anchor: model.JobID(action.AheadOf),
+					Ahead:  true,
+				})
+				err := resp.Error()
 				if err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_BehindOf:
-				err := j.moveJob(ctx, jobID, model.JobID(action.BehindOf), false)
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:     jobID,
+					Anchor: model.JobID(action.BehindOf),
+					Ahead:  false,
+				})
+				err := resp.Error()
 				if err != nil {
 					errors = append(errors, err.Error())
 				}

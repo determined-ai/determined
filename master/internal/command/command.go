@@ -126,9 +126,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		priority := c.Config.Resources.Priority
 		if priority != nil {
-			if err := c.setPriority(ctx, *priority); err != nil {
-				return err
-			}
+			ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+				Priority: *priority,
+				Handler:  ctx.Self(),
+			})
 		}
 
 		var portProxyConf *sproto.PortProxyConfig
@@ -261,7 +262,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 		c.clearJobInfo()
 	case *apiv1.SetNotebookPriorityRequest:
-		_ = c.setPriority(ctx, int(msg.Priority))
+		err := c.setPriority(ctx, int(msg.Priority), true)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
 
 	case *commandv1.Command:
@@ -279,7 +284,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetCommandPriorityRequest:
-		_ = c.setPriority(ctx, int(msg.Priority))
+		err := c.setPriority(ctx, int(msg.Priority), true)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
 
 	case *shellv1.Shell:
@@ -297,7 +306,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetShellPriorityRequest:
-		_ = c.setPriority(ctx, int(msg.Priority))
+		err := c.setPriority(ctx, int(msg.Priority), true)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
 
 	case *tensorboardv1.Tensorboard:
@@ -315,8 +328,15 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.clearJobInfo()
 
 	case *apiv1.SetTensorboardPriorityRequest:
-		_ = c.setPriority(ctx, int(msg.Priority))
+		err := c.setPriority(ctx, int(msg.Priority), true)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
+
+	case sproto.NotifyRMPriorityChange:
+		ctx.Respond(c.setPriority(ctx, msg.Priority, false))
 
 	case sproto.ContainerLog:
 
@@ -327,7 +347,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.setWeight(ctx, msg.Weight))
 
 	case job.SetGroupPriority:
-		ctx.Respond(c.setPriority(ctx, msg.Priority))
+		ctx.Respond(c.setPriority(ctx, msg.Priority, true))
+
+	case job.RegisterJobPosition:
+		err := c.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
+		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -335,18 +361,22 @@ func (c *command) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *command) setPriority(ctx *actor.Context, priority int) error {
+func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {
 	if sproto.UseK8sRM(ctx.Self().System()) {
 		return fmt.Errorf("setting priority for job type %s in kubernetes is not supported",
 			c.jobType)
 	}
 	c.Config.Resources.Priority = &priority
-	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-		Priority: priority,
-		Handler:  ctx.Self(),
-	})
-	// TODO revert in case of error
-	return resp.Error()
+
+	if forward {
+		resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+			Priority: priority,
+			Handler:  ctx.Self(),
+		})
+		return resp.Error()
+	}
+
+	return nil
 }
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {

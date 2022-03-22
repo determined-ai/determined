@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -216,7 +217,7 @@ func trySchedulingTaskViaPreemption(
 			allocationJobID := allocationRequest.JobID
 			candidateJobID := priorityToScheduledTaskMap[priority][i].JobID
 			if priority == allocationPriority &&
-				jobPositions[allocationJobID] >= jobPositions[candidateJobID] {
+				jobPositions[allocationJobID].GreaterThanOrEqual(jobPositions[candidateJobID]) {
 				break
 			}
 			preemptionCandidate := priorityToScheduledTaskMap[priority][i]
@@ -307,6 +308,7 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 func comparePositions(a, b *sproto.AllocateRequest, jobPositions jobSortState) int {
 	aPosition, aOk := jobPositions[a.JobID]
 	bPosition, bOk := jobPositions[b.JobID]
+	zero := decimal.NewFromInt(0)
 	if !aOk || !bOk {
 		// we shouldn't run into this situation once k8 support is implemented other than
 		// when testing.
@@ -315,12 +317,12 @@ func comparePositions(a, b *sproto.AllocateRequest, jobPositions jobSortState) i
 	switch {
 	case aPosition == bPosition:
 		return aReqComparator(a, b) * -1 // CHECK
-	case aPosition < 0 || bPosition < 0:
-		if aPosition > 0 {
+	case aPosition.LessThan(zero) || bPosition.LessThan(zero):
+		if aPosition.GreaterThan(zero) {
 			return 1
 		}
 		return -1
-	case aPosition < bPosition:
+	case aPosition.LessThan(bPosition):
 		return 1
 	default:
 		return -1
