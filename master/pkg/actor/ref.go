@@ -70,8 +70,11 @@ func newRef(system *System, parent *Ref, address Address, actor Actor) *Ref {
 		typeName = strings.Split(typeName, ".")[1]
 	}
 	ref := &Ref{
-		log: log.WithField("type", typeName).WithField("id", address.Local()).WithField(
-			"system", system.id),
+		log: log.WithFields(log.Fields{
+			"go-type":          typeName,
+			"actor-local-addr": address.Local(),
+			"actor-system":     system.id,
+		}),
 
 		address:        address,
 		registeredTime: time.Now(),

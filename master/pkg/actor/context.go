@@ -4,6 +4,8 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 // Context holds contextual information for the context's recipient and the current message.
@@ -30,6 +32,11 @@ func (c *Context) Log() *log.Entry {
 // AddLabel adds a new label to the context's recipient's logger.
 func (c *Context) AddLabel(key string, value interface{}) {
 	c.recipient.log = c.recipient.log.WithField(key, value)
+}
+
+// AddLabels adds new labels to the context's recipient's logger.
+func (c *Context) AddLabels(ctx logger.Context) {
+	c.recipient.log = c.recipient.log.WithFields(ctx.Fields())
 }
 
 // Tell sends the specified message to the actor (fire-and-forget semantics). The new context's

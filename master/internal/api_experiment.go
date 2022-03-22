@@ -28,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -203,6 +204,8 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		},
 		rm: a.m.rm,
 		db: a.m.db,
+
+		logCtx: logger.Context{"experiment-id": exp.ID},
 	}).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}

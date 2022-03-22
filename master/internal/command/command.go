@@ -7,6 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/logger"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -61,6 +62,12 @@ func createGenericCommandActor(
 		jobType:        jobType,
 		serviceAddress: &serviceAddress,
 		jobID:          jobID,
+
+		logCtx: logger.Context{
+			"job-id":    jobID,
+			"task-id":   taskID,
+			"task-type": taskType,
+		},
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -94,12 +101,15 @@ type command struct {
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	rmJobInfo      *job.RMJobInfo
+
+	logCtx logger.Context
 }
 
 // Receive implements the actor.Actor interface.
 func (c *command) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddJob(&model.Job{
@@ -156,7 +166,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		allocation := task.NewAllocation(sproto.AllocateRequest{
+		allocation := task.NewAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,

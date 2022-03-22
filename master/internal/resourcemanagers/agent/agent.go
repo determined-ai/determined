@@ -174,13 +174,17 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
+		log := ctx.Log().
+			WithFields(msg.LogContext.Fields()).
+			WithField("container-id", msg.ContainerID)
+		log.Infof("killing container")
+
 		killMsg := aproto.SignalContainer{
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
 		}
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			ctx.Log().WithError(err).Error("failed to write kill task message")
+			log.WithError(err).Error("failed to write kill task message")
 		}
 	case aproto.SignalContainer:
 		if a.awaitingReconnect {
@@ -197,18 +201,20 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.bufferForRecovery(ctx, msg)
 			return nil
 		}
-		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
-			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
-			msg.TaskActor.Address())
+		log := ctx.Log().
+			WithFields(msg.LogContext.Fields()).
+			WithField("container-id", msg.StartContainer.Container.ID).
+			WithField("slots", len(msg.StartContainer.Container.Devices))
+		log.Infof("starting container")
 
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
-			ctx.Log().WithError(err).Error("failed to write start container message")
+			log.WithError(err).Error("failed to write start container message")
 		}
 
 		if err := a.agentState.startContainer(ctx, msg); err != nil {
-			ctx.Log().WithError(err).Error("failed to update agent state")
+			log.WithError(err).Error("failed to update agent state")
 		}
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)

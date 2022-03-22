@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -192,7 +193,8 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	// mock allocation
 	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	taskAllocator = func(
-		req sproto.AllocateRequest, db db.DB, rm *actor.Ref, l *task.Logger,
+		logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm *actor.Ref,
+		l *task.Logger,
 	) actor.Actor {
 		return &allocImpl
 	}
@@ -204,6 +206,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	tr := newTrial(
+		detLogger.Context{},
 		taskID,
 		model.JobID("1"),
 		time.Now(),

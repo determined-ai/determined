@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -71,6 +72,8 @@ type (
 		proxies []string
 		// active all gather state
 		allGather *allGather
+
+		logCtx detLogger.Context
 	}
 
 	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -124,7 +127,7 @@ const (
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
-	req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
+	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
 ) actor.Actor {
 	return &Allocation{
 		db:     db,
@@ -141,6 +144,10 @@ func NewAllocation(
 		},
 
 		resources: resourcesList{},
+
+		logCtx: detLogger.MergeContexts(logCtx, detLogger.Context{
+			"allocation-id": req.AllocationID,
+		}),
 	}
 }
 
@@ -168,6 +175,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages handle interaction with the resource manager. The generally
 	// handle the primary allocation lifecycle/functionality.
 	case actor.PreStart:
+		ctx.AddLabels(a.logCtx)
 		if err := a.RequestResources(ctx); err != nil {
 			a.Error(ctx, err)
 		}
@@ -326,7 +334,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 		for _, r := range a.resources {
 			if r.exit == nil {
 				ctx.Log().Infof("allocation exited with unterminated reservation: %v", r.Summary())
-				r.Kill(ctx)
+				r.Kill(ctx, a.logCtx)
 			}
 		}
 		if len(a.resources) > 0 {
@@ -379,7 +387,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	for cID, r := range a.resources {
-		r.Start(ctx, spec, sproto.ResourcesRuntimeInfo{
+		r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 			Token:        token,
 			AgentRank:    a.resources[cID].rank,
 			IsMultiAgent: len(a.resources) > 1,
@@ -578,8 +586,8 @@ func (a *Allocation) kill(ctx *actor.Context) {
 		a.killedWhileRunning = true
 	}
 	a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
-	for _, reservation := range a.resources {
-		reservation.Kill(ctx)
+	for _, r := range a.resources {
+		r.Kill(ctx, a.logCtx)
 	}
 }
 

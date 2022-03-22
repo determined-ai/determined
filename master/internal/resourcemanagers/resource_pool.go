@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
@@ -469,7 +470,7 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 
 // StartContainer notifies the agent to start a container.
 func (c containerResources) Start(
-	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.container.id)
@@ -496,12 +497,14 @@ func (c containerResources) Start(
 			},
 			Spec: spec.ToDockerSpec(),
 		},
+		LogContext: logCtx,
 	})
 }
 
 // KillContainer notifies the agent to kill the container.
-func (c containerResources) Kill(ctx *actor.Context) {
+func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
 	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
 		ContainerID: c.container.id,
+		LogContext:  logCtx,
 	})
 }

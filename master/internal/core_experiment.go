@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -207,6 +208,8 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 				},
 				rm: m.rm,
 				db: m.db,
+
+				logCtx: logger.Context{"experiment-id": dbExp.ID},
 			})
 	}
 

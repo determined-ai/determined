@@ -3,9 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
-
 	actor "github.com/determined-ai/determined/master/pkg/actor"
+	logger "github.com/determined-ai/determined/master/pkg/logger"
+
+	mock "github.com/stretchr/testify/mock"
 
 	sproto "github.com/determined-ai/determined/master/internal/sproto"
 
@@ -17,14 +18,14 @@ type Resources struct {
 	mock.Mock
 }
 
-// Kill provides a mock function with given fields: ctx
-func (_m *Resources) Kill(ctx *actor.Context) {
-	_m.Called(ctx)
+// Kill provides a mock function with given fields: _a0, _a1
+func (_m *Resources) Kill(_a0 *actor.Context, _a1 logger.Context) {
+	_m.Called(_a0, _a1)
 }
 
-// Start provides a mock function with given fields: ctx, spec, rri
-func (_m *Resources) Start(ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo) {
-	_m.Called(ctx, spec, rri)
+// Start provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *Resources) Start(_a0 *actor.Context, _a1 logger.Context, _a2 tasks.TaskSpec, _a3 sproto.ResourcesRuntimeInfo) {
+	_m.Called(_a0, _a1, _a2, _a3)
 }
 
 // Summary provides a mock function with given fields:

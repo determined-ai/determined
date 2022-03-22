@@ -9,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -163,8 +164,8 @@ type ResourcesSummary struct {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(ctx *actor.Context, spec tasks.TaskSpec, rri ResourcesRuntimeInfo)
-	Kill(ctx *actor.Context)
+	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo)
+	Kill(*actor.Context, logger.Context)
 }
 
 // Event is the union of all event types during the parent lifecycle.

@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -98,6 +99,8 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		rmJobInfo             *job.RMJobInfo
+
+		logCtx logger.Context
 	}
 )
 
@@ -164,6 +167,11 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
+
+		logCtx: logger.Context{
+			"job-id":        expModel.JobID,
+			"experiment-id": expModel.ID,
+		},
 	}, nil
 }
 
@@ -171,6 +179,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	// Searcher-related messages.
 	case actor.PreStart:
+		ctx.AddLabels(e.logCtx)
 		ctx.Tell(e.rm, sproto.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
@@ -343,6 +352,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 			rm: e.rm,
 			db: e.db,
+
+			logCtx: e.logCtx,
 		})
 
 		if e.State == model.CompletedState {
@@ -467,8 +478,8 @@ func (e *experiment) processOperations(
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
-				trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State, state, e.rm,
-				e.taskLogger, e.db, config, checkpoint, e.taskSpec,
+				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
+				state, e.rm, e.taskLogger, e.db, config, checkpoint, e.taskSpec,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]

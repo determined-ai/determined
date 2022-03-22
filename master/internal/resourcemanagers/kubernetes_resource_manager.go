@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -462,7 +463,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p k8sPodResources) Start(
-	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) {
 	spec.ContainerID = string(p.container.id)
 	spec.ResourcesID = string(p.container.id)
@@ -478,15 +479,16 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	ctx.Tell(p.podsActor, kubernetes.StartTaskPod{
-		TaskActor: p.req.TaskActor,
-		Spec:      spec,
-		Slots:     p.container.slots,
-		Rank:      rri.AgentRank,
+		TaskActor:  p.req.TaskActor,
+		Spec:       spec,
+		Slots:      p.container.slots,
+		Rank:       rri.AgentRank,
+		LogContext: logCtx,
 	})
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p k8sPodResources) Kill(ctx *actor.Context) {
+func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 	ctx.Tell(p.podsActor, kubernetes.KillTaskPod{
 		PodID: p.container.id,
 	})
