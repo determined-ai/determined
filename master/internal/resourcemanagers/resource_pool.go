@@ -174,6 +174,11 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Resources: allocations,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
+	if assignmentIsScheduled(&allocated) {
+		if req.Group != nil {
+			ctx.Tell(req.Group, job.SchedulingStateScheduled)
+		}
+	}
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
 
 	// Refresh state for the updated agents.

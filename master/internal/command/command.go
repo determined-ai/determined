@@ -200,6 +200,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *job.RMJobInfo:
 		c.rmJobInfo = msg
 
+	case job.SchedulingState:
+		c.rmJobInfo.State = msg
+
 	case job.GetJob:
 		ctx.Respond(c.toV1Job())
 

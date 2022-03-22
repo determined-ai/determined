@@ -307,6 +307,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *job.RMJobInfo:
 		e.rmJobInfo = msg
 
+	case job.SchedulingState:
+		e.rmJobInfo.State = msg
+
 	case job.GetJobSummary:
 		ctx.Respond(e.toV1Job().Summary)
 
