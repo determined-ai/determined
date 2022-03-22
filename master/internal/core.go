@@ -657,16 +657,6 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	// End stats for dangling agents/instances in case of master crushed
-	err = m.db.EndAllAgentStats()
-	if err != nil {
-		return errors.Wrap(err, "could not update end stats for agents")
-	}
-	err = m.db.EndAllInstanceStats()
-	if err != nil {
-		return errors.Wrap(err, "could not update end stats for instances")
-	}
-
 	m.ClusterID, err = m.db.GetOrCreateClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
@@ -827,6 +817,17 @@ func (m *Master) Run(ctx context.Context) error {
 	for _, exp := range toRestore {
 		go m.tryRestoreExperiment(sema, exp)
 	}
+
+	// End stats for dangling agents/instances in case of master crushed
+	err = m.db.EndAllAgentStats()
+	if err != nil {
+		return errors.Wrap(err, "could not update end stats for agents")
+	}
+	err = m.db.EndAllInstanceStats()
+	if err != nil {
+		return errors.Wrap(err, "could not update end stats for instances")
+	}
+
 	if err = m.db.FailDeletingExperiment(); err != nil {
 		return err
 	}
