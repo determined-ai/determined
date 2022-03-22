@@ -252,11 +252,11 @@ func (a *agentResourceManager) getPoolJobStats(
 	if err := jobStatsResp.Error(); err != nil {
 		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
 	}
-	jobStats, ok := jobStatsResp.Get().(jobv1.QueueStats)
+	jobStats, ok := jobStatsResp.Get().(*jobv1.QueueStats)
 	if !ok {
 		return nil, fmt.Errorf("unexpected response type from jobStats")
 	}
-	return &jobStats, nil
+	return jobStats, nil
 }
 
 func (a *agentResourceManager) aggregateTaskHandler(
