@@ -65,7 +65,7 @@ type (
 		preemption *Preemption
 		// Encapsulates logic of rendezvousing containers of the currently
 		// allocated task. If there is no current task, or it is unallocated, it is nil.
-		rendezvous *Rendezvous
+		rendezvous *rendezvous
 		// Encapsulates the logic of watching for idle timeouts.
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
@@ -234,21 +234,28 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 
 			switch msg.(type) {
 			case WatchRendezvousInfo:
-				a.rendezvous = NewRendezvous(ctx, a.model.AllocationID, a.resources)
+				a.rendezvous = newRendezvous(ctx, a.model.AllocationID, a.resources)
 			case UnwatchRendezvousInfo, rendezvousTimeout:
 				// Ignore without active rendezvous.
 				return nil
 			}
 		}
 
-		switch err := a.rendezvous.ReceiveMsg(ctx).(type) {
-		case nil:
-			return nil
-		case ErrTimeoutExceeded:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+		switch msg := ctx.Message().(type) {
+		case WatchRendezvousInfo:
+			if w, err := a.rendezvous.watch(msg); err != nil {
+				ctx.Respond(err)
+			} else {
+				ctx.Respond(w)
+			}
+		case UnwatchRendezvousInfo:
+			a.rendezvous.unwatch(msg)
+		case rendezvousTimeout:
+			if err := a.rendezvous.checkTimeout(msg); err != nil {
+				a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+			}
 		default:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
-			a.Error(ctx, err)
+			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
 		}
 	case WatchAllGather, UnwatchAllGather, allGatherTimeout:
 		if a.allGather == nil {
@@ -666,7 +673,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 		defer a.preemption.Close()
 	}
 	if a.rendezvous != nil {
-		defer a.rendezvous.Close()
+		defer a.rendezvous.close()
 	}
 	switch {
 	case a.killedWhileRunning:
