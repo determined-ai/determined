@@ -82,10 +82,6 @@ func NewResourcePool(
 	return d
 }
 
-// func (rp *ResourcePool) groupByJobID(jobID model.JobID) *group {
-// 	return nil
-// }
-
 func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 	if rp.config.Provider == nil {
 		ctx.Log().Infof("not enabling provisioner for resource pool: %s", rp.config.PoolName)
@@ -537,8 +533,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	case job.SetGroupPriority:
 		err := rp.setGroupPriority(ctx, msg)
 		ctx.Respond(err)
-		// if !ok: we haven't seen the job yet or this group is not IsUserVisible
-		// thus no need to reinitialize its queue position.
 
 	case job.RecoverJobPosition:
 		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)

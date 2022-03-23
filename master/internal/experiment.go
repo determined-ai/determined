@@ -442,7 +442,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.clearJobInfo()
 
 	default:
-		// TODO: Should we return actor.ErrUnexpectedMessage(ctx) instead?
 		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
 	}
 
@@ -634,7 +633,6 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	oldPriority := resourcemanagers.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.Config.Resources()
-
 	if resources.Priority() != nil {
 		oldPriority = *resources.Priority()
 		oldPriorityPtr = &oldPriority
