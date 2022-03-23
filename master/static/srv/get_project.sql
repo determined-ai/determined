@@ -1,12 +1,15 @@
 WITH pe AS (
-  SELECT project_id, state, start_time
+  SELECT
+    COUNT(*) AS num_experiments,
+    SUM(case when state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,
+    MAX(start_time) AS last_experiment_started_at
   FROM experiments
   WHERE project_id = $1
 )
 SELECT p.id, p.name, p.workspace_id, p.description, p.archived, p.notes,
-  COUNT(pe) AS num_experiments,
-  SUM(case when pe.state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,
-  MAX(pe.start_time) AS last_experiment_started_at,
+  MAX(pe.num_experiments) AS num_experiments,
+  MAX(pe.num_active_experiments) AS num_active_experiments,
+  MAX(pe.last_experiment_started_at) AS last_experiment_started_at,
   u.username
 FROM pe, projects as p
   LEFT JOIN users as u ON u.id = p.user_id
