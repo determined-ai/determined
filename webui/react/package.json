@@ -47,8 +47,7 @@
     "screenfull": "^5.1.0",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
-    "uplot": "^1.6.18",
-    "websocket": "^1.0.34"
+    "uplot": "^1.6.18"
   },
   "browserslist": {
     "production": [
@@ -95,7 +94,6 @@
     "@types/smoothscroll-polyfill": "^0.3.1",
     "@types/sprintf-js": "^1.1.2",
     "@types/throttle-debounce": "^2.1.0",
-    "@types/websocket": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
     "antd-dayjs-webpack-plugin": "^1.0.1",
