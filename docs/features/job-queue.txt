@@ -132,7 +132,8 @@ There are a number of constraints associated with using the job queue to modify 
    is not possible for both to be active simultaneously.
 
 -  The ``ahead-of``, ``behind-of``, and WebUI **Move to Top** operations are only available for the
-   priority scheduler and are not possible with the fair share scheduler.
+   priority scheduler and are not possible with the fair share scheduler. These operations are not
+   yet fully supported for the Kubernetes priority scheduler.
 
 -  The change resource pool operation can only be performed on experiments. To change the resource
    pool of other tasks, cancel the task and resubmit it.
