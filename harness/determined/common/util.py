@@ -112,7 +112,7 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
         yaml.error.MarkedYAMLFutureWarning,
     ) as e:
         err_msg = (
-            f"Error: invalid experiment config file {yaml_file.name}.\n"
+            f"Error: invalid experiment config file {yaml_file.name!r}.\n"
             f"{e.__class__.__name__}: {e.problem}\n{e.problem_mark}"
         )
         print(err_msg)

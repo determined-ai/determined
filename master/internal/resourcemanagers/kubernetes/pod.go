@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -55,15 +56,18 @@ type pod struct {
 	slotResourceRequests     PodSlotResourceRequests
 	fluentConfig             FluentConfig
 
-	pod              *k8sV1.Pod
-	podName          string
-	configMap        *k8sV1.ConfigMap
-	configMapName    string
+	pod           *k8sV1.Pod
+	podName       string
+	configMap     *k8sV1.ConfigMap
+	configMapName string
+	// TODO: Drop this manufactured container obj all together.
 	container        cproto.Container
 	ports            []int
 	resourcesDeleted bool
 	testLogStreamer  bool
 	containerNames   map[string]bool
+
+	logCtx logger.Context
 }
 
 // PodSlotResourceRequests contains the per-slot container requests.
@@ -146,13 +150,16 @@ func newPod(
 		slotType:                 slotType,
 		slotResourceRequests:     slotResourceRequests,
 		fluentConfig:             fluentConfig,
+		logCtx: logger.MergeContexts(msg.LogContext, logger.Context{
+			"pod": uniqueName,
+		}),
 	}
 }
 
 func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.AddLabel("pod", p.podName)
+		ctx.AddLabels(p.logCtx)
 		if err := p.createPodSpecAndSubmit(ctx); err != nil {
 			return err
 		}
@@ -256,11 +263,11 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof(
 			"transitioning pod state from %s to %s", p.container.State, cproto.Pulling)
 		p.container = p.container.Transition(cproto.Pulling)
-		ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{Container: p.container})
+		p.informTaskResourcesState(ctx)
 
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Starting)
-		ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{Container: p.container})
+		p.informTaskResourcesState(ctx)
 
 	case cproto.Running:
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
@@ -294,8 +301,10 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			}
 		}
 
-		p.informTaskContainerStarted(ctx, sproto.TaskContainerStarted{Addresses: addresses,
-			NativeReservationID: taskContainerID})
+		p.informTaskResourcesStarted(ctx, sproto.ResourcesStarted{
+			Addresses:         addresses,
+			NativeResourcesID: taskContainerID,
+		})
 
 	case cproto.Terminated:
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod, p.containerNames)
@@ -315,19 +324,18 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Terminated)
 
-		taskContainerStopped := sproto.TaskContainerStopped{}
-		if exitCode == aproto.SuccessExitCode {
+		var resourcesStopped sproto.ResourcesStopped
+		switch exitCode {
+		case aproto.SuccessExitCode:
 			ctx.Log().Infof("pod exited successfully")
-		} else {
+		default:
 			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
-			exitCodeConverted := aproto.ExitCode(exitCode)
-			taskContainerStopped.ContainerStopped.Failure = &aproto.ContainerFailure{
-				FailureType: aproto.ContainerFailed,
-				ErrMsg:      exitMessage,
-				ExitCode:    &exitCodeConverted,
-			}
+			resourcesStopped.Failure = sproto.NewResourcesFailure(
+				sproto.ContainerFailed,
+				exitMessage,
+				sproto.ExitCode(exitCode))
 		}
-		p.informTaskContainerStopped(ctx, taskContainerStopped)
+		p.informTaskResourcesStopped(ctx, resourcesStopped)
 		ctx.Self().Stop()
 
 	default:
@@ -382,30 +390,40 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 		ctx.Log().Warnf("updating container state after pod actor exited unexpectedly")
 		p.container = p.container.Transition(cproto.Terminated)
 
-		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
-			ContainerStopped: aproto.ContainerError(
-				aproto.TaskError, errors.New("agent failed while container was running")),
-		})
+		p.informTaskResourcesStopped(ctx, sproto.ResourcesError(
+			sproto.TaskError, errors.New("pod actor exited while pod was running")))
 	}
 }
 
-func (p *pod) informTaskContainerStarted(
-	ctx *actor.Context,
-	containerStarted sproto.TaskContainerStarted,
-) {
-	ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{
-		Container:        p.container,
-		ContainerStarted: &containerStarted,
+func (p *pod) informTaskResourcesState(ctx *actor.Context) {
+	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
+		ResourcesID:    sproto.FromContainerID(p.container.ID),
+		ResourcesState: sproto.FromContainerState(p.container.State),
+		Container:      p.container.DeepCopy(),
 	})
 }
 
-func (p *pod) informTaskContainerStopped(
+func (p *pod) informTaskResourcesStarted(
 	ctx *actor.Context,
-	containerStopped sproto.TaskContainerStopped,
+	rs sproto.ResourcesStarted,
 ) {
-	ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{
-		Container:        p.container,
-		ContainerStopped: &containerStopped,
+	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
+		ResourcesID:      sproto.FromContainerID(p.container.ID),
+		ResourcesState:   sproto.FromContainerState(p.container.State),
+		ResourcesStarted: &rs,
+		Container:        p.container.DeepCopy(),
+	})
+}
+
+func (p *pod) informTaskResourcesStopped(
+	ctx *actor.Context,
+	rs sproto.ResourcesStopped,
+) {
+	ctx.Tell(p.taskActor, sproto.ResourcesStateChanged{
+		ResourcesID:      sproto.FromContainerID(p.container.ID),
+		ResourcesState:   sproto.FromContainerState(p.container.State),
+		ResourcesStopped: &rs,
+		Container:        p.container.DeepCopy(),
 	})
 }
 

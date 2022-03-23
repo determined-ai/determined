@@ -31,8 +31,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.5-tf-2.4-cpu-5158dec
-        cuda: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-5158dec
+        cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-97e4c60
+        cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-97e4c60
         rocm: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-roсm-4537b95
       pod_spec: null
       ports:
@@ -135,8 +135,6 @@
   default_as:
     http://determined.ai/schemas/expconf/v0/experiment.json
   case:
-    hyperparameters:
-      global_batch_size: 32
     searcher:
       name: single
       metric: loss
@@ -171,10 +169,7 @@
       registry_auth: null
       add_capabilities: []
       drop_capabilities: []
-    hyperparameters:
-      global_batch_size:
-        type: const
-        val: 32
+    hyperparameters: {}
     labels: []
     max_restarts: 5
     min_checkpoint_period:
@@ -225,8 +220,7 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
-    hyperparameters:
-      global_batch_size: 32
+    hyperparameters: {}
     entrypoint: model_def:MyTrial
     searcher:
       name: single

@@ -67,7 +67,7 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 // assignmentIsScheduled determines if a resource allocation assignment is considered equivalent to
 // being scheduled.
 func assignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
-	return allocatedResources != nil && len(allocatedResources.Reservations) > 0
+	return allocatedResources != nil && len(allocatedResources.Resources) > 0
 }
 
 type jobSortState map[model.JobID]decimal.Decimal

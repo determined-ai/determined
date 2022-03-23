@@ -550,6 +550,7 @@ export interface ExperimentTask extends Task {
 }
 
 export interface CommandTask extends Task {
+  displayName: string;
   misc?: CommandMisc;
   resourcePool: string;
   state: CommandState;

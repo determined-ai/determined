@@ -185,8 +185,8 @@ func (db *PgDB) UserByUsername(username string) (*model.User, error) {
 func addUser(tx *sqlx.Tx, user *model.User) (model.UserID, error) {
 	stmt, err := tx.PrepareNamed(`
 INSERT INTO users
-(username, admin, active)
-VALUES (:username, :admin, :active)
+(username, admin, active, password_hash)
+VALUES (:username, :admin, :active, :password_hash)
 RETURNING id`)
 	if err != nil {
 		return 0, errors.WithStack(err)
@@ -233,7 +233,7 @@ func deleteAgentUserGroup(tx *sqlx.Tx, userID model.UserID) error {
 	return nil
 }
 
-// AddUser creates a new user without a password.
+// AddUser creates a new user.
 func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) error {
 	tx, err := db.sql.Beginx()
 	if err != nil {

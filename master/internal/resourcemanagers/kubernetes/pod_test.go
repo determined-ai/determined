@@ -11,7 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -217,11 +216,11 @@ func checkReceiveTermination(
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
-	containerMsg, ok := message.(sproto.TaskContainerStateChanged)
+	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected sproto.TaskContainerStateChanged but received %s", reflect.TypeOf(message))
 	}
-	if containerMsg.ContainerStopped == nil {
+	if containerMsg.ResourcesStopped == nil {
 		t.Errorf("container started message not present")
 	}
 
@@ -590,12 +589,12 @@ func TestMultipleContainersRunning(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.TaskContainerStateChanged)
+	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	fmt.Println("CONTAINER MESSAGE:", containerMsg)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
-	if containerMsg.ContainerStarted == nil {
+	if containerMsg.ResourcesStarted == nil {
 		t.Errorf("container started message not present")
 	}
 }
@@ -728,22 +727,22 @@ func TestResourceCreationCancelled(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.TaskContainerStateChanged)
+	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected sproto.TaskContainerStateChanged but received %s",
 			reflect.TypeOf(message))
 	}
 
-	var correctContainerStarted *sproto.TaskContainerStarted = nil
+	var correctContainerStarted *sproto.ResourcesStarted = nil
 	correctFailType := "task failed without an associated exit code"
-	correctErrMsg := "agent failed while container was running"
-	var correctCode *aproto.ExitCode = nil
+	correctErrMsg := "pod actor exited while pod was running"
+	var correctCode *sproto.ExitCode = nil
 
-	assert.Equal(t, containerMsg.ContainerStarted, correctContainerStarted)
-	assert.Equal(t, containerMsg.ContainerStopped.Failure.FailureType,
-		aproto.FailureType(correctFailType))
-	assert.Equal(t, containerMsg.ContainerStopped.Failure.ErrMsg, correctErrMsg)
-	assert.Equal(t, containerMsg.ContainerStopped.Failure.ExitCode, correctCode)
+	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
+	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,
+		sproto.FailureType(correctFailType))
+	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ErrMsg, correctErrMsg)
+	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ExitCode, correctCode)
 }
 
 func TestResourceDeletionFailed(t *testing.T) {
@@ -765,21 +764,21 @@ func TestResourceDeletionFailed(t *testing.T) {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
 
-	containerMsg, ok := message.(sproto.TaskContainerStateChanged)
+	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	if !ok {
 		t.Errorf("expected sproto.TaskContainerStateChanged but received %s",
 			reflect.TypeOf(message))
 	}
 
-	var correctContainerStarted *sproto.TaskContainerStarted = nil
-	var correctCode *aproto.ExitCode = nil
+	var correctContainerStarted *sproto.ResourcesStarted = nil
+	var correctCode *sproto.ExitCode = nil
 
-	assert.Equal(t, containerMsg.ContainerStarted, correctContainerStarted)
-	assert.Equal(t, containerMsg.ContainerStopped.Failure.FailureType,
-		aproto.FailureType("task failed without an associated exit code"))
-	assert.Equal(t, containerMsg.ContainerStopped.Failure.ErrMsg,
-		"agent failed while container was running")
-	assert.Equal(t, containerMsg.ContainerStopped.Failure.ExitCode, correctCode)
+	assert.Equal(t, containerMsg.ResourcesStarted, correctContainerStarted)
+	assert.Equal(t, containerMsg.ResourcesStopped.Failure.FailureType,
+		sproto.FailureType("task failed without an associated exit code"))
+	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ErrMsg,
+		"pod actor exited while pod was running")
+	assert.Equal(t, containerMsg.ResourcesStopped.Failure.ExitCode, correctCode)
 }
 
 func TestGetPodNodeInfo(t *testing.T) {

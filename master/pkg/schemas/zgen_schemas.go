@@ -232,73 +232,6 @@ var (
     }
 }
 `)
-	textCheckGlobalBatchSizeV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json",
-    "title": "CheckGlobalBatchSize",
-    "union": {
-        "defaultMessage": "is neither a positive integer nor an int hyperparameter",
-        "items": [
-            {
-                "unionKey": "const:type=int",
-                "allOf": [
-                    {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-int.json"
-                    },
-                    {
-                        "properties": {
-                            "minval": {
-                                "type": "number",
-                                "minimum": 1
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "unionKey": "const:type=const",
-                "allOf": [
-                    {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-const.json"
-                    },
-                    {
-                        "properties": {
-                            "val": {
-                                "type": "number",
-                                "minimum": 1
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "unionKey": "const:type=categorical",
-                "allOf": [
-                    {
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json"
-                    },
-                    {
-                        "properties": {
-                            "vals": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                }
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "unionKey": "never",
-                "type": "integer",
-                "minimum": 1
-            }
-        ]
-    }
-}
-`)
 	textCheckGridHyperparameterV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json",
@@ -1083,7 +1016,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
         "internal": {
@@ -1629,20 +1562,6 @@ var (
     "$id": "http://determined.ai/schemas/expconf/v0/hyperparameters.json",
     "title": "Hyperparameters",
     "type": "object",
-    "eventuallyRequired": [
-        "global_batch_size"
-    ],
-    "properties": {
-        "global_batch_size": {
-            "type": [
-                "integer",
-                "object",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
-        }
-    },
     "additionalProperties": {
         "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter.json"
     }
@@ -3433,8 +3352,6 @@ var (
 
 	schemaCheckEpochNotUsedV0 interface{}
 
-	schemaCheckGlobalBatchSizeV0 interface{}
-
 	schemaCheckGridHyperparameterV0 interface{}
 
 	schemaCheckPositiveLengthV0 interface{}
@@ -3646,26 +3563,6 @@ func ParsedCheckEpochNotUsedV0() interface{} {
 		panic("invalid embedded json for CheckEpochNotUsedV0")
 	}
 	return schemaCheckEpochNotUsedV0
-}
-
-func ParsedCheckGlobalBatchSizeV0() interface{} {
-	cacheLock.RLock()
-	if schemaCheckGlobalBatchSizeV0 != nil {
-		cacheLock.RUnlock()
-		return schemaCheckGlobalBatchSizeV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaCheckGlobalBatchSizeV0 != nil {
-		return schemaCheckGlobalBatchSizeV0
-	}
-	err := json.Unmarshal(textCheckGlobalBatchSizeV0, &schemaCheckGlobalBatchSizeV0)
-	if err != nil {
-		panic("invalid embedded json for CheckGlobalBatchSizeV0")
-	}
-	return schemaCheckGlobalBatchSizeV0
 }
 
 func ParsedCheckGridHyperparameterV0() interface{} {
@@ -4753,8 +4650,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textCheckDataLayerCacheV0
 	url = "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
 	cachedSchemaBytesMap[url] = textCheckEpochNotUsedV0
-	url = "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
-	cachedSchemaBytesMap[url] = textCheckGlobalBatchSizeV0
 	url = "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
 	cachedSchemaBytesMap[url] = textCheckGridHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/check-positive-length.json"

@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -60,9 +61,17 @@ func (e ErrStaleContainer) Error() string {
 	return fmt.Sprintf("stale container %s", e.ID)
 }
 
+// ErrStaleResources is returned when an operation was attempted by a stale resources.
+type ErrStaleResources struct {
+	ID sproto.ResourcesID
+}
+
+func (e ErrStaleResources) Error() string {
+	return fmt.Sprintf("stale resources %s", e.ID)
+}
+
 // All behaviors for allocations.
 const (
-	rendezvous  = "rendezvous"
 	preemption  = "preemption"
 	idleWatcher = "idle_watcher"
 )
@@ -74,6 +83,15 @@ type ErrBehaviorDisabled struct {
 
 func (e ErrBehaviorDisabled) Error() string {
 	return fmt.Sprintf("%s not enabled for this allocation", e.Behavior)
+}
+
+// ErrBehaviorUnsupported is returned an operation is tried without the behavior being supported.
+type ErrBehaviorUnsupported struct {
+	Behavior string
+}
+
+func (e ErrBehaviorUnsupported) Error() string {
+	return fmt.Sprintf("%s not supported for this allocation or resource manager", e.Behavior)
 }
 
 // ErrAlreadyCancelled is returned to the allocation when it tries to take an action but has an

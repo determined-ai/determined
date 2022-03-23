@@ -153,7 +153,7 @@ def list_tasks(args: Namespace) -> None:
 
     values = render.select_values(res, table_header)
 
-    render.tabulate_or_csv(table_header, values, getattr(args, "csv", None))
+    render.tabulate_or_csv(table_header, values, getattr(args, "csv", False))
 
 
 @authentication.required

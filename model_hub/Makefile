@@ -5,10 +5,10 @@ SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 ARTIFACTS_DIR := /tmp/artifacts
 
 # Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-5158dec
+DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-97e4c60
 
 ############REMINDER############
-# When bumping third-party library versions, remember to bump versions in 
+# When bumping third-party library versions, remember to bump versions in
 # tests/requirements.txt and docs/requirements.txt to match.
 ############REMINDER############
 
@@ -17,10 +17,10 @@ TRANSFORMERS_VERSION := 4.8.2
 DATASETS_VERSION := 1.9.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
 # MMDetection Args
-MMCV_CUDA_VERSION := cu111 # Needs to match DEFAULT_GPU_IMAGE
-TORCH_VERSION := 1.9.0 # Needs to match DEFAULT_GPU_IMAGE
-MMCV_VERSION := 1.3.12
-MMDETECTION_VERSION := 2.16.0
+MMCV_CUDA_VERSION := cu113 # Needs to match DEFAULT_GPU_IMAGE
+TORCH_VERSION := 1.10.0 # Needs to match DEFAULT_GPU_IMAGE
+MMCV_VERSION := 1.4.5
+MMDETECTION_VERSION := 2.21.0
 MMDETECTION_ENVIRONMENT_ROOT := determinedai/model-hub-mmdetection
 
 # Example dirs
@@ -37,6 +37,7 @@ clean:
 	rm -rf dist/
 	rm -rf build/
 	rm -rf build-examples/
+	rm -f .coverage
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 	find . -type d -name .mypy_cache -prune -exec rm -rf {} \;
 
@@ -47,12 +48,12 @@ build:
 .PHONY: examples
 examples: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
 
-build-examples/%.tgz: examples/*/%/ 
+build-examples/%.tgz: examples/*/%/
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
-build-examples/%.tgz: examples/%/ 
+build-examples/%.tgz: examples/%/
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
@@ -75,7 +76,7 @@ check:
 
 .PHONY: test
 test:
-	pytest -v -s --durations=0 tests
+	coverage run -m pytest -v -s --durations=0 tests
 
 # We will only use HASH for dev environments.
 .PHONY: build-transformers-dev
@@ -94,12 +95,12 @@ publish-transformers-dev:
 
 .PHONY: build-mmdetection-dev
 build-mmdetection-dev:
-	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.1"* ]]; then \
+	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.3"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have cuda version $(MMCV_CUDA_VERSION)."; \
-	  exit; \
-	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.9"* ]]; then \
+	  exit 1; \
+	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.10"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have pytorch version $(TORCH_VERSION)."; \
-	  exit; \
+	  exit 1; \
 	else \
 	  docker build -f docker/Dockerfile.mmdetection \
 	  	  --build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
@@ -142,12 +143,12 @@ publish-transformers:
 
 .PHONY: build-mmdetection
 build-mmdetection:
-	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.1"* ]]; then \
+	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.3"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have cuda version $(MMCV_CUDA_VERSION)."; \
-	  exit; \
-	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.9"* ]]; then \
+	  exit 1; \
+	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.10"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have pytorch version $(TORCH_VERSION)."; \
-	  exit; \
+	  exit 1; \
 	else \
 	  docker build -f docker/Dockerfile.mmdetection \
 		  --build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \

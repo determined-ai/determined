@@ -301,7 +301,9 @@ class trialv1Trial:
         endTime: "typing.Optional[str]" = None,
         latestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         runnerState: "typing.Optional[str]" = None,
+        taskId: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
+        warmStartCheckpointUuid: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -315,6 +317,8 @@ class trialv1Trial:
         self.bestCheckpoint = bestCheckpoint
         self.runnerState = runnerState
         self.wallClockTime = wallClockTime
+        self.warmStartCheckpointUuid = warmStartCheckpointUuid
+        self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -331,6 +335,8 @@ class trialv1Trial:
             bestCheckpoint=v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj.get("bestCheckpoint", None) is not None else None,
             runnerState=obj.get("runnerState", None),
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
+            warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
+            taskId=obj.get("taskId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -347,6 +353,8 @@ class trialv1Trial:
             "bestCheckpoint": self.bestCheckpoint.to_json() if self.bestCheckpoint is not None else None,
             "runnerState": self.runnerState if self.runnerState is not None else None,
             "wallClockTime": dump_float(self.wallClockTime) if self.wallClockTime is not None else None,
+            "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
+            "taskId": self.taskId if self.taskId is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
@@ -475,6 +483,54 @@ class v1Allocation:
             "startTime": self.startTime if self.startTime is not None else None,
             "endTime": self.endTime if self.endTime is not None else None,
             "allocationId": self.allocationId if self.allocationId is not None else None,
+        }
+
+class v1AllocationAllGatherRequest:
+    def __init__(
+        self,
+        allocationId: str,
+        data: "typing.Dict[str, typing.Any]",
+        numPeers: "typing.Optional[int]" = None,
+        requestUuid: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+        self.requestUuid = requestUuid
+        self.numPeers = numPeers
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherRequest":
+        return cls(
+            allocationId=obj["allocationId"],
+            requestUuid=obj.get("requestUuid", None),
+            numPeers=obj.get("numPeers", None),
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId,
+            "requestUuid": self.requestUuid if self.requestUuid is not None else None,
+            "numPeers": self.numPeers if self.numPeers is not None else None,
+            "data": self.data,
+        }
+
+class v1AllocationAllGatherResponse:
+    def __init__(
+        self,
+        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherResponse":
+        return cls(
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "data": self.data,
         }
 
 class v1AllocationPreemptionSignalResponse:
@@ -722,6 +778,7 @@ class v1Command:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -729,6 +786,7 @@ class v1Command:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -742,6 +800,7 @@ class v1Command:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -755,6 +814,7 @@ class v1Command:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -1024,6 +1084,7 @@ class v1Experiment:
         state: "determinedexperimentv1State",
         username: str,
         description: "typing.Optional[str]" = None,
+        displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
@@ -1039,6 +1100,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1059,6 +1121,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1079,6 +1142,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -2667,26 +2731,26 @@ class v1LoginResponse:
             "user": self.user.to_json(),
         }
 
-class v1MarkAllocationReservationDaemonRequest:
+class v1MarkAllocationResourcesDaemonRequest:
     def __init__(
         self,
         allocationId: str,
-        containerId: str,
+        resourcesId: "typing.Optional[str]" = None,
     ):
         self.allocationId = allocationId
-        self.containerId = containerId
+        self.resourcesId = resourcesId
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1MarkAllocationReservationDaemonRequest":
+    def from_json(cls, obj: Json) -> "v1MarkAllocationResourcesDaemonRequest":
         return cls(
             allocationId=obj["allocationId"],
-            containerId=obj["containerId"],
+            resourcesId=obj.get("resourcesId", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "allocationId": self.allocationId,
-            "containerId": self.containerId,
+            "resourcesId": self.resourcesId if self.resourcesId is not None else None,
         }
 
 class v1MasterLogsResponse:
@@ -2943,6 +3007,7 @@ class v1Notebook:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         serviceAddress: "typing.Optional[str]" = None,
     ):
@@ -2951,6 +3016,7 @@ class v1Notebook:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -2965,6 +3031,7 @@ class v1Notebook:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -2979,6 +3046,7 @@ class v1Notebook:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -4452,6 +4520,7 @@ class v1Shell:
         addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
         agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         privateKey: "typing.Optional[str]" = None,
         publicKey: "typing.Optional[str]" = None,
@@ -4463,6 +4532,7 @@ class v1Shell:
         self.container = container
         self.privateKey = privateKey
         self.publicKey = publicKey
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -4480,6 +4550,7 @@ class v1Shell:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             privateKey=obj.get("privateKey", None),
             publicKey=obj.get("publicKey", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -4497,6 +4568,7 @@ class v1Shell:
             "container": self.container.to_json() if self.container is not None else None,
             "privateKey": self.privateKey if self.privateKey is not None else None,
             "publicKey": self.publicKey if self.publicKey is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -4662,6 +4734,7 @@ class v1Tensorboard:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         serviceAddress: "typing.Optional[str]" = None,
@@ -4674,6 +4747,7 @@ class v1Tensorboard:
         self.container = container
         self.experimentIds = experimentIds
         self.trialIds = trialIds
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -4690,6 +4764,7 @@ class v1Tensorboard:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             experimentIds=obj.get("experimentIds", None),
             trialIds=obj.get("trialIds", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -4706,6 +4781,7 @@ class v1Tensorboard:
             "container": self.container.to_json() if self.container is not None else None,
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "trialIds": self.trialIds if self.trialIds is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -5172,6 +5248,26 @@ def post_ActivateExperiment(
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
 
+def post_AllocationAllGather(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationAllGatherRequest",
+) -> "v1AllocationAllGatherResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/all_gather",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1AllocationAllGatherResponse.from_json(_resp.json())
+    raise APIHttpError("post_AllocationAllGather", _resp)
+
 def get_AllocationPreemptionSignal(
     session: "client.Session",
     *,
@@ -5218,12 +5314,12 @@ def get_AllocationRendezvousInfo(
     session: "client.Session",
     *,
     allocationId: str,
-    containerId: str,
+    resourcesId: str,
 ) -> "v1AllocationRendezvousInfoResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
+        path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous",
         params=_params,
         json=None,
         data=None,
@@ -6680,17 +6776,17 @@ def post_Logout(
         return
     raise APIHttpError("post_Logout", _resp)
 
-def post_MarkAllocationReservationDaemon(
+def post_MarkAllocationResourcesDaemon(
     session: "client.Session",
     *,
     allocationId: str,
-    body: "v1MarkAllocationReservationDaemonRequest",
-    containerId: str,
+    body: "v1MarkAllocationResourcesDaemonRequest",
+    resourcesId: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
+        path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -6699,7 +6795,7 @@ def post_MarkAllocationReservationDaemon(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_MarkAllocationReservationDaemon", _resp)
+    raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
 def patch_PatchExperiment(
     session: "client.Session",

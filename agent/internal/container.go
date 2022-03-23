@@ -21,9 +21,9 @@ import (
 
 const (
 	agentIDEnvVar      = "DET_AGENT_ID"
-	containerIDEnvVar  = "DET_CONTAINER_ID"
 	taskIDEnvVar       = "DET_TASK_ID"
 	allocationIDEnvVar = "DET_ALLOCATION_ID"
+	containerIDEnvVar  = "DET_CONTAINER_ID"
 )
 
 type containerActor struct {
@@ -235,7 +235,9 @@ func (c *containerActor) containerStopped(ctx *actor.Context, stopped aproto.Con
 		return
 	}
 
-	ctx.Log().Infof("transitioning state from %s to %s", c.State, newState)
+	ctx.Log().
+		WithField("why", stopped).
+		Infof("transitioning state from %s to %s", c.State, newState)
 	c.Container = c.Transition(newState)
 	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
 		Container: c.Container, ContainerStopped: &stopped})

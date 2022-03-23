@@ -756,8 +756,8 @@ func AllocateTasks(
 			}
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,
-				Reservations: []sproto.Reservation{
-					&containerReservation{
+				Resources: []sproto.Resources{
+					&containerResources{
 						req:       req,
 						agent:     fit.Agent,
 						container: container,
@@ -790,8 +790,8 @@ func AddUnallocatedTasks(
 }
 
 func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool) bool {
-	for _, alloc := range taskList.GetAllocations(toRelease).Reservations {
-		alloc, ok := alloc.(*containerReservation)
+	for _, alloc := range taskList.GetAllocations(toRelease).Resources {
+		alloc, ok := alloc.(*containerResources)
 		if !ok {
 			return false
 		}

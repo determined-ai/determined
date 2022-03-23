@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
@@ -17,7 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/device"
+	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -40,10 +41,10 @@ type (
 		// The state of the allocation, just informational.
 		state model.AllocationState
 
-		// State of all our reservations.
-		reservations reservations
-		// Separates the existence of reservations from us having started them.
-		reservationsStarted bool
+		// State of all our resources.
+		resources resourcesList
+		// Separates the existence of resources from us having started them.
+		resourcesStarted bool
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
 		exitReason error
 		// Marks that we intentionally killed the allocation so we can know to
@@ -64,19 +65,23 @@ type (
 		preemption *Preemption
 		// Encapsulates logic of rendezvousing containers of the currently
 		// allocated task. If there is no current task, or it is unallocated, it is nil.
-		rendezvous *Rendezvous
+		rendezvous *rendezvous
 		// Encapsulates the logic of watching for idle timeouts.
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
+		// active all gather state
+		allGather *allGather
+
+		logCtx detLogger.Context
 	}
 
-	// MarkReservationDaemon marks the given reservation as a daemon. In the event of a normal exit,
+	// MarkResourcesDaemon marks the given reservation as a daemon. In the event of a normal exit,
 	// the allocation will not wait for it to exit on its own and instead will kill it and instead
 	// await it's hopefully quick termination.
-	MarkReservationDaemon struct {
+	MarkResourcesDaemon struct {
 		AllocationID model.AllocationID
-		ContainerID  cproto.ID
+		ResourcesID  sproto.ResourcesID
 	}
 	// AllocationExited summarizes the exit status of an allocation.
 	AllocationExited struct {
@@ -94,10 +99,12 @@ type (
 	AllocationSignal string
 	// AllocationState requests allocation state. A copy is filled and returned.
 	AllocationState struct {
-		State      model.AllocationState
-		Containers map[cproto.ID]cproto.Container
-		Addresses  map[cproto.ID][]cproto.Address
-		Ready      bool
+		State     model.AllocationState
+		Resources map[sproto.ResourcesID]sproto.ResourcesSummary
+		Ready     bool
+
+		Addresses  map[sproto.ResourcesID][]cproto.Address
+		Containers map[sproto.ResourcesID][]cproto.Container
 	}
 	// AllocationReady marks an allocation as ready.
 	AllocationReady struct {
@@ -120,7 +127,7 @@ const (
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
-	req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
+	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
 ) actor.Actor {
 	return &Allocation{
 		db:     db,
@@ -134,10 +141,13 @@ func NewAllocation(
 			Slots:        req.SlotsNeeded,
 			AgentLabel:   req.Name,
 			ResourcePool: req.ResourcePool,
-			StartTime:    time.Now().UTC(),
 		},
 
-		reservations: reservations{},
+		resources: resourcesList{},
+
+		logCtx: detLogger.MergeContexts(logCtx, detLogger.Context{
+			"allocation-id": req.AllocationID,
+		}),
 	}
 }
 
@@ -151,8 +161,8 @@ func NewAllocation(
 // Additionally, there are secondary flows that force exits, such as a
 // reservation dying or the scheduler requesting us to stop, or being killed
 // by the user; and there are user interactions driven by APIs, along the way,
-// such as watching preemption, watching rendezvous, marking reservations as
-// 'daemon' reservations, etc.
+// such as watching preemption, watching rendezvous, marking resources as
+// 'daemon' resources, etc.
 //
 // An important note is error handling; the allocation cannot suddenly exit -
 // it must clean up its resources. If an error occurs that should not force a
@@ -165,6 +175,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages handle interaction with the resource manager. The generally
 	// handle the primary allocation lifecycle/functionality.
 	case actor.PreStart:
+		ctx.AddLabels(a.logCtx)
 		if err := a.RequestResources(ctx); err != nil {
 			a.Error(ctx, err)
 		}
@@ -172,17 +183,17 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {
 			a.Error(ctx, err)
 		}
-	case sproto.TaskContainerStateChanged:
-		a.TaskContainerStateChanged(ctx, msg)
-	case sproto.GetTaskContainerState:
-		if v, ok := a.reservations[msg.ContainerID]; ok {
+	case sproto.ResourcesStateChanged:
+		a.ResourcesStateChanged(ctx, msg)
+	case sproto.GetResourcesContainerState:
+		if v, ok := a.resources[msg.ResourcesID]; ok {
 			if v.container == nil {
-				ctx.Respond(errors.New(fmt.Sprintf("no task container %s", msg.ContainerID)))
+				ctx.Respond(fmt.Errorf("no container associated with %s", msg.ResourcesID))
 			} else {
 				ctx.Respond(*v.container)
 			}
 		} else {
-			ctx.Respond(errors.New(fmt.Sprintf("unknown container %s", msg.ContainerID)))
+			ctx.Respond(fmt.Errorf("unknown resources %s", msg.ResourcesID))
 		}
 	case sproto.ReleaseResources, sproto.ChangeRP:
 		a.Terminate(ctx)
@@ -200,29 +211,80 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.Error(ctx, err)
 		}
 		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.BoolPtr(true)})
-	case MarkReservationDaemon:
-		a.SetReservationAsDaemon(ctx, msg.AllocationID, msg.ContainerID)
+	case MarkResourcesDaemon:
+		a.SetResourcesAsDaemon(ctx, msg.AllocationID, msg.ResourcesID)
 	case AllocationSignal:
 		a.HandleSignal(ctx, msg)
 	case AllocationState:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(a.State())
 		}
-	case WatchRendezvousInfo, UnwatchRendezvousInfo, RendezvousTimeout:
-		if !a.req.DoRendezvous {
-			if ctx.ExpectingResponse() {
-				ctx.Respond(ErrBehaviorDisabled{Behavior: rendezvous})
+	case WatchRendezvousInfo, UnwatchRendezvousInfo, rendezvousTimeout:
+		if a.rendezvous == nil {
+			if a.resources == nil {
+				return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", msg)}
 			}
-			return nil
+
+			switch a.resources.first().Summary().ResourcesType {
+			case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
+				break
+			default:
+				return ErrBehaviorUnsupported{Behavior: fmt.Sprintf("%T", msg)}
+			}
+
+			switch msg.(type) {
+			case WatchRendezvousInfo:
+				a.rendezvous = newRendezvous(ctx, a.model.AllocationID, a.resources)
+			case UnwatchRendezvousInfo, rendezvousTimeout:
+				// Ignore without active rendezvous.
+				return nil
+			}
 		}
-		switch err := a.rendezvous.ReceiveMsg(ctx).(type) {
-		case nil:
-			return nil
-		case ErrTimeoutExceeded:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+
+		switch msg := ctx.Message().(type) {
+		case WatchRendezvousInfo:
+			if w, err := a.rendezvous.watch(msg); err != nil {
+				ctx.Respond(err)
+			} else {
+				ctx.Respond(w)
+			}
+		case UnwatchRendezvousInfo:
+			a.rendezvous.unwatch(msg)
+		case rendezvousTimeout:
+			if err := a.rendezvous.checkTimeout(msg); err != nil {
+				a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+			}
 		default:
-			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
-			a.Error(ctx, err)
+			a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
+		}
+	case WatchAllGather, UnwatchAllGather, allGatherTimeout:
+		if a.allGather == nil {
+			switch msg.(type) {
+			case WatchAllGather:
+				a.allGather = newAllGather(ctx)
+			case UnwatchAllGather, allGatherTimeout:
+				// Ignore without active all gather.
+				return nil
+			}
+		}
+
+		switch msg := ctx.Message().(type) {
+		case WatchAllGather:
+			watcher := a.allGather.watch(msg)
+			ctx.Respond(watcher)
+		case UnwatchAllGather:
+			a.allGather.unwatch(msg)
+		case allGatherTimeout:
+			if err := a.allGather.checkTimeout(msg); err != nil {
+				a.logger.Insert(ctx, a.enrichLog(model.TaskLog{Log: err.Error()}))
+				ctx.Log().WithError(err).Error("performing all gather through master")
+			}
+		default:
+			return actor.ErrUnexpectedMessage(ctx)
+		}
+
+		if a.allGather.done() {
+			a.allGather = nil
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
 		if !a.req.Preemptible {
@@ -276,13 +338,13 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	// Just in-case code.
 	if !a.exited {
 		ctx.Log().Info("exit did not run properly")
-		for _, r := range a.reservations {
+		for _, r := range a.resources {
 			if r.exit == nil {
 				ctx.Log().Infof("allocation exited with unterminated reservation: %v", r.Summary())
-				r.Kill(ctx)
+				r.Kill(ctx, a.logCtx)
 			}
 		}
-		if len(a.reservations) > 0 {
+		if len(a.resources) > 0 {
 			a.markResourcesReleased(ctx)
 		}
 		ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
@@ -301,7 +363,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	a.state = model.AllocationStateAssigned
-	a.reservations.append(msg.Reservations)
+	a.resources.append(msg.Resources)
 
 	// Get the task spec first, so the trial/task table is populated before allocations.
 	resp := ctx.Ask(ctx.Self().Parent(), BuildTaskSpec{})
@@ -326,44 +388,44 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		a.preemption = NewPreemption(a.model.AllocationID)
 	}
 
-	if a.req.DoRendezvous {
-		a.rendezvous = NewRendezvous(a.model.AllocationID, a.reservations)
-	}
-
 	if cfg := a.req.IdleTimeout; cfg != nil {
 		a.idleTimeoutWatcher = NewIdleTimeoutWatcher(a.req.Name, cfg)
 		a.idleTimeoutWatcher.PreStart(ctx)
 	}
 
-	for cID, r := range a.reservations {
-		r.Start(ctx, spec, sproto.ReservationRuntimeInfo{
+	for cID, r := range a.resources {
+		r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 			Token:        token,
-			AgentRank:    a.reservations[cID].rank,
-			IsMultiAgent: len(a.reservations) > 1,
+			AgentRank:    a.resources[cID].rank,
+			IsMultiAgent: len(a.resources) > 1,
 		})
 	}
-	a.reservationsStarted = true
+	a.resourcesStarted = true
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
 }
 
-// SetReservationAsDaemon sets the reservation as a daemon reservation. This means we won't wait for
+// SetResourcesAsDaemon sets the reservation as a daemon reservation. This means we won't wait for
 // it to exit in errorless exits and instead will kill the forcibly.
-func (a *Allocation) SetReservationAsDaemon(
-	ctx *actor.Context, aID model.AllocationID, cID cproto.ID,
+func (a *Allocation) SetResourcesAsDaemon(
+	ctx *actor.Context, aID model.AllocationID, rID sproto.ResourcesID,
 ) {
 	if aID != a.model.AllocationID {
 		ctx.Respond(ErrStaleAllocation{aID, a.model.AllocationID})
 		return
-	} else if _, ok := a.reservations[cID]; !ok {
-		ctx.Respond(ErrStaleContainer{ID: cID})
+	} else if _, ok := a.resources[rID]; !ok {
+		ctx.Respond(ErrStaleResources{ID: rID})
+		return
+	} else if len(a.resources) <= 1 {
+		ctx.Respond(api.AsValidationError(`ignoring set daemon request for allocation with a single
+			set of resources since this would just kill the allocation`))
 		return
 	}
 
-	a.reservations[cID].daemon = true
+	a.resources[rID].daemon = true
 
-	if len(a.reservations.daemons()) == len(a.reservations) {
-		ctx.Log().Warnf("all reservations were marked as daemon, exiting")
+	if len(a.resources.daemons()) == len(a.resources) {
+		ctx.Log().Warnf("all resources were marked as daemon, exiting")
 		a.Exit(ctx)
 	}
 }
@@ -378,29 +440,37 @@ func (a *Allocation) HandleSignal(ctx *actor.Context, msg actor.Message) {
 	}
 }
 
-// TaskContainerStateChanged handles changes in container states. It can move us to ready,
+// ResourcesStateChanged handles changes in container states. It can move us to ready,
 // kill us or close us normally depending on the changes, among other things.
-func (a *Allocation) TaskContainerStateChanged(
-	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
+func (a *Allocation) ResourcesStateChanged(
+	ctx *actor.Context, msg sproto.ResourcesStateChanged,
 ) {
-	if _, ok := a.reservations[msg.Container.ID]; !ok {
-		ctx.Log().WithError(ErrStaleContainer{ID: msg.Container.ID}).Warnf("old state change")
+	if _, ok := a.resources[msg.ResourcesID]; !ok {
+		ctx.Log().
+			WithField("container", msg.Container).
+			WithError(ErrStaleResources{ID: msg.ResourcesID}).Warnf("old state change")
 		return
 	}
 
-	a.reservations[msg.Container.ID].container = &msg.Container
-	ctx.Log().Debugf("container %s (rank %d) is %s",
-		msg.Container.ID, a.reservations[msg.Container.ID].rank, msg.Container.State,
+	a.resources[msg.ResourcesID].container = msg.Container
+	ctx.Log().Debugf("resources %s (rank %d) is %s [container=%v]",
+		msg.ResourcesID, a.resources[msg.ResourcesID].rank, msg.ResourcesState, msg.Container,
 	)
-	switch msg.Container.State {
-	case cproto.Pulling:
+	switch msg.ResourcesState {
+	case sproto.Pulling:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
-	case cproto.Starting:
+		a.model.StartTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
+		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
+			ctx.Log().
+				WithError(err).
+				Errorf("allocation will not be properly accounted for")
+		}
+	case sproto.Starting:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateStarting)
-	case cproto.Running:
+	case sproto.Running:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateRunning)
-		a.reservations[msg.Container.ID].start = msg.ContainerStarted
-		if a.req.DoRendezvous && a.rendezvous.try() {
+		a.resources[msg.ResourcesID].start = msg.ResourcesStarted
+		if a.rendezvous != nil && a.rendezvous.try() {
 			ctx.Log().Info("all containers are connected successfully (task container state changed)")
 		}
 		if a.req.ProxyPort != nil {
@@ -408,33 +478,33 @@ func (a *Allocation) TaskContainerStateChanged(
 		}
 
 		a.sendEvent(ctx, sproto.Event{
-			ContainerID:           string(msg.Container.ID),
-			ContainerStartedEvent: msg.ContainerStarted,
+			ContainerID:           coalesceString(msg.ContainerIDStr(), ""),
+			ContainerStartedEvent: msg.ResourcesStarted,
 		})
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
 			a.req.TaskActor.Address())
-		prom.AddAllocationReservation(a.reservations[msg.Container.ID].Summary(), msg.ContainerStarted)
+		prom.AddAllocationResources(a.resources[msg.ResourcesID].Summary(), msg.ResourcesStarted)
 
-	case cproto.Terminated:
+	case sproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
-		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
+		a.resources[msg.ResourcesID].exit = msg.ResourcesStopped
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-			ContainerID: ptrs.StringPtr(msg.Container.ID.String()),
-			Log:         msg.ContainerStopped.String(),
+			ContainerID: msg.ContainerIDStr(),
+			Log:         msg.ResourcesStopped.String(),
 		}))
 		switch {
-		case msg.ContainerStopped.Failure != nil:
-			a.Error(ctx, *msg.ContainerStopped.Failure)
+		case msg.ResourcesStopped.Failure != nil:
+			a.Error(ctx, *msg.ResourcesStopped.Failure)
 		default:
 			a.Exit(ctx)
 		}
 
-		for cID := range a.reservations {
+		for cID := range a.resources {
 			prom.DisassociateAllocationTask(a.req.AllocationID,
 				a.req.TaskID,
 				a.req.TaskActor.Address())
-			prom.RemoveAllocationReservation(a.reservations[cID].Summary())
+			prom.RemoveAllocationResources(a.resources[cID].Summary())
 		}
 	}
 
@@ -448,10 +518,10 @@ func (a *Allocation) TaskContainerStateChanged(
 // Exit attempts to exit an allocation while not killing or preempting it.
 func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 	switch {
-	case !a.reservationsStarted:
+	case !a.resourcesStarted:
 		a.terminated(ctx)
 		return true
-	case len(a.reservations) == len(a.reservations.exited()):
+	case len(a.resources) == len(a.resources.exited()):
 		a.terminated(ctx)
 		return true
 	case a.allNonDaemonsExited():
@@ -471,7 +541,7 @@ func (a *Allocation) Terminate(ctx *actor.Context) {
 		return
 	}
 	switch {
-	case a.req.Preemptible && a.req.DoRendezvous && a.rendezvous.ready():
+	case a.req.Preemptible && a.rendezvous != nil && a.rendezvous.ready():
 		a.preempt(ctx)
 	default:
 		a.kill(ctx)
@@ -496,9 +566,9 @@ func (a *Allocation) Error(ctx *actor.Context, err error) {
 }
 
 func (a *Allocation) allNonDaemonsExited() bool {
-	for id := range a.reservations {
-		_, terminated := a.reservations.exited()[id]
-		_, daemon := a.reservations.daemons()[id]
+	for id := range a.resources {
+		_, terminated := a.resources.exited()[id]
+		_, daemon := a.resources.daemons()[id]
 		if !(terminated || daemon) {
 			return false
 		}
@@ -519,28 +589,28 @@ func (a *Allocation) kill(ctx *actor.Context) {
 	}
 
 	ctx.Log().Info("decided to kill allocation")
-	if len(a.reservations.exited()) == 0 {
+	if len(a.resources.exited()) == 0 {
 		a.killedWhileRunning = true
 	}
 	a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
-	for _, reservation := range a.reservations {
-		reservation.Kill(ctx)
+	for _, r := range a.resources {
+		r.Kill(ctx, a.logCtx)
 	}
 }
 
-func (a *Allocation) registerProxies(ctx *actor.Context, msg sproto.TaskContainerStateChanged) {
+func (a *Allocation) registerProxies(ctx *actor.Context, msg sproto.ResourcesStateChanged) {
 	cfg := a.req.ProxyPort
 	if cfg == nil {
 		return
 	}
 
-	if len(a.reservations) > 1 {
+	if len(a.resources) > 1 {
 		// We don't support proxying multi-reservation allocations.
 		ctx.Log().Warnf("proxy for multi-reservation allocation aborted")
 		return
 	}
 
-	for _, address := range msg.ContainerStarted.Addresses {
+	for _, address := range msg.ResourcesStarted.Addresses {
 		// Only proxy the port we expect to proxy. If a dockerfile uses an EXPOSE command,
 		// additional addresses will appear her, but currently we only proxy one uuid to one
 		// port, so it doesn't make sense to send multiple proxy.Register messages for a
@@ -574,7 +644,7 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 		return
 	}
 
-	if len(a.reservations) > 1 {
+	if len(a.resources) > 1 {
 		// Can't proxy more than one reservation, so we never would've made them.
 		return
 	}
@@ -594,7 +664,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	defer ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 	defer a.unregisterProxies(ctx)
 	defer ctx.Self().Stop()
-	if len(a.reservations) == 0 {
+	if len(a.resources) == 0 {
 		return
 	}
 	defer a.markResourcesReleased(ctx)
@@ -602,8 +672,8 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	if a.req.Preemptible {
 		defer a.preemption.Close()
 	}
-	if a.req.DoRendezvous {
-		defer a.rendezvous.Close()
+	if a.rendezvous != nil {
+		defer a.rendezvous.close()
 	}
 	switch {
 	case a.killedWhileRunning:
@@ -612,7 +682,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	case a.req.Preemptible && a.preemption.Acknowledged():
 		ctx.Log().Info("allocation successfully stopped")
 		return
-	case len(a.reservations.exited()) > 0:
+	case len(a.resources.exited()) > 0:
 		if a.exitReason == nil {
 			// This is true because searcher and preemption exits both ack preemption.
 			exit.UserRequestedStop = true
@@ -659,7 +729,8 @@ func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 		ctx.Log().WithError(err).Error("failed to mark allocation completed")
 	}
 
-	telemetry.ReportAllocationTerminal(ctx.Self().System(), a.db, a.model, a.State().FirstDevice())
+	telemetry.ReportAllocationTerminal(
+		ctx.Self().System(), a.db, a.model, a.resources.firstDevice())
 }
 
 const killedLogSubstr = "exit code 137"
@@ -700,7 +771,7 @@ func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
 func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Event {
 	ev.ParentID = ctx.Self().Parent().Address().Local()
 	ev.Description = a.req.Name
-	ev.IsReady = coalesce(a.model.IsReady, false)
+	ev.IsReady = coalesceBool(a.model.IsReady, false)
 	if ev.State == "" {
 		ev.State = a.state.String()
 	}
@@ -712,40 +783,31 @@ func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Eve
 
 // State returns a deepcopy of our state.
 func (a *Allocation) State() AllocationState {
-	containers := map[cproto.ID]cproto.Container{}
-	for id, r := range a.reservations {
-		if r.container == nil {
-			continue
+	addresses := map[sproto.ResourcesID][]cproto.Address{}
+	containers := map[sproto.ResourcesID][]cproto.Container{}
+	resources := map[sproto.ResourcesID]sproto.ResourcesSummary{}
+	for id, r := range a.resources {
+		resources[id] = r.Summary()
+
+		if r.start != nil {
+			a := r.start.Addresses
+			na := make([]cproto.Address, len(a))
+			copy(na, a)
+			addresses[id] = na
 		}
 
-		c := r.container
-		nd := make([]device.Device, len(c.Devices))
-		copy(nd, c.Devices)
-		containers[id] = cproto.Container{
-			Parent:  c.Parent,
-			ID:      c.ID,
-			State:   c.State,
-			Devices: nd,
+		if r.container != nil {
+			containers[id] = append(containers[id], *r.container)
 		}
-	}
-
-	addresses := map[cproto.ID][]cproto.Address{}
-	for id, r := range a.reservations {
-		if r.start == nil {
-			continue
-		}
-
-		a := r.start.Addresses
-		na := make([]cproto.Address, len(a))
-		copy(na, a)
-		addresses[id] = na
 	}
 
 	return AllocationState{
 		State:      a.state,
-		Containers: containers,
+		Resources:  resources,
 		Addresses:  addresses,
-		Ready:      a.req.DoRendezvous && a.rendezvous.ready() || coalesce(a.model.IsReady, false),
+		Containers: containers,
+		Ready: a.rendezvous != nil && a.rendezvous.ready() ||
+			coalesceBool(a.model.IsReady, false),
 	}
 }
 
@@ -762,17 +824,9 @@ func (a *AllocationExited) String() string {
 
 // FirstContainer returns the first container in the allocation state.
 func (a AllocationState) FirstContainer() *cproto.Container {
-	for _, c := range a.Containers {
-		return &c
-	}
-	return nil
-}
-
-// FirstDevice returns the first device in the allocation state.
-func (a AllocationState) FirstDevice() *device.Device {
-	if a.FirstContainer() != nil {
-		for _, d := range a.FirstContainer().Devices {
-			return &d
+	for _, cs := range a.Containers {
+		for _, c := range cs {
+			return &c
 		}
 	}
 	return nil
@@ -786,7 +840,14 @@ func (a AllocationState) FirstContainerAddresses() []cproto.Address {
 	return nil
 }
 
-func coalesce(x *bool, fallback bool) bool {
+func coalesceBool(x *bool, fallback bool) bool {
+	if x == nil {
+		return fallback
+	}
+	return *x
+}
+
+func coalesceString(x *string, fallback string) string {
 	if x == nil {
 		return fallback
 	}

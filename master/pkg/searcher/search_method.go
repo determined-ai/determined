@@ -99,7 +99,7 @@ func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, e
 	return nil, nil
 }
 
-func (defaultSearchMethod) trialExitedEarly( //nolint: unused
+func (defaultSearchMethod) trialExitedEarly(
 	context, model.RequestID, model.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }

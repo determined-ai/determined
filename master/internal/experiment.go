@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -56,10 +57,18 @@ type (
 	trialGetSearcherState struct {
 		requestID model.RequestID
 	}
-	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
-	// its actor.PostStop and when the experiment snapshots the trial closed.
+
+	// trialClosed is used to replay closes missed when the master dies between when a trial closing
+	// in its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
 		requestID model.RequestID
+	}
+
+	// userInitiatedEarlyExit is a user-injected message, provided through the early exit API. It
+	// _should_ indicate the user is exiting, but in the event they don't, we will clean them up.
+	userInitiatedEarlyExit struct {
+		requestID model.RequestID
+		reason    model.ExitedReason
 	}
 )
 
@@ -92,6 +101,8 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		rmJobInfo             *job.RMJobInfo
+
+		logCtx logger.Context
 	}
 )
 
@@ -158,6 +169,11 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
+
+		logCtx: logger.Context{
+			"job-id":        expModel.JobID,
+			"experiment-id": expModel.ID,
+		},
 	}, nil
 }
 
@@ -165,6 +181,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	// Searcher-related messages.
 	case actor.PreStart:
+		ctx.AddLabels(e.logCtx)
 		ctx.Tell(e.rm, sproto.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
@@ -355,6 +372,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 			rm: e.rm,
 			db: e.db,
+
+			logCtx: e.logCtx,
 		})
 
 		if e.State == model.CompletedState {
@@ -480,8 +499,8 @@ func (e *experiment) processOperations(
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
-				trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State, state, e.rm,
-				e.taskLogger, e.db, config, checkpoint, e.taskSpec,
+				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
+				state, e.rm, e.taskLogger, e.db, config, checkpoint, e.taskSpec,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]

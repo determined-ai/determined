@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/pkg/errors"
@@ -28,11 +29,18 @@ type checkpointGCTask struct {
 	task *sproto.AllocateRequest
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
 	logs []sproto.ContainerLog
+
+	logCtx logger.Context
 }
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
+			"task-id":   t.taskID,
+			"task-type": model.TaskTypeCheckpointGC,
+		})
+		ctx.AddLabels(t.logCtx)
 		t.task = &sproto.AllocateRequest{
 			TaskID:            t.taskID,
 			JobID:             t.jobID,
@@ -54,26 +62,28 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
 
-		if len(msg.Reservations) != 1 {
+		if len(msg.Resources) != 1 {
 			return errors.New("multi-reservation checkpoint gc is wrong")
 		}
 
-		msg.Reservations[0].Start(ctx, t.ToTaskSpec(allocationToken), sproto.ReservationRuntimeInfo{
-			Token:        allocationToken,
-			AgentRank:    0,
-			IsMultiAgent: false,
-		})
+		msg.Resources[0].Start(ctx,
+			t.logCtx,
+			t.ToTaskSpec(allocationToken),
+			sproto.ResourcesRuntimeInfo{
+				Token:        allocationToken,
+				AgentRank:    0,
+				IsMultiAgent: false,
+			})
 	case sproto.ReleaseResources, task.AllocationSignal:
 		// Ignore the release resource message and wait for the GC job to finish.
 
-	case sproto.TaskContainerStateChanged:
+	case sproto.ResourcesStateChanged:
 		if msg.Container.State != cproto.Terminated {
 			return nil
 		}
-		status := msg.ContainerStopped
 
-		if msg.ContainerStopped.Failure != nil {
-			ctx.Log().Errorf("checkpoint garbage collection failed: %v", status)
+		if exit := msg.ResourcesStopped; exit.Failure != nil {
+			ctx.Log().Errorf("checkpoint garbage collection failed: %v", exit)
 			for _, log := range t.logs {
 				ctx.Log().Error(log.String())
 			}

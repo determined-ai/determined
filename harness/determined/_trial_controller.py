@@ -47,7 +47,6 @@ class TrialController(metaclass=abc.ABCMeta):
         self.use_horovod = distributed_backend.use_horovod()
         self._check_if_trial_supports_configurations(env)
 
-        self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()
 
         self.is_chief = context.distributed.rank == 0

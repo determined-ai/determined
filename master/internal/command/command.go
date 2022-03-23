@@ -7,6 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/logger"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -61,6 +62,12 @@ func createGenericCommandActor(
 		jobType:        jobType,
 		serviceAddress: &serviceAddress,
 		jobID:          jobID,
+
+		logCtx: logger.Context{
+			"job-id":    jobID,
+			"task-id":   taskID,
+			"task-type": taskType,
+		},
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -94,12 +101,15 @@ type command struct {
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	rmJobInfo      *job.RMJobInfo
+
+	logCtx logger.Context
 }
 
 // Receive implements the actor.Actor interface.
 func (c *command) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddJob(&model.Job{
@@ -159,7 +169,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		allocation := task.NewAllocation(sproto.AllocateRequest{
+		allocation := task.NewAllocation(c.logCtx, sproto.AllocateRequest{
 			AllocationID:      c.allocationID,
 			TaskID:            c.taskID,
 			JobID:             c.jobID,
@@ -403,6 +413,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		ServiceAddress: *c.serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.Base.Owner.Username,
+		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
@@ -418,6 +429,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Container:    state.FirstContainer().Proto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.Base.Owner.Username,
+		DisplayName:  c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
 		JobId:        c.jobID.String(),
@@ -435,6 +447,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		PrivateKey:     c.Metadata["privateKey"].(string),
 		PublicKey:      c.Metadata["publicKey"].(string),
 		Username:       c.Base.Owner.Username,
+		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		Addresses:      toProto(state.FirstContainerAddresses()),
@@ -455,6 +468,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ExperimentIds:  c.Metadata["experiment_ids"].([]int32),
 		TrialIds:       c.Metadata["trial_ids"].([]int32),
 		Username:       c.Base.Owner.Username,
+		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),

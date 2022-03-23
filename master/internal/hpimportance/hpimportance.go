@@ -45,13 +45,14 @@ const (
 // keep track of the order so the data columns will match.
 func createDataFile(data map[int][]model.HPImportanceTrialData,
 	experimentConfig expconf.ExperimentConfig, dataFile string) (int, error) {
+	//nolint:gosec // Ignore security warning because none of this is user-provided input
 	f, err := os.Create(dataFile)
 	if err != nil {
 		return 0, err
 	}
-	//nolint:gosec // Close check doesn't matter even though file is writable because it was synced.
 	defer func() {
 		if err = f.Close(); err != nil {
+			// Only logging is fine even though file is writable because it was synced.
 			log.WithError(err).Error("failed to close arff file")
 		}
 	}()
@@ -153,9 +154,9 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open HP importance file: %w", err)
 	}
-	//nolint:gosec // Good thought but file is not written, only read.
 	defer func() {
 		if err := file.Close(); err != nil {
+			// Only logging is fine because file is read-only.
 			log.WithError(err).Error("failed to close HP importance file")
 		}
 	}()

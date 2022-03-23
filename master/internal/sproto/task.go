@@ -6,6 +6,10 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -37,7 +41,6 @@ type (
 
 		// Behavioral configuration.
 		Preemptible  bool
-		DoRendezvous bool
 		IdleTimeout  *IdleTimeoutConfig
 		ProxyPort    *PortProxyConfig
 		StreamEvents *EventStreamConfig
@@ -121,26 +124,48 @@ type (
 	ResourcesAllocated struct {
 		ID           model.AllocationID
 		ResourcePool string
-		Reservations []Reservation
+		Resources    []Resources
 	}
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
 		ResourcePool string
 	}
-	// ReservationRuntimeInfo is all the inforamation provided at runtime to make a task spec.
-	ReservationRuntimeInfo struct {
+	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
+	ResourcesRuntimeInfo struct {
 		Token        string
 		AgentRank    int
 		IsMultiAgent bool
 	}
 )
 
-// Reservation is an interface that provides function for task actors
+const (
+	// ResourcesTypeEnvVar is the name of the env var indicating the resource type to a task.
+	ResourcesTypeEnvVar = "DET_RESOURCES_TYPE"
+	// ResourcesTypeK8sPod indicates the resources are a handle for a k8s pod.
+	ResourcesTypeK8sPod ResourcesType = "k8s-pod"
+	// ResourcesTypeDockerContainer indicates the resources are a handle for a docker container.
+	ResourcesTypeDockerContainer ResourcesType = "docker-container"
+)
+
+// ResourcesSummary provides a summary of the resources comprising what we know at the time the
+// allocation is granted, but for k8s it is granted before being scheduled so it isn't really much
+// and `agent_devices` are missing for k8s.
+type ResourcesSummary struct {
+	ResourcesID   ResourcesID                   `json:"resources_id"`
+	ResourcesType ResourcesType                 `json:"resources_type"`
+	AllocationID  model.AllocationID            `json:"allocation_id"`
+	AgentDevices  map[aproto.ID][]device.Device `json:"agent_devices"`
+
+	// Available if the RM can give information on the container level.
+	ContainerID *cproto.ID `json:"container_id"`
+}
+
+// Resources is an interface that provides function for task actors
 // to start tasks on assigned resources.
-type Reservation interface {
-	Summary() ContainerSummary
-	Start(ctx *actor.Context, spec tasks.TaskSpec, rri ReservationRuntimeInfo)
-	Kill(ctx *actor.Context)
+type Resources interface {
+	Summary() ResourcesSummary
+	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo)
+	Kill(*actor.Context, logger.Context)
 }
 
 // Event is the union of all event types during the parent lifecycle.
@@ -158,7 +183,7 @@ type Event struct {
 	// AssignedEvent is triggered when the parent was assigned to an agent.
 	AssignedEvent *ResourcesAllocated `json:"assigned_event"`
 	// ContainerStartedEvent is triggered when the container started on an agent.
-	ContainerStartedEvent *TaskContainerStarted `json:"container_started_event"`
+	ContainerStartedEvent *ResourcesStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
 	ServiceReadyEvent *bool `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to

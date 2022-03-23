@@ -427,8 +427,6 @@ func (m *Master) findListeningPort(listener net.Listener) (uint16, error) {
 	if err != nil {
 		return 0, err
 	}
-	// Deferring a close sets off gosec, but it's actually fine for read-only files.
-	//nolint:gosec
 	defer func() {
 		_ = tcp.Close()
 	}()
@@ -884,19 +882,15 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
-	experimentsGroup.GET("/:experiment_id", api.Route(m.getExperiment))
-	experimentsGroup.GET("/:experiment_id/checkpoints", api.Route(m.getExperimentCheckpoints))
-	experimentsGroup.GET("/:experiment_id/config", api.Route(m.getExperimentConfig))
-	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
-	experimentsGroup.GET("/:experiment_id/summary", api.Route(m.getExperimentSummary))
-	experimentsGroup.GET("/:experiment_id/metrics/summary", api.Route(m.getExperimentSummaryMetrics))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
+	searcherGroup := m.echo.Group("/searcher", authFuncs...)
+	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
+
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
-	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)

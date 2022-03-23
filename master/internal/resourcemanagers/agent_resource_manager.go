@@ -256,11 +256,11 @@ func (a *agentResourceManager) getPoolJobStats(
 	if err := jobStatsResp.Error(); err != nil {
 		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
 	}
-	jobStats, ok := jobStatsResp.Get().(jobv1.QueueStats)
+	jobStats, ok := jobStatsResp.Get().(*jobv1.QueueStats)
 	if !ok {
 		return nil, fmt.Errorf("unexpected response type from jobStats")
 	}
-	return &jobStats, nil
+	return jobStats, nil
 }
 
 func (a *agentResourceManager) aggregateTaskHandler(
@@ -348,15 +348,9 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 			slotsPerAgent = pool.Provider.GCP.SlotsPerInstance()
 			slotType = pool.Provider.GCP.SlotType()
-			accelerator = pool.Provider.GCP.Accelerator()
-			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
-				instanceType = pool.Provider.GCP.InstanceType.MachineType
-			} else {
-				instanceType = fmt.Sprintf("%s, %d x %s",
-					pool.Provider.GCP.InstanceType.MachineType,
-					pool.Provider.GCP.InstanceType.GPUNum,
-					pool.Provider.GCP.InstanceType.GPUType,
-				)
+			instanceType = pool.Provider.GCP.InstanceType.MachineType
+			if pool.Provider.GCP.InstanceType.GPUNum > 0 {
+				accelerator = pool.Provider.GCP.Accelerator()
 			}
 		}
 	}

@@ -1,10 +1,9 @@
 import { Alert } from 'antd';
+import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
-import ParallelCoordinates, {
-  Constraint, Dimension, DimensionType, dimensionTypeMap,
-} from 'components/ParallelCoordinates';
+import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
@@ -85,69 +84,79 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
-  const colorScale = useMemo(() => {
-    return getColorScale(chartData?.metricRange, smallerIsBetter);
-  }, [ chartData?.metricRange, smallerIsBetter ]);
-
-  const dimensions = useMemo(() => {
-    const newDimensions = selectedHParams.map(key => {
-      const hp = hyperparameters[key] || {};
-      const dimension: Dimension = {
-        label: key,
-        type: hp.type ? dimensionTypeMap[hp.type] : DimensionType.Scalar,
-      };
-
-      if (hp.vals) dimension.categories = hp.vals;
-      if (hp.minval != null && hp.maxval != null) {
-        const isLogarithmic = hp.type === HyperparameterType.Log;
-        dimension.range = isLogarithmic ?
-          [ 10 ** hp.minval, 10 ** hp.maxval ] : [ hp.minval, hp.maxval ];
-      }
-
-      return dimension;
-    });
-
-    // Add metric as column to parcoords dimension list
-    if (chartData?.metricRange) {
-      newDimensions.push({
-        label: metricNameToStr(selectedMetric),
-        range: chartData.metricRange,
-        type: DimensionType.Scalar,
-      });
-    }
-
-    return newDimensions;
-  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
-
-  const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
+  const handleFilterChange = useCallback((hermesFilters: Hermes.Filters) => {
+    // Skip if there aren't any chart data.
     if (!chartData) return;
 
-    // Figure out which trials fit within the user provided constraints.
+    // Initialize a new trial id filter map.
     const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
       acc[trialId] = true;
       return acc;
     }, {} as Record<number, boolean>);
 
-    Object.entries(constraints).forEach(([ key, constraint ]) => {
-      if (!constraint) return;
-      if (!chartData.data[key]) return;
+    // Figure out which trials are filtered out based on user filters.
+    Object.entries(hermesFilters).forEach(([ key, list ]) => {
+      if (!chartData.data[key] || list.length === 0) return;
 
-      const range = constraint.range;
-      const values = chartData.data[key];
-      values.forEach((value, index) => {
-        if (constraint.values?.includes(value)) return;
-        if (!constraint.values && value >= range[0] && value <= range[1]) return;
-        const trialId = chartData.trialIds[index];
-        newFilteredTrialIdMap[trialId] = false;
+      chartData.data[key].forEach((value, index) => {
+        let isWithinFilter = false;
+
+        list.forEach((filter: Hermes.Filter) => {
+          if (value >= filter[0] && value <= filter[1]) isWithinFilter = true;
+        });
+
+        if (!isWithinFilter) {
+          const trialId = chartData.trialIds[index];
+          newFilteredTrialIdMap[trialId] = false;
+        }
       });
     });
 
     setFilteredTrialIdMap(newFilteredTrialIdMap);
   }, [ chartData ]);
 
-  const clearSelected = useCallback(() => {
-    setSelectedRowKeys([]);
-  }, []);
+  const colorScale = useMemo(() => {
+    return getColorScale(chartData?.metricRange, smallerIsBetter);
+  }, [ chartData?.metricRange, smallerIsBetter ]);
+
+  const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(() => ({
+    hooks: { onFilterChange: handleFilterChange },
+    style: {
+      axes: { label: { placement: 'after' } },
+      data: {
+        colorScale: {
+          colors: colorScale.map(scale => scale.color),
+          dimensionKey: metricNameToStr(selectedMetric),
+        },
+      },
+      dimension: { label: { angle: Math.PI / 4, truncate: 24 } },
+      padding: [ 4, 120, 4, 16 ],
+    },
+  }), [ colorScale, handleFilterChange, selectedMetric ]);
+
+  const dimensions = useMemo(() => {
+    const newDimensions: Hermes.Dimension[] = selectedHParams.map(key => {
+      const hp = hyperparameters[key] || {};
+
+      if (hp.type === HyperparameterType.Categorical || hp.vals) {
+        return { categories: hp.vals ?? [], key, label: key, type: DimensionType.Categorical };
+      } else if (hp.type === HyperparameterType.Log) {
+        return { key, label: key, logBase: hp.base, type: DimensionType.Logarithmic };
+      }
+
+      return { key, label: key, type: DimensionType.Linear };
+    });
+
+    // Add metric as column to parcoords dimension list
+    if (chartData?.metricRange) {
+      const key = metricNameToStr(selectedMetric);
+      newDimensions.push({ key, label: key, type: DimensionType.Linear });
+    }
+
+    return newDimensions;
+  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
+
+  const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
   useEffect(() => {
     if (ui.isPageHidden) return;
@@ -260,8 +269,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTrialUnselect = useCallback((trialId: number) =>
-    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+  const handleTrialUnselect = useCallback((trialId: number) => {
+    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId));
+  }, []);
+
+  // Reset filtered trial ids when HP Viz filters changes.
+  useEffect(() => {
+    setFilteredTrialIdMap(undefined);
+  }, [ selectedBatch, selectedBatchMargin, selectedHParams, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -285,11 +300,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
         <div className={css.container}>
           <div className={css.chart}>
             <ParallelCoordinates
-              colorScale={colorScale}
-              colorScaleKey={metricNameToStr(selectedMetric)}
-              data={chartData?.data || {}}
+              config={config}
+              data={chartData?.data ?? {}}
               dimensions={dimensions}
-              onFilter={handleChartFilter}
             />
           </div>
           <div>

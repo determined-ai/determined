@@ -725,6 +725,18 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     wallClockTime?: number;
+    /**
+     * UUID of checkpoint that this trial started from.
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    warmStartCheckpointUuid?: string;
+    /**
+     * Id of task associated with this trial.
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    taskId?: string;
 }
 
 /**
@@ -881,6 +893,52 @@ export interface V1Allocation {
      * @memberof V1Allocation
      */
     allocationId?: string;
+}
+
+/**
+ * Arguments to an all gather.
+ * @export
+ * @interface V1AllocationAllGatherRequest
+ */
+export interface V1AllocationAllGatherRequest {
+    /**
+     * The ID of the allocation.
+     * @type {string}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    allocationId: string;
+    /**
+     * The UUID of the participant in an all gather.
+     * @type {string}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    requestUuid?: string;
+    /**
+     * The number of process to wait for.
+     * @type {number}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    numPeers?: number;
+    /**
+     * The data from this process.
+     * @type {any}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    data: any;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1AllocationAllGatherResponse
+ */
+export interface V1AllocationAllGatherResponse {
+    /**
+     * The data for all the processes.
+     * @type {Array<any>}
+     * @memberof V1AllocationAllGatherResponse
+     */
+    data: Array<any>;
 }
 
 /**
@@ -1211,6 +1269,12 @@ export interface V1Command {
      * @memberof V1Command
      */
     container?: V1Container;
+    /**
+     * The display name of the user that created the command.
+     * @type {string}
+     * @memberof V1Command
+     */
+    displayName?: string;
     /**
      * The username of the user that created the command.
      * @type {string}
@@ -1571,6 +1635,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     numTrials: number;
+    /**
+     * The display name of the user that created the experiment.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    displayName?: string;
     /**
      * The username of the user that created the experiment.
      * @type {string}
@@ -3222,29 +3292,29 @@ export interface V1LogoutResponse {
 /**
  * Mark some reservation as a daemon.
  * @export
- * @interface V1MarkAllocationReservationDaemonRequest
+ * @interface V1MarkAllocationResourcesDaemonRequest
  */
-export interface V1MarkAllocationReservationDaemonRequest {
+export interface V1MarkAllocationResourcesDaemonRequest {
     /**
-     * The allocation ID for the reservation.
+     * The id of the allocation.
      * @type {string}
-     * @memberof V1MarkAllocationReservationDaemonRequest
+     * @memberof V1MarkAllocationResourcesDaemonRequest
      */
     allocationId: string;
     /**
-     * The container ID for the reservation.
+     * The id of the clump of resources to mark as daemon.
      * @type {string}
-     * @memberof V1MarkAllocationReservationDaemonRequest
+     * @memberof V1MarkAllocationResourcesDaemonRequest
      */
-    containerId: string;
+    resourcesId?: string;
 }
 
 /**
- * Response to MarkAllocationReservationDaemonRequest.
+ * Response to MarkAllocationResourcesDaemonRequest.
  * @export
- * @interface V1MarkAllocationReservationDaemonResponse
+ * @interface V1MarkAllocationResourcesDaemonResponse
  */
-export interface V1MarkAllocationReservationDaemonResponse {
+export interface V1MarkAllocationResourcesDaemonResponse {
 }
 
 /**
@@ -3560,6 +3630,12 @@ export interface V1Notebook {
      * @memberof V1Notebook
      */
     container?: V1Container;
+    /**
+     * The display name of the user that created the notebook.
+     * @type {string}
+     * @memberof V1Notebook
+     */
+    displayName?: string;
     /**
      * The username of the user that created the notebook.
      * @type {string}
@@ -5250,6 +5326,12 @@ export interface V1Shell {
      */
     publicKey?: string;
     /**
+     * The display name of the user that created the shell.
+     * @type {string}
+     * @memberof V1Shell
+     */
+    displayName?: string;
+    /**
      * The username of the user that created the shell.
      * @type {string}
      * @memberof V1Shell
@@ -5489,6 +5571,12 @@ export interface V1Tensorboard {
      * @memberof V1Tensorboard
      */
     trialIds?: Array<number>;
+    /**
+     * The display name of the user that created the tensorboard.
+     * @type {string}
+     * @memberof V1Tensorboard
+     */
+    displayName?: string;
     /**
      * The username of the user that created the tensorboard.
      * @type {string}
@@ -10257,6 +10345,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1AllocationAllGatherRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationAllGather.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationAllGather.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/all_gather`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AllocationAllGatherRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -10347,22 +10481,22 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
          * @param {string} allocationId The id of the allocation.
-         * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+         * @param {string} resourcesId The id of the clump of resources.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationRendezvousInfo(allocationId: string, containerId: string, options: any = {}): FetchArgs {
+        allocationRendezvousInfo(allocationId: string, resourcesId: string, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
                 throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationRendezvousInfo.');
             }
-            // verify required parameter 'containerId' is not null or undefined
-            if (containerId === null || containerId === undefined) {
-                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling allocationRendezvousInfo.');
+            // verify required parameter 'resourcesId' is not null or undefined
+            if (resourcesId === null || resourcesId === undefined) {
+                throw new RequiredError('resourcesId','Required parameter resourcesId was null or undefined when calling allocationRendezvousInfo.');
             }
-            const localVarPath = `/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}`
+            const localVarPath = `/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
-                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+                .replace(`{${"resourcesId"}}`, encodeURIComponent(String(resourcesId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -10824,29 +10958,29 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
-         * @param {string} allocationId The allocation ID for the reservation.
-         * @param {string} containerId The container ID for the reservation.
-         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
+         * @param {string} allocationId The id of the allocation.
+         * @param {string} resourcesId The id of the clump of resources to mark as daemon.
+         * @param {V1MarkAllocationResourcesDaemonRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        markAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options: any = {}): FetchArgs {
+        markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling markAllocationReservationDaemon.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling markAllocationResourcesDaemon.');
             }
-            // verify required parameter 'containerId' is not null or undefined
-            if (containerId === null || containerId === undefined) {
-                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling markAllocationReservationDaemon.');
+            // verify required parameter 'resourcesId' is not null or undefined
+            if (resourcesId === null || resourcesId === undefined) {
+                throw new RequiredError('resourcesId','Required parameter resourcesId was null or undefined when calling markAllocationResourcesDaemon.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling markAllocationReservationDaemon.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling markAllocationResourcesDaemon.');
             }
-            const localVarPath = `/api/v1/allocations/{allocationId}/containers/{containerId}/daemon`
+            const localVarPath = `/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
-                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+                .replace(`{${"resourcesId"}}`, encodeURIComponent(String(resourcesId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -10866,7 +11000,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1MarkAllocationReservationDaemonRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1MarkAllocationResourcesDaemonRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -11517,6 +11651,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1AllocationAllGatherRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationAllGather(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -11559,12 +11713,12 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * 
          * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
          * @param {string} allocationId The id of the allocation.
-         * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+         * @param {string} resourcesId The id of the clump of resources.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationRendezvousInfo(allocationId: string, containerId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationRendezvousInfo(allocationId, containerId, options);
+        allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationRendezvousInfo(allocationId, resourcesId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11792,15 +11946,15 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
-         * @param {string} allocationId The allocation ID for the reservation.
-         * @param {string} containerId The container ID for the reservation.
-         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
+         * @param {string} allocationId The id of the allocation.
+         * @param {string} resourcesId The id of the clump of resources to mark as daemon.
+         * @param {V1MarkAllocationResourcesDaemonRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        markAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationReservationDaemonResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).markAllocationReservationDaemon(allocationId, containerId, body, options);
+        markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationResourcesDaemonResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12083,6 +12237,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1AllocationAllGatherRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
+            return InternalApiFp(configuration).allocationAllGather(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12107,12 +12272,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
          * @param {string} allocationId The id of the allocation.
-         * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+         * @param {string} resourcesId The id of the clump of resources.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationRendezvousInfo(allocationId: string, containerId: string, options?: any) {
-            return InternalApiFp(configuration).allocationRendezvousInfo(allocationId, containerId, options)(fetch, basePath);
+        allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
+            return InternalApiFp(configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(fetch, basePath);
         },
         /**
          * 
@@ -12232,15 +12397,15 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
-         * @param {string} allocationId The allocation ID for the reservation.
-         * @param {string} containerId The container ID for the reservation.
-         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
+         * @param {string} allocationId The id of the allocation.
+         * @param {string} resourcesId The id of the clump of resources to mark as daemon.
+         * @param {V1MarkAllocationResourcesDaemonRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        markAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any) {
-            return InternalApiFp(configuration).markAllocationReservationDaemon(allocationId, containerId, body, options)(fetch, basePath);
+        markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any) {
+            return InternalApiFp(configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -12409,6 +12574,19 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+     * @param {string} allocationId The ID of the allocation.
+     * @param {V1AllocationAllGatherRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationAllGather(allocationId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
      * @param {string} allocationId The id of the allocation.
      * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12437,13 +12615,13 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
      * @param {string} allocationId The id of the allocation.
-     * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+     * @param {string} resourcesId The id of the clump of resources.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationRendezvousInfo(allocationId: string, containerId: string, options?: any) {
-        return InternalApiFp(this.configuration).allocationRendezvousInfo(allocationId, containerId, options)(this.fetch, this.basePath);
+    public allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
+        return InternalApiFp(this.configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -12586,16 +12764,16 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
-     * @param {string} allocationId The allocation ID for the reservation.
-     * @param {string} containerId The container ID for the reservation.
-     * @param {V1MarkAllocationReservationDaemonRequest} body 
+     * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all resources to exit - unless they are marked as daemon resources, in which case Determined will clean them up regardless of exit status after all non-daemon resources have exited.
+     * @param {string} allocationId The id of the allocation.
+     * @param {string} resourcesId The id of the clump of resources to mark as daemon.
+     * @param {V1MarkAllocationResourcesDaemonRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public markAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any) {
-        return InternalApiFp(this.configuration).markAllocationReservationDaemon(allocationId, containerId, body, options)(this.fetch, this.basePath);
+    public markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any) {
+        return InternalApiFp(this.configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options)(this.fetch, this.basePath);
     }
 
     /**

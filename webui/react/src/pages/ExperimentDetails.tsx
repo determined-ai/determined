@@ -47,7 +47,7 @@ const ExperimentDetails: React.FC = () => {
         isSingleTrialExperiment(experimentData),
       );
     } catch (e) {
-      if (!pageError && !isAborted(e)) setPageError(e);
+      if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
   }, [
     experiment,

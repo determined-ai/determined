@@ -174,13 +174,17 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
+		log := ctx.Log().
+			WithFields(msg.LogContext.Fields()).
+			WithField("container-id", msg.ContainerID)
+		log.Infof("killing container")
+
 		killMsg := aproto.SignalContainer{
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
 		}
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			ctx.Log().WithError(err).Error("failed to write kill task message")
+			log.WithError(err).Error("failed to write kill task message")
 		}
 	case aproto.SignalContainer:
 		if a.awaitingReconnect {
@@ -197,18 +201,20 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.bufferForRecovery(ctx, msg)
 			return nil
 		}
-		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
-			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
-			msg.TaskActor.Address())
+		log := ctx.Log().
+			WithFields(msg.LogContext.Fields()).
+			WithField("container-id", msg.StartContainer.Container.ID).
+			WithField("slots", len(msg.StartContainer.Container.Devices))
+		log.Infof("starting container")
 
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
-			ctx.Log().WithError(err).Error("failed to write start container message")
+			log.WithError(err).Error("failed to write start container message")
 		}
 
 		if err := a.agentState.startContainer(ctx, msg); err != nil {
-			ctx.Log().WithError(err).Error("failed to update agent state")
+			log.WithError(err).Error("failed to update agent state")
 		}
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
@@ -431,27 +437,19 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	taskActor, ok := a.agentState.containers[sc.Container.ID]
 	check.Panic(check.True(ok, "container not allocated to agent: container %s", sc.Container.ID))
 
-	rsc := sproto.TaskContainerStateChanged{Container: sc.Container}
 	switch sc.Container.State {
 	case cproto.Running:
 		if sc.ContainerStarted.ProxyAddress == "" {
 			sc.ContainerStarted.ProxyAddress = a.address
-		}
-		rsc.ContainerStarted = &sproto.TaskContainerStarted{
-			Addresses:           sc.ContainerStarted.Addresses(),
-			NativeReservationID: sc.ContainerStarted.ContainerInfo.ID,
 		}
 	case cproto.Terminated:
 		ctx.Log().
 			WithError(sc.ContainerStopped.Failure).
 			Infof("container %s terminated", sc.Container.ID)
 		delete(a.agentState.containers, sc.Container.ID)
-		rsc.ContainerStopped = &sproto.TaskContainerStopped{
-			ContainerStopped: *sc.ContainerStopped,
-		}
 	}
 
-	ctx.Tell(taskActor, rsc)
+	ctx.Tell(taskActor, sproto.FromContainerStateChanged(sc))
 	a.agentState.containerStateChanged(ctx, sc)
 }
 
@@ -483,8 +481,8 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.ContainerReattach {
 	result := make([]aproto.ContainerReattach, 0, len(a.agentState.containers))
 	for containerID, allocation := range a.agentState.containers {
-		resp := ctx.Ask(allocation, sproto.GetTaskContainerState{
-			ContainerID: containerID,
+		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
+			ResourcesID: sproto.ResourcesID(containerID),
 		})
 		switch {
 		case resp.Error() != nil:
@@ -538,8 +536,8 @@ func (a *agent) clearNonReattachedContainers(
 			stopped := aproto.ContainerError(aproto.AgentFailed, errors.New(errorMsg))
 			ctx.Log().Infof("killing container that didn't restore: %s", cid.String())
 
-			resp := ctx.Ask(allocation, sproto.GetTaskContainerState{
-				ContainerID: cid,
+			resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
+				ResourcesID: sproto.ResourcesID(cid),
 			})
 			switch {
 			case resp.Error() != nil:

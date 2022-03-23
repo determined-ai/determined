@@ -53,7 +53,7 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-5158dec",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-97e4c60",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -225,7 +225,10 @@ func (c GCPClusterConfig) SlotType() device.Type {
 
 // Accelerator returns the GPU accelerator for the instance.
 func (c GCPClusterConfig) Accelerator() string {
-	return c.InstanceType.GPUType
+	return fmt.Sprintf("%d x %s",
+		c.InstanceType.GPUNum,
+		c.InstanceType.GPUType,
+	)
 }
 
 func (c GCPClusterConfig) buildDockerLogString() string {

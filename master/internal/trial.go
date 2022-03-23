@@ -7,6 +7,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/task"
 
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/pkg/errors"
@@ -14,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -64,10 +65,15 @@ type trial struct {
 
 	// a ref to the current allocation
 	allocation *actor.Ref
+	// a note of the user initated exit reason, if any.
+	userInitiatedExit *model.ExitedReason
+
+	logCtx logger.Context
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
+	logCtx logger.Context,
 	taskID model.TaskID,
 	jobID model.JobID,
 	jobSubmissionTime time.Time,
@@ -95,20 +101,27 @@ func newTrial(
 		config:              config,
 		taskSpec:            taskSpec,
 		warmStartCheckpoint: warmStartCheckpoint,
+
+		logCtx: logger.MergeContexts(logCtx, logger.Context{
+			"task-id":   taskID,
+			"task-type": model.TaskTypeTrial,
+		}),
 	}
 }
 
 func (t *trial) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.AddLabel("experiment-id", t.experimentID)
 		if t.idSet {
-			ctx.AddLabel("trial-id", t.id)
 			if err := t.recover(); err != nil {
 				return err
 			}
-			ctx.AddLabel("task-run-id", t.runID)
+			t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
+				"trial-id":     t.id,
+				"trial-run-id": t.runID,
+			})
 		}
+		ctx.AddLabels(t.logCtx)
 		return t.maybeAllocateTask(ctx)
 	case actor.PostStop:
 		if !t.idSet {
@@ -154,6 +167,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(spec)
+		}
+	case userInitiatedEarlyExit:
+		if err := t.handleUserInitiatedStops(ctx, msg); err != nil {
+			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
 		return t.allocationExited(ctx, msg)
@@ -212,7 +229,10 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 	ctx.Log().Info("decided to allocate trial")
 	t.runID++
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
+	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
+	ctx.AddLabel("trial-run-id", t.runID)
+
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
 		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
@@ -229,10 +249,28 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			SingleAgent: false,
 		},
 
-		Preemptible:  true,
-		DoRendezvous: true,
+		Preemptible: true,
 	}, t.db, t.rm, t.taskLogger))
 	return nil
+}
+
+const (
+	// InvalidHPKillDelay the delay before we forcibly kill a trial that said it had an invalid HP.
+	InvalidHPKillDelay = 3 * time.Second
+)
+
+func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEarlyExit) error {
+	switch msg.reason {
+	case model.InvalidHP, model.InitInvalidHP:
+		t.userInitiatedExit = &msg.reason
+		// After a short time, force us to clean up if we're still handling messages.
+		actors.NotifyAfter(ctx, InvalidHPKillDelay, model.StoppingKilledState)
+		return nil
+	case model.UserCanceled, model.Errored:
+		return fmt.Errorf("should not report special exit reason %s to the master", msg.reason)
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
@@ -268,6 +306,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		}
 		t.id = modelTrial.ID
 		t.idSet = true
+		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-id": t.id})
 		ctx.AddLabel("trial-id", t.id)
 		ctx.Tell(t.rm, sproto.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
@@ -324,7 +363,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.ErrorState)
 		}
 		return t.transition(ctx, model.CompletedState)
-	case exit.Err != nil && !aproto.IsRestartableSystemError(exit.Err):
+	case exit.Err != nil && !sproto.IsRestartableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
@@ -339,6 +378,12 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 			requestID: t.searcher.Create.RequestID,
 			reason:    model.UserCanceled,
+		})
+		return t.transition(ctx, model.CompletedState)
+	case t.userInitiatedExit != nil:
+		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
+			requestID: t.searcher.Create.RequestID,
+			reason:    *t.userInitiatedExit,
 		})
 		return t.transition(ctx, model.CompletedState)
 	}

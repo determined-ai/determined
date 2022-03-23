@@ -3,6 +3,7 @@ import datetime
 import enum
 import inspect
 import json
+import logging
 import math
 import numbers
 import os
@@ -12,8 +13,9 @@ import shutil
 import time
 import uuid
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Set, SupportsFloat, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Set, SupportsFloat, Tuple, TypeVar, cast
 
+import determined as det
 from determined import constants
 from determined.common import check, util
 
@@ -128,7 +130,7 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
             pass
         avg_metrics[name] = m
 
-    metrics = {"batch_metrics": batch_metrics, "avg_metrics": avg_metrics}
+    metrics = {"batch_metrics": batch_metrics, "avg_metrics": avg_metrics}  # type: Dict[str, Any]
     if num_inputs is not None:
         metrics["num_inputs"] = num_inputs
 
@@ -256,3 +258,38 @@ def make_timing_log(verb: str, duration: float, num_inputs: int, num_batches: in
         f"{verb}: {num_inputs} records in {humanize_float(duration)}s ({rps} records/s), "
         f"in {num_batches} batches ({bps} batches/s)"
     )
+
+
+def calculate_batch_sizes(
+    hparams: Dict[str, Any],
+    slots_per_trial: int,
+    trialname: str,
+) -> Tuple[int, int]:
+    if "global_batch_size" not in hparams:
+        raise det.errors.InvalidExperimentException(
+            "Please specify an integer `global_batch_size` hyperparameter in your experiment "
+            f"config.  It is a required hyperparameter for {trialname}-based training."
+        )
+    global_batch_size = hparams["global_batch_size"]
+    if not isinstance(global_batch_size, int):
+        raise det.errors.InvalidExperimentException(
+            "The `global_batch_size` hyperparameter must be an integer value, not "
+            f"{type(global_batch_size).__name__}"
+        )
+
+    if global_batch_size < slots_per_trial:
+        raise det.errors.InvalidExperimentException(
+            "Please set the `global_batch_size` hyperparameter to be greater or equal to the "
+            f"number of slots. Current batch_size: {global_batch_size}, slots_per_trial: "
+            f"{slots_per_trial}."
+        )
+
+    per_gpu_batch_size = global_batch_size // slots_per_trial
+    effective_batch_size = per_gpu_batch_size * slots_per_trial
+    if effective_batch_size != global_batch_size:
+        logging.warning(
+            f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} "
+            f"to divide equally across {slots_per_trial} slots."
+        )
+
+    return per_gpu_batch_size, effective_batch_size

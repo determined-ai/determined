@@ -127,6 +127,7 @@ const mapCommonV1Task = (
   type: types.CommandType,
 ): types.CommandTask => {
   return {
+    displayName: task.displayName || '',
     id: task.id,
     name: task.description,
     resourcePool: task.resourcePool,
