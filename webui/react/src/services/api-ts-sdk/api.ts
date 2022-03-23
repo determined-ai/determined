@@ -770,6 +770,20 @@ export interface V1ActivateExperimentResponse {
 }
 
 /**
+ * Response to AddProjectNoteRequest.
+ * @export
+ * @interface V1AddProjectNoteResponse
+ */
+export interface V1AddProjectNoteResponse {
+    /**
+     * The complete list of notes on a project.
+     * @type {Array<V1Note>}
+     * @memberof V1AddProjectNoteResponse
+     */
+    notes: Array<V1Note>;
+}
+
+/**
  * Agent is a pool of resources where containers are run.
  * @export
  * @interface V1Agent
@@ -2420,6 +2434,58 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
+ * Sort associated experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by their id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by their description.  - SORT_BY_START_TIME: Returns experiments sorted by time that they started.  - SORT_BY_END_TIME: Returns experiments sorted by time that they ended.  - SORT_BY_STATE: Returns experiments sorted by their state.  - SORT_BY_NUM_TRIALS: Returns experiments sorted by number of trials.  - SORT_BY_PROGRESS: Returns experiments sorted by progress.  - SORT_BY_USER: Returns experiments sorted by their user.  - SORT_BY_NAME: Returns experiments sorted by their name.
+ * @export
+ * @enum {string}
+ */
+export enum V1GetProjectExperimentsRequestSortBy {
+    UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
+    ID = <any> 'SORT_BY_ID',
+    DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
+    STARTTIME = <any> 'SORT_BY_START_TIME',
+    ENDTIME = <any> 'SORT_BY_END_TIME',
+    STATE = <any> 'SORT_BY_STATE',
+    NUMTRIALS = <any> 'SORT_BY_NUM_TRIALS',
+    PROGRESS = <any> 'SORT_BY_PROGRESS',
+    USER = <any> 'SORT_BY_USER',
+    NAME = <any> 'SORT_BY_NAME'
+}
+
+/**
+ * Response to GetProjectExperimentsRequest.
+ * @export
+ * @interface V1GetProjectExperimentsResponse
+ */
+export interface V1GetProjectExperimentsResponse {
+    /**
+     * The experiments associated with the project.
+     * @type {Array<V1Experiment>}
+     * @memberof V1GetProjectExperimentsResponse
+     */
+    experiments: Array<V1Experiment>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetProjectExperimentsResponse
+     */
+    pagination: V1Pagination;
+}
+
+/**
+ * Response to GetProjectRequest.
+ * @export
+ * @interface V1GetProjectResponse
+ */
+export interface V1GetProjectResponse {
+    /**
+     * The project requested.
+     * @type {V1Project}
+     * @memberof V1GetProjectResponse
+     */
+    project: V1Project;
+}
+
+/**
  * Response to GetResourcePoolsRequest.
  * @export
  * @interface V1GetResourcePoolsResponse
@@ -2758,6 +2824,84 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     users?: Array<V1User>;
+}
+
+/**
+ * Sort associated projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.
+ * @export
+ * @enum {string}
+ */
+export enum V1GetWorkspaceProjectsRequestSortBy {
+    UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
+    CREATIONTIME = <any> 'SORT_BY_CREATION_TIME',
+    LASTEXPERIMENTSTARTTIME = <any> 'SORT_BY_LAST_EXPERIMENT_START_TIME',
+    NAME = <any> 'SORT_BY_NAME',
+    DESCRIPTION = <any> 'SORT_BY_DESCRIPTION'
+}
+
+/**
+ * Response to GetWorkspaceProjectsRequest.
+ * @export
+ * @interface V1GetWorkspaceProjectsResponse
+ */
+export interface V1GetWorkspaceProjectsResponse {
+    /**
+     * The projects associated with the workspace.
+     * @type {Array<V1Project>}
+     * @memberof V1GetWorkspaceProjectsResponse
+     */
+    projects: Array<V1Project>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetWorkspaceProjectsResponse
+     */
+    pagination: V1Pagination;
+}
+
+/**
+ * Response to GetWorkspaceRequest.
+ * @export
+ * @interface V1GetWorkspaceResponse
+ */
+export interface V1GetWorkspaceResponse {
+    /**
+     * The workspace requested.
+     * @type {V1Workspace}
+     * @memberof V1GetWorkspaceResponse
+     */
+    workspace: V1Workspace;
+}
+
+/**
+ * Sort workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+ * @export
+ * @enum {string}
+ */
+export enum V1GetWorkspacesRequestSortBy {
+    UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
+    ID = <any> 'SORT_BY_ID',
+    NAME = <any> 'SORT_BY_NAME'
+}
+
+/**
+ * Response to GetWorkspacesRequest.
+ * @export
+ * @interface V1GetWorkspacesResponse
+ */
+export interface V1GetWorkspacesResponse {
+    /**
+     * The list of returned workspaces.
+     * @type {Array<V1Workspace>}
+     * @memberof V1GetWorkspacesResponse
+     */
+    workspaces: Array<V1Workspace>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetWorkspacesResponse
+     */
+    pagination: V1Pagination;
 }
 
 /**
@@ -3631,6 +3775,26 @@ export interface V1ModelVersion {
 }
 
 /**
+ * Note is a user comment connected to a project.
+ * @export
+ * @interface V1Note
+ */
+export interface V1Note {
+    /**
+     * The name or title of the note.
+     * @type {string}
+     * @memberof V1Note
+     */
+    name: string;
+    /**
+     * The text contents of the note.
+     * @type {string}
+     * @memberof V1Note
+     */
+    contents: string;
+}
+
+/**
  * Notebook is a Jupyter notebook in a containerized environment.
  * @export
  * @interface V1Notebook
@@ -4136,6 +4300,46 @@ export interface V1PostModelVersionResponse {
 }
 
 /**
+ * Request for creating a project.
+ * @export
+ * @interface V1PostProjectRequest
+ */
+export interface V1PostProjectRequest {
+    /**
+     * The name of the project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    name: string;
+    /**
+     * Description of the project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    description?: string;
+    /**
+     * Id of the associated workspace.
+     * @type {number}
+     * @memberof V1PostProjectRequest
+     */
+    workspaceId: number;
+}
+
+/**
+ * Response to PostProjectRequest.
+ * @export
+ * @interface V1PostProjectResponse
+ */
+export interface V1PostProjectResponse {
+    /**
+     * The project created.
+     * @type {V1Project}
+     * @memberof V1PostProjectResponse
+     */
+    project: V1Project;
+}
+
+/**
  * Create a batch of trial profiler metrics.
  * @export
  * @interface V1PostTrialProfilerMetricsBatchRequest
@@ -4200,6 +4404,34 @@ export interface V1PostUserResponse {
 }
 
 /**
+ * Request for creating a workspace.
+ * @export
+ * @interface V1PostWorkspaceRequest
+ */
+export interface V1PostWorkspaceRequest {
+    /**
+     * The name of the workspace.
+     * @type {string}
+     * @memberof V1PostWorkspaceRequest
+     */
+    name: string;
+}
+
+/**
+ * Response to PostWorkspaceRequest.
+ * @export
+ * @interface V1PostWorkspaceResponse
+ */
+export interface V1PostWorkspaceResponse {
+    /**
+     * The workspace created.
+     * @type {V1Workspace}
+     * @memberof V1PostWorkspaceResponse
+     */
+    workspace: V1Workspace;
+}
+
+/**
  * Preview hyperparameter search.
  * @export
  * @interface V1PreviewHPSearchRequest
@@ -4231,6 +4463,74 @@ export interface V1PreviewHPSearchResponse {
      * @memberof V1PreviewHPSearchResponse
      */
     simulation?: V1ExperimentSimulation;
+}
+
+/**
+ * Project is a named collection of experiments.
+ * @export
+ * @interface V1Project
+ */
+export interface V1Project {
+    /**
+     * The unique id of the project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    id: number;
+    /**
+     * The unique name of the project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    name: string;
+    /**
+     * The id of the associated workspace.
+     * @type {number}
+     * @memberof V1Project
+     */
+    workspaceId: number;
+    /**
+     * The description of the project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    description?: string;
+    /**
+     * Time of most recently started experiment within this project.
+     * @type {Date}
+     * @memberof V1Project
+     */
+    lastExperimentStartedAt?: Date;
+    /**
+     * Notes associated with this project.
+     * @type {Array<V1Note>}
+     * @memberof V1Project
+     */
+    notes: Array<V1Note>;
+    /**
+     * Count of experiments associated with this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    numExperiments: number;
+    /**
+     * Count of active experiments associated with this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    numActiveExperiments: number;
+    /**
+     * Whether this project is archived or not.
+     * @type {boolean}
+     * @memberof V1Project
+     */
+    archived: boolean;
+    /**
+     * User who created this project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    username: string;
 }
 
 /**
@@ -6061,6 +6361,38 @@ export interface V1ValidationHistoryEntry {
      * @memberof V1ValidationHistoryEntry
      */
     searcherMetric: number;
+}
+
+/**
+ * Workspace is a named collection of projects.
+ * @export
+ * @interface V1Workspace
+ */
+export interface V1Workspace {
+    /**
+     * The unique id of the workspace.
+     * @type {number}
+     * @memberof V1Workspace
+     */
+    id: number;
+    /**
+     * The unique name of the workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    name: string;
+    /**
+     * Whether this workspace is archived or not.
+     * @type {boolean}
+     * @memberof V1Workspace
+     */
+    archived: boolean;
+    /**
+     * User who created this workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    username: string;
 }
 
 
@@ -15281,6 +15613,458 @@ export class ProfilerApi extends BaseAPI {
 }
 
 /**
+ * ProjectsApi - fetch parameter creator
+ * @export
+ */
+export const ProjectsApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Add a note to a project.
+         * @param {number} projectId The id of the project.
+         * @param {V1Note} body The note to add.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addProjectNote(projectId: number, body: V1Note, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling addProjectNote.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling addProjectNote.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/notes`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1Note" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProject(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProject.');
+            }
+            const localVarPath = `/api/v1/projects/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get experiments associated with a project.
+         * @param {number} id The id of the project.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by their id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by their description.  - SORT_BY_START_TIME: Returns experiments sorted by time that they started.  - SORT_BY_END_TIME: Returns experiments sorted by time that they ended.  - SORT_BY_STATE: Returns experiments sorted by their state.  - SORT_BY_NUM_TRIALS: Returns experiments sorted by number of trials.  - SORT_BY_PROGRESS: Returns experiments sorted by progress.  - SORT_BY_USER: Returns experiments sorted by their user.  - SORT_BY_NAME: Returns experiments sorted by their name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the experiments to those matching the name.
+         * @param {string} [description] Limit the experiments to those matching the description.
+         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+         * @param {boolean} [archived] Limit experiments to those that are archived.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectExperiments.');
+            }
+            const localVarPath = `/api/v1/projects/{id}/experiments`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            if (description !== undefined) {
+                localVarQueryParameter['description'] = description;
+            }
+
+            if (labels) {
+                localVarQueryParameter['labels'] = labels;
+            }
+
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived;
+            }
+
+            if (states) {
+                localVarQueryParameter['states'] = states;
+            }
+
+            if (users) {
+                localVarQueryParameter['users'] = users;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a project.
+         * @param {number} workspaceId Id of the associated workspace.
+         * @param {V1PostProjectRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postProject(workspaceId: number, body: V1PostProjectRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling postProject.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postProject.');
+            }
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/projects`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostProjectRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * ProjectsApi - functional programming interface
+ * @export
+ */
+export const ProjectsApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Add a note to a project.
+         * @param {number} projectId The id of the project.
+         * @param {V1Note} body The note to add.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addProjectNote(projectId: number, body: V1Note, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).addProjectNote(projectId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get experiments associated with a project.
+         * @param {number} id The id of the project.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by their id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by their description.  - SORT_BY_START_TIME: Returns experiments sorted by time that they started.  - SORT_BY_END_TIME: Returns experiments sorted by time that they ended.  - SORT_BY_STATE: Returns experiments sorted by their state.  - SORT_BY_NUM_TRIALS: Returns experiments sorted by number of trials.  - SORT_BY_PROGRESS: Returns experiments sorted by progress.  - SORT_BY_USER: Returns experiments sorted by their user.  - SORT_BY_NAME: Returns experiments sorted by their name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the experiments to those matching the name.
+         * @param {string} [description] Limit the experiments to those matching the description.
+         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+         * @param {boolean} [archived] Limit experiments to those that are archived.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectExperimentsResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create a project.
+         * @param {number} workspaceId Id of the associated workspace.
+         * @param {V1PostProjectRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postProject(workspaceId: number, body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(workspaceId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * ProjectsApi - factory interface
+ * @export
+ */
+export const ProjectsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Add a note to a project.
+         * @param {number} projectId The id of the project.
+         * @param {V1Note} body The note to add.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addProjectNote(projectId: number, body: V1Note, options?: any) {
+            return ProjectsApiFp(configuration).addProjectNote(projectId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the requested project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProject(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get experiments associated with a project.
+         * @param {number} id The id of the project.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by their id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by their description.  - SORT_BY_START_TIME: Returns experiments sorted by time that they started.  - SORT_BY_END_TIME: Returns experiments sorted by time that they ended.  - SORT_BY_STATE: Returns experiments sorted by their state.  - SORT_BY_NUM_TRIALS: Returns experiments sorted by number of trials.  - SORT_BY_PROGRESS: Returns experiments sorted by progress.  - SORT_BY_USER: Returns experiments sorted by their user.  - SORT_BY_NAME: Returns experiments sorted by their name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the experiments to those matching the name.
+         * @param {string} [description] Limit the experiments to those matching the description.
+         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+         * @param {boolean} [archived] Limit experiments to those that are archived.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+         * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
+            return ProjectsApiFp(configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create a project.
+         * @param {number} workspaceId Id of the associated workspace.
+         * @param {V1PostProjectRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
+            return ProjectsApiFp(configuration).postProject(workspaceId, body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * ProjectsApi - object-oriented interface
+ * @export
+ * @class ProjectsApi
+ * @extends {BaseAPI}
+ */
+export class ProjectsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Add a note to a project.
+     * @param {number} projectId The id of the project.
+     * @param {V1Note} body The note to add.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public addProjectNote(projectId: number, body: V1Note, options?: any) {
+        return ProjectsApiFp(this.configuration).addProjectNote(projectId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the requested project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get experiments associated with a project.
+     * @param {number} id The id of the project.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by their id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by their description.  - SORT_BY_START_TIME: Returns experiments sorted by time that they started.  - SORT_BY_END_TIME: Returns experiments sorted by time that they ended.  - SORT_BY_STATE: Returns experiments sorted by their state.  - SORT_BY_NUM_TRIALS: Returns experiments sorted by number of trials.  - SORT_BY_PROGRESS: Returns experiments sorted by progress.  - SORT_BY_USER: Returns experiments sorted by their user.  - SORT_BY_NAME: Returns experiments sorted by their name.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
+     * @param {string} [name] Limit the experiments to those matching the name.
+     * @param {string} [description] Limit the experiments to those matching the description.
+     * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+     * @param {boolean} [archived] Limit experiments to those that are archived.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+     * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create a project.
+     * @param {number} workspaceId Id of the associated workspace.
+     * @param {V1PostProjectRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).postProject(workspaceId, body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
  * ShellsApi - fetch parameter creator
  * @export
  */
@@ -17560,17 +18344,17 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
+        getUser(username: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling getUser.');
             }
-            const localVarPath = `/api/v1/users/{userId}`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -17628,22 +18412,22 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling patchUser.');
+        patchUser(username: string, body: V1PatchUser, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling patchUser.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchUser.');
             }
-            const localVarPath = `/api/v1/users/{userId}`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -17714,22 +18498,22 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling setUserPassword.');
+        setUserPassword(username: string, body: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling setUserPassword.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setUserPassword.');
             }
-            const localVarPath = `/api/v1/users/{userId}/password`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}/password`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -17769,6 +18553,492 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested user.
+         * @param {string} username The username of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUser(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(username, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsers(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Patch a user's fields.
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUser(username: string, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(username, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create a new user.
+         * @param {V1PostUserRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUser(body: V1PostUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUser(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Set the requested user's password.
+         * @param {string} username The username of the user.
+         * @param {string} body The password of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setUserPassword(username: string, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(username, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * UsersApi - factory interface
+ * @export
+ */
+export const UsersApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Get the requested user.
+         * @param {string} username The username of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUser(username: string, options?: any) {
+            return UsersApiFp(configuration).getUser(username, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsers(options?: any) {
+            return UsersApiFp(configuration).getUsers(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch a user's fields.
+         * @param {string} username The username of the user.
+         * @param {V1PatchUser} body The updated user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUser(username: string, body: V1PatchUser, options?: any) {
+            return UsersApiFp(configuration).patchUser(username, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create a new user.
+         * @param {V1PostUserRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUser(body: V1PostUserRequest, options?: any) {
+            return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Set the requested user's password.
+         * @param {string} username The username of the user.
+         * @param {string} body The password of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setUserPassword(username: string, body: string, options?: any) {
+            return UsersApiFp(configuration).setUserPassword(username, body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * UsersApi - object-oriented interface
+ * @export
+ * @class UsersApi
+ * @extends {BaseAPI}
+ */
+export class UsersApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get the requested user.
+     * @param {string} username The username of the user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUser(username: string, options?: any) {
+        return UsersApiFp(this.configuration).getUser(username, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of users.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUsers(options?: any) {
+        return UsersApiFp(this.configuration).getUsers(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's fields.
+     * @param {string} username The username of the user.
+     * @param {V1PatchUser} body The updated user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public patchUser(username: string, body: V1PatchUser, options?: any) {
+        return UsersApiFp(this.configuration).patchUser(username, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create a new user.
+     * @param {V1PostUserRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public postUser(body: V1PostUserRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set the requested user's password.
+     * @param {string} username The username of the user.
+     * @param {string} body The password of the user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public setUserPassword(username: string, body: string, options?: any) {
+        return UsersApiFp(this.configuration).setUserPassword(username, body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
+ * WorkspacesApi - fetch parameter creator
+ * @export
+ */
+export const WorkspacesApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get the requested user.
+         * @param {number} userId The id of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUser(userId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
+            }
+            const localVarPath = `/api/v1/users/{userId}`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get projects associated with a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the projects to those matching the name.
+         * @param {boolean} [archived] Limit the projects to those with an archived status.
+         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspaceProjects.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}/projects`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy;
+            }
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Patch a user's fields.
+         * @param {number} userId The id of the user.
+         * @param {V1PatchUser} body The updated user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling patchUser.');
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+            const localVarPath = `/api/v1/users/{userId}`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived;
+            }
+
+            if (users) {
+                localVarQueryParameter['users'] = users;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of workspaces.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/workspaces`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived;
+            }
+
+            if (users) {
+                localVarQueryParameter['users'] = users;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Set the requested user's password.
+         * @param {number} userId The id of the user.
+         * @param {string} body The password of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setUserPassword(userId: number, body: string, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling setUserPassword.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postWorkspace.');
+            }
+            const localVarPath = `/api/v1/users/{userId}/password`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostWorkspaceRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * WorkspacesApi - functional programming interface
+ * @export
+ */
+export const WorkspacesApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17791,8 +19061,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(options);
+        getWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17825,13 +19095,19 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Create a new user.
-         * @param {V1PostUserRequest} body 
+         * @summary Get a list of workspaces.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUser(body: V1PostUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUser(body, options);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17866,10 +19142,10 @@ export const UsersApiFp = function(configuration?: Configuration) {
 };
 
 /**
- * UsersApi - factory interface
+ * WorkspacesApi - factory interface
  * @export
  */
-export const UsersApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+export const WorkspacesApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
          * 
@@ -17887,8 +19163,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(options?: any) {
-            return UsersApiFp(configuration).getUsers(options)(fetch, basePath);
+        getWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -17903,13 +19179,19 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
-         * @summary Create a new user.
-         * @param {V1PostUserRequest} body 
+         * @summary Get a list of workspaces.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the workspaces to those matching the name.
+         * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUser(body: V1PostUserRequest, options?: any) {
-            return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
         },
         /**
          * 
@@ -17926,9 +19208,9 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
 };
 
 /**
- * UsersApi - object-oriented interface
+ * WorkspacesApi - object-oriented interface
  * @export
- * @class UsersApi
+ * @class WorkspacesApi
  * @extends {BaseAPI}
  */
 export class UsersApi extends BaseAPI {
@@ -17946,13 +19228,14 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get a list of users.
+     * @summary Get the requested workspace.
+     * @param {number} id The id of the workspace.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof UsersApi
+     * @memberof WorkspacesApi
      */
-    public getUsers(options?: any) {
-        return UsersApiFp(this.configuration).getUsers(options)(this.fetch, this.basePath);
+    public getWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17962,7 +19245,7 @@ export class UsersApi extends BaseAPI {
      * @param {V1PatchUser} body The updated user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof UsersApi
+     * @memberof WorkspacesApi
      */
     public patchUser(userId: number, body: V1PatchUser, options?: any) {
         return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath);
@@ -17970,14 +19253,20 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
-     * @summary Create a new user.
-     * @param {V1PostUserRequest} body 
+     * @summary Get a list of workspaces.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME'} [sortBy] Sort the workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workspaces in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of workspaces before returning results. Negative values denote number of workspaces to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
+     * @param {string} [name] Limit the workspaces to those matching the name.
+     * @param {boolean} [archived] Limit the workspaces to those with an archived status.
+     * @param {Array<string>} [users] Limit the workspaces to those from particular users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof UsersApi
+     * @memberof WorkspacesApi
      */
-    public postUser(body: V1PostUserRequest, options?: any) {
-        return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17987,7 +19276,7 @@ export class UsersApi extends BaseAPI {
      * @param {string} body The password of the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof UsersApi
+     * @memberof WorkspacesApi
      */
     public setUserPassword(userId: number, body: string, options?: any) {
         return UsersApiFp(this.configuration).setUserPassword(userId, body, options)(this.fetch, this.basePath);
