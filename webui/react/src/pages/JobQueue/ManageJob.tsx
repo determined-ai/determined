@@ -8,7 +8,7 @@ import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { Job, JobType, RPStats } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { moveJobToPositionUpdate, orderedSchedulers } from 'utils/job';
+import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { floatToPercent, truncate } from 'utils/string';
 
 import css from './ManageJob.module.scss';
@@ -213,7 +213,7 @@ const ManageJob: React.FC<Props> = (
           <Input max={99} min={1} type="number" />
         </Form.Item>
         <Form.Item
-          hidden={schedulerType === api.V1SchedulerType.FAIRSHARE}
+          hidden={unsupportedQPosSchedulers.has(schedulerType)}
           label="Position in Queue"
           name="position">
           <Input
