@@ -213,7 +213,7 @@ const ManageJob: React.FC<Props> = (
           <Input max={99} min={1} type="number" />
         </Form.Item>
         <Form.Item
-          hidden={!process.env.IS_DEV || schedulerType === api.V1SchedulerType.FAIRSHARE}
+          hidden={schedulerType === api.V1SchedulerType.FAIRSHARE}
           label="Position in Queue"
           name="position">
           <Input
