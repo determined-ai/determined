@@ -5,7 +5,8 @@ WITH page_info AS (
         FROM experiments e
         JOIN users u ON e.owner_id = u.id
         WHERE
-            ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
+            ($7 = 0 OR e.project_id = $7)
+            AND ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
             AND ($2 = '' OR e.archived = $2::BOOL)
             AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
             AND ($4 = '' OR e.owner_id IN (SELECT unnest(string_to_array($4, ',')::int [])))
@@ -71,4 +72,3 @@ WITH page_info AS (
 SELECT
     (SELECT coalesce(json_agg(exps), '[]'::json) FROM exps) AS experiments,
     (SELECT p.page_info FROM page_info p) AS pagination
-

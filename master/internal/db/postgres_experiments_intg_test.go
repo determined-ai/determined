@@ -221,6 +221,7 @@ func TestGetExperiments(t *testing.T) {
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,
+				0,
 				tt.offset,
 				tt.limit,
 			)
