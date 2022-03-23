@@ -1,27 +1,23 @@
 .headerCell {
-  text-overflow: clip;
+  svg {
+    cursor: pointer;
+  }
   :global(.ant-table-cell) {
-    z-index: 1;
-
     user-select: none;
+    z-index: 1;
   }
-  :global(div[class='ant-table-cell']) {
+  :global(.ant-table-column-title) {
     cursor: move;
+    z-index: 0;
   }
-
   :global(.ant-table-filter-trigger) {
     cursor: pointer;
   }
-  :global(.ant-table-column-title) {
-    z-index: 0;
-    cursor: move;
-  }
-  :global(.ant-table-column-sorters:after) {
+  :global(.ant-table-column-sorters::after) {
     z-index: -2;
   }
-
-  svg {
-    cursor: pointer;
+  :global(div[class='ant-table-cell']) {
+    cursor: move;
   }
 }
 .dropOverLeftward {
@@ -30,13 +26,12 @@
 .dropOverRightward {
   border-right: 2px dashed var(--theme-colors-action-normal) !important;
 }
-
 .cell {
+  background: #fff;
   .rightClickableCellWrapper {
     display: inline;
   }
 }
-
 .columnResizeHandle {
   border-radius: 4px;
   bottom: 0;
@@ -46,8 +41,11 @@
   right: -2.5px;
   user-select: none;
   width: 4px;
-  z-index: 1;
+  z-index: 3;
 
+  &:active {
+    background: var(--theme-colors-action-normal);
+  }
   &:hover {
     background: var(--theme-colors-action-normal);
   }

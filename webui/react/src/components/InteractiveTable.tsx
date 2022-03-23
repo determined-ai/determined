@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
@@ -74,6 +75,7 @@ interface HeaderCellProps {
   index: number;
   moveColumn: (source: number, destination: number) => void;
   onResize: ResizeCallback;
+  onResizeStart: ResizeCallback;
   onResizeStop: ResizeCallback;
   title: unknown;
   width: number;
@@ -135,11 +137,12 @@ const Row = ({
   );
 };
 
-const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
+const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps) => {
   const rightClickableCellProps = useContext(RightClickableRowContext);
-  if (!isCellRightClickable) return <td {...props}>{children}</td>;
+  const classes = [ className, css.cell ];
+  if (!isCellRightClickable) return <td className={classes.join(' ')} {...props}>{children}</td>;
   return (
-    <td {...props}>
+    <td className={classes.join(' ')} {...props}>
       <div className={css.rightClickableCellWrapper} {...rightClickableCellProps}>
         {children}
       </div>
@@ -148,7 +151,10 @@ const Cell = ({ children, isCellRightClickable, ...props }: CellProps) => {
 };
 
 const HeaderCell = ({
+  layoutIsBeingModified,
+  setLayoutIsBeingModified,
   onResize,
+  onResizeStart,
   onResizeStop,
   width,
   className,
@@ -162,11 +168,17 @@ const HeaderCell = ({
   const ref = useRef<HTMLDivElement>(null);
   const classes = [ css.headerCell ];
 
+  const [ , drag ] = useDrag({
+    canDrag: () => !layoutIsBeingModified,
+    item: { index },
+    type,
+  });
+
   const [ { isOver, dropClassName }, drop ] = useDrop({
     accept: type,
     collect: (monitor) => {
 
-      const dragItem = (monitor.getItem() || {}) as DndItem;
+      const dragItem = (monitor.getItem() || {}); // as DndItem;
       const dragIndex = dragItem?.index;
       if (dragIndex == null || dragIndex === index) {
         return {};
@@ -182,10 +194,7 @@ const HeaderCell = ({
       }
     },
   });
-  const [ , drag ] = useDrag({
-    item: { index },
-    type,
-  });
+
   drop(drag(ref));
 
   if (isOver) classes.push(dropClassName ?? '');
@@ -208,6 +217,7 @@ const HeaderCell = ({
       height={0}
       width={width || MIN_COLUMN_WIDTH}
       onResize={onResize}
+      onResizeStart={onResizeStart}
       onResizeStop={onResizeStop}>
       <th
         className={classes.join(' ')}>
@@ -235,11 +245,14 @@ const InteractiveTable: InteractiveTable = ({
   ...props
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [ widths, setWidths ] = useState(settings?.columnWidths);
+  const [ widthData, setWidthData ] = useState({ offset: 0, widths: settings?.columnWidths });
+  const [ layoutIsBeingModified, setLayoutIsBeingModified ] = useState(false);
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  useEffect(() => setWidths(settings.columnWidths), [ settings.columnWidths ]);
+  useEffect(() => setWidthData({ offset: 0, widths: settings.columnWidths }), [
+    settings.columnWidths,
+  ]);
 
   const handleChange = useCallback(
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -280,49 +293,127 @@ const InteractiveTable: InteractiveTable = ({
       throttle(
         DEFAULT_RESIZE_THROTTLE_TIME,
         (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
-          const column = settings.columns[index];
-          const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
-          const targetWidth = Math.floor(Math.max(size.width, minWidth));
-          const newWidths = settings.columnWidths.map((w: number, i: number) =>
-            index === i ? targetWidth : w);
-          setWidths(newWidths);
+          setWidthData(({ widths: prevWidths, offset: prevOffset }) => {
+
+            const column = settings.columns[index];
+            const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
+            const targetWidth = size.width;
+            if (targetWidth < minWidth) {
+              return { offset: minWidth - targetWidth, widths: prevWidths };
+            } else {
+              const adjustedTargetWidth = targetWidth - prevOffset;
+              const newWidth = Math.max(adjustedTargetWidth, minWidth);
+              const newOffset = Math.max(prevOffset - adjustedTargetWidth, 0);
+              const newWidths = prevWidths.map((w: number, i: number) =>
+                index === i ? newWidth : w);
+              return { offset: newOffset, widths: newWidths };
+
+            }
+
+          });
         },
       ),
-    [ settings.columnWidths, settings.columns ],
+    [ settings.columns ],
+  );
+
+  // const handleResize = useCallback(
+  //   (index) =>
+  //     throttle(
+  //       DEFAULT_RESIZE_THROTTLE_TIME,
+  //       (e: Event, { size }: ResizeCallbackData) => {
+  //         const column = settings.columns[index];
+  //         const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
+  //         const targetWidth = Math.max(size.width, minWidth);
+  //         // const targetWidth = Math.floor(Math.max(size.width, minWidth));
+  //         setWidths(prevWidths => {
+  //           const delta = targetWidth - prevWidths[index];
+  //           const shiftRight = delta >= 0;
+  //           const numCompensatingColumns = shiftRight ? prevWidths.length - index - 1 : index;
+  //           const deltaEach = -delta / numCompensatingColumns;
+  //           // console.log(deltaEach);
+
+  //           // const prevSum = prevWidths.reduce((sum, width) => sum + width, 0);
+  //           // const targetSum = prevSum + (targetWidth - colPrevWidth);
+  //           // const scaling = targetSum / prevSum;
+  //           let newWidths;
+  //           if (shiftRight) {
+  //             newWidths = prevWidths.map((w: number, i: number) =>
+  //               i === index ? targetWidth : i > index ? (w + deltaEach) : w);
+  //           } else {
+  //             newWidths = prevWidths.map((w: number, i: number) =>
+  //               i === index ? targetWidth : i < index ? w + deltaEach : w);
+  //           }
+  //           console.log(targetWidth, newWidths.reduce((a, b) => a + b));
+  //           return newWidths;
+
+  //         });
+  //       },
+  //     ),
+  //   [ settings.columns ],
+  // );
+
+  // const handleResizeStop = useCallback(
+  //   (index) => (e: Event, { size }: ResizeCallbackData) => {
+  //     const column = settings.columns[index];
+  //     const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
+  //     const targetWidth = Math.floor(Math.max(size.width, minWidth));
+  //     const newWidths = settings.columnWidths.map((w: number, i: number) =>
+  //       index === i ? targetWidth : w);
+  //     updateSettings({ columnWidths: newWithds });
+  //   },
+  //   [ updateSettings, settings.columns, settings.columnWidths ],
+  // );
+
+  const handleResizeStart = useCallback(
+    () => {
+      setLayoutIsBeingModified(true);
+    },
+    [ setLayoutIsBeingModified ],
   );
 
   const handleResizeStop = useCallback(
-    (index) => (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
-      const column = settings.columns[index];
-      const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
-      const targetWidth = Math.floor(Math.max(size.width, minWidth));
-      const newWidths = settings.columnWidths.map((w: number, i: number) =>
-        index === i ? targetWidth : w);
-      updateSettings({ columnWidths: newWidths });
+    () => {
+      updateSettings({ columnWidths: widthData.widths });
+      setLayoutIsBeingModified(false);
     },
-    [ updateSettings, settings.columns, settings.columnWidths ],
+    [ updateSettings, widthData ],
   );
 
-  const onHeaderCell = useCallback((index, columnSpec) => {
-    return () => {
-      const filterActive = !!columnSpec?.isFiltered?.(settings);
-      return {
-        columnName: columnSpec.title,
-        filterActive,
-        index,
-        moveColumn,
-        onResize: handleResize(index),
-        onResizeStop: handleResizeStop(index),
-        width: widths[index],
+  const onHeaderCell = useCallback(
+    (index, columnSpec) => {
+      return () => {
+        const filterActive = !!columnSpec?.isFiltered?.(settings);
+        return {
+          columnName: columnSpec.title,
+          filterActive,
+          index,
+          layoutIsBeingModified,
+          moveColumn,
+          onResize: handleResize(index),
+          onResizeStart: handleResizeStart,
+          onResizeStop: handleResizeStop,
+          setLayoutIsBeingModified,
+          width: widthData?.widths[index],
+        };
       };
-    };
-  }, [ handleResize, handleResizeStop, widths, moveColumn, settings ]);
+    },
+    [
+      handleResize,
+      handleResizeStop,
+      widthData,
+      moveColumn,
+      settings,
+      layoutIsBeingModified,
+      setLayoutIsBeingModified,
+      handleResizeStart,
+    ],
+  );
 
   const renderColumns: ColumnsType<ExperimentItem> = useMemo(
     () => [
       ...settings.columns.map((columnName, index) => {
         const column = columnSpec[columnName];
-        const columnWidth = widths[index];
+        const columnWidth = widthData.widths[index];
         const sortOrder =
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
@@ -334,7 +425,7 @@ const InteractiveTable: InteractiveTable = ({
         };
       }, columnSpec.action) as ColumnsType<ExperimentItem>,
     ],
-    [ settings.columns, widths, settings.sortKey, settings.sortDesc, columnSpec, onHeaderCell ],
+    [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnSpec, onHeaderCell ],
   );
 
   const components = {
