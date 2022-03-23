@@ -7414,6 +7414,44 @@ def post_MarkAllocationResourcesDaemon(
         return
     raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
+def post_MoveExperiment(
+    session: "client.Session",
+    *,
+    experimentId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/move",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveExperiment", _resp)
+
+def post_MoveProject(
+    session: "client.Session",
+    *,
+    projectId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{projectId}/move",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveProject", _resp)
+
 def patch_PatchExperiment(
     session: "client.Session",
     *,

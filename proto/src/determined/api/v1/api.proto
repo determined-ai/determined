@@ -1392,4 +1392,22 @@ service Determined {
       tags: "Projects"
     };
   }
+  // Move a project into a workspace.
+  rpc MoveProject(MoveProjectRequest) returns (MoveProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{projectId}/move"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Move an experiment into a project.
+  rpc MoveExperiment(MoveExperimentRequest) returns (MoveExperimentResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experimentId}/move"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
 }

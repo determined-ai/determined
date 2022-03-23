@@ -3755,6 +3755,22 @@ export interface V1ModelVersion {
 }
 
 /**
+ * Response to MoveExperimentRequest.
+ * @export
+ * @interface V1MoveExperimentResponse
+ */
+export interface V1MoveExperimentResponse {
+}
+
+/**
+ * Response to MoveProjectRequest.
+ * @export
+ * @interface V1MoveProjectResponse
+ */
+export interface V1MoveProjectResponse {
+}
+
+/**
  * Note is a user comment connected to a project.
  * @export
  * @interface V1Note
@@ -9416,6 +9432,43 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Move an experiment into a project.
+         * @param {number} experimentId The id of the experiment being moved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveExperiment(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling moveExperiment.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/move`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
          * @param {V1PatchExperiment} body Patched experiment attributes.
@@ -10029,6 +10082,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Move an experiment into a project.
+         * @param {number} experimentId The id of the experiment being moved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiment(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
          * @param {V1PatchExperiment} body Patched experiment attributes.
@@ -10340,6 +10412,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Move an experiment into a project.
+         * @param {number} experimentId The id of the experiment being moved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveExperiment(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).moveExperiment(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Patch an experiment's fields.
          * @param {number} experimentId The id of the experiment.
          * @param {V1PatchExperiment} body Patched experiment attributes.
@@ -10624,6 +10706,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public killTrial(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Move an experiment into a project.
+     * @param {number} experimentId The id of the experiment being moved.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public moveExperiment(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).moveExperiment(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -15909,6 +16003,43 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Move a project into a workspace.
+         * @param {number} projectId The id of the project being moved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveProject(projectId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling moveProject.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/move`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update a project.
          * @param {number} id The id of the project.
          * @param {V1PatchProject} body The desired project fields and values to update.
@@ -16097,6 +16228,25 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Move a project into a workspace.
+         * @param {number} projectId The id of the project being moved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveProject(projectId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).moveProject(projectId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Update a project.
          * @param {number} id The id of the project.
          * @param {V1PatchProject} body The desired project fields and values to update.
@@ -16197,6 +16347,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Move a project into a workspace.
+         * @param {number} projectId The id of the project being moved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveProject(projectId: number, options?: any) {
+            return ProjectsApiFp(configuration).moveProject(projectId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Update a project.
          * @param {number} id The id of the project.
          * @param {V1PatchProject} body The desired project fields and values to update.
@@ -16284,6 +16444,18 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
         return ProjectsApiFp(this.configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Move a project into a workspace.
+     * @param {number} projectId The id of the project being moved.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public moveProject(projectId: number, options?: any) {
+        return ProjectsApiFp(this.configuration).moveProject(projectId, options)(this.fetch, this.basePath);
     }
 
     /**
