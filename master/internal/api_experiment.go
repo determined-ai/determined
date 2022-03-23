@@ -288,6 +288,7 @@ func (a *apiServer) GetExperiments(
 		labelFilterExpr,
 		req.Description,
 		req.Name,
+		0,
 		req.Offset,
 		req.Limit,
 	)
