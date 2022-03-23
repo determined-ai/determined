@@ -1,8 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -45,25 +43,14 @@ func calculateDesiredNewAgentNum(
 
 	}
 
-	fmt.Printf("before adding groups slotSum: %d", slotSum)
-	fmt.Print("\n")
-
 	for g, groupSlotSum := range groupSlotsNeeded {
 		maxSlots := g.maxSlots
 		if maxSlots != nil {
-			fmt.Printf("g id: %d", *g.maxSlots)
-			fmt.Printf("groupSlotSum: %d", groupSlotSum)
-			fmt.Print("\n")
 			slotSum += min(*maxSlots, groupSlotSum)
 		} else {
-			fmt.Printf("no max slots")
-			fmt.Printf("groupSlotSum: %d", groupSlotSum)
-			fmt.Print("\n")
 			slotSum += groupSlotSum
 		}
 	}
-
-	fmt.Printf("slotSum: %d", slotSum)
 
 	numAgentByZeroSlot, numAgentBySlot := 0, 0
 	switch {

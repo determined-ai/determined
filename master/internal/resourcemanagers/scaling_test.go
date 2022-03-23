@@ -42,8 +42,11 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	// ceil(26/5) = 6
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, groupMap, 5, 10), 6)
 
-	/*taskList = newTaskList()
+	system = actor.NewSystem(t.Name())
+	taskList = newTaskList()
+
 	// Test one-slot allocated and pending tasks.
+
 	forceAddTask(t, system, taskList, "task1", 1, 1)
 	forceAddTask(t, system, taskList, "task2", 0, 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 100), 0)
@@ -137,5 +140,5 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 1), 3)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 0, 2), 1)
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 1, 2), 9)
-	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 2), 3)*/
+	assert.Equal(t, calculateDesiredNewAgentNum(taskList, nil, 2, 2), 3)
 }
