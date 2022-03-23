@@ -24,9 +24,6 @@ type priorityScheduler struct {
 // AllocReqs is an alias for a list of Allocate Requests.
 type AllocReqs = []*sproto.AllocateRequest
 
-// REMOVEME can't replace groups identifier with job id since not all groups are
-// associated with a job, eg GC tasks that aren't related to a job.
-
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *config.SchedulerConfig) Scheduler {
 	return &priorityScheduler{
@@ -53,21 +50,6 @@ func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor
 }
 
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	/*
-		compute a single numerical ordering for allocationreuqests that can be modified.
-		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms
-		of priority. do we completely hide these from the user? discussed: we shouldn't show these to
-		the user
-		. either way we
-		1. get a total ordering of allocation requests
-		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any,
-		maphallocationrequests to their jobid, per job id only keep the first occurrence
-		3. convert the resulting ordered list of jobids into a Job type for job apis
-
-		Once jobs carry a queue position attribute with them it'll be what
-		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
-	*/
-
 	reqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
 	jobQInfo, _ := reduceToJobQInfo(reqs)
 	return jobQInfo
@@ -312,11 +294,11 @@ func comparePositions(a, b *sproto.AllocateRequest, jobPositions jobSortState) i
 	if !aOk || !bOk {
 		// we shouldn't run into this situation once k8 support is implemented other than
 		// when testing.
-		return aReqComparator(a, b) * -1 // CHECK
+		return aReqComparator(a, b) * -1
 	}
 	switch {
 	case aPosition == bPosition:
-		return aReqComparator(a, b) * -1 // CHECK
+		return aReqComparator(a, b) * -1
 	case aPosition.LessThan(zero) || bPosition.LessThan(zero):
 		if aPosition.GreaterThan(zero) {
 			return 1
@@ -358,7 +340,7 @@ func sortTasksWithPosition(
 			}
 		}
 
-		return comparePositions(reqs[i], reqs[j], jobPositions) > 0 // CHECK
+		return comparePositions(reqs[i], reqs[j], jobPositions) > 0
 	})
 
 	return reqs

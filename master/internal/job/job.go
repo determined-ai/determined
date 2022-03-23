@@ -56,13 +56,13 @@ type (
 	// SetGroupWeight sets the weight of a group in the fair share scheduler.
 	SetGroupWeight struct {
 		Weight       float64
-		ResourcePool string // TODO are we using this?
+		ResourcePool string
 		Handler      *actor.Ref
 	}
 	// SetGroupPriority sets the priority of the group in the priority scheduler.
 	SetGroupPriority struct {
 		Priority     int
-		ResourcePool string // TODO are we using this?
+		ResourcePool string
 		Handler      *actor.Ref
 	}
 	// SetResourcePool switches the resource pool that the job belongs to.
@@ -270,8 +270,6 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				if action.ResourcePool == "" {
 					errors = append(errors, "resource pool must be set")
 				}
-				// TODO tell whoever keeping track of the qposition for this job
-				// to forget it. (depends..)
 				resp := ctx.Ask(jobActor, SetResourcePool{
 					ResourcePool: action.ResourcePool,
 				})
