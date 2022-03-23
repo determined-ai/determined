@@ -22,7 +22,7 @@ import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
-  unsupportedQPosition } from 'utils/job';
+  unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
@@ -120,7 +120,7 @@ const JobQueue: React.FC = () => {
     };
     if (selectedRp && isJobOrderAvailable &&
         job.summary.jobsAhead > 0 && canManageJob(job, selectedRp) &&
-        !unsupportedQPosition.has(selectedRp.schedulerType)) {
+        !unsupportedQPosSchedulers.has(selectedRp.schedulerType)) {
       triggers[JobAction.MoveToTop] = () => moveJobToPosition(jobs, job.jobId, 1);
     }
 
