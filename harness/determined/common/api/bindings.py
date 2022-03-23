@@ -1108,6 +1108,7 @@ class v1Experiment:
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
         progress: "typing.Optional[float]" = None,
+        projectId: "typing.Optional[int]" = None,
         resourcePool: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -1127,6 +1128,7 @@ class v1Experiment:
         self.jobId = jobId
         self.forkedFrom = forkedFrom
         self.progress = progress
+        self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1148,6 +1150,7 @@ class v1Experiment:
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+            projectId=obj.get("projectId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1169,6 +1172,7 @@ class v1Experiment:
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
+            "projectId": self.projectId if self.projectId is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -7417,6 +7421,7 @@ def post_MarkAllocationResourcesDaemon(
 def post_MoveExperiment(
     session: "client.Session",
     *,
+    body: int,
     experimentId: int,
 ) -> None:
     _params = None
@@ -7424,7 +7429,7 @@ def post_MoveExperiment(
         method="POST",
         path=f"/api/v1/experiments/{experimentId}/move",
         params=_params,
-        json=None,
+        json=body,
         data=None,
         headers=None,
         timeout=None,
@@ -7436,6 +7441,7 @@ def post_MoveExperiment(
 def post_MoveProject(
     session: "client.Session",
     *,
+    body: int,
     projectId: int,
 ) -> None:
     _params = None
@@ -7443,7 +7449,7 @@ def post_MoveProject(
         method="POST",
         path=f"/api/v1/projects/{projectId}/move",
         params=_params,
-        json=None,
+        json=body,
         data=None,
         headers=None,
         timeout=None,

@@ -14,6 +14,7 @@ SELECT
     e.progress AS progress,
     e.job_id AS job_id,
     e.parent_id AS forked_from,
+    e.project_id AS project_id,
     u.username AS username
 FROM
     experiments e
