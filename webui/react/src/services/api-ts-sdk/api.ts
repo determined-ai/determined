@@ -4404,7 +4404,7 @@ export interface V1PostProjectRequest {
      * @type {string}
      * @memberof V1PostProjectRequest
      */
-    description: string;
+    description?: string;
     /**
      * Id of the associated workspace.
      * @type {number}

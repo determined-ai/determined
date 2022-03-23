@@ -3774,9 +3774,9 @@ class v1PostModelVersionResponse:
 class v1PostProjectRequest:
     def __init__(
         self,
-        description: str,
         name: str,
         workspaceId: int,
+        description: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
@@ -3786,14 +3786,14 @@ class v1PostProjectRequest:
     def from_json(cls, obj: Json) -> "v1PostProjectRequest":
         return cls(
             name=obj["name"],
-            description=obj["description"],
+            description=obj.get("description", None),
             workspaceId=obj["workspaceId"],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "name": self.name,
-            "description": self.description,
+            "description": self.description if self.description is not None else None,
             "workspaceId": self.workspaceId,
         }
 

@@ -100,7 +100,7 @@ message GetProjectExperimentsResponse {
 // Request for creating a project.
 message PostProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "description", "name", "workspace_id" ] }
+    json_schema: { required: [ "name", "workspace_id" ] }
   };
 
   // The name of the project.
