@@ -4160,26 +4160,6 @@ export interface V1PatchProject {
 }
 
 /**
- * Request for updating a project.
- * @export
- * @interface V1PatchProjectRequest
- */
-export interface V1PatchProjectRequest {
-    /**
-     * The id of the project.
-     * @type {number}
-     * @memberof V1PatchProjectRequest
-     */
-    id?: number;
-    /**
-     * The desired project fields and values to update.
-     * @type {V1PatchProject}
-     * @memberof V1PatchProjectRequest
-     */
-    project?: V1PatchProject;
-}
-
-/**
  * Response to PatchProjectRequest.
  * @export
  * @interface V1PatchProjectResponse
@@ -4233,26 +4213,6 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     name?: string;
-}
-
-/**
- * Request for updating a workspace.
- * @export
- * @interface V1PatchWorkspaceRequest
- */
-export interface V1PatchWorkspaceRequest {
-    /**
-     * The id of the workspace.
-     * @type {number}
-     * @memberof V1PatchWorkspaceRequest
-     */
-    id?: number;
-    /**
-     * The desired workspace fields and values to update.
-     * @type {V1PatchWorkspace}
-     * @memberof V1PatchWorkspaceRequest
-     */
-    workspace?: V1PatchWorkspace;
 }
 
 /**
@@ -15939,11 +15899,11 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Update a project.
          * @param {number} id The id of the project.
-         * @param {V1PatchProjectRequest} body 
+         * @param {V1PatchProject} body The desired project fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchProject(id: number, body: V1PatchProjectRequest, options: any = {}): FetchArgs {
+        patchProject(id: number, body: V1PatchProject, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling patchProject.');
@@ -15973,7 +15933,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchProjectRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchProject" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -16127,11 +16087,11 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Update a project.
          * @param {number} id The id of the project.
-         * @param {V1PatchProjectRequest} body 
+         * @param {V1PatchProject} body The desired project fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchProject(id: number, body: V1PatchProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
+        patchProject(id: number, body: V1PatchProject, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject(id, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -16227,11 +16187,11 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Update a project.
          * @param {number} id The id of the project.
-         * @param {V1PatchProjectRequest} body 
+         * @param {V1PatchProject} body The desired project fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchProject(id: number, body: V1PatchProjectRequest, options?: any) {
+        patchProject(id: number, body: V1PatchProject, options?: any) {
             return ProjectsApiFp(configuration).patchProject(id, body, options)(fetch, basePath);
         },
         /**
@@ -16318,12 +16278,12 @@ export class ProjectsApi extends BaseAPI {
      * 
      * @summary Update a project.
      * @param {number} id The id of the project.
-     * @param {V1PatchProjectRequest} body 
+     * @param {V1PatchProject} body The desired project fields and values to update.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public patchProject(id: number, body: V1PatchProjectRequest, options?: any) {
+    public patchProject(id: number, body: V1PatchProject, options?: any) {
         return ProjectsApiFp(this.configuration).patchProject(id, body, options)(this.fetch, this.basePath);
     }
 
@@ -19279,11 +19239,11 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * 
          * @summary Update a workspace.
          * @param {number} id The id of the workspace.
-         * @param {V1PatchWorkspaceRequest} body 
+         * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchWorkspace(id: number, body: V1PatchWorkspaceRequest, options: any = {}): FetchArgs {
+        patchWorkspace(id: number, body: V1PatchWorkspace, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling patchWorkspace.');
@@ -19313,7 +19273,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchWorkspaceRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchWorkspace" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -19463,11 +19423,11 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * 
          * @summary Update a workspace.
          * @param {number} id The id of the workspace.
-         * @param {V1PatchWorkspaceRequest} body 
+         * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchWorkspace(id: number, body: V1PatchWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
+        patchWorkspace(id: number, body: V1PatchWorkspace, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).patchWorkspace(id, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -19564,11 +19524,11 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * 
          * @summary Update a workspace.
          * @param {number} id The id of the workspace.
-         * @param {V1PatchWorkspaceRequest} body 
+         * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchWorkspace(id: number, body: V1PatchWorkspaceRequest, options?: any) {
+        patchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
             return WorkspacesApiFp(configuration).patchWorkspace(id, body, options)(fetch, basePath);
         },
         /**
@@ -19656,12 +19616,12 @@ export class WorkspacesApi extends BaseAPI {
      * 
      * @summary Update a workspace.
      * @param {number} id The id of the workspace.
-     * @param {V1PatchWorkspaceRequest} body 
+     * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public patchWorkspace(id: number, body: V1PatchWorkspaceRequest, options?: any) {
+    public patchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
         return WorkspacesApiFp(this.configuration).patchWorkspace(id, body, options)(this.fetch, this.basePath);
     }
 

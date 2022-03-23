@@ -1317,7 +1317,7 @@ service Determined {
   rpc PatchWorkspace(PatchWorkspaceRequest) returns (PatchWorkspaceResponse) {
     option (google.api.http) = {
       patch: "/api/v1/workspaces/{id}"
-      body: "*"
+      body: "workspace"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Workspaces"
@@ -1376,7 +1376,7 @@ service Determined {
   rpc PatchProject(PatchProjectRequest) returns (PatchProjectResponse) {
     option (google.api.http) = {
       patch: "/api/v1/projects/{id}"
-      body: "*"
+      body: "project"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

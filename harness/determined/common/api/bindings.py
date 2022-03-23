@@ -3529,28 +3529,6 @@ class v1PatchProject:
             "description": self.description if self.description is not None else None,
         }
 
-class v1PatchProjectRequest:
-    def __init__(
-        self,
-        id: "typing.Optional[int]" = None,
-        project: "typing.Optional[v1PatchProject]" = None,
-    ):
-        self.id = id
-        self.project = project
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchProjectRequest":
-        return cls(
-            id=obj.get("id", None),
-            project=v1PatchProject.from_json(obj["project"]) if obj.get("project", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "id": self.id if self.id is not None else None,
-            "project": self.project.to_json() if self.project is not None else None,
-        }
-
 class v1PatchProjectResponse:
     def __init__(
         self,
@@ -3621,28 +3599,6 @@ class v1PatchWorkspace:
     def to_json(self) -> typing.Any:
         return {
             "name": self.name if self.name is not None else None,
-        }
-
-class v1PatchWorkspaceRequest:
-    def __init__(
-        self,
-        id: "typing.Optional[int]" = None,
-        workspace: "typing.Optional[v1PatchWorkspace]" = None,
-    ):
-        self.id = id
-        self.workspace = workspace
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchWorkspaceRequest":
-        return cls(
-            id=obj.get("id", None),
-            workspace=v1PatchWorkspace.from_json(obj["workspace"]) if obj.get("workspace", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "id": self.id if self.id is not None else None,
-            "workspace": self.workspace.to_json() if self.workspace is not None else None,
         }
 
 class v1PatchWorkspaceResponse:
@@ -7514,7 +7470,7 @@ def patch_PatchModelVersion(
 def patch_PatchProject(
     session: "client.Session",
     *,
-    body: "v1PatchProjectRequest",
+    body: "v1PatchProject",
     id: int,
 ) -> "v1PatchProjectResponse":
     _params = None
@@ -7554,7 +7510,7 @@ def patch_PatchUser(
 def patch_PatchWorkspace(
     session: "client.Session",
     *,
-    body: "v1PatchWorkspaceRequest",
+    body: "v1PatchWorkspace",
     id: int,
 ) -> "v1PatchWorkspaceResponse":
     _params = None
