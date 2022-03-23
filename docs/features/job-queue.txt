@@ -50,14 +50,14 @@ For more information about the CLI options, see the CLI documentation or use the
 command.
 
 The WebUI and the CLI display a table of results, ordered by scheduling order. The scheduling order
-does not represent the job priority. In addition to job order, the table incudes the job states and
+does not represent the job priority. In addition to job order, the table includes the job states and
 number of slots allocated to each job.
 
 **********************
  Modify the Job Queue
 **********************
 
-The job queue can be changed in the WebUI **Job Queue** Section or by using the CLI ``det job
+The job queue can be changed in the WebUI **Job Queue** section or by using the CLI ``det job
 update`` command. You can make changes on a per-job basis by selecting a job and a job operation.
 Available operations include:
 
@@ -75,13 +75,13 @@ To modify the job queue in the Webui,
 #. Find the job to modify.
 #. Click the three dots in the right-most column of the job.
 #. Find and click the **Manage Job** option.
-#. Make the change you want on the pop up page, and click **OK**.
+#. Make the change you want on the pop-up page, and click **OK**.
 
 CLI
 ===
 
-To modify the job queue in the CLI, use the ``det job update`` command. run ``det job update --help``
-for more information. Example operations:
+To modify the job queue in the CLI, use the ``det job update`` command. Run ``det job update
+--help`` for more information. Example operations:
 
 .. code::
 
@@ -125,7 +125,7 @@ Example workflow:
  Job Queue Constraints
 ***********************
 
-Using the job queue to modify jobs has a number of constraints:
+There are a number of constraints associated with using the job queue to modify jobs:
 
 -  The priority and fair share fields are mutually exclusive. The priority field is only active for
    the priority scheduler and the fair share field is only active for the fair share scheduler. It
