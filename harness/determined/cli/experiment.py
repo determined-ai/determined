@@ -336,10 +336,10 @@ def describe(args: Namespace) -> None:
         + v_metrics_headers
     )
 
+    wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
             workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
-            wl_output: Dict[int, List[Any]] = {}
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload | None = None
