@@ -3,6 +3,7 @@ import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
+import useResize from 'hooks/useResize';
 import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
 import React, {
   createContext,
@@ -16,7 +17,7 @@ import React, {
 import 'antd/dist/antd.min.css';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { DraggableCore } from 'react-draggable';
+import Draggable, { DraggableCore } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
 import {
   ExperimentItem,
@@ -25,8 +26,9 @@ import {
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
 
+import { isAbsolute } from 'path';
+
 const DEFAULT_RESIZE_THROTTLE_TIME = 10;
-const MIN_COLUMN_WIDTH = 40;
 
 const type = 'DraggableColumn';
 
@@ -151,8 +153,6 @@ const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps
 };
 
 const HeaderCell = ({
-  setColumnBeingMoved,
-  columnBeingMoved,
   onResize,
   onResizeStart,
   onResizeStop,
@@ -165,82 +165,63 @@ const HeaderCell = ({
   title: unusedTitleFromAntd,
   ...props
 }: HeaderCellProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const reorderRef = useRef<HTMLDivElement>(null);
+  const resizingRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef(null);
+
   const classes = [ css.headerCell ];
-  const [ , drag ] = useDrag({
-    canDrag: () => {
-      setColumnBeingMoved(true); return true;
-    },
-    end: () => setColumnBeingMoved(false),
-    item: { index },
-    type,
-  });
+  // const [ , drag ] = useDrag({
+  //   item: { index },
+  //   type,
+  // });
 
-  const [ { isOver, dropClassName }, drop ] = useDrop({
-    accept: type,
-    collect: (monitor) => {
+  // const [ { isOver, dropClassName }, drop ] = useDrop({
+  //   accept: type,
+  //   collect: (monitor) => {
 
-      const dragItem = (monitor.getItem() || {}); // as DndItem;
-      const dragIndex = dragItem?.index;
-      if (dragIndex == null || dragIndex === index) {
-        return {};
-      }
-      return {
-        dropClassName: dragIndex > index ? css.dropOverLeftward : css.dropOverRightward,
-        isOver: monitor.isOver(),
-      };
-    },
-    drop: (item: DndItem) => {
-      if (item.index != null) {
-        moveColumn(item.index, index);
-      }
-    },
-  });
+  //     const dragItem = (monitor.getItem() || {}); // as DndItem;
+  //     const dragIndex = dragItem?.index;
+  //     if (dragIndex == null || dragIndex === index) {
+  //       return {};
+  //     }
+  //     return {
+  //       dropClassName: dragIndex > index ? css.dropOverLeftward : css.dropOverRightward,
+  //       isOver: monitor.isOver(),
+  //     };
+  //   },
+  //   drop: (item: DndItem) => {
+  //     if (item.index != null) {
+  //       moveColumn(item.index, index);
+  //     }
+  //   },
+  // });
 
-  drop(drag(ref));
+  // drop(drag(reorderRef));
 
-  if (isOver) classes.push(dropClassName ?? '');
+  // if (isOver) classes.push(dropClassName ?? '');
   if (filterActive) classes.push(css.headerFilterOn);
 
   if (!columnName) {
     return <th className={className} {...props} />;
   }
-  return (
-  // <Resizable
-  //   draggableOpts={{ enableUserSelectHack: false }}
-  //   handle={(
-  //     <span
-  //       className={css.columnResizeHandle}
-  //       onClick={(e) => {
-  //         e.stopPropagation();
-  //       }}
-  //     />
-  //   )}
-  //   height={0}
-  //   width={width || MIN_COLUMN_WIDTH}
-  //   onResize={onResize}
-  //   onResizeStart={onResizeStart}
-  //   onResizeStop={onResizeStop}>
-
+  const tableCell = (
     <th
       className={classes.join(' ')}>
       <div
         className={`${className} ${css.columnDraggingDiv}`}
-        ref={ref}
+        ref={reorderRef}
         title={columnName}
         onClick={e => e.stopPropagation()}
         {...props}
       />
       <DraggableCore
-        cancel="div"
-        disabled={columnBeingMoved}
-        enableUserSelectHack={false}
-        handle={`.${css.columnResizeHandle}`}
+        nodeRef={resizingRef}
         onDrag={onResize}
         onStart={onResizeStart}
         onStop={onResizeStop}>
         <span
           className={css.columnResizeHandle}
+          ref={resizingRef}
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -248,8 +229,22 @@ const HeaderCell = ({
 
       </DraggableCore>
     </th>
+  );
+  const preview = React.cloneElement(tableCell, {
+    ref: previewRef,
+    style: { position: 'absolute', translate: '(0px, 0px)' },
+  });
+  console.log(preview);
+  return (
+    <>
+      {preview}
+      <DraggableCore
+        nodeRef={reorderRef}
+        onDrag={(e, { x }) => preview.ref.current.style.transform = `translate(${x}px, 0px) `}>
+        {tableCell}
 
-  // </Resizable>
+      </DraggableCore>
+    </>
   );
 };
 
@@ -267,8 +262,8 @@ const InteractiveTable: InteractiveTable = ({
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({ widths: settings?.columnWidths });
-  const [ columnBeingMoved, setColumnBeingMoved ] = useState(false);
-  console.log(columnBeingMoved);
+  const resize = useResize(tableRef);
+  // console.log(resize.width, widthData.widths.reduce((a, b) => a + b));
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
@@ -312,12 +307,6 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleResize = useCallback(
     (index) => {
-      if (columnBeingMoved) {
-        return () => {
-          console.log('cancel');
-          return false;
-        };
-      }
       return throttle(
         DEFAULT_RESIZE_THROTTLE_TIME,
         (e: Event, { x }: ResizeCallbackData) => {
@@ -330,10 +319,7 @@ const InteractiveTable: InteractiveTable = ({
                   index === i ? minWidth : w),
               };
             }
-
-            // const newWidth = prevWidths[index] + deltaX;
             const newWidth = x;
-            // const newWidth = Math.max(adjustedTargetWidth, minWidth);
             const newWidths = prevWidths.map((w: number, i: number) =>
               index === i ? newWidth : w);
             return { widths: newWidths };
@@ -342,49 +328,12 @@ const InteractiveTable: InteractiveTable = ({
         },
       );
     },
-    [ settings.columns, columnBeingMoved ],
+    [ settings.columns ],
   );
-
-  // const handleResize = useCallback(
-  //   (index) =>
-  //     throttle(
-  //       DEFAULT_RESIZE_THROTTLE_TIME,
-  //       (e: Event, { size }: ResizeCallbackData) => {
-  //         const column = settings.columns[index];
-  //         const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
-  //         const targetWidth = Math.max(size.width, minWidth);
-  //         // const targetWidth = Math.floor(Math.max(size.width, minWidth));
-  //         setWidths(prevWidths => {
-  //           const delta = targetWidth - prevWidths[index];
-  //           const shiftRight = delta >= 0;
-  //           const numCompensatingColumns = shiftRight ? prevWidths.length - index - 1 : index;
-  //           const deltaEach = -delta / numCompensatingColumns;
-  //           // console.log(deltaEach);
-
-  //           // const prevSum = prevWidths.reduce((sum, width) => sum + width, 0);
-  //           // const targetSum = prevSum + (targetWidth - colPrevWidth);
-  //           // const scaling = targetSum / prevSum;
-  //           let newWidths;
-  //           if (shiftRight) {
-  //             newWidths = prevWidths.map((w: number, i: number) =>
-  //               i === index ? targetWidth : i > index ? (w + deltaEach) : w);
-  //           } else {
-  //             newWidths = prevWidths.map((w: number, i: number) =>
-  //               i === index ? targetWidth : i < index ? w + deltaEach : w);
-  //           }
-  //           console.log(targetWidth, newWidths.reduce((a, b) => a + b));
-  //           return newWidths;
-
-  //         });
-  //       },
-  //     ),
-  //   [ settings.columns ],
-  // );
 
   const handleResizeStart = useCallback(
     (index) =>
       (e, { x }) => {
-        if (columnBeingMoved) return false;
         const column = settings.columns[index];
         const startWidth = settings.columnWidths[index];
         const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.7;
@@ -392,15 +341,23 @@ const InteractiveTable: InteractiveTable = ({
         const minX = x - deltaX;
         setWidthData(({ widths }) => ({ minX, widths }));
       },
-    [ columnBeingMoved, setWidthData, settings.columns, settings.columnWidths ],
+    [ setWidthData, settings.columns, settings.columnWidths ],
   );
 
   const handleResizeStop = useCallback(
     () => {
-      updateSettings({ columnWidths: widthData.widths });
-      setWidthData(({ widths }) => ({ widths }));
+      let newWidths = widthData.widths;
+      const sumOfWidths = newWidths.reduce((a, b) => a + b);
+      if (sumOfWidths < resize.width) {
+        const scaleUp = resize.width / sumOfWidths;
+        newWidths = newWidths.map(w => w * scaleUp);
+      }
+
+      setWidthData({ widths: newWidths });
+      updateSettings({ columnWidths: newWidths });
+
     },
-    [ updateSettings, widthData ],
+    [ updateSettings, widthData, setWidthData, resize.width ],
   );
 
   const onHeaderCell = useCallback(
@@ -408,7 +365,6 @@ const InteractiveTable: InteractiveTable = ({
       return () => {
         const filterActive = !!columnSpec?.isFiltered?.(settings);
         return {
-          columnBeingMoved,
           columnName: columnSpec.title,
           filterActive,
           index,
@@ -416,7 +372,6 @@ const InteractiveTable: InteractiveTable = ({
           onResize: handleResize(index),
           onResizeStart: handleResizeStart,
           onResizeStop: handleResizeStop,
-          setColumnBeingMoved,
           width: widthData?.widths[index],
         };
       };
@@ -427,8 +382,6 @@ const InteractiveTable: InteractiveTable = ({
       widthData,
       moveColumn,
       settings,
-      columnBeingMoved,
-      setColumnBeingMoved,
       handleResizeStart,
     ],
   );
@@ -469,6 +422,7 @@ const InteractiveTable: InteractiveTable = ({
             columns={renderColumns as ColumnsType<any>}
             components={components}
             dataSource={dataSource}
+            // ref={tableRef}
             // scroll={tableScroll}
             tableLayout="fixed"
             onChange={handleChange}
