@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -27,6 +28,7 @@ const (
 	// This must match the value at $PROJECT_ROOT/cli/determined_cli/sso.CLI_REDIRECT_PORT.
 	cliRedirectPath = "http://localhost:49176"
 	cliRelayState   = "cli=true"
+	envVarName      = "DETERMINED_OIDC_CLIENT_SECRET"
 )
 
 // Service handles OIDC interactions.
@@ -53,13 +55,21 @@ func New(db *db.PgDB, config config.OIDCConfig) (*Service, error) {
 	// join instead of replacing path in case we're behind a rewriting proxy
 	ru.Path = path.Join(ru.Path, OidcRoot, CallbackPath)
 
+	secret := config.ClientSecret
+	if secret == "" {
+		secret = os.Getenv(envVarName)
+	}
+	if secret == "" {
+		return nil, fmt.Errorf("client secret has not been set")
+	}
+
 	return &Service{
 		config:   config,
 		db:       db,
 		provider: provider,
 		oauth2Config: oauth2.Config{
 			ClientID:     config.ClientID,
-			ClientSecret: config.ClientSecret,
+			ClientSecret: secret,
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  ru.String(),
 			Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
