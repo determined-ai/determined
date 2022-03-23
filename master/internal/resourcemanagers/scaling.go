@@ -40,7 +40,6 @@ func calculateDesiredNewAgentNum(
 			}
 			allTasks++
 		}
-
 	}
 
 	for g, groupSlotSum := range groupSlotsNeeded {
