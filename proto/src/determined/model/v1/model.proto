@@ -43,8 +43,10 @@ message Model {
   int32 num_versions = 7;
   // Labels associated with this model.
   repeated string labels = 8;
-  // User who created this model.
+  // Username of the user who created this model.
   string username = 10;
+  // Id of the user who created this model.
+  int32 user_id = 13;
   // Whether this model is archived or not.
   bool archived = 11;
   // Notes associated with this model.
@@ -102,8 +104,10 @@ message ModelVersion {
   google.protobuf.Timestamp last_updated_time = 8;
   // Comment associated with this model version.
   string comment = 9;
-  // User who created this model version.
+  // Username of the user who created this model version.
   string username = 11;
+  // Id of the user who created this model version.
+  int32 user_id = 14;
   // Labels associated with this model version.
   repeated string labels = 12;
   // Notes associated with this model version.

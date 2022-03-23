@@ -780,6 +780,7 @@ class v1Command:
         container: "typing.Optional[v1Container]" = None,
         displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.description = description
@@ -787,6 +788,7 @@ class v1Command:
         self.startTime = startTime
         self.container = container
         self.displayName = displayName
+        self.userId = userId
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -801,6 +803,7 @@ class v1Command:
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             displayName=obj.get("displayName", None),
+            userId=obj.get("userId", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -815,6 +818,7 @@ class v1Command:
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "userId": self.userId if self.userId is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -1091,6 +1095,7 @@ class v1Experiment:
         notes: "typing.Optional[str]" = None,
         progress: "typing.Optional[float]" = None,
         resourcePool: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.description = description
@@ -1101,6 +1106,7 @@ class v1Experiment:
         self.archived = archived
         self.numTrials = numTrials
         self.displayName = displayName
+        self.userId = userId
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1122,6 +1128,7 @@ class v1Experiment:
             archived=obj["archived"],
             numTrials=obj["numTrials"],
             displayName=obj.get("displayName", None),
+            userId=obj.get("userId", None),
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1143,6 +1150,7 @@ class v1Experiment:
             "archived": self.archived,
             "numTrials": self.numTrials,
             "displayName": self.displayName if self.displayName is not None else None,
+            "userId": self.userId if self.userId is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -2890,6 +2898,7 @@ class v1Model:
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.name = name
         self.description = description
@@ -2900,6 +2909,7 @@ class v1Model:
         self.numVersions = numVersions
         self.labels = labels
         self.username = username
+        self.userId = userId
         self.archived = archived
         self.notes = notes
 
@@ -2915,6 +2925,7 @@ class v1Model:
             numVersions=obj["numVersions"],
             labels=obj.get("labels", None),
             username=obj["username"],
+            userId=obj.get("userId", None),
             archived=obj.get("archived", None),
             notes=obj.get("notes", None),
         )
@@ -2930,6 +2941,7 @@ class v1Model:
             "numVersions": self.numVersions,
             "labels": self.labels if self.labels is not None else None,
             "username": self.username,
+            "userId": self.userId if self.userId is not None else None,
             "archived": self.archived if self.archived is not None else None,
             "notes": self.notes if self.notes is not None else None,
         }
@@ -2949,6 +2961,7 @@ class v1ModelVersion:
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.model = model
         self.checkpoint = checkpoint
@@ -2960,6 +2973,7 @@ class v1ModelVersion:
         self.lastUpdatedTime = lastUpdatedTime
         self.comment = comment
         self.username = username
+        self.userId = userId
         self.labels = labels
         self.notes = notes
 
@@ -2976,6 +2990,7 @@ class v1ModelVersion:
             lastUpdatedTime=obj.get("lastUpdatedTime", None),
             comment=obj.get("comment", None),
             username=obj["username"],
+            userId=obj.get("userId", None),
             labels=obj.get("labels", None),
             notes=obj.get("notes", None),
         )
@@ -2992,6 +3007,7 @@ class v1ModelVersion:
             "lastUpdatedTime": self.lastUpdatedTime if self.lastUpdatedTime is not None else None,
             "comment": self.comment if self.comment is not None else None,
             "username": self.username,
+            "userId": self.userId if self.userId is not None else None,
             "labels": self.labels if self.labels is not None else None,
             "notes": self.notes if self.notes is not None else None,
         }
@@ -3010,6 +3026,7 @@ class v1Notebook:
         displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         serviceAddress: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.description = description
@@ -3017,6 +3034,7 @@ class v1Notebook:
         self.startTime = startTime
         self.container = container
         self.displayName = displayName
+        self.userId = userId
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -3032,6 +3050,7 @@ class v1Notebook:
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             displayName=obj.get("displayName", None),
+            userId=obj.get("userId", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -3047,6 +3066,7 @@ class v1Notebook:
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "userId": self.userId if self.userId is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -3824,6 +3844,7 @@ class v1ResourceAllocationRawEntry:
         seconds: "typing.Optional[float]" = None,
         slots: "typing.Optional[int]" = None,
         startTime: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
         username: "typing.Optional[str]" = None,
     ):
         self.kind = kind
@@ -3831,6 +3852,7 @@ class v1ResourceAllocationRawEntry:
         self.endTime = endTime
         self.experimentId = experimentId
         self.username = username
+        self.userId = userId
         self.labels = labels
         self.seconds = seconds
         self.slots = slots
@@ -3843,6 +3865,7 @@ class v1ResourceAllocationRawEntry:
             endTime=obj.get("endTime", None),
             experimentId=obj.get("experimentId", None),
             username=obj.get("username", None),
+            userId=obj.get("userId", None),
             labels=obj.get("labels", None),
             seconds=float(obj["seconds"]) if obj.get("seconds", None) is not None else None,
             slots=obj.get("slots", None),
@@ -3855,6 +3878,7 @@ class v1ResourceAllocationRawEntry:
             "endTime": self.endTime if self.endTime is not None else None,
             "experimentId": self.experimentId if self.experimentId is not None else None,
             "username": self.username if self.username is not None else None,
+            "userId": self.userId if self.userId is not None else None,
             "labels": self.labels if self.labels is not None else None,
             "seconds": dump_float(self.seconds) if self.seconds is not None else None,
             "slots": self.slots if self.slots is not None else None,
@@ -4524,6 +4548,7 @@ class v1Shell:
         exitStatus: "typing.Optional[str]" = None,
         privateKey: "typing.Optional[str]" = None,
         publicKey: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.description = description
@@ -4533,6 +4558,7 @@ class v1Shell:
         self.privateKey = privateKey
         self.publicKey = publicKey
         self.displayName = displayName
+        self.userId = userId
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -4551,6 +4577,7 @@ class v1Shell:
             privateKey=obj.get("privateKey", None),
             publicKey=obj.get("publicKey", None),
             displayName=obj.get("displayName", None),
+            userId=obj.get("userId", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -4569,6 +4596,7 @@ class v1Shell:
             "privateKey": self.privateKey if self.privateKey is not None else None,
             "publicKey": self.publicKey if self.publicKey is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "userId": self.userId if self.userId is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -4739,6 +4767,7 @@ class v1Tensorboard:
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         serviceAddress: "typing.Optional[str]" = None,
         trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+        userId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.description = description
@@ -4748,6 +4777,7 @@ class v1Tensorboard:
         self.experimentIds = experimentIds
         self.trialIds = trialIds
         self.displayName = displayName
+        self.userId = userId
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -4765,6 +4795,7 @@ class v1Tensorboard:
             experimentIds=obj.get("experimentIds", None),
             trialIds=obj.get("trialIds", None),
             displayName=obj.get("displayName", None),
+            userId=obj.get("userId", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -4782,6 +4813,7 @@ class v1Tensorboard:
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "trialIds": self.trialIds if self.trialIds is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "userId": self.userId if self.userId is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
