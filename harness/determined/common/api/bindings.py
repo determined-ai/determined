@@ -503,6 +503,54 @@ class v1Allocation:
             "allocationId": self.allocationId if self.allocationId is not None else None,
         }
 
+class v1AllocationAllGatherRequest:
+    def __init__(
+        self,
+        allocationId: str,
+        data: "typing.Dict[str, typing.Any]",
+        numPeers: "typing.Optional[int]" = None,
+        requestUuid: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+        self.requestUuid = requestUuid
+        self.numPeers = numPeers
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherRequest":
+        return cls(
+            allocationId=obj["allocationId"],
+            requestUuid=obj.get("requestUuid", None),
+            numPeers=obj.get("numPeers", None),
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId,
+            "requestUuid": self.requestUuid if self.requestUuid is not None else None,
+            "numPeers": self.numPeers if self.numPeers is not None else None,
+            "data": self.data,
+        }
+
+class v1AllocationAllGatherResponse:
+    def __init__(
+        self,
+        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherResponse":
+        return cls(
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "data": self.data,
+        }
+
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
@@ -748,6 +796,7 @@ class v1Command:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -755,6 +804,7 @@ class v1Command:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -768,6 +818,7 @@ class v1Command:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -781,6 +832,7 @@ class v1Command:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -1050,12 +1102,12 @@ class v1Experiment:
         state: "determinedexperimentv1State",
         username: str,
         description: "typing.Optional[str]" = None,
+        displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
         progress: "typing.Optional[float]" = None,
-        projectId: "typing.Optional[int]" = None,
         resourcePool: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -1066,6 +1118,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1074,7 +1127,6 @@ class v1Experiment:
         self.jobId = jobId
         self.forkedFrom = forkedFrom
         self.progress = progress
-        self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1087,6 +1139,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1095,7 +1148,6 @@ class v1Experiment:
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
-            projectId=obj.get("projectId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1108,6 +1160,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -1116,7 +1169,6 @@ class v1Experiment:
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
-            "projectId": self.projectId if self.projectId is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -2823,26 +2875,26 @@ class v1LoginResponse:
             "user": self.user.to_json(),
         }
 
-class v1MarkAllocationReservationDaemonRequest:
+class v1MarkAllocationResourcesDaemonRequest:
     def __init__(
         self,
         allocationId: str,
-        containerId: str,
+        resourcesId: "typing.Optional[str]" = None,
     ):
         self.allocationId = allocationId
-        self.containerId = containerId
+        self.resourcesId = resourcesId
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1MarkAllocationReservationDaemonRequest":
+    def from_json(cls, obj: Json) -> "v1MarkAllocationResourcesDaemonRequest":
         return cls(
             allocationId=obj["allocationId"],
-            containerId=obj["containerId"],
+            resourcesId=obj.get("resourcesId", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "allocationId": self.allocationId,
-            "containerId": self.containerId,
+            "resourcesId": self.resourcesId if self.resourcesId is not None else None,
         }
 
 class v1MasterLogsResponse:
@@ -3121,6 +3173,7 @@ class v1Notebook:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         serviceAddress: "typing.Optional[str]" = None,
     ):
@@ -3129,6 +3182,7 @@ class v1Notebook:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -3143,6 +3197,7 @@ class v1Notebook:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -3157,6 +3212,7 @@ class v1Notebook:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -3451,46 +3507,6 @@ class v1PatchModelVersionResponse:
             "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
         }
 
-class v1PatchProject:
-    def __init__(
-        self,
-        description: "typing.Optional[str]" = None,
-        name: "typing.Optional[str]" = None,
-    ):
-        self.name = name
-        self.description = description
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchProject":
-        return cls(
-            name=obj.get("name", None),
-            description=obj.get("description", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "name": self.name if self.name is not None else None,
-            "description": self.description if self.description is not None else None,
-        }
-
-class v1PatchProjectResponse:
-    def __init__(
-        self,
-        project: "v1Project",
-    ):
-        self.project = project
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchProjectResponse":
-        return cls(
-            project=v1Project.from_json(obj["project"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "project": self.project.to_json(),
-        }
-
 class v1PatchUser:
     def __init__(
         self,
@@ -3525,42 +3541,6 @@ class v1PatchUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
-        }
-
-class v1PatchWorkspace:
-    def __init__(
-        self,
-        name: "typing.Optional[str]" = None,
-    ):
-        self.name = name
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchWorkspace":
-        return cls(
-            name=obj.get("name", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "name": self.name if self.name is not None else None,
-        }
-
-class v1PatchWorkspaceResponse:
-    def __init__(
-        self,
-        workspace: "v1Workspace",
-    ):
-        self.workspace = workspace
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchWorkspaceResponse":
-        return cls(
-            workspace=v1Workspace.from_json(obj["workspace"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "workspace": self.workspace.to_json(),
         }
 
 class v1PostCheckpointMetadataRequest:
@@ -3897,15 +3877,15 @@ class v1Project:
     def __init__(
         self,
         archived: bool,
-        description: str,
         id: int,
-        lastExperimentStartedAt: str,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
         username: str,
         workspaceId: int,
+        description: "typing.Optional[str]" = None,
+        lastExperimentStartedAt: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.name = name
@@ -3924,8 +3904,8 @@ class v1Project:
             id=obj["id"],
             name=obj["name"],
             workspaceId=obj["workspaceId"],
-            description=obj["description"],
-            lastExperimentStartedAt=obj["lastExperimentStartedAt"],
+            description=obj.get("description", None),
+            lastExperimentStartedAt=obj.get("lastExperimentStartedAt", None),
             notes=[v1Note.from_json(x) for x in obj["notes"]],
             numExperiments=obj["numExperiments"],
             numActiveExperiments=obj["numActiveExperiments"],
@@ -3938,8 +3918,8 @@ class v1Project:
             "id": self.id,
             "name": self.name,
             "workspaceId": self.workspaceId,
-            "description": self.description,
-            "lastExperimentStartedAt": self.lastExperimentStartedAt,
+            "description": self.description if self.description is not None else None,
+            "lastExperimentStartedAt": self.lastExperimentStartedAt if self.lastExperimentStartedAt is not None else None,
             "notes": [x.to_json() for x in self.notes],
             "numExperiments": self.numExperiments,
             "numActiveExperiments": self.numActiveExperiments,
@@ -4840,6 +4820,7 @@ class v1Shell:
         addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
         agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         privateKey: "typing.Optional[str]" = None,
         publicKey: "typing.Optional[str]" = None,
@@ -4851,6 +4832,7 @@ class v1Shell:
         self.container = container
         self.privateKey = privateKey
         self.publicKey = publicKey
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -4868,6 +4850,7 @@ class v1Shell:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             privateKey=obj.get("privateKey", None),
             publicKey=obj.get("publicKey", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -4885,6 +4868,7 @@ class v1Shell:
             "container": self.container.to_json() if self.container is not None else None,
             "privateKey": self.privateKey if self.privateKey is not None else None,
             "publicKey": self.publicKey if self.publicKey is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -5050,6 +5034,7 @@ class v1Tensorboard:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         serviceAddress: "typing.Optional[str]" = None,
@@ -5062,6 +5047,7 @@ class v1Tensorboard:
         self.container = container
         self.experimentIds = experimentIds
         self.trialIds = trialIds
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -5078,6 +5064,7 @@ class v1Tensorboard:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             experimentIds=obj.get("experimentIds", None),
             trialIds=obj.get("trialIds", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -5094,6 +5081,7 @@ class v1Tensorboard:
             "container": self.container.to_json() if self.container is not None else None,
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "trialIds": self.trialIds if self.trialIds is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -5594,12 +5582,12 @@ def post_AddProjectNote(
     session: "client.Session",
     *,
     body: "v1Note",
-    id: int,
+    projectId: int,
 ) -> "v1AddProjectNoteResponse":
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/projects/{id}/notes",
+        path=f"/api/v1/projects/{projectId}/notes",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -5609,6 +5597,26 @@ def post_AddProjectNote(
     if _resp.status_code == 200:
         return v1AddProjectNoteResponse.from_json(_resp.json())
     raise APIHttpError("post_AddProjectNote", _resp)
+
+def post_AllocationAllGather(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationAllGatherRequest",
+) -> "v1AllocationAllGatherResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/all_gather",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1AllocationAllGatherResponse.from_json(_resp.json())
+    raise APIHttpError("post_AllocationAllGather", _resp)
 
 def get_AllocationPreemptionSignal(
     session: "client.Session",
@@ -5656,12 +5664,12 @@ def get_AllocationRendezvousInfo(
     session: "client.Session",
     *,
     allocationId: str,
-    containerId: str,
+    resourcesId: str,
 ) -> "v1AllocationRendezvousInfoResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}",
+        path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous",
         params=_params,
         json=None,
         data=None,
@@ -5862,25 +5870,6 @@ def delete_DeleteModelVersion(
         return
     raise APIHttpError("delete_DeleteModelVersion", _resp)
 
-def delete_DeleteProject(
-    session: "client.Session",
-    *,
-    id: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="DELETE",
-        path=f"/api/v1/projects/{id}",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("delete_DeleteProject", _resp)
-
 def delete_DeleteTemplate(
     session: "client.Session",
     *,
@@ -5899,25 +5888,6 @@ def delete_DeleteTemplate(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
-
-def delete_DeleteWorkspace(
-    session: "client.Session",
-    *,
-    id: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="DELETE",
-        path=f"/api/v1/workspaces/{id}",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(
     session: "client.Session",
@@ -7301,17 +7271,17 @@ def post_Logout(
         return
     raise APIHttpError("post_Logout", _resp)
 
-def post_MarkAllocationReservationDaemon(
+def post_MarkAllocationResourcesDaemon(
     session: "client.Session",
     *,
     allocationId: str,
-    body: "v1MarkAllocationReservationDaemonRequest",
-    containerId: str,
+    body: "v1MarkAllocationResourcesDaemonRequest",
+    resourcesId: str,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/allocations/{allocationId}/containers/{containerId}/daemon",
+        path=f"/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7320,47 +7290,7 @@ def post_MarkAllocationReservationDaemon(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_MarkAllocationReservationDaemon", _resp)
-
-def post_MoveExperiment(
-    session: "client.Session",
-    *,
-    body: int,
-    experimentId: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/experiments/{experimentId}/move",
-        params=_params,
-        json=body,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_MoveExperiment", _resp)
-
-def post_MoveProject(
-    session: "client.Session",
-    *,
-    body: int,
-    projectId: int,
-) -> None:
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/projects/{projectId}/move",
-        params=_params,
-        json=body,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_MoveProject", _resp)
+    raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
 def patch_PatchExperiment(
     session: "client.Session",
@@ -7423,26 +7353,6 @@ def patch_PatchModelVersion(
         return v1PatchModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModelVersion", _resp)
 
-def patch_PatchProject(
-    session: "client.Session",
-    *,
-    body: "v1PatchProject",
-    id: int,
-) -> "v1PatchProjectResponse":
-    _params = None
-    _resp = session._do_request(
-        method="PATCH",
-        path=f"/api/v1/projects/{id}",
-        params=_params,
-        json=body.to_json(),
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1PatchProjectResponse.from_json(_resp.json())
-    raise APIHttpError("patch_PatchProject", _resp)
-
 def patch_PatchUser(
     session: "client.Session",
     *,
@@ -7462,26 +7372,6 @@ def patch_PatchUser(
     if _resp.status_code == 200:
         return v1PatchUserResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUser", _resp)
-
-def patch_PatchWorkspace(
-    session: "client.Session",
-    *,
-    body: "v1PatchWorkspace",
-    id: int,
-) -> "v1PatchWorkspaceResponse":
-    _params = None
-    _resp = session._do_request(
-        method="PATCH",
-        path=f"/api/v1/workspaces/{id}",
-        params=_params,
-        json=body.to_json(),
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1PatchWorkspaceResponse.from_json(_resp.json())
-    raise APIHttpError("patch_PatchWorkspace", _resp)
 
 def post_PauseExperiment(
     session: "client.Session",
