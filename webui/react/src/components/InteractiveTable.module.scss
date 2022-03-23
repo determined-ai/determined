@@ -2,6 +2,11 @@
   svg {
     cursor: pointer;
   }
+  .columnDraggingDiv{
+    width: 97%;
+    // margin-right: 20%;
+  }
+
   :global(.ant-table-cell) {
     user-select: none;
     z-index: 1;
@@ -45,6 +50,13 @@
 
   &:active {
     background: var(--theme-colors-action-normal);
+    &::before {
+      content: ' ';
+      position: absolute;
+      cursor: col-resize;
+      height: 100vh;
+      width: 100vh;
+    }
   }
   &:hover {
     background: var(--theme-colors-action-normal);

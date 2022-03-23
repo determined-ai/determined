@@ -16,7 +16,7 @@ import React, {
 import 'antd/dist/antd.min.css';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Resizable, ResizeCallbackData } from 'react-resizable';
+import { DraggableCore } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
 import {
   ExperimentItem,
@@ -151,8 +151,8 @@ const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps
 };
 
 const HeaderCell = ({
-  layoutIsBeingModified,
-  setLayoutIsBeingModified,
+  setColumnBeingMoved,
+  columnBeingMoved,
   onResize,
   onResizeStart,
   onResizeStop,
@@ -167,9 +167,11 @@ const HeaderCell = ({
 }: HeaderCellProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const classes = [ css.headerCell ];
-
   const [ , drag ] = useDrag({
-    canDrag: () => !layoutIsBeingModified,
+    canDrag: () => {
+      setColumnBeingMoved(true); return true;
+    },
+    end: () => setColumnBeingMoved(false),
     item: { index },
     type,
   });
@@ -204,31 +206,50 @@ const HeaderCell = ({
     return <th className={className} {...props} />;
   }
   return (
-    <Resizable
-      draggableOpts={{ enableUserSelectHack: false }}
-      handle={(
+  // <Resizable
+  //   draggableOpts={{ enableUserSelectHack: false }}
+  //   handle={(
+  //     <span
+  //       className={css.columnResizeHandle}
+  //       onClick={(e) => {
+  //         e.stopPropagation();
+  //       }}
+  //     />
+  //   )}
+  //   height={0}
+  //   width={width || MIN_COLUMN_WIDTH}
+  //   onResize={onResize}
+  //   onResizeStart={onResizeStart}
+  //   onResizeStop={onResizeStop}>
+
+    <th
+      className={classes.join(' ')}>
+      <div
+        className={`${className} ${css.columnDraggingDiv}`}
+        ref={ref}
+        title={columnName}
+        onClick={e => e.stopPropagation()}
+        {...props}
+      />
+      <DraggableCore
+        cancel="div"
+        disabled={columnBeingMoved}
+        enableUserSelectHack={false}
+        handle={`.${css.columnResizeHandle}`}
+        onDrag={onResize}
+        onStart={onResizeStart}
+        onStop={onResizeStop}>
         <span
           className={css.columnResizeHandle}
           onClick={(e) => {
             e.stopPropagation();
           }}
         />
-      )}
-      height={0}
-      width={width || MIN_COLUMN_WIDTH}
-      onResize={onResize}
-      onResizeStart={onResizeStart}
-      onResizeStop={onResizeStop}>
-      <th
-        className={classes.join(' ')}>
-        <div
-          className={className}
-          ref={ref}
-          title={columnName}
-          {...props}
-        />
-      </th>
-    </Resizable>
+
+      </DraggableCore>
+    </th>
+
+  // </Resizable>
   );
 };
 
@@ -245,12 +266,13 @@ const InteractiveTable: InteractiveTable = ({
   ...props
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [ widthData, setWidthData ] = useState({ offset: 0, widths: settings?.columnWidths });
-  const [ layoutIsBeingModified, setLayoutIsBeingModified ] = useState(false);
+  const [ widthData, setWidthData ] = useState({ widths: settings?.columnWidths });
+  const [ columnBeingMoved, setColumnBeingMoved ] = useState(false);
+  console.log(columnBeingMoved);
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  useEffect(() => setWidthData({ offset: 0, widths: settings.columnWidths }), [
+  useEffect(() => setWidthData({ widths: settings.columnWidths }), [
     settings.columnWidths,
   ]);
 
@@ -289,31 +311,38 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const handleResize = useCallback(
-    (index) =>
-      throttle(
+    (index) => {
+      if (columnBeingMoved) {
+        return () => {
+          console.log('cancel');
+          return false;
+        };
+      }
+      return throttle(
         DEFAULT_RESIZE_THROTTLE_TIME,
-        (e: React.SyntheticEvent, { size }: ResizeCallbackData) => {
-          setWidthData(({ widths: prevWidths, offset: prevOffset }) => {
-
+        (e: Event, { x }: ResizeCallbackData) => {
+          setWidthData(({ widths: prevWidths }) => {
             const column = settings.columns[index];
             const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
-            const targetWidth = size.width;
-            if (targetWidth < minWidth) {
-              return { offset: minWidth - targetWidth, widths: prevWidths };
-            } else {
-              const adjustedTargetWidth = targetWidth - prevOffset;
-              const newWidth = Math.max(adjustedTargetWidth, minWidth);
-              const newOffset = Math.max(prevOffset - adjustedTargetWidth, 0);
-              const newWidths = prevWidths.map((w: number, i: number) =>
-                index === i ? newWidth : w);
-              return { offset: newOffset, widths: newWidths };
-
+            if (x < minWidth) {
+              return {
+                widths: prevWidths.map((w: number, i: number) =>
+                  index === i ? minWidth : w),
+              };
             }
+
+            // const newWidth = prevWidths[index] + deltaX;
+            const newWidth = x;
+            // const newWidth = Math.max(adjustedTargetWidth, minWidth);
+            const newWidths = prevWidths.map((w: number, i: number) =>
+              index === i ? newWidth : w);
+            return { widths: newWidths };
 
           });
         },
-      ),
-    [ settings.columns ],
+      );
+    },
+    [ settings.columns, columnBeingMoved ],
   );
 
   // const handleResize = useCallback(
@@ -352,29 +381,24 @@ const InteractiveTable: InteractiveTable = ({
   //   [ settings.columns ],
   // );
 
-  // const handleResizeStop = useCallback(
-  //   (index) => (e: Event, { size }: ResizeCallbackData) => {
-  //     const column = settings.columns[index];
-  //     const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
-  //     const targetWidth = Math.floor(Math.max(size.width, minWidth));
-  //     const newWidths = settings.columnWidths.map((w: number, i: number) =>
-  //       index === i ? targetWidth : w);
-  //     updateSettings({ columnWidths: newWithds });
-  //   },
-  //   [ updateSettings, settings.columns, settings.columnWidths ],
-  // );
-
   const handleResizeStart = useCallback(
-    () => {
-      setLayoutIsBeingModified(true);
-    },
-    [ setLayoutIsBeingModified ],
+    (index) =>
+      (e, { x }) => {
+        if (columnBeingMoved) return false;
+        const column = settings.columns[index];
+        const startWidth = settings.columnWidths[index];
+        const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.7;
+        const deltaX = startWidth - minWidth;
+        const minX = x - deltaX;
+        setWidthData(({ widths }) => ({ minX, widths }));
+      },
+    [ columnBeingMoved, setWidthData, settings.columns, settings.columnWidths ],
   );
 
   const handleResizeStop = useCallback(
     () => {
       updateSettings({ columnWidths: widthData.widths });
-      setLayoutIsBeingModified(false);
+      setWidthData(({ widths }) => ({ widths }));
     },
     [ updateSettings, widthData ],
   );
@@ -384,15 +408,15 @@ const InteractiveTable: InteractiveTable = ({
       return () => {
         const filterActive = !!columnSpec?.isFiltered?.(settings);
         return {
+          columnBeingMoved,
           columnName: columnSpec.title,
           filterActive,
           index,
-          layoutIsBeingModified,
           moveColumn,
           onResize: handleResize(index),
           onResizeStart: handleResizeStart,
           onResizeStop: handleResizeStop,
-          setLayoutIsBeingModified,
+          setColumnBeingMoved,
           width: widthData?.widths[index],
         };
       };
@@ -403,8 +427,8 @@ const InteractiveTable: InteractiveTable = ({
       widthData,
       moveColumn,
       settings,
-      layoutIsBeingModified,
-      setLayoutIsBeingModified,
+      columnBeingMoved,
+      setColumnBeingMoved,
       handleResizeStart,
     ],
   );
