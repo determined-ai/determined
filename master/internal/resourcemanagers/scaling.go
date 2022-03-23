@@ -19,12 +19,6 @@ func calculateDesiredNewAgentNum(
 		// TODO(DET-4035): This code is duplicated from the fitting functions in the
 		//    scheduler. To determine is a task is schedulable, we would ideally interface
 		//    with the scheduler in some way and not duplicate this logic.
-		var group *group
-		if groups != nil {
-			group = groups[it.value().Group]
-		} else {
-			group = nil
-		}
 		switch {
 		case taskList.GetAllocations(it.value().TaskActor) != nil:
 			// If a task is already allocated, skip it.
@@ -35,7 +29,8 @@ func calculateDesiredNewAgentNum(
 		case slotsPerAgent == 0:
 			continue
 		case it.value().SlotsNeeded <= slotsPerAgent, it.value().SlotsNeeded%slotsPerAgent == 0:
-			if group != nil {
+			if groups != nil {
+				group := groups[it.value().Group]
 				slotsGroupSum, visitedGroup := groupSlotsNeeded[group]
 				if visitedGroup {
 					groupSlotsNeeded[group] = slotsGroupSum + it.value().SlotsNeeded
@@ -48,17 +43,27 @@ func calculateDesiredNewAgentNum(
 			allTasks++
 		}
 
-		for g, groupSlotSum := range groupSlotsNeeded {
-			maxSlots := g.maxSlots
-			fmt.Print("asjdasdsadprint")
-			if maxSlots != nil {
-				slotSum += min(*maxSlots, groupSlotSum)
-			} else {
-				slotSum += groupSlotSum
-			}
-		}
-
 	}
+
+	fmt.Printf("before adding groups slotSum: %d", slotSum)
+	fmt.Print("\n")
+
+	for g, groupSlotSum := range groupSlotsNeeded {
+		maxSlots := g.maxSlots
+		if maxSlots != nil {
+			fmt.Printf("g id: %d", *g.maxSlots)
+			fmt.Printf("groupSlotSum: %d", groupSlotSum)
+			fmt.Print("\n")
+			slotSum += min(*maxSlots, groupSlotSum)
+		} else {
+			fmt.Printf("no max slots")
+			fmt.Printf("groupSlotSum: %d", groupSlotSum)
+			fmt.Print("\n")
+			slotSum += groupSlotSum
+		}
+	}
+
+	fmt.Printf("slotSum: %d", slotSum)
 
 	numAgentByZeroSlot, numAgentBySlot := 0, 0
 	switch {
