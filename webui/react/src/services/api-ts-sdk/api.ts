@@ -4170,7 +4170,7 @@ export interface V1PatchProjectResponse {
      * @type {V1Project}
      * @memberof V1PatchProjectResponse
      */
-    project?: V1Project;
+    project: V1Project;
 }
 
 /**
@@ -4226,7 +4226,7 @@ export interface V1PatchWorkspaceResponse {
      * @type {V1Workspace}
      * @memberof V1PatchWorkspaceResponse
      */
-    workspace?: V1Workspace;
+    workspace: V1Workspace;
 }
 
 /**
@@ -4404,7 +4404,7 @@ export interface V1PostProjectRequest {
      * @type {string}
      * @memberof V1PostProjectRequest
      */
-    description?: string;
+    description: string;
     /**
      * Id of the associated workspace.
      * @type {number}

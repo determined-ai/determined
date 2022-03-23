@@ -3532,19 +3532,19 @@ class v1PatchProject:
 class v1PatchProjectResponse:
     def __init__(
         self,
-        project: "typing.Optional[v1Project]" = None,
+        project: "v1Project",
     ):
         self.project = project
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchProjectResponse":
         return cls(
-            project=v1Project.from_json(obj["project"]) if obj.get("project", None) is not None else None,
+            project=v1Project.from_json(obj["project"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "project": self.project.to_json() if self.project is not None else None,
+            "project": self.project.to_json(),
         }
 
 class v1PatchUser:
@@ -3604,19 +3604,19 @@ class v1PatchWorkspace:
 class v1PatchWorkspaceResponse:
     def __init__(
         self,
-        workspace: "typing.Optional[v1Workspace]" = None,
+        workspace: "v1Workspace",
     ):
         self.workspace = workspace
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchWorkspaceResponse":
         return cls(
-            workspace=v1Workspace.from_json(obj["workspace"]) if obj.get("workspace", None) is not None else None,
+            workspace=v1Workspace.from_json(obj["workspace"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "workspace": self.workspace.to_json() if self.workspace is not None else None,
+            "workspace": self.workspace.to_json(),
         }
 
 class v1PostCheckpointMetadataRequest:
@@ -3774,9 +3774,9 @@ class v1PostModelVersionResponse:
 class v1PostProjectRequest:
     def __init__(
         self,
+        description: str,
         name: str,
         workspaceId: int,
-        description: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
@@ -3786,14 +3786,14 @@ class v1PostProjectRequest:
     def from_json(cls, obj: Json) -> "v1PostProjectRequest":
         return cls(
             name=obj["name"],
-            description=obj.get("description", None),
+            description=obj["description"],
             workspaceId=obj["workspaceId"],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "name": self.name,
-            "description": self.description if self.description is not None else None,
+            "description": self.description,
             "workspaceId": self.workspaceId,
         }
 

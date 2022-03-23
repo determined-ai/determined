@@ -1324,7 +1324,8 @@ service Determined {
     };
   }
   // Delete a workspace.
-  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {
+  rpc DeleteWorkspace(DeleteWorkspaceRequest)
+      returns (DeleteWorkspaceResponse) {
     option (google.api.http) = {
       delete: "/api/v1/workspaces/{id}"
     };

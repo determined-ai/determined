@@ -11,6 +11,10 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the requested workspace.
 message GetWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
   // The id of the workspace.
   int32 id = 1;
 }
@@ -27,6 +31,10 @@ message GetWorkspaceResponse {
 
 // Get a list of projects associated with a workspace.
 message GetWorkspaceProjectsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
   // Sort associated projects by the given field.
   enum SortBy {
     // Returns projects in an unsorted list.
@@ -66,7 +74,7 @@ message GetWorkspaceProjectsRequest {
 // Response to GetWorkspaceProjectsRequest.
 message GetWorkspaceProjectsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "projects", "pagination" ] }
+    json_schema: { required: [ "pagination", "projects" ] }
   };
 
   // The projects associated with the workspace.
@@ -111,6 +119,7 @@ message GetWorkspacesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "workspaces", "pagination" ] }
   };
+
   // The list of returned workspaces.
   repeated determined.workspace.v1.Workspace workspaces = 1;
   // Pagination information of the full dataset.
@@ -122,6 +131,7 @@ message PostWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "name" ] }
   };
+
   // The name of the workspace.
   string name = 1;
 }
@@ -138,6 +148,10 @@ message PostWorkspaceResponse {
 
 // Request for updating a workspace.
 message PatchWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "workspace" ] }
+  };
+
   // The id of the workspace.
   int32 id = 1;
   // The desired workspace fields and values to update.
@@ -146,12 +160,20 @@ message PatchWorkspaceRequest {
 
 // Response to PatchWorkspaceRequest.
 message PatchWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace" ] }
+  };
+
   // The updated workspace.
   determined.workspace.v1.Workspace workspace = 1;
 }
 
 // Request for deleting a workspace.
 message DeleteWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
   // The id of the workspace.
   int32 id = 1;
 }

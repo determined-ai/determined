@@ -37,6 +37,13 @@ def test_workspace_org() -> None:
         get_workspace = bindings.get_GetWorkspace(sess, id=madeWorkspace.id).workspace
         assert get_workspace and get_workspace.name == "_TestOnly"
 
+        # Patch the workspace
+        w_patch = bindings.v1PatchExperiment.from_json(madeWorkspace.to_json())
+        w_patch.name = "_TestPatched"
+        bindings.patch_PatchWorkspace(sess, body=w_patch, id=madeWorkspace.id)
+        get_workspace = bindings.get_GetWorkspace(sess, id=madeWorkspace.id).workspace
+        assert get_workspace.name == "_TestPatched"
+
         # Sort test and default workspaces.
         ww = bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS"))
         assert ww.workspace is not None
@@ -63,6 +70,13 @@ def test_workspace_org() -> None:
         test_projects.append(madeProject)
         get_project = bindings.get_GetProject(sess, id=madeProject.id).project
         assert get_project and get_project.name == "_TestOnly"
+
+        # Patch the project
+        p_patch = bindings.v1PatchProject.from_json(madeProject.to_json())
+        p_patch.name = "_TestPatchedProject"
+        bindings.patch_PatchWorkspace(sess, body=p_patch, id=madeProject.id)
+        get_project = bindings.get_GetProject(sess, id=madeProject.id).project
+        assert get_project.name == "_TestPatchedProject"
 
         # Sort workspaces' projects.
         p1 = bindings.post_PostProject(
