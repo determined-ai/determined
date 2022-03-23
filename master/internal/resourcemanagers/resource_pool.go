@@ -620,6 +620,22 @@ func (rp *ResourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*age
 	return result
 }
 
+func (rp *ResourcePool) getJobState(jobId model.JobID) *job.SchedulingState {
+
+	var reqs []*sproto.AllocateRequest
+	for it := rp.taskList.iterator(); it.next(); {
+		reqs = append(reqs, it.value())
+	}
+	// find job requests
+	// get allocations for its task actors
+	// determine the job state and report
+	jobQInfo, _ := reduceToJobQInfo(reqs)
+	if info, ok := jobQInfo[jobId]; ok {
+		return &info.State
+	}
+	return nil
+}
+
 func (rp *ResourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*actor.Ref) {
 	responses := ctx.AskAll(agent.GetAgentState{}, agents...).GetAll()
 
