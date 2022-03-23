@@ -45,6 +45,6 @@ environment:
     - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
 
 resources:
-  slots_per_trial: 8 # max number of GPUs a trial is allowed to individually use
+  slots_per_trial: 2 # max number of GPUs a trial is allowed to individually use
   shm_size: 200000000000
-entrypoint: model_hub.mmdetection:MMDetTrial
+entrypoint: python3 -m determined.launch.torch_distributed model_hub.mmdetection:MMDetTrial

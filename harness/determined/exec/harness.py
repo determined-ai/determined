@@ -95,6 +95,8 @@ def main(train_entrypoint: Optional[str]) -> int:
             distributed = _core.DistributedContext.from_horovod(horovod.hvd)
         elif distributed_backend.use_deepspeed():
             distributed = _core.DistributedContext.from_deepspeed()
+        elif distributed_backend.use_torch():
+            distributed = _core.DistributedContext.from_torch_distributed()
         elif len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
             raise ValueError(
                 "In multi-slot tasks, the determined.exec.harness module must not be invoked "

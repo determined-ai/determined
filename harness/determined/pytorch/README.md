@@ -219,3 +219,7 @@ limitations (needing to know the optimizer when calling `scale_loss`).
     because `amp.scale_loss()` requires us to take actions on the correct
     optimizer, we do not allow multiple optimizers; we have to know that the
     our one optimizer is the correct optimizer to pass to scale_loss().
+
+* PyTorch Distributed:
+  * PyTorch Distributed wraps models in a `DistributedDataParallel` wrapper,
+  which must be done after initializing APEX AMP. 

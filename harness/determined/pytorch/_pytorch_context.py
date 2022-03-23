@@ -57,6 +57,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             "PyTorchTrial",
         )
 
+        self._distributed_backend = det._DistributedBackend()
+
         self.device = self._init_device()
 
         # Track which types we have issued warnings for in to_device().
@@ -69,6 +71,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self.profiler = None  # type: Any
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
+
+        # Keep a map of wrapped models to their original input forms, which is needed
+        # by torch DDP and apex to initialize in the correct order
+        self._wrapped_models = {}  # type: Dict[nn.Module, nn.Module]
 
         # Use a main model to contain all of the models because when using horovod
         # to broadcast the states of models we want to avoid name conflicts for these
@@ -168,25 +174,24 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             check.false(self._use_apex, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
-            if not self.distributed.size > 1 and self.n_gpus > 1:
-                check.eq(
-                    self._aggregation_frequency,
-                    1,
-                    "Please enable `optimized_parallel` to use aggregation "
-                    "frequency greater than 1 for single machine multi-GPU "
-                    "training.",
-                )
-                model = nn.DataParallel(model)
-                logging.debug("Initialized model for native parallel training.")
+
+            if self.distributed.size > 1 and self._distributed_backend.use_torch():
+                wrapped_model = torch.nn.parallel.DistributedDataParallel(model)
+            else:
+                wrapped_model = model
+
+            self._wrapped_models[wrapped_model] = model
+        else:
+            wrapped_model = model
 
         model_id = len(self.models)
-        self._main_model.__setattr__(f"model_{model_id}", model)
+        self._main_model.__setattr__(f"model_{model_id}", wrapped_model)
 
         if self.experimental._auto_amp:
-            model = self.autocast_forward_pass(model)
+            wrapped_model = self.autocast_forward_pass(wrapped_model)
 
-        self.models.append(model)
-        return model
+        self.models.append(wrapped_model)
+        return wrapped_model
 
     def wrap_optimizer(
         self,
@@ -226,7 +231,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 "backward_passes_per_step for local gradient aggregation must be >= 1",
             )
 
-            if self.distributed.size > 1:
+            if self.distributed.size > 1 and self._distributed_backend.use_horovod():
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
@@ -324,7 +329,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             if self.n_gpus > 0:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
-                device = torch.device("cuda", hvd.local_rank())
+                device = torch.device("cuda", self.distributed.local_rank)
                 torch.cuda.set_device(device)
             else:
                 device = torch.device("cpu")
@@ -479,6 +484,13 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             "Mixed precision training (AMP) is supported only on GPU slots.",
         )
 
+        if self._distributed_backend.use_torch():
+            # We need to get the pre-wrapped input models to initialize APEX because
+            if isinstance(models, list):
+                models = [self._wrapped_models[wrapped_model] for wrapped_model in models]
+            else:
+                models = self._wrapped_models[models]
+
         logging.info(f"Enabling mixed precision training with opt_level: {opt_level}.")
         models, optimizers = apex.amp.initialize(
             models=models,
@@ -498,11 +510,29 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             if self.distributed.get_rank() == 0 or self.env.experiment_config.debug_enabled()
             else 0,
         )
+
         if not isinstance(models, list):
             self.models = [models]
+
+        if self.distributed.size > 1 and self._distributed_backend.use_torch():
+            # If Torch DDP is in use, re-wrap the models
+            self.models = [
+                torch.nn.parallel.DistributedDataParallel(model) for model in self.models
+            ]
+
         if not isinstance(optimizers, list):
             self.optimizers = [optimizers]
         return models, optimizers
+
+    @contextlib.contextmanager
+    def _no_sync(self) -> Iterator[None]:
+        assert (
+            self._distributed_backend.use_torch()
+        ), "_no_sync() is only applicable when using Torch DDP"
+        with contextlib.ExitStack() as exit_stack:
+            for ddp_model in self.models:
+                exit_stack.enter_context(ddp_model.no_sync())
+            yield
 
     def _should_communicate_and_update(self) -> bool:
         if not self.env.managed_training:
@@ -572,7 +602,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
 
-                if self.distributed.size > 1 and self._should_communicate_and_update():
+                if (
+                    self.distributed.size > 1
+                    and self._should_communicate_and_update()
+                    and self._distributed_backend.use_horovod()
+                ):
                     # When we exit out of this context manager, we need to finish
                     # communicating gradient updates before they are unscaled.
                     #
@@ -590,11 +624,21 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 loss = self._scaler.scale(loss)
 
             with self._record_timing("train_batch.backward", accumulate=True):
-                loss.backward(  # type: ignore
-                    gradient=gradient,
-                    retain_graph=retain_graph,
-                    create_graph=create_graph,
-                )
+                if (
+                    self.distributed.size > 1
+                    and self._distributed_backend.use_torch()
+                    and not self._should_communicate_and_update()
+                ):
+                    # PyTorch DDP automatically syncs gradients by default on every backward pass.
+                    # no_sync() disables gradient all-reduce until the last iteration.
+                    with self._no_sync():
+                        loss.backward(
+                            gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
+                        )
+                else:
+                    loss.backward(
+                        gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
+                    )
 
     def _average_gradients(self, parameters: Any, divisor: int) -> None:
         check.gt_eq(divisor, 1)
@@ -659,7 +703,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # before we apply gradient clipping and `step()`. In the case of APEX
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
-        if self.distributed.size > 1 and not self._use_apex:
+        if (
+            self.distributed.size > 1
+            and self._distributed_backend.use_horovod()
+            and not self._use_apex
+        ):
             with self._record_timing("train_batch.sync_optimizers", accumulate=True):
                 optimizer.synchronize()  # type: ignore
 
@@ -689,7 +737,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         else:
             step_fn = optimizer.step  # type: ignore
 
-        if self.distributed.size > 1:
+        if self.distributed.size > 1 and self._distributed_backend.use_horovod():
             with optimizer.skip_synchronize():  # type: ignore
                 step_fn()
         else:

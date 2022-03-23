@@ -1,6 +1,7 @@
 import contextlib
 import json
 import logging
+import os
 import pathlib
 import pickle
 import random
@@ -11,6 +12,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, c
 
 import numpy as np
 import torch
+import torch.distributed as dist
 
 import determined as det
 from determined import layers, pytorch, util, workload
@@ -61,9 +63,11 @@ class PyTorchTrialController(det.TrialController):
 
         self.latest_batch = self.env.latest_batch
 
-        # Currently only horovod backend is supported if distributed training
+        # Currently only horovod and torch distributed backends are supported if distributed training
         if self.context.distributed.size > 1:
-            assert self.use_horovod, "Must use horovod for distributed training"
+            assert (
+                self.use_horovod or self.use_torch
+            ), "Must use horovod or torch for distributed training"
 
     @classmethod
     def pre_execute_hook(
@@ -75,6 +79,11 @@ class PyTorchTrialController(det.TrialController):
         if distributed_backend.use_horovod():
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
+        if distributed_backend.use_torch():
+            if torch.cuda.is_available():
+                dist.init_process_group(backend="nccl")
+            else:
+                dist.init_process_group(backend="gloo")
 
         cls._set_random_seeds(env.trial_seed)
 
@@ -230,7 +239,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(load_path)
 
-            if self.context.distributed.size > 1:
+            if self.context.distributed.size > 1 and self.use_horovod:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)

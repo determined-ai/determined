@@ -196,8 +196,8 @@ class DistributedContext:
         Create a DistributedContext using the standard deepspeed environment variables to determine
         rank information.
 
-        The IP address for the chief worker is required whenver CROSS_SIZE > 1.  The value may
-        be provided via the chief_ip arugment or the DET_CHIEF_IP environment variable.
+        The IP address for the chief worker is required whenever CROSS_SIZE > 1.  The value may
+        be provided via the chief_ip argument or the DET_CHIEF_IP environment variable.
         """
 
         return cls(
@@ -207,6 +207,27 @@ class DistributedContext:
             local_size=int(os.environ["LOCAL_SIZE"]),
             cross_rank=int(os.environ["CROSS_RANK"]),
             cross_size=int(os.environ["CROSS_SIZE"]),
+            chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
+            port_offset=_get_training_port_offset(),
+        )
+
+    @classmethod
+    def from_torch_distributed(cls, chief_ip: Optional[str] = None) -> "DistributedContext":
+        """
+        Create a DistributedContext using the standard torch distributed environment variables to determine
+        rank information.
+
+        The IP address for the chief worker is required whenever CROSS_SIZE > 1.  The value may
+        be provided via the chief_ip argument or the DET_CHIEF_IP environment variable.
+        """
+
+        return cls(
+            rank=int(os.environ["RANK"]),
+            size=int(os.environ["WORLD_SIZE"]),
+            local_rank=int(os.environ["LOCAL_RANK"]),
+            local_size=int(os.environ["LOCAL_WORLD_SIZE"]),
+            cross_rank=int(os.environ["GROUP_RANK"]),
+            cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
             port_offset=_get_training_port_offset(),
         )

@@ -33,6 +33,7 @@ import mmdet.datasets
 import mmdet.models
 import numpy as np
 import torch
+import torch.distributed as dist
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
@@ -62,15 +63,11 @@ class MMDetTrial(det_torch.PyTorchTrial):
         self.context.experimental.disable_auto_to_device()
 
         # Build model and make sure it's compatible with horovod.
-        self.model = mmdet.models.build_detector(self.cfg.model)
-        # We need to monkey patch the reduce_mean function from mmdet.core.utils so that it uses
-        # horovod's allreduce primitive instead of pytorch distributed's all_reduce function.
-        utils.monkey_patch_reduce_mean(self.model)
-        # We need to convert pytorch SyncBatchNorm layers to horovod's.
-        utils.convert_syncbn_model(self.model)
+        model = mmdet.models.build_detector(self.cfg.model)
 
         # Initialize model
-        self.model.init_weights()
+        model.init_weights()
+
         # If use_pretrained, try loading pretrained weights for the mmcv config if available.
         if self.hparams.use_pretrained:
             ckpt_path, ckpt = utils.get_pretrained_ckpt_path("/tmp", self.hparams.config_file)

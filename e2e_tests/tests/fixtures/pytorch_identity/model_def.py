@@ -51,7 +51,12 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         data, label = batch
 
         loss = self.loss_fn(self.model(data), label)
-        weight = self.model.weight.data.item()
+
+        if self.context._distributed_backend.use_torch():
+            weight = self.model.module.weight.data.item()
+        else:
+            weight = self.model.weight.data.item()
+
         return {"val_loss": loss, "weight": weight}
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
