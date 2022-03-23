@@ -1,0 +1,10 @@
+:orphan:
+
+**Breaking Changes**
+
+Changed the message body of PatchModelRequest and PatchModelVersionRequest such that the POST-ed
+body is the PatchModel or PatchModelVersion object, instead of being wrapped in ``{ "model":
+PatchModel }``.
+
+Updated typing hints on other Model Registry API endpoints to make it clear which fields will be
+returned in API responses.
