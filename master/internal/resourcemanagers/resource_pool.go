@@ -568,11 +568,9 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	case groupActorStopped:
 		if jobID, ok := rp.groupActorToID[msg.Ref]; ok {
 			delete(rp.queuePositions, jobID)
-			delete(rp.groupActorToID, msg.Ref)
 			delete(rp.IDToGroupActor, jobID)
-		} else {
-			ctx.Log().Errorf("group actor stopped but no job id found for group: %s", msg.Ref)
 		}
+		delete(rp.groupActorToID, msg.Ref)
 		delete(rp.groups, msg.Ref)
 
 	case sproto.SetGroupMaxSlots:

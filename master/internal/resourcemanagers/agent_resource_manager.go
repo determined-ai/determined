@@ -167,8 +167,8 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(aMsg).Error("")
 				ctx.Respond(aMsg)
 				return nil
-			case jobv1.QueueStats:
-				qStats.Stats = &aMsg
+			case *jobv1.QueueStats:
+				qStats.Stats = aMsg
 				resp.Results = append(resp.Results, &qStats)
 			default:
 				return fmt.Errorf("unexpected response type: %T", aMsg)
