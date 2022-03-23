@@ -1,5 +1,3 @@
-from time import sleep
-
 import pytest
 
 from determined.common.api import authentication, bindings, certs
@@ -30,16 +28,15 @@ def test_workspace_org() -> None:
     DELETE FROM workspaces WHERE name LIKE '_Test%';
     """
 
-    # Add test workspaces.
+    # Add a test workspace.
     r3 = bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestOnly"))
     madeWorkspace = r3.workspace
     assert madeWorkspace is not None
-    bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS"))
-    sleep(0.1)
     get_workspace = bindings.get_GetWorkspace(sess, id=madeWorkspace.id).workspace
     assert get_workspace and get_workspace.name == "_TestOnly"
 
     # Sort test and default workspaces.
+    bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS"))
     list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
     assert ["Uncategorized", "_TestOnly", "_TestWS"] == list(map(lambda w: w.name, list_test_1))
     list_test_2 = bindings.get_GetWorkspaces(
@@ -51,7 +48,7 @@ def test_workspace_org() -> None:
     ).workspaces
     assert ["_TestOnly", "_TestWS", "Uncategorized"] == list(map(lambda w: w.name, list_test_3))
 
-    # Add test projects to a workspace.
+    # Add a test project to a workspace.
     r4 = bindings.post_PostProject(
         sess,
         body=bindings.v1PostProjectRequest(name="_TestOnly", workspaceId=madeWorkspace.id),
@@ -59,6 +56,10 @@ def test_workspace_org() -> None:
     )
     madeProject = r4.project
     assert madeProject is not None
+    get_project = bindings.get_GetProject(sess, id=madeProject.id).project
+    assert get_project and get_project.name == "_TestOnly"
+
+    # Sort workspaces' projects.
     bindings.post_PostProject(
         sess,
         body=bindings.v1PostProjectRequest(name="_TestPRJ", workspaceId=madeWorkspace.id),
@@ -69,11 +70,6 @@ def test_workspace_org() -> None:
         body=bindings.v1PostProjectRequest(name="_TestEarly", workspaceId=madeWorkspace.id),
         workspaceId=madeWorkspace.id,
     )
-    sleep(0.1)
-    get_project = bindings.get_GetProject(sess, id=madeProject.id).project
-    assert get_project and get_project.name == "_TestOnly"
-
-    # Sort workspaces' projects.
     list_test_4 = bindings.get_GetWorkspaceProjects(sess, id=madeWorkspace.id).projects
     assert list_test_4 is not None
     assert ["_TestOnly", "_TestPRJ", "_TestEarly"] == list(map(lambda w: w.name, list_test_4))
@@ -96,7 +92,6 @@ def test_workspace_org() -> None:
         body=note,
         projectId=madeProject.id,
     )
-    sleep(0.1)
     r5 = bindings.post_AddProjectNote(
         sess,
         body=note2,
