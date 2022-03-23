@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -107,6 +109,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
+		job.MoveJob,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -311,6 +314,9 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 				}
 			}
 		}
+
+	case job.MoveJob:
+		ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in Kubernetes"))
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
