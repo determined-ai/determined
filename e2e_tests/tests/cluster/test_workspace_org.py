@@ -49,15 +49,21 @@ def test_workspace_org() -> None:
         assert ww.workspace is not None
         test_workspaces.append(ww.workspace)
         list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
-        assert ["Uncategorized", "_TestPatched", "_TestWS"] == list(map(lambda w: w.name, list_test_1))
+        assert ["Uncategorized", "_TestPatched", "_TestWS"] == list(
+            map(lambda w: w.name, list_test_1)
+        )
         list_test_2 = bindings.get_GetWorkspaces(
             sess, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
         ).workspaces
-        assert ["_TestWS", "_TestPatched", "Uncategorized"] == list(map(lambda w: w.name, list_test_2))
+        assert ["_TestWS", "_TestPatched", "Uncategorized"] == list(
+            map(lambda w: w.name, list_test_2)
+        )
         list_test_3 = bindings.get_GetWorkspaces(
             sess, sortBy=bindings.v1GetWorkspacesRequestSortBy.SORT_BY_NAME
         ).workspaces
-        assert ["_TestPatched", "_TestWS", "Uncategorized"] == list(map(lambda w: w.name, list_test_3))
+        assert ["_TestPatched", "_TestWS", "Uncategorized"] == list(
+            map(lambda w: w.name, list_test_3)
+        )
 
         # Add a test project to a workspace.
         r4 = bindings.post_PostProject(
@@ -93,19 +99,25 @@ def test_workspace_org() -> None:
         test_projects += [p1, p2]
         list_test_4 = bindings.get_GetWorkspaceProjects(sess, id=madeWorkspace.id).projects
         assert list_test_4 is not None
-        assert ["_TestPatchedProject", "_TestPRJ", "_TestEarly"] == list(map(lambda w: w.name, list_test_4))
+        assert ["_TestPatchedProject", "_TestPRJ", "_TestEarly"] == list(
+            map(lambda w: w.name, list_test_4)
+        )
         list_test_5 = bindings.get_GetWorkspaceProjects(
             sess, id=madeWorkspace.id, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
         ).projects
         assert list_test_5 is not None
-        assert ["_TestEarly", "_TestPRJ", "_TestPatchedProject"] == list(map(lambda w: w.name, list_test_5))
+        assert ["_TestEarly", "_TestPRJ", "_TestPatchedProject"] == list(
+            map(lambda w: w.name, list_test_5)
+        )
         list_test_6 = bindings.get_GetWorkspaceProjects(
             sess,
             id=madeWorkspace.id,
             sortBy=bindings.v1GetWorkspaceProjectsRequestSortBy.SORT_BY_NAME,
         ).projects
         assert list_test_6 is not None
-        assert ["_TestEarly", "_TestPatchedProject", "_TestPRJ"] == list(map(lambda w: w.name, list_test_6))
+        assert ["_TestEarly", "_TestPatchedProject", "_TestPRJ"] == list(
+            map(lambda w: w.name, list_test_6)
+        )
 
         # Add a test note to a project.
         note = bindings.v1Note(name="Hello", contents="Hello World")
@@ -113,12 +125,12 @@ def test_workspace_org() -> None:
         bindings.post_AddProjectNote(
             sess,
             body=note,
-            id=madeProject.id,
+            projectId=madeProject.id,
         )
         r5 = bindings.post_AddProjectNote(
             sess,
             body=note2,
-            id=madeProject.id,
+            projectId=madeProject.id,
         )
         returned_notes = r5.notes
         assert returned_notes and len(returned_notes) == 2
