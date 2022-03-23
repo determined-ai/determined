@@ -269,6 +269,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			case *jobv1.QueueControl_ResourcePool:
 				if action.ResourcePool == "" {
 					errors = append(errors, "resource pool must be set")
+					continue
 				}
 				resp := ctx.Ask(jobActor, SetResourcePool{
 					ResourcePool: action.ResourcePool,
