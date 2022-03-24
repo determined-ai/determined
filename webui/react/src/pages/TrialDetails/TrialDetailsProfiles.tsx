@@ -53,7 +53,7 @@ const TrialDetailsProfiles: React.FC<Props> = (props: Props) => {
     } else {
       scrollTop.current = scroll.scrollTop;
     }
-  }/* , [ scroll ] */);
+  });
   return (
     <div className={css.base} ref={containerRef}>
       <Profiler {...props} />
