@@ -680,6 +680,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		ResourcePool:   e.Config.Resources().ResourcePool(),
 		SubmissionTime: timestamppb.New(e.StartTime),
 		Username:       e.Username,
+		UserId:         int32(*e.OwnerID),
 		Progress:       float32(e.searcher.Progress()),
 		Name:           e.Config.Name().String(),
 	}

@@ -2813,6 +2813,12 @@ export interface V1Job {
      */
     username: string;
     /**
+     * The id of the user who submitted the job.
+     * @type {number}
+     * @memberof V1Job
+     */
+    userId?: number;
+    /**
      * Associated resource pool.
      * @type {string}
      * @memberof V1Job

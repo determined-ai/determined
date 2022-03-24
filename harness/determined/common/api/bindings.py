@@ -2270,12 +2270,14 @@ class v1Job:
         priority: "typing.Optional[int]" = None,
         progress: "typing.Optional[float]" = None,
         summary: "typing.Optional[v1JobSummary]" = None,
+        userId: "typing.Optional[int]" = None,
         weight: "typing.Optional[float]" = None,
     ):
         self.summary = summary
         self.type = type
         self.submissionTime = submissionTime
         self.username = username
+        self.userId = userId
         self.resourcePool = resourcePool
         self.isPreemptible = isPreemptible
         self.priority = priority
@@ -2294,6 +2296,7 @@ class v1Job:
             type=determinedjobv1Type(obj["type"]),
             submissionTime=obj["submissionTime"],
             username=obj["username"],
+            userId=obj.get("userId", None),
             resourcePool=obj["resourcePool"],
             isPreemptible=obj["isPreemptible"],
             priority=obj.get("priority", None),
@@ -2312,6 +2315,7 @@ class v1Job:
             "type": self.type.value,
             "submissionTime": self.submissionTime,
             "username": self.username,
+            "userId": self.userId if self.userId is not None else None,
             "resourcePool": self.resourcePool,
             "isPreemptible": self.isPreemptible,
             "priority": self.priority if self.priority is not None else None,

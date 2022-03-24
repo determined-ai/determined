@@ -487,6 +487,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		SubmissionTime: timestamppb.New(c.registeredTime),
 		Username:       c.Base.Owner.Username,
+		UserId:         int32(c.Base.Owner.ID),
 		Weight:         c.Config.Resources.Weight,
 		Name:           c.Config.Description,
 	}
