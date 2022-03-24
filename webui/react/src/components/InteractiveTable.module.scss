@@ -19,20 +19,17 @@
     background: var(--theme-colors-action-normal);
     opacity: 0.2;
   }
-
   .dropTargetIndicator {
     background: var(--theme-colors-action-normal);
     border-radius: 4px;
     bottom: 0;
-    top: 0;
     margin: 0;
-    width: 4px;
     pointer-events: none;
     position: absolute;
+    top: 0;
+    width: 4px;
     z-index: 4;
-
   }
-
   :global(.ant-table-cell) {
     user-select: none;
     z-index: 1;

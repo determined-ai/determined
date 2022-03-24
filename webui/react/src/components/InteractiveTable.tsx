@@ -16,6 +16,7 @@ import 'antd/dist/antd.min.css';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
+
 import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
 import { ExperimentItem } from 'types';
 
@@ -404,7 +405,7 @@ const InteractiveTable: InteractiveTable = ({
       tableWidth -= 100;
       const sumOfWidths = newWidths.reduce((a: number, b: number): number => a + b);
       if (sumOfWidths < tableWidth) {
-        console.log(sumOfWidths, tableWidth);
+        // console.log(sumOfWidths, tableWidth);
         const scaleUp = tableWidth / sumOfWidths;
         newWidths = widths.map((w: number) => w * scaleUp);
       }
