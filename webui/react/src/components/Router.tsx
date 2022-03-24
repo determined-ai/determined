@@ -30,7 +30,6 @@ const Router: React.FC<Props> = (props: Props) => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  console.log('rerednering', auth);
   return (
     <Switch>
       {props.routes.map(config => {
@@ -39,7 +38,6 @@ const Router: React.FC<Props> = (props: Props) => {
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
           if (!auth.checked) return <Route key={route.id} {...route} />;
-          // window.alert('needs auth and not checked');
           return (
             <Route
               key={route.id}
