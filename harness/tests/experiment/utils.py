@@ -28,7 +28,12 @@ class TrainAndValidate:
         self._latest_batch = 0
 
     def send(
-        self, steps: int, validation_freq: int, initial_step_id: int = 1, scheduling_unit: int = 1
+        self,
+        steps: int,
+        validation_freq: int,
+        initial_step_id: int = 1,
+        scheduling_unit: int = 1,
+        train_batch_calls: int = 1,
     ) -> workload.Stream:
         self._training_metrics = []
         self._avg_training_metrics = []
@@ -47,7 +52,7 @@ class TrainAndValidate:
             )
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
-            assert len(batch_metrics) == scheduling_unit
+            assert len(batch_metrics) == scheduling_unit * train_batch_calls
             self._training_metrics.extend(batch_metrics)
             self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
             self._latest_batch += scheduling_unit

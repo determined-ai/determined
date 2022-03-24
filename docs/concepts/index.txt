@@ -69,14 +69,14 @@ The **master** is the central component of the Determined system. It is responsi
 -  Scheduling and dispatching work to agents.
 -  Managing provisioning and deprovisioning of agents in clouds.
 -  Advancing the experiment, trial, and workload state machines over time.
--  Serve the WebUI.
+-  Hosting the WebUI and the REST API.
 
-The **agent** manages a number of **slots**, which are the units of computing devices, typically one
-slot per CPU or GPU. It has no state and only communicate with the master. It is responsible for
+An **agent** manages a number of **slots**, which are computing devices (typically a GPU or CPU). An
+agent has no state and only communicates with the master. Each agent is responsible for
 
--  Discover the devices and send them to the master.
+-  Discovering local computing devices (slots) and sending metadata about them to the master.
 -  Running the workloads that are requested by the master.
--  Monitoring the containers and send them to the master.
+-  Monitoring containers and sending information about them to the master.
 
 The **trial runner** runs a trial in a containerized environment. So the trial runners are expected
 to have access to the data that will be used in training. The **agents** are responsible for
@@ -88,21 +88,22 @@ reporting the states of **trial runner** to the master.
 
 .. _concept-experiment:
 
-We use the concept of **experiments** to represent the basic unit of running the model training
-code. An experiment is a collection of one or more trials that are exploring a user-defined
-hyperparameter space. For example, during a learning rate hyperparameter search, an experiment can
-consist of three trials with learning rates of .001, .01, and .1.
+We use **experiments** to represent the basic unit of running the model training code. An experiment
+is a collection of one or more trials that are exploring a user-defined hyperparameter space. For
+example, during a learning rate hyperparameter search, an experiment might consist of three trials
+with learning rates of .001, .01, and .1.
 
 .. _concept-trial:
 
-A trial is a training task with a defined set of hyperparameters.
+A **trial** is a training task with a defined set of hyperparameters. A common degenerate case is an
+experiment with a single trial, which corresponds to training a single deep learning model.
 
 In order to run experiments, you need to write your model training code. We use **model definition**
 to represent a specification of a deep learning model and its training procedure. It contains
 training code that implements :doc:`training APIs </training-apis/index>`.
 
-For each experiment, you can configure a **searcher** or a **searching algorithm**. The search
-algorithm determines how many trials will be run for a particular experiment and how the
+For each experiment, you can configure a **searcher**, also known as a **search algorithm**. The
+search algorithm determines how many trials will be run for a particular experiment and how the
 hyperparameters will be set. More information can be found at :doc:`/training-hyperparameter/index`.
 
 .. toctree::

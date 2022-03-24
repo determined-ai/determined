@@ -26,6 +26,7 @@ import (
 func TestGetExperiments(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	// Add a mock user.
@@ -274,6 +275,7 @@ func mockExpconf() expconf.ExperimentConfig {
 func TestCheckpointMetadata(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	tests := []struct {

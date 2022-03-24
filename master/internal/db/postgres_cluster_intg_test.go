@@ -18,6 +18,7 @@ func TestClusterAPI(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	_, err := db.GetOrCreateClusterID()

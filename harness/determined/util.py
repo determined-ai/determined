@@ -10,6 +10,7 @@ import os
 import pathlib
 import random
 import shutil
+import socket
 import time
 import uuid
 import warnings
@@ -293,3 +294,34 @@ def calculate_batch_sizes(
         )
 
     return per_gpu_batch_size, effective_batch_size
+
+
+def check_sshd(peer_addr: str, deadline: float, port: int) -> None:
+    """
+    Waits for every peer machine to be ready to accept SSHD connections.
+
+    :param peer_addr: address of machine running SSHD
+    :param deadline: time to wait until SSHD ready
+    :param port: port on addresses running SSHD
+    :return: raises Exception if SSHD connection invalid or timeout on any peer
+    """
+    while True:
+        with socket.socket() as sock:
+            sock.settimeout(1)
+            try:
+                # Connect to a socket to ensure sshd is listening.
+                sock.connect((peer_addr, port))
+                # The ssh protocol requires the server to serve an initial greeting.
+                # Receive part of that greeting to know that sshd is accepting/responding.
+                data = sock.recv(1)
+                if not data:
+                    raise ValueError("no sshd greeting")
+                # This peer is ready.
+                break
+            except Exception:
+                if time.time() > deadline:
+                    raise ValueError(
+                        f"Chief machine was unable to connect to sshd on peer machine at "
+                        f"{peer_addr}:{port}"
+                    )
+                time.sleep(0.1)
