@@ -1,5 +1,5 @@
 import queryString from 'query-string';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useLocation } from 'react-router';
 
 import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
