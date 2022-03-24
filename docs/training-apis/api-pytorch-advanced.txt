@@ -1,6 +1,6 @@
-########################
- PyTorch API - Advanced
-########################
+################
+ Advanced Usage
+################
 
 *******************
  Gradient Clipping
@@ -19,6 +19,8 @@ Determined supports proper reduction of arbitrary training and validation metric
 distributed training, by allowing users to define custom reducers. Custom reducers can be either a
 function or an implementation of the :class:`determined.pytorch.MetricReducer` interface. See
 :meth:`determined.pytorch.PyTorchTrialContext.wrap_reducer` for more details.
+
+.. _pytorch-reproducible-dataset:
 
 ************************************
  Customizing A Reproducible Dataset

@@ -23,7 +23,7 @@ def test_create_run_command(
         "-np",
         "16",
         "-p",
-        str(constants.HOROVOD_SSH_PORT),
+        str(constants.DTRAIN_SSH_PORT),
         "-H",
         "localhost:8,128.140.2.4:8",
         "--start-timeout",

@@ -20,6 +20,7 @@ docs below depending on your ML Framework.
 
 -  :doc:`/training-apis/api-pytorch`
 -  :doc:`/training-apis/api-pytorch-lightning`
+-  :doc:`/training-apis/deepspeed/index`
 -  :doc:`/training-apis/api-keras`
 -  :doc:`/training-apis/api-estimator`
 
@@ -90,6 +91,7 @@ Known limitations:
 
    api-pytorch
    api-pytorch-lightning
+   deepspeed/index
    api-keras
    api-estimator
    data-layer

@@ -1,6 +1,6 @@
-###############################
- Estimator API - API Reference
-###############################
+###############
+ API Reference
+###############
 
 *****************************************
  ``determined.estimator.EstimatorTrial``

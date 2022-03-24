@@ -1,6 +1,6 @@
-#########################
- PyTorch API - Reference
-#########################
+###############
+ API Reference
+###############
 
 *************************************
  ``determined.pytorch.PyTorchTrial``
@@ -39,6 +39,8 @@
    :members:
    :exclude-members: reduce_metrics, reset_reducers, wrap_reducer
 
+.. _pytorch-dataloader:
+
 ***********************************
  ``determined.pytorch.DataLoader``
 ***********************************
@@ -61,6 +63,8 @@
 .. autoclass:: determined.pytorch.Reducer
    :members:
 
+.. _pytorch-metric-reducer:
+
 **************************************
  ``determined.pytorch.MetricReducer``
 **************************************
@@ -69,6 +73,8 @@
    :members: reset, per_slot_reduce, cross_slot_reduce
    :member-order: bysource
 
+.. _pytorch-samplers:
+
 *********************************
  ``determined.pytorch.samplers``
 *********************************
@@ -76,12 +82,16 @@
 .. automodule:: determined.pytorch.samplers
    :members:
 
+.. _pytorch-callbacks:
+
 ****************************************
  ``determined.pytorch.PyTorchCallback``
 ****************************************
 
 .. autoclass:: determined.pytorch.PyTorchCallback
    :members:
+
+.. _pytorch-writer:
 
 ***************************************************************
  ``determined.tensorboard.metric_writers.pytorch.TorchWriter``
@@ -93,5 +103,4 @@
  ``determined.pytorch.load_trial_from_checkpoint_path``
 ********************************************************
 
-.. autoclass:: determined.pytorch.load_trial_from_checkpoint_path
-   :members:
+.. autofunction:: determined.pytorch.load_trial_from_checkpoint_path
