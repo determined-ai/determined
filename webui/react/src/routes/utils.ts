@@ -148,7 +148,6 @@ export const routeToReactUrl = (path: string): void => {
 export const filterOutLoginLocation = (
   location: { pathname: string },
 ): { pathname: string } | undefined => {
-  return clone(location);
   return location.pathname.includes('login') ? undefined : clone(location);
 };
 

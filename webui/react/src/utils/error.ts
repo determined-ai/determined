@@ -145,8 +145,10 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): void
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (e.type === ErrorType.Auth) {
-    window.alert('auth error');
-    if (!window.location.href.includes('login')) {
+    // This check accounts for requestes that had not been aborted properly prior
+    // to the page dismount and end up throwing after the user is logged out.
+    const path = window.location.pathname;
+    if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
       history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
     }
   }
