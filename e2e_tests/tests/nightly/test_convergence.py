@@ -1,10 +1,9 @@
 import pytest
+from compute_stats import compare_stats
 
 from tests import config as conf
 from tests import experiment as exp
 
-
-from compute_stats import compare_stats
 
 @pytest.mark.nightly
 def test_mnist_pytorch_accuracy() -> None:
@@ -365,9 +364,7 @@ def test_cifar10_byol_pytorch_accuracy() -> None:
     )
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def resource_stats():
     yield
     compare_stats()
-
-

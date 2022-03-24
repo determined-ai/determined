@@ -1,17 +1,20 @@
-import re
 import calendar
-from datetime import datetime, timezone, timedelta
+import re
 import subprocess
-from tests import config as conf
-from determined.common.api import bindings, certs, authentication
-from determined.common.experimental import session
+from datetime import datetime, timedelta, timezone
 
-DATE_PATTERN = '%Y-%m-%dT%H:%M:%S.%f'
-ADD_KEY = 'adding'
-REMOVE_KEY = 'removing'
+from determined.common.api import authentication, bindings, certs
+from determined.common.experimental import session
+from tests import config as conf
+
+DATE_PATTERN = "%Y-%m-%dT%H:%M:%S.%f"
+ADD_KEY = "adding"
+REMOVE_KEY = "removing"
+
 
 def iso_date_to_epoch(iso_date):
-   return calendar.timegm(datetime.strptime(iso_date[:-4], DATE_PATTERN).timetuple())
+    return calendar.timegm(datetime.strptime(iso_date[:-4], DATE_PATTERN).timetuple())
+
 
 # def start_date_to_epoch(date_arg):
 #    utc_adj = 3600 * 7 if sys.argv[4] == 'PT' else 0 # 7 hours ahead of PT
@@ -29,13 +32,13 @@ def parse_log_for_gpu_stats(log_path):
 
     agent_event_mapping = {}
     all_agents = set()
-    #min_ts = 1596240000 # Override if logs start significantly later than start of day
-    #max_ts = 1597622399 # Override if logs end significantly earlier than end of day
-    min_ts = -1 # will infer start time based on earliest log timestamp
-    max_ts = -1 # will infer end time based on latest log timestamp
+    # min_ts = 1596240000 # Override if logs start significantly later than start of day
+    # max_ts = 1597622399 # Override if logs end significantly earlier than end of day
+    min_ts = -1  # will infer start time based on earliest log timestamp
+    max_ts = -1  # will infer end time based on latest log timestamp
 
-    with open(log_path, 'r') as f:
-        for i,line in enumerate(f):
+    with open(log_path, "r") as f:
+        for i, line in enumerate(f):
             match_date = date_parsing_re.match(line)
             if match_date:
                 ts = iso_date_to_epoch(match_date.group(1))
@@ -62,22 +65,31 @@ def parse_log_for_gpu_stats(log_path):
             agent_event_mapping[agent_id][REMOVE_KEY] = max_ts
         start = times[ADD_KEY] if ADD_KEY in times else min_ts
         end = times[REMOVE_KEY] if REMOVE_KEY in times else max_ts
-        total_agent_uptime_sec += (end - start)
+        total_agent_uptime_sec += end - start
         agent_uptime_hours = (end - start) / 3600
         print(f"{agent_id}: {agent_uptime_hours} hours")
 
-    global_start = datetime.fromtimestamp(min_ts, tz=timezone(timedelta(hours=0))).strftime('%Y-%m-%dT%H:%M:%S.000Z')
-    global_end = datetime.fromtimestamp(max_ts, tz=timezone(timedelta(hours=0))).strftime('%Y-%m-%dT%H:%M:%S.000Z')
-    print(f"Master log time period: {global_start} to {global_end} Total agent up seconds: {total_agent_uptime_sec} ")
+    global_start = datetime.fromtimestamp(min_ts, tz=timezone(timedelta(hours=0))).strftime(
+        "%Y-%m-%dT%H:%M:%S.000Z"
+    )
+    global_end = datetime.fromtimestamp(max_ts, tz=timezone(timedelta(hours=0))).strftime(
+        "%Y-%m-%dT%H:%M:%S.000Z"
+    )
+    print(
+        f"Master log time period: {global_start} to {global_end} Total agent up seconds: {total_agent_uptime_sec} "
+    )
     return total_agent_uptime_sec, global_start, global_end
 
 
 log_path = "/tmp/det-master.log"
+
+
 def fetch_master_log():
     command = ["det", "-m", conf.make_master_url(), "master", "logs"]
     output = subprocess.check_output(command)
-    with open(log_path, 'wb') as log:
+    with open(log_path, "wb") as log:
         log.write(output)
+
 
 def create_test_session() -> session.Session:
     murl = conf.make_master_url()
@@ -85,26 +97,28 @@ def create_test_session() -> session.Session:
     authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
     return session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
 
+
 def compare_stats():
     fetch_master_log()
     gpu_from_log, global_start, global_end = parse_log_for_gpu_stats(log_path)
     res = bindings.get_ResourceAllocationRaw(
-        create_test_session(), timestampAfter=global_start, timestampBefore=global_end)
+        create_test_session(), timestampAfter=global_start, timestampBefore=global_end
+    )
     gpu_from_api = 0
     gpu_from_api_map = {}
     instance_from_api = 0
     instance_from_api_map = {}
-    for r in (res.to_json())['resourceEntries']:
-        if r['kind'] == 'agent' and r['seconds'] > 0:
-            gpu_from_api += r['seconds']
-            if r['username'] not in gpu_from_api_map:
-                gpu_from_api_map[r['username']] = 0
-            gpu_from_api_map[r['username']] += r['seconds']
-        if r['kind'] == 'instance' and r['seconds'] > 0:
-            instance_from_api += r['seconds']
-            if r['username'] not in instance_from_api_map:
-                instance_from_api_map[r['username']] = 0
-            instance_from_api_map[r['username']] += r['seconds']
+    for r in (res.to_json())["resourceEntries"]:
+        if r["kind"] == "agent" and r["seconds"] > 0:
+            gpu_from_api += r["seconds"]
+            if r["username"] not in gpu_from_api_map:
+                gpu_from_api_map[r["username"]] = 0
+            gpu_from_api_map[r["username"]] += r["seconds"]
+        if r["kind"] == "instance" and r["seconds"] > 0:
+            instance_from_api += r["seconds"]
+            if r["username"] not in instance_from_api_map:
+                instance_from_api_map[r["username"]] = 0
+            instance_from_api_map[r["username"]] += r["seconds"]
     for ins in instance_from_api_map:
         # make sure instance initialization time is less than 5 mins
         assert instance_from_api_map[ins] - gpu_from_api_map[ins] < 60 * 5

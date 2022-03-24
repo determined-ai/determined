@@ -1,9 +1,9 @@
 import pytest
+from compute_stats import compare_stats
 
 from tests import config as conf
 from tests import experiment as exp
 
-from compute_stats import compare_stats
 
 @pytest.mark.nightly
 def test_mmdetection_pytorch_const() -> None:
@@ -101,7 +101,8 @@ def test_protein_pytorch_geometric() -> None:
         config, conf.graphs_examples_path("proteins_pytorch_geometric"), 1
     )
 
-@pytest.fixture(scope='session', autouse=True)
+
+@pytest.fixture(scope="session", autouse=True)
 def resource_stats():
     yield
     compare_stats()
