@@ -1,12 +1,10 @@
-// @ts-nocheck
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
-import useResize from 'hooks/useResize';
-import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
 import React, {
   createContext,
+  CSSProperties,
   useCallback,
   useContext,
   useEffect,
@@ -16,11 +14,11 @@ import React, {
 } from 'react';
 import 'antd/dist/antd.min.css';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
-import { DraggableCore } from 'react-draggable';
+import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
-import {
-  ExperimentItem,
-} from 'types';
+
+import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
+import { ExperimentItem } from 'types';
 
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
@@ -28,8 +26,6 @@ import Spinner from './Spinner';
 const DEFAULT_RESIZE_THROTTLE_TIME = 10;
 
 const type = 'DraggableColumn';
-
-type ResizeCallback = ((e: React.SyntheticEvent, data: ResizeCallbackData) => void) | undefined;
 
 type DndItem = {
   index?: number;
@@ -59,11 +55,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => JSX.Element;
 
-// enum DragState {
-//   NotDragging,
-//   DraggingRight,
-//   DraggingLeft,
-// }
+type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
 interface RowProps {
   ContextMenu: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
@@ -75,18 +67,23 @@ interface RowProps {
 interface HeaderCellProps {
   className: string;
   columnName: string;
+  dragState : DragState;
+  dropLeftStyle: CSSProperties;
+  dropRightStyle: CSSProperties;
   filterActive: boolean;
   index: number;
+  isResizing: boolean;
   moveColumn: (source: number, destination: number) => void;
-  onResize: ResizeCallback;
-  onResizeStart: ResizeCallback;
-  onResizeStop: ResizeCallback;
+  onResize: DraggableEventHandler;
+  onResizeStart: DraggableEventHandler;
+  onResizeStop: DraggableEventHandler;
   title: unknown;
   width: number;
 }
 
 interface CellProps {
   children?: React.ReactNode;
+  className: string;
   isCellRightClickable?: boolean;
 }
 
@@ -263,12 +260,16 @@ const InteractiveTable: InteractiveTable = ({
   ...props
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [ widthData, setWidthData ] = useState({ widths: settings?.columnWidths });
+  const [ widthData, setWidthData ] = useState({
+    dropLeftStyles: settings?.columnWidths.map(() => ({})),
+    dropRightStyles: settings?.columnWidths.map(() => ({})),
+    widths: settings?.columnWidths,
+  });
   const [ isResizing, setIsResizing ] = useState(false);
 
   const { dragState } = useDragLayer((monitor) => {
     const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
-    const dragState = deltaX > 0 ? 'draggingRight' : deltaX < 0 ? 'draggingLeft' : 'notDragging';
+    const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
     return ({ dragState });
   });
 
@@ -276,14 +277,17 @@ const InteractiveTable: InteractiveTable = ({
 
   useEffect(() => {
 
-    const tableWidth = tableRef.current
-      .getElementsByTagName('table')
+    const widths = settings.columnWidths;
+    const sumOfWidths = widths.reduce((a, b) => a + b);
+    const tableWidth = tableRef
+      ?.current
+      ?.getElementsByTagName('table')
       ?.[0].getBoundingClientRect()
       .width;
 
-    const widths = settings.columnWidths;
-    const sumOfWidths = widths.reduce((a, b) => a + b);
-    const scalingFactor = tableWidth / sumOfWidths * .9;
+    let scalingFactor = 1;
+    if (tableWidth) scalingFactor = tableWidth / sumOfWidths * .9;
+
     const dropRightStyles = widths.map((w, i) => ({
       left: `${(w / 2) * scalingFactor}px`,
       width: `${(w + (widths[i + 1] ?? 0)) * (scalingFactor / 2)}px`,
@@ -335,20 +339,21 @@ const InteractiveTable: InteractiveTable = ({
     (index) => {
       return throttle(
         DEFAULT_RESIZE_THROTTLE_TIME,
-        (e: Event, { x }: ResizeCallbackData) => {
-          setWidthData(({ widths: prevWidths }) => {
+        (e: Event, { x }: DraggableData) => {
+          setWidthData(({ widths: prevWidths, ...rest }) => {
             const column = settings.columns[index];
             const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.70;
             if (x < minWidth) {
               return {
                 widths: prevWidths.map((w: number, i: number) =>
                   index === i ? minWidth : w),
+                ...rest,
               };
             }
             const newWidth = x;
             const newWidths = prevWidths.map((w: number, i: number) =>
               index === i ? newWidth : w);
-            return { widths: newWidths };
+            return { widths: newWidths, ...rest };
 
           });
         },
@@ -359,14 +364,14 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleResizeStart = useCallback(
     (index) =>
-      (e, { x }) => {
+      (e: Event, { x }: DraggableData) => {
         setIsResizing(true);
         const column = settings.columns[index];
         const startWidth = settings.columnWidths[index];
         const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.7;
         const deltaX = startWidth - minWidth;
         const minX = x - deltaX;
-        setWidthData(({ widths }) => ({ minX, widths }));
+        setWidthData(({ widths, ...rest }) => ({ minX, widths, ...rest }));
       },
     [ setWidthData, settings.columns, settings.columnWidths ],
   );
@@ -385,7 +390,7 @@ const InteractiveTable: InteractiveTable = ({
       //   }
       // }
       setIsResizing(false);
-      setWidthData({ widths: newWidths });
+      setWidthData(({ ...prev }) => ({ ... prev, widths: newWidths }));
       updateSettings({ columnWidths: newWidths });
 
     },

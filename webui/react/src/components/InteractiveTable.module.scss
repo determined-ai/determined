@@ -1,77 +1,39 @@
 .headerCell {
-  &:active {
-    background: var(--theme-colors-action-normal);
+  cursor: move;
 
-    &::before {
-      content: '';
-      position: fixed;
-      cursor: move;
-      top: 0px;
-      left: 0px;
-      height: 100vh;
-      width: 100vw;
-      z-index: 5;
-    }
+  svg {
+    cursor: pointer;
   }
-  cursor: move;
-  // z-index: 2;
-  // &:active {
-
-  //   &:active {
-  //     :global(.ant-table-cell) {
-  //       background: black !important;
-  //     }
-  //     // background: var(--theme-colors-action-normal);
-  //     &::after {
-  //       content: '';
-  //       position: fixed;
-  //       // cursor: move;
-  //       top: 0px;
-  //       left: 0px;
-  //       height: 100vh;
-  //       width: 100vw;
-  //       z-index: 4;
-  //     }
-  //   }
+  .dropTarget {
+    background: var(--theme-colors-action-normal);
+    border-radius: 4px;
+    bottom: 0;
+    height: 250px;
+    margin: 0;
+    opacity: 0.1;
+    position: absolute;
+    top: -100px;
+    z-index: 5;
+  }
+  .dropTargetActive {
+    background: var(--theme-colors-action-normal);
+    opacity: 0.2;
+  }
+  :global(.ant-table-cell) {
+    user-select: none;
+    z-index: 1;
+  }
+  :global(.ant-table-column-title) {
+    cursor: move;
+    z-index: 0;
+  }
+  :global(.ant-table-filter-trigger) {
+    cursor: pointer;
+  }
+  :global(.ant-table-column-sorters::after) {
+    z-index: -2;
+  }
 }
-// transform: translate(30px, 0px) !important;
-svg {
-  cursor: pointer;
-}
-.columnDraggingDiv {
-}
-
-.dropTarget {
-  border-radius: 4px;
-  bottom: 0;
-  height: 250px;
-  position: absolute;
-  margin: 0;
-  top: -100px;
-  z-index: 5;
-  background: rgba(0, 50, 200, 0.05);
-}
-.dropTargetActive {
-  background: rgba(0, 50, 200, 0.2);
-}
-
-:global(.ant-table-cell) {
-  user-select: none;
-  z-index: 1;
-}
-:global(.ant-table-column-title) {
-  cursor: move;
-  z-index: 0;
-}
-:global(.ant-table-filter-trigger) {
-  cursor: pointer;
-}
-:global(.ant-table-column-sorters::after) {
-  z-index: -2;
-}
-// :global(div[class='ant-table-cell']) {
-//   cursor: move;
-// }
 .columnResizeHandle {
   border-radius: 4px;
   bottom: 0;
@@ -85,13 +47,14 @@ svg {
 
   &:active {
     background: var(--theme-colors-action-normal);
+
     &::before {
       content: '';
-      position: fixed;
       cursor: col-resize;
-      top: 0px;
-      left: 0px;
       height: 100vh;
+      left: 0;
+      position: fixed;
+      top: 0;
       width: 100vw;
     }
   }
@@ -99,7 +62,6 @@ svg {
     background: var(--theme-colors-action-normal);
   }
 }
-
 .dropOverLeftward {
   border-left: 3px dashed var(--theme-colors-action-normal) !important;
 }
@@ -108,11 +70,11 @@ svg {
 }
 .cell {
   background: #fff;
+
   .rightClickableCellWrapper {
     display: inline;
   }
 }
-
 .headerFilterOn {
   :global(.ant-table-filter-column .ant-table-filter-trigger) {
     color: var(--theme-colors-action-normal);
