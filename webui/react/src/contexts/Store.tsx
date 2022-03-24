@@ -198,18 +198,22 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, agents: action.value, cluster, pool };
     }
     case StoreAction.ResetAuth:
+      console.log('reset auth');
       clearAuthCookie();
       globalStorage.removeAuthToken();
       return { ...state, auth: { ...state.auth, isAuthenticated: false } };
     case StoreAction.ResetAuthCheck:
+      console.log('reset auth check');
       if (!state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: false } };
     case StoreAction.SetAuth:
+      console.log('set auth');
       if (action.value.token) {
         globalStorage.authToken = action.value.token;
       }
       return { ...state, auth: { ...action.value, checked: true } };
     case StoreAction.SetAuthCheck:
+      console.log('set auth check');
       if (state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: true } };
     case StoreAction.SetInfo:
