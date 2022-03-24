@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -80,7 +79,6 @@ func RunMaster(ctx context.Context, c *config.Config) (
 	logrus.AddHook(logs)
 	go func() {
 		err := m.Run(ctx)
-		defer db.PostTestTeardown()
 		switch {
 		case err == context.Canceled:
 			fmt.Println("master stopped")
