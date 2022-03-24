@@ -68,7 +68,7 @@ def parse_log_for_gpu_stats(log_path):
 
     global_start = datetime.fromtimestamp(min_ts, tz=timezone(timedelta(hours=0))).strftime('%Y-%m-%dT%H:%M:%S.000Z')
     global_end = datetime.fromtimestamp(max_ts, tz=timezone(timedelta(hours=0))).strftime('%Y-%m-%dT%H:%M:%S.000Z')
-    
+    print(f"Master log time period: {global_start} to {global_end} Total agent up seconds: {total_agent_uptime_sec} ")
     return total_agent_uptime_sec, global_start, global_end
 
 
