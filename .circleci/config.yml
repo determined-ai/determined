@@ -1357,7 +1357,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "harness/tests/requirements.txt"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - persist_to_workspace:
@@ -1374,7 +1374,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "harness/tests/requirements.txt"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - persist_to_workspace:
@@ -1390,7 +1390,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3"
-          extra-requirements-file: "harness/tests/requirements.txt"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - persist_to_workspace:
@@ -1406,7 +1406,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3"
-          extra-requirements-file: "harness/tests/requirements.txt"
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
       - persist_to_workspace:
@@ -1488,7 +1488,7 @@ jobs:
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
-      - run: pip install -r harness/tests/requirements.txt
+      - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - run: sh -c "pip check || true"
       - run: pytest harness/tests/cli
