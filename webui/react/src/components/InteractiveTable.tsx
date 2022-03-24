@@ -15,9 +15,8 @@ import React, {
   useState,
 } from 'react';
 import 'antd/dist/antd.min.css';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import Draggable, { DraggableCore } from 'react-draggable';
+import { useDrag, useDragLayer, useDrop } from 'react-dnd';
+import { DraggableCore } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
 import {
   ExperimentItem,
@@ -25,8 +24,6 @@ import {
 
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
-
-import { isAbsolute } from 'path';
 
 const DEFAULT_RESIZE_THROTTLE_TIME = 10;
 
@@ -62,6 +59,11 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => JSX.Element;
 
+// enum DragState {
+//   NotDragging,
+//   DraggingRight,
+//   DraggingLeft,
+// }
 interface RowProps {
   ContextMenu: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
@@ -163,55 +165,60 @@ const HeaderCell = ({
   moveColumn,
   index,
   title: unusedTitleFromAntd,
+  isResizing,
+  dropRightStyle,
+  dropLeftStyle,
+  dragState,
   ...props
 }: HeaderCellProps) => {
-  const reorderRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef<HTMLDivElement>(null);
-  const previewRef = useRef(null);
 
-  const classes = [ css.headerCell ];
-  // const [ , drag ] = useDrag({
-  //   item: { index },
-  //   type,
-  // });
+  const headerCellClasses = [ css.headerCell ];
+  const dropTargetClasses = [ css.dropTarget ];
+  const [ , drag ] = useDrag({
+    canDrag: () => !isResizing,
+    item: { index },
+    type,
+  });
 
-  // const [ { isOver, dropClassName }, drop ] = useDrop({
-  //   accept: type,
-  //   collect: (monitor) => {
+  const [ { isOver, dropClassName }, drop ] = useDrop({
+    accept: type,
+    collect: (monitor) => {
+      const dragItem = (monitor.getItem() || {}); // as DndItem;
+      const dragIndex = dragItem?.index;
+      if (dragIndex == null || dragIndex === index) {
+        return {};
+      }
+      return {
+        dropClassName: dragIndex > index ? css.dropOverLeftward : css.dropOverRightward,
+        isOver: monitor.isOver(),
+      };
+    },
+    drop: (item: DndItem) => {
+      if (item.index != null) {
+        moveColumn(item.index, index);
+      }
+    },
+  });
 
-  //     const dragItem = (monitor.getItem() || {}); // as DndItem;
-  //     const dragIndex = dragItem?.index;
-  //     if (dragIndex == null || dragIndex === index) {
-  //       return {};
-  //     }
-  //     return {
-  //       dropClassName: dragIndex > index ? css.dropOverLeftward : css.dropOverRightward,
-  //       isOver: monitor.isOver(),
-  //     };
-  //   },
-  //   drop: (item: DndItem) => {
-  //     if (item.index != null) {
-  //       moveColumn(item.index, index);
-  //     }
-  //   },
-  // });
-
-  // drop(drag(reorderRef));
-
-  // if (isOver) classes.push(dropClassName ?? '');
-  if (filterActive) classes.push(css.headerFilterOn);
+  if (isOver) {
+    headerCellClasses.push(dropClassName ?? '');
+    dropTargetClasses.push(css.dropTargetActive);
+  }
+  if (filterActive) headerCellClasses.push(css.headerFilterOn);
 
   if (!columnName) {
     return <th className={className} {...props} />;
   }
+
   const tableCell = (
     <th
-      className={classes.join(' ')}>
+      className={headerCellClasses.join(' ')}>
       <div
         className={`${className} ${css.columnDraggingDiv}`}
-        ref={reorderRef}
+        ref={drag}
         title={columnName}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         {...props}
       />
       <DraggableCore
@@ -226,26 +233,21 @@ const HeaderCell = ({
             e.stopPropagation();
           }}
         />
-
       </DraggableCore>
+      <span
+        className={dropTargetClasses.join(' ')}
+        ref={drop}
+        style={
+          dragState === 'draggingRight'
+            ? dropRightStyle
+            : dragState === 'draggingLeft'
+              ? dropLeftStyle
+              : {}
+        }
+      />
     </th>
   );
-  const preview = React.cloneElement(tableCell, {
-    ref: previewRef,
-    style: { position: 'absolute', translate: '(0px, 0px)' },
-  });
-  console.log(preview);
-  return (
-    <>
-      {preview}
-      <DraggableCore
-        nodeRef={reorderRef}
-        onDrag={(e, { x }) => preview.ref.current.style.transform = `translate(${x}px, 0px) `}>
-        {tableCell}
-
-      </DraggableCore>
-    </>
-  );
+  return tableCell;
 };
 
 const InteractiveTable: InteractiveTable = ({
@@ -262,12 +264,36 @@ const InteractiveTable: InteractiveTable = ({
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({ widths: settings?.columnWidths });
-  const resize = useResize(tableRef);
-  // console.log(resize.width, widthData.widths.reduce((a, b) => a + b));
+  const [ isResizing, setIsResizing ] = useState(false);
+
+  const { dragState } = useDragLayer((monitor) => {
+    const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
+    const dragState = deltaX > 0 ? 'draggingRight' : deltaX < 0 ? 'draggingLeft' : 'notDragging';
+    return ({ dragState });
+  });
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  useEffect(() => setWidthData({ widths: settings.columnWidths }), [
+  useEffect(() => {
+
+    const tableWidth = tableRef.current
+      .getElementsByTagName('table')
+      ?.[0].getBoundingClientRect()
+      .width;
+
+    const widths = settings.columnWidths;
+    const sumOfWidths = widths.reduce((a, b) => a + b);
+    const scalingFactor = tableWidth / sumOfWidths * .9;
+    const dropRightStyles = widths.map((w, i) => ({
+      left: `${(w / 2) * scalingFactor}px`,
+      width: `${(w + (widths[i + 1] ?? 0)) * (scalingFactor / 2)}px`,
+    }));
+    const dropLeftStyles = widths.map((w, i) => ({
+      left: `${-((widths[i - 1] ?? 0) / 2) * scalingFactor}px`,
+      width: `${(w + (widths[i - 1] ?? 0)) * (scalingFactor / 2)}px`,
+    }));
+    setWidthData({ dropLeftStyles, dropRightStyles, widths });
+  }, [
     settings.columnWidths,
   ]);
 
@@ -334,6 +360,7 @@ const InteractiveTable: InteractiveTable = ({
   const handleResizeStart = useCallback(
     (index) =>
       (e, { x }) => {
+        setIsResizing(true);
         const column = settings.columns[index];
         const startWidth = settings.columnWidths[index];
         const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.7;
@@ -346,18 +373,23 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleResizeStop = useCallback(
     () => {
-      let newWidths = widthData.widths;
-      const sumOfWidths = newWidths.reduce((a, b) => a + b);
-      if (sumOfWidths < resize.width) {
-        const scaleUp = resize.width / sumOfWidths;
-        newWidths = newWidths.map(w => w * scaleUp);
-      }
+      const newWidths = widthData.widths.map(Math.floor);
 
+      // const tables = tableRef.current.getElementsByTagName('table');
+      // if (tables.length) {
+      //   const sumOfWidths = newWidths.reduce((a, b) => a + b);
+      //   const tableWidth = tables[0].getBoundingClientRect().width;
+      //   if (sumOfWidths < tableWidth) {
+      //   const scaleUp = tableWidth / sumOfWidths;
+      //   newWidths = newWidths.map(w => w * scaleUp);
+      //   }
+      // }
+      setIsResizing(false);
       setWidthData({ widths: newWidths });
       updateSettings({ columnWidths: newWidths });
 
     },
-    [ updateSettings, widthData, setWidthData, resize.width ],
+    [ updateSettings, widthData, setWidthData ],
   );
 
   const onHeaderCell = useCallback(
@@ -366,11 +398,15 @@ const InteractiveTable: InteractiveTable = ({
         const filterActive = !!columnSpec?.isFiltered?.(settings);
         return {
           columnName: columnSpec.title,
+          dragState,
+          dropLeftStyle: { ...widthData?.dropLeftStyles?.[index] },
+          dropRightStyle: { ...widthData?.dropRightStyles?.[index] },
           filterActive,
           index,
+          isResizing,
           moveColumn,
           onResize: handleResize(index),
-          onResizeStart: handleResizeStart,
+          onResizeStart: handleResizeStart(index),
           onResizeStop: handleResizeStop,
           width: widthData?.widths[index],
         };
@@ -383,6 +419,8 @@ const InteractiveTable: InteractiveTable = ({
       moveColumn,
       settings,
       handleResizeStart,
+      dragState,
+      isResizing,
     ],
   );
 
@@ -415,26 +453,22 @@ const InteractiveTable: InteractiveTable = ({
   return (
     <div ref={tableRef}>
       <Spinner spinning={spinning}>
-        <DndProvider backend={HTML5Backend}>
-          <Table
-            bordered
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            columns={renderColumns as ColumnsType<any>}
-            components={components}
-            dataSource={dataSource}
-            // ref={tableRef}
-            // scroll={tableScroll}
-            tableLayout="fixed"
-            onChange={handleChange}
-            onRow={(record, index) => ({
-              areRowsSelected,
-              ContextMenu,
-              index,
-              record,
-            } as React.HTMLAttributes<HTMLElement>)}
-            {...props}
-          />
-        </DndProvider>
+        <Table
+          bordered
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          columns={renderColumns as ColumnsType<any>}
+          components={components}
+          dataSource={dataSource}
+          tableLayout="fixed"
+          onChange={handleChange}
+          onRow={(record, index) => ({
+            areRowsSelected,
+            ContextMenu,
+            index,
+            record,
+          } as React.HTMLAttributes<HTMLElement>)}
+          {...props}
+        />
       </Spinner>
     </div>
   );

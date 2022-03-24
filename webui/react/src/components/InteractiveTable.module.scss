@@ -1,43 +1,77 @@
 .headerCell {
-  // transform: translate(30px, 0px) !important;
-  svg {
-    cursor: pointer;
-  }
-  .columnDraggingDiv{
-    width: 95%;
-    // margin-right: 20%;
-  }
+  &:active {
+    background: var(--theme-colors-action-normal);
 
-  :global(.ant-table-cell) {
-    user-select: none;
-    z-index: 1;
+    &::before {
+      content: '';
+      position: fixed;
+      cursor: move;
+      top: 0px;
+      left: 0px;
+      height: 100vh;
+      width: 100vw;
+      z-index: 5;
+    }
   }
-  :global(.ant-table-column-title) {
-    cursor: move;
-    z-index: 0;
-  }
-  :global(.ant-table-filter-trigger) {
-    cursor: pointer;
-  }
-  :global(.ant-table-column-sorters::after) {
-    z-index: -2;
-  }
-  :global(div[class='ant-table-cell']) {
-    cursor: move;
-  }
+  cursor: move;
+  // z-index: 2;
+  // &:active {
+
+  //   &:active {
+  //     :global(.ant-table-cell) {
+  //       background: black !important;
+  //     }
+  //     // background: var(--theme-colors-action-normal);
+  //     &::after {
+  //       content: '';
+  //       position: fixed;
+  //       // cursor: move;
+  //       top: 0px;
+  //       left: 0px;
+  //       height: 100vh;
+  //       width: 100vw;
+  //       z-index: 4;
+  //     }
+  //   }
 }
-.dropOverLeftward {
-  border-left: 2px dashed var(--theme-colors-action-normal) !important;
+// transform: translate(30px, 0px) !important;
+svg {
+  cursor: pointer;
 }
-.dropOverRightward {
-  border-right: 2px dashed var(--theme-colors-action-normal) !important;
+.columnDraggingDiv {
 }
-.cell {
-  background: #fff;
-  .rightClickableCellWrapper {
-    display: inline;
-  }
+
+.dropTarget {
+  border-radius: 4px;
+  bottom: 0;
+  height: 250px;
+  position: absolute;
+  margin: 0;
+  top: -100px;
+  z-index: 5;
+  background: rgba(0, 50, 200, 0.05);
 }
+.dropTargetActive {
+  background: rgba(0, 50, 200, 0.2);
+}
+
+:global(.ant-table-cell) {
+  user-select: none;
+  z-index: 1;
+}
+:global(.ant-table-column-title) {
+  cursor: move;
+  z-index: 0;
+}
+:global(.ant-table-filter-trigger) {
+  cursor: pointer;
+}
+:global(.ant-table-column-sorters::after) {
+  z-index: -2;
+}
+// :global(div[class='ant-table-cell']) {
+//   cursor: move;
+// }
 .columnResizeHandle {
   border-radius: 4px;
   bottom: 0;
@@ -52,17 +86,33 @@
   &:active {
     background: var(--theme-colors-action-normal);
     &::before {
-      content: ' ';
-      position: absolute;
+      content: '';
+      position: fixed;
       cursor: col-resize;
+      top: 0px;
+      left: 0px;
       height: 100vh;
-      width: 100vh;
+      width: 100vw;
     }
   }
   &:hover {
     background: var(--theme-colors-action-normal);
   }
 }
+
+.dropOverLeftward {
+  border-left: 3px dashed var(--theme-colors-action-normal) !important;
+}
+.dropOverRightward {
+  border-right: 3px dashed var(--theme-colors-action-normal) !important;
+}
+.cell {
+  background: #fff;
+  .rightClickableCellWrapper {
+    display: inline;
+  }
+}
+
 .headerFilterOn {
   :global(.ant-table-filter-column .ant-table-filter-trigger) {
     color: var(--theme-colors-action-normal);
