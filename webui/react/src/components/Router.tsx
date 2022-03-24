@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { RouteConfig } from 'routes/types';
+import { filterOutLoginLocation, paths } from 'routes/utils';
 
 interface Props {
   routes: RouteConfig[];
@@ -36,8 +37,21 @@ const Router: React.FC<Props> = (props: Props) => {
 
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          // if (!auth.checked) return <Route key={route.id} {...route} />;
-          return <Route key={route.id} {...route} />;
+          if (!auth.checked) return <Route key={route.id} {...route} />;
+          return (
+            <Route
+              key={route.id}
+              {...route}
+              render={({ location }): ReactNode => (
+                <Redirect
+                  to={{
+                    pathname: paths.login(),
+                    state: { loginRedirect: filterOutLoginLocation(location) },
+                  }}
+                />
+              )}
+            />
+          );
         } else if (route.redirect) {
           /*
           * We treat '*' as a catch-all path and specifically avoid wrapping the
