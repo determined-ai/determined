@@ -19,7 +19,7 @@ import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
   experiment: ExperimentBase;
-  trial: TrialDetails;
+  trial?: TrialDetails;
 }
 
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
@@ -59,6 +59,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       setDownloadModal(undefined);
     }
 
+    if (!trial?.id) return;
+
     try {
       await downloadTrialLogs(trial.id);
     } catch (e) {
@@ -71,9 +73,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         type: ErrorType.Ui,
       });
     }
-  }, [ downloadModal, trial.id ]);
+  }, [ downloadModal, trial?.id ]);
 
   const handleDownloadLogs = useCallback(() => {
+    if (!trial?.id) return;
     const modal = Modal.confirm({
       content: (
         <div>
@@ -91,7 +94,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       width: 640,
     });
     setDownloadModal(modal);
-  }, [ experiment.id, handleDownloadConfirm, trial.id ]);
+  }, [ experiment.id, handleDownloadConfirm, trial?.id ]);
 
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = {
@@ -119,7 +122,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     }
 
     return detApi.StreamingExperiments.trialLogs(
-      trial.id,
+      trial?.id ?? 0,
       options.limit,
       options.follow,
       settings.agentId,
@@ -133,10 +136,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       options.orderBy as OrderBy,
       { signal: config.canceler.signal },
     );
-  }, [ settings, trial.id ]);
+  }, [ settings, trial?.id ]);
 
   useEffect(() => {
     if (ui.isPageHidden) return;
+    if (!trial?.id) return;
 
     const canceler = new AbortController();
 
@@ -150,7 +154,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     );
 
     return () => canceler.abort();
-  }, [ trial.id, ui.isPageHidden ]);
+  }, [ trial?.id, ui.isPageHidden ]);
 
   const logFilters = (
     <div className={css.filters}>
@@ -169,7 +173,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         decoder={jsonToTrialLog}
         title={logFilters}
         onDownload={handleDownloadLogs}
-        onFetch={handleFetch}
+        onFetch={trial && handleFetch}
       />
     </div>
   );

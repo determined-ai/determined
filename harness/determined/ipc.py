@@ -697,11 +697,11 @@ class PIDServer:
                 p.send_signal(on_fail)
                 if on_fail != signal.SIGKILL:
                     try:
-                        return p.wait(timeout=10)
+                        return p.wait(timeout=10) or 77
                     except subprocess.TimeoutExpired:
                         logging.error(f"killing worker which didn't exit after {on_fail.name}")
                         p.send_signal(signal.SIGKILL)
-            return p.wait()
+            return p.wait() or 77
 
         # All workers exited normally.
         if on_exit is not None:

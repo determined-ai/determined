@@ -37,8 +37,6 @@ Depending on your installation method, some of these services will be installed 
 -  On-premise using ``det deploy``, Docker will need to be installed.
 -  When doing a manual installation, you will have to install Docker and PostgreSQL yourself.
 
-More information on a Determined cluster can be found:
-
 .. toctree::
    :maxdepth: 1
    :hidden:

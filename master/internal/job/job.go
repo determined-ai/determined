@@ -2,18 +2,29 @@ package job
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
-	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/shopspring/decimal"
+
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+// DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.
+const DecimalExp = 1000
+
 var (
 	// JobsActorAddr is the address of the jobs actor.
 	JobsActorAddr = actor.Addr("jobs")
+	// HeadAnchor is an internal anchor for the head of the job queue.
+	HeadAnchor = model.JobID("INTERNAL-head")
+	// TailAnchor is an internal anchor for the tail of the job queue.
+	TailAnchor = model.JobID("INTERNAL-tail")
 )
 
 // RMJobInfo packs information available only to the RM that updates frequently.
@@ -59,7 +70,28 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// MoveJob requests the job to be moved within a priority queue relative to another job.
+	MoveJob struct {
+		ID     model.JobID
+		Anchor model.JobID
+		Ahead  bool
+	}
 )
+
+// RegisterJobPosition gets sent from the resource pool to experiment/command actors.
+// It notifies the task of its new position.
+type RegisterJobPosition struct {
+	JobID       model.JobID
+	JobPosition decimal.Decimal
+}
+
+// RecoverJobPosition gets sent from the experiment or command actor to the resource pool.
+// Notifies the resource pool of the position of the job.
+type RecoverJobPosition struct {
+	JobID        model.JobID
+	JobPosition  decimal.Decimal
+	ResourcePool string
+}
 
 // RegisterJob Registers an active job with the jobs actor.
 // Used as to denote a child actor.
@@ -82,7 +114,8 @@ type Jobs struct {
 // AQueue is a map of jobID to RMJobInfo.
 type AQueue = map[model.JobID]*RMJobInfo
 
-func errJobNotFound(jobID model.JobID) error {
+// ErrJobNotFound returns a standard job error.
+func ErrJobNotFound(jobID model.JobID) error {
 	return fmt.Errorf("job %s not found", jobID)
 }
 
@@ -128,6 +161,67 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (AQueue, er
 	return jobQ, nil
 }
 
+func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*jobv1.Job, error) {
+	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get jobs from the job actors.
+	jobRefs := make([]*actor.Ref, 0)
+	for jID := range jobQ {
+		jobRef, ok := j.actorByID[jID]
+		if ok {
+			jobRefs = append(jobRefs, jobRef)
+		}
+	}
+	jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
+	if err != nil {
+		ctx.Log().WithError(err).Error("parsing responses from job actors")
+		return nil, err
+	}
+
+	// Merge the results.
+	jobsInRM := make([]*jobv1.Job, 0)
+	for jID, jRMInfo := range jobQ {
+		v1Job, ok := jobs[jID]
+		if ok {
+			UpdateJobQInfo(v1Job, jRMInfo)
+			jobsInRM = append(jobsInRM, v1Job)
+		}
+	}
+
+	// order by jobsAhead first and JobId second.
+	sort.SliceStable(jobsInRM, func(i, j int) bool {
+		if desc {
+			i, j = j, i
+		}
+		if jobsInRM[i].Summary == nil || jobsInRM[j].Summary == nil {
+			return false
+		}
+		if jobsInRM[i].Summary.JobsAhead < jobsInRM[j].Summary.JobsAhead {
+			return true
+		}
+		if jobsInRM[i].Summary.JobsAhead > jobsInRM[j].Summary.JobsAhead {
+			return false
+		}
+		return jobsInRM[i].JobId < jobsInRM[j].JobId
+	})
+
+	return jobsInRM, nil
+}
+
+func (j *Jobs) setJobPriority(ctx *actor.Context, jobID model.JobID, priority int) error {
+	if priority < 1 || priority > 99 {
+		return errors.New("priority must be between 1 and 99")
+	}
+	jobActor := j.actorByID[jobID]
+	resp := ctx.Ask(jobActor, SetGroupPriority{
+		Priority: priority,
+	})
+	return resp.Error()
+}
+
 // Receive implements the actor.Actor interface.
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -140,37 +234,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		jobQ, err := j.jobQSnapshot(ctx, msg.ResourcePool)
+		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC)
 		if err != nil {
 			ctx.Respond(err)
-			return nil
 		}
-
-		// Get jobs from the job actors.
-		jobRefs := make([]*actor.Ref, 0)
-		for jID := range jobQ {
-			jobRef, ok := j.actorByID[jID]
-			if ok {
-				jobRefs = append(jobRefs, jobRef)
-			}
-		}
-		jobs, err := j.parseV1JobMsgs(ctx.AskAll(GetJob{}, jobRefs...).GetAll())
-		if err != nil {
-			ctx.Log().WithError(err).Error("parsing responses from job actors")
-			ctx.Respond(err)
-			return nil
-		}
-
-		// Merge the results.
-		jobsInRM := make([]*jobv1.Job, 0)
-		for jID, jRMInfo := range jobQ {
-			v1Job, ok := jobs[jID]
-			if ok {
-				UpdateJobQInfo(v1Job, jRMInfo)
-				jobsInRM = append(jobsInRM, v1Job)
-			}
-		}
-		ctx.Respond(jobsInRM)
+		ctx.Respond(jobs)
 
 	case *apiv1.UpdateJobQueueRequest:
 		errors := make([]string, 0)
@@ -178,20 +246,13 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			jobID := model.JobID(update.JobId)
 			jobActor := j.actorByID[jobID]
 			if jobActor == nil {
-				ctx.Respond(errJobNotFound(jobID))
+				ctx.Respond(ErrJobNotFound(jobID))
 				return nil
 			}
 			switch action := update.GetAction().(type) {
 			case *jobv1.QueueControl_Priority:
 				priority := int(action.Priority)
-				if priority < 1 || priority > 99 {
-					errors = append(errors, "priority must be between 1 and 99")
-					continue
-				}
-				resp := ctx.Ask(jobActor, SetGroupPriority{
-					Priority: priority,
-				})
-				if err := resp.Error(); err != nil {
+				if err := j.setJobPriority(ctx, jobID, priority); err != nil {
 					errors = append(errors, err.Error())
 				}
 			case *jobv1.QueueControl_Weight:
@@ -208,6 +269,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 			case *jobv1.QueueControl_ResourcePool:
 				if action.ResourcePool == "" {
 					errors = append(errors, "resource pool must be set")
+					continue
 				}
 				resp := ctx.Ask(jobActor, SetResourcePool{
 					ResourcePool: action.ResourcePool,
@@ -215,9 +277,26 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 				if err := resp.Error(); err != nil {
 					errors = append(errors, err.Error())
 				}
-			case *jobv1.QueueControl_AheadOf, *jobv1.QueueControl_BehindOf:
-				ctx.Respond(api.ErrNotImplemented)
-				return nil
+			case *jobv1.QueueControl_AheadOf:
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:     jobID,
+					Anchor: model.JobID(action.AheadOf),
+					Ahead:  true,
+				})
+				err := resp.Error()
+				if err != nil {
+					errors = append(errors, err.Error())
+				}
+			case *jobv1.QueueControl_BehindOf:
+				resp := ctx.Ask(j.RMRef, MoveJob{
+					ID:     jobID,
+					Anchor: model.JobID(action.BehindOf),
+					Ahead:  false,
+				})
+				err := resp.Error()
+				if err != nil {
+					errors = append(errors, err.Error())
+				}
 			default:
 				ctx.Respond(fmt.Errorf("unexpected action: %v", action))
 				return nil

@@ -27,7 +27,7 @@ class Reducer(enum.Enum):
     MIN = 4
 
 
-def _reduce_metrics(
+def _simple_reduce_metrics(
     reducer: Reducer, metrics: np.array, num_batches: Optional[List[int]] = None
 ) -> np.float:
     if reducer == Reducer.AVG:
@@ -350,19 +350,19 @@ class _PyTorchReducerContext:
 
         **Reducer functions: the simple API**
 
-        If the ``reducer`` parameter is a function, it must have the following properities:
+        If the ``reducer`` parameter is a function, it must have the following properties:
 
            -  It accepts a single parameter, which will be a flat list of all inputs the users
-              passes when they call ``.update()`` on the object returned by ``wrap_reducer()``.
+              pass when they call ``.update()`` on the object returned by ``wrap_reducer()``.
               See the code example below for more details.
            -  It returns either a single (non-dict) metric or a dictionary mapping names to
-              metrics, as desribed above.
+              metrics, as described above.
 
         The primary motivation for passing a function as the reducer is simplicity. Metrics from
         all batches will be buffered in memory and passed over the network before they are reduced
         all at once. This introduces some overhead, but it is likely unnoticeable for scalar
         metrics or on validation datasets of small or medium size.  This single function strategy
-        may also be desirable for quick prototyping or for calculating metrics that are difficult
+        can be useful for quick prototyping or for calculating metrics that are difficult
         or impossible to calculate incrementally.
 
         For example, ROC AUC could be properly calculated by passing a small wrapper function

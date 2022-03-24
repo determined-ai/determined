@@ -1,0 +1,12 @@
+:orphan:
+
+**New Features**
+
+-  Support DeepSpeed with a new DeepSpeedTrial API.
+
+   -  `DeepSpeed <https://www.deepspeed.ai/>`_ is a powerful library for training large scale models.
+         With the new ``DeepSpeedTrial`` you can combine all the benefits of Determined with the
+         features available in DeepSpeed like the Zero Redundancy Optimizer and pipeline parallel
+         training. We also provide an example based on Eleuther AI's `GPT-NeoX
+         <https://github.com/EleutherAI/gpt-neox/>`_ repo to help you get started training
+         state-of-the-art language models.

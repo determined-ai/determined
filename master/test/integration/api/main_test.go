@@ -26,6 +26,8 @@ func TestMain(m *testing.M) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	// Tear down the database immediately; we were just testing for connectivity.
+	db.PostTestTeardown()
 	es, err = testutils.ResolveElastic()
 	if err != nil {
 		fmt.Println(err)

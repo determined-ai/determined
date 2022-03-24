@@ -9,20 +9,23 @@ import numpy as np
 import pytest
 
 from determined import _core
-from determined.pytorch import Reducer, _PyTorchReducerContext, _reduce_metrics
+from determined.pytorch import Reducer, _PyTorchReducerContext, _simple_reduce_metrics
 
 logger = logging.getLogger(__name__)
 
 
 def test_reducer() -> None:
     metrics = np.array([0.25, 0.5, 0.75, 1, 25.5, 1.9])
-    assert np.around(_reduce_metrics(Reducer.AVG, metrics), decimals=2) == 4.98
-    assert _reduce_metrics(Reducer.SUM, metrics) == 29.9
-    assert _reduce_metrics(Reducer.MIN, metrics) == 0.25
-    assert _reduce_metrics(Reducer.MAX, metrics) == 25.5
+    assert np.around(_simple_reduce_metrics(Reducer.AVG, metrics), decimals=2) == 4.98
+    assert _simple_reduce_metrics(Reducer.SUM, metrics) == 29.9
+    assert _simple_reduce_metrics(Reducer.MIN, metrics) == 0.25
+    assert _simple_reduce_metrics(Reducer.MAX, metrics) == 25.5
 
     batches_per_process = [1, 2, 5, 4, 5, 6]
-    assert np.around(_reduce_metrics(Reducer.AVG, metrics, batches_per_process), decimals=2) == 6.43
+    assert (
+        np.around(_simple_reduce_metrics(Reducer.AVG, metrics, batches_per_process), decimals=2)
+        == 6.43
+    )
 
 
 DummyDistributedReducerContext = namedtuple(

@@ -2259,7 +2259,7 @@ export interface V1GetModelLabelsResponse {
      * @type {Array<string>}
      * @memberof V1GetModelLabelsResponse
      */
-    labels?: Array<string>;
+    labels: Array<string>;
 }
 
 /**
@@ -2273,7 +2273,7 @@ export interface V1GetModelResponse {
      * @type {V1Model}
      * @memberof V1GetModelResponse
      */
-    model?: V1Model;
+    model: V1Model;
 }
 
 /**
@@ -2287,7 +2287,7 @@ export interface V1GetModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1GetModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -2312,19 +2312,19 @@ export interface V1GetModelVersionsResponse {
      * @type {V1Model}
      * @memberof V1GetModelVersionsResponse
      */
-    model?: V1Model;
+    model: V1Model;
     /**
      * The list of returned model versions.
      * @type {Array<V1ModelVersion>}
      * @memberof V1GetModelVersionsResponse
      */
-    modelVersions?: Array<V1ModelVersion>;
+    modelVersions: Array<V1ModelVersion>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetModelVersionsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -3878,26 +3878,6 @@ export interface V1PatchModel {
 }
 
 /**
- * Request for updating a model in the registry.
- * @export
- * @interface V1PatchModelRequest
- */
-export interface V1PatchModelRequest {
-    /**
-     * The model desired model fields and values.
-     * @type {V1PatchModel}
-     * @memberof V1PatchModelRequest
-     */
-    model?: V1PatchModel;
-    /**
-     * The name of the model being updated.
-     * @type {string}
-     * @memberof V1PatchModelRequest
-     */
-    modelName?: string;
-}
-
-/**
  * Response to PatchModelRequest.
  * @export
  * @interface V1PatchModelResponse
@@ -3908,7 +3888,7 @@ export interface V1PatchModelResponse {
      * @type {V1Model}
      * @memberof V1PatchModelResponse
      */
-    model?: V1Model;
+    model: V1Model;
 }
 
 /**
@@ -3956,32 +3936,6 @@ export interface V1PatchModelVersion {
 }
 
 /**
- * Request for updating a model version in the registry.
- * @export
- * @interface V1PatchModelVersionRequest
- */
-export interface V1PatchModelVersionRequest {
-    /**
-     * The name of the model being updated.
-     * @type {string}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelName?: string;
-    /**
-     * The model version being updated.
-     * @type {V1PatchModelVersion}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersion?: V1PatchModelVersion;
-    /**
-     * The id of the model version being updated.
-     * @type {number}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersionId?: number;
-}
-
-/**
  * Response to PatchModelVersionRequest.
  * @export
  * @interface V1PatchModelVersionResponse
@@ -3992,7 +3946,7 @@ export interface V1PatchModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1PatchModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -4090,12 +4044,6 @@ export interface V1PostModelRequest {
      */
     labels?: Array<string>;
     /**
-     * User who is creating this model.
-     * @type {string}
-     * @memberof V1PostModelRequest
-     */
-    username?: string;
-    /**
      * Notes associated with this model.
      * @type {string}
      * @memberof V1PostModelRequest
@@ -4114,7 +4062,7 @@ export interface V1PostModelResponse {
      * @type {V1Model}
      * @memberof V1PostModelResponse
      */
-    model?: V1Model;
+    model: V1Model;
 }
 
 /**
@@ -4178,7 +4126,7 @@ export interface V1PostModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1PostModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -13378,7 +13326,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {number} modelVersionId The id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13675,11 +13623,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options: any = {}): FetchArgs {
+        patchModel(modelName: string, body: V1PatchModel, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModel.');
@@ -13709,7 +13657,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchModelRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchModel" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -13722,11 +13670,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options: any = {}): FetchArgs {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModelVersion.');
@@ -13761,7 +13709,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchModelVersionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchModelVersion" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -13943,7 +13891,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {number} modelVersionId The id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14072,11 +14020,11 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+        patchModel(modelName: string, body: V1PatchModel, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel(modelName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14093,11 +14041,11 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14200,7 +14148,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {number} modelVersionId The id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14275,11 +14223,11 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
+        patchModel(modelName: string, body: V1PatchModel, options?: any) {
             return ModelsApiFp(configuration).patchModel(modelName, body, options)(fetch, basePath);
         },
         /**
@@ -14287,11 +14235,11 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
             return ModelsApiFp(configuration).patchModelVersion(modelName, modelVersionId, body, options)(fetch, basePath);
         },
         /**
@@ -14363,7 +14311,7 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Delete a model version
      * @param {string} modelName The name of the model associated with the model version.
-     * @param {number} modelVersionId THe id of the model version to delete.
+     * @param {number} modelVersionId The id of the model version to delete.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
@@ -14450,12 +14398,12 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Patch a model's fields.
      * @param {string} modelName The name of the model being updated.
-     * @param {V1PatchModelRequest} body 
+     * @param {V1PatchModel} body The model desired model fields and values.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
+    public patchModel(modelName: string, body: V1PatchModel, options?: any) {
         return ModelsApiFp(this.configuration).patchModel(modelName, body, options)(this.fetch, this.basePath);
     }
 
@@ -14464,12 +14412,12 @@ export class ModelsApi extends BaseAPI {
      * @summary Patch a model version's fields.
      * @param {string} modelName The name of the model being updated.
      * @param {number} modelVersionId The id of the model version being updated.
-     * @param {V1PatchModelVersionRequest} body 
+     * @param {V1PatchModelVersion} body The model version being updated.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
         return ModelsApiFp(this.configuration).patchModelVersion(modelName, modelVersionId, body, options)(this.fetch, this.basePath);
     }
 

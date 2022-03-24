@@ -30,6 +30,7 @@ _INTEG_MARKERS = {
     "model_hub_transformers",
     "model_hub_transformers_amp",
     "model_hub_mmdetection",
+    "deepspeed",
     "managed_devcluster",
 }
 

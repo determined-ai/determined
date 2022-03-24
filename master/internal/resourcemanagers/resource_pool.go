@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -37,6 +39,9 @@ type ResourcePool struct {
 	agentStatesCache map[*actor.Ref]*agent.AgentState
 	taskList         *taskList
 	groups           map[*actor.Ref]*group
+	queuePositions   jobSortState // secondary sort key initialized based on job submission time
+	groupActorToID   map[*actor.Ref]model.JobID
+	IDToGroupActor   map[model.JobID]*actor.Ref
 	scalingInfo      *sproto.ScalingInfo
 
 	reschedule bool
@@ -64,10 +69,13 @@ func NewResourcePool(
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
 
-		agents:      make(map[*actor.Ref]bool),
-		taskList:    newTaskList(),
-		groups:      make(map[*actor.Ref]*group),
-		scalingInfo: &sproto.ScalingInfo{},
+		agents:         make(map[*actor.Ref]bool),
+		taskList:       newTaskList(),
+		groups:         make(map[*actor.Ref]*group),
+		queuePositions: initalizeJobSortState(),
+		groupActorToID: make(map[*actor.Ref]model.JobID),
+		IDToGroupActor: make(map[model.JobID]*actor.Ref),
+		scalingInfo:    &sproto.ScalingInfo{},
 
 		reschedule: false,
 	}
@@ -106,6 +114,13 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
+	if msg.IsUserVisible {
+		if _, ok := rp.queuePositions[msg.JobID]; !ok {
+			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
+		}
+		rp.groupActorToID[msg.Group] = msg.JobID
+		rp.IDToGroupActor[msg.JobID] = msg.Group
+	}
 	rp.taskList.AddTask(&msg)
 }
 
@@ -254,6 +269,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		err := rp.setupProvisioner(ctx)
+		if err != nil {
+			return err
+		}
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 		return err
 
@@ -265,16 +283,18 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
-		job.SetGroupWeight,
-		job.SetGroupPriority,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
 
 	case
+		job.MoveJob,
 		job.GetJobQ,
-		job.GetJobQStats:
+		job.GetJobQStats,
+		job.SetGroupWeight,
+		job.SetGroupPriority,
+		job.RecoverJobPosition:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -357,16 +377,188 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
+func (rp *ResourcePool) moveJob(
+	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+) error {
+	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+		return fmt.Errorf("unable to perform operation on resource pool with %s",
+			rp.config.Scheduler.GetType())
+	}
+
+	if anchorID == "" || jobID == "" || anchorID == jobID {
+		return nil
+	}
+
+	if _, ok := rp.queuePositions[jobID]; !ok {
+		return nil
+	}
+
+	groupAddr, ok := rp.IDToGroupActor[jobID]
+	if !ok {
+		return job.ErrJobNotFound(jobID)
+	}
+	if _, ok := rp.queuePositions[anchorID]; !ok {
+		return job.ErrJobNotFound(anchorID)
+	}
+
+	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
+
+	if secondAnchor == "" {
+		return fmt.Errorf("unable to move job with ID %s", jobID)
+	}
+
+	if secondAnchor == jobID {
+		return nil
+	}
+
+	if prioChange {
+		oldPriority := *rp.groups[groupAddr].priority
+		err := rp.setGroupPriority(ctx, job.SetGroupPriority{
+			Priority:     anchorPriority,
+			ResourcePool: rp.config.PoolName,
+			Handler:      rp.IDToGroupActor[jobID],
+		})
+		if err != nil {
+			return err
+		}
+
+		resp := ctx.Ask(rp.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
+			Priority: anchorPriority,
+		})
+		if resp.Error() != nil {
+			_ = rp.setGroupPriority(ctx, job.SetGroupPriority{
+				Priority:     oldPriority,
+				ResourcePool: rp.config.PoolName,
+				Handler:      rp.IDToGroupActor[jobID],
+			})
+			return resp.Error()
+		}
+		if !needMove(
+			rp.queuePositions[jobID],
+			rp.queuePositions[anchorID],
+			rp.queuePositions[secondAnchor],
+			aheadOf,
+		) {
+			return nil
+		}
+	}
+
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
+	if err != nil {
+		return err
+	}
+
+	ctx.Tell(groupAddr, msg)
+
+	return nil
+}
+
+func (rp *ResourcePool) findAnchor(
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
+) (bool, model.JobID, int) {
+	var secondAnchor model.JobID
+	targetPriority := 0
+	anchorPriority := 0
+	anchorIdx := 0
+	prioChange := false
+
+	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
+
+	for i, req := range sortedReqs {
+		if req.JobID == jobID {
+			targetPriority = *rp.groups[req.Group].priority
+		} else if req.JobID == anchorID {
+			anchorPriority = *rp.groups[req.Group].priority
+			anchorIdx = i
+		}
+	}
+
+	if aheadOf {
+		if anchorIdx == 0 {
+			secondAnchor = job.HeadAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx-1].JobID
+		}
+	} else {
+		if anchorIdx >= len(sortedReqs)-1 {
+			secondAnchor = job.TailAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx+1].JobID
+		}
+	}
+
+	if targetPriority != anchorPriority {
+		prioChange = true
+	}
+
+	return prioChange, secondAnchor, anchorPriority
+}
+
+func needMove(
+	jobPos decimal.Decimal,
+	anchorPos decimal.Decimal,
+	secondPos decimal.Decimal,
+	aheadOf bool,
+) bool {
+	if aheadOf {
+		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
+			return false
+		}
+		return true
+	}
+	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
+		return false
+	}
+
+	return true
+}
+
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(rp.taskList))
 
 	case job.GetJobQ:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
+	case job.MoveJob:
+		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
+		ctx.Respond(err)
+
+	case job.SetGroupWeight:
+		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
+
+	case job.SetGroupPriority:
+		err := rp.setGroupPriority(ctx, msg)
+		ctx.Respond(err)
+
+	case job.RecoverJobPosition:
+		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (rp *ResourcePool) setGroupPriority(ctx *actor.Context, msg job.SetGroupPriority) error {
+	g := rp.getOrCreateGroup(ctx, msg.Handler)
+	if (g.priority != nil && *g.priority == msg.Priority) ||
+		rp.config.Scheduler.Priority == nil {
+		return nil
+	}
+	ctx.Log().Infof("setting priority for group of %s to %d",
+		msg.Handler.Address().String(), msg.Priority)
+	g.priority = &msg.Priority
+	jobID, ok := rp.groupActorToID[msg.Handler]
+	if ok {
+		time, err := getJobSubmissionTime(rp.taskList, jobID)
+		if err != nil {
+			ctx.Log().Errorf("failed to get job submission time: %s", err)
+			return nil
+		}
+		rp.queuePositions[jobID] = initalizeQueuePosition(time)
 	}
 	return nil
 }
@@ -374,22 +566,15 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case groupActorStopped:
+		if jobID, ok := rp.groupActorToID[msg.Ref]; ok {
+			delete(rp.queuePositions, jobID)
+			delete(rp.IDToGroupActor, jobID)
+		}
+		delete(rp.groupActorToID, msg.Ref)
 		delete(rp.groups, msg.Ref)
 
 	case sproto.SetGroupMaxSlots:
 		rp.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
-
-	case job.SetGroupWeight:
-		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
-
-	case job.SetGroupPriority:
-		g := rp.getOrCreateGroup(ctx, msg.Handler)
-		g.priority = &msg.Priority
-
-		if rp.config.Scheduler.Priority != nil {
-			ctx.Log().Infof("setting priority for group of %s to %d",
-				msg.Handler.Address().String(), *g.priority)
-		}
 
 	case sproto.SetTaskName:
 		rp.receiveSetTaskName(ctx, msg)

@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -26,6 +28,7 @@ import (
 func TestJobTaskAndAllocationAPI(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	// Add a mock user.
@@ -37,6 +40,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		JobID:   jID,
 		JobType: model.JobTypeExperiment,
 		OwnerID: &user.ID,
+		QPos:    decimal.New(0, 0),
 	}
 	err := db.AddJob(jIn)
 	require.NoError(t, err, "failed to add job")
@@ -108,6 +112,7 @@ const (
 func TestExhaustiveEnums(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	type check struct {

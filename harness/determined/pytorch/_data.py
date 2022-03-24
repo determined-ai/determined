@@ -36,6 +36,22 @@ T = TypeVar("T")
 _collate_fn_t = Optional[Callable[[List[T]], Any]]
 
 
+def _dataset_repro_warning(fn: str, data_obj: Any, is_deepspeed_trial: bool = False) -> str:
+    disable_repro_check_method = "context.experimental.disable_dataset_reproducibility_checks()"
+    if is_deepspeed_trial:
+        disable_repro_check_method = "context.disable_dataset_reproducibility_checks()"
+
+    return (
+        f"{fn}() returned an instance of {type(data_obj).__name__}, which is not a "
+        "subclass of det.pytorch.DataLoader.  For most non-Iterable DataSets, "
+        "det.pytorch.DataLoader is a drop-in replacement for torch.utils.data.DataLoader "
+        "but which offers easy and transparent reproducibility in Determined experiments. "
+        "It is highly recommended that you use det.pytorch.DataLoader if possible.  If "
+        f"not, you can disable this check by calling {disable_repro_check_method} at some point "
+        "in your trial's __init__() method."
+    )
+
+
 class DataLoader:
     """
     DataLoader is meant to contain a user's `Dataset`, configuration for

@@ -25,6 +25,7 @@ var emptyMetadata = []byte(`{}`)
 func TestModels(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	tests := []struct {
