@@ -56,6 +56,7 @@ SELECT
     array_to_json(mv.labels) AS labels,
     mv.version, mv.id,
     mv.creation_time, mv.notes,
+    mv.username, mv.user_id,
     mv.name, mv.comment, mv.metadata, mv.last_updated_time
     FROM c, mv, m
     WHERE c.uuid = mv.checkpoint_uuid::text;
