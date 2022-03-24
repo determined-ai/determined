@@ -2,6 +2,7 @@ import calendar
 import re
 import subprocess
 from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Tuple
 
 from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
@@ -12,33 +13,23 @@ ADD_KEY = "adding"
 REMOVE_KEY = "removing"
 
 
-def iso_date_to_epoch(iso_date):
+def iso_date_to_epoch(iso_date: str) -> int:
     return calendar.timegm(datetime.strptime(iso_date[:-4], DATE_PATTERN).timetuple())
 
 
-# def start_date_to_epoch(date_arg):
-#    utc_adj = 3600 * 7 if sys.argv[4] == 'PT' else 0 # 7 hours ahead of PT
-#    return calendar.timegm(datetime.strptime(date_arg + ' 00:00:00', '%m/%d/%Y %H:%M:%S').timetuple()) + utc_adj
-
-# def end_date_to_epoch(date_arg):
-#    utc_adj = 3600 * 7 if sys.argv[4] == 'PT' else 0 # 7 hours ahead of PT
-#    return calendar.timegm(datetime.strptime(date_arg + ' 23:59:59', '%m/%d/%Y %H:%M:%S').timetuple()) + utc_adj
-
-
-def parse_log_for_gpu_stats(log_path):
-    date_parsing_re = re.compile("(\d{4}-\d{2}-\d{2}\S+).*")
-    line_parsing_re = re.compile("(\S+).*(adding|removing) agent: (\S+).*")
+def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
+    date_parsing_re = re.compile(r"(\d{4}-\d{2}-\d{2}\S+).*")
+    line_parsing_re = re.compile(r"(\S+).*(adding|removing) agent: (\S+).*")
     # agent_parsing_re = re.compile("det-agent-argo-dai-dev-[a-z]*-[a-z]*")
 
-    agent_event_mapping = {}
-    all_agents = set()
+    agent_event_mapping: Dict[str, Any] = {}
     # min_ts = 1596240000 # Override if logs start significantly later than start of day
     # max_ts = 1597622399 # Override if logs end significantly earlier than end of day
     min_ts = -1  # will infer start time based on earliest log timestamp
     max_ts = -1  # will infer end time based on latest log timestamp
 
     with open(log_path, "r") as f:
-        for i, line in enumerate(f):
+        for _, line in enumerate(f):
             match_date = date_parsing_re.match(line)
             if match_date:
                 ts = iso_date_to_epoch(match_date.group(1))
@@ -75,16 +66,15 @@ def parse_log_for_gpu_stats(log_path):
     global_end = datetime.fromtimestamp(max_ts, tz=timezone(timedelta(hours=0))).strftime(
         "%Y-%m-%dT%H:%M:%S.000Z"
     )
-    print(
-        f"Master log time period: {global_start} to {global_end} Total agent up seconds: {total_agent_uptime_sec} "
-    )
+    print(f"Master log time period: {global_start} to {global_end} \n")
+    print(f"Total agent up seconds: {total_agent_uptime_sec} ")
     return total_agent_uptime_sec, global_start, global_end
 
 
 log_path = "/tmp/det-master.log"
 
 
-def fetch_master_log():
+def fetch_master_log() -> None:
     command = ["det", "-m", conf.make_master_url(), "master", "logs"]
     output = subprocess.check_output(command)
     with open(log_path, "wb") as log:
@@ -98,7 +88,7 @@ def create_test_session() -> session.Session:
     return session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
 
 
-def compare_stats():
+def compare_stats() -> None:
     fetch_master_log()
     gpu_from_log, global_start, global_end = parse_log_for_gpu_stats(log_path)
     res = bindings.get_ResourceAllocationRaw(

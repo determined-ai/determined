@@ -1,3 +1,5 @@
+from typing import Generator
+
 import pytest
 from compute_stats import compare_stats
 
@@ -103,6 +105,6 @@ def test_protein_pytorch_geometric() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def resource_stats():
+def resource_stats() -> Generator[None, None, None]:
     yield
     compare_stats()
