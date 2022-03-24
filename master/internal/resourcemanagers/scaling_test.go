@@ -37,7 +37,7 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 	// task 4, task 5 are in a group with maxSlots = 2 and total slots needed = 5
 	// task 6, task 7 are in group with no maxSlots and total slots needed = 4
 	// task 8 is in a group with max slots = 15 and total slots needed = 10
-	// task 9 has no group and slots needed = 10
+	// task 9 is in a group with no max slots and slots needed = 10
 	// The feasible total SlotSum (with maxSlots of each group taken into account) = 26.
 	// ceil(26/5) = 6
 	assert.Equal(t, calculateDesiredNewAgentNum(taskList, groupMap, 5, 10), 6)
