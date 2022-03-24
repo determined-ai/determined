@@ -121,7 +121,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 
 	p.scaleDecider.calculateInstanceStates()
 
-	if updated && p.scaleDecider.db != nil {
+	if updated {
 		err = p.scaleDecider.recordInstanceStats(p.SlotsPerInstance())
 		if err != nil {
 			ctx.Log().WithError(err).Error("cannot record instance stats")
@@ -132,6 +132,10 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		ctx.Log().Infof("decided to terminate %d instances: %s",
 			len(toTerminate.InstanceIDs), toTerminate.String())
 		p.provider.terminate(ctx, toTerminate.InstanceIDs)
+		err = p.scaleDecider.updateInstancesEndStats(toTerminate.InstanceIDs)
+		if err != nil {
+			ctx.Log().WithError(err).Error("cannot update end stats for terminated instance")
+		}
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {

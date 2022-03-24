@@ -116,6 +116,9 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 }
 
 func (s *scaleDecider) recordInstanceStats(slots int) error {
+	if s.db == nil {
+		return nil
+	}
 	for _, inst := range s.instances {
 		instID := inst.ID
 		err := s.updateInstanceStartStats(s.resourcePool, instID, slots)
@@ -123,7 +126,6 @@ func (s *scaleDecider) recordInstanceStats(slots int) error {
 			return err
 		}
 	}
-
 	for instID := range s.disconnected {
 		err := s.updateInstanceEndStats(instID)
 		if err != nil {
@@ -151,6 +153,22 @@ func (s *scaleDecider) updateInstanceEndStats(instID string) error {
 	return s.db.EndInstanceStats(&model.InstanceStats{
 		InstanceID: instID,
 	})
+}
+
+func (s *scaleDecider) updateInstancesEndStats(instIDs []string) error {
+	if s.db == nil {
+		return nil
+	}
+	var err error
+	for _, instID := range instIDs {
+		err = s.db.EndInstanceStats(&model.InstanceStats{
+			InstanceID: instID,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *scaleDecider) calculateInstanceStates() {
