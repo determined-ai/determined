@@ -501,7 +501,7 @@ export const patchModel: Service.DetApi<
    request: (params: Service.PatchModelParams) =>
      detApi.Models.patchModel(
        params.modelName,
-       { model: params.body },
+       params.body,
      ),
  };
 
@@ -515,7 +515,7 @@ export const patchModelVersion: Service.DetApi<
      detApi.Models.patchModelVersion(
        params.modelName,
        params.versionId,
-       { modelVersion: params.body },
+       params.body,
      ),
  };
 
@@ -580,7 +580,6 @@ export const postModel: Service.DetApi<
     labels: params.labels,
     metadata: params.metadata,
     name: params.name,
-    username: params.username,
   }),
 };
 

@@ -34,6 +34,8 @@ message Command {
   google.protobuf.Timestamp start_time = 4;
   // The container running the command.
   determined.container.v1.Container container = 6;
+  // The display name of the user that created the command.
+  string display_name = 14;
   // The username of the user that created the command.
   string username = 10;
   // The name of the resource pool the command was created in

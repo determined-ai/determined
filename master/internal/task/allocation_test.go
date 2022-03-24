@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -18,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
@@ -60,13 +64,15 @@ func TestAllocation(t *testing.T) {
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
 				rsrv := &mocks.Resources{}
-				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
+				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return().Times(1)
 				rsrv.On("Summary").Return(sproto.ResourcesSummary{
-					AllocationID: a.req.AllocationID,
-					ResourcesID:  rID,
-					AgentDevices: map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
+					AllocationID:  a.req.AllocationID,
+					ResourcesID:   rID,
+					ResourcesType: sproto.ResourcesTypeDockerContainer,
+					AgentDevices:  map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
 				})
-				rsrv.On("Kill", mock.Anything).Return()
+				rsrv.On("Kill", mock.Anything, mock.Anything).Return()
 				return rsrv
 			}
 
@@ -168,6 +174,100 @@ func TestAllocation(t *testing.T) {
 	}
 }
 
+func TestAllocationAllGather(t *testing.T) {
+	system, _, rm, trialImpl, _, db, a, self := setup(t)
+
+	// Pre-allocated stage.
+	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
+		rsrv := &mocks.Resources{}
+		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return().Times(1)
+		rsrv.On("Summary").Return(sproto.ResourcesSummary{
+			AllocationID:  a.req.AllocationID,
+			ResourcesID:   rID,
+			ResourcesType: sproto.ResourcesTypeDockerContainer,
+			AgentDevices:  map[aproto.ID][]device.Device{aproto.ID(agentID): nil},
+		})
+		rsrv.On("Kill", mock.Anything, mock.Anything).Return()
+		return rsrv
+	}
+
+	resources := []sproto.Resources{
+		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
+		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
+	}
+	db.On("AddAllocation", mock.Anything).Return(nil)
+	db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
+	trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
+		Msg: tasks.TaskSpec{},
+	})
+	require.NoError(t, system.Ask(rm, actors.ForwardThroughMock{
+		To: self,
+		Msg: sproto.ResourcesAllocated{
+			ID:           a.req.AllocationID,
+			ResourcePool: "default",
+			Resources:    resources,
+		},
+	}).Error())
+	system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
+	require.Nil(t, trialImpl.AssertExpectations())
+	require.True(t, db.AssertExpectations(t))
+
+	numPeers := 4
+	type peerState struct {
+		uuid    uuid.UUID
+		data    *structpb.Struct
+		watcher AllGatherWatcher
+	}
+	peerStates := map[int]*peerState{}
+
+	var expectedData []float64
+	for i := 0; i < numPeers; i++ {
+		expectedData = append(expectedData, float64(i))
+		data, err := structpb.NewStruct(map[string]interface{}{"key": i})
+		require.NoError(t, err)
+
+		peerStates[i] = &peerState{
+			uuid: uuid.New(),
+			data: data,
+		}
+
+		resp := system.Ask(self, WatchAllGather{
+			WatcherID: peerStates[i].uuid,
+			NumPeers:  numPeers,
+			Data:      peerStates[i].data,
+		})
+		require.NoError(t, resp.Error())
+
+		if i == 0 {
+			// All gather should now be "started".
+			require.NotNil(t, a.allGather)
+		}
+
+		require.IsType(t, AllGatherWatcher{}, resp.Get())
+		tResp := resp.Get().(AllGatherWatcher)
+		peerStates[i].watcher = tResp
+	}
+
+	// All gather should now be "completed".
+	require.Nil(t, a.allGather)
+
+	for _, ps := range peerStates {
+		resp := <-ps.watcher.C
+		require.NoError(t, resp.Err)
+		require.Len(t, resp.Data, numPeers)
+
+		var actualData []float64
+		for _, d := range resp.Data {
+			for _, v := range d.AsMap() {
+				actualData = append(actualData, v.(float64))
+			}
+		}
+
+		require.Equal(t, expectedData, actualData)
+	}
+}
+
 func setup(t *testing.T) (
 	*actor.System, *actors.MockActor, *actor.Ref, *actors.MockActor,
 	*actor.Ref, *mocks.DB, *Allocation, *actor.Ref,
@@ -197,12 +297,12 @@ func setup(t *testing.T) (
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	a := NewAllocation(
+		detLogger.Context{},
 		sproto.AllocateRequest{
 			TaskID:       taskID,
 			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", taskID)),
 			SlotsNeeded:  2,
 			Preemptible:  true,
-			DoRendezvous: true,
 			// ...
 		},
 		db,

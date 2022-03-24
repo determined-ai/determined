@@ -9,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -40,7 +41,6 @@ type (
 
 		// Behavioral configuration.
 		Preemptible  bool
-		DoRendezvous bool
 		IdleTimeout  *IdleTimeoutConfig
 		ProxyPort    *PortProxyConfig
 		StreamEvents *EventStreamConfig
@@ -139,6 +139,8 @@ type (
 )
 
 const (
+	// ResourcesTypeEnvVar is the name of the env var indicating the resource type to a task.
+	ResourcesTypeEnvVar = "DET_RESOURCES_TYPE"
 	// ResourcesTypeK8sPod indicates the resources are a handle for a k8s pod.
 	ResourcesTypeK8sPod ResourcesType = "k8s-pod"
 	// ResourcesTypeDockerContainer indicates the resources are a handle for a docker container.
@@ -162,8 +164,8 @@ type ResourcesSummary struct {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(ctx *actor.Context, spec tasks.TaskSpec, rri ResourcesRuntimeInfo)
-	Kill(ctx *actor.Context)
+	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo)
+	Kill(*actor.Context, logger.Context)
 }
 
 // Event is the union of all event types during the parent lifecycle.

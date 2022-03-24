@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -20,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -85,6 +87,45 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	}
 	return m.db.ExperimentCheckpointsToGCRaw(
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest, false)
+}
+
+func (m *Master) getExperimentModelDefinition(c echo.Context) error {
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	modelDef, err := m.db.ExperimentModelDefinitionRaw(args.ExperimentID)
+	if err != nil {
+		return err
+	}
+
+	expConfig, err := m.db.ExperimentConfig(args.ExperimentID)
+	if err != nil {
+		return err
+	}
+
+	// Make a Regex to remove everything but a whitelist of characters.
+	reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
+	cleanName := reg.ReplaceAllString(expConfig.Name().String(), "")
+
+	// Truncate name to a smaller size to both accommodate file name and path size
+	// limits on different platforms as well as get users more accustom to picking shorter
+	// names as we move toward "name as mnemonic for an experiment".
+	maxNameLength := 50
+	if len(cleanName) > maxNameLength {
+		cleanName = cleanName[0:maxNameLength]
+	}
+
+	c.Response().Header().Set(
+		"Content-Disposition",
+		fmt.Sprintf(
+			`attachment; filename="exp%d_%s_model_def.tar.gz"`,
+			args.ExperimentID,
+			cleanName))
+	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
 func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
@@ -207,6 +248,8 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 				},
 				rm: m.rm,
 				db: m.db,
+
+				logCtx: logger.Context{"experiment-id": dbExp.ID},
 			})
 	}
 

@@ -18,9 +18,9 @@ export function getRandomElementOfEnum(e: any): any {
 }
 
 export const sampleUsers = [
-  { id: 0, username: 'admin' },
-  { id: 1, username: 'determined' },
-  { id: 2, username: 'hamid' },
+  { displayName: '', id: 0, username: 'admin' },
+  { displayName: '', id: 1, username: 'determined' },
+  { displayName: '', id: 2, username: 'hamid' },
 ];
 
 function generateTask(idx: number): Type.Task & Type.RecentEvent {
@@ -61,6 +61,7 @@ export function generateCommandTask(idx: number): Type.RecentCommandTask {
   const user = sampleUsers.random();
   return {
     ...task,
+    displayName: user.displayName,
     state: state as Type.CommandState,
     type: getRandomElementOfEnum(Type.CommandType),
     username: user.username,

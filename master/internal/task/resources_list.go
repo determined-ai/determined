@@ -38,6 +38,13 @@ func (rs resourcesList) append(ars []sproto.Resources) {
 	}
 }
 
+func (rs resourcesList) first() *resourcesWithState {
+	for _, r := range rs {
+		return r
+	}
+	return nil
+}
+
 func (rs resourcesList) firstDevice() *device.Device {
 	for _, r := range rs {
 		if r.container != nil && len(r.container.Devices) > 0 {

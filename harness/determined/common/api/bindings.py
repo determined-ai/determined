@@ -485,6 +485,54 @@ class v1Allocation:
             "allocationId": self.allocationId if self.allocationId is not None else None,
         }
 
+class v1AllocationAllGatherRequest:
+    def __init__(
+        self,
+        allocationId: str,
+        data: "typing.Dict[str, typing.Any]",
+        numPeers: "typing.Optional[int]" = None,
+        requestUuid: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+        self.requestUuid = requestUuid
+        self.numPeers = numPeers
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherRequest":
+        return cls(
+            allocationId=obj["allocationId"],
+            requestUuid=obj.get("requestUuid", None),
+            numPeers=obj.get("numPeers", None),
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId,
+            "requestUuid": self.requestUuid if self.requestUuid is not None else None,
+            "numPeers": self.numPeers if self.numPeers is not None else None,
+            "data": self.data,
+        }
+
+class v1AllocationAllGatherResponse:
+    def __init__(
+        self,
+        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationAllGatherResponse":
+        return cls(
+            data=obj["data"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "data": self.data,
+        }
+
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
@@ -730,6 +778,7 @@ class v1Command:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -737,6 +786,7 @@ class v1Command:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -750,6 +800,7 @@ class v1Command:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -763,6 +814,7 @@ class v1Command:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -1032,6 +1084,7 @@ class v1Experiment:
         state: "determinedexperimentv1State",
         username: str,
         description: "typing.Optional[str]" = None,
+        displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
@@ -1047,6 +1100,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.searcherType = searcherType
@@ -1067,6 +1121,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj.get("resourcePool", None),
             searcherType=obj["searcherType"],
@@ -1087,6 +1142,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "searcherType": self.searcherType,
@@ -1639,55 +1695,55 @@ class v1GetModelDefResponse:
 class v1GetModelLabelsResponse:
     def __init__(
         self,
-        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        labels: "typing.Sequence[str]",
     ):
         self.labels = labels
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelLabelsResponse":
         return cls(
-            labels=obj.get("labels", None),
+            labels=obj["labels"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "labels": self.labels if self.labels is not None else None,
+            "labels": self.labels,
         }
 
 class v1GetModelResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
+        model: "v1Model",
     ):
         self.model = model
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
+            "model": self.model.to_json(),
         }
 
 class v1GetModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "typing.Optional[v1ModelVersion]" = None,
+        modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelVersionResponse":
         return cls(
-            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
+            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
+            "modelVersion": self.modelVersion.to_json(),
         }
 
 class v1GetModelVersionsRequestSortBy(enum.Enum):
@@ -1698,9 +1754,9 @@ class v1GetModelVersionsRequestSortBy(enum.Enum):
 class v1GetModelVersionsResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
-        modelVersions: "typing.Optional[typing.Sequence[v1ModelVersion]]" = None,
-        pagination: "typing.Optional[v1Pagination]" = None,
+        model: "v1Model",
+        modelVersions: "typing.Sequence[v1ModelVersion]",
+        pagination: "v1Pagination",
     ):
         self.model = model
         self.modelVersions = modelVersions
@@ -1709,16 +1765,16 @@ class v1GetModelVersionsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelVersionsResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
-            modelVersions=[v1ModelVersion.from_json(x) for x in obj["modelVersions"]] if obj.get("modelVersions", None) is not None else None,
-            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
+            modelVersions=[v1ModelVersion.from_json(x) for x in obj["modelVersions"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
-            "modelVersions": [x.to_json() for x in self.modelVersions] if self.modelVersions is not None else None,
-            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "model": self.model.to_json(),
+            "modelVersions": [x.to_json() for x in self.modelVersions],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetModelsRequestSortBy(enum.Enum):
@@ -2951,6 +3007,7 @@ class v1Notebook:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         serviceAddress: "typing.Optional[str]" = None,
     ):
@@ -2959,6 +3016,7 @@ class v1Notebook:
         self.state = state
         self.startTime = startTime
         self.container = container
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -2973,6 +3031,7 @@ class v1Notebook:
             state=determinedtaskv1State(obj["state"]),
             startTime=obj["startTime"],
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -2987,6 +3046,7 @@ class v1Notebook:
             "state": self.state.value,
             "startTime": self.startTime,
             "container": self.container.to_json() if self.container is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -3159,44 +3219,22 @@ class v1PatchModel:
             "notes": self.notes if self.notes is not None else None,
         }
 
-class v1PatchModelRequest:
-    def __init__(
-        self,
-        model: "typing.Optional[v1PatchModel]" = None,
-        modelName: "typing.Optional[str]" = None,
-    ):
-        self.model = model
-        self.modelName = modelName
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchModelRequest":
-        return cls(
-            model=v1PatchModel.from_json(obj["model"]) if obj.get("model", None) is not None else None,
-            modelName=obj.get("modelName", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "model": self.model.to_json() if self.model is not None else None,
-            "modelName": self.modelName if self.modelName is not None else None,
-        }
-
 class v1PatchModelResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
+        model: "v1Model",
     ):
         self.model = model
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
+            "model": self.model.to_json(),
         }
 
 class v1PatchModelVersion:
@@ -3237,48 +3275,22 @@ class v1PatchModelVersion:
             "notes": self.notes if self.notes is not None else None,
         }
 
-class v1PatchModelVersionRequest:
-    def __init__(
-        self,
-        modelName: "typing.Optional[str]" = None,
-        modelVersion: "typing.Optional[v1PatchModelVersion]" = None,
-        modelVersionId: "typing.Optional[int]" = None,
-    ):
-        self.modelName = modelName
-        self.modelVersion = modelVersion
-        self.modelVersionId = modelVersionId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchModelVersionRequest":
-        return cls(
-            modelName=obj.get("modelName", None),
-            modelVersion=v1PatchModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
-            modelVersionId=obj.get("modelVersionId", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "modelName": self.modelName if self.modelName is not None else None,
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
-            "modelVersionId": self.modelVersionId if self.modelVersionId is not None else None,
-        }
-
 class v1PatchModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "typing.Optional[v1ModelVersion]" = None,
+        modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelVersionResponse":
         return cls(
-            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
+            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
+            "modelVersion": self.modelVersion.to_json(),
         }
 
 class v1PatchUser:
@@ -3361,13 +3373,11 @@ class v1PostModelRequest:
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         notes: "typing.Optional[str]" = None,
-        username: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
         self.metadata = metadata
         self.labels = labels
-        self.username = username
         self.notes = notes
 
     @classmethod
@@ -3377,7 +3387,6 @@ class v1PostModelRequest:
             description=obj.get("description", None),
             metadata=obj.get("metadata", None),
             labels=obj.get("labels", None),
-            username=obj.get("username", None),
             notes=obj.get("notes", None),
         )
 
@@ -3387,26 +3396,25 @@ class v1PostModelRequest:
             "description": self.description if self.description is not None else None,
             "metadata": self.metadata if self.metadata is not None else None,
             "labels": self.labels if self.labels is not None else None,
-            "username": self.username if self.username is not None else None,
             "notes": self.notes if self.notes is not None else None,
         }
 
 class v1PostModelResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
+        model: "v1Model",
     ):
         self.model = model
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
+            "model": self.model.to_json(),
         }
 
 class v1PostModelVersionRequest:
@@ -3454,19 +3462,19 @@ class v1PostModelVersionRequest:
 class v1PostModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "typing.Optional[v1ModelVersion]" = None,
+        modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelVersionResponse":
         return cls(
-            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
+            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
+            "modelVersion": self.modelVersion.to_json(),
         }
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -4460,6 +4468,7 @@ class v1Shell:
         addresses: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
         agentUserGroup: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         privateKey: "typing.Optional[str]" = None,
         publicKey: "typing.Optional[str]" = None,
@@ -4471,6 +4480,7 @@ class v1Shell:
         self.container = container
         self.privateKey = privateKey
         self.publicKey = publicKey
+        self.displayName = displayName
         self.username = username
         self.resourcePool = resourcePool
         self.exitStatus = exitStatus
@@ -4488,6 +4498,7 @@ class v1Shell:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             privateKey=obj.get("privateKey", None),
             publicKey=obj.get("publicKey", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             resourcePool=obj["resourcePool"],
             exitStatus=obj.get("exitStatus", None),
@@ -4505,6 +4516,7 @@ class v1Shell:
             "container": self.container.to_json() if self.container is not None else None,
             "privateKey": self.privateKey if self.privateKey is not None else None,
             "publicKey": self.publicKey if self.publicKey is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "resourcePool": self.resourcePool,
             "exitStatus": self.exitStatus if self.exitStatus is not None else None,
@@ -4670,6 +4682,7 @@ class v1Tensorboard:
         state: "determinedtaskv1State",
         username: str,
         container: "typing.Optional[v1Container]" = None,
+        displayName: "typing.Optional[str]" = None,
         exitStatus: "typing.Optional[str]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         serviceAddress: "typing.Optional[str]" = None,
@@ -4682,6 +4695,7 @@ class v1Tensorboard:
         self.container = container
         self.experimentIds = experimentIds
         self.trialIds = trialIds
+        self.displayName = displayName
         self.username = username
         self.serviceAddress = serviceAddress
         self.resourcePool = resourcePool
@@ -4698,6 +4712,7 @@ class v1Tensorboard:
             container=v1Container.from_json(obj["container"]) if obj.get("container", None) is not None else None,
             experimentIds=obj.get("experimentIds", None),
             trialIds=obj.get("trialIds", None),
+            displayName=obj.get("displayName", None),
             username=obj["username"],
             serviceAddress=obj.get("serviceAddress", None),
             resourcePool=obj["resourcePool"],
@@ -4714,6 +4729,7 @@ class v1Tensorboard:
             "container": self.container.to_json() if self.container is not None else None,
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "trialIds": self.trialIds if self.trialIds is not None else None,
+            "displayName": self.displayName if self.displayName is not None else None,
             "username": self.username,
             "serviceAddress": self.serviceAddress if self.serviceAddress is not None else None,
             "resourcePool": self.resourcePool,
@@ -5179,6 +5195,26 @@ def post_ActivateExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
+
+def post_AllocationAllGather(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationAllGatherRequest",
+) -> "v1AllocationAllGatherResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/all_gather",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1AllocationAllGatherResponse.from_json(_resp.json())
+    raise APIHttpError("post_AllocationAllGather", _resp)
 
 def get_AllocationPreemptionSignal(
     session: "client.Session",
@@ -6732,7 +6768,7 @@ def patch_PatchExperiment(
 def patch_PatchModel(
     session: "client.Session",
     *,
-    body: "v1PatchModelRequest",
+    body: "v1PatchModel",
     modelName: str,
 ) -> "v1PatchModelResponse":
     _params = None
@@ -6752,7 +6788,7 @@ def patch_PatchModel(
 def patch_PatchModelVersion(
     session: "client.Session",
     *,
-    body: "v1PatchModelVersionRequest",
+    body: "v1PatchModelVersion",
     modelName: str,
     modelVersionId: int,
 ) -> "v1PatchModelVersionResponse":

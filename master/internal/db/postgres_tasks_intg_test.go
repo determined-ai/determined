@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -37,6 +39,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		JobID:   jID,
 		JobType: model.JobTypeExperiment,
 		OwnerID: &user.ID,
+		QPos:    decimal.New(0, 0),
 	}
 	err := db.AddJob(jIn)
 	require.NoError(t, err, "failed to add job")

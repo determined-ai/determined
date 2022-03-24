@@ -19,18 +19,18 @@ import (
 )
 
 const (
-	// MinLocalRendezvousPort is the smallest port to use (from the container's point of view;
+	// minLocalRendezvousPort is the smallest port to use (from the container's point of view;
 	// it will be mapped to some arbitrary port on the host) for communication across containers.
-	MinLocalRendezvousPort = 1734
+	minLocalRendezvousPort = 1734
 
-	// MaxLocalRendezvousPort is the largest port to use for communication across containers.
+	// maxLocalRendezvousPort is the largest port to use for communication across containers.
 	// Each distributed trial can take up to 2 host based ports and we assume a maximum.
-	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
-	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
+	// of 16 slot per agent. maxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
+	maxLocalRendezvousPort = minLocalRendezvousPort + 2*16 - 1
 )
 
-// RendezvousTimeoutDuration is the default timeout for rendezvous.
-var RendezvousTimeoutDuration = 10 * time.Minute
+// rendezvousTimeoutDuration is the default timeout for rendezvous.
+var rendezvousTimeoutDuration = 10 * time.Minute
 
 type (
 	// WatchRendezvousInfo begins watching for rendezvous info.
@@ -54,15 +54,15 @@ type (
 		ResourcesID sproto.ResourcesID
 	}
 
-	// RendezvousTimeout tracks the timeout of the allocation resources rendezvousing.
+	// rendezvousTimeout tracks the timeout of the allocation resources rendezvousing.
 	// It is possible that it takes very long for all containers to be connected after the first
 	// container is connected. This might happen when the k8s cluster waits for new instances
 	// to spin up, which might not happen at all. At the same time, taking up part of all
 	// the resources and waiting is wasteful. So we need to detect this situation.
-	RendezvousTimeout struct{ AllocationID model.AllocationID }
+	rendezvousTimeout struct{ AllocationID model.AllocationID }
 
-	// Rendezvous encapsulates the rendezvous state of a trial.
-	Rendezvous struct {
+	// rendezvous encapsulates the rendezvous state of a trial.
+	rendezvous struct {
 		allocationID      model.AllocationID
 		watchers          map[sproto.ResourcesID]chan<- RendezvousInfoOrError
 		resources         resourcesList
@@ -71,59 +71,38 @@ type (
 	}
 )
 
-// NewRendezvous returns a new rendezvous component.
-func NewRendezvous(allocationID model.AllocationID, rs resourcesList) *Rendezvous {
-	return &Rendezvous{
+// newRendezvous returns a new rendezvous component.
+func newRendezvous(
+	ctx *actor.Context,
+	allocationID model.AllocationID,
+	rs resourcesList,
+) *rendezvous {
+	if ctx != nil {
+		actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{
+			AllocationID: allocationID,
+		})
+	}
+
+	return &rendezvous{
 		allocationID: allocationID,
 		resources:    rs,
 		watchers:     map[sproto.ResourcesID]chan<- RendezvousInfoOrError{},
 	}
 }
 
-// ReceiveMsg receives rendezvous-specific messages.
-func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
-	if r == nil {
-		return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", ctx.Message())}
-	}
-
-	switch msg := ctx.Message().(type) {
-	case WatchRendezvousInfo:
-		if len(r.watchers) == 0 {
-			actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{
-				AllocationID: r.allocationID,
-			})
-		}
-
-		if w, err := r.watch(msg.ResourcesID); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(w)
-		}
-	case UnwatchRendezvousInfo:
-		r.unwatch(msg.ResourcesID)
-	case RendezvousTimeout:
-		if err := r.checkTimeout(msg.AllocationID); err != nil {
-			return err
-		}
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func (r *Rendezvous) watch(id sproto.ResourcesID) (RendezvousWatcher, error) {
-	if _, ok := r.resources[id]; !ok {
-		err := ErrStaleResources{ID: id}
+func (r *rendezvous) watch(msg WatchRendezvousInfo) (RendezvousWatcher, error) {
+	if _, ok := r.resources[msg.ResourcesID]; !ok {
+		err := ErrStaleResources{ID: msg.ResourcesID}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
-	} else if _, ok := r.watchers[id]; ok {
+	} else if _, ok := r.watchers[msg.ResourcesID]; ok {
 		return RendezvousWatcher{}, apiutils.AsValidationError(
-			"resources already rendezvoused: %s", id,
+			"resources already rendezvoused: %s", msg.ResourcesID,
 		)
 	}
 
 	// Channel is size 1 since rendezvous info will only ever be sent once.
 	w := make(chan RendezvousInfoOrError, 1)
-	r.watchers[id] = w
+	r.watchers[msg.ResourcesID] = w
 	r.lastWatchTime = time.Now()
 	if r.ready() {
 		r.push()
@@ -131,14 +110,14 @@ func (r *Rendezvous) watch(id sproto.ResourcesID) (RendezvousWatcher, error) {
 	return RendezvousWatcher{C: w}, nil
 }
 
-func (r *Rendezvous) unwatch(id sproto.ResourcesID) {
+func (r *rendezvous) unwatch(msg UnwatchRendezvousInfo) {
 	if r == nil {
 		return
 	}
-	delete(r.watchers, id)
+	delete(r.watchers, msg.ResourcesID)
 }
 
-func (r *Rendezvous) try() bool {
+func (r *rendezvous) try() bool {
 	if r.ready() {
 		r.push()
 	}
@@ -150,7 +129,7 @@ func (r *Rendezvous) try() bool {
 // message. The two messages are not guaranteed to come in-order. During each run of the
 // trial, once all the containers are ready this function will return true afterward because this
 // function is used in deciding if the trial should be forcibly killed when terminating.
-func (r *Rendezvous) ready() bool {
+func (r *rendezvous) ready() bool {
 	if r == nil {
 		return false
 	}
@@ -171,7 +150,7 @@ func (r *Rendezvous) ready() bool {
 
 // push gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
-func (r Rendezvous) push() bool {
+func (r rendezvous) push() bool {
 	if !r.ready() {
 		return false
 	}
@@ -192,13 +171,13 @@ func (r Rendezvous) push() bool {
 }
 
 // checkTimeout checks if the task should timeout waiting for rendezvous.
-func (r *Rendezvous) checkTimeout(allocationID model.AllocationID) error {
+func (r *rendezvous) checkTimeout(msg rendezvousTimeout) error {
 	if r == nil {
 		return nil
 	}
 
-	exceededTimeout := time.Now().After(r.lastWatchTime.Add(RendezvousTimeoutDuration))
-	if r.allocationID == allocationID && exceededTimeout {
+	exceededTimeout := time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration))
+	if r.allocationID == msg.AllocationID && exceededTimeout {
 		return ErrTimeoutExceeded{
 			Message: "some containers are taking a long time to " +
 				"connect to master; when running on kubernetes this may happen " +
@@ -210,8 +189,8 @@ func (r *Rendezvous) checkTimeout(allocationID model.AllocationID) error {
 	return nil
 }
 
-// Close closes rendezvous by letting still active watchers know they were terminated.
-func (r *Rendezvous) Close() {
+// close closes rendezvous by letting still active watchers know they were terminated.
+func (r *rendezvous) close() {
 	if r == nil {
 		return
 	}
@@ -229,7 +208,7 @@ type cAddress struct {
 	ordinal   int
 }
 
-func (r *Rendezvous) info() ([]cAddress, []string, error) {
+func (r *rendezvous) info() ([]cAddress, []string, error) {
 	var caddrs []cAddress
 	for id, r := range r.resources {
 		caddr := cAddress{
@@ -265,8 +244,8 @@ func (r *Rendezvous) info() ([]cAddress, []string, error) {
 	for _, caddr := range caddrs {
 		var addrs []cproto.Address
 		for _, addr := range caddr.addresses {
-			if MinLocalRendezvousPort <= addr.ContainerPort &&
-				addr.ContainerPort <= MaxLocalRendezvousPort {
+			if minLocalRendezvousPort <= addr.ContainerPort &&
+				addr.ContainerPort <= maxLocalRendezvousPort {
 				addrs = append(addrs, addr)
 			}
 		}

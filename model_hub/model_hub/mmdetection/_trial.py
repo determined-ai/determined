@@ -201,7 +201,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
                 (bbox_results, mmdet.core.encode_mask_results(mask_results))
                 for bbox_results, mask_results in result
             ]
-        self.reducer.update(([b["idx"] for b in batch["img_metas"][0]], result))  # type: ignore
+        self.reducer.update(([b["idx"] for b in batch["img_metas"][0]], result))
         return {}
 
     def build_training_data_loader(self) -> det_torch.DataLoader:

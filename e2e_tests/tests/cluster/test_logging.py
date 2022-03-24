@@ -5,7 +5,8 @@ import pytest
 
 from determined.cli import command
 from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common.api import authentication, bindings, certs
+from determined.common.experimental import session
 from tests import config as conf
 from tests import experiment as exp
 
@@ -45,20 +46,7 @@ def test_trial_logs() -> None:
 @pytest.mark.parametrize(
     "task_type,task_config,log_regex",
     [
-        # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
-        (
-            command.TaskTypeCommand,
-            {
-                "entrypoint": [
-                    "echo",
-                    "hello",
-                    "&&",
-                    "sleep",
-                    "10",
-                ]
-            },
-            re.compile("^.*hello.*$"),
-        ),
+        (command.TaskTypeCommand, {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
         (command.TaskTypeNotebook, {}, re.compile("^.*Jupyter Server .* is running.*$")),
         (command.TaskTypeShell, {}, re.compile("^.*Server listening on.*$")),
         (command.TaskTypeTensorBoard, {}, re.compile("^.*TensorBoard .* at .*$")),
@@ -69,6 +57,18 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+
+    rps = bindings.get_GetResourcePools(
+        session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    )
+    assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
+
+    if (
+        rps.resourcePools[0].type == bindings.v1ResourcePoolType.RESOURCE_POOL_TYPE_K8S
+        and task_type == command.TaskTypeCommand
+    ):
+        # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
+        return
 
     body = {}
     if task_type == command.TaskTypeTensorBoard:

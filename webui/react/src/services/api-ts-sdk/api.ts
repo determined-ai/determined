@@ -896,6 +896,52 @@ export interface V1Allocation {
 }
 
 /**
+ * Arguments to an all gather.
+ * @export
+ * @interface V1AllocationAllGatherRequest
+ */
+export interface V1AllocationAllGatherRequest {
+    /**
+     * The ID of the allocation.
+     * @type {string}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    allocationId: string;
+    /**
+     * The UUID of the participant in an all gather.
+     * @type {string}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    requestUuid?: string;
+    /**
+     * The number of process to wait for.
+     * @type {number}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    numPeers?: number;
+    /**
+     * The data from this process.
+     * @type {any}
+     * @memberof V1AllocationAllGatherRequest
+     */
+    data: any;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1AllocationAllGatherResponse
+ */
+export interface V1AllocationAllGatherResponse {
+    /**
+     * The data for all the processes.
+     * @type {Array<any>}
+     * @memberof V1AllocationAllGatherResponse
+     */
+    data: Array<any>;
+}
+
+/**
  * Response to AllocationPreemptionSignalRequest.
  * @export
  * @interface V1AllocationPreemptionSignalResponse
@@ -1223,6 +1269,12 @@ export interface V1Command {
      * @memberof V1Command
      */
     container?: V1Container;
+    /**
+     * The display name of the user that created the command.
+     * @type {string}
+     * @memberof V1Command
+     */
+    displayName?: string;
     /**
      * The username of the user that created the command.
      * @type {string}
@@ -1583,6 +1635,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     numTrials: number;
+    /**
+     * The display name of the user that created the experiment.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    displayName?: string;
     /**
      * The username of the user that created the experiment.
      * @type {string}
@@ -2189,7 +2247,7 @@ export interface V1GetModelLabelsResponse {
      * @type {Array<string>}
      * @memberof V1GetModelLabelsResponse
      */
-    labels?: Array<string>;
+    labels: Array<string>;
 }
 
 /**
@@ -2203,7 +2261,7 @@ export interface V1GetModelResponse {
      * @type {V1Model}
      * @memberof V1GetModelResponse
      */
-    model?: V1Model;
+    model: V1Model;
 }
 
 /**
@@ -2217,7 +2275,7 @@ export interface V1GetModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1GetModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -2242,19 +2300,19 @@ export interface V1GetModelVersionsResponse {
      * @type {V1Model}
      * @memberof V1GetModelVersionsResponse
      */
-    model?: V1Model;
+    model: V1Model;
     /**
      * The list of returned model versions.
      * @type {Array<V1ModelVersion>}
      * @memberof V1GetModelVersionsResponse
      */
-    modelVersions?: Array<V1ModelVersion>;
+    modelVersions: Array<V1ModelVersion>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetModelVersionsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -3573,6 +3631,12 @@ export interface V1Notebook {
      */
     container?: V1Container;
     /**
+     * The display name of the user that created the notebook.
+     * @type {string}
+     * @memberof V1Notebook
+     */
+    displayName?: string;
+    /**
      * The username of the user that created the notebook.
      * @type {string}
      * @memberof V1Notebook
@@ -3778,26 +3842,6 @@ export interface V1PatchModel {
 }
 
 /**
- * Request for updating a model in the registry.
- * @export
- * @interface V1PatchModelRequest
- */
-export interface V1PatchModelRequest {
-    /**
-     * The model desired model fields and values.
-     * @type {V1PatchModel}
-     * @memberof V1PatchModelRequest
-     */
-    model?: V1PatchModel;
-    /**
-     * The name of the model being updated.
-     * @type {string}
-     * @memberof V1PatchModelRequest
-     */
-    modelName?: string;
-}
-
-/**
  * Response to PatchModelRequest.
  * @export
  * @interface V1PatchModelResponse
@@ -3808,7 +3852,7 @@ export interface V1PatchModelResponse {
      * @type {V1Model}
      * @memberof V1PatchModelResponse
      */
-    model?: V1Model;
+    model: V1Model;
 }
 
 /**
@@ -3856,32 +3900,6 @@ export interface V1PatchModelVersion {
 }
 
 /**
- * Request for updating a model version in the registry.
- * @export
- * @interface V1PatchModelVersionRequest
- */
-export interface V1PatchModelVersionRequest {
-    /**
-     * The name of the model being updated.
-     * @type {string}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelName?: string;
-    /**
-     * The model version being updated.
-     * @type {V1PatchModelVersion}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersion?: V1PatchModelVersion;
-    /**
-     * The id of the model version being updated.
-     * @type {number}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersionId?: number;
-}
-
-/**
  * Response to PatchModelVersionRequest.
  * @export
  * @interface V1PatchModelVersionResponse
@@ -3892,7 +3910,7 @@ export interface V1PatchModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1PatchModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -3990,12 +4008,6 @@ export interface V1PostModelRequest {
      */
     labels?: Array<string>;
     /**
-     * User who is creating this model.
-     * @type {string}
-     * @memberof V1PostModelRequest
-     */
-    username?: string;
-    /**
      * Notes associated with this model.
      * @type {string}
      * @memberof V1PostModelRequest
@@ -4014,7 +4026,7 @@ export interface V1PostModelResponse {
      * @type {V1Model}
      * @memberof V1PostModelResponse
      */
-    model?: V1Model;
+    model: V1Model;
 }
 
 /**
@@ -4078,7 +4090,7 @@ export interface V1PostModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1PostModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -5262,6 +5274,12 @@ export interface V1Shell {
      */
     publicKey?: string;
     /**
+     * The display name of the user that created the shell.
+     * @type {string}
+     * @memberof V1Shell
+     */
+    displayName?: string;
+    /**
      * The username of the user that created the shell.
      * @type {string}
      * @memberof V1Shell
@@ -5501,6 +5519,12 @@ export interface V1Tensorboard {
      * @memberof V1Tensorboard
      */
     trialIds?: Array<number>;
+    /**
+     * The display name of the user that created the tensorboard.
+     * @type {string}
+     * @memberof V1Tensorboard
+     */
+    displayName?: string;
     /**
      * The username of the user that created the tensorboard.
      * @type {string}
@@ -10269,6 +10293,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1AllocationAllGatherRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationAllGather.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationAllGather.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/all_gather`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AllocationAllGatherRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -11529,6 +11599,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1AllocationAllGatherRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationAllGather(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12095,6 +12185,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1AllocationAllGatherRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
+            return InternalApiFp(configuration).allocationAllGather(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12417,6 +12518,19 @@ export class InternalApi extends BaseAPI {
      */
     public ackAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
         return InternalApiFp(this.configuration).ackAllocationPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary AllocationAllGather performs an all gather through the master. An allocation can only perform once all gather at a time.
+     * @param {string} allocationId The ID of the allocation.
+     * @param {V1AllocationAllGatherRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationAllGather(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13158,7 +13272,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {number} modelVersionId The id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13455,11 +13569,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options: any = {}): FetchArgs {
+        patchModel(modelName: string, body: V1PatchModel, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModel.');
@@ -13489,7 +13603,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchModelRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchModel" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -13502,11 +13616,11 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options: any = {}): FetchArgs {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModelVersion.');
@@ -13541,7 +13655,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchModelVersionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchModelVersion" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -13723,7 +13837,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {number} modelVersionId The id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13852,11 +13966,11 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+        patchModel(modelName: string, body: V1PatchModel, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel(modelName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -13873,11 +13987,11 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -13980,7 +14094,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {number} modelVersionId The id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -14055,11 +14169,11 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Patch a model's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {V1PatchModelRequest} body 
+         * @param {V1PatchModel} body The model desired model fields and values.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
+        patchModel(modelName: string, body: V1PatchModel, options?: any) {
             return ModelsApiFp(configuration).patchModel(modelName, body, options)(fetch, basePath);
         },
         /**
@@ -14067,11 +14181,11 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
          * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersionRequest} body 
+         * @param {V1PatchModelVersion} body The model version being updated.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
             return ModelsApiFp(configuration).patchModelVersion(modelName, modelVersionId, body, options)(fetch, basePath);
         },
         /**
@@ -14143,7 +14257,7 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Delete a model version
      * @param {string} modelName The name of the model associated with the model version.
-     * @param {number} modelVersionId THe id of the model version to delete.
+     * @param {number} modelVersionId The id of the model version to delete.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
@@ -14230,12 +14344,12 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Patch a model's fields.
      * @param {string} modelName The name of the model being updated.
-     * @param {V1PatchModelRequest} body 
+     * @param {V1PatchModel} body The model desired model fields and values.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
+    public patchModel(modelName: string, body: V1PatchModel, options?: any) {
         return ModelsApiFp(this.configuration).patchModel(modelName, body, options)(this.fetch, this.basePath);
     }
 
@@ -14244,12 +14358,12 @@ export class ModelsApi extends BaseAPI {
      * @summary Patch a model version's fields.
      * @param {string} modelName The name of the model being updated.
      * @param {number} modelVersionId The id of the model version being updated.
-     * @param {V1PatchModelVersionRequest} body 
+     * @param {V1PatchModelVersion} body The model version being updated.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
         return ModelsApiFp(this.configuration).patchModelVersion(modelName, modelVersionId, body, options)(this.fetch, this.basePath);
     }
 

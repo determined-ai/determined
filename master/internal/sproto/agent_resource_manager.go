@@ -7,6 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 // Message protocol from an agent actor to the default resource manager.
@@ -29,10 +30,14 @@ type (
 	StartTaskContainer struct {
 		TaskActor *actor.Ref
 		aproto.StartContainer
+
+		LogContext logger.Context
 	}
 	// KillTaskContainer notifies the agent to kill a task container.
 	KillTaskContainer struct {
 		ContainerID cproto.ID
+
+		LogContext logger.Context
 	}
 )
 

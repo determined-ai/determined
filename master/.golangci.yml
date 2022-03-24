@@ -1,4 +1,6 @@
 run:
+  go: 1.18
+
   # Deadline for individual linters to complete by.
   deadline: 1m
 
@@ -123,3 +125,11 @@ linters:
     - varnamelen
     - wastedassign
     - wrapcheck
+
+    # Below here are new linters from upgrading to 1.45.0. Since we enable all and disable
+    # selectively, when we upgrade we get a ton of new linters.
+    - maintidx
+    - containedctx
+    - decorder
+    - errchkjson
+    - grouper

@@ -48,7 +48,7 @@ class ModelVersion:
         self.name = name
         self._session.patch(
             "/api/v1/models/{}/versions/{}".format(self.model_name, self.model_version_id),
-            json={"model_version": {"name": self.name}},
+            json={"name": self.name},
         )
 
     def set_notes(self, notes: str) -> None:
@@ -62,7 +62,7 @@ class ModelVersion:
         self.notes = notes
         self._session.patch(
             "/api/v1/models/{}/versions/{}".format(self.model_name, self.model_version_id),
-            json={"model_version": {"notes": self.notes}},
+            json={"notes": self.notes},
         )
 
     def delete(self) -> None:
@@ -274,7 +274,7 @@ class Model:
 
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
-            json={"model": {"metadata": self.metadata, "description": self.description}},
+            json={"metadata": self.metadata, "description": self.description},
         )
 
     def remove_metadata(self, keys: List[str]) -> None:
@@ -291,7 +291,7 @@ class Model:
 
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
-            json={"model": {"metadata": self.metadata, "description": self.description}},
+            json={"metadata": self.metadata, "description": self.description},
         )
 
     def set_labels(self, labels: List[str]) -> None:
@@ -305,14 +305,14 @@ class Model:
         self.labels = labels
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
-            json={"model": {"labels": self.labels}},
+            json={"labels": self.labels},
         )
 
     def set_description(self, description: str) -> None:
         self.description = description
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
-            json={"model": {"description": description}},
+            json={"description": description},
         )
 
     def archive(self) -> None:

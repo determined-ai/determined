@@ -28,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -203,6 +204,8 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		},
 		rm: a.m.rm,
 		db: a.m.db,
+
+		logCtx: logger.Context{"experiment-id": exp.ID},
 	}).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
@@ -252,7 +255,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:          "username",
+		apiv1.GetExperimentsRequest_SORT_BY_USER:          "display_name",
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
 	}

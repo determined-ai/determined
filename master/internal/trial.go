@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/pkg/errors"
@@ -66,10 +67,13 @@ type trial struct {
 	allocation *actor.Ref
 	// a note of the user initated exit reason, if any.
 	userInitiatedExit *model.ExitedReason
+
+	logCtx logger.Context
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
+	logCtx logger.Context,
 	taskID model.TaskID,
 	jobID model.JobID,
 	jobSubmissionTime time.Time,
@@ -97,20 +101,27 @@ func newTrial(
 		config:              config,
 		taskSpec:            taskSpec,
 		warmStartCheckpoint: warmStartCheckpoint,
+
+		logCtx: logger.MergeContexts(logCtx, logger.Context{
+			"task-id":   taskID,
+			"task-type": model.TaskTypeTrial,
+		}),
 	}
 }
 
 func (t *trial) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.AddLabel("experiment-id", t.experimentID)
 		if t.idSet {
-			ctx.AddLabel("trial-id", t.id)
 			if err := t.recover(); err != nil {
 				return err
 			}
-			ctx.AddLabel("task-run-id", t.runID)
+			t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
+				"trial-id":     t.id,
+				"trial-run-id": t.runID,
+			})
 		}
+		ctx.AddLabels(t.logCtx)
 		return t.maybeAllocateTask(ctx)
 	case actor.PostStop:
 		if !t.idSet {
@@ -218,7 +229,10 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 	ctx.Log().Info("decided to allocate trial")
 	t.runID++
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
+	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
+	ctx.AddLabel("trial-run-id", t.runID)
+
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
 		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
@@ -235,8 +249,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			SingleAgent: false,
 		},
 
-		Preemptible:  true,
-		DoRendezvous: true,
+		Preemptible: true,
 	}, t.db, t.rm, t.taskLogger))
 	return nil
 }
@@ -293,6 +306,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		}
 		t.id = modelTrial.ID
 		t.idSet = true
+		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-id": t.id})
 		ctx.AddLabel("trial-id", t.id)
 		ctx.Tell(t.rm, sproto.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),

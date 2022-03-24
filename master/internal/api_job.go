@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"sort"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,23 +24,6 @@ func (a *apiServer) GetJobs(
 	if !ok {
 		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
-
-	// order by jobsAhead first and JobId second.
-	sort.SliceStable(jobs, func(i, j int) bool {
-		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
-			i, j = j, i
-		}
-		if jobs[i].Summary == nil || jobs[j].Summary == nil {
-			return false
-		}
-		if jobs[i].Summary.JobsAhead < jobs[j].Summary.JobsAhead {
-			return true
-		}
-		if jobs[i].Summary.JobsAhead > jobs[j].Summary.JobsAhead {
-			return false
-		}
-		return jobs[i].JobId < jobs[j].JobId
-	})
 
 	if req.Pagination == nil {
 		req.Pagination = &apiv1.PaginationRequest{}

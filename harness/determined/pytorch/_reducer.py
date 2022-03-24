@@ -1,7 +1,7 @@
 import abc
 import enum
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, overload
 
 import numpy as np
 
@@ -155,8 +155,8 @@ class MetricReducer(metaclass=abc.ABCMeta):
 
         The return value should either be:
            -  A dict mapping string metric names to metric values, if the call to
-              context.wrap_metric() omitted the `name` parameter, or
-           -  A non-dict metric value if the call to context.wrap_metric() had name set to a string
+              context.wrap_reducer() omitted the `name` parameter, or
+           -  A non-dict metric value if the call to context.wrap_reducer() had name set to a string
               (an error will be raised if a dict-type metric is returned but name was set).
 
         This will be called after per_slot_reduce.
@@ -265,6 +265,9 @@ class _WrappedReducer:
         return result
 
 
+T = TypeVar("T", bound=MetricReducer)
+
+
 class _PyTorchReducerContext:
     """
     _PyTorchReducerContext is a component of the PyTorchTrialContext which does not interact with
@@ -281,6 +284,28 @@ class _PyTorchReducerContext:
     def reset_reducers(self) -> None:
         for wrapped in self._wrapped_reducers:
             wrapped.reset()
+
+    # When wrap_reducer is passed a Callable, it returns a _SimpleReducer.
+    @overload
+    def wrap_reducer(
+        self,
+        reducer: Callable,
+        name: Optional[str] = None,
+        for_training: bool = True,
+        for_validation: bool = True,
+    ) -> _SimpleReducer:
+        ...
+
+    # When wrap_reducer is passed a MetricReducer, it returns the same MetricReducer.
+    @overload
+    def wrap_reducer(
+        self,
+        reducer: T,
+        name: Optional[str] = None,
+        for_training: bool = True,
+        for_validation: bool = True,
+    ) -> T:
+        ...
 
     def wrap_reducer(
         self,
