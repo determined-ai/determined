@@ -21,6 +21,7 @@ import (
 func TestProtoGetTrial(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
+	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	exp := model.ExperimentModel()
