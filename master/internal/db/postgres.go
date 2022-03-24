@@ -5,48 +5,15 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib" // Import Postgres driver.
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/extra/bundebug"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
-
-var bunMutex sync.Mutex
-var theOneBun *bun.DB
-
-func initTheOneBun(db *sql.DB) {
-	bunMutex.Lock()
-	defer bunMutex.Unlock()
-	if theOneBun != nil {
-		panic("Can't initialize bun twice!  Did you initialize the database twice?")
-	}
-	theOneBun = bun.NewDB(db, pgdialect.New())
-
-	// This will print every query that runs.
-	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
-
-	// This will print only the failed queries.
-	theOneBun.AddQueryHook(bundebug.NewQueryHook())
-}
-
-// Bun returns the singleton database connection through the bun library. bun is the database
-// library we we have decided to use for new code in the future due to its superior composability
-// over bare SQL, and its superior flexibility over e.g. gorm.  New code should not use the old bare
-// SQL tooling.
-func Bun() *bun.DB {
-	if theOneBun == nil {
-		panic("Bun is not yet initialized!  Did you use the database before initializing it?")
-	}
-	return theOneBun
-}
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
@@ -62,7 +29,6 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
-			initTheOneBun(sql.DB)
 			return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}, url: url}, err
 		}
 		numTries++
