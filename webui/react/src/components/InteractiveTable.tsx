@@ -16,7 +16,6 @@ import 'antd/dist/antd.min.css';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
-
 import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
 import { ExperimentItem } from 'types';
 
@@ -292,9 +291,28 @@ const InteractiveTable: InteractiveTable = ({
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  useEffect(() => {
+  const getUpscaledWidths = useCallback((widths: number[]): number[] => {
+    let newWidths = widths;
+    let tableWidth = tableRef?.current
+      ?.getElementsByTagName('table')?.[0]
+      ?.getBoundingClientRect()?.width;
+    tableWidth = (tableWidth ?? 0) + 0;
+    if (tableWidth) {
+      tableWidth -= 100; // need to compute this number somehow
+      const sumOfWidths = newWidths.reduce((a: number, b: number): number => a + b);
+      console.log(sumOfWidths, tableWidth);
+      if (sumOfWidths < tableWidth) {
+        const scaleUp = tableWidth / sumOfWidths;
+        newWidths = widths.map((w: number) => w * scaleUp);
+      }
+    }
+    return newWidths.map(Math.floor);
+  }, []);
 
-    const widths = settings.columnWidths;
+  useEffect(() => {
+    console.log('effecting');
+
+    const widths = getUpscaledWidths(settings.columnWidths);
     const sumOfWidths = widths.reduce((a, b) => a + b);
     const tableWidth = tableRef
       ?.current
@@ -316,9 +334,12 @@ const InteractiveTable: InteractiveTable = ({
       width: `${(w + (widths[i - 1] ?? edgeOverflow)) * (scalingFactor / 2)}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-    // setWidthData({ dropLeftStyles, dropRightStyles, widths });
+    if (widths !== settings.columnWidths) {
+      // updateSettings({ columnWidths: widths });
+    }
+
   }, [
-    settings.columnWidths,
+    settings.columnWidths, getUpscaledWidths, updateSettings,
   ]);
 
   const handleChange = useCallback(
@@ -387,41 +408,23 @@ const InteractiveTable: InteractiveTable = ({
       (e: Event, { x }: DraggableData) => {
         setIsResizing(true);
         const column = settings.columns[index];
-        const startWidth = settings.columnWidths[index];
+        const startWidth = widthData.widths[index];
         const minWidth = DEFAULT_COLUMN_WIDTHS[column] * 0.7;
         const deltaX = startWidth - minWidth;
         const minX = x - deltaX;
         setWidthData(({ widths, ...rest }) => ({ minX, widths, ...rest }));
       },
-    [ setWidthData, settings.columns, settings.columnWidths ],
+    [ setWidthData, settings.columns, widthData.widths ],
   );
-
-  const getScaledWidths = useCallback((widths) => {
-    let newWidths = widths;
-    let tableWidth = tableRef?.current
-      ?.getElementsByTagName('table')?.[0]
-      ?.getBoundingClientRect()?.width;
-    if (tableWidth) {
-      tableWidth -= 100;
-      const sumOfWidths = newWidths.reduce((a: number, b: number): number => a + b);
-      if (sumOfWidths < tableWidth) {
-        // console.log(sumOfWidths, tableWidth);
-        const scaleUp = tableWidth / sumOfWidths;
-        newWidths = widths.map((w: number) => w * scaleUp);
-      }
-    }
-    return newWidths.map(Math.floor);
-  }, []);
 
   const handleResizeStop = useCallback(
     () => {
-      const newWidths = getScaledWidths(widthData.widths);
+      const newWidths = getUpscaledWidths(widthData.widths);
       setIsResizing(false);
-      setWidthData(({ ...prev }) => ({ ...prev, widths: newWidths }));
       updateSettings({ columnWidths: newWidths });
 
     },
-    [ updateSettings, widthData, setWidthData, getScaledWidths ],
+    [ updateSettings, widthData, getUpscaledWidths ],
   );
 
   const onHeaderCell = useCallback(
