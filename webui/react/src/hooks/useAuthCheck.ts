@@ -88,7 +88,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     updateBearerToken,
   ]);
 
-  useEffect(() => storeDispatch({ type: StoreAction.ResetAuthCheck }), [ storeDispatch ]);
+  // useEffect(() => storeDispatch({ type: StoreAction.ResetAuthCheck }), [ storeDispatch ]);
 
   return checkAuth;
 };

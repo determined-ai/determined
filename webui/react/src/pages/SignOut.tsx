@@ -20,12 +20,13 @@ const SignOut: React.FC = () => {
       try {
         await logout({});
       } catch (e) {
-        handleError(e, {
-          isUserTriggered: false,
-          level: ErrorLevel.Warn,
-          silent: true,
-          type: ErrorType.Server,
-        });
+        // ignore
+        // handleError(e, {
+        //   isUserTriggered: false,
+        //   level: ErrorLevel.Warn,
+        //   silent: true,
+        //   type: ErrorType.Server,
+        // });
       }
       updateDetApi({ apiKey: undefined });
       storeDispatch({ type: StoreAction.ResetAuth });
