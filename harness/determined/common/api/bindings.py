@@ -1703,55 +1703,55 @@ class v1GetModelDefResponse:
 class v1GetModelLabelsResponse:
     def __init__(
         self,
-        labels: "typing.Optional[typing.Sequence[str]]" = None,
+        labels: "typing.Sequence[str]",
     ):
         self.labels = labels
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelLabelsResponse":
         return cls(
-            labels=obj.get("labels", None),
+            labels=obj["labels"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "labels": self.labels if self.labels is not None else None,
+            "labels": self.labels,
         }
 
 class v1GetModelResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
+        model: "v1Model",
     ):
         self.model = model
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
+            "model": self.model.to_json(),
         }
 
 class v1GetModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "typing.Optional[v1ModelVersion]" = None,
+        modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelVersionResponse":
         return cls(
-            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
+            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
+            "modelVersion": self.modelVersion.to_json(),
         }
 
 class v1GetModelVersionsRequestSortBy(enum.Enum):
@@ -1762,9 +1762,9 @@ class v1GetModelVersionsRequestSortBy(enum.Enum):
 class v1GetModelVersionsResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
-        modelVersions: "typing.Optional[typing.Sequence[v1ModelVersion]]" = None,
-        pagination: "typing.Optional[v1Pagination]" = None,
+        model: "v1Model",
+        modelVersions: "typing.Sequence[v1ModelVersion]",
+        pagination: "v1Pagination",
     ):
         self.model = model
         self.modelVersions = modelVersions
@@ -1773,16 +1773,16 @@ class v1GetModelVersionsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetModelVersionsResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
-            modelVersions=[v1ModelVersion.from_json(x) for x in obj["modelVersions"]] if obj.get("modelVersions", None) is not None else None,
-            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
+            modelVersions=[v1ModelVersion.from_json(x) for x in obj["modelVersions"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
-            "modelVersions": [x.to_json() for x in self.modelVersions] if self.modelVersions is not None else None,
-            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "model": self.model.to_json(),
+            "modelVersions": [x.to_json() for x in self.modelVersions],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetModelsRequestSortBy(enum.Enum):
@@ -3243,44 +3243,22 @@ class v1PatchModel:
             "notes": self.notes if self.notes is not None else None,
         }
 
-class v1PatchModelRequest:
-    def __init__(
-        self,
-        model: "typing.Optional[v1PatchModel]" = None,
-        modelName: "typing.Optional[str]" = None,
-    ):
-        self.model = model
-        self.modelName = modelName
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchModelRequest":
-        return cls(
-            model=v1PatchModel.from_json(obj["model"]) if obj.get("model", None) is not None else None,
-            modelName=obj.get("modelName", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "model": self.model.to_json() if self.model is not None else None,
-            "modelName": self.modelName if self.modelName is not None else None,
-        }
-
 class v1PatchModelResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
+        model: "v1Model",
     ):
         self.model = model
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
+            "model": self.model.to_json(),
         }
 
 class v1PatchModelVersion:
@@ -3321,48 +3299,22 @@ class v1PatchModelVersion:
             "notes": self.notes if self.notes is not None else None,
         }
 
-class v1PatchModelVersionRequest:
-    def __init__(
-        self,
-        modelName: "typing.Optional[str]" = None,
-        modelVersion: "typing.Optional[v1PatchModelVersion]" = None,
-        modelVersionId: "typing.Optional[int]" = None,
-    ):
-        self.modelName = modelName
-        self.modelVersion = modelVersion
-        self.modelVersionId = modelVersionId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchModelVersionRequest":
-        return cls(
-            modelName=obj.get("modelName", None),
-            modelVersion=v1PatchModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
-            modelVersionId=obj.get("modelVersionId", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "modelName": self.modelName if self.modelName is not None else None,
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
-            "modelVersionId": self.modelVersionId if self.modelVersionId is not None else None,
-        }
-
 class v1PatchModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "typing.Optional[v1ModelVersion]" = None,
+        modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelVersionResponse":
         return cls(
-            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
+            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
+            "modelVersion": self.modelVersion.to_json(),
         }
 
 class v1PatchUser:
@@ -3445,13 +3397,11 @@ class v1PostModelRequest:
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         notes: "typing.Optional[str]" = None,
-        username: "typing.Optional[str]" = None,
     ):
         self.name = name
         self.description = description
         self.metadata = metadata
         self.labels = labels
-        self.username = username
         self.notes = notes
 
     @classmethod
@@ -3461,7 +3411,6 @@ class v1PostModelRequest:
             description=obj.get("description", None),
             metadata=obj.get("metadata", None),
             labels=obj.get("labels", None),
-            username=obj.get("username", None),
             notes=obj.get("notes", None),
         )
 
@@ -3471,26 +3420,25 @@ class v1PostModelRequest:
             "description": self.description if self.description is not None else None,
             "metadata": self.metadata if self.metadata is not None else None,
             "labels": self.labels if self.labels is not None else None,
-            "username": self.username if self.username is not None else None,
             "notes": self.notes if self.notes is not None else None,
         }
 
 class v1PostModelResponse:
     def __init__(
         self,
-        model: "typing.Optional[v1Model]" = None,
+        model: "v1Model",
     ):
         self.model = model
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelResponse":
         return cls(
-            model=v1Model.from_json(obj["model"]) if obj.get("model", None) is not None else None,
+            model=v1Model.from_json(obj["model"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "model": self.model.to_json() if self.model is not None else None,
+            "model": self.model.to_json(),
         }
 
 class v1PostModelVersionRequest:
@@ -3538,19 +3486,19 @@ class v1PostModelVersionRequest:
 class v1PostModelVersionResponse:
     def __init__(
         self,
-        modelVersion: "typing.Optional[v1ModelVersion]" = None,
+        modelVersion: "v1ModelVersion",
     ):
         self.modelVersion = modelVersion
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelVersionResponse":
         return cls(
-            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]) if obj.get("modelVersion", None) is not None else None,
+            modelVersion=v1ModelVersion.from_json(obj["modelVersion"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "modelVersion": self.modelVersion.to_json() if self.modelVersion is not None else None,
+            "modelVersion": self.modelVersion.to_json(),
         }
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -6856,7 +6804,7 @@ def patch_PatchExperiment(
 def patch_PatchModel(
     session: "client.Session",
     *,
-    body: "v1PatchModelRequest",
+    body: "v1PatchModel",
     modelName: str,
 ) -> "v1PatchModelResponse":
     _params = None
@@ -6876,7 +6824,7 @@ def patch_PatchModel(
 def patch_PatchModelVersion(
     session: "client.Session",
     *,
-    body: "v1PatchModelVersionRequest",
+    body: "v1PatchModelVersion",
     modelName: str,
     modelVersionId: int,
 ) -> "v1PatchModelVersionResponse":

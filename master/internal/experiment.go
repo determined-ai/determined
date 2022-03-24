@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 
 	"github.com/google/uuid"
@@ -187,7 +189,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
 			return err
 		}
-		if err := e.setPriority(ctx, e.Config.Resources().Priority()); err != nil {
+		if err := e.setPriority(ctx, e.Config.Resources().Priority(), true); err != nil {
 			return err
 		}
 
@@ -197,6 +199,19 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		})
 
 		if e.restored {
+			j, err := e.db.JobByID(e.JobID)
+			if err != nil {
+				return err
+			}
+
+			if !j.QPos.Equals(decimal.Zero) {
+				ctx.Tell(e.rm, job.RecoverJobPosition{
+					JobID:        e.JobID,
+					JobPosition:  j.QPos,
+					ResourcePool: e.Config.Resources().ResourcePool(),
+				})
+			}
+
 			e.restoreTrials(ctx)
 			return nil
 		}
@@ -277,16 +292,15 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
+	case sproto.NotifyRMPriorityChange:
+		ctx.Respond(e.setPriority(ctx, &msg.Priority, false))
 	case job.SetGroupWeight:
 		if err := e.setWeight(ctx, msg.Weight); err != nil {
 			ctx.Respond(err)
 			ctx.Log().WithError(err)
 		}
 	case job.SetGroupPriority:
-		if err := e.setPriority(ctx, &msg.Priority); err != nil {
-			ctx.Respond(err)
-			ctx.Log().WithError(err)
-		}
+		ctx.Respond(e.setPriority(ctx, &msg.Priority, true))
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -299,6 +313,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case job.SetResourcePool:
 		if err := e.setRP(ctx, msg); err != nil {
 			ctx.Respond(err)
+		}
+
+	case job.RegisterJobPosition:
+		err := e.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
 		}
 
 	// Experiment shutdown logic.
@@ -422,7 +442,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.clearJobInfo()
 
 	default:
-		return actor.ErrUnexpectedMessage(ctx)
+		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
 	}
 
 	return nil
@@ -606,7 +626,7 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
+func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool) (err error) {
 	if priority == nil {
 		return nil
 	}
@@ -619,15 +639,33 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int) error {
 	}
 	resources.SetPriority(priority)
 	e.Config.SetResources(resources)
+
+	defer func() {
+		if err != nil {
+			resources.SetPriority(oldPriorityPtr)
+			e.Config.SetResources(resources)
+			err = e.db.SaveExperimentConfig(e.Experiment)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
-		resources.SetPriority(oldPriorityPtr)
-		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-		Priority: *priority,
-		Handler:  ctx.Self(),
-	})
+
+	if forward {
+		resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
+			Priority: *priority,
+			Handler:  ctx.Self(),
+		})
+		err := resp.Error()
+		if err != nil {
+			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
+		}
+	}
+
 	return nil
 }
 
@@ -641,11 +679,17 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d weight", e.ID)
 	}
-	ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
 	})
-	return nil
+	err := resp.Error()
+	if err != nil {
+		resources.SetWeight(oldWeight)
+		e.Config.SetResources(resources)
+		err = errors.Wrapf(err, "setting experiment %d weight", e.ID)
+	}
+	return err
 }
 
 func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
@@ -667,6 +711,8 @@ func (e *experiment) setRP(ctx *actor.Context, msg job.SetResourcePool) error {
 		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, msg.ResourcePool)
 	}
+	// TODO revert the change like the other setters
+	// also change to ask all?
 	ctx.TellAll(sproto.ChangeRP{ResourcePool: msg.ResourcePool}, ctx.Children()...)
 
 	return nil
@@ -685,7 +731,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Name:           e.Config.Name().String(),
 	}
 
-	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool) // && true
+	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
 	job.UpdateJobQInfo(&j, e.rmJobInfo)

@@ -72,8 +72,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority:
+	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority,
+		job.MoveJob:
 		a.forwardToAllPools(ctx, msg)
+
+	case job.RecoverJobPosition:
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
 
 	case sproto.GetTaskHandler:
 		if handler, err := a.aggregateTaskHandler(a.forwardToAllPools(ctx, msg)); err != nil {
@@ -163,8 +167,8 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(aMsg).Error("")
 				ctx.Respond(aMsg)
 				return nil
-			case jobv1.QueueStats:
-				qStats.Stats = &aMsg
+			case *jobv1.QueueStats:
+				qStats.Stats = aMsg
 				resp.Results = append(resp.Results, &qStats)
 			default:
 				return fmt.Errorf("unexpected response type: %T", aMsg)

@@ -25,7 +25,7 @@ class TrialContext(metaclass=abc.ABCMeta):
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "TrialContext":
         """
-        Create an context object suitable for debugging outside of Determined.
+        Create a context object suitable for debugging outside of Determined.
 
         An example for a subclass of :class:`~determined.pytorch._pytorch_trial.PyTorchTrial`:
 
