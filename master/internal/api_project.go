@@ -139,7 +139,6 @@ func (a *apiServer) AddProjectNote(
 
 func (a *apiServer) PatchProject(
 	_ context.Context, req *apiv1.PatchProjectRequest) (*apiv1.PatchProjectResponse, error) {
-
 	// Verify current project exists and can be edited.
 	currProject, err := a.GetProjectFromID(req.Id)
 	if err != nil {

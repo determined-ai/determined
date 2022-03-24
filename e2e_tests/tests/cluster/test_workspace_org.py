@@ -38,7 +38,7 @@ def test_workspace_org() -> None:
         assert get_workspace and get_workspace.name == "_TestOnly"
 
         # Patch the workspace
-        w_patch = bindings.v1PatchExperiment.from_json(madeWorkspace.to_json())
+        w_patch = bindings.v1PatchWorkspace.from_json(madeWorkspace.to_json())
         w_patch.name = "_TestPatched"
         bindings.patch_PatchWorkspace(sess, body=w_patch, id=madeWorkspace.id)
         get_workspace = bindings.get_GetWorkspace(sess, id=madeWorkspace.id).workspace

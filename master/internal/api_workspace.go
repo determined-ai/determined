@@ -150,7 +150,6 @@ func (a *apiServer) PostWorkspace(
 
 func (a *apiServer) PatchWorkspace(
 	_ context.Context, req *apiv1.PatchWorkspaceRequest) (*apiv1.PatchWorkspaceResponse, error) {
-
 	// Verify current workspace exists and can be edited.
 	currWorkspace, err := a.GetWorkspaceFromID(req.Id)
 	if err != nil {
