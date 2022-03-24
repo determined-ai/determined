@@ -39,9 +39,3 @@ func MustMigrateTestPostgres(t *testing.T, db *PgDB, migrationsPath string) {
 	err := db.Migrate(migrationsPath, []string{"up"})
 	require.NoError(t, err, "failed to migrate postgres")
 }
-
-// PostTestTeardown deletes our bun singleton, which we normally don't allow at all, but which is
-// necessary during testing.
-func PostTestTeardown() {
-	theOneBun = nil
-}

@@ -28,7 +28,6 @@ import (
 func TestJobTaskAndAllocationAPI(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
-	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	// Add a mock user.
@@ -112,7 +111,6 @@ const (
 func TestExhaustiveEnums(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
-	defer PostTestTeardown()
 	MustMigrateTestPostgres(t, db, migrationsFromDB)
 
 	type check struct {
