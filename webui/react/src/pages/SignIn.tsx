@@ -33,12 +33,6 @@ const logoConfig: Record<RecordKey, string> = {
   okta: LogoOkta,
 };
 
-const isValidRedirect = (path: string | null) => {
-  if (!path) return false;
-  // ignore redirects back to the login page.
-  return !path.includes('login');
-};
-
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
   const { auth, info } = useStore();
@@ -77,9 +71,7 @@ const SignIn: React.FC = () => {
       // Reroute the authenticated user to the app.
       const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       if (!queries.redirect) {
-        const reactUrl = isValidRedirect(locationToPath(loginRedirect)) ?
-          locationToPath(loginRedirect) : null;
-        routeToReactUrl(reactUrl || defaultRoute.path);
+        routeToReactUrl(locationToPath(loginRedirect) || defaultRoute.path);
       } else {
         routeAll(queries.redirect);
       }
