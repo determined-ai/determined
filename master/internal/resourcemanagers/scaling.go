@@ -29,12 +29,7 @@ func calculateDesiredNewAgentNum(
 		case it.value().SlotsNeeded <= slotsPerAgent, it.value().SlotsNeeded%slotsPerAgent == 0:
 			if groups != nil {
 				group := groups[it.value().Group]
-				slotsGroupSum, visitedGroup := groupSlotsNeeded[group]
-				if visitedGroup {
-					groupSlotsNeeded[group] = slotsGroupSum + it.value().SlotsNeeded
-				} else {
-					groupSlotsNeeded[group] = it.value().SlotsNeeded
-				}
+				groupSlotsNeeded[group] += it.value().SlotsNeeded
 			} else {
 				slotSum += it.value().SlotsNeeded
 			}
