@@ -312,8 +312,12 @@ class TestPIDServer:
             _, port = pid_server.listener.getsockname()
 
             # Enforce that the crashed worker causes the exit before the other worker exits.
+            deadline = time.time() + 20
+
+            # Enforce that run_subprocess exits nonzero on a worker failure, even if the main
+            # subprocess exits zero.
             procs = [
-                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False, 20)),
+                multiprocessing.Process(target=TestPIDServer._worker_proc, args=(port, False, 30)),
                 multiprocessing.Process(
                     target=TestPIDServer._worker_proc, args=(port, False, 0.5, 1, True)
                 ),
@@ -322,11 +326,11 @@ class TestPIDServer:
             for p in procs:
                 p.start()
 
-            error_code = pid_server.run_subprocess(
-                ["sleep", "30"],
-            )
+            error_code = pid_server.run_subprocess(["sleep", "2"])
 
-            assert error_code == 77
+            assert error_code == 79
+
+            assert time.time() < deadline, "crashing worker did not trigger exit"
 
             for p in procs:
                 p.terminate()
@@ -383,3 +387,22 @@ class TestPIDServer:
                 p.join()
 
             assert len(pid_server.graceful_shutdowns) == 0
+
+    def test_single_worker_failure_is_caught(self) -> None:
+        # This is a regression test; there used to be a codepath where we would stop checking pid's
+        # after the last pidclient disconnected, even if it disconnected with a failure.
+        with ipc.PIDServer(addr=0, num_clients=1) as pid_server:
+            assert pid_server.listener
+            _, port = pid_server.listener.getsockname()
+
+            p = multiprocessing.Process(
+                target=TestPIDServer._worker_proc, args=(port, False, 0.5, 1, True)
+            )
+
+            p.start()
+
+            with pytest.raises(det.errors.WorkerError):
+                pid_server.run()
+
+            p.terminate()
+            p.join()
