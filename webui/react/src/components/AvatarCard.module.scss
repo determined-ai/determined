@@ -1,0 +1,17 @@
+.base {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
+  position: relative;
+  width: var(--theme-sizes-navigation-maxWidth);
+}
+.base > [class*=Avatar_base_] {
+  flex-shrink: 0;
+}
+.base > span {
+  color: var(--theme-colors-monochrome-17);
+  font-size: var(--theme-sizes-font-small);
+  margin-left: var(--theme-sizes-layout-big);
+  pointer-events: none;
+}
