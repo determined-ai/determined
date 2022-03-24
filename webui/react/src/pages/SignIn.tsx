@@ -35,6 +35,7 @@ const logoConfig: Record<RecordKey, string> = {
 
 const isValidRedirect = (path: string | null) => {
   if (!path) return false;
+  // ignore redirects back to the login page.
   return !path.includes('login');
 };
 
