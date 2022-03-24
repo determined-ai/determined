@@ -13,12 +13,26 @@
     opacity: 0.1;
     position: absolute;
     top: -100px;
-    z-index: 5;
+    z-index: 4;
   }
   .dropTargetActive {
     background: var(--theme-colors-action-normal);
     opacity: 0.2;
   }
+
+  .dropTargetIndicator {
+    background: var(--theme-colors-action-normal);
+    border-radius: 4px;
+    bottom: 0;
+    top: 0;
+    margin: 0;
+    width: 4px;
+    pointer-events: none;
+    position: absolute;
+    z-index: 4;
+
+  }
+
   :global(.ant-table-cell) {
     user-select: none;
     z-index: 1;
@@ -61,12 +75,6 @@
   &:hover {
     background: var(--theme-colors-action-normal);
   }
-}
-.dropOverLeftward {
-  border-left: 3px dashed var(--theme-colors-action-normal) !important;
-}
-.dropOverRightward {
-  border-right: 3px dashed var(--theme-colors-action-normal) !important;
 }
 .cell {
   background: #fff;

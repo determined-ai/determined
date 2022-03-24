@@ -16,7 +16,6 @@ import 'antd/dist/antd.min.css';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
-
 import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
 import { ExperimentItem } from 'types';
 
@@ -178,30 +177,38 @@ const HeaderCell = ({
     type,
   });
 
-  const [ { isOver, dropClassName }, drop ] = useDrop({
+  const [ { isOver }, drop ] = useDrop({
     accept: type,
-    collect: (monitor) => {
+    canDrop: (_, monitor) => {
       const dragItem = (monitor.getItem() || {}); // as DndItem;
       const dragIndex = dragItem?.index;
-      if (dragIndex == null || dragIndex === index) {
-        return {};
+      const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
+      const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
+      if (
+        dragIndex == null ||
+        dragIndex === index ||
+        (dragState === 'draggingRight' && dragIndex > index) ||
+        (dragState === 'draggingLeft' && dragIndex < index)
+      ) {
+        return false;
       }
-      return {
-        dropClassName: dragIndex > index ? css.dropOverLeftward : css.dropOverRightward,
-        isOver: monitor.isOver(),
-      };
+      return true;
+    },
+    collect: (monitor) => {
+      return { isOver: monitor.canDrop() && monitor.isOver() };
     },
     drop: (item: DndItem) => {
       if (item.index != null) {
         moveColumn(item.index, index);
       }
     },
+
   });
 
   if (isOver) {
-    headerCellClasses.push(dropClassName ?? '');
     dropTargetClasses.push(css.dropTargetActive);
   }
+
   if (filterActive) headerCellClasses.push(css.headerFilterOn);
 
   if (!columnName) {
@@ -209,8 +216,7 @@ const HeaderCell = ({
   }
 
   const tableCell = (
-    <th
-      className={headerCellClasses.join(' ')}>
+    <th className={headerCellClasses.join(' ')}>
       <div
         className={`${className} ${css.columnDraggingDiv}`}
         ref={drag}
@@ -239,6 +245,16 @@ const HeaderCell = ({
             ? dropRightStyle
             : dragState === 'draggingLeft'
               ? dropLeftStyle
+              : {}
+        }
+      />
+      <span
+        className={isOver ? css.dropTargetIndicator : ''}
+        style={
+          dragState === 'draggingRight'
+            ? { right: '-3px' }
+            : dragState === 'draggingLeft'
+              ? { left: '-3px' }
               : {}
         }
       />
@@ -278,7 +294,6 @@ const InteractiveTable: InteractiveTable = ({
   useEffect(() => {
 
     const widths = settings.columnWidths;
-    // const widths = getScaledWidths(settings.columnWidths) as number[];
     const sumOfWidths = widths.reduce((a, b) => a + b);
     const tableWidth = tableRef
       ?.current
@@ -289,15 +304,18 @@ const InteractiveTable: InteractiveTable = ({
     let scalingFactor = 1;
     if (tableWidth) scalingFactor = tableWidth / sumOfWidths * .9;
 
+    const edgeOverflow = 40;
+
     const dropRightStyles = widths.map((w, i) => ({
       left: `${(w / 2) * scalingFactor}px`,
-      width: `${(w + (widths[i + 1] ?? 0)) * (scalingFactor / 2)}px`,
+      width: `${(w + (widths[i + 1] ?? edgeOverflow)) * (scalingFactor / 2)}px`,
     }));
     const dropLeftStyles = widths.map((w, i) => ({
-      left: `${-((widths[i - 1] ?? 0) / 2) * scalingFactor}px`,
-      width: `${(w + (widths[i - 1] ?? 0)) * (scalingFactor / 2)}px`,
+      left: `${-((widths[i - 1] ?? edgeOverflow) / 2) * scalingFactor}px`,
+      width: `${(w + (widths[i - 1] ?? edgeOverflow)) * (scalingFactor / 2)}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
+    // setWidthData({ dropLeftStyles, dropRightStyles, widths });
   }, [
     settings.columnWidths,
   ]);
@@ -383,10 +401,10 @@ const InteractiveTable: InteractiveTable = ({
       ?.getElementsByTagName('table')?.[0]
       ?.getBoundingClientRect()?.width;
     if (tableWidth) {
-      tableWidth -= 100
+      tableWidth -= 100;
       const sumOfWidths = newWidths.reduce((a: number, b: number): number => a + b);
       if (sumOfWidths < tableWidth) {
-        console.log(sumOfWidths, tableWidth)
+        console.log(sumOfWidths, tableWidth);
         const scaleUp = tableWidth / sumOfWidths;
         newWidths = widths.map((w: number) => w * scaleUp);
       }
@@ -451,8 +469,8 @@ const InteractiveTable: InteractiveTable = ({
           width: columnWidth,
           ...column,
         };
-      }, columnSpec.action) as ColumnsType<ExperimentItem>,
-    ],
+      }), columnSpec.action ] as ColumnsType<ExperimentItem>,
+
     [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnSpec, onHeaderCell ],
   );
 

@@ -51,7 +51,7 @@ export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
 // };
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
-  action: 60,
+  action: 40,
   archived: 135,
   description: 208,
   duration: 135,
