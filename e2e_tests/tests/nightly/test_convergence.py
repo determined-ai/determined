@@ -4,6 +4,8 @@ from tests import config as conf
 from tests import experiment as exp
 
 
+from compute_stats import compare_stats
+
 @pytest.mark.nightly
 def test_mnist_pytorch_accuracy() -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
@@ -361,3 +363,11 @@ def test_cifar10_byol_pytorch_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
+
+
+@pytest.fixture(scope='session', autouse=True)
+def resource_stats():
+    yield
+    compare_stats()
+
+

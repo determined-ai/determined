@@ -7,6 +7,7 @@ import pytest
 from tests import config as conf
 from tests import experiment as exp
 
+from compute_stats import compare_stats
 
 @pytest.mark.distributed
 def test_mnist_pytorch_distributed() -> None:
@@ -173,3 +174,9 @@ def test_byol_pytorch_distributed() -> None:
     config = conf.set_max_length(config, {"epochs": 1})
 
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("byol_pytorch"), 1)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def resource_stats():
+    yield
+    compare_stats()
