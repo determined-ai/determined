@@ -278,6 +278,7 @@ const InteractiveTable: InteractiveTable = ({
   useEffect(() => {
 
     const widths = settings.columnWidths;
+    // const widths = getScaledWidths(settings.columnWidths) as number[];
     const sumOfWidths = widths.reduce((a, b) => a + b);
     const tableWidth = tableRef
       ?.current
@@ -376,25 +377,32 @@ const InteractiveTable: InteractiveTable = ({
     [ setWidthData, settings.columns, settings.columnWidths ],
   );
 
+  const getScaledWidths = useCallback((widths) => {
+    let newWidths = widths;
+    let tableWidth = tableRef?.current
+      ?.getElementsByTagName('table')?.[0]
+      ?.getBoundingClientRect()?.width;
+    if (tableWidth) {
+      tableWidth -= 100
+      const sumOfWidths = newWidths.reduce((a: number, b: number): number => a + b);
+      if (sumOfWidths < tableWidth) {
+        console.log(sumOfWidths, tableWidth)
+        const scaleUp = tableWidth / sumOfWidths;
+        newWidths = widths.map((w: number) => w * scaleUp);
+      }
+    }
+    return newWidths.map(Math.floor);
+  }, []);
+
   const handleResizeStop = useCallback(
     () => {
-      const newWidths = widthData.widths.map(Math.floor);
-
-      // const tables = tableRef.current.getElementsByTagName('table');
-      // if (tables.length) {
-      //   const sumOfWidths = newWidths.reduce((a, b) => a + b);
-      //   const tableWidth = tables[0].getBoundingClientRect().width;
-      //   if (sumOfWidths < tableWidth) {
-      //   const scaleUp = tableWidth / sumOfWidths;
-      //   newWidths = newWidths.map(w => w * scaleUp);
-      //   }
-      // }
+      const newWidths = getScaledWidths(widthData.widths);
       setIsResizing(false);
-      setWidthData(({ ...prev }) => ({ ... prev, widths: newWidths }));
+      setWidthData(({ ...prev }) => ({ ...prev, widths: newWidths }));
       updateSettings({ columnWidths: newWidths });
 
     },
-    [ updateSettings, widthData, setWidthData ],
+    [ updateSettings, widthData, setWidthData, getScaledWidths ],
   );
 
   const onHeaderCell = useCallback(
