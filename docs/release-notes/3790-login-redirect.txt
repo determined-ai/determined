@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Fix an issue where the authentication flow did not remember the originally
+   requested page to redirect to after a successful authentication.
