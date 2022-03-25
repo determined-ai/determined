@@ -1,9 +1,8 @@
-import { cancellableRunStates, deletableRunStates, pausableRunStates,
-  terminalRunStates } from 'constants/states';
-
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Switch } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
@@ -22,13 +21,14 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import { cancellableRunStates, deletableRunStates, pausableRunStates,
+  terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
@@ -67,6 +67,7 @@ const ExperimentList: React.FC = () => {
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
+  const pageRef = useRef<HTMLElement>(null);
 
   const {
     activeSettings,
@@ -660,6 +661,7 @@ const ExperimentList: React.FC = () => {
 
   return (
     <Page
+      containerRef={pageRef}
       id="experiments"
       options={(
         <Space>
@@ -687,9 +689,9 @@ const ExperimentList: React.FC = () => {
         onClear={clearSelected}
       />
       <InteractiveTable
-        areRowsRightClickable={true}
         areRowsSelected={!!settings.row}
         columnSpec={columns}
+        containerRef={pageRef}
         ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
