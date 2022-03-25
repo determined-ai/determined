@@ -10,6 +10,7 @@ import JobQueue from 'pages/JobQueue/JobQueue';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
+import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
@@ -17,6 +18,8 @@ import TaskList from 'pages/TaskList';
 import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
+import WorkspaceDetails from 'pages/WorkspaceDetails';
+import WorkspaceList from 'pages/WorkspaceList';
 
 import Routes from './routes';
 import { RouteConfig } from './types';
@@ -32,6 +35,7 @@ const routeComponentMap: Record<string, FC> = {
   modelDetails: ModelDetails,
   models: ModelRegistry,
   modelVersionDetails: ModelVersionDetails,
+  projectDetails: ProjectDetails,
   reload: Reload,
   signIn: SignIn,
   signOut: SignOut,
@@ -39,6 +43,8 @@ const routeComponentMap: Record<string, FC> = {
   taskLogs: TaskLogs,
   trialDetails: TrialDetails,
   wait: Wait,
+  workspaceDetails: WorkspaceDetails,
+  workspaceList: WorkspaceList,
 };
 
 const defaultRouteId = 'dashboard';
