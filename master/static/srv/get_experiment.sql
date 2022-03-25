@@ -14,11 +14,11 @@ SELECT
     e.job_id AS job_id,
     e.parent_id AS forked_from,
     u.username AS username,
-	array_to_json(ARRAY_AGG(t.id)) AS trial_ids,
+	array_to_json(ARRAY_AGG(t.id) filter (where t.id is not null)) AS trial_ids,
 	COUNT(t.id) AS num_trials
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id
-JOIN trials t ON e.id = t.experiment_id
+LEFT JOIN trials t ON e.id = t.experiment_id
 WHERE e.id = $1
 GROUP by e.id, u.username
