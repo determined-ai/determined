@@ -51,10 +51,17 @@ type Checkpoint struct {
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
 }
 
-// ValidationMetrics is based on the checkpointsv1.Metrics protobuf message.
+// ValidationMetrics is based on the checkpointv1.Metrics protobuf message.
 type ValidationMetrics struct {
 	NumInputs         int     `json:"num_inputs"`
 	ValidationMetrics JSONObj `json:"validation_metrics"`
+}
+
+func (m *ValidationMetrics) ToProto(pc *protoutils.ProtoConverter) *checkpointv1.Metrics {
+	return &checkpointv1.Metrics{
+		NumInputs:         pc.ToInt32(m.NumInputs),
+		ValidationMetrics: pc.ToStruct(m.ValidationMetrics, "validation_metrics"),
+	}
 }
 
 // CheckpointExpanded represents a row from the `checkpoints_expanded` view.  It is called
@@ -72,7 +79,7 @@ type CheckpointExpanded struct {
 	TrialRunID        int
 	TotalBatches      int
 	State             State
-	EndTime           *time.Time
+	EndTime           time.Time
 	UUID              string
 	Resources         Resources
 	Metadata          JSONObj
@@ -83,10 +90,9 @@ type CheckpointExpanded struct {
 	ExperimentConfig  JSONObj
 	ExperimentID      int
 	Hparams           JSONObj
-	Metadata          JSONObj
 	ValidationMetrics ValidationMetrics
 	ValidationState   State
-	SearcherMetric    float64
+	SearcherMetric    *float64
 }
 
 func (c CheckpointExpanded) ToProto(pc *protoutils.ProtoConverter) checkpointv1.Checkpoint {
@@ -95,22 +101,22 @@ func (c CheckpointExpanded) ToProto(pc *protoutils.ProtoConverter) checkpointv1.
 	}
 
 	out := checkpointv1.Checkpoint{
-		uuid:              c.UUID,
-		ExperimentConfig:  pc.ToStruct(c.ExperimentConfig),
-		ExperimentID:      pc.ToInt32(c.ExperimentID),
-		TrialId:           c.TrialID,
-		Hparams:           pc.ToStruct(c.Hparams),
+		Uuid:              c.UUID,
+		ExperimentConfig:  pc.ToStruct(c.ExperimentConfig, "experiment config"),
+		ExperimentId:      pc.ToInt32(c.ExperimentID),
+		TrialId:           pc.ToInt32(c.TrialID),
+		Hparams:           pc.ToStruct(c.Hparams, "hparams"),
 		BatchNumber:       pc.ToInt32(c.TotalBatches),
 		EndTime:           pc.ToTimestamp(c.EndTime),
 		Resources:         c.Resources,
-		Metadata:          pc.ToStruct(c.Metadata),
+		Metadata:          pc.ToStruct(c.Metadata, "metadata"),
 		Framework:         c.Framework,
 		Format:            c.Format,
 		DeterminedVersion: c.DeterminedVersion,
 		Metrics:           c.ValidationMetrics.ToProto(pc),
-		ValidationState:   pc.ToCheckpointv1State(c.ValidationState),
-		State:             pc.ToCheckpointv1State(c.ValidationState),
-		SearcherMetric:    c.SearcherMetric,
+		ValidationState:   pc.ToCheckpointv1State(string(c.ValidationState)),
+		State:             pc.ToCheckpointv1State(string(c.State)),
+		SearcherMetric:    pc.ToDoubleValue(c.SearcherMetric),
 	}
 
 	return out

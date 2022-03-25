@@ -15,12 +15,16 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/ckpts"
+	"github.com/determined-ai/determined/master/internal/models"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 type apiServer struct {
 	m *Master
+	ckpts.CkptsAPI
+	models.ModelsAPI
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.

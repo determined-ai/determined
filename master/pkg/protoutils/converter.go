@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
@@ -65,4 +66,13 @@ func (c *ProtoConverter) ToInt32(i int) int32 {
 		return 0
 	}
 	return int32(i)
+}
+
+// ToDoubleValue converts a float32 pointer into the nullable DoubleValue type.
+func (c *ProtoConverter) ToDoubleValue(v *float64) *wrapperspb.DoubleValue {
+	if v == nil {
+		// XXX: does this properly distinguish 0 and nil values?
+		return nil
+	}
+	return &wrapperspb.DoubleValue{Value: *v}
 }

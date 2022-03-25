@@ -1,0 +1,35 @@
+# git grep -liE 'from (raw_|)checkpoints' static/srv internal
+
+DONE: static/srv/get_checkpoint.sql
+DONE: static/srv/get_checkpoints_for_trial.sql
+DONE: static/srv/get_model_version.sql
+
+static/srv/get_checkpoints_for_experiment.sql
+static/srv/get_model_versions.sql
+static/srv/get_trial.sql
+static/srv/get_trial_metrics.sql
+static/srv/insert_model_version.sql
+static/srv/proto_get_trial_workloads.sql
+static/srv/update_model_version.sql
+internal/db/postgres_trial.go
+internal/db/postgres_experiments.go
+
+static/srv/get_checkpoint.sql
+    internal/api_checkpoint.go::GetCheckpoint()
+        moved to internal/ckpts/api.go::CkptsAPI.GetCheckpoint()
+        Replaced with ckpts.ByUUID()
+    internal/api_model.go::PostModelVersion()
+        Used only to verify checkpoint existence and state==COMPLETED.
+        Replaced with new method ckpts.State(), which only touches the
+        checkpoints tables (or at least, there's an XXX to make it so)
+
+static/srv/get_checkpoints_for_trial.sql
+    internal/api_trials.go::GetTrialCheckpoints()
+        moved to internal/ckpts/api.go::CkptsAPI.GetTrialCheckpoints()
+        Replaced with a Count/Limit.Offset.Scan pattern in a bun.Tx
+        was a 404 possible with no checkpoints?  It's not clear to me.
+
+static/srv/get_model_version.sql
+    internal/api_model.go::GetModelVerison()
+        moved to internal/models/api.go::Server.GetModelVersion()
+        replaced with models.ByNameTx, models.VersionTx, ckpts.ByIDTx

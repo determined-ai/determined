@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-// DB is an interface for _all_ the functionality packed into the DB.
+// DB is an interface for the legacy (non-bun) functionality packed into the DB.
 type DB interface {
 	StartUserSession(user *model.User) (string, error)
 	UserByToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error)
@@ -167,7 +168,7 @@ type DB interface {
 }
 
 // ErrNotFound is returned if nothing is found.
-var ErrNotFound = errors.New("not found")
+var ErrNotFound = sql.ErrNoRows
 
 // ErrTooManyRowsAffected is returned if too many rows are affected.
 var ErrTooManyRowsAffected = errors.New("too many rows are affected")

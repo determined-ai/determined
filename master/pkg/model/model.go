@@ -64,13 +64,12 @@ type ModelVersion struct {
 	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
 	Comment         string    `db:"comment" json:"comment"`
 	Notes           string    `db:"notes" json:"notes"` // XXX: why was this db:"readme"?
-	Username        string    `db:"username" json:"username"`
 	Labels          Labels
 
 	UserID UserID
 	// "join users on models.user_id = users.id"
 	// XXX: does this get picked up automatically??
-	Username string `bun:",rel:belongs-to,join:user_id=id`
+	Username string `bun:",rel:belongs-to,join:user_id=id" db:"username" json:"username"`
 }
 
 func (v ModelVersion) ToProto(

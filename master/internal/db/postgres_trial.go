@@ -435,7 +435,7 @@ VALUES
 			State:             model.CompletedState,
 			TotalBatches:      int(m.LatestBatch),
 			UUID:              &m.Uuid,
-			Resources:         model.JSONObjFromMapStringInt64(m.Resources),
+			Resources:         m.Resources,
 			Framework:         m.Framework,
 			Format:            m.Format,
 			DeterminedVersion: m.DeterminedVersion,
