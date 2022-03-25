@@ -144,10 +144,8 @@ const App: React.FC = () => {
     <HelmetProvider>
       <StoreProvider>
         <DndProvider backend={HTML5Backend}>
-
           <AppView />
         </DndProvider>
-
       </StoreProvider>
     </HelmetProvider>
   );

@@ -266,27 +266,24 @@ const ExperimentList: React.FC = () => {
     />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
 
-  const saveExperimentDescription = useCallback(
-    async (editedDescription: string, id: number): Promise<void | Error> => {
-      try {
-        await patchExperiment({
-          body: { description: editedDescription },
-          experimentId: id,
-        });
-      } catch (e) {
-        handleError(e, {
-          isUserTriggered: true,
-          publicMessage: 'Unable to save experiment description.',
-          silent: false,
-        });
-        setIsLoading(false);
-        return e as Error;
-      }
-    },
-    [],
-  );
+  const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
+    try {
+      await patchExperiment({
+        body: { description: editedDescription },
+        experimentId: id,
+      });
+    } catch (e) {
+      handleError(e, {
+        isUserTriggered: true,
+        publicMessage: 'Unable to save experiment description.',
+        silent: false,
+      });
+      setIsLoading(false);
+      return e;
+    }
+  }, [ ]);
 
-  const columns = useMemo(() => {
+  const columnDefs = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
         compact
@@ -482,9 +479,9 @@ const ExperimentList: React.FC = () => {
   ]);
 
   const transferColumns = useMemo(() => {
-    return Object.values(columns).filter(column => column.title !== '')
+    return Object.values(columnDefs).filter(column => column.title !== '')
       .map(column => sentenceToCamelCase(column.title as string));
-  }, [ columns ]);
+  }, [ columnDefs ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
@@ -579,7 +576,10 @@ const ExperimentList: React.FC = () => {
       ?.map((col, i) => ({ [col]: settings.columnWidths?.[i] }))
       .reduce((a, b) => ({ ...a, ...b }), {});
     if (columns.length === 0) {
-      updateSettings({ columns: [ 'name' ], columnWidths: [ DEFAULT_COLUMN_WIDTHS['name'] ] });
+      updateSettings({
+        columns: [ 'id', 'name' ],
+        columnWidths: [ DEFAULT_COLUMN_WIDTHS['id'], DEFAULT_COLUMN_WIDTHS['name'] ],
+      });
     } else {
       updateSettings({
         columns: columns,
@@ -690,18 +690,15 @@ const ExperimentList: React.FC = () => {
       />
       <InteractiveTable
         areRowsSelected={!!settings.row}
-        columnSpec={columns}
+        columnDefs={columnDefs}
         containerRef={pageRef}
         ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}
         loading={isLoading}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          total,
-        )}
+        pagination={getFullPaginationConfig({
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
+        }, total)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
         rowSelection={{

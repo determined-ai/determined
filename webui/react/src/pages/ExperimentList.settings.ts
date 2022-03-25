@@ -34,7 +34,7 @@ export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   action: 40,
-  archived: 96,
+  archived: 75,
   description: 147,
   duration: 96,
   forkedFrom: 128,

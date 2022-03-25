@@ -49,7 +49,7 @@ export type ColumnDefs<ColumnName extends string, RecordType> = Record<
 interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
-  columnSpec: ColumnDefs<string, RecordType>;
+  columnDefs: ColumnDefs<string, RecordType>;
   containerRef: MutableRefObject<HTMLElement | null>,
   settings: Settings;
   updateSettings: (settings: Partial<Settings>, shouldPush?: boolean) => void;
@@ -271,7 +271,7 @@ const InteractiveTable: InteractiveTable = ({
   loading,
   scroll,
   dataSource,
-  columnSpec,
+  columnDefs,
   containerRef,
   settings,
   updateSettings,
@@ -282,8 +282,8 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({
-    dropLeftStyles: settings?.columnWidths.map(() => ({})),
-    dropRightStyles: settings?.columnWidths.map(() => ({})),
+    dropLeftStyles: settings?.columnWidths?.map(() => ({}) ?? []),
+    dropRightStyles: settings?.columnWidths?.map(() => ({}) ?? []),
     widths: settings?.columnWidths,
   });
   const [ isResizing, setIsResizing ] = useState(false);
@@ -349,7 +349,7 @@ const InteractiveTable: InteractiveTable = ({
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (!columnKey || !settings.columns.find((col) => columnSpec[col]?.key === columnKey)) return;
+      if (!columnKey || !settings.columns.find((col) => columnDefs[col]?.key === columnKey)) return;
 
       const newSettings = {
         sortDesc: order === 'descend',
@@ -361,7 +361,7 @@ const InteractiveTable: InteractiveTable = ({
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
-    [ settings, updateSettings, columnSpec ],
+    [ settings, updateSettings, columnDefs ],
   );
 
   const moveColumn = useCallback(
@@ -427,11 +427,11 @@ const InteractiveTable: InteractiveTable = ({
   }, [ updateSettings, widthData, getUpscaledWidths ]);
 
   const onHeaderCell = useCallback(
-    (index, columnSpec) => {
+    (index, columnDefs) => {
       return () => {
-        const filterActive = !!columnSpec?.isFiltered?.(settings);
+        const filterActive = !!columnDefs?.isFiltered?.(settings);
         return {
-          columnName: columnSpec.title,
+          columnName: columnDefs.title,
           dragState,
           dropLeftStyle: { ...widthData?.dropLeftStyles?.[index] },
           dropRightStyle: { ...widthData?.dropRightStyles?.[index] },
@@ -462,7 +462,7 @@ const InteractiveTable: InteractiveTable = ({
     () =>
       [
         ...settings.columns.map((columnName, index) => {
-          const column = columnSpec[columnName];
+          const column = columnDefs[columnName];
           const columnWidth = widthData.widths[index];
           const sortOrder =
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
@@ -474,10 +474,10 @@ const InteractiveTable: InteractiveTable = ({
             ...column,
           };
         }),
-        { ...columnSpec.action, width: WIDGET_COLUMN_WIDTH },
+        { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH },
       ] as ColumnsType<ExperimentItem>,
 
-    [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnSpec, onHeaderCell ],
+    [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
   );
 
   const components = {
