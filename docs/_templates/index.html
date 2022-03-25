@@ -1,0 +1,382 @@
+{# Overrides the output of converting index.rst to enable a custom landing page for the docs #}
+{# Ensure that all links found within the index.rst are transposed here as well. #}
+
+{# - extends "layout.html" #}
+
+<!doctype html>
+<html class="no-js"{% if language is not none %} lang="{{ language }}"{% endif %}>
+  <head>
+    <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Quickstart for Model Developers" href="getting-started.html" />
+
+        <link rel="shortcut icon" href="_static/favicon.ico"/><meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+            <title>Determined AI Documentation</title>
+          <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+        <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
+        <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+        <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+        <link rel="stylesheet" type="text/css" href="_static/styles/determined.css" />
+    <style>
+      body {
+        --color-code-background: #eeffcc;
+      --color-code-foreground: black;
+      --color-brand-primary: #f37a22;
+      --color-brand-content: #f37a22;
+      --font-stack: Open Sans, Metric HPE, Arial, sans-serif;
+      
+      }
+      body[data-theme="dark"] {
+        --color-code-background: #272822;
+      --color-code-foreground: #f8f8f2;
+      --color-brand-primary: #f37a22;
+      --color-brand-content: #f37a22;
+      
+      }
+      @media (prefers-color-scheme: dark) {
+        body:not([data-theme="light"]) {
+          --color-code-background: #272822;
+      --color-code-foreground: #f8f8f2;
+      --color-brand-primary: #f37a22;
+      --color-brand-content: #f37a22;
+      
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    {% set title = _('Determined Documentation') %}
+
+    {% block body %}
+
+
+        {% block header %}
+{#          {% include "header.html" %} #}
+        {% endblock %}
+
+                    <div class="page-main-content">
+                        <div class="hero">
+                            <p>Determined is an open-source deep learning training platform that makes building models fast and easy. Determined enables you to:</p>
+                            <ul>
+                                <li>Train models faster using state-of-the-art distributed training, without changing your model code</li>
+                                <li>Automatically find high-quality models with advanced hyperparameter tuning from the creators of Hyperband</li>
+                                <li>Get more from your GPUs with smart scheduling and cut cloud GPU costs by seamlessly using preemptible instances</li>
+                                <li>Track and reproduce your work with experiment tracking that works out-of-the-box, covering code versions, metrics, checkpoints, and hyperparameters</li>
+                            </ul>
+                            <p>Determined integrates these features into an easy-to-use, high-performance deep learning environment — which means you can spend your time building models instead of managing infrastructure.</p>
+                        </div>
+                    <section class="section">
+                      <div class="row m-0 p-0 docutils container">
+                        <div
+                          class="col-md-6 pl-0 pr-3 py-3 m-0 docutils container"
+                        >
+                          <div class="card px-0 h-100 docutils container">
+                            <p class="card-header htitle rubric">
+                              <a
+                                class="reference internal"
+                                href="quickstart/quick-start.html"
+                                ><span class="std std-ref"
+                                  >Getting Started</span
+                                ></a
+                              >
+                            </p>
+                            <div class="card-body docutils container">
+                              <ul class="simplelist">
+                                <li>The
+                                  <a
+                                    class="reference external"
+                                    href="quickstart/quick-start.html"
+                                    title="(Quick Start)"
+                                    ><span class="xref std std-ref"
+                                      >Quick Start</span
+                                    ></a
+                                  >
+                                  provides a quick, hands-on introduction training a model, performing a hyperparameter search, and running a distributed training job on you local computer.
+                                </li>
+                                <li>The
+                                  <a
+                                    class="reference external"
+                                    href="quickstart/quick-start.html"
+                                    title="(Getting Started with)"
+                                    ><span class="xref std std-ref"
+                                      >Getting Started with xyz</span
+                                    ></a
+                                  >
+                                  introduces you to sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat..
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="col-md-6 pl-0 pr-3 py-3 m-0 docutils container"
+                        >
+                          <div class="card px-0 h-100 docutils container">
+                            <p class="card-header htitle rubric">
+                              <a
+                                class="reference internal"
+                                href="features/system-architecture.html"
+                                ><span class="std std-ref"
+                                  >Introducing Determined</span
+                                ></a
+                              >
+                            </p>
+                            <div class="card-body docutils container">
+                              <ul class="simplelist">
+                                <li>The 
+                                  <a
+                                    class="reference external"
+                                    href="features/system-architecture.html"
+                                    title="(System Architecture)"
+                                    ><span class="xref std std-ref"
+                                      >System Architecture</span
+                                    ></a
+                                  >
+                                  gives an architectural view of Determined components and workflows in on-premis and cloud environments, with GPU or CPU-only configurations.
+                                </li>
+                                <li>The
+                                  <a
+                                    class="reference external"
+                                    href="features/command-notebook-config.html"
+                                    title="(Features)"
+                                    ><span class="xref std std-ref"
+                                      >Features</span
+                                    ></a
+                                  >
+                                  descriptions provide an overview of Determined functionality, capabilities, and conventions, and introduce you to essential concepts.
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="col-md-6 pl-0 pr-3 py-3 m-0 docutils container"
+                          id="start-theme"
+                        >
+                          <div class="card px-0 h-100 docutils container">
+                            <p class="card-header htitle rubric">
+                              <a
+                                class="reference internal"
+                                href="prepare-data/index.html"
+                                ><span class="std std-ref"
+                                  >Training</span
+                                ></a
+                              >
+                            </p>
+                            <div class="card-body docutils container">
+                              <ul class="simplelist">
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="training-distributed/index.html"
+                                    title="(Distributed Training)"
+                                    ><span class="xref std std-ref"
+                                      >Distributed Training</span
+                                    ></a
+                                  >
+                                  demonstrates how to perform optimized distributed training with Determined to speed up the training of a single trial.
+                                </li>
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="training-hyperparameter/index.html"
+                                    title="(Hyperparameter Tuning)"
+                                    ><span class="xref std std-ref"
+                                      >Hyperparameter Tuning</span
+                                    ></a
+                                  >
+                                  covers the hyperparameter tuning machine learning workflow that involves appropriate data configuration, model architecture, and learning algorithm to produce an effective model.
+                                </li>
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="training-reproducibility/index.html"
+                                    title="(Reproducibility)"
+                                    ><span class="xref std std-ref"
+                                      >Reproducibility</span
+                                    ></a
+                                  >
+                                  describes Determined support for deterministic, reproducible machine learning experiments.
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="col-md-6 pl-0 pr-3 py-3 m-0 docutils container"
+                          id="start-configuration"
+                        >
+                          <div class="card px-0 h-100 docutils container">
+                            <p class="card-header htitle rubric">
+                              <a
+                                class="reference internal"
+                                href="sysadmin-basics/index.html"
+                                ><span class="std std-ref"
+                                  >Administration Guide</span
+                                ></a
+                              >
+                            </p>
+                            <div class="card-body docutils container">
+                              <ul class="simplelist">
+                                <li>The
+                                  <a
+                                    class="reference external"
+                                    href="sysadmin-basics/index.html"
+                                    title="(Basics)"
+                                    ><span class="xref std std-ref"
+                                      >Basics</span
+                                    ></a
+                                  >
+                                  section describes Determined CLI and cluster installation and operation in your local environment, which might involve your local development machine, an on-premise GPU cluster, or cloud resources.
+                                </li>
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="sysadmin-deploy-on-aws/index.html"
+                                    title="(Deploy on AWS)"
+                                    ><span class="xref std std-ref"
+                                      >Deploy on AWS</span
+                                    ></a
+                                  >
+                                  explains how to install and run Determined on your Amazon Web Services (AWS).
+                                </li>
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="sysadmin-deploy-on-gcp/index.html"
+                                    title="(Deploy on GCP)"
+                                    ><span class="xref std std-ref"
+                                      >Deploy on GCP</span
+                                    ></a
+                                  >
+                                  explains how to install and run Determined on your Google Cloud Platform (GCP).
+                                </li>
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="sysadmin-deploy-on-prem/index.html"
+                                    title="(Deploy on Prem)"
+                                    ><span class="xref std std-ref"
+                                      >Deploy on Prem</span
+                                    ></a
+                                  >
+                                  explains how to install and run Determined on machines you already have access to, whether a single laptop for local development or a fleet of multi-GPU servers.
+                                </li>
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="sysadmin-deploy-on-k8s/index.html"
+                                    title="(Deploy on Kubernetes)"
+                                    ><span class="xref std std-ref"
+                                      >Deploy on Kubernetes</span
+                                    ></a
+                                  >
+                                  explains how to install and run Determined on a Kubernetes cluster.
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="col-md-6 pl-0 pr-3 py-3 m-0 docutils container"
+                          id="start-configuration"
+                        >
+                          <div class="card px-0 h-100 docutils container">
+                            <p class="card-header htitle rubric">
+                              <a
+                                class="reference internal"
+                                href="tutorials/porting-tutorial.html"
+                                ><span class="std std-ref"
+                                  >Tutorials</span
+                                ></a
+                              >
+                            </p>
+                            <div class="card-body docutils container">
+                              <ul class="simplelist">
+                                <li>
+                                  <a
+                                    class="reference external"
+                                    href="/tutorials/index.html"
+                                    title="(Tutorials)"
+                                    ><span class="xref std std-ref"
+                                      >Tutorials</span
+                                    ></a
+                                  >
+                                  are simple, step-by-step guides about various topics to help you get started using Determined. These include:
+                                  <ul>
+                                    <li><a href="tutorials/pytorch-mnist-tutorial.html#pytorch-mnist-tutorial">PyTorch MNIST Tutorial</a></li>
+                                    <li><a href="tutorials/tf-mnist-tutorial.html#tf-mnist-tutorial">TensorFlow Keras Fashion MNIST Tutorial</a></li>
+                                    <li><a href="tutorials/porting-tutorial.html">Porting Tutorial</a></li>
+                                    <li><a href="tutorials/pytorch-mnist-tutorial.html">PyTorch MNIST Tutorial</a></li>
+                                    <li><a href="tutorials/tf-mnist-tutorial.html">TensorFlow Keras Fashion MNIST Tutorial</a></li>
+                                  </ul>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="col-md-6 pl-0 pr-3 py-3 m-0 docutils container"
+                          id="start-configuration"
+                        >
+                          <div class="card px-0 h-100 docutils container">
+                            <p class="card-header htitle rubric">
+                              <a
+                                class="reference internal"
+                                href="training-apis/index.html"
+                                ><span class="std std-ref"
+                                  >Reference</span
+                                ></a
+                              >
+                            </p>
+                            <div class="card-body docutils container">
+                              <ul class="simplelist">
+                                <li>The 
+                                  <a
+                                    class="reference external"
+                                    href="training-apis/index.html"
+                                    title="(Trial API)"
+                                    ><span class="xref std std-ref"
+                                      >Training API
+                                    </a
+                                  >
+                                  describes the training API interface between Determined and your application framework, such as Keras and TensorFlow, described in terms of training data loading, model architecture, and the underlying iterative optimization training algorithms.
+                                </li>
+                                <li>The 
+                                  <a
+                                    class="reference external"
+                                    href="training-apis/trial-api.html#model-definitions-trial-api"
+                                    title="(Trial API)"
+                                    ><span class="xref std std-ref"
+                                      >Trial API
+                                    </a
+                                  >
+                                  describes the inteface provided by Determined to create a Trial API model definition. The interface provides information such as the model architecture to use or the validation metrics that should be computed.
+                                </li>
+                                <li>The
+                                  <a
+                                    class="reference external"
+                                    href="model-hub/index.html"
+                                    title="(Model Hub)"
+                                    ><span class="xref std std-ref"
+                                      >Model Hub</span
+                                    ></a
+                                  >
+                                  library interface makes it easy to train models using popular, third-party libraries with a Determined cluster. These include:
+                                  <ul>
+                                    <li><a href="model-hub/transformers/index.html#model-hub-transformers">Huggingface Transformers</a></li>
+                                    <li><a href="model-hub/mmdetection/index.html#model-hub-mmdetection">MMDetection</a></li>
+                                </ul>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                    </div>
+    {% endblock %}
+
+  </body>
+</html>

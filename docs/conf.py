@@ -39,6 +39,11 @@ html_baseurl = "https://docs.determined.ai"  # Base URL for sitemap.
 highlight_language = "none"
 todo_include_todos = True
 
+# Additional templates that should be rendered to pages, maps page names to template names.
+html_additional_pages = {
+    'index': 'index.html'
+}
+
 # HTML theme settings
 html_show_sourcelink = False
 html_show_sphinx = False
