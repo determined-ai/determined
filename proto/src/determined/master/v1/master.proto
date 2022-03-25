@@ -30,6 +30,8 @@ message ResourceAllocationRawEntry {
   int32 experiment_id = 4;
   // The username of the user who ran the experiment.
   string username = 5;
+  // The username of the user who ran the experiment.
+  int32 user_id = 9;
   // The labels assigned to the experiment.
   repeated string labels = 6;
   // The number of seconds for which the allocation was active during the
