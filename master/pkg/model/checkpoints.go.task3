@@ -1,0 +1,92 @@
+package model
+
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+)
+
+// Resources maps filenames to file sizes.
+type Resources map[string]int64
+
+// Scan converts jsonb from postgres into a Resources object.
+// TODO: Combine all json.unmarshal-based Scanners into a single Scan implementation.
+func (r *Resources) Scan(src interface{}) error {
+	if src == nil {
+		*r = nil
+		return nil
+	}
+	bytes, ok := src.([]byte)
+	if !ok {
+		return errors.Errorf("unable to convert to []byte: %v", src)
+	}
+	obj := make(map[string]int64)
+	if err := json.Unmarshal(bytes, &obj); err != nil {
+		return errors.Wrapf(err, "unable to unmarshal Resources: %v", src)
+	}
+	*r = Resources(obj)
+	return nil
+}
+
+// RBCheckpoint is rb's checkpoint.
+type RBCheckpoint struct {
+	bun.BaseModel
+
+	// Basic data, common to all checkpoints
+	// ID           int       // `db:"id" json:"id"`
+	UUID         string    // `db:"uuid" json:"uuid"`
+	TaskID       *string   // `db:"trial_id" json:"task_id"`
+	AllocationID *string   // `db:"trial_id" json:"task_id"`
+	ReportTime   time.Time // `db:"end_time" json:"report_time"`
+	State        State     // `db:"state" json:"state"
+	Resources    Resources // `db:"resources" json:"resources"`
+	Metadata     JSONObj   // `db:"metadata" json:"metadata"`
+
+	// Training data, flattened to work with the database.  Considered empty if TrialID == 0.
+	TrialID           int
+	ExperimentID      int
+	ExperimentConfig  JSONObj
+	Hparams           JSONObj
+	TrainingMetrics   JSONObj
+	ValidationMetrics JSONObj
+}
+
+func (c RBCheckpoint) ToProto(pc *protoutils.ProtoConverter) checkpointv1.Checkpoint {
+	if pc.Error() != nil {
+		return checkpointv1.Checkpoint{}
+	}
+
+	nilToStr := func(v *string) string {
+		if v == nil {
+			return ""
+		}
+		return *v
+	}
+
+	out := checkpointv1.Checkpoint{
+		TaskId:       nilToStr(c.TaskID),
+		AllocationId: nilToStr(c.AllocationID),
+		Uuid:         c.UUID,
+		ReportTime:   pc.ToTimestamp(c.ReportTime),
+		State:        pc.ToCheckpointv1State(string(c.State)),
+		Resources:    c.Resources,
+		Metadata:     pc.ToStruct(c.Metadata, "metadata"),
+	}
+	if c.TrialID != 0 {
+		out.Training = &checkpointv1.CheckpointTrainingData{
+			TrialId:           int32(c.TrialID),
+			ExperimentId:      int32(c.ExperimentID),
+			ExperimentConfig:  pc.ToStruct(c.ExperimentConfig, "experiment config"),
+			Hparams:           pc.ToStruct(c.Hparams, "hparams"),
+			TrainingMetrics:   pc.ToStruct(c.TrainingMetrics, "training metrics"),
+			ValidationMetrics: pc.ToStruct(c.ValidationMetrics, "validation metrics"),
+		}
+	}
+
+	return out
+}
