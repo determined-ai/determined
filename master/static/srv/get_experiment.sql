@@ -9,13 +9,16 @@ SELECT
     e.start_time AS start_time,
     e.end_time AS end_time,
     'STATE_' || e.state AS state,
-    (SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials,
     e.archived AS archived,
     e.progress AS progress,
     e.job_id AS job_id,
     e.parent_id AS forked_from,
-    u.username AS username
+    u.username AS username,
+	array_to_json(ARRAY_AGG(t.id)) AS trial_ids,
+	COUNT(t.id) AS num_trials
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id
-WHERE e.id = $1;
+JOIN trials t ON e.id = t.experiment_id
+WHERE e.id = $1
+GROUP by e.id, u.username

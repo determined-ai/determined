@@ -73,6 +73,8 @@ message Experiment {
   bool archived = 7;
   // The number of trials linked to the experiment.
   int32 num_trials = 8;
+  // The ids of the trials linked to the experiment.
+  repeated int32 trial_ids = 19;
   // The display name of the user that created the experiment.
   string display_name = 18;
   // The username of the user that created the experiment.
