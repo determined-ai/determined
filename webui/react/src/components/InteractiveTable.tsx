@@ -25,7 +25,7 @@ import { ExperimentItem } from 'types';
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
 
-const WIDGET_COLUMN_WIDTH = 46;
+export const WIDGET_COLUMN_WIDTH = 46;
 const DEFAULT_RESIZE_THROTTLE_TIME = 10;
 
 const type = 'DraggableColumn';
@@ -321,10 +321,7 @@ const InteractiveTable: InteractiveTable = ({
 
   useLayoutEffect(() => {
     const prevWidths = settings.columnWidths;
-    const prevSumOfWidths = adjustedColumnWidthSum(prevWidths);
     const widths = getUpscaledWidths(prevWidths);
-    const sumOfWidths = adjustedColumnWidthSum(widths);
-
     const dropRightStyles = widths.map((w, i) => ({
       left: `${(w / 2) }px`,
       width: `${(w + (widths[i + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
@@ -334,9 +331,11 @@ const InteractiveTable: InteractiveTable = ({
       width: `${(w + (widths[i - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-    if (sumOfWidths !== prevSumOfWidths) {
-      updateSettings({ columnWidths: widths });
-    }
+    // right now this causes the column change modal
+    // to re-render on save, hence the work around in experimentlist
+    // if (sumOfWidths !== prevSumOfWidths) {
+    //   updateSettings({ columnWidths: widths });
+    // }
   }, [ settings.columnWidths,
     getUpscaledWidths,
     updateSettings,

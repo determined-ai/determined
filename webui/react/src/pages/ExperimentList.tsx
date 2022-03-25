@@ -7,7 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDefs } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDefs, WIDGET_COLUMN_WIDTH } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -28,6 +28,7 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
+import useResize from 'hooks/useResize';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
@@ -68,6 +69,7 @@ const ExperimentList: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
+  const { width: pageWidth } = useResize(pageRef);
 
   const {
     activeSettings,
@@ -571,6 +573,29 @@ const ExperimentList: React.FC = () => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
+  const adjustedColumnWidthSum = useCallback((columnWidths: number[]) => {
+    const pagePadding = parseInt(
+      getComputedStyle(document.body)
+        ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
+    ) ?? 16;
+    return columnWidths.reduce((a, b) => a + b) + 2 * WIDGET_COLUMN_WIDTH + 2 * pagePadding;
+  }, []);
+
+  const getUpscaledWidths = useCallback(
+    (widths: number[]): number[] => {
+      let newWidths = widths;
+      if (pageWidth) {
+        const sumOfWidths = adjustedColumnWidthSum(newWidths);
+        if (sumOfWidths < pageWidth) {
+          const scaleUp = pageWidth / sumOfWidths;
+          newWidths = widths.map((w: number) => w * scaleUp);
+        }
+      }
+      return newWidths.map(Math.floor);
+    },
+    [ pageWidth, adjustedColumnWidthSum ],
+  );
+
   const handleUpdateColumns = useCallback((columns: ExperimentColumnName[]) => {
     const previousWidths = settings.columns
       ?.map((col, i) => ({ [col]: settings.columnWidths?.[i] }))
@@ -578,16 +603,20 @@ const ExperimentList: React.FC = () => {
     if (columns.length === 0) {
       updateSettings({
         columns: [ 'id', 'name' ],
-        columnWidths: [ DEFAULT_COLUMN_WIDTHS['id'], DEFAULT_COLUMN_WIDTHS['name'] ],
+        columnWidths: getUpscaledWidths([
+          DEFAULT_COLUMN_WIDTHS['id'],
+          DEFAULT_COLUMN_WIDTHS['name'],
+        ]),
       });
     } else {
       updateSettings({
         columns: columns,
-        columnWidths: columns.map((col) =>
-          Math.max(previousWidths?.[col] ?? 0, DEFAULT_COLUMN_WIDTHS[col])),
+        columnWidths: getUpscaledWidths(
+          columns.map((col) => Math.max(previousWidths?.[col] ?? 0, DEFAULT_COLUMN_WIDTHS[col])),
+        ),
       });
     }
-  }, [ settings.columnWidths, settings.columns, updateSettings ]);
+  }, [ settings.columnWidths, settings.columns, updateSettings, getUpscaledWidths ]);
 
   const { modalOpen } = useModalCustomizeColumns({
     columns: transferColumns,
