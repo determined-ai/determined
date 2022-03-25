@@ -1,0 +1,53 @@
+.. _core-reference:
+
+######################
+ API Reference
+######################
+
+..
+   XXX how do I document context.core.init()?
+
+*****************************
+ ``determined.core.Context``
+*****************************
+
+.. autoclass:: determined._core.Context
+   :members:
+   :member-order: bysource
+   :special-members: __init__
+
+******************************
+ ``determined.core.Training``
+******************************
+
+.. autoclass:: determined._core.Training
+   :members:
+   :member-order: bysource
+   :special-members: __init__
+
+******************************
+ ``determined.core.Searcher``
+******************************
+
+.. autoclass:: determined._core.Searcher
+   :members:
+   :member-order: bysource
+   :special-members: __init__
+
+***********************************
+ ``determined.core.Checkpointing``
+***********************************
+
+.. autoclass:: determined._core.Checkpointing
+   :members:
+   :member-order: bysource
+   :special-members: __init__
+
+********************************
+ ``determined.core.Preemption``
+********************************
+
+.. autoclass:: determined._core.Preemption
+   :members:
+   :member-order: bysource
+   :special-members: __init__

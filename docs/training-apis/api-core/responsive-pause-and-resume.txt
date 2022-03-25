@@ -1,0 +1,7 @@
+.. _core-responsive-pause-and-resume:
+
+#############################
+Responsive Pause and Resume
+#############################
+
+TBD
