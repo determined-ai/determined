@@ -6,20 +6,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/protoutils"
-
 	"github.com/jackc/pgtype"
-	"google.golang.org/protobuf/encoding/protojson"
-
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 // State is the run state of an experiment / trial / step / etc.
@@ -404,22 +401,6 @@ type TrialMetrics struct {
 	State        State      `db:"state" json:"state"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
-}
-
-// Checkpoint represents a row from the `checkpoints` table.
-type Checkpoint struct {
-	ID                int        `db:"id" json:"id"`
-	TrialID           int        `db:"trial_id" json:"trial_id"`
-	TrialRunID        int        `db:"trial_run_id" json:"-"`
-	TotalBatches      int        `db:"total_batches" json:"total_batches"`
-	State             State      `db:"state" json:"state"`
-	EndTime           *time.Time `db:"end_time" json:"end_time"`
-	UUID              *string    `db:"uuid" json:"uuid"`
-	Resources         JSONObj    `db:"resources" json:"resources"`
-	Metadata          JSONObj    `db:"metadata" json:"metadata"`
-	Framework         string     `db:"framework" json:"framework"`
-	Format            string     `db:"format" json:"format"`
-	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
 }
 
 // TrialLog represents a row from the `trial_logs` table.
