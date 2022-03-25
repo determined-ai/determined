@@ -1,9 +1,31 @@
-########
-Core API
-########
+##########
+ Core API
+##########
 
-The Core API etc.
+The Core API lets you train arbitrary models in Determined, but in a way that you can integrate
+seamlessly with the entire Determined platform. Technically, no interaction with the Core API is
+required to run arbitrary models on Determined, in which case you will still already have access to
+the following platform features:
 
+-  scheduling single-gpu jobs on a Determined cluster (on-premise or on-cloud)
+-  tracking/viewing logs from training jobs in the webui or cli
+-  tracking of experiment configurations and model definitions
+-  tracking of random seeds
+-  interactve labeling of experiments
+
+With a small amount of code changes, you can also integrate with each of the following features of
+the Determined platform:
+
+-  metrics tracking & visualizations
+-  checkpoint tracking
+-  hyperparameter search
+-  pausing & resuming jobs interactively from the webui
+-  performant spot-instance support
+-  running on one gpu, or across many gpus
+
+The Core API is used behind-the-scenes to implement each of the higher-level APIs Determined offers
+(PyTorchTrial, Keras, Estimator, Lightning, etc), so with the Core API, you really have the full
+capabilities of the Determined platform at your fingertips!
 
 .. toctree::
    :maxdepth: 1

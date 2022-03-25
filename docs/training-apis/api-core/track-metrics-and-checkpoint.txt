@@ -1,7 +1,105 @@
 .. _core-track-metrics-and-checkpoint:
 
-#############################
-Track Metrics and Checkpoint
-#############################
+##############################
+ Track Metrics and Checkpoint
+##############################
 
-TBD
+Now you are running on a Determined cluster, but the webui doesn't have any useful information about
+your training metrics or checkpoints, and also that bind_mounts setting was obnoxious.
+
+Let's look at how to get the following API features:
+
+-  metrics tracking & visualizations in the webui
+-  checkpoint tracking
+
+All you have to do is:
+
+#. Initialize a Core API context: with det.core.init() as context:
+#. Report training metrics: context.training.report_training_metrics()
+#. Report validation metrics: context.training.report_validation_metrics()
+#. Report checkpoints to the Checkpoint API: with context.checkpoint.save_path() as path: ...
+
+You don't have to report all metrics and checkpoints in one go, but we will in this demo.
+
+*************************
+ Updates to ``train.py``
+*************************
+
+.. code::
+
+       import torch
+       from model import build_model, train_model, eval_model
+       from data import build_data
+
+       # some configurations
+       BATCH_SIZE=32
+       LR=0.00001
+       EPOCHS=50
+
+   -   def main():
+   +   def main(context):
+           model, loss_fn, opt = build_model(LR)
+           train_data, eval_data = build_dataset(BATCH_SIZE)
+
+   +       # keep track of how many batches we have trained
+   +       batches_trained = 0
+
+           for epoch in range(config.EPOCHS):
+               # train model
+               train_loss = model.train_model(model, loss_fn, opt, train_data)
+               print(f"after epoch {epoch}, train_loss={train_loss}")
+
+   +           # report training metrics to the master
+   +           batches_trained += len(train_data)
+   +           context.training.report_training_metrics(
+   +               batches_trained=batches_trained,
+   +               metrics={"loss": train_loss},
+   +           )
+
+               # evaluate model
+               eval_loss = model.eval_model(model, loss_fn, train_data)
+               print(f"after epoch {epoch}, eval_loss={eval_loss}")
+
+   +           # report validation metrics to the master
+   +           context.training.report_validation_metrics(
+   +               batches_trained=batches_trained,
+   +               metrics={"loss": eval_loss},
+   +           )
+
+           # checkpoint model
+   -       path="checkpoint_dir/my_checkpoint"
+   -       torch.save(model.state_dict(), path)
+   +       with context.checkpoint.save_path() as path:
+   +           torch.save(model.state_dict(), f"{path]/my_checkpoint")
+
+       if __name__ == "__main__":
+   -       main()
+   +       # initialize a context object for accessing the Core API
+   +       import determined as det
+   +       with det.core.init() as context:
+   +           main(context)
+
+*******************************
+ Updates to ``my_config.yaml``
+*******************************
+
+Notice that the context.checkpoint.save_path() from the Core API was easy to use, and now we can
+rely on the cluster's checkpoint configuration, rather than hacking something together with
+bindmounts:
+
+.. code::
+
+       entrypoint_script: python3 train.py
+
+       searcher:
+           # we're not doing hp search yet so just use the 'single' searcher
+           name: "single"
+           # we have to configure the searcher for the master even though
+           # our training script is going to totally ignore it.
+           max_length: 1
+   -
+   -   # since we are using context.checkpoint.save_path(),
+   -   # we don't need bind_mounts anymore
+   -   bind_mounts:
+   -     - host_path: /my/path/to/checkpoints
+   -       container_path: ./checkpoint_dir

@@ -1,7 +1,26 @@
 .. _core-responsive-pause-and-resume:
 
 #############################
-Responsive Pause and Resume
+ Responsive Pause and Resume
 #############################
 
-TBD
+Simply check context.should_preempt() periodically, and shut down when it returns true. Checking
+every epoch is easy but when you hit the pause button in the webui you will have to wait up to a
+full epoch to finish before the training job shuts down.
+
+You can have a more responsive experience by choosing to check every batch, in which case you should
+use context.should_preempt(block=False). When it returns true, you may choose to save a checkpoint
+in a partially-complete epoch or you may choose to just exit immediately. Saving a checkpoint
+minimizes lost progress, but keeping reproducibility even when checkpoints can occur mid-epoch can
+be extremely difficult, depending in particular on your dataset and training loop complexity.
+
+Here we show the simple, per-epoch version:
+
+.. code::
+
+       while epochs_trained < op.length:
+   +       if context.should_preempt():
+   +           break
+
+           # train model
+           ...

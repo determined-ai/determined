@@ -1,7 +1,43 @@
 .. _core-set-up-distributed-training:
 
 #############################
-Set up Distributed Training
+ Set up Distributed Training
 #############################
 
-TBD
+Have you ever felt like the hardest part of distributed training is just setting up all of the
+machines and getting them so they can talk to each other?
+
+Determined exposes a "launch layer" so to solve that problem. Let Determined coordinate all of the
+compute nodes in a multi-node distributed training job, and you just kick of training when
+everything's ready.
+
+The way it works is:
+
+-  You schedule a multi-gpu training job with a custom launch_layer setting in the experiment
+   config. The launch_layer should be an executable script with arguments
+-  Determined starts up all the containers with their assigned gpus
+-  Determined gathers all of ip addresses and assigned gpus for every compute node in the training
+   job (the "rendezvous info" for the job)
+-  Determined calls your launch_layer on every compute node, with the rendezvous info exposed as
+   both a python API and as environment variables
+-  Your launch layer starts the distributed training job on the assigned compute nodes however it
+   sees fit.
+-  For common distributed training solutions (horovod, torch.distributed, pytorch lightning) you can
+   actually just use a pre-made launch layer.
+
+Example: Launch a Detectron2 model (based on torch.distributed) with Determined's built-in
+torch.distributed support:
+
+.. code:: yaml
+
+   launch_layer: python3 -m determined.launch.torch_distributed
+   entrypoint_script: python3 train_detectron.py
+
+Example: Train a model that uses horovod directly:
+
+.. code:: yaml
+
+   launch_layer: python3 -m determined.launch.horovod
+   entrypoint_script: python3 horovod_model.py
+
+TODO: decide on an API for writing your own launch layer from scratch and include examples.

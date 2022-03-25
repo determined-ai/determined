@@ -1,8 +1,8 @@
 .. _core-reference:
 
-######################
+###############
  API Reference
-######################
+###############
 
 ..
    XXX how do I document context.core.init()?

@@ -1,7 +1,124 @@
 .. _core-add-hyperparam-search:
 
-#############################
-Add Hyperparameter Search
-#############################
+###########################
+ Add Hyperparameter Search
+###########################
 
-TBD
+You already have many great benefits of Determined with very little work. Now, let's add support for
+hyperparameter search. After this, you'll be able to run random searches, grid searches, and even
+hyperband searches, using the "adaptive" searcher, Determined's state-of-the-art implementation of
+the hyperband algorithm!
+
+As we introduce HP search, we are also going to implement some best practices for model definitions,
+including:
+
+-  seed our RNGs with the Determined-tracked seed for an experiment, significantly improving our
+   ability to reproduce training results
+-  separate configuration from code, to be able to easily browse configs and even configure new
+   experiments interactively!
+
+*************************
+ Updates to ``train.py``
+*************************
+
+.. code::
+
+       import torch
+       from model import build_model, train_model, eval_model
+       from data import build_data
+
+   -   # prefer to configure via the experiment config
+   -   BATCH_SIZE=32
+   -   LR=0.00001
+   -   EPOCHS=50
+
+       def main(context):
+   +       # seed RNGs based on context-provided seed
+   +       seed = context.training.trial_seed
+   +       random.seed(seed)
+   +       torch.random.manual_seed(seed)
+   +       # ... also seed any other RNGs you need to
+
+   +       # read hyperparameters from the context object
+   +       hparams = context.training.hparams
+
+   -       model, loss_fn, opt = build_model(LR)
+   +       model, loss_fn, opt = build_model(hparams["learning_rate"])
+
+   -       train_data, eval_data = build_dataset(BATCH_SIZE)
+   +       train_data, eval_data = build_dataset(hparams["batch_size"])
+
+           # keep track of how many batches we have trained
+           batches_trained = 0
+
+   -       for epoch in range(config.EPOCHS):
+   +       # iterate through searcher operations, which are unitless
+   +       # lengths that we choose here to treat as epochs
+   +       epochs_trained = 0
+   +       for op in context.searcher.ops():
+   +           # every op represents an absolute length of training,
+   +           # followed by a validation
+   +           while epochs_trained < op.length:
+                   # train model
+                   ...
+
+                   # report training metrics to the master
+                   ...
+
+   +               # track how much we have trained
+   +               epochs_trained += 1
+   +
+   +               # update progress in the webui
+   +               op.report_progress(epochs_trained)
+
+               # evaluate model
+               ...
+
+               # report validation metrics to the master
+               ...
+
+   +           # report evaluation of the searcher_metric for this op
+   +           op.complete(eval_loss)
+
+           # checkpoint model
+           with context.checkpoint.save_path() as path:
+               torch.save(model.state_dict(), f"{path]/my_checkpoint")
+
+       if __name__ == "__main__":
+           # initialize a context object for accessing the Core API
+           import determined as det
+           with det.core.init() as context:
+               main(context)
+
+*******************************
+ Updates to ``my_config.yaml``
+*******************************
+
+As we move more information to the configuration, we are improving our own development velocity,
+allowing us to quickly reconfigure new models with all the controls in one place:
+
+.. code::
+
+       entrypoint_script: python3 train.py
+
+   +   # define a hyperparameter search space
+   +   hyperparameters:
+   +       batch_size:
+   +           type: int
+   +           minval: 1
+   +           maxval: 64
+   +       learning_rate:
+   +           type: log
+   +           base: 10
+   +           minval: -5  # 10^-5 = .00001
+   +           maxval: -3  # 10^-5 = .001
+
+       searcher:
+   -       name: "single"
+   +       # use a real hp search instead of the single searcher
+   +       name: "random"
+   -       max_length: 1
+   +       # we are now honoring max_length in train.py
+   +       max_length: 50
+   +
+   +       max_trials: 10

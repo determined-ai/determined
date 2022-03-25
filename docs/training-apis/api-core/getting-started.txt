@@ -1,7 +1,166 @@
 .. _core-getting-started:
 
-#############################
-Getting Started
-#############################
+#################
+ Getting Started
+#################
 
-TBD
+Let's pretend you have a very simple training script built around PyTorch. In real life, you should
+use our PyTorchTrial, Determined's high-level API for integrating with PyTorch (but this author is
+most familiar with PyTorch, so that's what the Core API tutorial is in right now).
+
+We'll split our training into a few different files:
+
+-  model.py: defines the model and how to train/evaluate it
+-  data.py: defines the dataset
+-  train.py: entrypoint for training the model
+
+*******
+ Files
+*******
+
+model.py
+========
+
+.. code:: python
+
+   import torch
+
+   def build_model(learning_rate):
+       # the model is silly, the real focus is on the Core API
+       model = nn.Linear(1, 1, False)
+       loss_fn = torch.nn.MSELoss()
+
+       opt = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+       return model, loss_fn, opt
+
+   def train_model(model, loss_fn, opt, train_data):
+       losses = []
+       for batch in train_data:
+           data, labels = batch
+           # forward pass
+           pred = model(data)
+           loss = loss_fn(pred, labels)
+           losses.append(loss)
+           # backward pass
+           loss.backward()
+           opt.step()
+           opt.zero()
+       # reduce training metrics, simple average
+       train_loss = sum(losses)/len(losses)
+       return train_loss
+
+   @torch.no_grad
+   def eval_model(model, loss_fn, eval_data):
+       # Validate model.
+       losses = []
+       for batch in eval_data:
+           data, labels = batch
+           pred = model(data)
+           loss = loss_fn(pred, labels)
+           losses.append(loss)
+       val_loss = sum(losses)/len(losses)
+       return val_loss
+
+data.py
+=======
+
+.. code:: python
+
+   import torch
+
+   class OnesDataset(torch.utils.data.Dataset):
+       def __len__(self):
+           return 2048
+
+       def __getitem__(self, index):
+           # return data, labels
+           return torch.Tensor([1.0]), torch.Tensor([1.0])
+
+   def build_datasets(batch_size):
+       train_data = torch.utils.data.DataLoader(
+           OnesDataset(), batch_size=batch_size
+       )
+       eval_data = torch.utils.data.DataLoader(
+           OnesDataset(), batch_size=batch_size
+       )
+       return train_data, eval_data
+
+train.py
+========
+
+.. code:: python
+
+   import torch
+   from model import build_model, train_model, eval_model
+   from data import build_data
+
+   # some configurations
+   BATCH_SIZE=32
+   LR=0.00001
+   EPOCHS=50
+
+   def main():
+       model, loss_fn, opt = build_model(LR)
+       train_data, eval_data = build_dataset(BATCH_SIZE)
+
+       for epoch in range(config.EPOCHS):
+           # train model
+           train_loss = model.train_model(model, loss_fn, opt, train_data)
+           print(f"after epoch {epoch}, train_loss={train_loss}")
+
+           # evaluate model
+           eval_loss = model.eval_model(model, loss_fn, train_data)
+           print(f"after epoch {epoch}, eval_loss={eval_loss}")
+
+       # checkpoint model
+       path="checkpoint_dir/my_checkpoint"
+       torch.save(model.state_dict(), path)
+
+
+   if __name__ == "__main__":
+       main()
+
+******
+ More
+******
+
+At this point, by simply submitting your script to the cluster, you already have all of the
+following features:
+
+-  scheduling single-gpu jobs on a Determined cluster (on-premise or on-cloud) tracking/viewing logs
+-  from training jobs in the webui or cli tracking of experiment configurations and model
+-  definitions tracking of random seeds interactve labeling of experiments
+
+To submit to the cluster, you would configure an experiment config with something like this:
+
+my_config.yaml
+
+.. code:: yaml
+
+   entrypoint_script: python3 train.py
+   searcher:
+       name: "single"
+       max_length: 1
+   bind_mounts:
+     - host_path: /my/path/to/checkpoints
+   container_path: ./checkpoint_dir
+
+we're not doing hp search yet so just use the 'single' searcher
+
+we have to configure the searcher for the master even though our training script is going to totally
+ignore it.
+
+note that for the script to save the checkpoint to a persistent location, you would have to set up a
+bind mound so that the checkpoint created inside the container appears on the host file system.
+There's easier ways to do this in Determined; we'll get to those shortly.
+
+Then you can submit the script to the cluster like this:
+
+.. code:: bash
+
+   det experiment create my_config.yaml . -f
+
+Note that the -f means "follow logs" (they will print right to your terminal) and the . is the model
+directory that gets passed to the cluster. To use . you of course have to run this from the same
+directory as train.py, etc.
