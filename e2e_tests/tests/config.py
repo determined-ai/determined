@@ -13,13 +13,13 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-97e4c60"
+DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-83dbcaa"
 DEFAULT_TF2_CPU_IMAGE = (
-    "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-97e4c60"
+    "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-83dbcaa"
 )
-DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-97e4c60"
+DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-83dbcaa"
 DEFAULT_TF2_GPU_IMAGE = (
-    "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-97e4c60"
+    "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-83dbcaa"
 )
 
 TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE
@@ -73,6 +73,10 @@ def model_hub_examples_path(path: str) -> str:
 
 def graphs_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/graphs", path)
+
+
+def deepspeed_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/deepspeed", path)
 
 
 def load_config(config_path: str) -> Any:

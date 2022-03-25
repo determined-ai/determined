@@ -7,16 +7,15 @@ subprocess otherwise.
 import argparse
 import logging
 import os
-import socket
 import subprocess
 import sys
 import time
 
 import determined as det
-from determined import horovod
+from determined import horovod, util
 from determined.common import api
 from determined.common.api import certs
-from determined.constants import HOROVOD_SSH_PORT
+from determined.constants import DTRAIN_SSH_PORT
 
 
 def main(train_entrypoint: str) -> int:
@@ -76,7 +75,7 @@ def main(train_entrypoint: str) -> int:
         run_sshd_command = [
             "/usr/sbin/sshd",
             "-p",
-            str(HOROVOD_SSH_PORT),
+            str(DTRAIN_SSH_PORT),
             "-f",
             "/run/determined/ssh/sshd_config",
             "-D",
@@ -91,27 +90,8 @@ def main(train_entrypoint: str) -> int:
     # Chief machine waits for every worker's sshd to be available.  All machines should be pretty
     # close to in-step by now because all machines just finished synchronizing rendezvous info.
     deadline = time.time() + 20
-    for peer in info.container_addrs[1:]:
-        while True:
-            with socket.socket() as sock:
-                sock.settimeout(1)
-                try:
-                    # Connect to a socket to ensure sshd is listening.
-                    sock.connect((peer, HOROVOD_SSH_PORT))
-                    # The ssh protocol requires the server to serve an initial greeting.
-                    # Receive part of that greeting to know that sshd is accepting/responding.
-                    data = sock.recv(1)
-                    if not data:
-                        raise ValueError("no sshd greeting")
-                    # This peer is ready.
-                    break
-                except Exception:
-                    if time.time() > deadline:
-                        raise ValueError(
-                            f"Chief machine was unable to connect to sshd on peer machine at "
-                            f"{peer}:{HOROVOD_SSH_PORT}"
-                        )
-                    time.sleep(0.1)
+    for peer_addr in info.container_addrs[1:]:
+        util.check_sshd(peer_addr, deadline, DTRAIN_SSH_PORT)
 
     # The chief has several layers of wrapper processes:
     # - a top-level pid_server, which causes the whole container to exit if any local worker dies.
@@ -162,6 +142,8 @@ def main(train_entrypoint: str) -> int:
         "python3",
         "-m",
         "determined.exec.worker_process_wrapper",
+        "HOROVOD_RANK",
+        "--",
     ]
 
     harness_cmd = [

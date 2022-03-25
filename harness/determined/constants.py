@@ -25,8 +25,8 @@ DEFAULT_EXP_CFG = {
 }
 
 # TODO (DET-1189): Use port registry to allocate ssh port.
-# SSH port used by Horovod.
-HOROVOD_SSH_PORT = 12350
+# SSH port used for agents during dtrain (currently used with horovod and deepspeed backend).
+DTRAIN_SSH_PORT = 12350
 
 # GLOO port used by Horovod for the Gloo controller.
 HOROVOD_GLOO_RENDEZVOUS_PORT = 12355
