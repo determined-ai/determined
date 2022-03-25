@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
 import { useStore } from 'contexts/Store';
-import { CommonProps } from 'types';
+import { BrandingType, CommonProps } from 'types';
 
 import css from './Page.module.scss';
 import Spinner from './Spinner';
@@ -27,8 +27,10 @@ export interface Props extends CommonProps {
   title?: string;
 }
 
-const getFullDocTitle = (title?: string, clusterName?: string) => {
-  const segmentList = [ 'Determined' ];
+const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
+  const brand = branding === BrandingType.HPE ?
+    'HPE Machine Learning Development Environment' : 'Determined';
+  const segmentList = [ brand ];
 
   if (clusterName) segmentList.unshift(clusterName);
   if (title) segmentList.unshift(title);
@@ -44,6 +46,7 @@ const Page: React.FC<Props> = (props: Props) => {
   const brandingPath = `${process.env.PUBLIC_URL}/${info.branding}`;
 
   const docTitle = getFullDocTitle(
+    info.branding,
     props.docTitle || props.title,
     info.clusterName,
   );
