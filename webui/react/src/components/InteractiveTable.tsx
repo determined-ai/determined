@@ -90,6 +90,23 @@ interface CellProps {
   isCellRightClickable?: boolean;
 }
 
+export const PAGE_PADDING = 16;
+
+const getAdjustedColumnWidthSum = (columnsWidths: number[]) =>
+  columnsWidths.reduce((a, b) => a + b) + 2 * WIDGET_COLUMN_WIDTH + 2 * PAGE_PADDING;
+
+export const getUpscaledWidths = (widths: number[], pageWidth: number): number[] => {
+  let newWidths = widths;
+  if (pageWidth) {
+    const sumOfWidths = getAdjustedColumnWidthSum(newWidths);
+    if (sumOfWidths < pageWidth) {
+      const scaleUp = pageWidth / sumOfWidths;
+      newWidths = widths.map((w: number) => w * scaleUp);
+    }
+  }
+  return newWidths.map(Math.round);
+};
+
 const RightClickableRowContext = createContext({});
 
 const Row = ({
@@ -282,8 +299,8 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({
-    dropLeftStyles: settings?.columnWidths?.map(() => ({}) ?? []),
-    dropRightStyles: settings?.columnWidths?.map(() => ({}) ?? []),
+    dropLeftStyles: settings?.columnWidths.map(() => ({})),
+    dropRightStyles: settings?.columnWidths.map(() => ({})),
     widths: settings?.columnWidths,
   });
   const [ isResizing, setIsResizing ] = useState(false);
@@ -296,32 +313,15 @@ const InteractiveTable: InteractiveTable = ({
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  const adjustedColumnWidthSum = useCallback((columnsWidths: number[]) => {
-    const pagePadding = parseInt(
-      getComputedStyle(document.body)
-        ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
-    ) ?? 16;
-    return columnsWidths.reduce((a, b) => a + b) + 2 * WIDGET_COLUMN_WIDTH + 2 * pagePadding;
-  }, []);
-
-  const getUpscaledWidths = useCallback(
-    (widths: number[]): number[] => {
-      let newWidths = widths;
-      if (pageWidth) {
-        const sumOfWidths = adjustedColumnWidthSum(newWidths);
-        if (sumOfWidths < pageWidth) {
-          const scaleUp = pageWidth / sumOfWidths;
-          newWidths = widths.map((w: number) => w * scaleUp);
-        }
-      }
-      return newWidths.map(Math.floor);
-    },
-    [ pageWidth, adjustedColumnWidthSum ],
+  const getUpscaledWidthsWithPageContext = useCallback(
+    (widths: number[]) => getUpscaledWidths(widths, pageWidth),
+    [ pageWidth ],
   );
 
   useLayoutEffect(() => {
     const prevWidths = settings.columnWidths;
-    const widths = getUpscaledWidths(prevWidths);
+
+    const widths = getUpscaledWidthsWithPageContext(prevWidths);
     const dropRightStyles = widths.map((w, i) => ({
       left: `${(w / 2) }px`,
       width: `${(w + (widths[i + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
@@ -331,16 +331,16 @@ const InteractiveTable: InteractiveTable = ({
       width: `${(w + (widths[i - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-    // right now this causes the column change modal
-    // to re-render on save, hence the work around in experimentlist
+    // const prevSumOfWidths = getAdjustedColumnWidthSum(prevWidths);
+    // const sumOfWidths = getAdjustedColumnWidthSum(widths);
     // if (sumOfWidths !== prevSumOfWidths) {
     //   updateSettings({ columnWidths: widths });
     // }
+
   }, [ settings.columnWidths,
-    getUpscaledWidths,
+    getUpscaledWidthsWithPageContext,
     updateSettings,
-    pageWidth,
-    adjustedColumnWidthSum ]);
+    pageWidth ]);
 
   const handleChange = useCallback(
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -393,7 +393,7 @@ const InteractiveTable: InteractiveTable = ({
               index === i ? newWidth : w);
           }
 
-          const targetWidthSum = adjustedColumnWidthSum(targetWidths);
+          const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
           const shortage = pageWidth - targetWidthSum;
           if (shortage > 0) {
             const compensatingPortion = shortage / (settings.columnWidths.length - 1);
@@ -403,27 +403,26 @@ const InteractiveTable: InteractiveTable = ({
         });
       });
     },
-    [ settings.columns, settings.columnWidths, pageWidth, adjustedColumnWidthSum ],
+    [ settings.columns, settings.columnWidths, pageWidth ],
   );
 
   const handleResizeStart = useCallback(
     (index) => (e: Event, { x }: DraggableData) => {
       setIsResizing(true);
       const column = settings.columns[index];
-      const startWidth = settings.columnWidths[index];
+      const startWidth = widthData.widths[index];
       const minWidth = DEFAULT_COLUMN_WIDTHS[column];
       const deltaX = startWidth - minWidth;
       const minX = x - deltaX;
       setWidthData(({ widths, ...rest }) => ({ minX, widths, ...rest }));
     },
-    [ setWidthData, settings.columns, settings.columnWidths ],
+    [ setWidthData, settings.columns, widthData.widths ],
   );
 
   const handleResizeStop = useCallback(() => {
-    const newWidths = getUpscaledWidths(widthData.widths);
     setIsResizing(false);
-    updateSettings({ columnWidths: newWidths });
-  }, [ updateSettings, widthData, getUpscaledWidths ]);
+    updateSettings({ columnWidths: widthData.widths.map(Math.round) });
+  }, [ updateSettings, widthData ]);
 
   const onHeaderCell = useCallback(
     (index, columnDefs) => {
