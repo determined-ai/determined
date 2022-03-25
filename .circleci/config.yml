@@ -114,11 +114,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-97e4c60
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-83dbcaa
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-97e4c60
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-83dbcaa
 
   login-docker:
     parameters:
@@ -1389,7 +1389,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
@@ -1405,7 +1405,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
