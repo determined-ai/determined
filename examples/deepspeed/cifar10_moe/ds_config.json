@@ -2,15 +2,9 @@
   "train_batch_size": 16,
   "steps_per_print": 2000,
   "optimizer": {
-    "type": "Adam",
+    "type": "SGD",
     "params": {
-      "lr": 0.001,
-      "betas": [
-        0.8,
-        0.999
-      ],
-      "eps": 1e-8,
-      "weight_decay": 3e-7
+      "lr": 0.001
     }
   },
   "scheduler": {
@@ -24,7 +18,7 @@
   "gradient_clipping": 1.0,
   "prescale_gradients": false,
   "fp16": {
-      "enabled": true,
+      "enabled": false,
       "fp16_master_weights_and_grads": false,
       "loss_scale": 0,
       "loss_scale_window": 500,

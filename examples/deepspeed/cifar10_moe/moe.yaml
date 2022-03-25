@@ -3,8 +3,10 @@ debug: false
 hyperparameters:
   deepspeed_config: ds_config.json
   moe: true
+  num_experts: 
+    - 2
   ep_world_size: 2
-  num_experts: 2
+  mlp_type: standard
   top_k: 1
   min_capacity: 0
   noisy_gate_policy: RSample
@@ -17,7 +19,7 @@ environment:
     #    - NCCL_DEBUG=INFO
     #    - NCCL_IB_DISABLE=1
     image:
-        gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-deepspeed-0.5.10-gpu-5158dec
+        gpu: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-deepspeed-0.5.10-gpu-83dbcaa
 bind_mounts:
     - host_path: /tmp
       container_path: /data
