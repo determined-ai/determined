@@ -7,7 +7,6 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import deepspeed
-from deepspeed.moe.utils import is_moe_param
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -22,22 +21,28 @@ from determined.pytorch.deepspeed import (
 class Net(nn.Module):
     def __init__(self, args):
         super(Net, self).__init__()
-        self.moe = args.moe
+        self.args = args
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         if args.moe:
-            self.fc3 = nn.Linear(84, 84)
-            self.fc3 = deepspeed.moe.layer.MoE(
-                hidden_size=84,
-                expert=self.fc3,
-                num_experts=args.num_experts,
-                k=args.top_k,
-                min_capacity=args.min_capacity,
-                noisy_gate_policy=args.noisy_gate_policy,
-            )
+            fc3 = nn.Linear(84, 84)
+            self.moe_layer_list = []
+            for n_e in args.num_experts:
+                # create moe layers based on the number of experts
+                self.moe_layer_list.append(
+                    deepspeed.moe.layer.MoE(
+                        hidden_size=84,
+                        expert=fc3,
+                        num_experts=n_e,
+                        ep_size=args.ep_world_size,
+                        use_residual=args.mlp_type == 'residual',
+                        k=args.top_k,
+                        min_capacity=args.min_capacity,
+                        noisy_gate_policy=args.noisy_gate_policy))
+            self.moe_layer_list = nn.ModuleList(self.moe_layer_list)
             self.fc4 = nn.Linear(84, 10)
         else:
             self.fc3 = nn.Linear(84, 10)
@@ -48,8 +53,9 @@ class Net(nn.Module):
         x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        if self.moe:
-            x, _, _ = self.fc3(x)
+        if self.args.moe:
+            for layer in self.moe_layer_list:
+                x, _, _ = layer(x)
             x = self.fc4(x)
         else:
             x = self.fc3(x)
@@ -57,40 +63,22 @@ class Net(nn.Module):
 
 
 def create_moe_param_groups(model):
-    params_with_weight_decay = {"params": [], "name": "weight_decay_params"}
-    moe_params_with_weight_decay = {
-        "params": [],
-        "moe": True,
-        "name": "weight_decay_moe_params",
+    from deepspeed.moe.utils import split_params_into_different_moe_groups_for_optimizer
+
+    parameters = {
+        'params': [p for p in model.parameters()],
+        'name': 'parameters'
     }
 
-    for module_ in model.modules():
-        moe_params_with_weight_decay["params"].extend(
-            [
-                p
-                for n, p in list(module_._parameters.items())
-                if p is not None and is_moe_param(p)
-            ]
-        )
-        params_with_weight_decay["params"].extend(
-            [
-                p
-                for n, p in list(module_._parameters.items())
-                if p is not None and not is_moe_param(p)
-            ]
-        )
-
-    return params_with_weight_decay, moe_params_with_weight_decay
+    return split_params_into_different_moe_groups_for_optimizer(parameters)
 
 
 class CIFARTrial(DeepSpeedTrial):
     def __init__(self, context: DeepSpeedTrialContext) -> None:
         self.context = context
         self.args = AttrDict(self.context.get_hparams())
-        if self.args.moe:
-            deepspeed.utils.groups.initialize(ep_size=self.args.ep_world_size)
-        model = Net(self.args)
 
+        model = Net(self.args)
         parameters = filter(lambda p: p.requires_grad, model.parameters())
         if self.args.moe_param_group:
             parameters = create_moe_param_groups(model)

@@ -46,7 +46,7 @@ const Logo: React.FC<Props> = ({ branding, type }: Props) => {
     const server = serverAddress();
     const isSameServer = reactHostAddress() === server;
     return [
-      isDetermined ? 'Determined AI Logo' : 'HPE Cray AI Logo',
+      isDetermined ? 'Determined AI Logo' : 'HPE Machine Learning Development Logo',
       isSameServer ? '' : ` (Server: ${server})`,
     ].join();
   }, [ branding ]);
