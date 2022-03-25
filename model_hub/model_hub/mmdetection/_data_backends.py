@@ -2,14 +2,16 @@
 Add backends to support loading data from other sources including
 S3 buckets, GCS storage buckets, and fake data.
 """
+import contextlib
 import logging
 import os
+import tempfile
 import time
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 import boto3
-import google.cloud as gcs
 import mmcv
+from google.cloud import storage
 
 import determined
 import model_hub.utils as utils
@@ -34,11 +36,28 @@ class S3Backend(mmcv.fileio.BaseStorageBackend):  # type: ignore
 
     def get(self, filepath: str) -> Any:
         obj = self._storage_client.get_object(Bucket=self._bucket, Key=filepath)
-        img_str = obj["Body"].read()
-        return img_str
+        data = obj["Body"].read()
+        return data
 
     def get_text(self, filepath: str) -> Any:
         raise NotImplementedError
+
+    @contextlib.contextmanager
+    def get_local_path(self, filepath: str) -> Iterator[str]:
+        """Download a file from ``filepath``.
+        ``get_local_path`` is decorated by :meth:`contxtlib.contextmanager`. It
+        can be called with ``with`` statement, and when exists from the
+        ``with`` statement, the temporary path will be released.
+        Args:
+            filepath (str): Download a file from ``filepath``.
+        """
+        try:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            f.write(self.get(filepath))
+            f.close()
+            yield f.name
+        finally:
+            os.remove(f.name)
 
 
 mmcv.fileio.FileClient.register_backend("s3", S3Backend)
@@ -58,19 +77,36 @@ class GCSBackend(mmcv.fileio.BaseStorageBackend):  # type: ignore
     """
 
     def __init__(self, bucket_name: str):
-        self._storage_client = gcs.storage.Client()
+        self._storage_client = storage.Client()
         self._bucket = self._storage_client.bucket(bucket_name)
 
     def get(self, filepath: str) -> Any:
         blob = self._bucket.blob(filepath)
         try:
-            img_str = determined.util.download_gcs_blob_with_backoff(blob)
+            data = determined.util.download_gcs_blob_with_backoff(blob)
         except Exception as e:
             raise Exception(f"Encountered {e}, failed to download {filepath} from gcs bucket.")
-        return img_str
+        return data
 
     def get_text(self, filepath: str) -> Any:
         raise NotImplementedError
+
+    @contextlib.contextmanager
+    def get_local_path(self, filepath: str) -> Iterator[str]:
+        """Download a file from ``filepath``.
+        ``get_local_path`` is decorated by :meth:`contxtlib.contextmanager`. It
+        can be called with ``with`` statement, and when exists from the
+        ``with`` statement, the temporary path will be released.
+        Args:
+            filepath (str): Download a file from ``filepath``.
+        """
+        try:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            f.write(self.get(filepath))
+            f.close()
+            yield f.name
+        finally:
+            os.remove(f.name)
 
 
 mmcv.fileio.FileClient.register_backend("gcs", GCSBackend)
@@ -132,7 +168,7 @@ def sub_backend(
     """
     if type(cfg) in [mmcv.utils.config.Config, mmcv.utils.config.ConfigDict]:
         cfg = cast(Union[mmcv.utils.config.Config, mmcv.utils.config.ConfigDict], cfg)
-        if "type" in cfg and cfg["type"] == "LoadImageFromFile":
+        if "type" in cfg and cfg["type"] in ["LoadImageFromFile", "LoadPanopticAnnotations"]:
             cfg["file_client_args"] = file_client_args
         else:
             for k in cfg:
