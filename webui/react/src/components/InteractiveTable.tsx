@@ -92,21 +92,6 @@ interface CellProps {
 
 export const PAGE_PADDING = 16;
 
-const getAdjustedColumnWidthSum = (columnsWidths: number[]) =>
-  columnsWidths.reduce((a, b) => a + b) + 2 * WIDGET_COLUMN_WIDTH + 2 * PAGE_PADDING;
-
-export const getUpscaledWidths = (widths: number[], pageWidth: number): number[] => {
-  let newWidths = widths;
-  if (pageWidth) {
-    const sumOfWidths = getAdjustedColumnWidthSum(newWidths);
-    if (sumOfWidths < pageWidth) {
-      const scaleUp = pageWidth / sumOfWidths;
-      newWidths = widths.map((w: number) => w * scaleUp);
-    }
-  }
-  return newWidths.map(Math.round);
-};
-
 const RightClickableRowContext = createContext({});
 
 const Row = ({
@@ -143,9 +128,7 @@ const Row = ({
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr
-          className={
-            classes.join(' ')
-          }
+          className={classes.join(' ')}
           onMouseEnter={() => setRowHovered(true)}
           onMouseLeave={() => setRowHovered(false)}
           {...props}>
@@ -192,6 +175,7 @@ const HeaderCell = ({
 
   const headerCellClasses = [ css.headerCell ];
   const dropTargetClasses = [ css.dropTarget ];
+
   const [ , drag ] = useDrag({
     canDrag: () => !isResizing,
     item: { index },
@@ -223,18 +207,12 @@ const HeaderCell = ({
         moveColumn(item.index, index);
       }
     },
-
   });
 
-  if (isOver) {
-    dropTargetClasses.push(css.dropTargetActive);
-  }
+  if (!columnName) return <th className={className} {...props} />;
 
+  if (isOver) dropTargetClasses.push(css.dropTargetActive);
   if (filterActive) headerCellClasses.push(css.headerFilterOn);
-
-  if (!columnName) {
-    return <th className={className} {...props} />;
-  }
 
   const tableCell = (
     <th className={headerCellClasses.join(' ')}>
@@ -303,6 +281,7 @@ const InteractiveTable: InteractiveTable = ({
     dropRightStyles: settings?.columnWidths.map(() => ({})),
     widths: settings?.columnWidths,
   });
+
   const [ isResizing, setIsResizing ] = useState(false);
 
   const { dragState } = useDragLayer((monitor) => {
@@ -313,32 +292,46 @@ const InteractiveTable: InteractiveTable = ({
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  const getUpscaledWidthsWithPageContext = useCallback(
-    (widths: number[]) => getUpscaledWidths(widths, pageWidth),
-    [ pageWidth ],
+  const getAdjustedColumnWidthSum = useCallback((columnsWidths: number[]) => {
+    let pagePadding = parseInt(
+      getComputedStyle(document.body)
+        ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
+    );
+    if (typeof pagePadding !== 'number') pagePadding = 16;
+    return columnsWidths.reduce((a, b) => a + b) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
+  }, []);
+
+  const getUpscaledWidths = useCallback(
+    (widths: number[]): number[] => {
+      let newWidths = widths;
+      if (pageWidth) {
+        const sumOfWidths = getAdjustedColumnWidthSum(newWidths);
+        const shortage = pageWidth - sumOfWidths;
+        if (shortage > 0) {
+          const compensatingPortion = shortage / newWidths.length;
+          newWidths = newWidths.map((w) => w + compensatingPortion);
+        }
+      }
+      return newWidths.map(Math.round);
+    },
+    [ pageWidth, getAdjustedColumnWidthSum ],
   );
 
   useLayoutEffect(() => {
-    const prevWidths = settings.columnWidths;
-
-    const widths = getUpscaledWidthsWithPageContext(prevWidths);
+    const newSettingsWidths = settings.columnWidths;
+    const widths = getUpscaledWidths(newSettingsWidths);
+    const c = 0.95;
     const dropRightStyles = widths.map((w, i) => ({
       left: `${(w / 2) }px`,
-      width: `${(w + (widths[i + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+      width: `${(w + (widths[i + 1] ?? WIDGET_COLUMN_WIDTH)) * c / 2}px`,
     }));
     const dropLeftStyles = widths.map((w, i) => ({
       left: `${-((widths[i - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-      width: `${(w + (widths[i - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
+      width: `${(w + (widths[i - 1] ?? WIDGET_COLUMN_WIDTH)) * c / 2}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-    // const prevSumOfWidths = getAdjustedColumnWidthSum(prevWidths);
-    // const sumOfWidths = getAdjustedColumnWidthSum(widths);
-    // if (sumOfWidths !== prevSumOfWidths) {
-    //   updateSettings({ columnWidths: widths });
-    // }
-
   }, [ settings.columnWidths,
-    getUpscaledWidthsWithPageContext,
+    getUpscaledWidths,
     updateSettings,
     pageWidth ]);
 
@@ -384,39 +377,42 @@ const InteractiveTable: InteractiveTable = ({
           const minWidth = DEFAULT_COLUMN_WIDTHS[column];
           let targetWidths;
           if (x < minWidth) {
-            targetWidths = settings.columnWidths.map((w: number, i: number) =>
+            targetWidths = prevWidths.map((w: number, i: number) =>
               index === i ? minWidth : w);
 
           } else {
             const newWidth = x;
-            targetWidths = settings.columnWidths.map((w: number, i: number) =>
+            targetWidths = prevWidths.map((w: number, i: number) =>
               index === i ? newWidth : w);
           }
 
           const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
+
           const shortage = pageWidth - targetWidthSum;
           if (shortage > 0) {
-            const compensatingPortion = shortage / (settings.columnWidths.length - 1);
+            const compensatingPortion = shortage / (prevWidths.length - 1);
             targetWidths = targetWidths.map((w, i) => index === i ? w : w + compensatingPortion);
           }
           return { widths: targetWidths, ...rest };
         });
       });
     },
-    [ settings.columns, settings.columnWidths, pageWidth ],
+    [ settings.columns, pageWidth, getAdjustedColumnWidthSum ],
   );
 
   const handleResizeStart = useCallback(
     (index) => (e: Event, { x }: DraggableData) => {
       setIsResizing(true);
-      const column = settings.columns[index];
-      const startWidth = widthData.widths[index];
-      const minWidth = DEFAULT_COLUMN_WIDTHS[column];
-      const deltaX = startWidth - minWidth;
-      const minX = x - deltaX;
-      setWidthData(({ widths, ...rest }) => ({ minX, widths, ...rest }));
+      setWidthData(({ widths, ...rest }) => {
+        const column = settings.columns[index];
+        const startWidth = widths[index];
+        const minWidth = DEFAULT_COLUMN_WIDTHS[column];
+        const deltaX = startWidth - minWidth;
+        const minX = x - deltaX;
+        return { minX, widths, ...rest };
+      });
     },
-    [ setWidthData, settings.columns, widthData.widths ],
+    [ setWidthData, settings.columns ],
   );
 
   const handleResizeStop = useCallback(() => {
