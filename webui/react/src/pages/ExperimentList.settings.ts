@@ -85,6 +85,7 @@ const config: SettingsConfig = {
     {
       defaultValue: DEFAULT_COLUMNS.map((col: ExperimentColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
       key: 'columnWidths',
+      skipUrlEncoding: true,
       storageKey: 'columnWidths',
       type: {
         baseType: BaseType.Float,
