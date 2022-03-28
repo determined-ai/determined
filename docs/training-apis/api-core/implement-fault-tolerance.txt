@@ -4,13 +4,9 @@
  Implement Fault Tolerance
 ###########################
 
-Do you have training that take hours, days, or even weeks to complete?
-
-Don't let power outages, network outages, or even slow memory leaks cause you to have to restart.
-
-When you use the Core API, can checkpoint your progress as often as you like. Determined will
-restart your job with the last checkpoint you reported, and all you have to do for fault tolerance
-is load that checkpoint and go!
+You can use the Core API to checkpoint your progress as often as you want. Determined restarts your
+job with the last reported checkpoint so you can reload the checkpoint and run, achieving fault
+tolerance.
 
 .. code::
 
@@ -19,7 +15,6 @@ is load that checkpoint and go!
        batches_trained = 0
        epochs_complete = 0
 
-   +   # read state from the last checkpoint
    +   if context.latest_checkpoint is not None:
    +       with context.latest_checkpoint as path:
    +           state = torch.load(f"{path]/my_checkpoint")
@@ -41,8 +36,6 @@ is load that checkpoint and go!
                # update progress in the webui
                ...
 
-   +           # checkpoint every epoch for high fault-tolerance
-   +           # also track how far we have trained
    +           state = {
    +               "model": model.state_dict(),
    +               "epoch": epoch,
@@ -63,3 +56,21 @@ is load that checkpoint and go!
 
    -   with context.checkpoint.save_path() as path:
    -       torch.save(model.state_dict(), f"{path]/my_checkpoint")
+
+Read state from the last checkpoint.
+
+Train model.
+
+Report training metrics to the master.
+
+Track how much is trained.
+
+Update progress in the WebUI.
+
+Checkpoint every epoch for high fault-tolerance and track how much is trained.
+
+Evaluate model.
+
+Report validation metrics to the master.
+
+Report evaluation of the ``searcher_metric`` for this operation.

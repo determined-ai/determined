@@ -4,17 +4,14 @@
  Responsive Pause and Resume
 #############################
 
-Simply check context.should_preempt() periodically, and shut down when it returns true. Checking
-every epoch is easy but when you hit the pause button in the webui you will have to wait up to a
-full epoch to finish before the training job shuts down.
+To implement pause and resume, periodically call ``context.should_preempt()`` and shut down when it
+returns ``true``.
 
-You can have a more responsive experience by choosing to check every batch, in which case you should
-use context.should_preempt(block=False). When it returns true, you may choose to save a checkpoint
-in a partially-complete epoch or you may choose to just exit immediately. Saving a checkpoint
-minimizes lost progress, but keeping reproducibility even when checkpoints can occur mid-epoch can
-be extremely difficult, depending in particular on your dataset and training loop complexity.
+When you check every epoch using the WebUI and after clicking the **Pause** button, you have to wait
+for up to a full epoch to finish before the training job shuts down.
 
-Here we show the simple, per-epoch version:
+You can have a more responsive experience by checking every batch, as shown in this example, which
+implements the simple, per-epoch check:
 
 .. code::
 
@@ -24,3 +21,9 @@ Here we show the simple, per-epoch version:
 
            # train model
            ...
+
+For this case, set ``context.should_preempt(block=False)``. When the call returns ``true``, you can
+choose to save a checkpoint in a partially-complete epoch or exit immediately.
+
+Saving a checkpoint minimizes lost progress, but maintaining reproducibility when checkpoints occur
+mid-epoch can be difficult to manage, depending on your dataset and training loop complexity.

@@ -4,22 +4,23 @@
  Add Hyperparameter Search
 ###########################
 
-You already have many great benefits of Determined with very little work. Now, let's add support for
-hyperparameter search. After this, you'll be able to run random searches, grid searches, and even
-hyperband searches, using the "adaptive" searcher, Determined's state-of-the-art implementation of
-the hyperband algorithm!
+This section describes how to add support for hyperparameter search. This lets you run random
+searches, grid searches, and hyperband searches, using the Determined "adaptive" searcher.
 
-As we introduce HP search, we are also going to implement some best practices for model definitions,
-including:
+   .. tip::
 
--  seed our RNGs with the Determined-tracked seed for an experiment, significantly improving our
-   ability to reproduce training results
--  separate configuration from code, to be able to easily browse configs and even configure new
-   experiments interactively!
+      Model definition best practices:
+
+      -  Seed RNGs with the Determined-tracked seed for an experiment to significantly improve the
+         ability to reproduce training results.
+      -  Separate configuration from code to be able to easily browse configurations and
+         interactively configure new experiments.
 
 *************************
  Updates to ``train.py``
 *************************
+
+This example training file demonstrates how to add hyperparameter search.
 
 .. code::
 
@@ -27,19 +28,15 @@ including:
        from model import build_model, train_model, eval_model
        from data import build_data
 
-   -   # prefer to configure via the experiment config
    -   BATCH_SIZE=32
    -   LR=0.00001
    -   EPOCHS=50
 
        def main(context):
-   +       # seed RNGs based on context-provided seed
    +       seed = context.training.trial_seed
    +       random.seed(seed)
    +       torch.random.manual_seed(seed)
-   +       # ... also seed any other RNGs you need to
 
-   +       # read hyperparameters from the context object
    +       hparams = context.training.hparams
 
    -       model, loss_fn, opt = build_model(LR)
@@ -48,16 +45,11 @@ including:
    -       train_data, eval_data = build_dataset(BATCH_SIZE)
    +       train_data, eval_data = build_dataset(hparams["batch_size"])
 
-           # keep track of how many batches we have trained
            batches_trained = 0
 
    -       for epoch in range(config.EPOCHS):
-   +       # iterate through searcher operations, which are unitless
-   +       # lengths that we choose here to treat as epochs
    +       epochs_trained = 0
    +       for op in context.searcher.ops():
-   +           # every op represents an absolute length of training,
-   +           # followed by a validation
    +           while epochs_trained < op.length:
                    # train model
                    ...
@@ -65,10 +57,8 @@ including:
                    # report training metrics to the master
                    ...
 
-   +               # track how much we have trained
    +               epochs_trained += 1
    +
-   +               # update progress in the webui
    +               op.report_progress(epochs_trained)
 
                # evaluate model
@@ -77,31 +67,57 @@ including:
                # report validation metrics to the master
                ...
 
-   +           # report evaluation of the searcher_metric for this op
    +           op.complete(eval_loss)
 
-           # checkpoint model
            with context.checkpoint.save_path() as path:
                torch.save(model.state_dict(), f"{path]/my_checkpoint")
 
        if __name__ == "__main__":
-           # initialize a context object for accessing the Core API
            import determined as det
            with det.core.init() as context:
                main(context)
+
+Prefer to configure using the experiment configuration.
+
+Initialize a context object for accessing the Core API.
+
+Seed RNGs based on context-provided seed ... also seed any other RNGs you need to.
+
+Read hyperparameters from the context object.
+
+Keep track of how many batches are trained.
+
+Iterate through searcher operations, which are unitless lengths but not treated as epochs.
+
+Every operation represents an absolute length of training, followed by a validation.
+
+Train model.
+
+Report training metrics to the master.
+
+Track how much is trained.
+
+Update progress in the WebUI.
+
+Evaluate model.
+
+Report validation metrics to the master.
+
+Report evaluation of the ``searcher_metric`` for this operation.
+
+Checkpoint model.
 
 *******************************
  Updates to ``my_config.yaml``
 *******************************
 
-As we move more information to the configuration, we are improving our own development velocity,
-allowing us to quickly reconfigure new models with all the controls in one place:
+You can improve development velocity by moving more information to the configuration. This lets you
+quickly reconfigure new models with all of the controls in one place:
 
 .. code::
 
        entrypoint_script: python3 train.py
 
-   +   # define a hyperparameter search space
    +   hyperparameters:
    +       batch_size:
    +           type: int
@@ -115,10 +131,14 @@ allowing us to quickly reconfigure new models with all the controls in one place
 
        searcher:
    -       name: "single"
-   +       # use a real hp search instead of the single searcher
    +       name: "random"
    -       max_length: 1
-   +       # we are now honoring max_length in train.py
    +       max_length: 50
    +
    +       max_trials: 10
+
+Define a hyperparameter search space.
+
+Use a real hyperparameter search instead of the single searcher.
+
+Honor max_length in ``train.py``.

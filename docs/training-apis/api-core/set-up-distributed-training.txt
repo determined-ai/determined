@@ -4,40 +4,52 @@
  Set up Distributed Training
 #############################
 
-Have you ever felt like the hardest part of distributed training is just setting up all of the
-machines and getting them so they can talk to each other?
+Determined exposes a launch layer to reduce the difficulty of setting up all of your machines and
+getting them to communicate. By letting Determined coordinate all of the compute nodes in a
+multi-node distributed training job, you need only to start training after everything is ready.
 
-Determined exposes a "launch layer" so to solve that problem. Let Determined coordinate all of the
-compute nodes in a multi-node distributed training job, and you just kick of training when
-everything's ready.
+****************
+ Setup Sequence
+****************
 
-The way it works is:
+#. Schedule a multi-GPU training job with a custom ``launch_layer`` setting in the experiment
+   configuration. The ``launch_layer`` setting value should be an executable script with arguments.
+#. Determined starts all containers on their assigned GPUs.
+#. Determined gathers all of the IP addresses and assigned GPUs for every compute node in the
+   training job. This is the "rendezvous info" for the job.
+#. Determined calls your ``launch_layer`` on every compute node, with the "rendezvous info" exposed
+   as both a python API and as environment variables.
+#. Your launch layer starts the distributed training job on the assigned compute nodes, as
+   applicable.
 
--  You schedule a multi-gpu training job with a custom launch_layer setting in the experiment
-   config. The launch_layer should be an executable script with arguments
--  Determined starts up all the containers with their assigned gpus
--  Determined gathers all of ip addresses and assigned gpus for every compute node in the training
-   job (the "rendezvous info" for the job)
--  Determined calls your launch_layer on every compute node, with the rendezvous info exposed as
-   both a python API and as environment variables
--  Your launch layer starts the distributed training job on the assigned compute nodes however it
-   sees fit.
--  For common distributed training solutions (horovod, torch.distributed, pytorch lightning) you can
-   actually just use a pre-made launch layer.
+For common distributed training solutions, such as Horovod, ``torch.distributed``, and PyTorch
+Lightning, you can use a pre-made launch layer.
 
-Example: Launch a Detectron2 model (based on torch.distributed) with Determined's built-in
-torch.distributed support:
+***********
+ Example 1
+***********
+
+Launch a Detectron2 model based on ``torch.distributed`` using Determined built-in
+``torch.distributed`` support:
 
 .. code:: yaml
 
    launch_layer: python3 -m determined.launch.torch_distributed
    entrypoint_script: python3 train_detectron.py
 
-Example: Train a model that uses horovod directly:
+***********
+ Example 2
+***********
+
+Train a model that directly uses Horovod:
 
 .. code:: yaml
 
    launch_layer: python3 -m determined.launch.horovod
    entrypoint_script: python3 horovod_model.py
 
-TODO: decide on an API for writing your own launch layer from scratch and include examples.
+***********
+ Next Step
+***********
+
+Decide on an API for writing a launch layer from scratch, including examples.
