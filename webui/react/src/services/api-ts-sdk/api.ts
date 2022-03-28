@@ -1486,11 +1486,27 @@ export interface V1DeleteModelVersionResponse {
 }
 
 /**
+ * Response to DeleteProjectRequest.
+ * @export
+ * @interface V1DeleteProjectResponse
+ */
+export interface V1DeleteProjectResponse {
+}
+
+/**
  * Response to DeleteTemplateRequest.
  * @export
  * @interface V1DeleteTemplateResponse
  */
 export interface V1DeleteTemplateResponse {
+}
+
+/**
+ * Response to DeleteWorkspaceRequest.
+ * @export
+ * @interface V1DeleteWorkspaceResponse
+ */
+export interface V1DeleteWorkspaceResponse {
 }
 
 /**
@@ -4010,7 +4026,7 @@ export interface V1PatchExperimentResponse {
 }
 
 /**
- * PatchModel is a partial update to a model with only id required.
+ * PatchModel is a partial update to a model with only name required.
  * @export
  * @interface V1PatchModel
  */
@@ -4120,6 +4136,40 @@ export interface V1PatchModelVersionResponse {
 }
 
 /**
+ * PatchProject is a partial update to a project with all optional fields.
+ * @export
+ * @interface V1PatchProject
+ */
+export interface V1PatchProject {
+    /**
+     * The new name for the project.
+     * @type {string}
+     * @memberof V1PatchProject
+     */
+    name?: string;
+    /**
+     * The new description for the project.
+     * @type {string}
+     * @memberof V1PatchProject
+     */
+    description?: string;
+}
+
+/**
+ * Response to PatchProjectRequest.
+ * @export
+ * @interface V1PatchProjectResponse
+ */
+export interface V1PatchProjectResponse {
+    /**
+     * The updated project.
+     * @type {V1Project}
+     * @memberof V1PatchProjectResponse
+     */
+    project: V1Project;
+}
+
+/**
  * Request to edit fields for a user.
  * @export
  * @interface V1PatchUser
@@ -4145,6 +4195,34 @@ export interface V1PatchUserResponse {
      * @memberof V1PatchUserResponse
      */
     user: V1User;
+}
+
+/**
+ * PatchWorkspace is a partial update to a workspace with all optional fields.
+ * @export
+ * @interface V1PatchWorkspace
+ */
+export interface V1PatchWorkspace {
+    /**
+     * The new name for the workspace.
+     * @type {string}
+     * @memberof V1PatchWorkspace
+     */
+    name?: string;
+}
+
+/**
+ * Response to PatchWorkspaceRequest.
+ * @export
+ * @interface V1PatchWorkspaceResponse
+ */
+export interface V1PatchWorkspaceResponse {
+    /**
+     * The updated workspace.
+     * @type {V1Workspace}
+     * @memberof V1PatchWorkspaceResponse
+     */
+    workspace: V1Workspace;
 }
 
 /**
@@ -15666,6 +15744,43 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Delete a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteProject(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling deleteProject.');
+            }
+            const localVarPath = `/api/v1/projects/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -15790,6 +15905,52 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Update a project.
+         * @param {number} id The id of the project.
+         * @param {V1PatchProject} body The desired project fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchProject(id: number, body: V1PatchProject, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling patchProject.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchProject.');
+            }
+            const localVarPath = `/api/v1/projects/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchProject" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a project.
          * @param {number} workspaceId Id of the associated workspace.
          * @param {V1PostProjectRequest} body 
@@ -15865,6 +16026,25 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteProject(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -15901,6 +16081,26 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          */
         getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectExperimentsResponse> {
             const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Update a project.
+         * @param {number} id The id of the project.
+         * @param {V1PatchProject} body The desired project fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchProject(id: number, body: V1PatchProject, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject(id, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -15953,6 +16153,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Delete a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).deleteProject(id, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -15980,6 +16190,17 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          */
         getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
             return ProjectsApiFp(configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Update a project.
+         * @param {number} id The id of the project.
+         * @param {V1PatchProject} body The desired project fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchProject(id: number, body: V1PatchProject, options?: any) {
+            return ProjectsApiFp(configuration).patchProject(id, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -16017,6 +16238,18 @@ export class ProjectsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Delete a project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public deleteProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).deleteProject(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get the requested project.
      * @param {number} id The id of the project.
      * @param {*} [options] Override http request option.
@@ -16047,6 +16280,19 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
         return ProjectsApiFp(this.configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Update a project.
+     * @param {number} id The id of the project.
+     * @param {V1PatchProject} body The desired project fields and values to update.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public patchProject(id: number, body: V1PatchProject, options?: any) {
+        return ProjectsApiFp(this.configuration).patchProject(id, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19224,6 +19470,18 @@ export class UsersApi extends BaseAPI {
      */
     public getUser(userId: number, options?: any) {
         return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Delete a workspace.
+     * @param {number} id The id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public deleteWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).deleteWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
