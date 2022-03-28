@@ -54,15 +54,19 @@ func (a *apiServer) ModelVersionFromID(modelIdentifier string,
 		"get_model_version", mv, parentModel.Id, versionID); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s version %d not found", modelIdentifier, versionID)
+			codes.NotFound, "model \"%s\" version %d not found", modelIdentifier, versionID)
 	default:
-		return mv, err
+		return mv, errors.Wrapf(err,
+			"error fetching model \"%s\" version %d from database", modelIdentifier, versionID)
 	}
 }
 
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
 	m, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
 	return &apiv1.GetModelResponse{Model: m}, err
 }
 
@@ -338,6 +342,9 @@ func (a *apiServer) DeleteModel(
 func (a *apiServer) GetModelVersion(
 	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
 	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersion)
+	if err {
+		return nil, err
+	}
 	resp := &apiv1.GetModelVersionResponse{}
 	resp.ModelVersion = mv
 	return resp, err
