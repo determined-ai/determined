@@ -159,15 +159,13 @@ In typical PyTorch usage, a scaler object, typically an instance of ``torch.cuda
 is created and used to scale the loss for the backward pass and step optimizers during training. The
 scaler itself should be updated on each training iteration. The forward pass is wrapped in a
 ``torch.cuda.amp.autocast`` context manager, which is done both in training and when doing
-operations such as evaluation and inference. See the
-`PyTorch AMP package documentation <https://pytorch.org/docs/stable/amp.html>`_ and the
-`AMP recipe <https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html>`_ for full details and
-examples.
+operations such as evaluation and inference. See the `PyTorch AMP package documentation
+<https://pytorch.org/docs/stable/amp.html>`_ and the `AMP recipe
+<https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html>`_ for full details and examples.
 
 In the Determined PyTorchTrial API, this usage requires two modifications:
 
 -  The scaler should be wrapped before use with ``PyTorchTrial.wrap_scaler()``.
-
 -  Instead of calling ``scaler.step()``, directly, pass the scaler to
    ``PyTorchTrialContext.step_optimizer()``, which calls ``scaler.step()``.
 
@@ -203,7 +201,6 @@ For example:
 
            return {"validation_loss": loss}
 
-
 If your model invokes the features in ``torch.cuda.amp`` using only the pattern shown in the
 examples and recipes, you might be able to use an experimental feature that has all the above
 functionality without the need for additional code changes. To use the experimental feature, enable
@@ -220,4 +217,3 @@ the feature during model initialization, as shown here:
 
           context.experimental.use_amp()
           super().__init__(context)
-
