@@ -225,7 +225,7 @@ const lightDeterminedTheme: Theme = {
     navigation: {
       maxWidth: '240px',
       minWidth: '56px',
-      toolbarHeight: '56px'
+      toolbarHeight: '56px',
     },
   },
 };
