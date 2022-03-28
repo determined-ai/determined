@@ -4,22 +4,27 @@
  Getting Started
 #################
 
-Let's pretend you have a very simple training script built around PyTorch. In real life, you should
-use our PyTorchTrial, Determined's high-level API for integrating with PyTorch (but this author is
-most familiar with PyTorch, so that's what the Core API tutorial is in right now).
+Assuming you have a simple training script built around Pytorch, you need to provide the following
+files:
 
-We'll split our training into a few different files:
++---------------+------------------------------------------------+
+| File          | Description                                    |
++===============+================================================+
+| ``model.py``  | model definition and how to train/evaluate it  |
++---------------+------------------------------------------------+
+| ``data.py``   | dataset definition                             |
++---------------+------------------------------------------------+
+| ``train.py``  | entry point for training the model             |
++---------------+------------------------------------------------+
 
--  model.py: defines the model and how to train/evaluate it
--  data.py: defines the dataset
--  train.py: entrypoint for training the model
+The next step is to configure your experiment and submit it to the cluster.
 
-*******
- Files
-*******
+************************
+ Training File Examples
+************************
 
-model.py
-========
+``model.py``
+============
 
 .. code:: python
 
@@ -62,8 +67,8 @@ model.py
        val_loss = sum(losses)/len(losses)
        return val_loss
 
-data.py
-=======
+``data.py``
+===========
 
 .. code:: python
 
@@ -86,8 +91,8 @@ data.py
        )
        return train_data, eval_data
 
-train.py
-========
+``train.py``
+============
 
 .. code:: python
 
@@ -121,20 +126,21 @@ train.py
    if __name__ == "__main__":
        main()
 
-******
- More
-******
+*********************************
+ Configure and Run an Experiment
+*********************************
 
-At this point, by simply submitting your script to the cluster, you already have all of the
-following features:
+When you submit your script to the cluster, you already have:
 
--  scheduling single-gpu jobs on a Determined cluster (on-premise or on-cloud) tracking/viewing logs
--  from training jobs in the webui or cli tracking of experiment configurations and model
--  definitions tracking of random seeds interactve labeling of experiments
+-  single-GPU job scheduling, on-premise or on-cloud, and log tracking and viewing
+-  experiment configuration and model tracking, using the WebUI or CLI
+-  random seeds definition tracking and interactive experiment labeling
 
-To submit to the cluster, you would configure an experiment config with something like this:
+Step 1
+======
 
-my_config.yaml
+To submit you job to the cluster, configure an experiment similar to the following
+``my_config.yaml`` file:
 
 .. code:: yaml
 
@@ -146,21 +152,21 @@ my_config.yaml
      - host_path: /my/path/to/checkpoints
    container_path: ./checkpoint_dir
 
-we're not doing hp search yet so just use the 'single' searcher
+The ``single`` searcher is specified because hyperparameter search is not used.
 
-we have to configure the searcher for the master even though our training script is going to totally
-ignore it.
+Although not specified in the training script, configure the searcher for master.
 
-note that for the script to save the checkpoint to a persistent location, you would have to set up a
-bind mound so that the checkpoint created inside the container appears on the host file system.
-There's easier ways to do this in Determined; we'll get to those shortly.
+To save the checkpoint to a persistent location, set up a bind mount so that the checkpoint created
+inside the container appears on the host file system.
 
-Then you can submit the script to the cluster like this:
+Step 2
+======
+
+Submit the script to the cluster:
 
 .. code:: bash
 
    det experiment create my_config.yaml . -f
 
-Note that the -f means "follow logs" (they will print right to your terminal) and the . is the model
-directory that gets passed to the cluster. To use . you of course have to run this from the same
-directory as train.py, etc.
+The ``-f`` option means "follow logs", which print to your terminal. The ``.`` argument is the model
+directory passed to the cluster, which is the current directory that contains your model files.

@@ -4,26 +4,32 @@
  Track Metrics and Checkpoint
 ##############################
 
-Now you are running on a Determined cluster, but the webui doesn't have any useful information about
-your training metrics or checkpoints, and also that bind_mounts setting was obnoxious.
+Because the WebUI does not provide useful information about training metrics or checkpoints and the
+``bind_mounts`` configuration setting can be problematic, you might want to use the following Core
+API methods:
 
-Let's look at how to get the following API features:
++--------------------------------------------------+-------------------------------------------+
+| Method                                           | Function                                  |
++==================================================+===========================================+
+| ``det.core.init()``                              | Initializes a Core API context            |
++--------------------------------------------------+-------------------------------------------+
+| ``context.training.report_training_metrics()``   | Reports training metrics                  |
++--------------------------------------------------+-------------------------------------------+
+| ``context.training.report_validation_metrics()`` | Reports validation metrics                |
++--------------------------------------------------+-------------------------------------------+
+| ``context.checkpoint.save_path()``               | Reports checkpoints to the Checkpoint API |
++--------------------------------------------------+-------------------------------------------+
 
--  metrics tracking & visualizations in the webui
--  checkpoint tracking
+Using these methods, you can:
 
-All you have to do is:
+-  track and visualize metrics in the WebUI
+-  track checkpoints
 
-#. Initialize a Core API context: with det.core.init() as context:
-#. Report training metrics: context.training.report_training_metrics()
-#. Report validation metrics: context.training.report_validation_metrics()
-#. Report checkpoints to the Checkpoint API: with context.checkpoint.save_path() as path: ...
+***************************
+ ``train.py`` File Updates
+***************************
 
-You don't have to report all metrics and checkpoints in one go, but we will in this demo.
-
-*************************
- Updates to ``train.py``
-*************************
+This example training file demonstrates how to report all metrics and checkpoints.
 
 .. code::
 
@@ -31,7 +37,6 @@ You don't have to report all metrics and checkpoints in one go, but we will in t
        from model import build_model, train_model, eval_model
        from data import build_data
 
-       # some configurations
        BATCH_SIZE=32
        LR=0.00001
        EPOCHS=50
@@ -41,32 +46,26 @@ You don't have to report all metrics and checkpoints in one go, but we will in t
            model, loss_fn, opt = build_model(LR)
            train_data, eval_data = build_dataset(BATCH_SIZE)
 
-   +       # keep track of how many batches we have trained
    +       batches_trained = 0
 
            for epoch in range(config.EPOCHS):
-               # train model
                train_loss = model.train_model(model, loss_fn, opt, train_data)
                print(f"after epoch {epoch}, train_loss={train_loss}")
 
-   +           # report training metrics to the master
    +           batches_trained += len(train_data)
    +           context.training.report_training_metrics(
    +               batches_trained=batches_trained,
    +               metrics={"loss": train_loss},
    +           )
 
-               # evaluate model
                eval_loss = model.eval_model(model, loss_fn, train_data)
                print(f"after epoch {epoch}, eval_loss={eval_loss}")
 
-   +           # report validation metrics to the master
    +           context.training.report_validation_metrics(
    +               batches_trained=batches_trained,
    +               metrics={"loss": eval_loss},
    +           )
 
-           # checkpoint model
    -       path="checkpoint_dir/my_checkpoint"
    -       torch.save(model.state_dict(), path)
    +       with context.checkpoint.save_path() as path:
@@ -74,18 +73,29 @@ You don't have to report all metrics and checkpoints in one go, but we will in t
 
        if __name__ == "__main__":
    -       main()
-   +       # initialize a context object for accessing the Core API
    +       import determined as det
    +       with det.core.init() as context:
    +           main(context)
 
-*******************************
- Updates to ``my_config.yaml``
-*******************************
+Some configurations.
 
-Notice that the context.checkpoint.save_path() from the Core API was easy to use, and now we can
-rely on the cluster's checkpoint configuration, rather than hacking something together with
-bindmounts:
+Initialize a context object for accessing the Core API.
+
+Keep track of how many batches were trained.
+
+Train model.
+
+Report training metrics to the master.
+
+Evaluate model.
+
+Report validation metrics to the master.
+
+Checkpoint model.
+
+*********************************
+ ``my_config.yaml`` File Updates
+*********************************
 
 .. code::
 
@@ -98,8 +108,9 @@ bindmounts:
            # our training script is going to totally ignore it.
            max_length: 1
    -
-   -   # since we are using context.checkpoint.save_path(),
-   -   # we don't need bind_mounts anymore
    -   bind_mounts:
    -     - host_path: /my/path/to/checkpoints
    -       container_path: ./checkpoint_dir
+
+By using the ``context.checkpoint.save_path()`` method, you can now rely on the cluster checkpoint
+configuration instead of bind mounts.

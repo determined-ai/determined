@@ -2,30 +2,29 @@
  Core API
 ##########
 
-The Core API lets you train arbitrary models in Determined, but in a way that you can integrate
-seamlessly with the entire Determined platform. Technically, no interaction with the Core API is
-required to run arbitrary models on Determined, in which case you will still already have access to
-the following platform features:
+The Core API lets you train arbitrary models in a way that integrates seamlessly with the Determined
+platform. While you can run arbitrary models without using the Core API and have full access to the
+following features:
 
--  scheduling single-gpu jobs on a Determined cluster (on-premise or on-cloud)
--  tracking/viewing logs from training jobs in the webui or cli
--  tracking of experiment configurations and model definitions
--  tracking of random seeds
--  interactve labeling of experiments
+-  schedule single-GPU jobs on a Determined cluster, on-premise or on-cloud
+-  track and view training job logs using the WebUI or CLI
+-  track experiment configurations and model definitions
+-  track random seeds
+-  interactive experiment labeling
 
-With a small amount of code changes, you can also integrate with each of the following features of
-the Determined platform:
+Architecturally, each of the higher-level APIs, including PyTorchTrial, Keras, Estimator, and
+Lightning, is implemented using the Core API. With a small number of code changes and using the Core
+API, you gain access to the following additional capabilities:
 
--  metrics tracking & visualizations
+-  metrics tracking and visualization
 -  checkpoint tracking
 -  hyperparameter search
--  pausing & resuming jobs interactively from the webui
+-  interactive job pause and resume using the WebUI
 -  performant spot-instance support
--  running on one gpu, or across many gpus
+-  running on a single or multiple GPUs
 
-The Core API is used behind-the-scenes to implement each of the higher-level APIs Determined offers
-(PyTorchTrial, Keras, Estimator, Lightning, etc), so with the Core API, you really have the full
-capabilities of the Determined platform at your fingertips!
+This section shows you how to get started using the Core API and how to implement the above
+capabilities.
 
 .. toctree::
    :maxdepth: 1
