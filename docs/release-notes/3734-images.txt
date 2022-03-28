@@ -1,5 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Images: Update default environment images to PyTorch 1.10.2, Tensorflow 2.8, horovod 0.24.2.
