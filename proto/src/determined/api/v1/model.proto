@@ -118,7 +118,7 @@ message PostModelResponse {
 
 // Request for updating a model in the registry.
 message PatchModelRequest {
-  // The model desired model fields and values.
+  // The desired model fields and values to update.
   determined.model.v1.PatchModel model = 1;
   // The name of the model being updated.
   string model_name = 3;
