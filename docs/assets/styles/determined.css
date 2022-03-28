@@ -4,13 +4,23 @@ table.align-default {
     margin-left: inherit !important;
 }
 /* landing page */
-.page-main-content {
+.landing-main-content {
     padding-top: 2rem;
     padding-bottom: 2rem;
-    margin-top: 82px;
+/*    margin-top: 82px; */
     width: 100%;
     min-width: 0;
     flex-grow: 1;
+}
+.header__container {
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    margin-right: 100px;
+    color: #65665c;
+    font-weight: 700;
+    height: 82px;
+    line-height: 67px;
+    z-index: 400;
 }
 .page-toc-title {
     color: var(--color-sidebar-caption-text);
@@ -317,7 +327,8 @@ p.htitle {
   position: relative;
   margin-left: 140px;
   margin-bottom: 32px;
-  width: calc(var(--cols) * (var(--width) + 2 * var(--gap)));
+/*  width: calc(var(--cols) * (var(--width) + 2 * var(--gap))); */
+  width: 720px;
   padding: 0 var(--gap);
 }
 .hero h1 {
@@ -325,10 +336,10 @@ p.htitle {
   font-size: 24px;
 }
 .hero p{
-  margin-right: 140px;
+/*  margin-right: 140px; */
 }
 .hero li{
-  width: 50%;
+  width: 100%;
   padding-top: 10px;
 }
 .hero img {
@@ -356,6 +367,19 @@ ul.menu li {
     margin-right: 1.2rem;
 }
 ul.menu li a, a:hover, a:focus, a:active {
+    text-decoration: none;
+}
+ul.menu-right {
+    display: flex;
+    float: right;
+    list-style: none;
+    padding-left: 0;
+}
+ul.menu-right li {
+    border-bottom: 1px solid var(--color-background-border);
+    margin-right: 1.2rem;
+}
+ul.menu-right li a, a:hover, a:focus, a:active {
     text-decoration: none;
 }
 /* fonts */
