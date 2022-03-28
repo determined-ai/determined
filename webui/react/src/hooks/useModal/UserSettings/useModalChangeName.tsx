@@ -16,7 +16,7 @@ interface Props {
 
 const ChangeName: React.FC<Props> = ({ onComplete }) => {
   const { auth } = useStore();
-  const username = auth.user?.username ?? '';
+  const userId = auth.user?.id ?? 0;
   const existingDisplayName = auth.user?.displayName;
   const [ form ] = Form.useForm();
   const [ isUpdating, setIsUpdating ] = useState(false);
@@ -31,7 +31,7 @@ const ChangeName: React.FC<Props> = ({ onComplete }) => {
     setIsUpdating(true);
     try {
       const user = await patchUser({
-        username,
+        userId,
         userParams: { displayName: form.getFieldValue('displayName') },
       });
       storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
@@ -42,7 +42,7 @@ const ChangeName: React.FC<Props> = ({ onComplete }) => {
       handleError(e);
     }
     setIsUpdating(false);
-  }, [ form, onComplete, username, storeDispatch ]);
+  }, [ form, onComplete, userId, storeDispatch ]);
 
   return (
     <div className={css.base}>

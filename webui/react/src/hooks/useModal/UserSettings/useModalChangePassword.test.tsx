@@ -27,6 +27,7 @@ jest.mock('services/api', () => ({
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
+const USER_ID = 1;
 const CHANGE_PASSWORD_TEXT = 'Change password';
 const USER_SETTINGS_HEADER = 'Account';
 const FIRST_PASSWORD_VALUE = 'Password';
@@ -37,7 +38,7 @@ const CONFIRM_PASSWORD_LABEL = 'Confirm Password';
 
 const currentUser: DetailedUser = {
   displayName: 'Test name',
-  id: 1,
+  id: USER_ID,
   isActive: true,
   isAdmin: false,
   username: USERNAME,
@@ -129,7 +130,7 @@ describe('useModalChangePassword', () => {
     // api method was called:
     expect(mockSetUserPassword).toHaveBeenCalledWith({
       password: SECOND_PASSWORD_VALUE,
-      username: USERNAME,
+      userId: USER_ID,
     });
   });
 
