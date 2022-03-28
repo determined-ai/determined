@@ -342,7 +342,7 @@ func (a *apiServer) DeleteModel(
 func (a *apiServer) GetModelVersion(
 	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
 	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersion)
-	if err {
+	if err != nil {
 		return nil, err
 	}
 	resp := &apiv1.GetModelVersionResponse{}
