@@ -65,10 +65,6 @@
    :caption: Further
    :hidden:
 
-   join-community
-   attributions
-   release-notes
-
 ###############
  Determined AI
 ###############
