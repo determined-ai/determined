@@ -67,6 +67,9 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 			"error fetching experiment from database: %d", experimentID)
 	}
 
+	sort.Slice(exp.TrialIds, func(i, j int) bool {
+		return exp.TrialIds[i] < exp.TrialIds[j]
+	})
 	return exp, nil
 }
 
