@@ -2,6 +2,24 @@ import { RouteConfig } from './types';
 
 const routes: RouteConfig[] = [
   {
+    id: 'workspaceDetails',
+    needAuth: true,
+    path: '/workspaces/:workspaceId',
+    title: 'Workspace',
+  },
+  {
+    id: 'workspaceList',
+    needAuth: true,
+    path: '/workspaces',
+    title: 'Workspace',
+  },
+  {
+    id: 'projectDetails',
+    needAuth: true,
+    path: '/projects/:projectId',
+    title: 'Project',
+  },
+  {
     id: 'trialDetails',
     needAuth: true,
     path: '/experiments/:experimentId/trials/:trialId/:tab?',
