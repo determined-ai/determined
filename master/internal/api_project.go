@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -20,10 +21,10 @@ func (a *apiServer) GetProjectFromID(id int32) (*projectv1.Project, error) {
 	switch err := a.m.db.QueryProto("get_project", p, id); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "project \"%d\" not found", id)
+			codes.NotFound, "project (%d) not found", id)
 	default:
 		return p, errors.Wrapf(err,
-			"error fetching project \"%d\" from database", id)
+			"error fetching project (%d) from database", id)
 	}
 }
 
@@ -134,4 +135,64 @@ func (a *apiServer) AddProjectNote(
 	err = a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, notes)
 	return &apiv1.AddProjectNoteResponse{Notes: newp.Notes},
 		errors.Wrapf(err, "error adding project note")
+}
+
+func (a *apiServer) PatchProject(
+	_ context.Context, req *apiv1.PatchProjectRequest) (*apiv1.PatchProjectResponse, error) {
+	// Verify current project exists and can be edited.
+	currProject, err := a.GetProjectFromID(req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if currProject.Archived {
+		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
+			currProject.Id)
+	}
+
+	madeChanges := false
+	if req.Project.Name != nil && req.Project.Name.Value != currProject.Name {
+		log.Infof("project (%d) name changing from \"%s\" to \"%s\"",
+			currProject.Id, currProject.Name, req.Project.Name.Value)
+		madeChanges = true
+		currProject.Name = req.Project.Name.Value
+	}
+
+	if req.Project.Description != nil && req.Project.Description.Value != currProject.Description {
+		log.Infof("project (%d) description changing from \"%s\" to \"%s\"",
+			currProject.Id, currProject.Description, req.Project.Description.Value)
+		madeChanges = true
+		currProject.Description = req.Project.Description.Value
+	}
+
+	if !madeChanges {
+		return &apiv1.PatchProjectResponse{Project: currProject}, nil
+	}
+
+	finalProject := &projectv1.Project{}
+	err = a.m.db.QueryProto("update_project",
+		finalProject, currProject.Id, currProject.Name, currProject.Description)
+
+	return &apiv1.PatchProjectResponse{Project: finalProject},
+		errors.Wrapf(err, "error updating project (%d) in database", currProject.Id)
+}
+
+func (a *apiServer) DeleteProject(
+	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &projectv1.Project{}
+	err = a.m.db.QueryProto("delete_project", holder, req.Id, user.User.Id,
+		user.User.Admin)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) does not exist or not delete-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.DeleteProjectResponse{},
+		errors.Wrapf(err, "error deleting project (%d)", req.Id)
 }
