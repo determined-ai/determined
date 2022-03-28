@@ -229,6 +229,9 @@ export const paths = {
   modelVersionDetails: (modelName: string, versionId: number | string): string => {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
+  projectDetails: (projectId: number | string): string => {
+    return `projects/${projectId}`;
+  },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },
@@ -254,5 +257,11 @@ export const paths = {
   },
   users: (): string => {
     return '/users';
+  },
+  workspaceDetails: (workspaceId: number | string): string => {
+    return `/workspaces/${workspaceId}`;
+  },
+  workspaceList: (): string => {
+    return '/workspaces';
   },
 };
