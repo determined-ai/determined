@@ -2,5 +2,5 @@
 
 **Bug Fixes**
 
--  Fix an issue where the authentication flow did not remember the originally
-   requested page to redirect to after a successful authentication.
+-  Fix an issue where the originally requested page to redirect to after a previously successful
+   authentication flow was not remembered.
