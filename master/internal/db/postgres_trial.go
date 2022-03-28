@@ -27,7 +27,7 @@ func (db *PgDB) AddTrial(trial *model.Trial) error {
 			TaskID:     trial.TaskID,
 			TaskType:   model.TaskTypeTrial,
 			StartTime:  trial.StartTime,
-			JobID:      trial.JobID,
+			JobID:      &trial.JobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
 			return err

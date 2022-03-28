@@ -41,7 +41,7 @@ func TestClusterAPI(t *testing.T) {
 	tID := model.NewTaskID()
 	tIn := &model.Task{
 		TaskID:    tID,
-		JobID:     jID,
+		JobID:     &jID,
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}

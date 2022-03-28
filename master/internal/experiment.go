@@ -373,7 +373,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			rm: e.rm,
 			db: e.db,
 
-			logCtx: e.logCtx,
+			taskLogger: e.taskLogger,
+			logCtx:     e.logCtx,
 		})
 
 		if e.State == model.CompletedState {
