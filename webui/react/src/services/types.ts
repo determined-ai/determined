@@ -250,3 +250,37 @@ export interface PatchUserParams {
     displayName: string;
   };
 }
+
+export interface GetProjectParams {
+  id: number;
+}
+
+export interface GetProjectExperimentsParams extends GetExperimentsParams {
+  id: number;
+}
+
+export interface AddProjectNoteParams {
+  contents: string;
+  id: number;
+  name: string;
+}
+
+export interface GetWorkspacesParams extends PaginationParams {
+  archived?: boolean;
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME';
+  users?: string[];
+}
+
+export interface GetWorkspaceParams {
+  id: number;
+}
+
+export interface GetWorkspaceProjectsParams extends PaginationParams {
+  archived?: boolean;
+  id: number;
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' |
+  'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION';
+  users?: string[];
+}

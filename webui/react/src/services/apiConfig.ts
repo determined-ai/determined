@@ -22,6 +22,7 @@ export const detApi = {
   Internal: new Api.InternalApi(ApiConfig),
   Models: new Api.ModelsApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
+  Projects: new Api.ProjectsApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
@@ -32,6 +33,7 @@ export const detApi = {
   Templates: new Api.TemplatesApi(ApiConfig),
   TensorBoards: new Api.TensorboardsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
+  Workspaces: new Api.WorkspacesApi(ApiConfig),
 };
 
 const updatedApiConfigParams = (
@@ -593,6 +595,162 @@ export const postModelVersion: Service.DetApi<
   request: (params: Service.PostModelVersionParams) => detApi.Models.postModelVersion(
     params.modelName,
     params.body,
+  ),
+};
+
+/* Workspaces */
+
+export const getWorkspaces: Service.DetApi<
+  Service.GetWorkspacesParams,
+  Api.V1GetWorkspacesResponse,
+  Type.WorkspacePagination
+> = {
+  name: 'getWorkspaces',
+  postProcess: (response) => {
+    return {
+      pagination: response.pagination,
+      workspaces: response.workspaces.map(decoder.mapV1Workspace),
+    };
+  },
+  request: (params, options) => {
+    return detApi.Workspaces.getWorkspaces(
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.name,
+      params.archived,
+      params.users,
+      options,
+    );
+  },
+};
+
+export const getWorkspace: Service.DetApi<
+  Service.GetWorkspaceParams, Api.V1GetWorkspaceResponse, Type.Workspace
+> = {
+  name: 'getWorkspace',
+  postProcess: (response) => {
+    return decoder.mapV1Workspace(response.workspace);
+  },
+  request: (params) => detApi.Workspaces.getWorkspace(
+    params.id,
+  ),
+};
+
+export const createWorkspace: Service.DetApi<
+  Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
+> = {
+  name: 'createWorkspace',
+  postProcess: (response) => {
+    return decoder.mapV1Workspace(response.workspace);
+  },
+  request: (params) => detApi.Workspaces.postWorkspace(
+    { name: params.name },
+  ),
+};
+
+export const getWorkspaceProjects: Service.DetApi<
+  Service.GetWorkspaceProjectsParams,
+  Api.V1GetWorkspaceProjectsResponse,
+  Type.ProjectPagination
+> = {
+  name: 'getWorkspaceProjects',
+  postProcess: (response) => {
+    return {
+      pagination: response.pagination,
+      projects: response.projects.map(decoder.mapV1Project),
+    };
+  },
+  request: (params, options) => {
+    return detApi.Workspaces.getWorkspaceProjects(
+      params.id,
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.name,
+      params.archived,
+      params.users,
+      options,
+    );
+  },
+};
+
+/* Projects */
+
+export const getProject: Service.DetApi<
+  Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
+> = {
+  name: 'getProject',
+  postProcess: (response) => {
+    return decoder.mapV1Project(response.project);
+  },
+  request: (params) => detApi.Projects.getProject(
+    params.id,
+  ),
+};
+
+export const getProjectExperiments: Service.DetApi<
+  Service.GetProjectExperimentsParams,
+  Api.V1GetProjectExperimentsResponse,
+  Type.ExperimentPagination
+> = {
+  name: 'getProjectExperiments',
+  postProcess: (response: Api.V1GetExperimentsResponse) => {
+    return {
+      experiments: decoder.mapV1ExperimentList(response.experiments),
+      pagination: response.pagination,
+    };
+  },
+  request: (params: Service.GetProjectExperimentsParams, options) => {
+    return detApi.Projects.getProjectExperiments(
+      params.id,
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.description,
+      params.name,
+      params.labels,
+      params.archived,
+      params.states,
+      params.users,
+      options,
+    );
+  },
+};
+
+export const addProjectNote: Service.DetApi<
+  Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
+> = {
+  name: 'addProjectNote',
+  postProcess: (response) => {
+    return response.notes as Type.Note[];
+  },
+  request: (params) => detApi.Projects.addProjectNote(
+    params.id,
+    {
+      contents: params.contents,
+      name: params.name,
+    },
+  ),
+};
+
+export const createProject: Service.DetApi<
+  Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
+> = {
+  name: 'createProject',
+  postProcess: (response) => {
+    return decoder.mapV1Project(response.project);
+  },
+  request: (params) => detApi.Projects.postProject(
+    params.workspaceId,
+    {
+      description: params.description,
+      name: params.name,
+      workspaceId: params.workspaceId,
+    },
   ),
 };
 

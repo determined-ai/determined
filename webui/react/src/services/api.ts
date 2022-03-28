@@ -219,6 +219,44 @@ export const getModelLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
 
+/* Workspaces */
+
+export const getWorkspace = generateDetApi<
+  Service.GetWorkspaceParams, Api.V1GetWorkspaceResponse, Type.Workspace
+>(Config.getWorkspace);
+
+export const getWorkspaces = generateDetApi<
+  Service.GetWorkspacesParams, Api.V1GetWorkspacesResponse, Type.WorkspacePagination
+>(Config.getWorkspaces);
+
+export const getWorkspaceProjects = generateDetApi<
+  Service.GetWorkspaceProjectsParams, Api.V1GetWorkspaceProjectsResponse, Type.ProjectPagination
+>(Config.getWorkspaceProjects);
+
+export const createWorkspace = generateDetApi<
+  Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
+>(Config.createWorkspace);
+
+/* Projects */
+
+export const getProject = generateDetApi<
+  Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
+>(Config.getProject);
+
+export const getProjectExperiments = generateDetApi<
+  Service.GetProjectExperimentsParams,
+  Api.V1GetProjectExperimentsResponse,
+  Type.ExperimentPagination
+>(Config.getProjectExperiments);
+
+export const addProjectNote = generateDetApi<
+  Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
+>(Config.addProjectNote);
+
+export const createProject = generateDetApi<
+  Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
+>(Config.createProject);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
