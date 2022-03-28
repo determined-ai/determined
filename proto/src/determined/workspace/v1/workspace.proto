@@ -4,6 +4,7 @@ package determined.workspace.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/workspacev1";
 
 import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/wrappers.proto";
 
 // Workspace is a named collection of projects.
 message Workspace {
@@ -20,4 +21,10 @@ message Workspace {
   bool archived = 3;
   // User who created this workspace.
   string username = 4;
+}
+
+// PatchWorkspace is a partial update to a workspace with all optional fields.
+message PatchWorkspace {
+  // The new name for the workspace.
+  google.protobuf.StringValue name = 1;
 }
