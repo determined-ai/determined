@@ -3491,6 +3491,46 @@ class v1PatchModelVersionResponse:
             "modelVersion": self.modelVersion.to_json(),
         }
 
+class v1PatchProject:
+    def __init__(
+        self,
+        description: "typing.Optional[str]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.description = description
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchProject":
+        return cls(
+            name=obj.get("name", None),
+            description=obj.get("description", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+            "description": self.description if self.description is not None else None,
+        }
+
+class v1PatchProjectResponse:
+    def __init__(
+        self,
+        project: "v1Project",
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchProjectResponse":
+        return cls(
+            project=v1Project.from_json(obj["project"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "project": self.project.to_json(),
+        }
+
 class v1PatchUser:
     def __init__(
         self,
@@ -3525,6 +3565,42 @@ class v1PatchUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
+        }
+
+class v1PatchWorkspace:
+    def __init__(
+        self,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchWorkspace":
+        return cls(
+            name=obj.get("name", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+        }
+
+class v1PatchWorkspaceResponse:
+    def __init__(
+        self,
+        workspace: "v1Workspace",
+    ):
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchWorkspaceResponse":
+        return cls(
+            workspace=v1Workspace.from_json(obj["workspace"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspace": self.workspace.to_json(),
         }
 
 class v1PostCheckpointMetadataRequest:
@@ -5862,6 +5938,25 @@ def delete_DeleteModelVersion(
         return
     raise APIHttpError("delete_DeleteModelVersion", _resp)
 
+def delete_DeleteProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/projects/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteProject", _resp)
+
 def delete_DeleteTemplate(
     session: "client.Session",
     *,
@@ -5880,6 +5975,25 @@ def delete_DeleteTemplate(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
+
+def delete_DeleteWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/workspaces/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(
     session: "client.Session",
@@ -7343,6 +7457,26 @@ def patch_PatchModelVersion(
         return v1PatchModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModelVersion", _resp)
 
+def patch_PatchProject(
+    session: "client.Session",
+    *,
+    body: "v1PatchProject",
+    id: int,
+) -> "v1PatchProjectResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/projects/{id}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PatchProjectResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchProject", _resp)
+
 def patch_PatchUser(
     session: "client.Session",
     *,
@@ -7362,6 +7496,26 @@ def patch_PatchUser(
     if _resp.status_code == 200:
         return v1PatchUserResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUser", _resp)
+
+def patch_PatchWorkspace(
+    session: "client.Session",
+    *,
+    body: "v1PatchWorkspace",
+    id: int,
+) -> "v1PatchWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/workspaces/{id}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PatchWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchWorkspace", _resp)
 
 def post_PauseExperiment(
     session: "client.Session",

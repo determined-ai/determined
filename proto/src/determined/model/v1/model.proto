@@ -53,7 +53,7 @@ message Model {
   string notes = 12;
 }
 
-// PatchModel is a partial update to a model with only id required.
+// PatchModel is a partial update to a model with only name required.
 message PatchModel {
   // An updated name for the model.
   google.protobuf.StringValue name = 2
