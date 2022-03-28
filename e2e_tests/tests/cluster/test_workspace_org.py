@@ -2,7 +2,7 @@ from typing import List
 
 import pytest
 
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import authentication, bindings, certs, errors
 from determined.common.experimental import session
 from tests import config as conf
 
@@ -22,10 +22,12 @@ def test_workspace_org() -> None:
         r = bindings.get_GetWorkspaces(sess, name="Uncategorized")
         assert r.workspaces and len(r.workspaces) == 1
         default_workspace = r.workspaces[0]
+        assert default_workspace.immutable
         r2 = bindings.get_GetWorkspaceProjects(sess, id=default_workspace.id)
         assert r2.projects and len(r2.projects) == 1
         default_project = r2.projects[0]
         assert default_project.name == "Uncategorized"
+        assert default_project.immutable
 
         # Add a test workspace.
         r3 = bindings.post_PostWorkspace(
@@ -36,6 +38,7 @@ def test_workspace_org() -> None:
         test_workspaces.append(madeWorkspace)
         get_workspace = bindings.get_GetWorkspace(sess, id=madeWorkspace.id).workspace
         assert get_workspace and get_workspace.name == "_TestOnly"
+        assert not madeWorkspace.immutable and not get_workspace.immutable
 
         # Patch the workspace
         w_patch = bindings.v1PatchWorkspace.from_json(madeWorkspace.to_json())
@@ -76,6 +79,7 @@ def test_workspace_org() -> None:
         test_projects.append(madeProject)
         get_project = bindings.get_GetProject(sess, id=madeProject.id).project
         assert get_project and get_project.name == "_TestOnly"
+        assert not madeProject.immutable and not get_project.immutable
 
         # Patch the project
         p_patch = bindings.v1PatchProject.from_json(madeProject.to_json())
@@ -83,6 +87,10 @@ def test_workspace_org() -> None:
         bindings.patch_PatchProject(sess, body=p_patch, id=madeProject.id)
         get_project = bindings.get_GetProject(sess, id=madeProject.id).project
         assert get_project.name == "_TestPatchedProject"
+
+        # Refuse to patch the default project
+        with pytest.raises(errors.APIException):
+            bindings.patch_PatchProject(sess, body=p_patch, id=default_project.id)
 
         # Sort workspaces' projects.
         p1 = bindings.post_PostProject(

@@ -21,6 +21,8 @@ message Workspace {
   bool archived = 3;
   // User who created this workspace.
   string username = 4;
+  // Whether this workspace is immutable (default uncategorized workspace).
+  bool immutable = 5;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.

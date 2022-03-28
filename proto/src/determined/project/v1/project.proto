@@ -58,6 +58,8 @@ message Project {
   bool archived = 9;
   // User who created this project.
   string username = 10;
+  // Whether this project is immutable (default uncategorized project).
+  bool immutable = 11;
 }
 
 // ProjectModel is a checkpoint associated with a project.

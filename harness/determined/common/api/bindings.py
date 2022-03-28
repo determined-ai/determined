@@ -3961,6 +3961,7 @@ class v1Project:
         username: str,
         workspaceId: int,
         description: "typing.Optional[str]" = None,
+        immutable: "typing.Optional[bool]" = None,
         lastExperimentStartedAt: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -3973,6 +3974,7 @@ class v1Project:
         self.numActiveExperiments = numActiveExperiments
         self.archived = archived
         self.username = username
+        self.immutable = immutable
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -3987,6 +3989,7 @@ class v1Project:
             numActiveExperiments=obj["numActiveExperiments"],
             archived=obj["archived"],
             username=obj["username"],
+            immutable=obj.get("immutable", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4001,6 +4004,7 @@ class v1Project:
             "numActiveExperiments": self.numActiveExperiments,
             "archived": self.archived,
             "username": self.username,
+            "immutable": self.immutable if self.immutable is not None else None,
         }
 
 class v1PutTemplateResponse:
@@ -5592,11 +5596,13 @@ class v1Workspace:
         id: int,
         name: str,
         username: str,
+        immutable: "typing.Optional[bool]" = None,
     ):
         self.id = id
         self.name = name
         self.archived = archived
         self.username = username
+        self.immutable = immutable
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -5605,6 +5611,7 @@ class v1Workspace:
             name=obj["name"],
             archived=obj["archived"],
             username=obj["username"],
+            immutable=obj.get("immutable", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -5613,6 +5620,7 @@ class v1Workspace:
             "name": self.name,
             "archived": self.archived,
             "username": self.username,
+            "immutable": self.immutable if self.immutable is not None else None,
         }
 
 def post_AckAllocationPreemptionSignal(
