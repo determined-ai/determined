@@ -96,6 +96,7 @@ SELECT
     trials.experiment_id,
     workloads.kind,
     users.username,
+    experiments.owner_id AS user_id,
     experiments.config -> 'resources' ->> 'slots_per_trial' AS slots,
     experiments.config -> 'labels' AS labels,
     workloads.start_time,

@@ -1,6 +1,6 @@
 {
-  "short_name": "HPE Cray AI",
-  "name": "HPE Cray AI",
+  "short_name": "HPE Machine Learning Development Environment",
+  "name": "HPE Machine Learning Development Environment",
   "icons": [
     {
       "src": "favicon.ico",

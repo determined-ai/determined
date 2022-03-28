@@ -73,6 +73,8 @@ message Job {
   google.protobuf.Timestamp submission_time = 3;
   // The username of the user who submitted the job.
   string username = 4;
+  // The id of the user who submitted the job.
+  int32 user_id = 15;
   // Associated resource pool.
   string resource_pool = 5;
   // Whether the job is preemptible.

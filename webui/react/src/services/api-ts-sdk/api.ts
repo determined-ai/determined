@@ -1276,6 +1276,12 @@ export interface V1Command {
      */
     displayName?: string;
     /**
+     * The id of the user that created the command.
+     * @type {number}
+     * @memberof V1Command
+     */
+    userId?: number;
+    /**
      * The username of the user that created the command.
      * @type {string}
      * @memberof V1Command
@@ -1641,6 +1647,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     displayName?: string;
+    /**
+     * The id of the user that created the experiment.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    userId?: number;
     /**
      * The username of the user that created the experiment.
      * @type {string}
@@ -2801,6 +2813,12 @@ export interface V1Job {
      */
     username: string;
     /**
+     * The id of the user who submitted the job.
+     * @type {number}
+     * @memberof V1Job
+     */
+    userId?: number;
+    /**
      * Associated resource pool.
      * @type {string}
      * @memberof V1Job
@@ -3495,11 +3513,17 @@ export interface V1Model {
      */
     labels?: Array<string>;
     /**
-     * User who created this model.
+     * Username of the user who created this model.
      * @type {string}
      * @memberof V1Model
      */
     username: string;
+    /**
+     * Id of the user who created this model.
+     * @type {number}
+     * @memberof V1Model
+     */
+    userId?: number;
     /**
      * Whether this model is archived or not.
      * @type {boolean}
@@ -3575,11 +3599,17 @@ export interface V1ModelVersion {
      */
     comment?: string;
     /**
-     * User who created this model version.
+     * Username of the user who created this model version.
      * @type {string}
      * @memberof V1ModelVersion
      */
     username: string;
+    /**
+     * Id of the user who created this model version.
+     * @type {number}
+     * @memberof V1ModelVersion
+     */
+    userId?: number;
     /**
      * Labels associated with this model version.
      * @type {Array<string>}
@@ -3636,6 +3666,12 @@ export interface V1Notebook {
      * @memberof V1Notebook
      */
     displayName?: string;
+    /**
+     * The id of the user that created the notebook.
+     * @type {number}
+     * @memberof V1Notebook
+     */
+    userId?: number;
     /**
      * The username of the user that created the notebook.
      * @type {string}
@@ -4461,6 +4497,12 @@ export interface V1ResourceAllocationRawEntry {
      */
     username?: string;
     /**
+     * The username of the user who ran the experiment.
+     * @type {number}
+     * @memberof V1ResourceAllocationRawEntry
+     */
+    userId?: number;
+    /**
      * The labels assigned to the experiment.
      * @type {Array<string>}
      * @memberof V1ResourceAllocationRawEntry
@@ -5280,6 +5322,12 @@ export interface V1Shell {
      */
     displayName?: string;
     /**
+     * The id of the user that created the shell.
+     * @type {number}
+     * @memberof V1Shell
+     */
+    userId?: number;
+    /**
      * The username of the user that created the shell.
      * @type {string}
      * @memberof V1Shell
@@ -5525,6 +5573,12 @@ export interface V1Tensorboard {
      * @memberof V1Tensorboard
      */
     displayName?: string;
+    /**
+     * The id of the user that created the tensorboard.
+     * @type {number}
+     * @memberof V1Tensorboard
+     */
+    userId?: number;
     /**
      * The username of the user that created the tensorboard.
      * @type {string}

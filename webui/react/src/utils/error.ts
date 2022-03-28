@@ -145,7 +145,12 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): void
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (e.type === ErrorType.Auth) {
-    history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
+    // This check accounts for requestes that had not been aborted properly prior
+    // to the page dismount and end up throwing after the user is logged out.
+    const path = window.location.pathname;
+    if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
+      history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
+    }
   }
 
   // TODO add support for checking, saving, and dismissing class of errors as a user preference
