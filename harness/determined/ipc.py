@@ -643,8 +643,8 @@ class PIDServer:
 
     def run(self, health_check: Optional[Callable] = None, poll_period: float = 1) -> None:
         assert self.sel, "must start first"
-        # Continue until we aren't waiting for anything else to shut down.
-        while self.listener or self.conns:
+        # Continue waiting until all workers have connected and subsequently exited gracefully.
+        while self.listener or len(self.graceful_shutdowns) < self.num_clients:
             # Get some read events.
             for key, mask in self.sel.select(timeout=poll_period):
                 if key.fileobj == self.listener:
@@ -657,10 +657,6 @@ class PIDServer:
                     raise AssertionError(f"unexpected key from select(): {key}")
 
             self.check_pids()
-
-            # If all workers exited gracefully, shut down nicely.
-            if len(self.graceful_shutdowns) == self.num_clients:
-                return
 
             # Otherwise, run the externally-provided health check.
             if health_check is not None:
@@ -688,7 +684,7 @@ class PIDServer:
         try:
             self.run(health_check)
         except HealthCheckFail as e:
-            return e.exit_code
+            return e.exit_code or 77
         except det.errors.WorkerError:
             # Worker failed.
             if on_fail is not None:
@@ -697,11 +693,11 @@ class PIDServer:
                 p.send_signal(on_fail)
                 if on_fail != signal.SIGKILL:
                     try:
-                        return p.wait(timeout=10) or 77
+                        return p.wait(timeout=10) or 78
                     except subprocess.TimeoutExpired:
                         logging.error(f"killing worker which didn't exit after {on_fail.name}")
                         p.send_signal(signal.SIGKILL)
-            return p.wait() or 77
+            return p.wait() or 79
 
         # All workers exited normally.
         if on_exit is not None:

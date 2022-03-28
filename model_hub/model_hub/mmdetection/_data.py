@@ -116,7 +116,9 @@ def maybe_download_ann_file(cfg: mmcv.Config) -> None:
                 file_client_args = dataset.pipeline[0].file_client_args
                 file_client = mmcv.FileClient(**file_client_args)
                 ann_bytes = file_client.get(dataset.ann_file)
-                logging.info(f"Downloading annotation file using {file_client.backend} backend.")
+                logging.info(
+                    f'Downloading annotation file using {file_client_args["backend"]} backend.'
+                )
                 with open(dataset.ann_file, "wb") as f:
                     f.write(ann_bytes)
             except Exception as e:

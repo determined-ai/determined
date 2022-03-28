@@ -5,7 +5,7 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 const SignOut: React.FC = () => {
   const history = useHistory();
@@ -20,12 +20,14 @@ const SignOut: React.FC = () => {
       try {
         await logout({});
       } catch (e) {
-        handleError(e, {
-          isUserTriggered: false,
-          level: ErrorLevel.Warn,
-          silent: true,
-          type: ErrorType.Server,
-        });
+        if (!(e instanceof DetError && e.type === ErrorType.Auth)) {
+          handleError(e, {
+            isUserTriggered: false,
+            level: ErrorLevel.Warn,
+            silent: true,
+            type: ErrorType.Server,
+          });
+        }
       }
       updateDetApi({ apiKey: undefined });
       storeDispatch({ type: StoreAction.ResetAuth });
