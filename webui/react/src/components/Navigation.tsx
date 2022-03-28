@@ -7,7 +7,6 @@ import usePolling from 'hooks/usePolling';
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
 import NavigationTabbar from './NavigationTabbar';
-import NavigationTopbar from './NavigationTopbar';
 import Spinner from './Spinner';
 
 interface Props {
@@ -37,7 +36,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
     <Spinner spinning={ui.showSpinner}>
       <div className={css.base}>
         <NavigationSideBar />
-        <NavigationTopbar />
         {children}
         <NavigationTabbar />
       </div>
