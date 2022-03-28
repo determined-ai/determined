@@ -5,7 +5,7 @@ import pytest
 from determined.common.api import authentication, bindings, certs, errors
 from determined.common.experimental import session
 from tests import config as conf
-from tests import experiment as exp
+#from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
@@ -14,7 +14,6 @@ def test_workspace_org() -> None:
     certs.cli_cert = certs.default_load(master_url)
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
     sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
-
 
     test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []
@@ -129,8 +128,6 @@ def test_workspace_org() -> None:
         assert ["_TestEarly", "_TestPatchedProject", "_TestPRJ"] == list(
             map(lambda w: w.name, list_test_6)
         )
-<<<<<<< HEAD
-=======
 
         # Move a project to another workspace
         bindings.post_MoveProject(
@@ -140,7 +137,6 @@ def test_workspace_org() -> None:
         )
         get_project = bindings.get_GetProject(sess, id=madeProject.id).project
         assert get_project.workspaceId == ww.workspace.id
->>>>>>> 98ff70ecd (code the move endpoint and tests)
 
         # Add a test note to a project.
         note = bindings.v1Note(name="Hello", contents="Hello World")
@@ -159,7 +155,7 @@ def test_workspace_org() -> None:
         assert returned_notes and len(returned_notes) == 2
 
     finally:
-        # Clean out test workspaces and projects
+        # Clean out experiments, projects, workspaces.
         # In dependency order:
         for e in test_experiments:
             bindings.delete_DeleteExperiment(sess, experimentId=e.id)
