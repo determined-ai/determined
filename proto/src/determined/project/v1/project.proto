@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/projectv1";
 import "determined/checkpoint/v1/checkpoint.proto";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Note is a user comment connected to a project.
@@ -68,4 +69,12 @@ message ProjectModel {
   string name = 1;
   // Checkpoint associated with the project.
   determined.checkpoint.v1.Checkpoint checkpoint = 2;
+}
+
+// PatchProject is a partial update to a project with all optional fields.
+message PatchProject {
+  // The new name for the project.
+  google.protobuf.StringValue name = 1;
+  // The new description for the project.
+  google.protobuf.StringValue description = 2;
 }
