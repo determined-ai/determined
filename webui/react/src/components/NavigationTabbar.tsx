@@ -96,7 +96,7 @@ const NavigationTabbar: React.FC = () => {
           },
           {
             label: 'Sign out',
-            path: paths.logout(),
+            onClick: e => handlePathUpdate(e, paths.logout()),
           },
           {
             icon: 'jupyter-lab',

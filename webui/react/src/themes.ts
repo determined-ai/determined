@@ -92,7 +92,6 @@ export interface Theme {
       maxWidth: string;
       minWidth: string;
       toolbarHeight: string;
-      topbarHeight: string;
     };
   };
 }
@@ -226,8 +225,7 @@ const lightDeterminedTheme: Theme = {
     navigation: {
       maxWidth: '240px',
       minWidth: '56px',
-      toolbarHeight: '56px',
-      topbarHeight: '56px',
+      toolbarHeight: '56px'
     },
   },
 };
