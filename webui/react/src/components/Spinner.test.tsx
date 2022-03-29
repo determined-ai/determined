@@ -1,45 +1,53 @@
-import {
-  render,
-  screen,
-  waitForElementToBeRemoved,
-} from '@testing-library/react';
+// @ts-nocheck
+import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { not } from 'fp-ts/lib/Predicate';
 import React from 'react';
 
-import Page from './Page';
 import Spinner from './Spinner';
 
-const setup = (
-  { disabled, onSaveReturnsError, value } = {
-    disabled: false,
-    onSaveReturnsError: false,
-    value: 'before',
-  },
-) => {
-  const onSave = onSaveReturnsError
-    ? jest.fn(() => Promise.resolve(new Error()))
-    : jest.fn(() => Promise.resolve());
-  const onCancel = jest.fn();
-  const { container } = render(
-    <Spinner spinning={true}>
-      <div>content</div>
-    </Spinner>,
-  );
-
-  const waitForSpinnerToDisappear = async () =>
-    await waitForElementToBeRemoved(
-      () => container.getElementsByClassName('ant-spin-spinning')[0],
-    );
-  return { onCancel, onSave, waitForSpinnerToDisappear };
-};
+const waitForSpinnerToDisappear = async () =>
+  await waitForElementToBeRemoved(() => container.getElementsByClassName('ant-spin-spinning')[0]);
 
 describe('Spinner', () => {
-  it('spins', () => {
+  it('hides while spinning', () => {
+    const handleButtonClick = jest.fn(() => console.log('click'));
+    render(
+      <Spinner spinning={true}>
+        <button onClick={handleButtonClick}>click</button>
+      </Spinner>
+    );
+    const button = screen.getByRole('button');
+    let error = null;
+    try {
+      userEvent.click(button);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).not.toBeNull();
+    expect(handleButtonClick).toHaveBeenCalledTimes(0);
+  });
 
-    setup();
-    expect(screen.queryByDisplayValue('content')).toBeNull();
+  it('shows when done spinning', () => {
+    const handleButtonClick = jest.fn(() => console.log('click'));
+    render(
+      <Spinner spinning={false}>
+        <button onClick={handleButtonClick}>click</button>
+      </Spinner>
+    );
+    const button = screen.getByRole('button');
+    userEvent.click(button);
+    expect(handleButtonClick).toHaveBeenCalledTimes(1);
 
   });
 
+  it('displays tip text', () => {
+    const handleButtonClick = jest.fn(() => console.log('click'));
+    render(
+      <Spinner spinning={false}>
+        <button onClick={handleButtonClick}>click</button>
+      </Spinner>
+    );
+    // screen.debug();
+    // expect(screen.queryByText('content')).toBeInTheDocument();
+  });
 });
