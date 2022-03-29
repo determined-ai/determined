@@ -1,3 +1,8 @@
+WITH trial_ids AS (
+    SELECT id
+    FROM trials
+    WHERE experiment_id = $1
+)
 SELECT
     e.id AS id,
     e.config->>'name' AS name,
@@ -15,11 +20,9 @@ SELECT
     e.parent_id AS forked_from,
     e.owner_id AS user_id,
     u.username AS username,
-	array_to_json(ARRAY_AGG(t.id) filter (where t.id is not null)) AS trial_ids,
-	COUNT(t.id) AS num_trials
+    (SELECT json_agg(id) FROM trial_ids) AS trial_ids,
+	(SELECT count(id) FROM trial_ids) AS num_trials
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id
-LEFT JOIN trials t ON e.id = t.experiment_id
 WHERE e.id = $1
-GROUP by e.id, u.username
