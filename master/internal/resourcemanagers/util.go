@@ -1,7 +1,9 @@
 package resourcemanagers
 
+import "golang.org/x/exp/constraints"
+
 // min returns the smallest value of all provided values.
-func min(values ...int) int {
+func min[T constraints.Ordered](values ...T) T {
 	minValue := values[0]
 	for _, value := range values[1:] {
 		if value < minValue {
