@@ -1,6 +1,7 @@
 import calendar
 import re
 import subprocess
+import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
@@ -74,11 +75,16 @@ def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
 log_path = "/tmp/det-master.log"
 
 
-def fetch_master_log() -> None:
+def fetch_master_log() -> bool:
     command = ["det", "-m", conf.make_master_url(), "master", "logs"]
-    output = subprocess.check_output(command)
+    try:
+        output = subprocess.check_output(command)
+    except Exception:
+        traceback.print_exc()
+        return False
     with open(log_path, "wb") as log:
         log.write(output)
+    return True
 
 
 def create_test_session() -> session.Session:
@@ -89,7 +95,9 @@ def create_test_session() -> session.Session:
 
 
 def compare_stats() -> None:
-    fetch_master_log()
+    if not fetch_master_log():
+        print("Skip compare stats because error at fetch master")
+        return
     gpu_from_log, global_start, global_end = parse_log_for_gpu_stats(log_path)
     res = bindings.get_ResourceAllocationRaw(
         create_test_session(), timestampAfter=global_start, timestampBefore=global_end
