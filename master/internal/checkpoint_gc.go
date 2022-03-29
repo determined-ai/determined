@@ -26,10 +26,8 @@ type checkpointGCTask struct {
 	jobID             model.JobID
 	jobSubmissionTime time.Time
 
-	//task *sproto.AllocateRequest
 	allocation *actor.Ref
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
-	logs       []sproto.ContainerLog
 	taskLogger *task.Logger
 
 	logCtx logger.Context
@@ -48,7 +46,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			TaskID:     t.taskID,
 			TaskType:   model.TaskTypeCheckpointGC,
 			StartTime:  ctx.Self().RegisteredTime(),
-			JobID:      nil,
+			JobID:      &t.jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
 			return errors.Wrapf(err, "persisting GC task %s", t.taskID)
@@ -69,51 +67,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}, t.db, sproto.GetRM(ctx.Self().System()), t.taskLogger)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
-		//ctx.Tell(t.rm, *t.task)
-
-	/*
-			case sproto.ResourcesAllocated:
-				ctx.Log().Info("starting checkpoint garbage collection")
-
-				allocationToken, err := t.db.StartAllocationSession(msg.ID)
-				if err != nil {
-					return errors.Wrap(err, "cannot start a new task session for a GC task")
-				}
-
-				if len(msg.Resources) != 1 {
-					return errors.New("multi-reservation checkpoint gc is wrong")
-				}
-
-				msg.Resources[0].Start(ctx,
-					t.logCtx,
-					t.ToTaskSpec(allocationToken),
-					sproto.ResourcesRuntimeInfo{
-						Token:        allocationToken,
-						AgentRank:    0,
-						IsMultiAgent: false,
-					})
-		case sproto.ReleaseResources, task.AllocationSignal:
-			// Ignore the release resource message and wait for the GC job to finish.
-
-		case sproto.ResourcesStateChanged:
-			if msg.Container.State != cproto.Terminated {
-				return nil
-			}
-
-			if exit := msg.ResourcesStopped; exit.Failure != nil {
-				ctx.Log().Errorf("checkpoint garbage collection failed: %v", exit)
-				for _, log := range t.logs {
-					ctx.Log().Error(log.String())
-				}
-			} else {
-				ctx.Log().Info("finished checkpoint garbage collection")
-			}
-			ctx.Self().Stop()
-	*/
-
-	case sproto.ContainerLog:
-		t.logs = append(t.logs, msg)
-
 	case task.BuildTaskSpec:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(t.ToTaskSpec())

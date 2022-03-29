@@ -27,10 +27,8 @@ type GCCkptSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (g GCCkptSpec) ToTaskSpec( /*allocationToken string*/ ) TaskSpec {
+func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 	res := g.Base
-
-	//res.AllocationSessionToken = allocationToken
 
 	// Set Environment.
 	// Keep only the EnvironmentVariables provided by the experiment's config.
