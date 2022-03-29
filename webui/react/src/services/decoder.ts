@@ -398,6 +398,7 @@ export const mapV1Experiment = (
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
+    trialIds: data.trialIds || [],
     username: data.username,
   };
 };
