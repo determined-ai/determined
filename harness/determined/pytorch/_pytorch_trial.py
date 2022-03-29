@@ -228,7 +228,7 @@ class PyTorchTrialController(det.TrialController):
                 with self.context._core.checkpoint.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
-                    self._load(pathlib.Path(load_path))
+                    self._load(load_path)
 
             if self.context.distributed.size > 1:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
@@ -274,10 +274,10 @@ class PyTorchTrialController(det.TrialController):
                             "format": "pickle",
                         }
                         with self.context._core.checkpoint.store_path(metadata) as (
-                            storage_id,
                             path,
+                            storage_id,
                         ):
-                            self._save(pathlib.Path(path))
+                            self._save(path)
                         response = {"uuid": storage_id}
                     else:
                         response = {}

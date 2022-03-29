@@ -130,10 +130,10 @@ class MetricMaker(det.TrialController):
                 metadata = {"latest_batch": self.latest_batch}
                 if self.is_chief:
                     with self.context._core.checkpoint.store_path(metadata) as (
-                        storage_id,
                         path,
+                        storage_id,
                     ):
-                        self.save(pathlib.Path(path))
+                        self.save(path)
                         response = {"uuid": storage_id}
                 else:
                     response = {}

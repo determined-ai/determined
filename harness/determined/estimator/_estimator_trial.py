@@ -313,8 +313,8 @@ class DeterminedControlHook(estimator.RunHook):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
                         }
-                        with _core.checkpoint.store_path(metadata) as (storage_id, path):
-                            self._checkpoint_model(pathlib.Path(path))
+                        with _core.checkpoint.store_path(metadata) as (path, storage_id):
+                            self._checkpoint_model(path)
                         response = {"uuid": storage_id}
                     else:
                         response = {}
@@ -748,9 +748,9 @@ class EstimatorTrialController(det.TrialController):
             logging.debug(f"Load path set to {self.estimator_dir}.")
 
             # Load WorkloadSequencer state.
-            wlsq_path = os.path.join(load_path, "workload_sequencer.pkl")
-            if self.wlsq is not None and os.path.exists(wlsq_path):
-                with open(wlsq_path, "rb") as f:
+            wlsq_path = load_path / "workload_sequencer.pkl"
+            if self.wlsq is not None and wlsq_path.exists():
+                with wlsq_path.open("rb") as f:
                     self.wlsq.load_state(pickle.load(f))
 
     def compute_validation_metrics(self) -> workload.Response:

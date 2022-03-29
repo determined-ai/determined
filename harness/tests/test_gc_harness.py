@@ -1,5 +1,6 @@
 import os
-from pathlib import Path
+import pathlib
+import uuid
 from typing import Any, List
 
 import pytest
@@ -10,7 +11,7 @@ from tests.storage import util as storage_util
 
 
 @pytest.fixture()
-def manager(tmp_path: Path) -> storage.StorageManager:
+def manager(tmp_path: pathlib.Path) -> storage.StorageManager:
     return storage.SharedFSStorageManager(str(tmp_path))
 
 
@@ -18,7 +19,8 @@ def manager(tmp_path: Path) -> storage.StorageManager:
 def to_delete(request: Any, manager: storage.StorageManager) -> List[str]:
     storage_ids = []
     for _ in range(request.param):
-        with manager.store_path() as (storage_id, path):
+        storage_id = str(uuid.uuid4())
+        with manager.store_path(storage_id) as path:
             storage_util.create_checkpoint(path)
             storage_ids.append(storage_id)
 

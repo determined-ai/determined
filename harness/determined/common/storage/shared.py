@@ -1,6 +1,8 @@
 import contextlib
 import os
-from typing import Any, Dict, Iterator, Optional
+import pathlib
+import shutil
+from typing import Any, Dict, Iterator, Optional, Union
 
 from determined import errors
 from determined.common import check
@@ -49,8 +51,14 @@ class SharedFSStorageManager(StorageManager):
         )
         return cls(base_path)
 
+    def post_store_path(self, src: str, dst: str) -> None:
+        """
+        Nothing to clean up after writing directly to shared_fs.
+        """
+        pass
+
     @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[str]:
+    def restore_path(self, src: str) -> Iterator[pathlib.Path]:
         """
         Prepare a local directory exposing the checkpoint. Do some simple checks to make sure the
         configuration seems reasonable.
@@ -60,9 +68,32 @@ class SharedFSStorageManager(StorageManager):
             f"Storage directory does not exist: {self._base_path}. Please verify that you are "
             "using the correct configuration value for checkpoint_storage.host_path",
         )
-        storage_dir = os.path.join(self._base_path, storage_id)
+        storage_dir = os.path.join(self._base_path, src)
         if not os.path.exists(storage_dir):
+            raise errors.CheckpointNotFound(f"Did not find checkpoint {src} in shared_fs storage")
+        yield pathlib.Path(storage_dir)
+
+    def delete(self, tgt: str) -> None:
+        """
+        Delete the stored data from persistent storage.
+        """
+        storage_dir = os.path.join(self._base_path, tgt)
+
+        if not os.path.exists(storage_dir):
+            raise errors.CheckpointNotFound(f"Storage directory does not exist: {storage_dir}")
+        if not os.path.isdir(storage_dir):
+            raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
+        shutil.rmtree(storage_dir, ignore_errors=False)
+
+    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+        src = os.fspath(src)
+        shutil.copytree(src, os.path.join(self._base_path, dst))
+
+    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+        dst = os.fspath(dst)
+        try:
+            shutil.copytree(os.path.join(self._base_path, src), dst)
+        except FileNotFoundError:
             raise errors.CheckpointNotFound(
-                f"Did not find checkpoint {storage_id} in shared_fs storage"
-            )
-        yield storage_dir
+                f"Did not find checkpoint {src} in shared_fs storage"
+            ) from None

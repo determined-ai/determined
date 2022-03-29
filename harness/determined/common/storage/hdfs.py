@@ -1,16 +1,14 @@
-import contextlib
 import logging
 import os
 import tempfile
-from typing import Iterator, Optional
+from typing import Optional, Union
 
 from hdfs.client import InsecureClient
 
-from determined.common import util
-from determined.common.storage.base import StorageManager
+from determined.common import storage, util
 
 
-class HDFSStorageManager(StorageManager):
+class HDFSStorageManager(storage.CloudStorageManager):
     """
     Store and load checkpoints from HDFS.
     """
@@ -31,32 +29,18 @@ class HDFSStorageManager(StorageManager):
         self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
 
     @util.preserve_random_state
-    def post_store_path(self, storage_id: str, storage_dir: str) -> None:
-        """post_store_path uploads the checkpoint to hdfs and deletes the original files."""
-        try:
-            logging.info(f"Uploading storage {storage_id} to HDFS")
-            result = self.client.upload(storage_id, storage_dir)
-
-            logging.info(f"Uploaded storage {storage_id} to HDFS path {result}")
-        finally:
-            self._remove_checkpoint_directory(storage_id)
-
-    @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[str]:
-        logging.info(f"Downloading storage {storage_id} from HDFS")
-
-        self.download(storage_id)
-
-        try:
-            yield os.path.join(self._base_path, storage_id)
-        finally:
-            self._remove_checkpoint_directory(storage_id)
+    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+        src = os.fspath(src)
+        logging.info(f"Uploading to HDFS: {dst}")
+        self.client.upload(dst, src)
 
     @util.preserve_random_state
-    def download(self, storage_id: str) -> None:
-        self.client.download(storage_id, self._base_path, overwrite=True)
+    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+        dst = os.fspath(dst)
+        logging.info(f"Downloading {src} from HDFS")
+        self.client.download(src, dst, overwrite=True)
 
     @util.preserve_random_state
-    def delete(self, storage_id: str) -> None:
-        logging.info(f"Deleting storage {storage_id} from HDFS")
-        self.client.delete(storage_id, recursive=True)
+    def delete(self, tgt: str) -> None:
+        logging.info(f"Deleting {tgt} from HDFS")
+        self.client.delete(tgt, recursive=True)

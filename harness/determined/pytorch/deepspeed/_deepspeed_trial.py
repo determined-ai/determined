@@ -6,6 +6,7 @@ import pathlib
 import pickle
 import random
 import time
+import uuid
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
 import deepspeed
@@ -276,7 +277,7 @@ class DeepSpeedTrialController(det.TrialController):
                 with self.context._core.checkpoint.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
-                    self._load(pathlib.Path(load_path))
+                    self._load(load_path)
 
             with self.prof:
                 for callback in self.callbacks.values():
@@ -324,13 +325,11 @@ class DeepSpeedTrialController(det.TrialController):
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",
                         }
-                        with storage_manager.store_path() as (
-                            storage_id,
-                            path,
-                        ):
+                        storage_id = str(uuid.uuid4())
+                        with storage_manager.store_path(storage_id) as path:
                             # Broadcast checkpoint path to all ranks.
                             self.context.distributed.broadcast((storage_id, path))
-                            self._save(pathlib.Path(path))
+                            self._save(path)
                             # Gather resources across nodes.
                             all_resources = self.context.distributed.gather(
                                 storage.StorageManager._list_directory(path)
@@ -343,13 +342,13 @@ class DeepSpeedTrialController(det.TrialController):
                         response = {"uuid": storage_id}
                     else:
                         storage_id, path = self.context.distributed.broadcast(None)
-                        self._save(pathlib.Path(path))
+                        self._save(path)
                         # Gather resources across nodes.
                         _ = self.context.distributed.gather(
                             storage.StorageManager._list_directory(path)
                         )
                         if self.context.distributed.local_rank == 0:
-                            storage_manager.post_store_path(storage_id, path)
+                            storage_manager.post_store_path(str(path), storage_id)
                         response = {}
 
                 else:
