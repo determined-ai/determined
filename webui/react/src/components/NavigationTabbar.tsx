@@ -1,12 +1,15 @@
+import { Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
+import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 
 import ActionSheet from './ActionSheet';
+import AvatarCard from './AvatarCard';
 import Icon from './Icon';
 import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
@@ -40,6 +43,8 @@ const NavigationTabbar: React.FC = () => {
   const { auth, cluster: overview, ui, resourcePools } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
+  const [ modal, contextHolder ] = Modal.useModal();
+  const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
 
   const cluster = useMemo(() => {
     if (overview[ResourceType.ALL].allocation === 0) return undefined;
@@ -69,6 +74,7 @@ const NavigationTabbar: React.FC = () => {
 
   return (
     <nav className={css.base}>
+      {contextHolder}
       <div className={css.toolbar}>
         <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
         <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
@@ -79,6 +85,19 @@ const NavigationTabbar: React.FC = () => {
       </div>
       <ActionSheet
         actions={[
+          {
+            render: () => {
+              return <AvatarCard className={css.user} user={auth.user} />;
+            },
+          },
+          {
+            label: 'Settings',
+            onClick: () => openUserSettingsModal(),
+          },
+          {
+            label: 'Sign out',
+            onClick: e => handlePathUpdate(e, paths.logout()),
+          },
           {
             icon: 'jupyter-lab',
             label: 'Launch JupyterLab',

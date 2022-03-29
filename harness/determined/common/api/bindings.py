@@ -1095,6 +1095,7 @@ class v1Experiment:
         notes: "typing.Optional[str]" = None,
         progress: "typing.Optional[float]" = None,
         resourcePool: "typing.Optional[str]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
         userId: "typing.Optional[int]" = None,
     ):
         self.id = id
@@ -1105,6 +1106,7 @@ class v1Experiment:
         self.state = state
         self.archived = archived
         self.numTrials = numTrials
+        self.trialIds = trialIds
         self.displayName = displayName
         self.userId = userId
         self.username = username
@@ -1127,6 +1129,7 @@ class v1Experiment:
             state=determinedexperimentv1State(obj["state"]),
             archived=obj["archived"],
             numTrials=obj["numTrials"],
+            trialIds=obj.get("trialIds", None),
             displayName=obj.get("displayName", None),
             userId=obj.get("userId", None),
             username=obj["username"],
@@ -1149,6 +1152,7 @@ class v1Experiment:
             "state": self.state.value,
             "archived": self.archived,
             "numTrials": self.numTrials,
+            "trialIds": self.trialIds if self.trialIds is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
             "userId": self.userId if self.userId is not None else None,
             "username": self.username,
@@ -6481,12 +6485,12 @@ def get_GetTrialCheckpoints(
 def get_GetUser(
     session: "client.Session",
     *,
-    username: str,
+    userId: int,
 ) -> "v1GetUserResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/users/{username}",
+        path=f"/api/v1/users/{userId}",
         params=_params,
         json=None,
         data=None,
@@ -6846,12 +6850,12 @@ def patch_PatchUser(
     session: "client.Session",
     *,
     body: "v1PatchUser",
-    username: str,
+    userId: int,
 ) -> "v1PatchUserResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/users/{username}",
+        path=f"/api/v1/users/{userId}",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7269,12 +7273,12 @@ def post_SetUserPassword(
     session: "client.Session",
     *,
     body: str,
-    username: str,
+    userId: int,
 ) -> "v1SetUserPasswordResponse":
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/users/{username}/password",
+        path=f"/api/v1/users/{userId}/password",
         params=_params,
         json=body,
         data=None,

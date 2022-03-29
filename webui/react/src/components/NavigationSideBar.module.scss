@@ -128,25 +128,10 @@
     color: var(--theme-colors-monochrome-17);
   }
   .user {
-    align-items: center;
     background-color: var(--theme-colors-base-4);
-    cursor: pointer;
-    display: flex;
-    padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
-    position: relative;
-    width: var(--theme-sizes-navigation-maxWidth);
   }
   .user:hover {
     background-color: var(--theme-colors-base-3);
-  }
-  .user > [class*=Avatar_base_] {
-    flex-shrink: 0;
-  }
-  .user > span {
-    color: var(--theme-colors-monochrome-17);
-    font-size: var(--theme-sizes-font-small);
-    margin-left: var(--theme-sizes-layout-big);
-    pointer-events: none;
   }
 }
 .collapsedAppear {

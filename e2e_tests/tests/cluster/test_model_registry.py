@@ -29,6 +29,12 @@ def test_model_registry() -> None:
         assert mnist.metadata == db_model.metadata
         assert mnist.metadata == {"testing": "metadata"}
 
+        # Confirm we can look up a model by its ID
+        db_model = d.get_model_by_id(mnist.model_id)
+        assert db_model.name == "mnist"
+        db_model = d.get_model(mnist.model_id)
+        assert db_model.name == "mnist"
+
         # Confirm DB assigned username
         assert db_model.username == "determined"
 

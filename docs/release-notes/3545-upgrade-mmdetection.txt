@@ -1,0 +1,10 @@
+:orphan:
+
+**Improvements**
+
+-  Model Hub: add support for panoptic segmentation.
+
+   -  Model Hub mmdetection now supports panoptic segmentation task in addition to object detection.
+      Previously, the associated docker image lacked dependencies for panoptic segmentation. Users
+      can now use mmdetection configs under ``panoptic_fpn`` and also the ``coco_panoptic`` dataset
+      base config.

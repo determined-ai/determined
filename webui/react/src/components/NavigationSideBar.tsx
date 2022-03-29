@@ -9,9 +9,8 @@ import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
-import { getDisplayName } from 'utils/user';
 
-import Avatar from './Avatar';
+import AvatarCard from './AvatarCard';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import JupyterLabModal from './JupyterLabModal';
@@ -151,10 +150,7 @@ const NavigationSideBar: React.FC = () => {
             )}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <div className={css.user}>
-              <Avatar hideTooltip username={auth.user?.username} />
-              <span>{getDisplayName(auth.user)}</span>
-            </div>
+            <AvatarCard className={css.user} user={auth.user} />
           </Dropdown>
         </header>
         <main>

@@ -11,8 +11,8 @@ import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { StateOfUnion } from 'themes';
 import {
-  CommandTask, CommandType, ExperimentItem, ModelVersion, Pagination,
-  StartEndTimes, TrialItem,
+  CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
+  Pagination, StartEndTimes, TrialItem,
 } from 'types';
 import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
@@ -155,17 +155,17 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 
 /* Model Table Column Renderers */
 
-export const modelNameRenderer = (value: string): React.ReactNode => (
+export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
   <Space>
     <div style={{ paddingInline: 4 }}>
       <Icon name="model" size="medium" />
     </div>
-    <Link path={paths.modelDetails(value)}>{value}</Link>
+    <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
   </Space>
 );
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
-  <Link path={paths.modelVersionDetails(record.model?.name ?? '', record.id)}>
+  <Link path={paths.modelVersionDetails(String(record.model?.id ?? ''), record.id)}>
     {value ? value : 'Version ' + record.version}
   </Link>
 );

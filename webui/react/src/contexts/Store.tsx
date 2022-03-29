@@ -200,7 +200,7 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ResetAuth:
       clearAuthCookie();
       globalStorage.removeAuthToken();
-      return { ...state, auth: { ...initAuth } };
+      return { ...state, auth: { ...state.auth, isAuthenticated: initAuth.isAuthenticated } };
     case StoreAction.ResetAuthCheck:
       if (!state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: false } };

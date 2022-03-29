@@ -14,15 +14,6 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
-def test_noop_long_train_step() -> None:
-    exp.run_basic_test(
-        conf.fixtures_path("no_op/single-long-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
-
-
-@pytest.mark.e2e_cpu
 def test_noop_pause() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.

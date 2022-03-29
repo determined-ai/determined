@@ -1,0 +1,8 @@
+:orphan:
+
+**API Changes**
+
+The model registry API now accepts either the ID or model name in ``/api/v1/models/:id`` or
+``/api/v1/models/:name``. This applies to all API routes for models and model versions.
+
+The ID can be used in the API and the WebUI (``/det/models/:id``) as a permanent link to the model.
