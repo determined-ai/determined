@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/mmath"
 )
 
 // calculateDesiredNewAgentNum calculates the new instances based on pending tasks and
@@ -40,7 +41,7 @@ func calculateDesiredNewAgentNum(
 	for g, groupSlotSum := range groupSlotsNeeded {
 		maxSlots := g.maxSlots
 		if maxSlots != nil {
-			slotSum += min(*maxSlots, groupSlotSum)
+			slotSum += mmath.Min(*maxSlots, groupSlotSum)
 		} else {
 			slotSum += groupSlotSum
 		}
@@ -63,5 +64,5 @@ func calculateDesiredNewAgentNum(
 	default:
 		numAgentBySlot = (slotSum + slotsPerAgent - 1) / slotsPerAgent
 	}
-	return max(numAgentByZeroSlot, numAgentBySlot)
+	return mmath.Max(numAgentByZeroSlot, numAgentBySlot)
 }

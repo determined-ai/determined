@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/determined-ai/determined/master/pkg/mmath"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -32,7 +33,7 @@ func newAsyncHalvingStoppingSearch(
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor(), float64(config.NumRungs()-id-1))
-		unitsNeeded += u64max(uint64(float64(config.MaxLength().Units)/downsamplingRate), 1)
+		unitsNeeded += mmath.Max(uint64(float64(config.MaxLength().Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
 				UnitsNeeded:       unitsNeeded,
@@ -65,7 +66,7 @@ func (s *asyncHalvingStoppingSearch) Restore(state json.RawMessage) error {
 // training the current trial.
 func (r *rung) continueTraining(requestID model.RequestID, metric float64, divisor float64) bool {
 	// Compute cutoff for promotion to next rung to continue training.
-	numPromote := max(int(float64(len(r.Metrics)+1)/divisor), 1)
+	numPromote := mmath.Max(int(float64(len(r.Metrics)+1)/divisor), 1)
 
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
@@ -99,10 +100,10 @@ func (s *asyncHalvingStoppingSearch) initialOperations(ctx context) ([]Operation
 	var maxConcurrentTrials int
 
 	if s.MaxConcurrentTrials() > 0 {
-		maxConcurrentTrials = min(s.MaxConcurrentTrials(), s.MaxTrials())
+		maxConcurrentTrials = mmath.Min(s.MaxConcurrentTrials(), s.MaxTrials())
 	} else {
-		maxConcurrentTrials = max(
-			min(int(math.Pow(s.Divisor(), float64(s.NumRungs()-1))), s.MaxTrials()),
+		maxConcurrentTrials = mmath.Max(
+			mmath.Min(int(math.Pow(s.Divisor(), float64(s.NumRungs()-1))), s.MaxTrials()),
 			1)
 	}
 
@@ -180,7 +181,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 			if promoteTrial {
 				s.TrialRungs[requestID] = rungIndex + 1
 				nextRung.OutstandingTrials++
-				unitsNeeded := u64max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
+				unitsNeeded := mmath.Max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
 				ops = append(ops, NewValidateAfter(requestID, unitsNeeded))
 				addedTrainWorkload = true
 			} else {
