@@ -56,6 +56,19 @@ class Net(torch.nn.Module):
         return x
 
 
+def download_data_with_retry(n_retries, download_directory, dataset_name):
+    while n_retries > 0:
+        try:
+            return TUDataset(
+                root=download_directory,
+                name=dataset_name
+            )
+        except Exception as e:
+            n_retries -= 1
+            if n_retries==0:
+                raise
+
+
 class GraphConvTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
@@ -64,9 +77,10 @@ class GraphConvTrial(PyTorchTrial):
         # other when doing distributed training.
         download_directory = tempfile.mkdtemp()
 
-        self.dataset = TUDataset(
-            root=download_directory,
-            name=self.context.get_hparam("dataset"),
+        self.dataset = download_data_with_retry(
+            3,
+            download_directory,
+            self.context.get_hparam("dataset"),
         )
 
         num_training = self.context.get_hparam("training_records")
