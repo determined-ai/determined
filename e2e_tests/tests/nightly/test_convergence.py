@@ -1,7 +1,4 @@
-from typing import Generator
-
 import pytest
-from compute_stats import compare_stats
 
 from tests import config as conf
 from tests import experiment as exp
@@ -364,9 +361,3 @@ def test_cifar10_byol_pytorch_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
-
-
-@pytest.fixture(scope="session", autouse=True)
-def resource_stats() -> Generator[None, None, None]:
-    yield
-    compare_stats()

@@ -123,7 +123,7 @@ func (s *scaleDecider) recordInstanceStats(slots int) error {
 		instID := inst.ID
 		err := s.updateInstanceStartStats(s.resourcePool, instID, slots)
 		if err != nil {
-			return err
+			continue
 		}
 	}
 	for instID := range s.disconnected {

@@ -1,10 +1,8 @@
 import os
 import shutil
 import tempfile
-from typing import Generator
 
 import pytest
-from compute_stats import compare_stats
 
 from tests import config as conf
 from tests import experiment as exp
@@ -226,9 +224,3 @@ def test_gpt_neox_zero_3D_parallel() -> None:
     config = conf.set_min_validation_period(config, {"batches": 100})
 
     exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def resource_stats() -> Generator[None, None, None]:
-    yield
-    compare_stats()

@@ -1,7 +1,4 @@
-from typing import Generator
-
 import pytest
-from compute_stats import compare_stats
 
 from tests import config as conf
 from tests import experiment as exp
@@ -102,9 +99,3 @@ def test_protein_pytorch_geometric() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.graphs_examples_path("proteins_pytorch_geometric"), 1
     )
-
-
-@pytest.fixture(scope="session", autouse=True)
-def resource_stats() -> Generator[None, None, None]:
-    yield
-    compare_stats()
