@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -7,16 +5,7 @@ import React from 'react';
 import Spinner from './Spinner';
 
 describe('Spinner', () => {
-  /*
-  * load ant styles into test environment
-  * https://github.com/testing-library/jest-dom/issues/113#issuecomment-496971128
-  * https://github.com/testing-library/jest-dom
-  * /blob/09f7f041805b2a4bcf5ac5c1e8201ee10a69ab9b/src/__tests__/to-have-style.js#L12-L18
-  */
-  const antdStyleSheet = readFileSync('node_modules/antd/dist/antd.css').toString();
-  const style = document.createElement('style');
-  style.innerHTML = antdStyleSheet;
-  document.body.appendChild(style);
+  loadAntdStyleSheet(); // defined in setupTests.ts
 
   it('blocks inner content while spinning', () => {
     const handleButtonClick = jest.fn();
@@ -50,10 +39,9 @@ describe('Spinner', () => {
   });
 
   it('displays tip text when spinning', () => {
-    const handleButtonClick = jest.fn();
     render(
       <Spinner spinning={true} tip="Spinner text content">
-        <button onClick={handleButtonClick}>click</button>
+        <button>click</button>
       </Spinner>,
     );
     expect(screen.getByText('Spinner text content')).toBeInTheDocument();
