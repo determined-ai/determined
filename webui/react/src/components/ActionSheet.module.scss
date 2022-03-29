@@ -24,6 +24,9 @@
 
     [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
     .label { font-size: var(--theme-sizes-font-medium); }
+    .spacer {
+      width: calc(var(--theme-sizes-icon-large) + 2 * var(--theme-sizes-layout-big));
+    }
   }
 }
 .sheetEnter {

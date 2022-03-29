@@ -213,7 +213,6 @@ export const paths = {
   },
   jobs: (): string => {
     return routeById.jobs.path;
-
   },
   login: (): string => {
     return '/login';

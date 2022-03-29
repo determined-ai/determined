@@ -16,8 +16,8 @@ message GetUsersResponse {
 
 // Get the requested user.
 message GetUserRequest {
-  // The username of the user.
-  string username = 1;
+  // The id of the user.
+  int32 user_id = 2;
 }
 // Response to GetUserRequest.
 message GetUserResponse {
@@ -40,8 +40,8 @@ message PostUserResponse {
 
 // Set the requested user's passwords.
 message SetUserPasswordRequest {
-  // The username of the user.
-  string username = 1;
+  // The id of the user.
+  int32 user_id = 3;
   // The password of the user.
   string password = 2;
 }
@@ -53,8 +53,8 @@ message SetUserPasswordResponse {
 
 // Edit fields for a user.
 message PatchUserRequest {
-  // The username of the user.
-  string username = 1;
+  // The id of the user.
+  int32 user_id = 3;
   // The updated user.
   determined.user.v1.PatchUser user = 2;
 }

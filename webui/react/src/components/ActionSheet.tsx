@@ -7,8 +7,9 @@ import Link, { Props as LinkProps } from './Link';
 
 export interface ActionItem extends LinkProps {
   icon?: string;
-  label: string;
+  label?: string;
   popout?: boolean;
+  render?: () => JSX.Element;
 }
 
 interface Props {
@@ -31,6 +32,20 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
     if (onCancel) onCancel();
   }, [ onCancel ]);
 
+  function renderActionItem(action: ActionItem) {
+    if(action.render) {
+      return action.render();
+    } else {
+      return (
+        <Link className={css.item} key={action.label} path={action.path} {...action}>
+          {action.icon && <Icon name={action.icon} size="large" />}
+          {!action.icon && <span className={css.spacer} />}
+          <div className={css.label}>{action.label}</div>
+        </Link>
+      );
+    }
+  }
+
   return (
     <CSSTransition
       classNames={{
@@ -46,10 +61,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
       <div className={css.base} onClick={handleOverlayClick}>
         <div className={css.sheet} ref={sheetRef}>
           {props.actions.map(action => (
-            <Link className={css.item} key={action.label} path={action.path} {...action}>
-              {action.icon && <Icon name={action.icon} size="large" />}
-              <div className={css.label}>{action.label}</div>
-            </Link>
+            renderActionItem(action)
           ))}
           {!props.hideCancel && (
             <Link className={css.item} onClick={handleCancelClick}>

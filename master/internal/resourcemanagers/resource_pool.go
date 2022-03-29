@@ -239,7 +239,7 @@ func (rp *ResourcePool) notifyOnStop(
 
 func (rp *ResourcePool) updateScalingInfo() bool {
 	desiredInstanceNum := calculateDesiredNewAgentNum(
-		rp.taskList, rp.slotsPerInstance, rp.config.MaxAuxContainersPerAgent,
+		rp.taskList, rp.groups, rp.slotsPerInstance, rp.config.MaxAuxContainersPerAgent,
 	)
 	agents := make(map[string]sproto.AgentSummary)
 	for _, agentState := range rp.agentStatesCache {

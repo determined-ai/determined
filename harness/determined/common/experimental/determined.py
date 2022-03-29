@@ -1,4 +1,5 @@
 import pathlib
+import warnings
 from typing import Any, Dict, List, Optional, Union, cast
 
 from determined.common import check, context, util, yaml
@@ -130,7 +131,7 @@ class Determined:
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        r = self._session.get("/api/v1/checkpoints/{}".format(uuid)).json()
+        r = self._session.get(f"/api/v1/checkpoints/{uuid}").json()
         return checkpoint.Checkpoint._from_json(r["checkpoint"], self._session)
 
     def create_model(
@@ -155,25 +156,40 @@ class Determined:
 
         return model.Model._from_json(r.json().get("model"), self._session)
 
-    def get_model(self, name: str) -> model.Model:
+    def get_model(self, identifier: Union[str, int]) -> model.Model:
         """
         Get the :class:`~determined.experimental.Model` from the model registry
-        with the provided name. If no model with that id is found in the registry,
+        with the provided identifer, which is either a string-type name or an
+        integer-type model ID. If no corresponding model is found in the registry,
         an exception is raised.
+
+        Arguments:
+            identifier (string, int): The unique name or ID of the model.
         """
-        r = self._session.get("/api/v1/models/{}".format(name))
-        return model.Model._from_json(r.json().get("model"), self._session)
+        r = self._session.get(f"/api/v1/models/{identifier}").json()
+        assert r.get("model", False)
+        return model.Model._from_json(r.get("model"), self._session)
 
     def get_model_by_id(self, model_id: int) -> model.Model:
         """
         Get the :class:`~determined.experimental.Model` from the model registry
         with the provided id. If no model with that id is found in the registry,
         an exception is raised.
+
+        .. warning::
+           Determined.get_model_by_id() has been deprecated and will be removed
+           in a future version.
+           Please call Determined.get_model() with either a string-type name or
+           an integer-type model ID.
         """
-        r = self._session.get("/api/v1/models?id={}".format(model_id))
-        models = r.json().get("models")
-        assert len(models) == 1
-        return model.Model._from_json(models[0], self._session)
+        warnings.warn(
+            "Determined.get_model_by_id() has been deprecated and will be removed"
+            "in a future version.\n"
+            "Please call Determined.get_model() with either a string-type name or"
+            "an integer-type model ID.",
+            FutureWarning,
+        )
+        return self.get_model(model_id)
 
     def get_models(
         self,
