@@ -50,7 +50,7 @@
 
     {% block body %}
       <header class="header__container">
-        <div>
+        <div class="header__content">
           <img src="_static/images/logo-determined-ai.svg" alt="Light Logo">
           <ul class="menu-right">
               <li>
@@ -85,15 +85,51 @@
              <li>Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code versions, metrics, checkpoints, and hyperparameters.</li>
           </ul>
           <p>Spend your time building models instead of managing infrastructure.</p>
-          <p>At the same time, continue using popular Deep Learning libraries, such as TensorFlow Keras, TensorFlow Estimator, and PyTorch, and simply call the Determined API from your existing model code.</p>
+          <p>At the same time, continue using popular Deep Learning libraries, such as TensorFlow Keras, TensorFlow Estimator, and PyTorch, calling the Determined API from your existing model code.</p>
+        </div>
+        <div class="landing">
+            <div class="tiles-flex">
+                <a class="tile" href="getting-started.html">
+                    <h2 class="tile-title">Quickstart for Model Developers</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="features/terminology-concepts.html">
+                    <h2 class="tile-title">Setup Guide</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="prepare-data/index.html">
+                    <h2 class="tile-title">Overview</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="prepare-data/index.html">
+                    <h2 class="tile-title">Training</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="prepare-data/index.html">
+                    <h2 class="tile-title">Model Libraries</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="prepare-data/index.html">
+                    <h2 class="tile-title">Integrations</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="sysadmin-basics/index.html">
+                    <h2 class="tile-title">Example Solutions</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="prepare-data/index.html">
+                    <h2 class="tile-title">Reference</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+            </div>
         </div>
         <div class="hero">
-          <div>
+          <h3>
             <a class="reference internal" href="release-notes.html">Release Notes</a>
-          </div>
-          <div>
+          </h3>
+          <h3>
             <a class="reference internal" href="attributions.html">Attributions</a>
-          </div>
+          </h3>
         </div>
       </div>
     {% endblock %}
