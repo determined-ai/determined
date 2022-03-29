@@ -97,7 +97,7 @@ SELECT
     workloads.kind,
     users.username,
     experiments.owner_id AS user_id,
-    experiments.config -> 'resources' ->> 'slots_per_trial' AS slots,
+    (experiments.config -> 'resources' ->> 'slots_per_trial') :: smallint AS slots,
     experiments.config -> 'labels' AS labels,
     workloads.start_time,
     workloads.end_time,
