@@ -1,0 +1,1 @@
+ALTER TABLE experiments ALTER COLUMN project_id SET DEFAULT NULL;
