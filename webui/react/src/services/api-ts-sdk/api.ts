@@ -4581,6 +4581,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     username: string;
+    /**
+     * Whether this project is immutable (default uncategorized project).
+     * @type {boolean}
+     * @memberof V1Project
+     */
+    immutable: boolean;
 }
 
 /**
@@ -6449,6 +6455,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     username: string;
+    /**
+     * Whether this workspace is immutable (default uncategorized workspace).
+     * @type {boolean}
+     * @memberof V1Workspace
+     */
+    immutable: boolean;
 }
 
 

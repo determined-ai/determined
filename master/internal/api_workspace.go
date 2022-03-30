@@ -156,7 +156,11 @@ func (a *apiServer) PatchWorkspace(
 		return nil, err
 	}
 	if currWorkspace.Archived {
-		return nil, errors.Errorf("workspace (%d) is archived and cannot have attributes updated.",
+		return nil, errors.Errorf("workspace (%v) is archived and cannot have attributes updated.",
+			currWorkspace.Id)
+	}
+	if currWorkspace.Immutable {
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot have attributes updated.",
 			currWorkspace.Id)
 	}
 
