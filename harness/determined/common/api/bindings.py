@@ -3930,6 +3930,7 @@ class v1Project:
         self,
         archived: bool,
         id: int,
+        immutable: bool,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
@@ -3949,6 +3950,7 @@ class v1Project:
         self.numActiveExperiments = numActiveExperiments
         self.archived = archived
         self.username = username
+        self.immutable = immutable
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -3963,6 +3965,7 @@ class v1Project:
             numActiveExperiments=obj["numActiveExperiments"],
             archived=obj["archived"],
             username=obj["username"],
+            immutable=obj["immutable"],
         )
 
     def to_json(self) -> typing.Any:
@@ -3977,6 +3980,7 @@ class v1Project:
             "numActiveExperiments": self.numActiveExperiments,
             "archived": self.archived,
             "username": self.username,
+            "immutable": self.immutable,
         }
 
 class v1PutTemplateResponse:
@@ -5578,6 +5582,7 @@ class v1Workspace:
         self,
         archived: bool,
         id: int,
+        immutable: bool,
         name: str,
         username: str,
     ):
@@ -5585,6 +5590,7 @@ class v1Workspace:
         self.name = name
         self.archived = archived
         self.username = username
+        self.immutable = immutable
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -5593,6 +5599,7 @@ class v1Workspace:
             name=obj["name"],
             archived=obj["archived"],
             username=obj["username"],
+            immutable=obj["immutable"],
         )
 
     def to_json(self) -> typing.Any:
@@ -5601,6 +5608,7 @@ class v1Workspace:
             "name": self.name,
             "archived": self.archived,
             "username": self.username,
+            "immutable": self.immutable,
         }
 
 def post_AckAllocationPreemptionSignal(
