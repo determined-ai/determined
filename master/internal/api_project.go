@@ -148,6 +148,10 @@ func (a *apiServer) PatchProject(
 		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated.",
 			currProject.Id)
 	}
+	if currProject.Immutable {
+		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated.",
+			currProject.Id)
+	}
 
 	madeChanges := false
 	if req.Project.Name != nil && req.Project.Name.Value != currProject.Name {
