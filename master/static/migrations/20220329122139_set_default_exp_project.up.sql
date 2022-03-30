@@ -10,3 +10,6 @@ UPDATE experiments SET project_id = (
   SELECT MIN(id) FROM projects WHERE name = 'Uncategorized'
 )
 WHERE project_id IS NULL;
+
+-- Disallow nulls in the future
+ALTER TABLE experiments ALTER project_id SET NOT NULL;
