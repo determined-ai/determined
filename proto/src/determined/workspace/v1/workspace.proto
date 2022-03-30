@@ -9,7 +9,9 @@ import "google/protobuf/wrappers.proto";
 // Workspace is a named collection of projects.
 message Workspace {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "name", "archived", "username" ] }
+    json_schema: {
+      required: [ "archived", "id", "immutable", "name", "username" ]
+    }
   };
   // The unique id of the workspace.
   int32 id = 1;

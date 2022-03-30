@@ -3954,6 +3954,7 @@ class v1Project:
         self,
         archived: bool,
         id: int,
+        immutable: bool,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
@@ -3961,7 +3962,6 @@ class v1Project:
         username: str,
         workspaceId: int,
         description: "typing.Optional[str]" = None,
-        immutable: "typing.Optional[bool]" = None,
         lastExperimentStartedAt: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -3989,7 +3989,7 @@ class v1Project:
             numActiveExperiments=obj["numActiveExperiments"],
             archived=obj["archived"],
             username=obj["username"],
-            immutable=obj.get("immutable", None),
+            immutable=obj["immutable"],
         )
 
     def to_json(self) -> typing.Any:
@@ -4004,7 +4004,7 @@ class v1Project:
             "numActiveExperiments": self.numActiveExperiments,
             "archived": self.archived,
             "username": self.username,
-            "immutable": self.immutable if self.immutable is not None else None,
+            "immutable": self.immutable,
         }
 
 class v1PutTemplateResponse:
@@ -5594,9 +5594,9 @@ class v1Workspace:
         self,
         archived: bool,
         id: int,
+        immutable: bool,
         name: str,
         username: str,
-        immutable: "typing.Optional[bool]" = None,
     ):
         self.id = id
         self.name = name
@@ -5611,7 +5611,7 @@ class v1Workspace:
             name=obj["name"],
             archived=obj["archived"],
             username=obj["username"],
-            immutable=obj.get("immutable", None),
+            immutable=obj["immutable"],
         )
 
     def to_json(self) -> typing.Any:
@@ -5620,7 +5620,7 @@ class v1Workspace:
             "name": self.name,
             "archived": self.archived,
             "username": self.username,
-            "immutable": self.immutable if self.immutable is not None else None,
+            "immutable": self.immutable,
         }
 
 def post_AckAllocationPreemptionSignal(

@@ -4624,7 +4624,7 @@ export interface V1Project {
      * @type {boolean}
      * @memberof V1Project
      */
-    immutable?: boolean;
+    immutable: boolean;
 }
 
 /**
@@ -6474,7 +6474,7 @@ export interface V1Workspace {
      * @type {boolean}
      * @memberof V1Workspace
      */
-    immutable?: boolean;
+    immutable: boolean;
 }
 
 
