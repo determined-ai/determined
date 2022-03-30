@@ -37,10 +37,6 @@ type (
 		// The persisted representation.
 		model model.Allocation
 
-		// State for the primary behavior of an allocation.
-		// The state of the allocation, just informational.
-		state model.AllocationState
-
 		// State of all our resources.
 		resources resourcesList
 		// Separates the existence of resources from us having started them.
@@ -205,7 +201,6 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
 	case AllocationReady:
-		a.model.State = &a.state // TODO(Brad): Consolidate where state is store else bugs.
 		a.model.IsReady = ptrs.BoolPtr(true)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
@@ -316,7 +311,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 
 // RequestResources sets up the allocation.
 func (a *Allocation) RequestResources(ctx *actor.Context) error {
-	a.state = model.AllocationStatePending
+	a.setModelState(model.AllocationStatePending)
 	a.req.TaskActor = ctx.Self()
 	if err := ctx.Ask(a.rm, a.req).Error(); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
@@ -356,13 +351,13 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
 // out). Eventually, Allocations should just be started with their TaskSpec.
 func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
-	if a.state != model.AllocationStatePending {
+	if a.getModelState() != model.AllocationStatePending {
 		// If we have moved on from the pending state, these must be stale (and we must have
 		// already released them, just the scheduler hasn't gotten word yet).
 		return ErrStaleResourcesReceived{}
 	}
 
-	a.state = model.AllocationStateAssigned
+	a.setModelState(model.AllocationStateAssigned)
 	a.resources.append(msg.Resources)
 
 	// Get the task spec first, so the trial/task table is populated before allocations.
@@ -458,7 +453,7 @@ func (a *Allocation) ResourcesStateChanged(
 	)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
-		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
+		a.setMostProgressedModelState(model.AllocationStatePulling)
 		a.model.StartTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
 		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 			ctx.Log().
@@ -466,9 +461,9 @@ func (a *Allocation) ResourcesStateChanged(
 				Errorf("allocation will not be properly accounted for")
 		}
 	case sproto.Starting:
-		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateStarting)
+		a.setMostProgressedModelState(model.AllocationStateStarting)
 	case sproto.Running:
-		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateRunning)
+		a.setMostProgressedModelState(model.AllocationStateRunning)
 		a.resources[msg.ResourcesID].start = msg.ResourcesStarted
 		if a.rendezvous != nil && a.rendezvous.try() {
 			ctx.Log().Info("all containers are connected successfully (task container state changed)")
@@ -487,7 +482,7 @@ func (a *Allocation) ResourcesStateChanged(
 		prom.AddAllocationResources(a.resources[msg.ResourcesID].Summary(), msg.ResourcesStarted)
 
 	case sproto.Terminated:
-		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
+		a.setMostProgressedModelState(model.AllocationStateTerminating)
 		a.resources[msg.ResourcesID].exit = msg.ResourcesStopped
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 			ContainerID: msg.ContainerIDStr(),
@@ -508,7 +503,6 @@ func (a *Allocation) ResourcesStateChanged(
 		}
 	}
 
-	a.model.State = &a.state
 	err := a.db.UpdateAllocationState(a.model)
 	if err != nil {
 		ctx.Log().Error(err)
@@ -657,7 +651,7 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 }
 
 func (a *Allocation) terminated(ctx *actor.Context) {
-	a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminated)
+	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.State()}
 	a.exited = true
 	defer ctx.Tell(ctx.Self().Parent(), exit)
@@ -773,7 +767,7 @@ func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Eve
 	ev.Description = a.req.Name
 	ev.IsReady = coalesceBool(a.model.IsReady, false)
 	if ev.State == "" {
-		ev.State = a.state.String()
+		ev.State = a.getModelState().String()
 	}
 	if ev.Time.IsZero() {
 		ev.Time = time.Now().UTC()
@@ -802,13 +796,28 @@ func (a *Allocation) State() AllocationState {
 	}
 
 	return AllocationState{
-		State:      a.state,
+		State:      a.getModelState(),
 		Resources:  resources,
 		Addresses:  addresses,
 		Containers: containers,
 		Ready: a.rendezvous != nil && a.rendezvous.ready() ||
 			coalesceBool(a.model.IsReady, false),
 	}
+}
+
+func (a *Allocation) setModelState(v model.AllocationState) {
+	a.model.State = &v
+}
+
+func (a *Allocation) setMostProgressedModelState(v model.AllocationState) {
+	a.setModelState(model.MostProgressedAllocationState(a.getModelState(), v))
+}
+
+func (a *Allocation) getModelState() model.AllocationState {
+	if a.model.State == nil {
+		return model.AllocationStatePending
+	}
+	return *a.model.State
 }
 
 func (a *AllocationExited) String() string {
