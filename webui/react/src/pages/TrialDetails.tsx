@@ -4,6 +4,7 @@ import { useHistory, useParams } from 'react-router';
 
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import RoutePagination from 'components/RoutePagination';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -46,14 +47,14 @@ const TrialDetailsComp: React.FC = () => {
   const history = useHistory();
   const routeParams = useParams<Params>();
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
-
+  const [ trialId, setTrialId ] = useState<number>(parseInt(routeParams.trialId));
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
     isLoading: true,
   });
+
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
-  const trialId = parseInt(routeParams.trialId);
   const trial = trialDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
@@ -109,6 +110,14 @@ const TrialDetailsComp: React.FC = () => {
   const { stopPolling } = usePolling(fetchTrialDetails);
 
   useEffect(() => {
+    setTrialId(parseInt(routeParams.trialId));
+  }, [ routeParams.trialId ]);
+
+  useEffect(() => {
+    fetchTrialDetails();
+  }, [ fetchTrialDetails, trialId ]);
+
+  useEffect(() => {
     fetchExperimentDetails();
   }, [ fetchExperimentDetails ]);
 
@@ -159,7 +168,22 @@ const TrialDetailsComp: React.FC = () => {
         hidePreview={tabKey === TabType.Logs}
         trial={trial}
         onViewLogs={handleViewLogs}>
-        <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+        <Tabs
+          activeKey={tabKey}
+          className="no-padding"
+          tabBarExtraContent={(
+            <div style={{ bottom: 9, position: 'relative' }}>
+              <RoutePagination
+                currentId={trialId}
+                ids={experiment.trialIds ?? []}
+                tooltipLabel="Trial"
+                onSelectId={(selectedTrialId) => {
+                  history.push(paths.trialDetails(selectedTrialId, experiment?.id));
+                }}
+              />
+            </div>
+          )}
+          onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">
             <TrialDetailsOverview experiment={experiment} trial={trial} />
           </TabPane>
