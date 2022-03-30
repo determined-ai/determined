@@ -145,9 +145,9 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       plotChart.destroy();
       chartRef.current = undefined;
     };
-    /* eslint-disable */
+    // eslint-disable-next-linez
   }, [ chartDivRef, hasData, JSON.stringify(options) ]);
-    /* eslint-enable */
+
   /*
    * Chart data when data changes.
    */
