@@ -25,14 +25,15 @@ message Project {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [
-        "id",
-        "name",
-        "workspace_id",
-        "notes",
-        "num_experiments",
-        "num_active_experiments",
         "archived",
-        "username"
+        "id",
+        "immutable",
+        "name",
+        "notes",
+        "num_active_experiments",
+        "num_experiments",
+        "username",
+        "workspace_id"
       ]
     }
   };
@@ -58,6 +59,8 @@ message Project {
   bool archived = 9;
   // User who created this project.
   string username = 10;
+  // Whether this project is immutable (default uncategorized project).
+  bool immutable = 11;
 }
 
 // ProjectModel is a checkpoint associated with a project.
