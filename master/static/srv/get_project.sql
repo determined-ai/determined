@@ -6,7 +6,7 @@ WITH pe AS (
   FROM experiments
   WHERE project_id = $1
 )
-SELECT p.id, p.name, p.workspace_id, p.description, p.archived, p.notes,
+SELECT p.id, p.name, p.workspace_id, p.description, p.archived, p.immutable, p.notes,
   MAX(pe.num_experiments) AS num_experiments,
   MAX(pe.num_active_experiments) AS num_active_experiments,
   MAX(pe.last_experiment_started_at) AS last_experiment_started_at,

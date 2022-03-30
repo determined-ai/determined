@@ -7,5 +7,5 @@ u AS (
   SELECT username FROM users, w
   WHERE users.id = w.user_id
 )
-SELECT w.id, w.name, w.archived, u.username
+SELECT w.id, w.name, w.archived, w.immutable, u.username
 FROM w, u;
