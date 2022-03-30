@@ -12,5 +12,5 @@ fi
 
 new_base="$(date +%Y%m%d%H%M%S)_$name"
 
-mv *"_$name.up.sql" "$new_base.up.sql"
-mv *"_$name.down.sql" "$new_base.down.sql"
+mv *"_$name.tx.up.sql" "$new_base.tx.up.sql"
+mv *"_$name.tx.down.sql" "$new_base.tx.down.sql"
