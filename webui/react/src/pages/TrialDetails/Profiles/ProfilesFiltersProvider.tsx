@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
-import useInterval from 'hooks/useInterval'
 import useSettings from 'hooks/useSettings';
 import { TrialDetails } from 'types';
 
@@ -84,11 +83,6 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
   }, [ settings.agentId, settings.name, systemSeries, updateSettings ]);
 
-  const [tickThrottle, setTickThrottle] = useState(false);
-  useInterval(() => {
-    setTickThrottle(!tickThrottle);
-  }, 200);
-
   const context = useMemo<ProfilesFiltersContextInterface>(() => ({
     metrics: {
       [MetricType.System]: systemMetrics,
@@ -98,7 +92,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     settings,
     systemSeries,
     updateSettings,
-  }), [tickThrottle ]);
+  }), [ systemMetrics, throughputMetrics, timingMetrics, settings, systemSeries, updateSettings ]);
 
   return (
     <ProfilesFiltersContext.Provider value={context}>

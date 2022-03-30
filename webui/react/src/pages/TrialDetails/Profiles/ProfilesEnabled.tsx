@@ -65,7 +65,6 @@ const seriesMapping = (name: string, index: number) => ({
 const fillerMapping = () => ({ class: css.hiddenLegend, scale: 'y', show: false });
 
 const ProfilesEnabled: React.FC = () => {
-  console.log("rendering")
   const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
 

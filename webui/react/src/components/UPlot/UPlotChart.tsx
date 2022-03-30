@@ -63,6 +63,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
    * Chart mount and dismount.
    */
   useEffect(() => {
+    // console.log(chartDivRef, hasData, JSON.stringify(options));
     if (!chartDivRef.current || !hasData || !options) return;
 
     const optionsExtended = uPlot.assign(
@@ -144,16 +145,18 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       plotChart.destroy();
       chartRef.current = undefined;
     };
-  }, [ chartDivRef, hasData, normalizedData, options ]);
-
+    /* eslint-disable */
+  }, [ chartDivRef, hasData, JSON.stringify(options) ]);
+    /* eslint-enable */
   /*
    * Chart data when data changes.
    */
   useEffect(() => {
     if (!chartRef.current || !normalizedData) return;
+    // console.log(normalizedData[0].slice(-1)[0]);
     chartRef.current.setData(normalizedData, isZoomed.current);
   }, [ normalizedData ]);
-
+  // [ chartDivRef, hasData, normalizedData, options ]
   /*
    * When a focus index is provided, highlight applicable series.
    */

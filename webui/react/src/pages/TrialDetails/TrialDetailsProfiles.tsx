@@ -1,8 +1,6 @@
 import { Alert } from 'antd';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
-
-import useScroll from 'hooks/useScroll';
 import ProfilesEnabled from 'pages/TrialDetails/Profiles/ProfilesEnabled';
 import ProfilesFiltersProvider from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import ProfilesNotEnabled from 'pages/TrialDetails/Profiles/ProfilesNotEnabled';
@@ -39,23 +37,8 @@ const Profiler: React.FC<Props> = ({ experiment, trial }: Props) => {
 };
 
 const TrialDetailsProfiles: React.FC<Props> = (props: Props) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scroll = useScroll(containerRef);
-  const scrollTop = useRef(0);
-
-  /*
-   * Preserve and restore scroll position upon re-render.
-   */
-
-  useEffect(() => {
-    if (containerRef.current && scroll.scrollTop === 0 && scrollTop.current !== 0) {
-      containerRef.current.scrollTop = scrollTop.current;
-    } else {
-      scrollTop.current = scroll.scrollTop;
-    }
-  });
   return (
-    <div className={css.base} ref={containerRef}>
+    <div className={css.base}>
       <Profiler {...props} />
     </div>
   );
