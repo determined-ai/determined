@@ -92,7 +92,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     settings,
     systemSeries,
     updateSettings,
-  }), [ systemMetrics, throughputMetrics, timingMetrics, settings, systemSeries, updateSettings ]);
+  }), [ settings, systemMetrics, systemSeries, throughputMetrics, timingMetrics, updateSettings ]);
 
   return (
     <ProfilesFiltersContext.Provider value={context}>
