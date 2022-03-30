@@ -1,19 +1,49 @@
 import json
 from argparse import Namespace
-from typing import Any, List, Tuple
+from typing import Any, List, Sequence, Tuple
 
 from determined.cli.session import setup_session
 from determined.common.api import authentication, bindings
-from determined.common.api.bindings import v1Project, v1Workspace
+from determined.common.api.bindings import v1Experiment, v1Project, v1Workspace
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import session
 
-from workspace import get_workspace_by_name, list_workspace_projects
-
 from . import render
+from .workspace import list_workspace_projects, workspace_by_name
 
-PROJECT_HEADERS = ["ID", "Name", "# Experiments", "# Active Experiments"]
-WORKSPACE_HEADERS = ["ID", "Name"]
+
+def render_experiments(args: Namespace, experiments: Sequence[v1Experiment]) -> None:
+    def format_experiment(e: v1Experiment) -> List[Any]:
+        result = [
+            e.id,
+            e.username,
+            e.name,
+            e.forkedFrom,
+            e.state.value.replace("STATE_", ""),
+            render.format_percent(e.progress),
+            render.format_time(e.startTime),
+            render.format_time(e.endTime),
+            e.resourcePool,
+        ]
+        if args.all:
+            result.append(e.archived)
+        return result
+
+    headers = [
+        "ID",
+        "Owner",
+        "Name",
+        "Parent ID",
+        "State",
+        "Progress",
+        "Start Time",
+        "End Time",
+        "Resource Pool",
+    ]
+    if args.all:
+        headers.append("Archived")
+    values = [format_experiment(e) for e in experiments]
+    render.tabulate_or_csv(headers, values, False)
 
 
 def render_project(project: v1Project) -> None:
@@ -23,105 +53,89 @@ def render_project(project: v1Project) -> None:
         project.numExperiments,
         project.numActiveExperiments,
     ]
+    PROJECT_HEADERS = ["ID", "Name", "# Experiments", "# Active Experiments"]
     render.tabulate_or_csv(PROJECT_HEADERS, [values], False)
 
 
-def project_by_name(sess: session.Session, workspace_name: str, project_name: str) -> Tuple[int, int]:
-    w = get_workspace_by_name(sess, workspace_name)
-    p = bindings.get_GetWorkspaceProjects(sess, name=project_name).projects
+def project_by_name(
+    sess: session.Session, workspace_name: str, project_name: str
+) -> Tuple[v1Workspace, v1Project]:
+    w = workspace_by_name(sess, workspace_name)
+    p = bindings.get_GetWorkspaceProjects(sess, id=w.id, name=project_name).projects
     if len(p) == 0:
         raise Exception(f'No project found on this workspace with name: "{project_name}"')
-    return (w.id, p[0].id)
+    return (w, p[0])
 
 
 @authentication.required
-def list_projects(args: Namespace) -> None:
-    list_workspace_projects(args)
-
-
-@authentication.required
-def list_workspace_projects(args: Namespace) -> None:
+def list_project_experiments(args: Namespace) -> None:
     sess = setup_session(args)
-    w = workspace_by_name(sess, args.workspace_name)
-
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
-    sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
-    projects = bindings.get_GetWorkspaceProjects(sess, id=w.id, orderBy=orderArg, sortBy=sortArg).projects
+    sortArg = bindings.v1GetProjectExperimentsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
+    experiments = bindings.get_GetProjectExperiments(
+        sess, id=p.id, orderBy=orderArg, sortBy=sortArg
+    ).experiments
     if args.json:
-        print(json.dumps([p.to_json() for p in projects], indent=2))
+        print(json.dumps([e.to_json() for e in experiments], indent=2))
     else:
-        values = [
-            [
-                p.id,
-                p.name,
-                p.numExperiments,
-                p.numActiveExperiments,
-            ]
-            for p in projects
-        ]
-        render.tabulate_or_csv(PROJECT_HEADERS, values, False)
+        render_experiments(args, experiments)
 
 
 @authentication.required
-def create_workspace(args: Namespace) -> None:
-    content = bindings.v1PostWorkspaceRequest(args.name)
-    w = bindings.post_PostWorkspace(setup_session(args), body=content).workspace
-
-    if args.json:
-        print(json.dumps(w.to_json(), indent=2))
-    else:
-        render_workspace(w)
-
-
-@authentication.required
-def describe_workspace(args: Namespace) -> None:
+def create_project(args: Namespace) -> None:
     sess = setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
+    content = bindings.v1PostProjectRequest(
+        name=args.name, description=args.description, workspaceId=w.id
+    )
+    p = bindings.post_PostProject(sess, body=content, workspaceId=w.id).project
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        print(json.dumps(p.to_json(), indent=2))
     else:
-        render_workspace(w)
-        print("\nAssociated Projects")
-        projects = bindings.get_GetWorkspaceProjects(sess, id=w.id).projects
-        values = [
-            [
-                p.id,
-                p.name,
-                p.numExperiments,
-                p.numActiveExperiments,
-            ]
-            for p in projects
-        ]
-        render.tabulate_or_csv(PROJECT_HEADERS, values, False)
+        render_project(p)
 
 
 @authentication.required
-def delete_workspace(args: Namespace) -> None:
+def describe_project(args: Namespace) -> None:
+    sess = setup_session(args)
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    if args.json:
+        print(json.dumps(p.to_json(), indent=2))
+    else:
+        render_project(p)
+        print("\nAssociated Experiments")
+        experiments = bindings.get_GetProjectExperiments(sess, id=p.id).experiments
+        render_experiments(args, experiments)
+
+
+@authentication.required
+def delete_project(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
-        "Deleting a workspace will result in the unrecoverable \n"
-        "deletion of all associated projects. For a recoverable \n"
+        "Deleting a project will result in the unrecoverable \n"
+        "deletion of all associated experiments. For a recoverable \n"
         "alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
         sess = setup_session(args)
-        w = workspace_by_name(sess, args.workspace_name)
-        bindings.delete_DeleteWorkspace(sess, id=w.id)
-        print(f"Successfully deleted workspace {args.workspace_name}.")
+        (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+        bindings.delete_DeleteProject(sess, id=p.id)
+        print(f"Successfully deleted project {args.project_name}.")
     else:
-        print("Aborting workspace deletion.")
+        print("Aborting project deletion.")
 
 
 @authentication.required
-def edit_workspace(args: Namespace) -> None:
+def edit_project(args: Namespace) -> None:
     sess = setup_session(args)
-    current = workspace_by_name(sess, args.workspace_name)
-    updated = bindings.v1PatchWorkspace(name=args.new_name)
-    w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    updated = bindings.v1PatchProject(name=args.new_name, description=args.description)
+    new_p = bindings.patch_PatchProject(sess, body=updated, id=p.id).project
 
     if args.json:
-        print(json.dumps(w.to_json(), indent=2))
+        print(json.dumps(new_p.to_json(), indent=2))
     else:
-        render_workspace(w)
+        render_project(new_p)
 
 
 args_description = [
@@ -155,20 +169,54 @@ args_description = [
                 is_default=True,
             ),
             Cmd(
-                "create",
-                create_workspace,
-                "create workspace",
+                "list-experiments",
+                list_project_experiments,
+                "list the experiments associated with a project",
                 [
-                    Arg("name", type=str, help="unique name of the workspace"),
+                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    Arg("project_name", type=str, help="name of the project"),
+                    Arg(
+                        "--all",
+                        "-a",
+                        action="store_true",
+                        help="show all experiments (including archived and other users')",
+                    ),
+                    Arg(
+                        "--sort-by",
+                        type=str,
+                        choices=["id", "name"],
+                        default="id",
+                        help="sort workspaces by the given field",
+                    ),
+                    Arg(
+                        "--order-by",
+                        type=str,
+                        choices=["asc", "desc"],
+                        default="asc",
+                        help="order workspaces in either ascending or descending order",
+                    ),
+                    Arg("--json", action="store_true", help="print as JSON"),
+                ],
+                is_default=True,
+            ),
+            Cmd(
+                "create",
+                create_project,
+                "create project",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    Arg("name", type=str, help="name of the project"),
+                    Arg("--description", type=str, help="description of the project"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
             Cmd(
                 "delete",
-                delete_workspace,
-                "delete workspace",
+                delete_project,
+                "delete project",
                 [
                     Arg("workspace_name", type=str, help="name of the workspace"),
+                    Arg("project_name", type=str, help="name of the project"),
                     Arg(
                         "--yes",
                         action="store_true",
@@ -179,20 +227,29 @@ args_description = [
             ),
             Cmd(
                 "describe",
-                describe_workspace,
-                "describe workspace",
+                describe_project,
+                "describe project",
                 [
                     Arg("workspace_name", type=str, help="name of the workspace"),
+                    Arg("project_name", type=str, help="name of the project"),
+                    Arg(
+                        "--all",
+                        "-a",
+                        action="store_true",
+                        help="show all experiments (including archived and other users')",
+                    ),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
             Cmd(
                 "edit",
-                edit_workspace,
-                "edit workspace",
+                edit_project,
+                "edit project",
                 [
                     Arg("workspace_name", type=str, help="current name of the workspace"),
-                    Arg("new_name", type=str, help="new name of the workspace"),
+                    Arg("project_name", type=str, help="name of the project"),
+                    Arg("--new_name", type=str, help="new name of the project"),
+                    Arg("--description", type=str, help="description of the project"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
