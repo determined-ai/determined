@@ -101,6 +101,7 @@ func (a *apiServer) GetWorkspaces(
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetWorkspacesRequest_SortBy]string{
 		apiv1.GetWorkspacesRequest_SORT_BY_UNSPECIFIED: "id",
+		apiv1.GetWorkspacesRequest_SORT_BY_ID:          "id",
 		apiv1.GetWorkspacesRequest_SORT_BY_NAME:        "name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
