@@ -2316,6 +2316,7 @@ class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
     SORT_BY_LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
+    SORT_BY_ID = "SORT_BY_ID"
 
 class v1GetWorkspaceProjectsResponse:
     def __init__(
