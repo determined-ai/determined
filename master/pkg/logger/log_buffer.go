@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/pkg/mmath"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
@@ -29,12 +29,12 @@ func computeSlice(startID int, endID int, limit int, totalEntries int, capacity 
 	selectTail := startID == -1
 
 	// Limit values to appropriate bounds.
-	startID = mmath.Max(startID, mmath.Max(0, totalEntries-capacity))
-	endID = mmath.Min(endID, totalEntries)
+	startID = mathx.Max(0, startID, totalEntries-capacity)
+	endID = mathx.Min(endID, totalEntries)
 	if startID >= endID {
 		return 0, 0
 	}
-	limit = mmath.Min(limit, endID-startID)
+	limit = mathx.Min(limit, endID-startID)
 
 	// Select the newest entries if the limit is taking effect and no startID was provided.
 	if selectTail {

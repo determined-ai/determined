@@ -5,7 +5,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/mmath"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -32,11 +32,11 @@ func getBracketMaxTrials(
 	allocated := 0
 	for i := 0; i < len(brackets); i++ {
 		bracketTrials = append(
-			bracketTrials, mmath.Max(int(bracketWeight[i]/totalWeight*float64(maxTrials)), 1))
+			bracketTrials, mathx.Max(int(bracketWeight[i]/totalWeight*float64(maxTrials)), 1))
 
 		allocated += bracketTrials[i]
 	}
-	remainder := mmath.Max(maxTrials-allocated, 0)
+	remainder := mathx.Max(maxTrials-allocated, 0)
 	bracketTrials[0] += remainder
 	return bracketTrials
 }
@@ -52,11 +52,11 @@ func getBracketMaxConcurrentTrials(
 	numBrackets := len(maxTrials)
 	bracketMaxConcurrentTrials := make([]int, 0, numBrackets)
 	if maxConcurrentTrials == 0 {
-		minTrials = mmath.Max(maxTrials[numBrackets-1], int(divisor))
+		minTrials = mathx.Max(maxTrials[numBrackets-1], int(divisor))
 	} else {
 		// Without this, the remainder will be less than numBrackets and later brackets willgit pu
 		// not receive a constraint on bracketMaxConcurrentTrials.
-		maxConcurrentTrials = mmath.Max(maxConcurrentTrials, numBrackets)
+		maxConcurrentTrials = mathx.Max(maxConcurrentTrials, numBrackets)
 		minTrials = maxConcurrentTrials / numBrackets
 		remainder = maxConcurrentTrials % numBrackets
 	}
@@ -76,11 +76,9 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 	brackets := config.BracketRungs()
 	if len(brackets) == 0 {
 		maxRungs := config.MaxRungs()
-		maxRungs = mmath.Min(
+		maxRungs = mathx.Min(
 			maxRungs,
-			int(math.Log(float64(config.MaxLength().Units))/math.Log(config.Divisor()))+1)
-		maxRungs = mmath.Min(
-			maxRungs,
+			int(math.Log(float64(config.MaxLength().Units))/math.Log(config.Divisor()))+1,
 			int(math.Log(float64(config.MaxTrials()))/math.Log(config.Divisor()))+1)
 		brackets = modeFunc(maxRungs)
 	}

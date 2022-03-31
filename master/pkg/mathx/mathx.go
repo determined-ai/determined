@@ -1,6 +1,10 @@
-package mmath
+package mathx
 
-import "golang.org/x/exp/constraints"
+import (
+	"fmt"
+
+	"golang.org/x/exp/constraints"
+)
 
 // Min returns the smallest value of all provided values.
 func Min[T constraints.Ordered](values ...T) T {
@@ -22,4 +26,12 @@ func Max[T constraints.Ordered](values ...T) T {
 		}
 	}
 	return maxValue
+}
+
+// Clamp returns the val, clamped between min and max. Clamp panics if max is less than min.
+func Clamp[T constraints.Ordered](min, val, max T) T {
+	if min > max {
+		panic(fmt.Sprintf("cannot call clamp with %v (min) !<= %v (max)", max, min))
+	}
+	return Min(Max(min, val), max)
 }

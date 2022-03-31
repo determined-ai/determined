@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/determined-ai/determined/master/pkg/mmath"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -47,7 +47,7 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	s.RemainingTrials = append(s.RemainingTrials, grid...)
 	initialTrials := s.trials
 	if s.MaxConcurrentTrials() > 0 {
-		initialTrials = mmath.Min(s.trials, s.MaxConcurrentTrials())
+		initialTrials = mathx.Min(s.trials, s.MaxConcurrentTrials())
 	}
 	var ops []Operation
 	for trial := 0; trial < initialTrials; trial++ {
@@ -213,7 +213,7 @@ func getGridAxes(route []string, h expconf.Hyperparameter) []gridAxis {
 		count := *p.Count()
 
 		// Clamp to the maximum number of integers in the range.
-		count = mmath.Min(count, p.Maxval()-p.Minval()+1)
+		count = mathx.Min(count, p.Maxval()-p.Minval()+1)
 
 		axis := make([]axisValue, count)
 		// Includes temporary validation, for invalid count

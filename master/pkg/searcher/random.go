@@ -3,7 +3,7 @@ package searcher
 import (
 	"encoding/json"
 
-	"github.com/determined-ai/determined/master/pkg/mmath"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -57,7 +57,7 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
 	initialTrials := s.MaxTrials()
 	if s.MaxConcurrentTrials() > 0 {
-		initialTrials = mmath.Min(s.MaxTrials(), s.MaxConcurrentTrials())
+		initialTrials = mathx.Min(s.MaxTrials(), s.MaxConcurrentTrials())
 	}
 	for trial := 0; trial < initialTrials; trial++ {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/mmath"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 )
 
 const (
@@ -239,8 +239,9 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 }
 
 func (s *scaleDecider) calculateNumInstancesToLaunch() int {
-	desiredNum := s.desiredNewInstances - len(s.recentlyLaunched)
-	desiredNum = mmath.Min(desiredNum, s.maxInstanceNum-len(s.instances))
-	desiredNum = mmath.Max(desiredNum, s.minInstanceNum-len(s.instances))
-	return mmath.Max(0, desiredNum)
+	return mathx.Clamp(
+		mathx.Max(0, s.minInstanceNum-len(s.instances)),
+		s.desiredNewInstances-len(s.recentlyLaunched),
+		s.maxInstanceNum-len(s.instances),
+	)
 }
