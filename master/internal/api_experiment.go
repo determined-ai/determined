@@ -78,7 +78,7 @@ func (a *apiServer) GetExperiment(
 ) (*apiv1.GetExperimentResponse, error) {
 	exp, err := a.getExperiment(int(req.ExperimentId))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching experiment from db")
 	}
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
@@ -103,10 +103,22 @@ func (a *apiServer) GetExperiment(
 		return &resp, nil
 	}
 
-	err = a.ask(actor.Addr("experiments").Child(exp.Id),
-		job.GetJobSummary{}, &resp.JobSummary)
+	err = a.ask(actor.Addr("experiments").Child(exp.Id), job.GetJobSummary{}, &resp.JobSummary)
 	if err != nil {
-		return nil, err
+		// An error here either is real or just that the experiment was not yet terminal in the DB
+		// when we first queried it but was by the time it got around to handling out ask. So we
+		// refresh our DB query and see which it was.
+		exp, qErr := a.getExperiment(int(req.ExperimentId))
+		if qErr != nil {
+			return nil, errors.Wrap(qErr, "re-fetching experiment from db")
+		}
+		resp.Experiment = exp
+
+		if model.TerminalStates[model.StateFromProto(exp.State)] {
+			return &resp, nil
+		}
+
+		return nil, errors.Wrap(err, "asking for job summary")
 	}
 
 	return &resp, nil
