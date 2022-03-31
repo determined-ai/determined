@@ -188,7 +188,6 @@ args_description = [
                     ),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
-                is_default=True,
             ),
             Cmd(
                 "create",
