@@ -25,12 +25,13 @@ trainings_vt AS (
 checkpoints_vt AS (
   SELECT row_to_json(r1) AS checkpoint, total_batches
   FROM (
-      SELECT 'STATE_' || c.state as state,
-        c.end_time,
+      SELECT
+        'STATE_' || c.state AS state,
+        c.report_time as end_time,
         c.uuid,
-        c.total_batches,
+        c.latest_batch as total_batches,
         c.resources
-      FROM checkpoints c
+      FROM checkpoints_view c
       WHERE c.trial_id = $1
     ) AS r1
 )

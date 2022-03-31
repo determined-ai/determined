@@ -327,7 +327,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
-		latestBatch = latestCheckpoint.TotalBatches
+		latestBatch = latestCheckpoint.LatestBatch
 	}
 
 	return tasks.TrialSpec{

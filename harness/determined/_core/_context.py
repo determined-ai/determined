@@ -140,14 +140,8 @@ def init(
                 container_path=constants.SHARED_FS_CONTAINER_PATH,
             )
 
-        api_path = f"/api/v1/trials/{info.trial.trial_id}/checkpoint_metadata"
-        static_metadata = {
-            "trial_id": info.trial.trial_id,
-            "trial_run_id": info.trial._trial_run_id,
-        }
-
         checkpointing = _core.Checkpointing(
-            distributed, storage_manager, session, api_path, static_metadata, tbd_mgr
+            distributed, storage_manager, session, info.task_id, info.allocation_id, tbd_mgr
         )
 
     else:
