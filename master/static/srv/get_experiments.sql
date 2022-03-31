@@ -44,6 +44,7 @@ WITH page_info AS (
         e.job_id AS job_id,
         e.parent_id AS forked_from,
         e.owner_id AS user_id,
+        e.project_id AS project_id,
         u.username AS username,
         COALESCE(u.display_name, u.username) as display_name
     FROM experiments e

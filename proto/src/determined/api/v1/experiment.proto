@@ -558,3 +558,18 @@ message GetModelDefResponse {
   // The base64-encoded, gzipped, tarball.
   string b64_tgz = 1;
 }
+
+// Request to move an experiment into a project.
+message MoveExperimentRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "destination_project_id", "experiment_id" ] }
+  };
+
+  // The id of the experiment being moved.
+  int32 experiment_id = 1;
+  // The id of the new parent project.
+  int32 destination_project_id = 2;
+}
+
+// Response to MoveExperimentRequest.
+message MoveExperimentResponse {}
