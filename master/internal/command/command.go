@@ -124,7 +124,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			TaskID:     c.taskID,
 			TaskType:   c.taskType,
 			StartTime:  c.registeredTime,
-			JobID:      c.jobID,
+			JobID:      &c.jobID,
 			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
 			return errors.Wrapf(err, "persisting task %v", c.taskID)

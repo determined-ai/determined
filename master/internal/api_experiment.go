@@ -220,7 +220,8 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		rm: a.m.rm,
 		db: a.m.db,
 
-		logCtx: logger.Context{"experiment-id": exp.ID},
+		taskLogger: a.m.taskLogger,
+		logCtx:     logger.Context{"experiment-id": exp.ID},
 	}).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}

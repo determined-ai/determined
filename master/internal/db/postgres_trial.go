@@ -23,6 +23,16 @@ func (db *PgDB) AddTrial(trial *model.Trial) error {
 			return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 		}
 
+		if err := addTask(tx, &model.Task{
+			TaskID:     trial.TaskID,
+			TaskType:   model.TaskTypeTrial,
+			StartTime:  trial.StartTime,
+			JobID:      &trial.JobID,
+			LogVersion: model.CurrentTaskLogVersion,
+		}); err != nil {
+			return err
+		}
+
 		if err := namedGet(tx, &trial.ID, `
 INSERT INTO trials
   (task_id, request_id, experiment_id, state, start_time, end_time,
@@ -34,13 +44,7 @@ RETURNING id`, trial); err != nil {
 			return errors.Wrapf(err, "error inserting trial %v", *trial)
 		}
 
-		return addTask(tx, &model.Task{
-			TaskID:     trial.TaskID,
-			TaskType:   model.TaskTypeTrial,
-			StartTime:  trial.StartTime,
-			JobID:      trial.JobID,
-			LogVersion: model.CurrentTaskLogVersion,
-		})
+		return nil
 	})
 }
 
