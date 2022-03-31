@@ -239,9 +239,9 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 }
 
 func (s *scaleDecider) calculateNumInstancesToLaunch() int {
-	return mathx.Clamp(
-		mathx.Max(0, s.minInstanceNum-len(s.instances)),
+	return mathx.Max(0, mathx.Clamp(
+		s.minInstanceNum-len(s.instances),
 		s.desiredNewInstances-len(s.recentlyLaunched),
 		s.maxInstanceNum-len(s.instances),
-	)
+	))
 }
