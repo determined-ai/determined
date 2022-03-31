@@ -111,7 +111,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		"DET_TASK_TYPE":          string(model.TaskTypeTrial),
 	}
 	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
-		envVars["DET_LATEST_CHECKPOINT"] = *s.LatestCheckpoint.UUID
+		envVars["DET_LATEST_CHECKPOINT"] = s.LatestCheckpoint.UUID.String()
 	}
 
 	res.ExtraEnvVars = envVars

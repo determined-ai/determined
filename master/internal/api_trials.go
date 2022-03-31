@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -24,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -334,23 +337,31 @@ func (a *apiServer) GetTrialCheckpoints(
 			return false
 		}
 
-		found = false
-		for _, state := range req.ValidationStates {
-			if state == v.ValidationState {
-				found = true
-				break
-			}
-		}
-
-		if len(req.ValidationStates) != 0 && !found {
-			return false
-		}
-
 		return true
 	})
 
-	a.sort(
-		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetTrialCheckpointsRequest_SORT_BY_BATCH_NUMBER)
+	sort.Slice(resp.Checkpoints, func(i, j int) bool {
+		a1, a2 := resp.Checkpoints[i], resp.Checkpoints[j]
+		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
+			a2, a1 = a1, a2
+		}
+
+		switch req.SortBy {
+		case apiv1.GetTrialCheckpointsRequest_SORT_BY_BATCH_NUMBER:
+			return a1.Metadata.AsMap()["latest_batch"].(float64) <
+				a2.Metadata.AsMap()["latest_batch"].(float64)
+		case apiv1.GetTrialCheckpointsRequest_SORT_BY_UUID:
+			return a1.Uuid < a2.Uuid
+		case apiv1.GetTrialCheckpointsRequest_SORT_BY_END_TIME:
+			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+		case apiv1.GetTrialCheckpointsRequest_SORT_BY_STATE:
+			return a1.State.Number() < a2.State.Number()
+		case apiv1.GetTrialCheckpointsRequest_SORT_BY_UNSPECIFIED:
+			fallthrough
+		default:
+			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+		}
+	})
 
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
@@ -801,16 +812,61 @@ func (a *apiServer) ReportTrialValidationMetrics(
 	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
 }
 
-func (a *apiServer) ReportTrialCheckpointMetadata(
-	ctx context.Context, req *apiv1.ReportTrialCheckpointMetadataRequest,
-) (*apiv1.ReportTrialCheckpointMetadataResponse, error) {
-	if err := a.checkTrialExists(int(req.CheckpointMetadata.TrialId)); err != nil {
+func (a *apiServer) ReportCheckpoint(
+	ctx context.Context, req *apiv1.ReportCheckpointRequest,
+) (*apiv1.ReportCheckpointResponse, error) {
+	if err := a.checkTaskExists(model.TaskID(req.Checkpoint.TaskId)); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddCheckpointMetadata(ctx, req.CheckpointMetadata); err != nil {
+
+	c, err := checkpointV2FromProtoWithDefaults(req.Checkpoint)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument, "unconvertable checkpoint: %s", err.Error())
+	}
+
+	switch c.State {
+	case model.CompletedState:
+	case "":
+		c.State = model.CompletedState
+	default:
+	}
+
+	if err := a.m.db.AddCheckpointMetadata(ctx, c); err != nil {
 		return nil, err
 	}
-	return &apiv1.ReportTrialCheckpointMetadataResponse{}, nil
+	return &apiv1.ReportCheckpointResponse{}, nil
+}
+
+func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.CheckpointV2, error) {
+	conv := &protoconverter.ProtoConverter{}
+
+	switch p.State {
+	case checkpointv1.State_STATE_COMPLETED:
+	case checkpointv1.State_STATE_UNSPECIFIED:
+		p.State = checkpointv1.State_STATE_COMPLETED
+	default:
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid state for reported checkpoint: %s", p.State)
+	}
+
+	if p.ReportTime == nil || p.ReportTime.AsTime().IsZero() {
+		p.ReportTime = timestamppb.New(time.Now().UTC())
+	}
+
+	c := &model.CheckpointV2{
+		UUID:         conv.ToUUID(p.Uuid),
+		TaskID:       model.TaskID(p.TaskId),
+		AllocationID: model.AllocationID(p.AllocationId),
+		ReportTime:   p.ReportTime.AsTime(),
+		State:        conv.ToCheckpointState(p.State),
+		Resources:    p.Resources,
+		Metadata:     p.Metadata.AsMap(),
+	}
+	if err := conv.Error(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", err)
+	}
+	return c, nil
 }
 
 func (a *apiServer) AllocationRendezvousInfo(
@@ -876,6 +932,18 @@ func (a *apiServer) checkTrialExists(id int) error {
 		return status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
 	case !ok:
 		return status.Errorf(codes.NotFound, "trial %d not found", id)
+	default:
+		return nil
+	}
+}
+
+func (a *apiServer) checkTaskExists(id model.TaskID) error {
+	ok, err := a.m.db.CheckTaskExists(id)
+	switch {
+	case err != nil:
+		return status.Errorf(codes.Internal, "failed to check if task exists: %s", err)
+	case !ok:
+		return status.Errorf(codes.NotFound, "task %s not found", id)
 	default:
 		return nil
 	}
