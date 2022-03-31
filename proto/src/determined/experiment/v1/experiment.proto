@@ -96,7 +96,7 @@ message Experiment {
   // The current progress of a running experiment.
   google.protobuf.DoubleValue progress = 17;
   // The id of a project associated with this experiment.
-  int32 project_id = 19;
+  int32 project_id = 21;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.
