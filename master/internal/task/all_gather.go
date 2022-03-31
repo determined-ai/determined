@@ -86,7 +86,7 @@ func (g *allGather) watch(msg WatchAllGather) AllGatherWatcher {
 	w := make(chan AllGatherInfoOrError, 1)
 	g.watchers[msg.WatcherID] = w
 	g.data = append(g.data, msg.Data)
-	g.numPeers = ptrs.IntPtr(msg.NumPeers)
+	g.numPeers = ptrs.Ptr(msg.NumPeers)
 	if g.done() {
 		g.push()
 	}

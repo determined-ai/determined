@@ -57,7 +57,7 @@ func TestClusterAPI(t *testing.T) {
 		Slots:        8,
 		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
-		StartTime:    ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond)),
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
 
 	err = db.AddAllocation(aIn)

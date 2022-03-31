@@ -32,7 +32,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 	maxLength := expconf.NewLengthInBatches(100)
 	eConf := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
-			RawMetric: ptrs.StringPtr("loss"),
+			RawMetric: ptrs.Ptr("loss"),
 			RawSingleConfig: &expconf.SingleConfig{
 				RawMaxLength: &maxLength,
 			},
@@ -41,7 +41,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 		RawHyperparameters: expconf.Hyperparameters{},
 		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
 			RawSharedFSConfig: &expconf.SharedFSConfig{
-				RawHostPath: ptrs.StringPtr("/"),
+				RawHostPath: ptrs.Ptr("/"),
 			},
 		},
 	}

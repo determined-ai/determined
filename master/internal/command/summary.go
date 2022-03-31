@@ -47,7 +47,7 @@ type (
 func (c *command) summary(ctx *actor.Context) summary {
 	var exitStatus *string
 	if c.exitStatus != nil {
-		exitStatus = ptrs.StringPtr(c.exitStatus.Err.Error())
+		exitStatus = ptrs.Ptr(c.exitStatus.Err.Error())
 	}
 
 	resp, _ := ctx.Ask(c.allocation, task.AllocationState{}).GetOrElseTimeout(

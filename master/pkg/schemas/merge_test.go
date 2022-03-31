@@ -16,14 +16,14 @@ type X struct {
 
 func TestMerge(t *testing.T) {
 	obj := X{
-		A: ptrs.StringPtr("obj:x.a"),
+		A: ptrs.Ptr("obj:x.a"),
 		B: nil,
-		C: ptrs.StringPtr("obj:x.c"),
+		C: ptrs.Ptr("obj:x.c"),
 	}
 
 	src := X{
-		A: ptrs.StringPtr("src:x.a"),
-		B: ptrs.StringPtr("src:x.b"),
+		A: ptrs.Ptr("src:x.a"),
+		B: ptrs.Ptr("src:x.b"),
 		C: nil,
 	}
 

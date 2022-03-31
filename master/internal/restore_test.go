@@ -58,15 +58,15 @@ func TestDeserExperimentSnapshotIntoCurrent(t *testing.T) {
 				asha := expconf.SearcherConfig{
 					//nolint:exhaustivestruct
 					RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-						RawNumRungs: ptrs.IntPtr(4),
-						RawStopOnce: ptrs.BoolPtr(false),
+						RawNumRungs: ptrs.Ptr(4),
+						RawStopOnce: ptrs.Ptr(false),
 						RawMaxLength: &expconf.Length{
 							Unit:  expconf.Batches,
 							Units: 937,
 						},
-						RawDivisor: ptrs.Float64Ptr(4),
+						RawDivisor: ptrs.Ptr[float64](4),
 					},
-					RawSmallerIsBetter: ptrs.BoolPtr(true),
+					RawSmallerIsBetter: ptrs.Ptr(true),
 				}
 				sm := searcher.NewSearchMethod(asha)
 				e.searcher = searcher.NewSearcher(0, sm, expconf.Hyperparameters{})

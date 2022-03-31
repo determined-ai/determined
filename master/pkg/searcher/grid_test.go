@@ -46,18 +46,18 @@ func TestGridFunctionality(t *testing.T) {
 }
 
 func TestHyperparameterGridMethod(t *testing.T) {
-	dParam := expconf.DoubleHyperparameter{RawMaxval: 2.0, RawCount: ptrs.IntPtr(5)}
+	dParam := expconf.DoubleHyperparameter{RawMaxval: 2.0, RawCount: ptrs.Ptr(5)}
 	assert.Equal(t,
 		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawDoubleHyperparameter: &dParam})[0]),
 		5,
 	)
-	iParam := expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.IntPtr(7)}
+	iParam := expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.Ptr(7)}
 	assert.Equal(t,
 		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawIntHyperparameter: &iParam})[0]),
 		7,
 	)
 	lParam := expconf.LogHyperparameter{
-		RawMinval: -3.0, RawMaxval: -2.0, RawBase: 10, RawCount: ptrs.IntPtr(2),
+		RawMinval: -3.0, RawMaxval: -2.0, RawBase: 10, RawCount: ptrs.Ptr(2),
 	}
 	assert.Equal(t,
 		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawLogHyperparameter: &lParam})[0]),
@@ -78,8 +78,8 @@ func TestHyperparameterGridMethod(t *testing.T) {
 }
 
 func TestGrid(t *testing.T) {
-	iParam1 := &expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.IntPtr(3)}
-	iParam2 := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.IntPtr(3)}
+	iParam1 := &expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.Ptr(3)}
+	iParam2 := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.Ptr(3)}
 	hparams := expconf.Hyperparameters{
 		"1": expconf.Hyperparameter{RawIntHyperparameter: iParam1},
 		"2": expconf.Hyperparameter{RawIntHyperparameter: iParam2},
@@ -100,8 +100,8 @@ func TestGrid(t *testing.T) {
 }
 
 func TestNestedGrid(t *testing.T) {
-	iParam1 := &expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.IntPtr(3)}
-	iParam2 := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.IntPtr(3)}
+	iParam1 := &expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.Ptr(3)}
+	iParam2 := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.Ptr(3)}
 	hparams := expconf.Hyperparameters{
 		"1": expconf.Hyperparameter{RawIntHyperparameter: iParam1},
 		"2": expconf.Hyperparameter{
@@ -143,7 +143,7 @@ func TestNestedGridFurther(t *testing.T) {
 							RawIntHyperparameter: &expconf.IntHyperparameter{
 								RawMinval: 7,
 								RawMaxval: 11,
-								RawCount:  ptrs.IntPtr(2),
+								RawCount:  ptrs.Ptr(2),
 							},
 						},
 					},
@@ -154,7 +154,7 @@ func TestNestedGridFurther(t *testing.T) {
 			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
 				RawMinval: 13.0,
 				RawMaxval: 17.0,
-				RawCount:  ptrs.IntPtr(2),
+				RawCount:  ptrs.Ptr(2),
 			},
 		},
 		"l": {
@@ -162,7 +162,7 @@ func TestNestedGridFurther(t *testing.T) {
 				RawMinval: 1,
 				RawMaxval: 2,
 				RawBase:   10,
-				RawCount:  ptrs.IntPtr(2),
+				RawCount:  ptrs.Ptr(2),
 			},
 		},
 	}
@@ -211,7 +211,7 @@ func TestGridIntCount(t *testing.T) {
 	hparams := expconf.Hyperparameters{
 		"1": expconf.Hyperparameter{
 			RawIntHyperparameter: &expconf.IntHyperparameter{
-				RawMinval: 0, RawMaxval: 4, RawCount: ptrs.IntPtr(5),
+				RawMinval: 0, RawMaxval: 4, RawCount: ptrs.Ptr(5),
 			},
 		},
 	}
@@ -230,7 +230,7 @@ func TestGridIntCountNegative(t *testing.T) {
 	hparams := expconf.Hyperparameters{
 		"1": expconf.Hyperparameter{
 			RawIntHyperparameter: &expconf.IntHyperparameter{
-				RawMinval: -4, RawMaxval: -2, RawCount: ptrs.IntPtr(3),
+				RawMinval: -4, RawMaxval: -2, RawCount: ptrs.Ptr(3),
 			},
 		},
 	}
@@ -244,7 +244,7 @@ func TestGridIntCountNegative(t *testing.T) {
 }
 
 func TestGridSearcherRecords(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: lengthPtr(expconf.NewLengthInRecords(19200))}
+	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(19200))}
 	actual = schemas.WithDefaults(actual).(expconf.GridConfig)
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]ValidateAfter{
@@ -256,7 +256,7 @@ func TestGridSearcherRecords(t *testing.T) {
 }
 
 func TestGridSearcherBatches(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: lengthPtr(expconf.NewLengthInBatches(300))}
+	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300))}
 	actual = schemas.WithDefaults(actual).(expconf.GridConfig)
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]ValidateAfter{
@@ -268,7 +268,7 @@ func TestGridSearcherBatches(t *testing.T) {
 }
 
 func TestGridSearcherEpochs(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: lengthPtr(expconf.NewLengthInEpochs(3))}
+	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInEpochs(3))}
 	actual = schemas.WithDefaults(actual).(expconf.GridConfig)
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]ValidateAfter{
@@ -293,8 +293,8 @@ func TestGridSearchMethod(t *testing.T) {
 			},
 			config: expconf.SearcherConfig{
 				RawGridConfig: &expconf.GridConfig{
-					RawMaxLength:           lengthPtr(expconf.NewLengthInBatches(300)),
-					RawMaxConcurrentTrials: ptrs.IntPtr(2),
+					RawMaxLength:           ptrs.Ptr(expconf.NewLengthInBatches(300)),
+					RawMaxConcurrentTrials: ptrs.Ptr(2),
 				},
 			},
 			hparams: generateHyperparameters([]int{2, 1, 3}),
