@@ -8,6 +8,7 @@ import css from './Spinner.module.scss';
 
 interface Props extends Omit<SpinProps, 'size'>, SpinState {
   center?: boolean;
+  conditionalRender?: boolean;
   inline?: boolean;
   size?: IconSize;
 }
@@ -15,7 +16,9 @@ interface Props extends Omit<SpinProps, 'size'>, SpinState {
 const Spinner: React.FC<Props> = ({
   center,
   className,
+  conditionalRender,
   size,
+  spinning,
   tip,
   ...props
 }: PropsWithChildren<Props>) => {
@@ -32,9 +35,10 @@ const Spinner: React.FC<Props> = ({
             <Icon name="spinner" size={size} />
           </div>
         )}
+        spinning={spinning}
         tip={tip}
         {...props}>
-        {props.children}
+        {conditionalRender ? (spinning ? null : props.children) : props.children}
       </Spin>
     </div>
   );
