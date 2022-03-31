@@ -200,3 +200,18 @@ func (a *apiServer) DeleteProject(
 	return &apiv1.DeleteProjectResponse{},
 		errors.Wrapf(err, "error deleting project (%d)", req.Id)
 }
+
+func (a *apiServer) MoveProject(
+	_ context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse, error) {
+	holder := &projectv1.Project{}
+	err := a.m.db.QueryProto("move_project", holder, req.ProjectId,
+		req.DestinationWorkspaceId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) does not exist or not moveable by this user",
+			req.ProjectId)
+	}
+
+	return &apiv1.MoveProjectResponse{},
+		errors.Wrapf(err, "error moving project (%d)", req.ProjectId)
+}

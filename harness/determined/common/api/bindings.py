@@ -1101,6 +1101,7 @@ class v1Experiment:
         jobId: str,
         name: str,
         numTrials: int,
+        projectId: int,
         searcherType: str,
         startTime: str,
         state: "determinedexperimentv1State",
@@ -1135,6 +1136,7 @@ class v1Experiment:
         self.jobId = jobId
         self.forkedFrom = forkedFrom
         self.progress = progress
+        self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1158,6 +1160,7 @@ class v1Experiment:
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+            projectId=obj["projectId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1181,6 +1184,7 @@ class v1Experiment:
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
+            "projectId": self.projectId,
         }
 
 class v1ExperimentSimulation:
@@ -7401,6 +7405,46 @@ def post_MarkAllocationResourcesDaemon(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
+
+def post_MoveExperiment(
+    session: "client.Session",
+    *,
+    body: int,
+    experimentId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/move",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveExperiment", _resp)
+
+def post_MoveProject(
+    session: "client.Session",
+    *,
+    body: int,
+    projectId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{projectId}/move",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveProject", _resp)
 
 def patch_PatchExperiment(
     session: "client.Session",
