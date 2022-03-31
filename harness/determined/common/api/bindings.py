@@ -616,125 +616,89 @@ class v1AwsCustomTag:
 class v1Checkpoint:
     def __init__(
         self,
-        batchNumber: int,
-        experimentId: int,
-        state: "determinedcheckpointv1State",
-        trialId: int,
-        determinedVersion: "typing.Optional[str]" = None,
-        endTime: "typing.Optional[str]" = None,
-        experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        format: "typing.Optional[str]" = None,
-        framework: "typing.Optional[str]" = None,
-        hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        metrics: "typing.Optional[v1Metrics]" = None,
-        resources: "typing.Optional[typing.Dict[str, str]]" = None,
-        searcherMetric: "typing.Optional[float]" = None,
-        uuid: "typing.Optional[str]" = None,
-        validationState: "typing.Optional[determinedcheckpointv1State]" = None,
+        allocationId: str,
+        metadata: "typing.Dict[str, typing.Any]",
+        resources: "typing.Dict[str, str]",
+        taskId: str,
+        training: "v1CheckpointTrainingMetadata",
+        uuid: str,
+        reportTime: "typing.Optional[str]" = None,
+        state: "typing.Optional[determinedcheckpointv1State]" = None,
     ):
+        self.taskId = taskId
+        self.allocationId = allocationId
         self.uuid = uuid
-        self.experimentConfig = experimentConfig
-        self.experimentId = experimentId
-        self.trialId = trialId
-        self.hparams = hparams
-        self.batchNumber = batchNumber
-        self.endTime = endTime
+        self.reportTime = reportTime
         self.resources = resources
         self.metadata = metadata
-        self.framework = framework
-        self.format = format
-        self.determinedVersion = determinedVersion
-        self.metrics = metrics
-        self.validationState = validationState
         self.state = state
-        self.searcherMetric = searcherMetric
+        self.training = training
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Checkpoint":
         return cls(
-            uuid=obj.get("uuid", None),
+            taskId=obj["taskId"],
+            allocationId=obj["allocationId"],
+            uuid=obj["uuid"],
+            reportTime=obj.get("reportTime", None),
+            resources=obj["resources"],
+            metadata=obj["metadata"],
+            state=determinedcheckpointv1State(obj["state"]) if obj.get("state", None) is not None else None,
+            training=v1CheckpointTrainingMetadata.from_json(obj["training"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "taskId": self.taskId,
+            "allocationId": self.allocationId,
+            "uuid": self.uuid,
+            "reportTime": self.reportTime if self.reportTime is not None else None,
+            "resources": self.resources,
+            "metadata": self.metadata,
+            "state": self.state.value if self.state is not None else None,
+            "training": self.training.to_json(),
+        }
+
+class v1CheckpointTrainingMetadata:
+    def __init__(
+        self,
+        experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        experimentId: "typing.Optional[int]" = None,
+        hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        searcherMetric: "typing.Optional[float]" = None,
+        trainingMetrics: "typing.Optional[v1Metrics]" = None,
+        trialId: "typing.Optional[int]" = None,
+        validationMetrics: "typing.Optional[v1Metrics]" = None,
+    ):
+        self.trialId = trialId
+        self.experimentId = experimentId
+        self.experimentConfig = experimentConfig
+        self.hparams = hparams
+        self.trainingMetrics = trainingMetrics
+        self.validationMetrics = validationMetrics
+        self.searcherMetric = searcherMetric
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CheckpointTrainingMetadata":
+        return cls(
+            trialId=obj.get("trialId", None),
+            experimentId=obj.get("experimentId", None),
             experimentConfig=obj.get("experimentConfig", None),
-            experimentId=obj["experimentId"],
-            trialId=obj["trialId"],
             hparams=obj.get("hparams", None),
-            batchNumber=obj["batchNumber"],
-            endTime=obj.get("endTime", None),
-            resources=obj.get("resources", None),
-            metadata=obj.get("metadata", None),
-            framework=obj.get("framework", None),
-            format=obj.get("format", None),
-            determinedVersion=obj.get("determinedVersion", None),
-            metrics=v1Metrics.from_json(obj["metrics"]) if obj.get("metrics", None) is not None else None,
-            validationState=determinedcheckpointv1State(obj["validationState"]) if obj.get("validationState", None) is not None else None,
-            state=determinedcheckpointv1State(obj["state"]),
+            trainingMetrics=v1Metrics.from_json(obj["trainingMetrics"]) if obj.get("trainingMetrics", None) is not None else None,
+            validationMetrics=v1Metrics.from_json(obj["validationMetrics"]) if obj.get("validationMetrics", None) is not None else None,
             searcherMetric=float(obj["searcherMetric"]) if obj.get("searcherMetric", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "uuid": self.uuid if self.uuid is not None else None,
+            "trialId": self.trialId if self.trialId is not None else None,
+            "experimentId": self.experimentId if self.experimentId is not None else None,
             "experimentConfig": self.experimentConfig if self.experimentConfig is not None else None,
-            "experimentId": self.experimentId,
-            "trialId": self.trialId,
             "hparams": self.hparams if self.hparams is not None else None,
-            "batchNumber": self.batchNumber,
-            "endTime": self.endTime if self.endTime is not None else None,
-            "resources": self.resources if self.resources is not None else None,
-            "metadata": self.metadata if self.metadata is not None else None,
-            "framework": self.framework if self.framework is not None else None,
-            "format": self.format if self.format is not None else None,
-            "determinedVersion": self.determinedVersion if self.determinedVersion is not None else None,
-            "metrics": self.metrics.to_json() if self.metrics is not None else None,
-            "validationState": self.validationState.value if self.validationState is not None else None,
-            "state": self.state.value,
+            "trainingMetrics": self.trainingMetrics.to_json() if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics.to_json() if self.validationMetrics is not None else None,
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
-        }
-
-class v1CheckpointMetadata:
-    def __init__(
-        self,
-        determinedVersion: str,
-        format: str,
-        framework: str,
-        resources: "typing.Dict[str, str]",
-        trialId: int,
-        trialRunId: int,
-        uuid: str,
-        latestBatch: "typing.Optional[int]" = None,
-    ):
-        self.trialId = trialId
-        self.trialRunId = trialRunId
-        self.uuid = uuid
-        self.resources = resources
-        self.framework = framework
-        self.format = format
-        self.determinedVersion = determinedVersion
-        self.latestBatch = latestBatch
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CheckpointMetadata":
-        return cls(
-            trialId=obj["trialId"],
-            trialRunId=obj["trialRunId"],
-            uuid=obj["uuid"],
-            resources=obj["resources"],
-            framework=obj["framework"],
-            format=obj["format"],
-            determinedVersion=obj["determinedVersion"],
-            latestBatch=obj.get("latestBatch", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "trialId": self.trialId,
-            "trialRunId": self.trialRunId,
-            "uuid": self.uuid,
-            "resources": self.resources,
-            "framework": self.framework,
-            "format": self.format,
-            "determinedVersion": self.determinedVersion,
-            "latestBatch": self.latestBatch if self.latestBatch is not None else None,
         }
 
 class v1CheckpointWorkload:
@@ -1401,9 +1365,7 @@ class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
     SORT_BY_UUID = "SORT_BY_UUID"
     SORT_BY_TRIAL_ID = "SORT_BY_TRIAL_ID"
     SORT_BY_BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
     SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_VALIDATION_STATE = "SORT_BY_VALIDATION_STATE"
     SORT_BY_STATE = "SORT_BY_STATE"
     SORT_BY_SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
 
@@ -2119,9 +2081,7 @@ class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
     SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     SORT_BY_UUID = "SORT_BY_UUID"
     SORT_BY_BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
     SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_VALIDATION_STATE = "SORT_BY_VALIDATION_STATE"
     SORT_BY_STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse:
@@ -2843,23 +2803,23 @@ class v1MetricType(enum.Enum):
 class v1Metrics:
     def __init__(
         self,
-        numInputs: "typing.Optional[int]" = None,
-        validationMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        avgMetrics: "typing.Dict[str, typing.Any]",
+        batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
     ):
-        self.numInputs = numInputs
-        self.validationMetrics = validationMetrics
+        self.avgMetrics = avgMetrics
+        self.batchMetrics = batchMetrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Metrics":
         return cls(
-            numInputs=obj.get("numInputs", None),
-            validationMetrics=obj.get("validationMetrics", None),
+            avgMetrics=obj["avgMetrics"],
+            batchMetrics=obj.get("batchMetrics", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "numInputs": self.numInputs if self.numInputs is not None else None,
-            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
+            "avgMetrics": self.avgMetrics,
+            "batchMetrics": self.batchMetrics if self.batchMetrics is not None else None,
         }
 
 class v1MetricsWorkload:
@@ -5791,7 +5751,6 @@ def get_GetExperimentCheckpoints(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
-    validationStates: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -5799,7 +5758,6 @@ def get_GetExperimentCheckpoints(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
-        "validationStates": [x.value for x in validationStates] if validationStates else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6461,7 +6419,6 @@ def get_GetTrialCheckpoints(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
-    validationStates: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -6469,7 +6426,6 @@ def get_GetTrialCheckpoints(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
-        "validationStates": [x.value for x in validationStates] if validationStates else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -7043,16 +6999,15 @@ def put_PutTemplate(
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
 
-def post_ReportTrialCheckpointMetadata(
+def post_ReportCheckpoint(
     session: "client.Session",
     *,
-    body: "v1CheckpointMetadata",
-    checkpointMetadata_trialId: int,
+    body: "v1Checkpoint",
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/trials/{checkpointMetadata_trialId}/checkpoint_metadata",
+        path="/api/v1/checkpoints",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7061,7 +7016,7 @@ def post_ReportTrialCheckpointMetadata(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_ReportTrialCheckpointMetadata", _resp)
+    raise APIHttpError("post_ReportCheckpoint", _resp)
 
 def post_ReportTrialProgress(
     session: "client.Session",

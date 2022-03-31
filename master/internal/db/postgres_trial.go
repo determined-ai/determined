@@ -131,100 +131,6 @@ WHERE id = $1`, id, md.State); err != nil {
 	return nil
 }
 
-// TrialDetailsRaw returns a trial as a JSON string. This includes checkpoints and
-// validations for every step, plus aggregated training metrics and full validation metrics.
-func (db *PgDB) TrialDetailsRaw(id int) ([]byte, error) {
-	// Find the desired metric names and construct parts of the query appropriately.
-	var metricNames []string
-	if err := db.sql.Select(&metricNames, `
-SELECT jsonb_object_keys(s.metrics->'batch_metrics'->0)
-FROM (
-    SELECT metrics
-    FROM steps
-    WHERE trial_id = $1 AND state = 'COMPLETED'
-    LIMIT 1
-) s
-`, id); err != nil {
-		return nil, errors.Wrapf(err, "failed to get metric names for trial %d", id)
-	}
-
-	averageMetrics := make([]string, 0, len(metricNames))
-	for _, name := range metricNames {
-		averageMetrics = append(averageMetrics,
-			fmt.Sprintf(`avg(try_float8_cast(value->>'%s')) AS "%s"`, name, name),
-		)
-	}
-
-	// We want to average the per-batch training metrics into per-step metrics.
-	// Newer runners compute the averages in the metrics already. For legacy
-	// data, we compute the averages on the fly.
-	//
-	// Ideally, we'd like to just cast the metric values (i.e., ::float8) but
-	// there may be non-scalar training metrics, in which case casts will cause
-	// an error in Postgres. We use the try_float8_cast function defined
-	// earlier, which makes the whole query considerably slower, but can handle
-	// that case (by returning NULL instead of aborting).
-	queryTemplate := `
-WITH const AS (
-    SELECT config->'searcher'->>'metric' AS metric_name,
-           (SELECT
-               CASE
-                   WHEN coalesce((config->'searcher'
-                                        ->>'smaller_is_better')::boolean, true)
-                   THEN 1
-                   ELSE -1
-               END) AS sign
-    FROM experiments WHERE id IN (SELECT experiment_id FROM trials WHERE id = $1)
-)
-SELECT row_to_json(r1)::text
-FROM (
-    SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
-           t.warm_start_checkpoint_id,
-           (SELECT coalesce(max(s.total_batches), 0)
-            FROM steps s
-            WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
-           ) AS total_batches_processed,
-           (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
-            FROM (
-                SELECT s.end_time, s.id, s.state, s.total_batches,
-                       (SELECT CASE
-                           WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
-                               (s.metrics->'avg_metrics')::json
-                           ELSE (SELECT row_to_json(r3)
-                                 FROM
-                                    (SELECT %s
-                                     FROM jsonb_array_elements(s.metrics->'batch_metrics')
-                                    ) r3)
-                        END) AS avg_metrics,
-                       (SELECT row_to_json(r4)
-                        FROM (
-                            SELECT v.end_time, v.id, v.metrics, v.state,
-                            FROM validations v
-                            WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
-                                  AND v.metrics IS NOT NULL
-                        ) r4
-                       ) AS validation,
-                       (SELECT row_to_json(r5)
-                        FROM (
-                            SELECT c.id, c.trial_id, c.total_batches, c.state,
-                                   c.end_time, c.uuid, c.resources, c.metadata,
-                                   (v.metrics->'validation_metrics'
-                                             ->>const.metric_name)::float8 AS validation_metric
-                            FROM checkpoints c LEFT JOIN validations v
-                            ON c.trial_id = v.trial_id AND c.total_batches = v.total_batches, const
-                            WHERE c.trial_id = t.id AND c.total_batches = s.total_batches
-                       ) r5) AS checkpoint
-                FROM steps s
-                WHERE s.trial_id = t.id
-            ) r2
-           ) AS steps
-   FROM trials t
-   WHERE t.id = $1
-) r1;`
-
-	return db.rawQuery(fmt.Sprintf(queryTemplate, strings.Join(averageMetrics, ",")), id)
-}
-
 // TrialRunIDAndRestarts returns the run id and restart count for a trial.
 func (db *PgDB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
 	var runID, restart int
@@ -284,15 +190,6 @@ WHERE trial_id = $1
   AND total_batches > $3;
 `, m.TrialId, m.TrialRunId, m.LatestBatch); err != nil {
 			return errors.Wrap(err, "archiving validations")
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-UPDATE raw_checkpoints SET archived = true
-WHERE trial_id = $1
-  AND trial_run_id < $2
-  AND total_batches > $3;
-`, m.TrialId, m.TrialRunId, m.LatestBatch); err != nil {
-			return errors.Wrap(err, "archiving checkpoints")
 		}
 
 		if _, err := tx.NamedExecContext(ctx, `
@@ -404,47 +301,31 @@ DO NOTHING
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
 func (db *PgDB) AddCheckpointMetadata(
-	ctx context.Context, m *trialv1.CheckpointMetadata,
+	ctx context.Context, m *model.CheckpointV2,
 ) error {
 	return db.withTransaction("add checkpoint metadata", func(tx *sqlx.Tx) error {
-		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
-			return err
+		var latestAllocationID model.AllocationID
+		switch err := tx.QueryRowx(`
+SELECT a.allocation_id
+FROM allocations a
+WHERE a.task_id = $1
+ORDER BY a.start_time DESC
+LIMIT 1`, m.TaskID).Scan(&latestAllocationID); {
+		case err != nil:
+			return fmt.Errorf("validating allocation ID: %w", err)
+		case m.AllocationID != latestAllocationID:
+			return fmt.Errorf("state allocation (%s != %s)", latestAllocationID, m.AllocationID)
 		}
-
-		if _, err := tx.ExecContext(ctx, `
-UPDATE raw_checkpoints SET archived = true
-WHERE trial_id = $1
-  AND trial_run_id < $2
-  AND total_batches >= $3;
-`, m.TrialId, m.TrialRunId, m.LatestBatch); err != nil {
-			return errors.Wrap(err, "archiving checkpoints")
-		}
-
-		if err := db.ensureStep(
-			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.LatestBatch),
-		); err != nil {
-			return err
-		}
+		// TODO: For the old "run ID" consistency check, we should just check the
+		// allocation ID is from the latest allocation.
 
 		if _, err := tx.NamedExecContext(ctx, `
-INSERT INTO raw_checkpoints
-	(trial_id, trial_run_id, state, end_time, total_batches,
-	 uuid, resources, framework, format, determined_version)
+INSERT INTO checkpoints_v2
+	(uuid, task_id, allocation_id, report_time, state, resources, metadata)
 VALUES
-	(:trial_id, :trial_run_id, :state, now(), :total_batches,
-	 :uuid, :resources, :framework, :format, :determined_version)
-`, model.Checkpoint{
-			TrialID:           int(m.TrialId),
-			TrialRunID:        int(m.TrialRunId),
-			State:             model.CompletedState,
-			TotalBatches:      int(m.LatestBatch),
-			UUID:              &m.Uuid,
-			Resources:         model.JSONObjFromMapStringInt64(m.Resources),
-			Framework:         m.Framework,
-			Format:            m.Format,
-			DeterminedVersion: m.DeterminedVersion,
-		}); err != nil {
-			return errors.Wrap(err, "inserting checkpoint metadata")
+	(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata)
+`, m); err != nil {
+			return errors.Wrap(err, "inserting checkpoint")
 		}
 		return nil
 	})
@@ -488,10 +369,10 @@ AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) 
 func (db *PgDB) CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, end_time, uuid, resources, metadata
-FROM checkpoints
-WHERE trial_id = $1
-AND total_batches = $2`, &checkpoint, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
+SELECT *
+FROM checkpoints_view c
+WHERE c.trial_id = $1 AND c.latest_batch = $2`, &checkpoint, trialID, totalBatches,
+	); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v, %v)",
@@ -504,9 +385,9 @@ AND total_batches = $2`, &checkpoint, trialID, totalBatches); errors.Cause(err) 
 func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, end_time, uuid, resources, metadata
-FROM checkpoints
-WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
+SELECT *
+FROM checkpoints_view c
+WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
@@ -519,38 +400,16 @@ WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 func (db *PgDB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT
-	id, trial_id, state, end_time, uuid, resources, metadata, format,
-	framework, determined_version, total_batches, trial_run_id
-FROM checkpoints
-WHERE trial_id = $1 AND state = 'COMPLETED'
-ORDER BY total_batches DESC
+SELECT *
+FROM checkpoints_view c
+WHERE c.trial_id = $1 AND c.state = 'COMPLETED'
+ORDER BY c.latest_batch DESC
 LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for latest trial checkpoint (%v)", trialID)
 	}
 	return &checkpoint, nil
-}
-
-// UpdateCheckpointMetadata updates an existing checkpoint with the metadata
-// attached to the checkpoint passed into the method.
-func (db *PgDB) UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error {
-	if checkpoint == nil {
-		return errors.Errorf("checkpoint cannot be nil does not exist")
-	}
-
-	toUpdate := []string{"metadata"}
-
-	err := db.namedExecOne(fmt.Sprintf(`
-UPDATE checkpoints
-%v
-WHERE id = :id`, setClause(toUpdate)), checkpoint)
-	if err != nil {
-		return errors.Wrapf(err, "error updating (%v) in checkpoint (%v)",
-			strings.Join(toUpdate, ", "), checkpoint.UUID)
-	}
-	return nil
 }
 
 // TrialState returns the current state of the given trial.

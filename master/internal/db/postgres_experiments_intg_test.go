@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -295,19 +296,26 @@ func TestCheckpointMetadata(t *testing.T) {
 			user := requireMockUser(t, db)
 			exp := requireMockExperiment(t, db, user)
 			tr := requireMockTrial(t, db, exp)
+			a := requireMockAllocation(t, db, tr.TaskID)
 
-			ckptUuid := uuid.NewString()
+			ckptUuid := uuid.New()
 			latestBatch := int32(10)
-			ckpt := &trialv1.CheckpointMetadata{
-				TrialId:           int32(tr.ID),
-				Uuid:              ckptUuid,
-				Resources:         map[string]int64{"ok": 1.0},
-				Framework:         "some framework",
-				Format:            "some format",
-				DeterminedVersion: "1.0.0",
-				LatestBatch:       latestBatch,
+			ckpt := model.CheckpointV2{
+				UUID:         ckptUuid,
+				TaskID:       tr.TaskID,
+				AllocationID: a.AllocationID,
+				ReportTime:   time.Now().UTC(),
+				State:        model.CompletedState,
+				Resources: map[string]int64{
+					"ok": 1.0,
+				},
+				Metadata: map[string]interface{}{
+					"framework":          "some framework",
+					"determined_version": "1.0.0",
+					"latest_batch":       float64(latestBatch),
+				},
 			}
-			err := db.AddCheckpointMetadata(context.TODO(), ckpt)
+			err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
 			require.NoError(t, err)
 
 			var m *trialv1.TrialMetrics
@@ -332,45 +340,49 @@ func TestCheckpointMetadata(t *testing.T) {
 			}
 
 			requireCheckpointOk := func(
-				expected *trialv1.CheckpointMetadata,
-				actual checkpointv1.Checkpoint,
+				expected *model.CheckpointV2, actual *checkpointv1.Checkpoint,
 			) {
-				require.Equal(t, expected, &trialv1.CheckpointMetadata{
-					TrialId:           actual.TrialId,
-					Uuid:              actual.Uuid,
-					Resources:         actual.Resources,
-					Framework:         actual.Framework,
-					Format:            actual.Format,
-					DeterminedVersion: actual.DeterminedVersion,
-					LatestBatch:       actual.BatchNumber,
-				})
+				conv := protoconverter.ProtoConverter{}
+				require.Equal(t, expected.TaskID, model.TaskID(actual.TaskId))
+				require.Equal(t, expected.AllocationID, model.AllocationID(actual.AllocationId))
+				require.NoError(t, conv.Error())
+				require.Equal(t, expected.UUID, conv.ToUUID(actual.Uuid))
+				require.Equal(t, expected.ReportTime.Truncate(time.Millisecond),
+					actual.ReportTime.AsTime().Truncate(time.Millisecond))
+				require.Equal(t, expected.Resources, actual.Resources)
+				require.Equal(t, expected.Metadata, model.JSONObj(actual.Metadata.AsMap()))
+				require.NoError(t, conv.Error())
+				require.Equal(t, expected.State, conv.ToCheckpointState(actual.State))
 				if tt.hasValidation {
-					require.Equal(t, metricValue, actual.SearcherMetric.Value)
-					require.Equal(t, checkpointv1.State_STATE_COMPLETED, actual.ValidationState)
-					require.NotNil(t, actual.Metrics)
+					require.Equal(t, metricValue, actual.Training.SearcherMetric.Value)
+					require.NotNil(t, actual.Training.ValidationMetrics.AvgMetrics)
 				} else {
-					require.Nil(t, actual.SearcherMetric)
-					require.Equal(t, checkpointv1.State_STATE_UNSPECIFIED, actual.ValidationState)
-					require.Nil(t, actual.Metrics)
+					require.Nil(t, actual.Training.SearcherMetric)
+					require.Nil(t, actual.Training.ValidationMetrics.AvgMetrics)
 				}
 			}
 
 			var retCkpt checkpointv1.Checkpoint
 			err = db.QueryProto("get_checkpoint", &retCkpt, ckptUuid)
 			require.NoError(t, err, "failed to get checkpoint")
-			requireCheckpointOk(ckpt, retCkpt)
+			requireCheckpointOk(&ckpt, &retCkpt)
 
 			var retCkpts []*checkpointv1.Checkpoint
 			err = db.QueryProto("get_checkpoints_for_trial", &retCkpts, tr.ID)
 			require.NoError(t, err)
 			require.Len(t, retCkpts, 1)
-			requireCheckpointOk(ckpt, *retCkpts[0])
+			requireCheckpointOk(&ckpt, retCkpts[0])
 
 			retCkpts = nil
 			err = db.QueryProto("get_checkpoints_for_experiment", &retCkpts, exp.ID)
 			require.NoError(t, err)
 			require.Len(t, retCkpts, 1)
-			requireCheckpointOk(ckpt, *retCkpts[0])
+			requireCheckpointOk(&ckpt, retCkpts[0])
+
+			latestCkpt, err := db.LatestCheckpointForTrial(tr.ID)
+			require.NoError(t, err, "failed to obtain latest checkpoint")
+			require.NotNil(t, latestCkpt, "checkpoint is nil")
+			require.Equal(t, latestCkpt.TrialID, tr.ID)
 		})
 	}
 }

@@ -664,23 +664,50 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return false
 		}
 
-		found = false
-		for _, state := range req.ValidationStates {
-			if state == v.ValidationState {
-				found = true
-				break
-			}
-		}
-
-		if len(req.ValidationStates) != 0 && !found {
-			return false
-		}
-
 		return true
 	})
 
-	a.sort(
-		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
+	sort.Slice(resp.Checkpoints, func(i, j int) bool {
+		a1, a2 := resp.Checkpoints[i], resp.Checkpoints[j]
+		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
+			a2, a1 = a1, a2
+		}
+
+		switch req.SortBy {
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
+			l1, ok := a1.Metadata.AsMap()[model.LatestBatchMetadataKey].(float64)
+			if !ok {
+				// Just consider missing as always lower.
+				return true
+			}
+			l2, ok := a2.Metadata.AsMap()[model.LatestBatchMetadataKey].(float64)
+			if !ok {
+				return false
+			}
+			return l1 < l2
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
+			return a1.Uuid < a2.Uuid
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
+			if a1.Training.TrialId == nil {
+				return true
+			}
+			if a2.Training.TrialId == nil {
+				return false
+			}
+			return a1.Training.TrialId.Value < a2.Training.TrialId.Value
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
+			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
+			return a1.State.Number() < a2.State.Number()
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
+			return a1.Training.SearcherMetric.Value < a2.Training.SearcherMetric.Value
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
+			fallthrough
+		default:
+			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+		}
+	})
+
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 

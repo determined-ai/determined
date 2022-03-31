@@ -1042,163 +1042,109 @@ export interface V1CancelExperimentResponse {
 }
 
 /**
- * Checkpoint is an artifact created by a trial during training.
+ * Checkpoint a collection of files saved by a task.
  * @export
  * @interface V1Checkpoint
  */
 export interface V1Checkpoint {
     /**
+     * ID of the task which generated this checkpoint.
+     * @type {string}
+     * @memberof V1Checkpoint
+     */
+    taskId: string;
+    /**
+     * ID of the allocation which generated this checkpoint.
+     * @type {string}
+     * @memberof V1Checkpoint
+     */
+    allocationId: string;
+    /**
      * UUID of the checkpoint.
      * @type {string}
      * @memberof V1Checkpoint
      */
-    uuid?: string;
+    uuid: string;
     /**
-     * The configuration of the experiment that created this checkpoint.
-     * @type {any}
-     * @memberof V1Checkpoint
-     */
-    experimentConfig?: any;
-    /**
-     * The ID of the experiment that created this checkpoint.
-     * @type {number}
-     * @memberof V1Checkpoint
-     */
-    experimentId: number;
-    /**
-     * The ID of the trial that created this checkpoint.
-     * @type {number}
-     * @memberof V1Checkpoint
-     */
-    trialId: number;
-    /**
-     * Hyperparameter values for the trial that created this checkpoint.
-     * @type {any}
-     * @memberof V1Checkpoint
-     */
-    hparams?: any;
-    /**
-     * Batch number of this checkpoint.
-     * @type {number}
-     * @memberof V1Checkpoint
-     */
-    batchNumber: number;
-    /**
-     * Timestamp when the checkpoint was reported as being saved to persistent storage.
+     * Timestamp when the checkpoint was reported.
      * @type {Date}
      * @memberof V1Checkpoint
      */
-    endTime?: Date;
+    reportTime?: Date;
     /**
      * Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
      * @type {{ [key: string]: string; }}
      * @memberof V1Checkpoint
      */
-    resources?: { [key: string]: string; };
+    resources: { [key: string]: string; };
     /**
      * User defined metadata associated with the checkpoint.
      * @type {any}
      * @memberof V1Checkpoint
      */
-    metadata?: any;
+    metadata: any;
     /**
-     * The framework of the trial i.e., tensorflow, torch.
-     * @type {string}
-     * @memberof V1Checkpoint
-     */
-    framework?: string;
-    /**
-     * The format of the checkpoint i.e., h5, saved_model, pickle.
-     * @type {string}
-     * @memberof V1Checkpoint
-     */
-    format?: string;
-    /**
-     * The version of Determined the checkpoint was taken with.
-     * @type {string}
-     * @memberof V1Checkpoint
-     */
-    determinedVersion?: string;
-    /**
-     * Dictionary of validation metric names to their values.
-     * @type {V1Metrics}
-     * @memberof V1Checkpoint
-     */
-    metrics?: V1Metrics;
-    /**
-     * The state of the validation associated with this checkpoint.
+     * The state of the underlying checkpoint.
      * @type {Determinedcheckpointv1State}
      * @memberof V1Checkpoint
      */
-    validationState?: Determinedcheckpointv1State;
+    state?: Determinedcheckpointv1State;
     /**
-     * The state of the checkpoint.
-     * @type {Determinedcheckpointv1State}
+     * Training-related data for this checkpoint.
+     * @type {V1CheckpointTrainingMetadata}
      * @memberof V1Checkpoint
      */
-    state: Determinedcheckpointv1State;
-    /**
-     * The value of the metric specified by `searcher.metric` for this metric.
-     * @type {number}
-     * @memberof V1Checkpoint
-     */
-    searcherMetric?: number;
+    training: V1CheckpointTrainingMetadata;
 }
 
 /**
- * The checkpoint metadata for some trial checkpoint.
+ * CheckpointTrainingMetadata is specifically metadata about training.
  * @export
- * @interface V1CheckpointMetadata
+ * @interface V1CheckpointTrainingMetadata
  */
-export interface V1CheckpointMetadata {
+export interface V1CheckpointTrainingMetadata {
     /**
-     * The ID of the trial associated with the checkpoint.
+     * The ID of the trial that created this checkpoint.
      * @type {number}
-     * @memberof V1CheckpointMetadata
+     * @memberof V1CheckpointTrainingMetadata
      */
-    trialId: number;
+    trialId?: number;
     /**
-     * The run of the trial associated with the checkpoint.
+     * The ID of the experiment that created this checkpoint.
      * @type {number}
-     * @memberof V1CheckpointMetadata
+     * @memberof V1CheckpointTrainingMetadata
      */
-    trialRunId: number;
+    experimentId?: number;
     /**
-     * UUID of the checkpoint.
-     * @type {string}
-     * @memberof V1CheckpointMetadata
+     * The configuration of the experiment that created this checkpoint.
+     * @type {any}
+     * @memberof V1CheckpointTrainingMetadata
      */
-    uuid: string;
+    experimentConfig?: any;
     /**
-     * Dictionary of file paths to file sizes in bytes of all files.
-     * @type {{ [key: string]: string; }}
-     * @memberof V1CheckpointMetadata
+     * Hyperparameter values for the trial that created this checkpoint.
+     * @type {any}
+     * @memberof V1CheckpointTrainingMetadata
      */
-    resources: { [key: string]: string; };
+    hparams?: any;
     /**
-     * The framework associated with the checkpoint.
-     * @type {string}
-     * @memberof V1CheckpointMetadata
+     * Training metrics reported at the same latest_batch as the checkpoint.
+     * @type {V1Metrics}
+     * @memberof V1CheckpointTrainingMetadata
      */
-    framework: string;
+    trainingMetrics?: V1Metrics;
     /**
-     * The format of the checkpoint.
-     * @type {string}
-     * @memberof V1CheckpointMetadata
+     * Validation metrics reported at the same latest_batch as the checkpoint.
+     * @type {V1Metrics}
+     * @memberof V1CheckpointTrainingMetadata
      */
-    format: string;
+    validationMetrics?: V1Metrics;
     /**
-     * The Determined version associated with the checkpoint.
-     * @type {string}
-     * @memberof V1CheckpointMetadata
-     */
-    determinedVersion: string;
-    /**
-     * The number of batches trained on when these metrics were reported.
+     * Searcher metric (as specified by the expconf) at the same latest_batch of the checkpoint.
      * @type {number}
-     * @memberof V1CheckpointMetadata
+     * @memberof V1CheckpointTrainingMetadata
      */
-    latestBatch?: number;
+    searcherMetric?: number;
 }
 
 /**
@@ -1949,7 +1895,7 @@ export interface V1GetCurrentTrialSearcherOperationResponse {
 }
 
 /**
- * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
+ * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
  * @export
  * @enum {string}
  */
@@ -1958,9 +1904,7 @@ export enum V1GetExperimentCheckpointsRequestSortBy {
     UUID = <any> 'SORT_BY_UUID',
     TRIALID = <any> 'SORT_BY_TRIAL_ID',
     BATCHNUMBER = <any> 'SORT_BY_BATCH_NUMBER',
-    STARTTIME = <any> 'SORT_BY_START_TIME',
     ENDTIME = <any> 'SORT_BY_END_TIME',
-    VALIDATIONSTATE = <any> 'SORT_BY_VALIDATION_STATE',
     STATE = <any> 'SORT_BY_STATE',
     SEARCHERMETRIC = <any> 'SORT_BY_SEARCHER_METRIC'
 }
@@ -2656,7 +2600,7 @@ export interface V1GetTensorboardsResponse {
 }
 
 /**
- * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+ * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
  * @export
  * @enum {string}
  */
@@ -2664,9 +2608,7 @@ export enum V1GetTrialCheckpointsRequestSortBy {
     UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
     UUID = <any> 'SORT_BY_UUID',
     BATCHNUMBER = <any> 'SORT_BY_BATCH_NUMBER',
-    STARTTIME = <any> 'SORT_BY_START_TIME',
     ENDTIME = <any> 'SORT_BY_END_TIME',
-    VALIDATIONSTATE = <any> 'SORT_BY_VALIDATION_STATE',
     STATE = <any> 'SORT_BY_STATE'
 }
 
@@ -3413,23 +3355,23 @@ export enum V1MetricType {
 }
 
 /**
- * Metrics calculated during validation.
+ * 
  * @export
  * @interface V1Metrics
  */
 export interface V1Metrics {
     /**
-     * Number of inputs to the model.
-     * @type {number}
-     * @memberof V1Metrics
-     */
-    numInputs?: number;
-    /**
-     * Metrics calculated on the validation set.
+     * 
      * @type {any}
      * @memberof V1Metrics
      */
-    validationMetrics?: any;
+    avgMetrics: any;
+    /**
+     * 
+     * @type {Array<any>}
+     * @memberof V1Metrics
+     */
+    batchMetrics?: Array<any>;
 }
 
 /**
@@ -4358,11 +4300,11 @@ export interface V1RendezvousInfo {
 }
 
 /**
- * 
+ * Response to ReportCheckpointRequest.
  * @export
- * @interface V1ReportTrialCheckpointMetadataResponse
+ * @interface V1ReportCheckpointResponse
  */
-export interface V1ReportTrialCheckpointMetadataResponse {
+export interface V1ReportCheckpointResponse {
 }
 
 /**
@@ -8517,16 +8459,15 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
+        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getExperimentCheckpoints.');
@@ -8560,10 +8501,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
-            }
-
-            if (validationStates) {
-                localVarQueryParameter['validationStates'] = validationStates;
             }
 
             if (states) {
@@ -8869,16 +8806,15 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
+        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getTrialCheckpoints.');
@@ -8912,10 +8848,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
-            }
-
-            if (validationStates) {
-                localVarQueryParameter['validationStates'] = validationStates;
             }
 
             if (states) {
@@ -9408,17 +9340,16 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options);
+        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9560,17 +9491,16 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options);
+        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9809,17 +9739,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Get a list of checkpoints for an experiment.
          * @param {number} id The experiment id.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options)(fetch, basePath);
+        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -9898,17 +9827,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Get a list of checkpoints for a trial.
          * @param {number} id The trial id.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
          * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-            return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options)(fetch, basePath);
+        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+            return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -10077,18 +10005,17 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Get a list of checkpoints for an experiment.
      * @param {number} id The experiment id.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment&#39;s &#x60;searcher.metric&#x60; configuration setting.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
      * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
      * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options)(this.fetch, this.basePath);
+    public getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10180,18 +10107,17 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Get a list of checkpoints for a trial.
      * @param {number} id The trial id.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_START_TIME: Returns checkpoints sorted by start time.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_VALIDATION_STATE: Returns checkpoints sorted by validation state.  - SORT_BY_STATE: Returns checkpoints sorted by state.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE'} [sortBy] Sort checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order checkpoints in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of checkpoints before returning results. Negative values denote number of checkpoints to skip from the end before returning results.
      * @param {number} [limit] Limit the number of checkpoints. A value of 0 denotes no limit.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [validationStates] Limit the checkpoints to those that match the validation states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
      * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>} [states] Limit the checkpoints to those that match the states.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_VALIDATION_STATE' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, validationStates?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, validationStates, states, options)(this.fetch, this.basePath);
+    public getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11213,22 +11139,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Record a checkpoint.
-         * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
-         * @param {V1CheckpointMetadata} body The training metrics to persist.
+         * @param {V1Checkpoint} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialCheckpointMetadata(checkpointMetadataTrialId: number, body: V1CheckpointMetadata, options: any = {}): FetchArgs {
-            // verify required parameter 'checkpointMetadataTrialId' is not null or undefined
-            if (checkpointMetadataTrialId === null || checkpointMetadataTrialId === undefined) {
-                throw new RequiredError('checkpointMetadataTrialId','Required parameter checkpointMetadataTrialId was null or undefined when calling reportTrialCheckpointMetadata.');
-            }
+        reportCheckpoint(body: V1Checkpoint, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialCheckpointMetadata.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportCheckpoint.');
             }
-            const localVarPath = `/api/v1/trials/{checkpointMetadata.trialId}/checkpoint_metadata`
-                .replace(`{${"checkpointMetadata.trialId"}}`, encodeURIComponent(String(checkpointMetadataTrialId)));
+            const localVarPath = `/api/v1/checkpoints`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11248,7 +11168,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1CheckpointMetadata" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1Checkpoint" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -12063,13 +11983,12 @@ export const InternalApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Record a checkpoint.
-         * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
-         * @param {V1CheckpointMetadata} body The training metrics to persist.
+         * @param {V1Checkpoint} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialCheckpointMetadata(checkpointMetadataTrialId: number, body: V1CheckpointMetadata, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialCheckpointMetadataResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialCheckpointMetadata(checkpointMetadataTrialId, body, options);
+        reportCheckpoint(body: V1Checkpoint, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportCheckpointResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportCheckpoint(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12469,13 +12388,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Record a checkpoint.
-         * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
-         * @param {V1CheckpointMetadata} body The training metrics to persist.
+         * @param {V1Checkpoint} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialCheckpointMetadata(checkpointMetadataTrialId: number, body: V1CheckpointMetadata, options?: any) {
-            return InternalApiFp(configuration).reportTrialCheckpointMetadata(checkpointMetadataTrialId, body, options)(fetch, basePath);
+        reportCheckpoint(body: V1Checkpoint, options?: any) {
+            return InternalApiFp(configuration).reportCheckpoint(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -12846,14 +12764,13 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Record a checkpoint.
-     * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
-     * @param {V1CheckpointMetadata} body The training metrics to persist.
+     * @param {V1Checkpoint} body The training metrics to persist.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportTrialCheckpointMetadata(checkpointMetadataTrialId: number, body: V1CheckpointMetadata, options?: any) {
-        return InternalApiFp(this.configuration).reportTrialCheckpointMetadata(checkpointMetadataTrialId, body, options)(this.fetch, this.basePath);
+    public reportCheckpoint(body: V1Checkpoint, options?: any) {
+        return InternalApiFp(this.configuration).reportCheckpoint(body, options)(this.fetch, this.basePath);
     }
 
     /**

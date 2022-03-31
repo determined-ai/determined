@@ -73,11 +73,12 @@ latest_validation AS (
   WHERE v.rank = 1
 ),
 best_checkpoint AS (
-  SELECT c.uuid::text AS uuid,
-    c.total_batches,
+  SELECT
+    c.uuid::text AS uuid,
+    c.latest_batch AS total_batches,
     c.trial_id,
-    c.end_time AS end_time,
-    c.resources AS resources,
+    c.report_time AS end_time,
+    c.resources,
     'STATE_' || c.state AS state
   FROM (
       SELECT c.*,
@@ -86,15 +87,16 @@ best_checkpoint AS (
           ORDER BY v.signed_searcher_metric ASC
         ) AS rank
       FROM trial_validations v
-        INNER JOIN checkpoints c ON (
-          c.total_batches = v.total_batches
-          AND c.trial_id = v.trial_id
-        )
+      INNER JOIN checkpoints_view c ON (
+        c.latest_batch = v.total_batches
+        AND c.trial_id = v.trial_id
+      )
       WHERE c.state = 'COMPLETED'
     ) c
   WHERE c.rank = 1
 )
-SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
+SELECT
+  row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   row_to_json(lv)::jsonb - 'trial_id' AS latest_validation,
   row_to_json(bc)::jsonb - 'trial_id' AS best_checkpoint,
   t.id AS id,
@@ -124,7 +126,7 @@ FROM searcher_info
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
-  LEFT JOIN checkpoints ckpt ON ckpt.id = t.warm_start_checkpoint_id
+  LEFT JOIN checkpoints_view ckpt ON ckpt.id = t.warm_start_checkpoint_id
   -- Return the same ordering of IDs given by $1.
   JOIN (
     SELECT *

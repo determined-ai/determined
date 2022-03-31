@@ -57,11 +57,11 @@ func (_m *DB) AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error {
 }
 
 // AddCheckpointMetadata provides a mock function with given fields: ctx, m
-func (_m *DB) AddCheckpointMetadata(ctx context.Context, m *trialv1.CheckpointMetadata) error {
+func (_m *DB) AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	ret := _m.Called(ctx, m)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *trialv1.CheckpointMetadata) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *model.CheckpointV2) error); ok {
 		r0 = rf(ctx, m)
 	} else {
 		r0 = ret.Error(0)
@@ -1709,29 +1709,6 @@ func (_m *DB) TrialByID(id int) (*model.Trial, error) {
 	return r0, r1
 }
 
-// TrialDetailsRaw provides a mock function with given fields: id
-func (_m *DB) TrialDetailsRaw(id int) ([]byte, error) {
-	ret := _m.Called(id)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int) []byte); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
-		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TrialExperimentAndRequestID provides a mock function with given fields: id
 func (_m *DB) TrialExperimentAndRequestID(id int) (int, model.RequestID, error) {
 	ret := _m.Called(id)
@@ -1938,20 +1915,6 @@ func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
 		r0 = rf(allocation)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateCheckpointMetadata provides a mock function with given fields: checkpoint
-func (_m *DB) UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error {
-	ret := _m.Called(checkpoint)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Checkpoint) error); ok {
-		r0 = rf(checkpoint)
 	} else {
 		r0 = ret.Error(0)
 	}

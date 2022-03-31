@@ -48,7 +48,7 @@ def render_model_version(model_version: ModelVersion) -> None:
             checkpoint.trial_id,
             checkpoint.batch_number,
             checkpoint.uuid,
-            json.dumps(checkpoint.validation, indent=2),
+            json.dumps(checkpoint.validation_metrics, indent=2),
             json.dumps(checkpoint.metadata, indent=2),
         ]
     ]
@@ -115,7 +115,7 @@ def list_versions(args: Namespace) -> None:
                 version.checkpoint.trial_id,
                 version.checkpoint.batch_number,
                 version.checkpoint.uuid,
-                json.dumps(version.checkpoint.validation, indent=2),
+                json.dumps(version.checkpoint.validation_metrics, indent=2),
                 json.dumps(version.checkpoint.metadata, indent=2),
             ]
             for version in model.get_versions()
