@@ -53,7 +53,8 @@ message Experiment {
         "job_id",
         "username",
         "job_id",
-        "searcher_type"
+        "searcher_type",
+        "project_id"
       ]
     }
   };

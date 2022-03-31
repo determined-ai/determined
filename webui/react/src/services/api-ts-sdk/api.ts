@@ -1724,7 +1724,7 @@ export interface V1Experiment {
      * @type {number}
      * @memberof V1Experiment
      */
-    projectId?: number;
+    projectId: number;
 }
 
 /**

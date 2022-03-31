@@ -1097,6 +1097,7 @@ class v1Experiment:
         jobId: str,
         name: str,
         numTrials: int,
+        projectId: int,
         searcherType: str,
         startTime: str,
         state: "determinedexperimentv1State",
@@ -1108,7 +1109,6 @@ class v1Experiment:
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
         progress: "typing.Optional[float]" = None,
-        projectId: "typing.Optional[int]" = None,
         resourcePool: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -1150,7 +1150,7 @@ class v1Experiment:
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
-            projectId=obj.get("projectId", None),
+            projectId=obj["projectId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1172,7 +1172,7 @@ class v1Experiment:
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
-            "projectId": self.projectId if self.projectId is not None else None,
+            "projectId": self.projectId,
         }
 
 class v1ExperimentSimulation:
