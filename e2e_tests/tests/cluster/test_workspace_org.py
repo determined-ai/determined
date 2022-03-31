@@ -40,7 +40,7 @@ def test_workspace_org() -> None:
         test_workspaces.append(made_workspace)
         get_workspace = bindings.get_GetWorkspace(sess, id=made_workspace.id).workspace
         assert get_workspace and get_workspace.name == "_TestOnly"
-        assert not madeWorkspace.immutable and not get_workspace.immutable
+        assert not made_workspace.immutable and not get_workspace.immutable
 
         # Patch the workspace
         w_patch = bindings.v1PatchWorkspace.from_json(made_workspace.to_json())
@@ -81,7 +81,7 @@ def test_workspace_org() -> None:
         test_projects.append(made_project)
         get_project = bindings.get_GetProject(sess, id=made_project.id).project
         assert get_project and get_project.name == "_TestOnly"
-        assert not madeProject.immutable and not get_project.immutable
+        assert not made_project.immutable and not get_project.immutable
 
         # Patch the project
         p_patch = bindings.v1PatchProject.from_json(made_project.to_json())
