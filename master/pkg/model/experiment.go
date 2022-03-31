@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 
 	"github.com/jackc/pgtype"
@@ -406,8 +408,24 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
-// Checkpoint represents a row from the `checkpoints` table.
-type Checkpoint struct {
+// CheckpointVersion describes the format in which some checkpoint metadata is saved.
+type CheckpointVersion int
+
+const (
+	// CheckpointVersionV1 was the original way checkpoints were stored, in a trial-attached
+	// checkpoint table.
+	CheckpointVersionV1 = 1
+	// CheckpointVersionV2 changed checkpoints to be non-trial-attached and generic.
+	CheckpointVersionV2 = 2
+	// CurrentCheckpointVersion is the current way checkpoints are stored.
+	CurrentCheckpointVersion = CheckpointVersionV2
+
+	// LatestBatchMetadataKey is the key within metadata to find latest batch now, if it exists.
+	LatestBatchMetadataKey = "latest_batch"
+)
+
+// CheckpointV1 represents a row from the `checkpoints` table.
+type CheckpointV1 struct {
 	ID                int        `db:"id" json:"id"`
 	TrialID           int        `db:"trial_id" json:"trial_id"`
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
@@ -420,6 +438,48 @@ type Checkpoint struct {
 	Framework         string     `db:"framework" json:"framework"`
 	Format            string     `db:"format" json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
+}
+
+// CheckpointV2 represents a row from the `checkpoints_v2` table.
+type CheckpointV2 struct {
+	ID           int              `db:"id"`
+	UUID         uuid.UUID        `db:"uuid"`
+	TaskID       TaskID           `db:"task_id"`
+	AllocationID AllocationID     `db:"allocation_id"`
+	ReportTime   time.Time        `db:"report_time"`
+	State        State            `db:"state"`
+	Resources    map[string]int64 `db:"resources"`
+	Metadata     JSONObj          `db:"metadata"`
+}
+
+// CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific
+// information.
+type CheckpointTrainingMetadata struct {
+	TrialID           int      `db:"trial_id"`
+	ExperimentID      int      `db:"experiment_id"`
+	ExperimentConfig  JSONObj  `db:"experiment_config"`
+	HParams           JSONObj  `db:"hparams"`
+	TrainingMetrics   JSONObj  `db:"training_metrics"`
+	ValidationMetrics JSONObj  `db:"validation_metrics"`
+	SearcherMetric    *float64 `db:"searcher_metric"`
+	LatestBatch       int      `db:"latest_batch"`
+}
+
+// Checkpoint represents a row from the `checkpoints_view` view.
+type Checkpoint struct {
+	ID int `db:"id"`
+
+	UUID         *uuid.UUID   `db:"uuid"`
+	TaskID       TaskID       `db:"task_id"`
+	AllocationID AllocationID `db:"allocation_id"`
+	ReportTime   time.Time    `db:"report_time"`
+	State        State        `db:"state"`
+	Resources    JSONObj      `db:"resources"`
+	Metadata     JSONObj      `db:"metadata"`
+
+	CheckpointTrainingMetadata
+
+	CheckpointVersion CheckpointVersion `db:"checkpoint_version"`
 }
 
 // TrialLog represents a row from the `trial_logs` table.
