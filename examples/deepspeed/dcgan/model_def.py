@@ -1,10 +1,11 @@
 from attrdict import AttrDict
+import logging
 
 import torch
 import torch.nn as nn
 import torch.utils.data
 import torchvision
-from typing import Any, Dict, Iterator, Optional, cast
+from typing import Any, Dict, Iterator, Optional, Tuple, Union, cast
 
 import data
 from gan_model import Generator, Discriminator, weights_init
@@ -57,73 +58,130 @@ class DCGANTrial(DeepSpeedTrial):
         self.criterion = nn.BCELoss()
         # TODO: Test fp16
         self.fp16 = generator.fp16_enabled()
-        if self.generator.gradient_accumulation_steps() > 1:
-            # The intermixed activation pattern requires zeroing gradients midway through batch, so
-            # we can't support gradient accumulation.
-            # One solution would be to disable automatic accumulation and run the generator
-            # separately for discriminator and generator training.
-            raise Exception("Gradient accumulation steps > 1 not supported.")
+        self.gradient_accumulation_steps = generator.gradient_accumulation_steps()
+        # Manually perform gradient accumulation.
+        if self.gradient_accumulation_steps > 1:
+            logging.info("Disabling automatic gradient accumulation.")
+            self.context.disable_auto_grad_accumulation()
+
+    def _get_noise(self, dtype: torch.dtype) -> torch.Tensor:
+        return cast(
+            torch.Tensor,
+            self.context.to_device(
+                torch.randn(
+                    self.context.train_micro_batch_size_per_gpu,
+                    self.hparams.noise_length,
+                    1,
+                    1,
+                    dtype=dtype,
+                )
+            ),
+        )
+
+    def _get_label_constants(
+        self, batch_size: int, dtype: torch.dtype
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        real_label = cast(
+            torch.Tensor,
+            self.context.to_device(torch.full((batch_size,), REAL_LABEL, dtype=dtype)),
+        )
+        fake_label = cast(
+            torch.Tensor,
+            self.context.to_device(torch.full((batch_size,), FAKE_LABEL, dtype=dtype)),
+        )
+        return real_label, fake_label
 
     def train_batch(
         self, iter_dataloader: Optional[Iterator[TorchData]], epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    ) -> Union[torch.Tensor, Dict[str, Any]]:
         assert iter_dataloader is not None
-        real, _ = self.context.to_device(next(iter_dataloader))
-        real = cast(torch.Tensor, real)
         if self.fp16:
-            real = real.half()
-        noise = self.context.to_device(
-            torch.randn(
-                self.context.train_micro_batch_size_per_gpu, self.hparams.noise_length, 1, 1
-            )
+            dtype = torch.float16
+        else:
+            dtype = torch.float32
+        real_label, fake_label = self._get_label_constants(
+            self.context.train_micro_batch_size_per_gpu, dtype
         )
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
         self.discriminator.zero_grad()
-        # train with real
-        batch_size = self.context.train_micro_batch_size_per_gpu
-        label = cast(
-            torch.Tensor,
-            self.context.to_device(torch.full((batch_size,), REAL_LABEL, dtype=real.dtype)),
+
+        real_sample_count = 0
+        errD_real_sum = 0.0
+        errD_fake_sum = 0.0
+        D_x = 0.0
+        D_G_z1 = 0.0
+        fake_sample_count = (
+            self.context.train_micro_batch_size_per_gpu * self.gradient_accumulation_steps
         )
-        output = self.discriminator(real)
-        errD_real = self.criterion(output, label)
-        self.discriminator.backward(errD_real)
-        D_x = output.mean().item()
 
-        # train with fake
-        noise = self.context.to_device(torch.randn(batch_size, self.hparams.noise_length, 1, 1))
-        fake = self.generator(noise)
-        label.fill_(FAKE_LABEL)
-        output = self.discriminator(fake.detach())
-        errD_fake = self.criterion(output, label)
-        self.discriminator.backward(errD_fake)
-        self.discriminator.step()
-        D_G_z1 = output.mean().item()
-        errD = errD_real + errD_fake
-
+        for i in range(self.gradient_accumulation_steps):
+            # Note: at end of epoch, may receive a batch of size smaller than train_micro_batch_size_per_gpu.
+            # In that case, we end up training on more fake examples than real examples.
+            # train with real
+            real, _ = self.context.to_device(next(iter_dataloader))
+            real = cast(torch.Tensor, real)
+            actual_batch_size = real.shape[0]
+            real_sample_count += actual_batch_size
+            if self.fp16:
+                real = real.half()
+            output = self.discriminator(real)
+            # For edge-case small batches, must cut real_label size to match.
+            errD_real = self.criterion(output, real_label[:actual_batch_size])
+            self.discriminator.backward(errD_real)
+            # Undo averaging so we can re-average at end when reporting metrics.
+            errD_real_sum += errD_real * actual_batch_size
+            D_x += output.sum().item()
+            # train with fake
+            noise = self._get_noise(dtype)
+            fake = self.generator(noise)
+            output = self.discriminator(fake.detach())
+            errD_fake = self.criterion(output, fake_label)
+            self.discriminator.backward(errD_fake)
+            errD_fake_sum += errD_fake * self.context.train_micro_batch_size_per_gpu
+            D_G_z1 += output.sum().item()
+            # update
+            self.discriminator.step()
+        D_x /= real_sample_count
+        D_G_z1 /= fake_sample_count
+        errD = (errD_real_sum / real_sample_count) + (errD_fake_sum / fake_sample_count)
         ############################
         # (2) Update G network: maximize log(D(G(z)))
         ###########################
         self.generator.zero_grad()
-        label.fill_(REAL_LABEL)  # fake labels are real for generator cost
-        output = self.discriminator(fake)
-        errG = self.criterion(output, label)
-        self.generator.backward(errG)
-        self.generator.step()
-        D_G_z2 = output.mean().item()
+        D_G_z2_sum = 0.0
+        errG_sum = 0.0
+        for i in range(self.gradient_accumulation_steps):
+            if i > 0:
+                # Must repeat forward pass of generator for accumulation steps beyond the first.
+                noise = self._get_noise(dtype)
+                fake = self.generator(noise)
+            output = self.discriminator(fake)
+            errG = self.criterion(output, real_label)  # fake labels are real for generator cost
+            self.generator.backward(errG)
+            errG_sum += errG * self.context._train_micro_batch_size_per_gpu
+            D_G_z2_sum += output.sum().item()
+            self.generator.step()
 
         if batch_idx % 100 == 0:
             fake = self.generator(self.fixed_noise)
+            denormalized_real = (real + 1) / 2
+            denormalized_fake = (fake + 1) / 2
             self.logger.writer.add_image(
-                "real_images", torchvision.utils.make_grid(real), batch_idx
+                "real_images", torchvision.utils.make_grid(denormalized_real), batch_idx
             )
             self.logger.writer.add_image(
-                "fake_images", torchvision.utils.make_grid(fake), batch_idx
+                "fake_images", torchvision.utils.make_grid(denormalized_fake), batch_idx
             )
 
-        return {"errD": errD, "errG": errG, "D_x": D_x, "D_G_z1": D_G_z1, "D_G_z2": D_G_z2}
+        return {
+            "errD": errD,
+            "errG": errG_sum / fake_sample_count,
+            "D_x": D_x,
+            "D_G_z1": D_G_z1,
+            "D_G_z2": D_G_z2_sum / fake_sample_count,
+        }
 
     def evaluate_batch(
         self, iter_dataloader: Optional[Iterator[TorchData]], batch_idx: int
