@@ -46,10 +46,9 @@ class Checkpoint(object):
         trial_id: int,
         hparams: Dict[str, Any],
         batch_number: int,
-        start_time: str,
-        end_time: str,
+        report_time: Optional[str],
         resources: Dict[str, Any],
-        validation: Dict[str, Any],
+        validation_metrics: Dict[str, Any],
         metadata: Dict[str, Any],
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
@@ -64,10 +63,9 @@ class Checkpoint(object):
         self.trial_id = trial_id
         self.hparams = hparams
         self.batch_number = batch_number
-        self.start_time = start_time
-        self.end_time = end_time
+        self.report_time = report_time
         self.resources = resources
-        self.validation = validation
+        self.validation_metrics = validation_metrics
         self.framework = framework
         self.format = format
         self.determined_version = determined_version
@@ -387,24 +385,21 @@ class Checkpoint(object):
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
-        validation = {
-            "metrics": data.get("metrics", {}),
-            "state": data.get("validation_state", None),
-        }
+        metadata = data.get("metadata", {})
+        training = data["training"]
 
         return cls(
             session,
             data["uuid"],
-            data.get("experiment_config", data.get("experimentConfig")),
-            data.get("experiment_id", data.get("experimentId")),
-            data.get("trial_id", data.get("trialId")),
-            data["hparams"],
-            data.get("batch_number", data.get("batchNumber")),
-            data.get("start_time", data.get("startTime")),
-            data.get("end_time", data.get("endTime")),
+            training.get("experimentConfig"),
+            training.get("experimentId"),
+            training.get("trialId"),
+            training.get("hparams"),
+            metadata.get("latest_batch"),
+            data.get("reportTime"),
             data["resources"],
-            validation,
-            data.get("metadata", {}),
+            training.get("validationMetrics"),
+            metadata,
             model_id=data.get("model_id"),
             framework=data.get("framework"),
             format=data.get("format"),

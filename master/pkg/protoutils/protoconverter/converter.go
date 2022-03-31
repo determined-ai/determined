@@ -1,13 +1,17 @@
-package protoutils
+package protoconverter
 
 import (
+	"fmt"
 	"math"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
@@ -35,12 +39,21 @@ func (c *ProtoConverter) ToStruct(x map[string]interface{}, what string) *struct
 	return out
 }
 
+// ToDoubleWrapper converts a float64 to a double wrapper.
+func (c *ProtoConverter) ToDoubleWrapper(x float64) *wrapperspb.DoubleValue {
+	if c.err != nil {
+		return nil
+	}
+	return wrapperspb.Double(x)
+}
+
 // ToTimestamp converts a time.Time into a timestamppb.Timestamp.
 func (c *ProtoConverter) ToTimestamp(x time.Time) *timestamppb.Timestamp {
 	return timestamppb.New(x)
 }
 
 // ToCheckpointv1State converts a model.State string into a checkpointv1.State.
+// TODO, rewrite, safer.
 func (c *ProtoConverter) ToCheckpointv1State(state string) checkpointv1.State {
 	if c.err != nil {
 		return 0
@@ -65,4 +78,42 @@ func (c *ProtoConverter) ToInt32(i int) int32 {
 		return 0
 	}
 	return int32(i)
+}
+
+// ToUUID converts a string to a uuid.UUID.
+func (c *ProtoConverter) ToUUID(x string) uuid.UUID {
+	if c.err != nil {
+		return uuid.UUID{}
+	}
+
+	y, err := uuid.Parse(x)
+	if err != nil {
+		c.err = fmt.Errorf("string %s is not a valid uuid", x)
+		return uuid.UUID{}
+	}
+
+	return y
+}
+
+// ToCheckpointState converts a proto chechkpoint state internal state represenations.
+func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
+	if c.err != nil {
+		return ""
+	}
+
+	switch x {
+	case checkpointv1.State_STATE_UNSPECIFIED:
+		return ""
+	case checkpointv1.State_STATE_ACTIVE:
+		return model.ActiveState
+	case checkpointv1.State_STATE_COMPLETED:
+		return model.CompletedState
+	case checkpointv1.State_STATE_DELETED:
+		return model.DeletedState
+	case checkpointv1.State_STATE_ERROR:
+		return model.ErrorState
+	default:
+		c.err = fmt.Errorf("state %s is not a valid state to the backend", x)
+		return ""
+	}
 }
