@@ -343,7 +343,7 @@ def describe(args: Namespace) -> None:
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
-                    Union[bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload]
+                    Union[bindings.v1MetricsWorkload, bindings.v1CheckpointWorkload]
                 ] = None
                 if workload.training:
                     wl_detail = workload.training
