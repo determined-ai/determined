@@ -10,6 +10,7 @@ import (
 
 // Spec provides the necessary information for an agent to start a container.
 type Spec struct {
+	TaskID string
 	PullSpec PullSpec
 	RunSpec  RunSpec
 }

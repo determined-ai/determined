@@ -346,6 +346,31 @@ WHERE task_id = $1
 	return count, nil
 }
 
+func RecordTaskStartStats(stats *model.TaskStats) error {
+	// 	return db.namedExecOne(`
+	// INSERT INTO task_stats (task_id, resource_pool, event_type, start_time)
+	// SELECT :task_id, :resource_pool, :event_type, CURRENT_TIMESTAMP
+	// `, stats)
+	db := Bun()
+	_, err := db.NewInsert().Model(stats).Exec(nil)
+	return err
+}
+
+func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
+	return db.namedExecOne(`
+UPDATE task_stats
+SET end_time = (SELECT CURRENT_TIMESTAMP)
+WHERE task_id = :task_id AND event_type IS :event_type
+`, stats)
+}
+
+func (db *PgDB) EndAllTaskStats() error {
+	_, err := db.sql.Exec(`
+UPDATE task_stats SET end_time = greatest(cluster_heartbeat, start_time) FROM cluster_id
+WHERE end_time IS NULL`)
+	return err
+}
+
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.
 func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error) {
 	var fields apiv1.TaskLogsFieldsResponse

@@ -98,6 +98,11 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		if a.socket != nil {
 			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
 		}
+	
+	case aproto.DockerImagePull:
+		if a.socket != nil {
+			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{DockerImagePull: &msg}})
+		}
 
 	case model.TaskLog:
 		return a.postTaskLog(msg)

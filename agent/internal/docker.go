@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type dockerActor struct {
@@ -39,7 +40,9 @@ type (
 	}
 	pullImage struct {
 		cproto.PullSpec
-		Name string
+		Name         string
+		ResourcePool string
+		TaskID       string
 	}
 	runContainer struct {
 		cproto.RunSpec
@@ -105,6 +108,7 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	ref = reference.TagNameOnly(ref)
 
 	_, _, err = d.ImageInspectWithRaw(context.Background(), ref.String())
+	msg.ForcePull = true
 	switch {
 	case msg.ForcePull:
 		if err == nil {
@@ -123,6 +127,12 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		sendErr(ctx, errors.Wrapf(err, "error checking if image exists: %s", ref.String()))
 		return
 	}
+	ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
+		Stats: &model.TaskStats{
+			ResourcePool: msg.ResourcePool,
+			TaskID:       model.TaskID(msg.TaskID),
+			EventType:    "IMAGEPULL",
+		}})
 
 	// TODO: replace with command.EncodeAuthToBase64
 	reg := ""

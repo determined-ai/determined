@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -418,6 +419,9 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
+	case msg.DockerImagePull != nil:
+
+		db.RecordTaskStartStats(msg.DockerImagePull.Stats)
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}

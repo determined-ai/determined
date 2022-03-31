@@ -187,6 +187,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 	}
 
 	spec := cproto.Spec{
+		TaskID: t.TaskID,
 		PullSpec: cproto.PullSpec{
 			Registry:  env.RegistryAuth(),
 			ForcePull: env.ForcePullImage(),

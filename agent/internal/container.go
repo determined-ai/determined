@@ -33,8 +33,9 @@ type containerActor struct {
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
 
-	baseTaskLog model.TaskLog
-	reattached  bool
+	baseTaskLog  model.TaskLog
+	reattached   bool
+	ResourcePool string
 }
 
 type (
@@ -42,12 +43,12 @@ type (
 	containerReady      struct{}
 )
 
-func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
-	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
+func newContainerActor(msg aproto.StartContainer, client *client.Client, pool string) actor.Actor {
+	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client, ResourcePool: pool}
 }
 
-func reattachContainerActor(container cproto.Container, client *client.Client) actor.Actor {
-	return &containerActor{Container: container, client: client, reattached: true}
+func reattachContainerActor(container cproto.Container, client *client.Client, pool string) actor.Actor {
+	return &containerActor{Container: container, client: client, reattached: true, ResourcePool: pool}
 }
 
 // getBaseTaskLog computes the container-specific extra fields to be injected into each Fluent
@@ -83,7 +84,12 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
 		if !c.reattached {
 			c.transition(ctx, cproto.Pulling)
-			pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
+			pull := pullImage{
+				PullSpec:     c.spec.PullSpec,
+				Name:         c.spec.RunSpec.ContainerConfig.Image,
+				ResourcePool: c.ResourcePool,
+				TaskID:       c.spec.TaskID,
+			}
 			ctx.Tell(c.docker, pull)
 			c.baseTaskLog = getBaseTaskLog(c.spec)
 		} else {
@@ -119,6 +125,9 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case containerTerminated:
 		c.containerStopped(ctx, aproto.ContainerExited(msg.ExitCode))
 		ctx.Self().Stop()
+
+	case aproto.DockerImagePull:
+		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.SignalContainer:
 		switch c.State {
