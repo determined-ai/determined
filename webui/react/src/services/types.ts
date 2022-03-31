@@ -284,3 +284,19 @@ export interface GetWorkspaceProjectsParams extends PaginationParams {
   'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION';
   users?: string[];
 }
+
+export interface DeleteWorkspaceParams {
+  id: number;
+}
+
+export interface DeleteProjectParams {
+  id: number;
+}
+
+export interface PatchWorkspaceParams extends Api.V1PatchWorkspace {
+  id: number;
+}
+
+export interface PatchProjectParams extends Api.V1PatchProject {
+  id: number;
+}

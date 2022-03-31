@@ -677,6 +677,28 @@ export const getWorkspaceProjects: Service.DetApi<
   },
 };
 
+export const deleteWorkspace: Service.DetApi<
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+> = {
+  name: 'deleteWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.deleteWorkspace(
+    params.id,
+  ),
+};
+
+export const patchWorkspace: Service.DetApi<
+  Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
+> = {
+  name: 'patchWorkspace',
+  postProcess: (response) => {
+    return decoder.mapV1Workspace(response.workspace);
+  },
+  request: (params) => {
+    return detApi.Workspaces.patchWorkspace(params.id, { name: params.name });
+  },
+};
+
 /* Projects */
 
 export const getProject: Service.DetApi<
@@ -752,6 +774,30 @@ export const createProject: Service.DetApi<
       workspaceId: params.workspaceId,
     },
   ),
+};
+
+export const patchProject: Service.DetApi<
+  Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
+> = {
+  name: 'patchProject',
+  postProcess: (response) => {
+    return decoder.mapV1Project(response.project);
+  },
+  request: (params) => detApi.Projects.patchProject(
+    params.id,
+    {
+      description: params.description,
+      name: params.name,
+    },
+  ),
+};
+
+export const deleteProject: Service.DetApi<
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+> = {
+  name: 'deleteProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.deleteProject(params.id),
 };
 
 /* Tasks */

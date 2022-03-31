@@ -237,6 +237,14 @@ export const createWorkspace = generateDetApi<
   Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
 >(Config.createWorkspace);
 
+export const deleteWorkspace = generateDetApi<
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+>(Config.deleteWorkspace);
+
+export const patchWorkspace = generateDetApi<
+  Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
+>(Config.patchWorkspace);
+
 /* Projects */
 
 export const getProject = generateDetApi<
@@ -256,6 +264,14 @@ export const addProjectNote = generateDetApi<
 export const createProject = generateDetApi<
   Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
 >(Config.createProject);
+
+export const deleteProject = generateDetApi<
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+>(Config.deleteProject);
+
+export const patchProject = generateDetApi<
+  Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
+>(Config.patchProject);
 
 /* Tasks */
 
