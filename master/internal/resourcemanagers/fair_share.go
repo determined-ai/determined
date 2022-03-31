@@ -9,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -176,7 +177,7 @@ func calculateGroupStates(
 				}
 			}
 			if state.maxSlots != nil {
-				state.slotDemand = min(state.slotDemand, *state.maxSlots)
+				state.slotDemand = mathx.Min(state.slotDemand, *state.maxSlots)
 			}
 		}
 	}
@@ -265,10 +266,10 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 			if state.disabled || state.offered == state.slotDemand {
 				continue
 			}
-			calculatedFairShare := max(1, int(float64(startCapacity)*state.weight/totalWeight))
+			calculatedFairShare := mathx.Max(1, int(float64(startCapacity)*state.weight/totalWeight))
 
 			progressMade = true
-			offer := min(calculatedFairShare, capacity, state.slotDemand-state.offered)
+			offer := mathx.Min(calculatedFairShare, capacity, state.slotDemand-state.offered)
 			preoffers[state], offer = accountForPreoffers(preoffers[state], offer)
 			state.offered += offer
 			capacity -= offer

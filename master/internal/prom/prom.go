@@ -80,13 +80,11 @@ func init() { //nolint: gochecknoinits
 }
 
 // AssociateAllocationContainer associates an allocation with its container ID.
-//nolint: interfacer
 func AssociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 	containerIDToAllocationID.WithLabelValues(cID.String(), aID.String()).Inc()
 }
 
 // AssociateAllocationTask associates an allocation ID with its task info.
-//nolint: interfacer
 func AssociateAllocationTask(aID model.AllocationID,
 	tID model.TaskID,
 	taskActor actor.Address) {
@@ -94,7 +92,6 @@ func AssociateAllocationTask(aID model.AllocationID,
 }
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
-//nolint: interfacer
 func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address) {
 	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String()).Dec()
 }
@@ -135,7 +132,6 @@ func RemoveAllocationResources(summary sproto.ResourcesSummary) {
 }
 
 // DisassociateAllocationContainer disassociates allocation ID with its container ID.
-//nolint: interfacer
 func DisassociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 	containerIDToAllocationID.WithLabelValues(cID.String(), aID.String()).Dec()
 }
@@ -148,7 +144,6 @@ func AssociateExperimentIDLabels(eID string, labels []string) {
 }
 
 // AssociateContainerGPU associates container ID with GPU device ID.
-//nolint: interfacer
 func AssociateContainerGPU(cID cproto.ID, d device.Device) {
 	if d.Type == device.CUDA {
 		gpuUUIDToContainerID.
@@ -158,7 +153,6 @@ func AssociateContainerGPU(cID cproto.ID, d device.Device) {
 }
 
 // DisassociateContainerGPU removes association between container ID and device ID.
-//nolint: interfacer
 func DisassociateContainerGPU(cID cproto.ID, d device.Device) {
 	if d.Type != device.CUDA {
 		return
