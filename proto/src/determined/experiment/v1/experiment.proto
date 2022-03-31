@@ -53,7 +53,8 @@ message Experiment {
         "job_id",
         "username",
         "job_id",
-        "searcher_type"
+        "searcher_type",
+        "project_id"
       ]
     }
   };
@@ -95,6 +96,8 @@ message Experiment {
   google.protobuf.Int32Value forked_from = 16;
   // The current progress of a running experiment.
   google.protobuf.DoubleValue progress = 17;
+  // The id of a project associated with this experiment.
+  int32 project_id = 19;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.
