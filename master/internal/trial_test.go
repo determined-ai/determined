@@ -218,8 +218,8 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		schemas.WithDefaults(expconf.ExperimentConfig{
 			RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 				RawSharedFSConfig: &expconf.SharedFSConfig{
-					RawHostPath:      ptrs.StringPtr("/tmp"),
-					RawContainerPath: ptrs.StringPtr("determined-sharedfs"),
+					RawHostPath:      ptrs.Ptr("/tmp"),
+					RawContainerPath: ptrs.Ptr("determined-sharedfs"),
 				},
 			},
 		}).(expconf.ExperimentConfig),

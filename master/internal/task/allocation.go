@@ -201,11 +201,11 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
 	case AllocationReady:
-		a.model.IsReady = ptrs.BoolPtr(true)
+		a.model.IsReady = ptrs.Ptr(true)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
 		}
-		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.BoolPtr(true)})
+		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.Ptr(true)})
 	case MarkResourcesDaemon:
 		a.SetResourcesAsDaemon(ctx, msg.AllocationID, msg.ResourcesID)
 	case AllocationSignal:
@@ -454,7 +454,7 @@ func (a *Allocation) ResourcesStateChanged(
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
-		a.model.StartTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
+		a.model.StartTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
 		if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
 			ctx.Log().
 				WithError(err).
@@ -586,7 +586,7 @@ func (a *Allocation) kill(ctx *actor.Context) {
 	if len(a.resources.exited()) == 0 {
 		a.killedWhileRunning = true
 	}
-	a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
+	a.killCooldown = ptrs.Ptr(time.Now().UTC().Add(killCooldown))
 	for _, r := range a.resources {
 		r.Kill(ctx, a.logCtx)
 	}
@@ -715,7 +715,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 
 // markResourcesReleased persists completion information.
 func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
-	a.model.EndTime = ptrs.TimePtr(time.Now().UTC())
+	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		ctx.Log().WithError(err).Error("error delete allocation session")
 	}
@@ -733,21 +733,21 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
 
 	if log.Timestamp == nil || log.Timestamp.IsZero() {
-		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
+		log.Timestamp = ptrs.Ptr(time.Now().UTC())
 	}
 
 	if a.killedDaemons && strings.Contains(log.Log, killedLogSubstr) {
-		log.Level = ptrs.StringPtr(model.LogLevelDebug)
+		log.Level = ptrs.Ptr(model.LogLevelDebug)
 	} else if log.Level == nil {
-		log.Level = ptrs.StringPtr(model.LogLevelInfo)
+		log.Level = ptrs.Ptr(model.LogLevelInfo)
 	}
 
 	if log.Source == nil {
-		log.Source = ptrs.StringPtr("master")
+		log.Source = ptrs.Ptr("master")
 	}
 
 	if log.StdType == nil {
-		log.StdType = ptrs.StringPtr("stdout")
+		log.StdType = ptrs.Ptr("stdout")
 	}
 
 	log.Log += "\n"

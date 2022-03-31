@@ -390,7 +390,7 @@ DO NOTHING
 		TrialID:    trialID,
 		TrialRunID: trialRunID,
 		State:      model.CompletedState,
-		EndTime:    ptrs.TimePtr(time.Now().UTC()),
+		EndTime:    ptrs.Ptr(time.Now().UTC()),
 		Metrics: map[string]interface{}{
 			"avg_metrics":   struct{}{},
 			"batch_metrics": []struct{}{},

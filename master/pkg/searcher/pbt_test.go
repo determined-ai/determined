@@ -25,9 +25,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		// After the first round, trial 1 beats trial 2, spawning trial 3. Trial 1 lasts for two rounds
 		// and the others last one round each.
 		config := expconf.PBTConfig{
-			RawPopulationSize: ptrs.IntPtr(2),
-			RawNumRounds:      ptrs.IntPtr(2),
-			RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(200)),
+			RawPopulationSize: ptrs.Ptr(2),
+			RawNumRounds:      ptrs.Ptr(2),
+			RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(200)),
 			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			}),
@@ -49,9 +49,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 	t.Run("no_truncation", func(t *testing.T) {
 		// There is no truncation, so the initial population just survives forever.
 		config := expconf.PBTConfig{
-			RawPopulationSize: ptrs.IntPtr(3),
-			RawNumRounds:      ptrs.IntPtr(4),
-			RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(400)),
+			RawPopulationSize: ptrs.Ptr(3),
+			RawNumRounds:      ptrs.Ptr(4),
+			RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(400)),
 			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 				TruncateFraction: 0.,
 			}),
@@ -75,9 +75,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		// beats trial 1, spawning trial 4. Thus we have two trials that run for two rounds (1, 3) and two
 		// that run for one round (2, 4).
 		config := expconf.PBTConfig{
-			RawPopulationSize: ptrs.IntPtr(2),
-			RawNumRounds:      ptrs.IntPtr(3),
-			RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(1700)),
+			RawPopulationSize: ptrs.Ptr(2),
+			RawNumRounds:      ptrs.Ptr(3),
+			RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(1700)),
 			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			}),
@@ -105,9 +105,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		// therefore lasts for two rounds, except for two of the initial population and the two created
 		// right before the last round.
 		config := expconf.PBTConfig{
-			RawPopulationSize: ptrs.IntPtr(4),
-			RawNumRounds:      ptrs.IntPtr(8),
-			RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(500)),
+			RawPopulationSize: ptrs.Ptr(4),
+			RawNumRounds:      ptrs.Ptr(8),
+			RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(500)),
 			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			}),
@@ -145,9 +145,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		// Same as the above case, except that smaller is now better; thus, the two lowest-numbered trials
 		// are always the best and survive forever, but all other trials last only one round.
 		config := expconf.PBTConfig{
-			RawPopulationSize: ptrs.IntPtr(4),
-			RawNumRounds:      ptrs.IntPtr(8),
-			RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(500)),
+			RawPopulationSize: ptrs.Ptr(4),
+			RawNumRounds:      ptrs.Ptr(8),
+			RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(500)),
 			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			}),
@@ -184,9 +184,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 
 func TestPBTSearcherReproducibility(t *testing.T) {
 	conf := expconf.PBTConfig{
-		RawPopulationSize:  ptrs.IntPtr(10),
-		RawNumRounds:       ptrs.IntPtr(10),
-		RawLengthPerRound:  lengthPtr(expconf.NewLengthInBatches(1000)),
+		RawPopulationSize:  ptrs.Ptr(10),
+		RawNumRounds:       ptrs.Ptr(10),
+		RawLengthPerRound:  ptrs.Ptr(expconf.NewLengthInBatches(1000)),
 		RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{TruncateFraction: 0.5}),
 		RawExploreFunction: exploreConfigPtr(
 			expconf.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
@@ -199,9 +199,9 @@ func TestPBTSearcherReproducibility(t *testing.T) {
 func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 	nullConfig := func() expconf.PBTConfig {
 		return expconf.PBTConfig{
-			RawPopulationSize:  ptrs.IntPtr(10),
-			RawNumRounds:       ptrs.IntPtr(10),
-			RawLengthPerRound:  lengthPtr(expconf.NewLengthInBatches(1000)),
+			RawPopulationSize:  ptrs.Ptr(10),
+			RawNumRounds:       ptrs.Ptr(10),
+			RawLengthPerRound:  ptrs.Ptr(expconf.NewLengthInBatches(1000)),
 			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{}),
 			RawExploreFunction: exploreConfigPtr(expconf.PBTExploreConfig{}),
 		}
@@ -334,11 +334,11 @@ func TestPBTSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B"), 0.3),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(true),
+				RawSmallerIsBetter: ptrs.Ptr(true),
 				RawPBTConfig: &expconf.PBTConfig{
-					RawPopulationSize: ptrs.IntPtr(2),
-					RawNumRounds:      ptrs.IntPtr(4),
-					RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(200)),
+					RawPopulationSize: ptrs.Ptr(2),
+					RawNumRounds:      ptrs.Ptr(4),
+					RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(200)),
 					RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					}),
@@ -360,11 +360,11 @@ func TestPBTSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B"), 0.3),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(true),
+				RawSmallerIsBetter: ptrs.Ptr(true),
 				RawPBTConfig: &expconf.PBTConfig{
-					RawPopulationSize: ptrs.IntPtr(2),
-					RawNumRounds:      ptrs.IntPtr(4),
-					RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(200)),
+					RawPopulationSize: ptrs.Ptr(2),
+					RawNumRounds:      ptrs.Ptr(4),
+					RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(200)),
 					RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					}),
@@ -386,11 +386,11 @@ func TestPBTSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B"), 0.7),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(false),
+				RawSmallerIsBetter: ptrs.Ptr(false),
 				RawPBTConfig: &expconf.PBTConfig{
-					RawPopulationSize: ptrs.IntPtr(2),
-					RawNumRounds:      ptrs.IntPtr(4),
-					RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(200)),
+					RawPopulationSize: ptrs.Ptr(2),
+					RawNumRounds:      ptrs.Ptr(4),
+					RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(200)),
 					RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					}),
@@ -412,11 +412,11 @@ func TestPBTSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B"), 0.7),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(false),
+				RawSmallerIsBetter: ptrs.Ptr(false),
 				RawPBTConfig: &expconf.PBTConfig{
-					RawPopulationSize: ptrs.IntPtr(2),
-					RawNumRounds:      ptrs.IntPtr(4),
-					RawLengthPerRound: lengthPtr(expconf.NewLengthInBatches(200)),
+					RawPopulationSize: ptrs.Ptr(2),
+					RawNumRounds:      ptrs.Ptr(4),
+					RawLengthPerRound: ptrs.Ptr(expconf.NewLengthInBatches(200)),
 					RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					}),

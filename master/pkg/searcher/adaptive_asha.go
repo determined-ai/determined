@@ -10,10 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-func lengthPtr(val expconf.Length) *expconf.Length {
-	return &val
-}
-
 func getBracketMaxTrials(
 	maxTrials int, divisor float64, brackets []int) []int {
 	// This allocation will result in roughly equal total step budget
@@ -92,12 +88,12 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
 		c := expconf.AsyncHalvingConfig{
-			RawNumRungs:            ptrs.IntPtr(numRungs),
-			RawMaxLength:           lengthPtr(config.MaxLength()),
+			RawNumRungs:            ptrs.Ptr(numRungs),
+			RawMaxLength:           ptrs.Ptr(config.MaxLength()),
 			RawMaxTrials:           &bracketMaxTrials[i],
-			RawDivisor:             ptrs.Float64Ptr(config.Divisor()),
-			RawMaxConcurrentTrials: ptrs.IntPtr(bracketMaxConcurrentTrials[i]),
-			RawStopOnce:            ptrs.BoolPtr(config.StopOnce()),
+			RawDivisor:             ptrs.Ptr(config.Divisor()),
+			RawMaxConcurrentTrials: ptrs.Ptr(bracketMaxConcurrentTrials[i]),
+			RawStopOnce:            ptrs.Ptr(config.StopOnce()),
 		}
 		if config.StopOnce() {
 			methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter))
