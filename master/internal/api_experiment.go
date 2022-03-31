@@ -1304,3 +1304,18 @@ func (a *apiServer) GetModelDef(
 
 	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
 }
+
+func (a *apiServer) MoveExperiment(
+	_ context.Context, req *apiv1.MoveExperimentRequest) (*apiv1.MoveExperimentResponse, error) {
+	holder := &experimentv1.Experiment{}
+	err := a.m.db.QueryProto("move_experiment", holder, req.ExperimentId,
+		req.DestinationProjectId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "experiment (%d) does not exist or not moveable by this user",
+			req.ExperimentId)
+	}
+
+	return &apiv1.MoveExperimentResponse{},
+		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
+}
