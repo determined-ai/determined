@@ -52,7 +52,7 @@ def test_launch_multi_slot_chief(
 
     mock_subprocess.side_effect = mock_process
 
-    with set_container_id_env_var():
+    with set_resources_id_env_var():
         autodeepspeed.main(train_entrypoint)
 
     mock_cluster_info.assert_called_once()
@@ -126,7 +126,7 @@ def test_launch_multi_slot_fail(
 
     mock_subprocess.side_effect = mock_process
 
-    with set_container_id_env_var():
+    with set_resources_id_env_var():
         with pytest.raises(ValueError, match="no sshd greeting"):
             autodeepspeed.main(train_entrypoint)
 
@@ -170,7 +170,7 @@ def test_launch_one_slot(
     harness_cmd = autodeepspeed.create_harness_cmd(train_entrypoint)
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
-    with set_container_id_env_var():
+    with set_resources_id_env_var():
         autodeepspeed.main(train_entrypoint)
 
     mock_cluster_info.assert_called_once()
@@ -196,7 +196,7 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
     harness_cmd = autodeepspeed.create_harness_cmd(train_entrypoint)
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
-    with set_container_id_env_var():
+    with set_resources_id_env_var():
         ret = autodeepspeed.main(train_entrypoint)
         assert ret == 1
 
@@ -215,7 +215,7 @@ def test_launch_worker(
 ) -> None:
     cluster_info = make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1)
     mock_cluster_info.return_value = cluster_info
-    with set_container_id_env_var():
+    with set_resources_id_env_var():
         autodeepspeed.main("model_def:TrialClass")
 
     mock_cluster_info.assert_called_once()
@@ -251,9 +251,9 @@ def make_mock_cluster_info(container_addrs: List[str], container_rank: int) -> d
 
 
 @contextlib.contextmanager
-def set_container_id_env_var() -> Iterator[None]:
+def set_resources_id_env_var() -> Iterator[None]:
     try:
-        os.environ["DET_CONTAINER_ID"] = "containerId"
+        os.environ["DET_RESOURCES_ID"] = "containerId"
         yield
     finally:
-        del os.environ["DET_CONTAINER_ID"]
+        del os.environ["DET_RESOURCES_ID"]
