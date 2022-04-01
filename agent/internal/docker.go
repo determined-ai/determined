@@ -113,7 +113,7 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	case msg.ForcePull:
 		if err == nil {
 			d.sendAuxLog(ctx, fmt.Sprintf(
-				"image present, but force_pull_image is set; checking for updates: %s",
+				"---> image present, but force_pull_image is set; checking for updates: %s",
 				ref.String(),
 			))
 		}
@@ -122,11 +122,12 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		ctx.Tell(ctx.Sender(), imagePulled{})
 		return
 	case client.IsErrNotFound(err):
-		d.sendAuxLog(ctx, fmt.Sprintf("image not found, pulling image: %s", ref.String()))
+		d.sendAuxLog(ctx, fmt.Sprintf("---> image not found, pulling image: %s", ref.String()))
 	default:
 		sendErr(ctx, errors.Wrapf(err, "error checking if image exists: %s", ref.String()))
 		return
 	}
+	d.sendAuxLog(ctx, "---------> before add to DB")
 	ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
 		Stats: &model.TaskStats{
 			ResourcePool: msg.ResourcePool,
