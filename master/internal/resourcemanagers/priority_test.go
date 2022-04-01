@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -749,8 +750,8 @@ func AllocateTasks(
 		fits := findFits(req, agents, BestFit)
 
 		for _, fit := range fits {
-			container := newContainer(req, fit.Slots)
-			devices, err := fit.Agent.AllocateFreeDevices(fit.Slots, container.id)
+			containerID := cproto.NewID()
+			devices, err := fit.Agent.AllocateFreeDevices(fit.Slots, containerID)
 			if err != nil {
 				panic(err)
 			}
@@ -758,10 +759,10 @@ func AllocateTasks(
 				ID: req.AllocationID,
 				Resources: []sproto.Resources{
 					&containerResources{
-						req:       req,
-						agent:     fit.Agent,
-						container: container,
-						devices:   devices,
+						req:         req,
+						agent:       fit.Agent,
+						containerID: containerID,
+						devices:     devices,
 					},
 				},
 			}
@@ -795,7 +796,7 @@ func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool
 		if !ok {
 			return false
 		}
-		alloc.agent.DeallocateContainer(alloc.container.id)
+		alloc.agent.DeallocateContainer(alloc.containerID)
 	}
 	if delete {
 		taskList.RemoveTaskByHandler(toRelease)

@@ -370,7 +370,7 @@ func removeTaskFromAgents(
 		allocation := allocation.(*containerResources)
 		if len(allocation.devices) == 0 {
 			// Handle zero-slot containers.
-			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.container.id)
+			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.containerID)
 		}
 
 		for _, allocatedDevice := range allocation.devices {
