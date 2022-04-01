@@ -348,15 +348,17 @@ WHERE task_id = $1
 }
 
 func RecordTaskStartStats(stats *model.TaskStats) error {
-	// 	return db.namedExecOne(`
-	// INSERT INTO task_stats (task_id, resource_pool, event_type, start_time)
-	// SELECT :task_id, :resource_pool, :event_type, CURRENT_TIMESTAMP
-	// `, stats)
 	db := Bun()
-	var ctx context.Context
-	_, err := db.NewInsert().Model(stats).Exec(ctx)
+	now := time.Now().UTC()
+	stats.StartTime = &now
+	_, err := db.NewInsert().Model(stats).Exec(context.TODO())
 	return err
 }
+
+// 	return db.namedExecOne(`
+// INSERT INTO task_stats (task_id, resource_pool, event_type, start_time)
+// SELECT :task_id, :resource_pool, :event_type, CURRENT_TIMESTAMP
+// `, stats)
 
 func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
 	return db.namedExecOne(`
