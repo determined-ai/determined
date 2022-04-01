@@ -159,6 +159,10 @@ export const getExperimentLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
+export const moveExperiment = generateDetApi<
+  Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
+>(Config.moveExperiment);
+
 /* Tasks */
 
 export const getTask = generateDetApi<
@@ -218,6 +222,64 @@ export const postModelVersion = generateDetApi<
 export const getModelLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
+
+/* Workspaces */
+
+export const getWorkspace = generateDetApi<
+  Service.GetWorkspaceParams, Api.V1GetWorkspaceResponse, Type.Workspace
+>(Config.getWorkspace);
+
+export const getWorkspaces = generateDetApi<
+  Service.GetWorkspacesParams, Api.V1GetWorkspacesResponse, Type.WorkspacePagination
+>(Config.getWorkspaces);
+
+export const getWorkspaceProjects = generateDetApi<
+  Service.GetWorkspaceProjectsParams, Api.V1GetWorkspaceProjectsResponse, Type.ProjectPagination
+>(Config.getWorkspaceProjects);
+
+export const createWorkspace = generateDetApi<
+  Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
+>(Config.createWorkspace);
+
+export const deleteWorkspace = generateDetApi<
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+>(Config.deleteWorkspace);
+
+export const patchWorkspace = generateDetApi<
+  Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
+>(Config.patchWorkspace);
+
+/* Projects */
+
+export const getProject = generateDetApi<
+  Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
+>(Config.getProject);
+
+export const getProjectExperiments = generateDetApi<
+  Service.GetProjectExperimentsParams,
+  Api.V1GetProjectExperimentsResponse,
+  Type.ExperimentPagination
+>(Config.getProjectExperiments);
+
+export const addProjectNote = generateDetApi<
+  Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
+>(Config.addProjectNote);
+
+export const createProject = generateDetApi<
+  Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
+>(Config.createProject);
+
+export const deleteProject = generateDetApi<
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+>(Config.deleteProject);
+
+export const patchProject = generateDetApi<
+  Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
+>(Config.patchProject);
+
+export const moveProject = generateDetApi<
+  Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
+>(Config.moveProject);
 
 /* Tasks */
 
