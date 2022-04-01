@@ -754,3 +754,35 @@ export enum JobAction {
 }
 
 /* End of Jobs */
+
+export interface Workspace {
+  archived: boolean;
+  id: number;
+  name: string;
+  username: string;
+}
+
+export interface WorkspacePagination extends WithPagination {
+  workspaces: Workspace[];
+}
+
+export interface Note {
+  contents: string;
+  name: string;
+}
+export interface Project {
+  archived: boolean;
+  description?: string;
+  id: number;
+  lastExperimentStartedAt?: Date;
+  name: string;
+  notes: Note[];
+  numActiveExperiments: number;
+  numExperiments: number;
+  username: string;
+  workspaceId: number;
+}
+
+export interface ProjectPagination extends WithPagination {
+  projects: Project[];
+}
