@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -352,7 +353,8 @@ func RecordTaskStartStats(stats *model.TaskStats) error {
 	// SELECT :task_id, :resource_pool, :event_type, CURRENT_TIMESTAMP
 	// `, stats)
 	db := Bun()
-	_, err := db.NewInsert().Model(stats).Exec(nil)
+	var ctx context.Context
+	_, err := db.NewInsert().Model(stats).Exec(ctx)
 	return err
 }
 
