@@ -134,7 +134,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		}
 		// actually overwrite the spec.
 		msg.Spec = enrichedSpec
-		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker, c.ResourcePool)); !ok {
+		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker, msg.Spec.ResourcePool)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
 			if ctx.ExpectingResponse() {
 				ctx.Respond(errors.Errorf("container already created: %s", msg.Container.ID))

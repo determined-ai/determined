@@ -155,10 +155,11 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		case agent.AllocateFreeDevicesResponse:
 			devices := resp.Devices
 			resources = append(resources, &containerResources{
-				req:         req,
-				agent:       fit.Agent,
-				containerID: containerID,
-				devices:     devices,
+				req:          req,
+				agent:        fit.Agent,
+				containerID:  containerID,
+				devices:      devices,
+				resourcePool: rp.config.PoolName,
 			})
 		case error:
 			// Rollback previous allocations.
@@ -685,10 +686,11 @@ func (rp *ResourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 
 // containerResources contains information for tasks have been allocated but not yet started.
 type containerResources struct {
-	req         *sproto.AllocateRequest
-	agent       *agent.AgentState
-	devices     []device.Device
-	containerID cproto.ID
+	req          *sproto.AllocateRequest
+	agent        *agent.AgentState
+	devices      []device.Device
+	containerID  cproto.ID
+	resourcePool string
 }
 
 // Summary summarizes a container allocation.
@@ -714,6 +716,7 @@ func (c containerResources) Start(
 	spec.AllocationID = string(c.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(c.req.TaskID)
+	spec.ResourcePool = c.resourcePool
 	if spec.LoggingFields == nil {
 		spec.LoggingFields = map[string]string{}
 	}
