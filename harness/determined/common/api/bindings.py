@@ -3168,6 +3168,50 @@ class v1ModelVersion:
             "notes": self.notes if self.notes is not None else None,
         }
 
+class v1MoveExperimentRequest:
+    def __init__(
+        self,
+        destinationProjectId: int,
+        experimentId: int,
+    ):
+        self.experimentId = experimentId
+        self.destinationProjectId = destinationProjectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveExperimentRequest":
+        return cls(
+            experimentId=obj["experimentId"],
+            destinationProjectId=obj["destinationProjectId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentId": self.experimentId,
+            "destinationProjectId": self.destinationProjectId,
+        }
+
+class v1MoveProjectRequest:
+    def __init__(
+        self,
+        destinationWorkspaceId: int,
+        projectId: int,
+    ):
+        self.projectId = projectId
+        self.destinationWorkspaceId = destinationWorkspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveProjectRequest":
+        return cls(
+            projectId=obj["projectId"],
+            destinationWorkspaceId=obj["destinationWorkspaceId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "projectId": self.projectId,
+            "destinationWorkspaceId": self.destinationWorkspaceId,
+        }
+
 class v1Note:
     def __init__(
         self,
@@ -7407,7 +7451,7 @@ def post_MarkAllocationResourcesDaemon(
 def post_MoveExperiment(
     session: "client.Session",
     *,
-    body: int,
+    body: "v1MoveExperimentRequest",
     experimentId: int,
 ) -> None:
     _params = None
@@ -7415,7 +7459,7 @@ def post_MoveExperiment(
         method="POST",
         path=f"/api/v1/experiments/{experimentId}/move",
         params=_params,
-        json=body,
+        json=body.to_json(),
         data=None,
         headers=None,
         timeout=None,
@@ -7427,7 +7471,7 @@ def post_MoveExperiment(
 def post_MoveProject(
     session: "client.Session",
     *,
-    body: int,
+    body: "v1MoveProjectRequest",
     projectId: int,
 ) -> None:
     _params = None
@@ -7435,7 +7479,7 @@ def post_MoveProject(
         method="POST",
         path=f"/api/v1/projects/{projectId}/move",
         params=_params,
-        json=body,
+        json=body.to_json(),
         data=None,
         headers=None,
         timeout=None,
