@@ -414,6 +414,20 @@ export const getTrialDetails: Service.DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
+export const moveExperiment: Service.DetApi<
+  Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
+> = {
+  name: 'moveExperiment',
+  postProcess: noOp,
+  request: (params) => detApi.Experiments.moveExperiment(
+    params.experimentId,
+    {
+      destinationProjectId: params.destinationProjectId,
+      experimentId: params.experimentId,
+    },
+  ),
+};
+
 /* Tasks */
 
 export const getTask: Service.DetApi<
@@ -798,6 +812,20 @@ export const deleteProject: Service.DetApi<
   name: 'deleteProject',
   postProcess: noOp,
   request: (params) => detApi.Projects.deleteProject(params.id),
+};
+
+export const moveProject: Service.DetApi<
+  Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
+> = {
+  name: 'moveProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.moveProject(
+    params.projectId,
+    {
+      destinationWorkspaceId: params.destinationWorkspaceId,
+      projectId: params.projectId,
+    },
+  ),
 };
 
 /* Tasks */

@@ -159,6 +159,10 @@ export const getExperimentLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
+export const moveExperiment = generateDetApi<
+  Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
+>(Config.moveExperiment);
+
 /* Tasks */
 
 export const getTask = generateDetApi<
@@ -272,6 +276,10 @@ export const deleteProject = generateDetApi<
 export const patchProject = generateDetApi<
   Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
 >(Config.patchProject);
+
+export const moveProject = generateDetApi<
+  Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
+>(Config.moveProject);
 
 /* Tasks */
 
