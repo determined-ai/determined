@@ -103,6 +103,7 @@ autodoc_mock_imports = [
     "mmdet",
     "transformers",
     "pytorch_lightning",
+    "deepspeed",
     "datasets",
     "analytics",
 ]
