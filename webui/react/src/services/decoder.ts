@@ -580,3 +580,27 @@ export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.Resourc
       .replace('TYPE_', '') as keyof typeof types.ResourceType
   ];
 };
+
+export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
+  return {
+    archived: data.archived,
+    id: data.id,
+    name: data.name,
+    username: data.username,
+  };
+};
+
+export const mapV1Project = (data: Sdk.V1Project): types.Project => {
+  return {
+    archived: data.archived,
+    description: data.description,
+    id: data.id,
+    lastExperimentStartedAt: data.lastExperimentStartedAt,
+    name: data.name,
+    notes: data.notes,
+    numActiveExperiments: data.numActiveExperiments,
+    numExperiments: data.numExperiments,
+    username: data.username,
+    workspaceId: data.workspaceId,
+  };
+};
