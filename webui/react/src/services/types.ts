@@ -250,3 +250,53 @@ export interface PatchUserParams {
     displayName: string;
   };
 }
+
+export interface GetProjectParams {
+  id: number;
+}
+
+export interface GetProjectExperimentsParams extends GetExperimentsParams {
+  id: number;
+}
+
+export interface AddProjectNoteParams {
+  contents: string;
+  id: number;
+  name: string;
+}
+
+export interface GetWorkspacesParams extends PaginationParams {
+  archived?: boolean;
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME';
+  users?: string[];
+}
+
+export interface GetWorkspaceParams {
+  id: number;
+}
+
+export interface GetWorkspaceProjectsParams extends PaginationParams {
+  archived?: boolean;
+  id: number;
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' |
+  'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION';
+  users?: string[];
+}
+
+export interface DeleteWorkspaceParams {
+  id: number;
+}
+
+export interface DeleteProjectParams {
+  id: number;
+}
+
+export interface PatchWorkspaceParams extends Api.V1PatchWorkspace {
+  id: number;
+}
+
+export interface PatchProjectParams extends Api.V1PatchProject {
+  id: number;
+}
