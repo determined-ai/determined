@@ -37,7 +37,7 @@ func TestBindMountsMerge(t *testing.T) {
 func TestName(t *testing.T) {
 	config := ExperimentConfig{
 		RawName: Name{
-			RawString: ptrs.StringPtr("my_name"),
+			RawString: ptrs.Ptr("my_name"),
 		},
 	}
 

@@ -71,7 +71,7 @@ func getBaseTaskLog(spec *cproto.Spec) model.TaskLog {
 		case taskIDEnvVar:
 			log.TaskID = value
 		case allocationIDEnvVar:
-			log.AllocationID = ptrs.StringPtr(value)
+			log.AllocationID = ptrs.Ptr(value)
 		}
 	}
 	return log

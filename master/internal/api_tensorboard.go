@@ -171,7 +171,7 @@ func (a *apiServer) LaunchTensorboard(
 			sharedFSMount := schemas.WithDefaults(expconf.BindMount{
 				RawContainerPath: expconf.DefaultSharedFSContainerPath,
 				RawHostPath:      c.HostPath(),
-				RawPropagation:   ptrs.StringPtr(expconf.DefaultSharedFSPropagation),
+				RawPropagation:   ptrs.Ptr(expconf.DefaultSharedFSPropagation),
 			}).(expconf.BindMount)
 			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()

@@ -36,8 +36,8 @@ func TestProtoGetTrial(t *testing.T) {
 		a := &model.Allocation{
 			AllocationID: model.NewAllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
 			TaskID:       tr.TaskID,
-			StartTime:    ptrs.TimePtr(startTime.Add(time.Duration(i) * time.Second)),
-			EndTime:      ptrs.TimePtr(startTime.Add(time.Duration(i+1) * time.Second)),
+			StartTime:    ptrs.Ptr(startTime.Add(time.Duration(i) * time.Second)),
+			EndTime:      ptrs.Ptr(startTime.Add(time.Duration(i+1) * time.Second)),
 		}
 		err = db.AddAllocation(a)
 		require.NoError(t, err, "failed to add allocation")

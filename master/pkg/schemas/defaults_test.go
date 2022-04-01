@@ -61,7 +61,7 @@ func TestFillEmptyDefaults(t *testing.T) {
 }
 
 func TestNonEmptyDefaults(t *testing.T) {
-	obj := BindMountV0{ReadOnly: ptrs.BoolPtr(true), Propagation: ptrs.StringPtr("asdf")}
+	obj := BindMountV0{ReadOnly: ptrs.Ptr(true), Propagation: ptrs.Ptr("asdf")}
 	out := WithDefaults(obj).(BindMountV0)
 	assert.Assert(t, *out.ReadOnly == true)
 	assert.Assert(t, *out.Propagation == "asdf")

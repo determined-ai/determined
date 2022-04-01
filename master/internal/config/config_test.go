@@ -229,9 +229,9 @@ checkpoint_storage:
 		},
 		CheckpointStorage: expconf.CheckpointStorageConfig{
 			RawS3Config: &expconf.S3Config{
-				RawAccessKey: ptrs.StringPtr("my_key"),
-				RawBucket:    ptrs.StringPtr("my_bucket"),
-				RawSecretKey: ptrs.StringPtr("my_secret"),
+				RawAccessKey: ptrs.Ptr("my_key"),
+				RawBucket:    ptrs.Ptr("my_bucket"),
+				RawSecretKey: ptrs.Ptr("my_secret"),
 			},
 		},
 	}
@@ -280,9 +280,9 @@ telemetry:
 		},
 		CheckpointStorage: expconf.CheckpointStorageConfig{
 			RawS3Config: &expconf.S3Config{
-				RawAccessKey: ptrs.StringPtr(s3Key),
-				RawBucket:    ptrs.StringPtr("my_bucket"),
-				RawSecretKey: ptrs.StringPtr(s3Secret),
+				RawAccessKey: ptrs.Ptr(s3Key),
+				RawBucket:    ptrs.Ptr("my_bucket"),
+				RawSecretKey: ptrs.Ptr(s3Secret),
 			},
 		},
 		Telemetry: config.TelemetryConfig{

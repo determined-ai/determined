@@ -3,6 +3,7 @@ package searcher
 import (
 	"encoding/json"
 
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -42,9 +43,9 @@ func newRandomSearch(config expconf.RandomConfig) SearchMethod {
 func newSingleSearch(config expconf.SingleConfig) SearchMethod {
 	return &randomSearch{
 		RandomConfig: schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials:           ptrs.IntPtr(1),
-			RawMaxLength:           lengthPtr(config.MaxLength()),
-			RawMaxConcurrentTrials: ptrs.IntPtr(1),
+			RawMaxTrials:           ptrs.Ptr(1),
+			RawMaxLength:           ptrs.Ptr(config.MaxLength()),
+			RawMaxConcurrentTrials: ptrs.Ptr(1),
 		}).(expconf.RandomConfig),
 		randomSearchState: randomSearchState{
 			SearchMethodType: SingleSearch,
@@ -56,7 +57,7 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
 	initialTrials := s.MaxTrials()
 	if s.MaxConcurrentTrials() > 0 {
-		initialTrials = min(s.MaxTrials(), s.MaxConcurrentTrials())
+		initialTrials = mathx.Min(s.MaxTrials(), s.MaxConcurrentTrials())
 	}
 	for trial := 0; trial < initialTrials; trial++ {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)

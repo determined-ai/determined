@@ -176,7 +176,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		return t.allocationExited(ctx, msg)
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
-			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
+			ContainerID: ptrs.Ptr(string(msg.Container.ID)),
 			Log:         msg.Message(),
 			Level:       msg.Level,
 		}); err != nil {
@@ -472,16 +472,16 @@ func (t *trial) enrichTaskLog(log model.TaskLog) (model.TaskLog, error) {
 	log.TaskID = string(t.taskID)
 
 	if log.Timestamp == nil {
-		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
+		log.Timestamp = ptrs.Ptr(time.Now().UTC())
 	}
 	if log.Level == nil {
-		log.Level = ptrs.StringPtr("INFO")
+		log.Level = ptrs.Ptr("INFO")
 	}
 	if log.Source == nil {
-		log.Source = ptrs.StringPtr("master")
+		log.Source = ptrs.Ptr("master")
 	}
 	if log.StdType == nil {
-		log.StdType = ptrs.StringPtr("stdout")
+		log.StdType = ptrs.Ptr("stdout")
 	}
 
 	log.Log += "\n"

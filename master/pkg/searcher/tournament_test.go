@@ -17,12 +17,12 @@ func TestRandomTournamentSearcher(t *testing.T) {
 	actual := newTournamentSearch(
 		RandomTournamentSearch,
 		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.IntPtr(2),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(300)),
+			RawMaxTrials: ptrs.Ptr(2),
+			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
 		}).(expconf.RandomConfig)),
 		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.IntPtr(3),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(200)),
+			RawMaxTrials: ptrs.Ptr(3),
+			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(200)),
 		}).(expconf.RandomConfig)),
 	)
 	expected := [][]ValidateAfter{
@@ -37,7 +37,7 @@ func TestRandomTournamentSearcher(t *testing.T) {
 
 func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 	conf := expconf.RandomConfig{
-		RawMaxTrials: ptrs.IntPtr(5), RawMaxLength: lengthPtr(expconf.NewLengthInBatches(800)),
+		RawMaxTrials: ptrs.Ptr(5), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(800)),
 	}
 	conf = schemas.WithDefaults(conf).(expconf.RandomConfig)
 	gen := func() SearchMethod {
@@ -63,10 +63,10 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	adaptiveConfig1 := expconf.SearcherConfig{
 		RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-			RawNumRungs:  ptrs.IntPtr(3),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-			RawMaxTrials: ptrs.IntPtr(3),
-			RawDivisor:   ptrs.Float64Ptr(3),
+			RawNumRungs:  ptrs.Ptr(3),
+			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+			RawMaxTrials: ptrs.Ptr(3),
+			RawDivisor:   ptrs.Ptr[float64](3),
 		},
 	}
 	adaptiveConfig1 = schemas.WithDefaults(adaptiveConfig1).(expconf.SearcherConfig)
@@ -74,10 +74,10 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	adaptiveConfig2 := expconf.SearcherConfig{
 		RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-			RawNumRungs:  ptrs.IntPtr(3),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-			RawMaxTrials: ptrs.IntPtr(3),
-			RawDivisor:   ptrs.Float64Ptr(3),
+			RawNumRungs:  ptrs.Ptr(3),
+			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+			RawMaxTrials: ptrs.Ptr(3),
+			RawDivisor:   ptrs.Ptr[float64](3),
 		},
 	}
 	adaptiveConfig2 = schemas.WithDefaults(adaptiveConfig2).(expconf.SearcherConfig)

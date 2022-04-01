@@ -36,6 +36,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
   ], []);
 
   const dataSource: HyperParameter[] = useMemo(() => {
+    if (trial?.hyperparameters == null) return [];
     return Object.entries(trial.hyperparameters).map(([ hyperparameter, value ]) => {
       return {
         hyperparameter,
@@ -43,7 +44,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
         value: isObject(value) ? JSON.stringify(value, null, 2) : String(value),
       };
     });
-  }, [ trial.hyperparameters ]);
+  }, [ trial?.hyperparameters ]);
 
   return (
     <div className={css.base}>
