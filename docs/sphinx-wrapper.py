@@ -14,33 +14,23 @@ from typing import List
 
 # "sphinx-build -W" does not seem to stop on the following warning:
 # download file not readable: docs/site/downloads/helm/determined-0.5.0.tgz
-download_file_regex = re.compile(r"download file not readable: (?P<filepath>.+)$")
+download_file_regex = re.compile(b"download file not readable: (?P<filepath>.+)$")
 
 
 def main(sphinx_build_args: List[str]) -> int:
-    if sys.stdout.isatty():
-        sphinx_build_args.append("--color")
+    p = subprocess.Popen(sphinx_build_args, stderr=subprocess.PIPE)
 
+    # Parse stderr for link errors while also passing it through to stdout.
     download_link_errors = []
-    with tempfile.TemporaryDirectory() as temp_dir:
-        stderr_path = os.path.join(temp_dir, "sphinx-build.stderr")
+    for line in p.stderr:
+        os.write(sys.stdout.fileno(), line)
+        m = re.match(download_file_regex, line)
+        if m is not None:
+            download_link_errors.append(m.group("filepath"))
 
-        redirect_args = (
-            f"{' '.join(sphinx_build_args)} 3>&1 1>&2 2>&3 | tee {stderr_path}"
-        )
-        process = subprocess.Popen(redirect_args, shell=True)
-        process.wait()
-
-        # Read stderr
-        with open(stderr_path, "r") as stderr:
-            for line in stderr.readlines():
-                m = re.match(download_file_regex, line)
-                if m is not None:
-                    download_link_errors.append(m.group("filepath"))
-
-    if process.returncode != 0:
-        sys.stderr.write(f"sphinx-build exited non-zero({process.returncode})\n")
-        return process.returncode
+    ret = p.wait()
+    if ret != 0:
+        return ret
 
     if len(download_link_errors) == 0:
         return 0
