@@ -133,7 +133,9 @@ def test_workspace_org() -> None:
         bindings.post_MoveProject(
             sess,
             projectId=made_project.id,
-            body=ww.workspace.id,
+            body=bindings.v1MoveProjectRequest(
+                destinationWorkspaceId=ww.workspace.id, projectId=made_project.id
+            ),
         )
         get_project = bindings.get_GetProject(sess, id=made_project.id).project
         assert get_project.workspaceId == ww.workspace.id
@@ -162,10 +164,16 @@ def test_workspace_org() -> None:
         test_experiments.append(test_exp)
         wait_for_experiment_state(test_exp_id, bindings.determinedexperimentv1State.STATE_COMPLETED)
         assert test_exp.projectId == default_project.id
-        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=made_project.id)
+        mbody = bindings.v1MoveExperimentRequest(
+            destinationProjectId=made_project.id, experimentId=test_exp_id
+        )
+        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
         modified_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
         assert modified_exp.projectId == made_project.id
-        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=default_project.id)
+        mbody2 = bindings.v1MoveExperimentRequest(
+            destinationProjectId=default_project.id, experimentId=test_exp_id
+        )
+        bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody2)
 
     finally:
         # Clean out experiments, projects, workspaces.

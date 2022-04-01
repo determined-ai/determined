@@ -1387,7 +1387,7 @@ service Determined {
   rpc MoveProject(MoveProjectRequest) returns (MoveProjectResponse) {
     option (google.api.http) = {
       post: "/api/v1/projects/{project_id}/move"
-      body: "destination_workspace_id"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"
@@ -1397,7 +1397,7 @@ service Determined {
   rpc MoveExperiment(MoveExperimentRequest) returns (MoveExperimentResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments/{experiment_id}/move"
-      body: "destination_project_id"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
