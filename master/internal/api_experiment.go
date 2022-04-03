@@ -240,7 +240,7 @@ func (a *apiServer) GetExperiments(
 		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
 	}
 	stateFilterExpr := strings.Join(allStates, ",")
-	userFilterExpr := strings.Join(req.Users, ",")
+	userFilterExpr := strings.Trim(strings.Join(strings.Split(fmt.Sprint(req.UserIds), " "), ","), "[]") // convert array of int32s to a string
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	archivedExpr := ""
 	if req.Archived != nil {

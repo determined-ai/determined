@@ -27,12 +27,12 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetCommandsRequest:
 		resp := &apiv1.GetCommandsResponse{}
-		users := make(map[string]bool)
-		for _, user := range msg.Users {
+		users := make(map[int32]bool)
+		for _, user := range msg.UserIds {
 			users[user] = true
 		}
 		for _, command := range ctx.AskAll(&commandv1.Command{}, ctx.Children()...).GetAll() {
-			if typed := command.(*commandv1.Command); len(users) == 0 || users[typed.Username] {
+			if typed := command.(*commandv1.Command); len(users) == 0 || users[typed.UserId] {
 				resp.Commands = append(resp.Commands, typed)
 			}
 		}

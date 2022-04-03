@@ -29,12 +29,12 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetShellsRequest:
 		resp := &apiv1.GetShellsResponse{}
-		users := make(map[string]bool)
-		for _, user := range msg.Users {
+		users := make(map[int32]bool)
+		for _, user := range msg.UserIds {
 			users[user] = true
 		}
 		for _, shell := range ctx.AskAll(&shellv1.Shell{}, ctx.Children()...).GetAll() {
-			if typed := shell.(*shellv1.Shell); len(users) == 0 || users[typed.Username] {
+			if typed := shell.(*shellv1.Shell); len(users) == 0 || users[typed.UserId] {
 				resp.Shells = append(resp.Shells, typed)
 			}
 		}
