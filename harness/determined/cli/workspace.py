@@ -10,7 +10,7 @@ from determined.common.experimental import session
 
 from . import render
 
-PROJECT_HEADERS = ["ID", "Name", "# Experiments", "# Active Experiments"]
+PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
 WORKSPACE_HEADERS = ["ID", "Name"]
 
 
@@ -67,6 +67,7 @@ def list_workspace_projects(args: Namespace) -> None:
             [
                 p.id,
                 p.name,
+                p.description,
                 p.numExperiments,
                 p.numActiveExperiments,
             ]
@@ -100,6 +101,7 @@ def describe_workspace(args: Namespace) -> None:
             [
                 p.id,
                 p.name,
+                p.description,
                 p.numExperiments,
                 p.numActiveExperiments,
             ]

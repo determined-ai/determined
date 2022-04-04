@@ -50,10 +50,11 @@ def render_project(project: v1Project) -> None:
     values = [
         project.id,
         project.name,
+        project.description,
         project.numExperiments,
         project.numActiveExperiments,
     ]
-    PROJECT_HEADERS = ["ID", "Name", "# Experiments", "# Active Experiments"]
+    PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
     render.tabulate_or_csv(PROJECT_HEADERS, [values], False)
 
 
