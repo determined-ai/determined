@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"time"
 
@@ -28,6 +29,14 @@ func TestGetCheckpoint(t *testing.T) {
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 	testGetCheckpoint(t, creds, cl, pgDB)
+}
+
+func TestGetCheckpoints(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	defer cancel()
+	assert.NilError(t, err, "failed to start master")
+	testGetCheckpoints(t, creds, cl, pgDB)
 }
 
 func testGetCheckpoint(
@@ -86,9 +95,6 @@ func testGetCheckpoint(
 			}
 			err = db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 
-			// TODO remove
-			t.Logf("checkpoint meta=%v", checkpointMeta)
-
 			assert.NilError(t, err, "failed to add checkpoint meta")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)
@@ -113,13 +119,93 @@ func testGetCheckpoint(
 				assert.Equal(t, ckptCl.ValidationState, checkpointv1.State_STATE_UNSPECIFIED)
 			}
 			assert.Equal(t, ckptCl.State, checkpointv1.State_STATE_COMPLETED)
-			t.Logf("Checkpoint from api: %v", ckptCl)
-			t.Logf("Uuid=%s", ckptCl.Uuid)
-			t.Logf("ExperimentConfig=%v", ckptCl.ExperimentConfig)
 		})
 	}
 
 	for idx, tc := range testCases {
 		runTestCase(t, tc, idx)
 	}
+}
+
+func testGetCheckpoints(
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+) {
+	experiment := model.ExperimentModel()
+	err := db.AddExperiment(experiment)
+	assert.NilError(t, err, "failed to insert experiment")
+	t.Logf("experiment.ID=%d", experiment.ID)
+
+	trial := model.TrialModel(
+		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
+	err = db.AddTrial(trial)
+	assert.NilError(t, err, "failed to insert trial")
+
+	var uuids []string
+	for i := 0; i < 5; i++ {
+		checkpointUuid := uuid.NewString()
+		uuids = append(uuids, checkpointUuid)
+		checkpointMeta := trialv1.CheckpointMetadata{
+			TrialId:           int32(trial.ID),
+			TrialRunId:        int32(0),
+			Uuid:              checkpointUuid,
+			Resources:         map[string]int64{"ok": 1.0},
+			Framework:         "some framework",
+			Format:            "some format",
+			DeterminedVersion: "1.0.0",
+			LatestBatch:       int32(10 * i),
+		}
+		err = db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		assert.NilError(t, err, "failed to add checkpoint meta")
+	}
+
+	ctx, _ := context.WithTimeout(creds, 10*time.Second)
+
+	req := apiv1.GetExperimentCheckpointsRequest{
+		Id: int32(experiment.ID),
+	}
+
+	resp, err := cl.GetExperimentCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetExperimentCheckpoints error")
+	ckptsCl := resp.Checkpoints
+
+	// default sort order is unspecified
+	assert.Equal(t, len(ckptsCl), 5)
+
+	// check sorting by assending end time
+	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME
+	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetExperimentCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	assert.Equal(t, len(ckptsCl), 5)
+	for j := 0; j < 5; j += 1 {
+		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
+	}
+
+	// check sorting by assending uuid
+	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID
+	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetExperimentCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	assert.Equal(t, len(ckptsCl), 5)
+	sort.Strings(uuids)
+	for j := 0; j < 5; j += 1 {
+		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
+	}
+
+	req.Limit = 3
+	req.Offset = 2
+
+	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetExperimentCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	// ascending uuid
+	assert.Equal(t, len(ckptsCl), 3)
+	sort.Strings(uuids)
+	for j := 2; j < 5; j += 1 {
+		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
+	}
+
 }
