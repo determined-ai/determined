@@ -298,6 +298,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
         </div>
       ),
       visible,
+      width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
     };
 
     return props;
