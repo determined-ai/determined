@@ -964,6 +964,18 @@ WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
 		}
 
+		if _, err := tx.Exec(`
+DELETE FROM checkpoints_v2
+WHERE task_id IN (
+	SELECT task_id
+	FROM tasks tk
+	JOIN trials t ON t.task_id = tk.id
+	JOIN experiments e ON t.experiment_id = e.id
+	WHERE experiment_id = $1
+)`, id); err != nil {
+			return errors.Wrapf(err, "error deleting checkpoints for experiment %v", id)
+		}
+
 		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
 			return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
 		}
@@ -1001,7 +1013,7 @@ EXISTS(
    SELECT 1
    FROM experiments e
    JOIN trials t ON e.id = t.experiment_id
-   JOIN checkpoints c ON c.trial_id = t.id
+   JOIN checkpoints_view c ON c.trial_id = t.id
    JOIN model_versions mv ON mv.checkpoint_uuid = c.uuid
    WHERE e.id = $1
 )`, id).Scan(&exists)
@@ -1197,7 +1209,7 @@ WITH const AS (
                    -- here for backwards compatibility with Python, but could maybe be
                    -- removed.)
                    '[]'::jsonb AS warm_start_trials
-            FROM checkpoints c, trials t, const
+            FROM checkpoints_view c, trials t, const
             WHERE c.state = 'COMPLETED' AND c.trial_id = t.id AND t.experiment_id = $1
         ) _, const
     ) c, const
@@ -1210,13 +1222,20 @@ WITH const AS (
 )`
 
 	if delete {
-		ctes += `, do_delete AS (
-    UPDATE checkpoints
+		ctes += `, do_delete_v1 AS (
+    UPDATE checkpoints c
     SET state = 'DELETED'
     FROM selected_checkpoints
-    WHERE checkpoints.id = selected_checkpoints.id
+    WHERE c.id = selected_checkpoints.id
 )
 `
+		ctes += `, do_delete_v2 AS (
+	UPDATE checkpoints_v2 c
+	SET state = 'DELETED'
+	FROM selected_checkpoints
+	WHERE c.id = selected_checkpoints.id
+)
+		`
 	}
 
 	query := `

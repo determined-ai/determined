@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -72,7 +71,6 @@ type DB interface {
 	UpdateTrial(id int, newState model.State) error
 	UpdateTrialRunnerState(id int, state string) error
 	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error
-	TrialDetailsRaw(id int) ([]byte, error)
 	AddAllocation(a *model.Allocation) error
 	CompleteAllocation(a *model.Allocation) error
 	CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error)
@@ -83,14 +81,7 @@ type DB interface {
 	AddValidationMetrics(
 		ctx context.Context, m *trialv1.TrialMetrics,
 	) error
-	AddCheckpointMetadata(
-		ctx context.Context, m *trialv1.CheckpointMetadata,
-	) error
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error)
-	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
-	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
-	LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
-	UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error
 	PeriodicTelemetryInfo() ([]byte, error)
 	AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error
 	AuthTokenKeypair() (*model.AuthTokenKeypair, error)

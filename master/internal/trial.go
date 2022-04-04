@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/api/checkpoints"
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -49,7 +50,7 @@ type trial struct {
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
 	taskSpec            *tasks.TaskSpec
-	warmStartCheckpoint *model.Checkpoint
+	warmStartCheckpoint *checkpoints.CheckpointMetadata
 	generatedKeys       *ssh.PrivateAndPublicKeys
 
 	// state is the current state of the trial. It's patched by experiment changes and kill trial.
@@ -83,7 +84,7 @@ func newTrial(
 	rm *actor.Ref, taskLogger *task.Logger,
 	db db.DB,
 	config expconf.ExperimentConfig,
-	warmStartCheckpoint *model.Checkpoint,
+	warmStartCheckpoint *checkpoints.CheckpointMetadata,
 	taskSpec *tasks.TaskSpec,
 ) *trial {
 	return &trial{
@@ -292,13 +293,17 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	}
 
 	if !t.idSet {
+		var warmStartCheckpointID *int
+		if t.warmStartCheckpoint != nil {
+			warmStartCheckpointID = &t.warmStartCheckpoint.ID
+		}
 		modelTrial := model.NewTrial(
 			t.jobID,
 			t.taskID,
 			t.searcher.Create.RequestID,
 			t.experimentID,
 			model.JSONObj(t.searcher.Create.Hparams),
-			t.warmStartCheckpoint,
+			warmStartCheckpointID,
 			int64(t.searcher.Create.TrialSeed))
 
 		if err := t.db.AddTrial(modelTrial); err != nil {

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -16,7 +17,9 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/extra/bundebug"
 
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 var bunMutex sync.Mutex
@@ -49,6 +52,56 @@ func Bun() *bun.DB {
 	}
 	return theOneBun
 }
+
+type PageInfo struct {
+	StartIndex int
+	EndIndex   int
+	Offset     int
+	Limit      int
+	Total      int
+}
+
+func newPageInfo(offset, limit, count int) PageInfo {
+	return PageInfo{
+		StartIndex: offset,
+		EndIndex:   mathx.Min(offset+limit, count),
+		Offset:     offset,
+		Limit:      limit,
+		Total:      count,
+	}
+}
+
+func (p *PageInfo) ToProto() *apiv1.Pagination {
+	return &apiv1.Pagination{
+		// TODO these being int32 is totally wrong.
+		Offset:     int32(p.Offset),
+		Limit:      int32(p.Limit),
+		StartIndex: int32(p.StartIndex),
+		EndIndex:   int32(p.EndIndex),
+		Total:      int32(p.Total),
+	}
+}
+
+func AddPagination(
+	ctx context.Context, q *bun.SelectQuery, offset, limit int,
+) (*bun.SelectQuery, PageInfo, error) {
+	n, err := q.Count(ctx)
+	if err != nil {
+		return nil, PageInfo{}, fmt.Errorf("counting rows to deduce offset: %w", err)
+	}
+
+	switch {
+	case offset > 0:
+		return q.Offset(offset), newPageInfo(offset, limit, n), nil
+	case offset == 0:
+		return q, newPageInfo(offset, limit, n), nil
+	default:
+		offset += n
+		return q.Offset(offset), newPageInfo(offset, limit, n), nil
+	}
+}
+
+type SelectExtension func(*bun.SelectQuery) (*bun.SelectQuery, error)
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {

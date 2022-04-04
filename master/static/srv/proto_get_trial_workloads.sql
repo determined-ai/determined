@@ -28,9 +28,9 @@ checkpoints_vt AS (
       SELECT 'STATE_' || c.state as state,
         c.end_time,
         c.uuid,
-        c.total_batches,
+        c.metadata->>'latest_batch' as total_batches,
         c.resources
-      FROM checkpoints c
+      FROM checkpoints_view c
       WHERE c.trial_id = $1
     ) AS r1
 )

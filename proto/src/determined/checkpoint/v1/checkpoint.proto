@@ -8,14 +8,6 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-// Metrics calculated during validation.
-message Metrics {
-  // Number of inputs to the model.
-  int32 num_inputs = 1 [deprecated = true];
-  // Metrics calculated on the validation set.
-  google.protobuf.Struct validation_metrics = 2;
-}
-
 // The current state of the checkpoint.
 enum State {
   // The state of the checkpoint is unknown.
@@ -30,45 +22,44 @@ enum State {
   STATE_DELETED = 4;
 }
 
-// Checkpoint is an artifact created by a trial during training.
-message Checkpoint {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "experiment_id", "trial_id", "batch_number", "state" ]
-    }
-  };
-  // UUID of the checkpoint.
-  string uuid = 1;
-  // The configuration of the experiment that created this checkpoint.
-  google.protobuf.Struct experiment_config = 2;
-  // The ID of the experiment that created this checkpoint.
-  int32 experiment_id = 3;
+message CheckpointTrainingMetadata {
   // The ID of the trial that created this checkpoint.
-  int32 trial_id = 4;
+  int32 trial_id = 3;
+  // The ID of the experiment that created this checkpoint.
+  int32 experiment_id = 4;
+  // The configuration of the experiment that created this checkpoint.
+  google.protobuf.Struct experiment_config = 5;
   // Hyperparameter values for the trial that created this checkpoint.
-  google.protobuf.Struct hparams = 5;
-  // Batch number of this checkpoint.
-  int32 batch_number = 6;
-  // Timestamp when the checkpoint was reported as being saved to persistent
-  // storage.
-  google.protobuf.Timestamp end_time = 8;
-  // Dictionary of file paths to file sizes in bytes of all files in the
-  // checkpoint.
-  map<string, int64> resources = 9;
-  // User defined metadata associated with the checkpoint.
-  google.protobuf.Struct metadata = 10;
-  // The framework of the trial i.e., tensorflow, torch.
-  string framework = 11;
-  // The format of the checkpoint i.e., h5, saved_model, pickle.
-  string format = 12;
-  // The version of Determined the checkpoint was taken with.
-  string determined_version = 13;
-  // Dictionary of validation metric names to their values.
-  Metrics metrics = 14;
-  // The state of the validation associated with this checkpoint.
-  State validation_state = 15;
-  // The state of the checkpoint.
-  State state = 16;
-  // The value of the metric specified by `searcher.metric` for this metric.
+  google.protobuf.Struct hparams = 6;
+  // Training metrics reported at the same latest_batch as the checkpoint.
+  google.protobuf.Struct training_metrics = 7;
+  // Validation metrics reported at the same latest_batch as the checkpoint.
+  google.protobuf.Struct validation_metrics = 8;
+  // TODO: is this actually a good idea?  It couples a lot of parts of the
+  // system pretty tightly, and if we had a good metrics api it would be a much
+  // more natural way to serve this information.
   google.protobuf.DoubleValue searcher_metric = 17;
+}
+
+// CheckpointMetadata is metadata about a collection of files.
+message CheckpointMetadata {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
+  // ID of the task which generated this checkpoint.
+  string task_id = 1;
+  // ID of the allocation which generated this checkpoint.
+  string allocation_id = 2;
+  // UUID of the checkpoint.
+  string uuid = 3;
+  // Timestamp when the checkpoint was reported.
+  google.protobuf.Timestamp report_time = 4;
+  // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
+  map<string, int64> resources = 5;
+  // User defined metadata associated with the checkpoint.
+  google.protobuf.Struct metadata = 6;
+  // The state of the underlying checkpoint.
+  State state = 7;
+  // Training-related data for this checkpoint.
+  CheckpointTrainingMetadata training = 8;
 }

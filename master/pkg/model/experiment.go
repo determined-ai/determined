@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgtype"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
@@ -65,6 +66,12 @@ const (
 
 // StateFromProto maps experimentv1.State to State.
 func StateFromProto(state experimentv1.State) State {
+	str := state.String()
+	return State(strings.TrimPrefix(str, "STATE_"))
+}
+
+// StateFromProto maps experimentv1.State to State.
+func CheckpointStateFromProto(state checkpointv1.State) State {
 	str := state.String()
 	return State(strings.TrimPrefix(str, "STATE_"))
 }

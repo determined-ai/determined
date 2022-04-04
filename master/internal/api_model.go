@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -10,13 +11,16 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/api/checkpoints"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -380,21 +384,31 @@ func (a *apiServer) PostModelVersion(
 			modelResp.Name)
 	}
 
-	// make sure the checkpoint exists
-	c := &checkpointv1.Checkpoint{}
-
-	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
-	case getCheckpointErr == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
-	case getCheckpointErr != nil:
-		return nil, getCheckpointErr
+	conv := protoconverter.ProtoConverter{}
+	uuid := conv.ToUUID(req.CheckpointUuid)
+	if err := conv.Error(); err != nil {
+		return nil, fmt.Errorf("invalid checkpoint uuid: %w", err)
 	}
 
-	if c.State != checkpointv1.State_STATE_COMPLETED {
-		return nil, errors.Errorf(
+	c, err := checkpoints.Single(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+		return q.Where("uuid = ?", uuid), nil
+	})
+	switch err {
+	case nil:
+		break
+	case db.ErrNotFound, sql.ErrNoRows:
+		return nil, status.Errorf(
+			codes.NotFound, "checkpoint %s not found", uuid)
+	default:
+		return nil, status.Errorf(
+			codes.Internal, "querying checkpoint %s: %w", uuid, err)
+	}
+
+	if c.State != model.CompletedState {
+		return nil, status.Errorf(
+			codes.FailedPrecondition,
 			"checkpoint %s is in %s state. checkpoints for model versions must be in a COMPLETED state",
-			c.Uuid, c.State,
+			c.UUID, c.State,
 		)
 	}
 
@@ -417,7 +431,7 @@ func (a *apiServer) PostModelVersion(
 		"insert_model_version",
 		respModelVersion.ModelVersion,
 		modelResp.Id,
-		c.Uuid,
+		c.UUID,
 		req.Name,
 		req.Comment,
 		mdata,

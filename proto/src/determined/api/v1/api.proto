@@ -706,10 +706,10 @@ service Determined {
     };
   }
   // Record a checkpoint.
-  rpc ReportTrialCheckpointMetadata(ReportTrialCheckpointMetadataRequest)
-      returns (ReportTrialCheckpointMetadataResponse) {
+  rpc ReportCheckpointMetadata(ReportCheckpointMetadataRequest)
+      returns (ReportCheckpointMetadataResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/{checkpoint_metadata.trial_id}/checkpoint_metadata"
+      post: "/api/v1/checkpoint_metadata"
       body: "checkpoint_metadata"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

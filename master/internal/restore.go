@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/api/checkpoints"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -112,7 +113,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 // restoreTrial takes the a searcher.Create and attempts to restore the trial that would be
 // associated with it. On failure, the trial is just reset to the start and errors are logged.
 func (e *experiment) restoreTrial(
-	ctx *actor.Context, ckpt *model.Checkpoint, searcher trialSearcherState,
+	ctx *actor.Context, ckpt *checkpoints.CheckpointMetadata, searcher trialSearcherState,
 ) {
 	l := ctx.Log().WithField("request-id", searcher.Create.RequestID)
 	l.Debug("restoring trial")

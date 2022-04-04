@@ -98,12 +98,8 @@ message GetTrialCheckpointsRequest {
     SORT_BY_UUID = 1;
     // Returns checkpoints sorted by batch number.
     SORT_BY_BATCH_NUMBER = 6;
-    // Returns checkpoints sorted by start time.
-    SORT_BY_START_TIME = 7;
     // Returns checkpoints sorted by end time.
     SORT_BY_END_TIME = 8;
-    // Returns checkpoints sorted by validation state.
-    SORT_BY_VALIDATION_STATE = 15;
     // Returns checkpoints sorted by state.
     SORT_BY_STATE = 16;
   }
@@ -128,7 +124,7 @@ message GetTrialCheckpointsRequest {
 // Response to GetTrialCheckpointsRequest.
 message GetTrialCheckpointsResponse {
   // The list of returned checkpoints.
-  repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
+  repeated determined.checkpoint.v1.CheckpointMetadata checkpoints = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
@@ -437,15 +433,15 @@ message ReportTrialValidationMetricsRequest {
 message ReportTrialValidationMetricsResponse {}
 
 // Persist the given checkpoint metadata for the trial.
-message ReportTrialCheckpointMetadataRequest {
+message ReportCheckpointMetadataRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "checkpoint_metadata" ] }
   };
   // The training metrics to persist.
-  determined.trial.v1.CheckpointMetadata checkpoint_metadata = 1;
+  determined.checkpoint.v1.CheckpointMetadata checkpoint_metadata = 1;
 }
 // Response to ReportTrialCheckpointMetadataRequest
-message ReportTrialCheckpointMetadataResponse {}
+message ReportCheckpointMetadataResponse {}
 
 // Partially update the trial metadata.
 message PostTrialRunnerMetadataRequest {

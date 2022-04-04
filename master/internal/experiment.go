@@ -1,11 +1,14 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/api/checkpoints"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 
 	"github.com/google/uuid"
@@ -94,7 +97,7 @@ type (
 		hpImportance        *actor.Ref
 		db                  *db.PgDB
 		searcher            *searcher.Searcher
-		warmStartCheckpoint *model.Checkpoint
+		warmStartCheckpoint *checkpoints.CheckpointMetadata
 
 		taskSpec *tasks.TaskSpec
 
@@ -533,7 +536,8 @@ func trialTaskID(eID int, rID model.RequestID) model.TaskID {
 	return model.TaskID(fmt.Sprintf("%d.%s", eID, rID))
 }
 
-func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
+func (e *experiment) checkpointForCreate(
+	op searcher.Create) (*checkpoints.CheckpointMetadata, error) {
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
@@ -598,13 +602,18 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 
 func checkpointFromTrialIDOrUUID(
 	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
-) (*model.Checkpoint, error) {
-	var checkpoint *model.Checkpoint
+) (*checkpoints.CheckpointMetadata, error) {
+	var checkpoint *checkpoints.CheckpointMetadata
 	var err error
 
 	// Attempt to find a Checkpoint object from the given IDs.
 	if trialID != nil {
-		checkpoint, err = db.LatestCheckpointForTrial(*trialID)
+		checkpoint, err = checkpoints.Single(context.TODO(), func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return q.Where("trial_id = ?", trialID).
+				Where("state = ?", model.CompletedState).
+				OrderExpr("metadata->>'latest_batch' DESC").
+				Limit(1), nil
+		})
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get checkpoint for source trial %d", *trialID)
 		}
@@ -616,10 +625,13 @@ func checkpointFromTrialIDOrUUID(
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid source checkpoint UUID")
 		}
-		checkpoint, err = db.CheckpointByUUID(checkpointUUID)
+
+		checkpoint, err = checkpoints.ByUUID(context.TODO(), checkpointUUID)
+		// TODO fix err check
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get source checkpoint %v", checkpointUUID)
 		}
+
 		if checkpoint == nil {
 			return nil, errors.Errorf("no checkpoint found with UUID %v", checkpointUUID)
 		}

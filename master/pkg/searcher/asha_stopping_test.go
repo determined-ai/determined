@@ -4,6 +4,8 @@ package searcher
 import (
 	"testing"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -260,6 +262,10 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 			},
 		},
 	}
+
+	err := errors.WithStack(nil)
+
+	errors.Wrap()
 
 	runValueSimulationTestCases(t, testCases)
 }

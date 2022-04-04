@@ -32,6 +32,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/checkpoints"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
 	detContext "github.com/determined-ai/determined/master/internal/context"
@@ -480,9 +481,14 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		})
 	}
 
+	apiServer := &apiServer{
+		m:                m,
+		CheckpointServer: checkpoints.NewCheckpointServer(m.db),
+	}
+
 	// This must be before grpcutil.RegisterHTTPProxy is called since it may use stuff set up by the
 	// gRPC server (logger initialization, maybe more). Found by --race.
-	gRPCServer := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
+	gRPCServer := grpcutil.NewGRPCServer(m.db, apiServer,
 		m.config.Observability.EnablePrometheus,
 		&m.config.InternalConfig.ExternalSessions)
 
@@ -889,10 +895,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
-
-	trialsGroup := m.echo.Group("/trials", authFuncs...)
-	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
-	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)

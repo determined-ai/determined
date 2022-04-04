@@ -89,7 +89,7 @@ message ModelVersion {
   // The model the version is related to.
   Model model = 1;
   // The checkpoint of the model version.
-  determined.checkpoint.v1.Checkpoint checkpoint = 2;
+  determined.checkpoint.v1.CheckpointMetadata checkpoint = 2;
   // The version number.
   int32 version = 3;
   // The time the model version was created.
@@ -117,7 +117,7 @@ message ModelVersion {
 // PatchModel is a partial update to a ModelVersion with only id required
 message PatchModelVersion {
   // An updated checkpoint to associate with the model version.
-  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+  determined.checkpoint.v1.CheckpointMetadata checkpoint = 1;
   // An updated name for the model version.
   google.protobuf.StringValue name = 3;
   // An updated metadata object for the model version.

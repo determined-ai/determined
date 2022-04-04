@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/checkpoints"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -26,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -295,64 +295,6 @@ func (a *apiServer) TrialLogsFields(
 			Sources:      setString(append(r1.Sources, r2.Sources...)...),
 		})
 	})
-}
-
-func (a *apiServer) GetTrialCheckpoints(
-	_ context.Context, req *apiv1.GetTrialCheckpointsRequest,
-) (*apiv1.GetTrialCheckpointsResponse, error) {
-	switch exists, err := a.m.db.CheckTrialExists(int(req.Id)); {
-	case err != nil:
-		return nil, err
-	case !exists:
-		return nil, status.Error(codes.NotFound, "trial not found")
-	}
-
-	resp := &apiv1.GetTrialCheckpointsResponse{}
-	resp.Checkpoints = []*checkpointv1.Checkpoint{}
-
-	switch err := a.m.db.QueryProto("get_checkpoints_for_trial", &resp.Checkpoints, req.Id); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "no checkpoints found for trial %d", req.Id)
-	case err != nil:
-		return nil,
-			errors.Wrapf(err, "error fetching checkpoints for trial %d from database", req.Id)
-	}
-
-	a.filter(&resp.Checkpoints, func(i int) bool {
-		v := resp.Checkpoints[i]
-
-		found := false
-		for _, state := range req.States {
-			if state == v.State {
-				found = true
-				break
-			}
-		}
-
-		if len(req.States) != 0 && !found {
-			return false
-		}
-
-		found = false
-		for _, state := range req.ValidationStates {
-			if state == v.ValidationState {
-				found = true
-				break
-			}
-		}
-
-		if len(req.ValidationStates) != 0 && !found {
-			return false
-		}
-
-		return true
-	})
-
-	a.sort(
-		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetTrialCheckpointsRequest_SORT_BY_BATCH_NUMBER)
-
-	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
 func (a *apiServer) KillTrial(
@@ -801,16 +743,23 @@ func (a *apiServer) ReportTrialValidationMetrics(
 	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
 }
 
-func (a *apiServer) ReportTrialCheckpointMetadata(
-	ctx context.Context, req *apiv1.ReportTrialCheckpointMetadataRequest,
-) (*apiv1.ReportTrialCheckpointMetadataResponse, error) {
-	if err := a.checkTrialExists(int(req.CheckpointMetadata.TrialId)); err != nil {
+func (a *apiServer) ReportCheckpointMetadata(
+	ctx context.Context, req *apiv1.ReportCheckpointMetadataRequest,
+) (*apiv1.ReportCheckpointMetadataResponse, error) {
+	if err := a.checkTaskExists(model.TaskID(req.CheckpointMetadata.TaskId)); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.AddCheckpointMetadata(ctx, req.CheckpointMetadata); err != nil {
+
+	c, err := checkpoints.FromProto(req.CheckpointMetadata)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if err := c.Insert(ctx); err != nil {
 		return nil, err
 	}
-	return &apiv1.ReportTrialCheckpointMetadataResponse{}, nil
+
+	return &apiv1.ReportCheckpointMetadataResponse{}, nil
 }
 
 func (a *apiServer) AllocationRendezvousInfo(
@@ -876,6 +825,18 @@ func (a *apiServer) checkTrialExists(id int) error {
 		return status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
 	case !ok:
 		return status.Errorf(codes.NotFound, "trial %d not found", id)
+	default:
+		return nil
+	}
+}
+
+func (a *apiServer) checkTaskExists(id model.TaskID) error {
+	ok, err := a.m.db.CheckTaskExists(id)
+	switch {
+	case err != nil:
+		return status.Errorf(codes.Internal, "failed to check if task exists: %s", err)
+	case !ok:
+		return status.Errorf(codes.NotFound, "task %d not found", id)
 	default:
 		return nil
 	}
