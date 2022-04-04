@@ -726,7 +726,7 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	spec.TaskType = model.TaskType(spec.LoggingFields["task-type"])
-	ctx.Log().Infof("------------> set task type to spec: %s..", spec.LoggingFields["task-type"])
+	ctx.Log().Infof("------------> set task type to spec: %+v..", spec.LoggingFields)
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{
