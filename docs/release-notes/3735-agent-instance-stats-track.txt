@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+- Collect data for agent/instance start time and end time. 
+- Two new ``kind`` (``agent`` and ``instance``) added to CSV report at Cluster page. 
