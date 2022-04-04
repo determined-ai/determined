@@ -355,17 +355,15 @@ func RecordTaskStartStats(stats *model.TaskStats) error {
 	return err
 }
 
-// 	return db.namedExecOne(`
-// INSERT INTO task_stats (task_id, resource_pool, event_type, start_time)
-// SELECT :task_id, :resource_pool, :event_type, CURRENT_TIMESTAMP
-// `, stats)
-
-func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
-	return db.namedExecOne(`
-UPDATE task_stats
-SET end_time = (SELECT CURRENT_TIMESTAMP)
-WHERE task_id = :task_id AND event_type IS :event_type
-`, stats)
+func RecordTaskEndStats(stats *model.TaskStats) error {
+	db := Bun()
+	now := time.Now().UTC()
+	stats.EndTime = &now
+	_, err := db.NewUpdate().Model(stats).Column("end_time").Where(
+		"task_id = ?", stats.TaskID).Where(
+		"event_type = ?", stats.EventType).Where(
+		"end_time = NULL").Exec(context.TODO())
+	return err
 }
 
 func (db *PgDB) EndAllTaskStats() error {

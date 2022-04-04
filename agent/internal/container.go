@@ -89,6 +89,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 				Name:         c.spec.RunSpec.ContainerConfig.Image,
 				ResourcePool: c.ResourcePool,
 				TaskID:       c.spec.TaskID,
+				TaskType:     c.spec.TaskType,
 			}
 			ctx.Tell(c.docker, pull)
 			c.baseTaskLog = getBaseTaskLog(c.spec)

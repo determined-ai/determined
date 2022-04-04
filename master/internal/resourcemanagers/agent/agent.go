@@ -420,8 +420,12 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
 	case msg.DockerImagePull != nil:
+		if msg.DockerImagePull.EndStats {
+			db.RecordTaskEndStats(msg.DockerImagePull.Stats)
+		} else {
+			db.RecordTaskStartStats(msg.DockerImagePull.Stats)
+		}
 
-		db.RecordTaskStartStats(msg.DockerImagePull.Stats)
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}

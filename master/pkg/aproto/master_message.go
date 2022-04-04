@@ -76,7 +76,8 @@ type ContainerStarted struct {
 }
 
 type DockerImagePull struct {
-	Stats *model.TaskStats
+	EndStats bool
+	Stats    *model.TaskStats
 }
 
 // Addresses calculates the address of containers and hosts based on the container

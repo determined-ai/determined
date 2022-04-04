@@ -43,6 +43,7 @@ type (
 		Name         string
 		ResourcePool string
 		TaskID       string
+		TaskType     string
 	}
 	runContainer struct {
 		cproto.RunSpec
@@ -113,7 +114,7 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	case msg.ForcePull:
 		if err == nil {
 			d.sendAuxLog(ctx, fmt.Sprintf(
-				"---> image present, but force_pull_image is set; checking for updates: %s",
+				"image present, but force_pull_image is set; checking for updates: %s",
 				ref.String(),
 			))
 		}
@@ -122,18 +123,20 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		ctx.Tell(ctx.Sender(), imagePulled{})
 		return
 	case client.IsErrNotFound(err):
-		d.sendAuxLog(ctx, fmt.Sprintf("---> image not found, pulling image: %s", ref.String()))
+		d.sendAuxLog(ctx, fmt.Sprintf("image not found, pulling image: %s", ref.String()))
 	default:
 		sendErr(ctx, errors.Wrapf(err, "error checking if image exists: %s", ref.String()))
 		return
 	}
-	d.sendAuxLog(ctx, "---------> before add to DB")
-	ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
-		Stats: &model.TaskStats{
-			ResourcePool: msg.ResourcePool,
-			TaskID:       model.TaskID(msg.TaskID),
-			EventType:    "IMAGEPULL",
-		}})
+	if taskNeedsRecording(msg) {
+		ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
+			EndStats: false,
+			Stats: &model.TaskStats{
+				ResourcePool: msg.ResourcePool,
+				TaskID:       model.TaskID(msg.TaskID),
+				EventType:    "IMAGEPULL",
+			}})
+	}
 
 	// TODO: replace with command.EncodeAuthToBase64
 	reg := ""
@@ -180,7 +183,21 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		sendErr(ctx, errors.Wrap(err, "error closing log stream"))
 		return
 	}
+
+	if taskNeedsRecording(msg) {
+		ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
+			EndStats: true,
+			Stats: &model.TaskStats{
+				TaskID:    model.TaskID(msg.TaskID),
+				EventType: "IMAGEPULL",
+			}})
+	}
+
 	ctx.Tell(ctx.Sender(), imagePulled{})
+}
+
+func taskNeedsRecording(msg pullImage) bool {
+	return msg.TaskType == string(model.TaskTypeTrial)
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
