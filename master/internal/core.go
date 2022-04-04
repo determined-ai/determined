@@ -754,7 +754,8 @@ func (m *Master) Run(ctx context.Context) error {
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
-	m.echo.Use(otelecho.Middleware("my-server"))
+	tp := otelConfig()
+	m.echo.Use(otelecho.Middleware("determined-master", otelecho.WithTracerProvider(tp)))
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
