@@ -36,7 +36,10 @@ type RMJobInfo struct { // rename ?
 }
 
 // GetJobSummary requests a summary of the job.
-type GetJobSummary struct{}
+type GetJobSummary struct {
+	JobID        model.JobID
+	ResourcePool string
+}
 
 // GetJob requests a job representation from a job.
 type GetJob struct{}
@@ -237,8 +240,27 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC)
 		if err != nil {
 			ctx.Respond(err)
+			return nil
 		}
 		ctx.Respond(jobs)
+
+	case GetJobSummary:
+		jobs, err := j.jobQSnapshot(ctx, msg.ResourcePool)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		jobInfo, ok := jobs[msg.JobID]
+		if !ok || jobInfo == nil {
+			// job is not active.
+			ctx.Respond(nil)
+			return nil
+		}
+		summary := jobv1.JobSummary{
+			State:     jobInfo.State.Proto(),
+			JobsAhead: int32(jobInfo.JobsAhead),
+		}
+		ctx.Respond(&summary)
 
 	case *apiv1.UpdateJobQueueRequest:
 		errors := make([]string, 0)

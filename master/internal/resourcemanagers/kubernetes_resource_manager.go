@@ -106,7 +106,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case
 		job.GetJobQ,
-		job.GetJobSummary,
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
