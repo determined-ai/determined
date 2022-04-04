@@ -15,4 +15,5 @@ from . import (
     tensorboard,
     trial,
     user,
+    workspace,
 )

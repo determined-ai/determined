@@ -47,6 +47,8 @@ message GetWorkspaceProjectsRequest {
     SORT_BY_NAME = 3;
     // Returns projects sorted by description.
     SORT_BY_DESCRIPTION = 4;
+    // Returns projects sorted by ID.
+    SORT_BY_ID = 5;
   }
 
   // Sort the projects by the given field.

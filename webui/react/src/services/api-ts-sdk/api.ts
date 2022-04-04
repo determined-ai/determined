@@ -2835,7 +2835,7 @@ export interface V1GetUsersResponse {
 }
 
 /**
- * Sort associated projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.
+ * Sort associated projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
  * @export
  * @enum {string}
  */
@@ -2844,7 +2844,8 @@ export enum V1GetWorkspaceProjectsRequestSortBy {
     CREATIONTIME = <any> 'SORT_BY_CREATION_TIME',
     LASTEXPERIMENTSTARTTIME = <any> 'SORT_BY_LAST_EXPERIMENT_START_TIME',
     NAME = <any> 'SORT_BY_NAME',
-    DESCRIPTION = <any> 'SORT_BY_DESCRIPTION'
+    DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
+    ID = <any> 'SORT_BY_ID'
 }
 
 /**
@@ -19293,7 +19294,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * 
          * @summary Get projects associated with a workspace.
          * @param {number} id The id of the workspace.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -19303,7 +19304,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspaceProjects.');

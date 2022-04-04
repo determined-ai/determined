@@ -49,6 +49,7 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:   "id",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME: "created_at",
 		startTime: "last_experiment_started_at",
+		apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:          "id",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:        "name",
 		apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION: "description",
 	}
@@ -101,6 +102,7 @@ func (a *apiServer) GetWorkspaces(
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetWorkspacesRequest_SortBy]string{
 		apiv1.GetWorkspacesRequest_SORT_BY_UNSPECIFIED: "id",
+		apiv1.GetWorkspacesRequest_SORT_BY_ID:          "id",
 		apiv1.GetWorkspacesRequest_SORT_BY_NAME:        "name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
