@@ -83,16 +83,16 @@ func (c ContainerLog) ToEvent() Event {
 		State:       string(c.Container.State),
 		ContainerID: string(c.Container.ID),
 		Time:        c.Timestamp.UTC(),
-		LogEvent:    ptrs.StringPtr(c.Message()),
+		LogEvent:    ptrs.Ptr(c.Message()),
 	}
 }
 
 // ToTaskLog converts a container log to a task log.
 func (c ContainerLog) ToTaskLog() model.TaskLog {
 	return model.TaskLog{
-		ContainerID: ptrs.StringPtr(string(c.Container.ID)),
+		ContainerID: ptrs.Ptr(string(c.Container.ID)),
 		Level:       c.Level,
-		Timestamp:   ptrs.TimePtr(c.Timestamp.UTC()),
+		Timestamp:   ptrs.Ptr(c.Timestamp.UTC()),
 		Log:         c.Message(),
 	}
 }

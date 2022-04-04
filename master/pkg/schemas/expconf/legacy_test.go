@@ -91,16 +91,16 @@ func TestLegacyConfig(t *testing.T) {
 			Expected: LegacyConfig{
 				checkpointStorage: CheckpointStorageConfig{
 					RawSharedFSConfig: &SharedFSConfig{
-						RawHostPath:        ptrs.StringPtr("/tmp"),
-						RawContainerPath:   ptrs.StringPtr("qwer"),
-						RawCheckpointPath:  ptrs.StringPtr("asdf"),
-						RawTensorboardPath: ptrs.StringPtr("zxcv"),
-						RawStoragePath:     ptrs.StringPtr("determined-cp"),
-						RawPropagation:     ptrs.StringPtr("rprivate"),
+						RawHostPath:        ptrs.Ptr("/tmp"),
+						RawContainerPath:   ptrs.Ptr("qwer"),
+						RawCheckpointPath:  ptrs.Ptr("asdf"),
+						RawTensorboardPath: ptrs.Ptr("zxcv"),
+						RawStoragePath:     ptrs.Ptr("determined-cp"),
+						RawPropagation:     ptrs.Ptr("rprivate"),
 					},
-					RawSaveExperimentBest: ptrs.IntPtr(10),
-					RawSaveTrialBest:      ptrs.IntPtr(10),
-					RawSaveTrialLatest:    ptrs.IntPtr(10),
+					RawSaveExperimentBest: ptrs.Ptr(10),
+					RawSaveTrialBest:      ptrs.Ptr(10),
+					RawSaveTrialLatest:    ptrs.Ptr(10),
 				},
 				bindMounts: BindMountsConfig{},
 				envvars: EnvironmentVariablesMap{
@@ -206,13 +206,13 @@ func TestLegacyConfig(t *testing.T) {
 			Expected: LegacyConfig{
 				checkpointStorage: CheckpointStorageConfig{
 					RawSharedFSConfig: &SharedFSConfig{
-						RawHostPath:    ptrs.StringPtr("/tmp"),
-						RawStoragePath: ptrs.StringPtr("determined-cp"),
-						RawPropagation: ptrs.StringPtr("rprivate"),
+						RawHostPath:    ptrs.Ptr("/tmp"),
+						RawStoragePath: ptrs.Ptr("determined-cp"),
+						RawPropagation: ptrs.Ptr("rprivate"),
 					},
-					RawSaveExperimentBest: ptrs.IntPtr(10),
-					RawSaveTrialBest:      ptrs.IntPtr(10),
-					RawSaveTrialLatest:    ptrs.IntPtr(10),
+					RawSaveExperimentBest: ptrs.Ptr(10),
+					RawSaveTrialBest:      ptrs.Ptr(10),
+					RawSaveTrialLatest:    ptrs.Ptr(10),
 				},
 				bindMounts: BindMountsConfig{},
 				envvars: EnvironmentVariablesMap{
@@ -330,20 +330,20 @@ func TestLegacyConfig(t *testing.T) {
 			Expected: LegacyConfig{
 				checkpointStorage: CheckpointStorageConfig{
 					RawSharedFSConfig: &SharedFSConfig{
-						RawHostPath:    ptrs.StringPtr("/tmp"),
-						RawStoragePath: ptrs.StringPtr("determined-cp"),
-						RawPropagation: ptrs.StringPtr("rprivate"),
+						RawHostPath:    ptrs.Ptr("/tmp"),
+						RawStoragePath: ptrs.Ptr("determined-cp"),
+						RawPropagation: ptrs.Ptr("rprivate"),
 					},
-					RawSaveExperimentBest: ptrs.IntPtr(10),
-					RawSaveTrialBest:      ptrs.IntPtr(10),
-					RawSaveTrialLatest:    ptrs.IntPtr(10),
+					RawSaveExperimentBest: ptrs.Ptr(10),
+					RawSaveTrialBest:      ptrs.Ptr(10),
+					RawSaveTrialLatest:    ptrs.Ptr(10),
 				},
 				bindMounts: BindMountsConfig{
 					BindMount{
 						RawHostPath:      "/tmp/asdf",
 						RawContainerPath: "/tmp/asdf",
-						RawReadOnly:      ptrs.BoolPtr(false),
-						RawPropagation:   ptrs.StringPtr("rprivate"),
+						RawReadOnly:      ptrs.Ptr(false),
+						RawPropagation:   ptrs.Ptr("rprivate"),
 					},
 				},
 				envvars: EnvironmentVariablesMap{

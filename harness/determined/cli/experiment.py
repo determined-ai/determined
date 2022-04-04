@@ -9,7 +9,7 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import tabulate
 
@@ -342,7 +342,9 @@ def describe(args: Namespace) -> None:
             workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
             for workload in workloads:
                 t_metrics_fields = []
-                wl_detail: bindings.v1MetricsWorkload | bindings.v1CheckpointWorkload | None = None
+                wl_detail: Optional[
+                    Union[bindings.v1MetricsWorkload, bindings.v1CheckpointWorkload]
+                ] = None
                 if workload.training:
                     wl_detail = workload.training
                     for name in t_metrics_names:

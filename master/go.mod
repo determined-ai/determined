@@ -158,6 +158,7 @@ require (
 	github.com/uptrace/bun v1.1.2
 	github.com/uptrace/bun/dialect/pgdialect v1.1.2
 	github.com/uptrace/bun/extra/bundebug v1.1.2
+	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
 require github.com/fatih/color v1.13.0 // indirect

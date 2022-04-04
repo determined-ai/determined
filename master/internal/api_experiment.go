@@ -67,6 +67,9 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 			"error fetching experiment from database: %d", experimentID)
 	}
 
+	sort.Slice(exp.TrialIds, func(i, j int) bool {
+		return exp.TrialIds[i] < exp.TrialIds[j]
+	})
 	return exp, nil
 }
 
@@ -75,7 +78,7 @@ func (a *apiServer) GetExperiment(
 ) (*apiv1.GetExperimentResponse, error) {
 	exp, err := a.getExperiment(int(req.ExperimentId))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching experiment from db")
 	}
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
@@ -100,10 +103,21 @@ func (a *apiServer) GetExperiment(
 		return &resp, nil
 	}
 
-	err = a.ask(actor.Addr("experiments").Child(exp.Id),
-		job.GetJobSummary{}, &resp.JobSummary)
+	err = a.ask(actor.Addr("experiments").Child(exp.Id), job.GetJobSummary{}, &resp.JobSummary)
 	if err != nil {
-		return nil, err
+		// An error here either is real or just that the experiment was not yet terminal in the DB
+		// when we first queried it but was by the time it got around to handling out ask. We can't
+		// just refresh our DB state to see which it was, since there is a time between an actor
+		// closing and PostStop (where the DB state is set) being received where the actor may not
+		// respond but still is not terminal -- more clearly, there is a time where the actor is
+		// truly non-terminal and not reachable. We _could_ await its stop and recheck, but it's not
+		// easy deducible how long that would block. So the best we can really do is return without
+		// an error if we're in this case and log. This is a debug log because of how often the
+		// happens when polling for an experiment to end.
+		if !strings.Contains(err.Error(), actorDidNotRespond) {
+			return nil, err
+		}
+		logrus.WithError(err).Debugf("asking for job summary")
 	}
 
 	return &resp, nil
@@ -205,7 +219,8 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		rm: a.m.rm,
 		db: a.m.db,
 
-		logCtx: logger.Context{"experiment-id": exp.ID},
+		taskLogger: a.m.taskLogger,
+		logCtx:     logger.Context{"experiment-id": exp.ID},
 	}).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}

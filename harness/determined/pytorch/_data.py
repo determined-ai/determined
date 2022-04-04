@@ -16,6 +16,7 @@ from typing import (
 
 import numpy as np
 import torch
+from packaging import version
 from torch.utils.data import (
     BatchSampler,
     Dataset,
@@ -96,6 +97,15 @@ class DataLoader:
         worker_init_fn (callable, optional): If not ``None``, this will be called on each
             worker subprocess with the worker id (an int in ``[0, num_workers - 1]``) as
             input, after seeding and before data loading. (default: ``None``)
+        generator (torch.Generator, optional): If not ``None``, this RNG will be used
+            by RandomSampler to generate random indexes and multiprocessing to generate
+            `base_seed` for workers. (default: ``None``)
+        prefetch_factor (int, optional, keyword-only arg): Number of samples loaded
+            in advance by each worker. ``2`` means there will be a total of
+            2 * num_workers samples prefetched across all workers. (default: ``2``)
+        persistent_workers (bool, optional): If ``True``, the data loader will not shutdown
+            the worker processes after a dataset has been consumed once. This allows to
+            maintain the workers `Dataset` instances alive. (default: ``False``)
     """
 
     def __init__(
@@ -111,6 +121,11 @@ class DataLoader:
         drop_last: bool = False,
         timeout: float = 0,
         worker_init_fn: _worker_init_fn_t = None,
+        multiprocessing_context: Any = None,
+        generator: Any = None,
+        *,
+        prefetch_factor: int = 2,
+        persistent_workers: bool = False,
     ):
         # Don't allow IterableDatasets in our DataLoader.
         if isinstance(dataset, torch.utils.data.IterableDataset):
@@ -121,7 +136,7 @@ class DataLoader:
                 "You can use an IterableDataset in Determined, but you will be responsible for "
                 "shuffling, sharding, repeating, and skipping to ensure reproducibility and "
                 "correctness of training.  See the in-depth guide at: "
-                "docs.determined.ai/latest/reference/api/pytorch-samplers.html"
+                "https://docs.determined.ai/latest/training-apis/api-pytorch-advanced.html"
             )
 
         # Don't allow this rare combination of inputs that we would puke on later.
@@ -130,7 +145,7 @@ class DataLoader:
                 "The case of batch_sampler=None and batch_size=None is not supported through "
                 "det.pytorch.DataLoader(). For customizing your data loader beyond what is "
                 "supported by det.pytorch.DataLoader, see the in-depth guide at: "
-                "docs.determined.ai/latest/reference/api/pytorch-samplers.html"
+                "https://docs.determined.ai/latest/training-apis/api-pytorch-advanced.html"
             )
 
         # BEGIN VENDORED CODE FROM PYTORCH
@@ -144,11 +159,23 @@ class DataLoader:
         if timeout < 0:
             raise ValueError("timeout option should be non-negative")
 
+        if num_workers == 0 and prefetch_factor != 2:
+            raise ValueError(
+                "prefetch_factor option could only be specified in multiprocessing. "
+                "let num_workers > 0 to enable multiprocessing."
+            )
+        assert prefetch_factor > 0
+
+        if persistent_workers and num_workers == 0:
+            raise ValueError("persistent_workers option needs num_workers > 0")
+
         self.dataset = dataset
         self.num_workers = num_workers
+        self.prefetch_factor = prefetch_factor
         self.pin_memory = pin_memory
         self.timeout = timeout
         self.worker_init_fn = worker_init_fn
+        self.multiprocessing_context = multiprocessing_context
 
         if sampler is not None and shuffle:
             raise ValueError("sampler option is mutually exclusive with " "shuffle")
@@ -174,7 +201,11 @@ class DataLoader:
 
         if sampler is None:  # give default samplers
             if shuffle:
-                sampler = RandomSampler(dataset)  # type: ignore
+                # The generator arg to RandomSampler was added in torch 1.6.
+                if version.parse(torch.__version__) >= version.parse("1.6.0"):
+                    sampler = RandomSampler(dataset, generator=generator)  # type: ignore
+                else:
+                    sampler = RandomSampler(dataset)  # type: ignore
             else:
                 sampler = SequentialSampler(dataset)  # type: ignore
 
@@ -186,6 +217,7 @@ class DataLoader:
         self.drop_last = drop_last
         self.sampler = sampler
         self.batch_sampler = batch_sampler
+        self.generator = generator
 
         if collate_fn is None:
             if self._auto_collation:
@@ -194,6 +226,7 @@ class DataLoader:
                 collate_fn = _utils.collate.default_convert
 
         self.collate_fn = collate_fn
+        self.persistent_workers = persistent_workers
         # END VENDORED CODE FROM PYTORCH
 
     # BEGIN VENDORED CODE FROM PYTORCH
@@ -211,6 +244,17 @@ class DataLoader:
         batch_sampler = adapt_batch_sampler(
             batch_sampler, repeat=repeat, skip=skip, num_replicas=num_replicas, rank=rank
         )
+
+        # Try to no break any torch version as old as v1.0.
+        extra_kwargs = {}
+        if version.parse(torch.__version__) >= version.parse("1.2.0"):
+            extra_kwargs["multiprocessing_context"] = self.multiprocessing_context
+        if version.parse(torch.__version__) >= version.parse("1.6.0"):
+            extra_kwargs["generator"] = self.generator
+        if version.parse(torch.__version__) >= version.parse("1.7.0"):
+            extra_kwargs["prefetch_factor"] = self.prefetch_factor
+            extra_kwargs["persistent_workers"] = self.persistent_workers
+
         return torch.utils.data.DataLoader(
             self.dataset,
             batch_sampler=batch_sampler,
@@ -219,6 +263,7 @@ class DataLoader:
             pin_memory=self.pin_memory,
             timeout=self.timeout,
             worker_init_fn=self.worker_init_fn,
+            **extra_kwargs,
         )
 
     def __iter__(self) -> Iterator:

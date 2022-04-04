@@ -56,9 +56,7 @@ class GPT2Trial(DeepSpeedTrial):
             model,
             self.optimizer,
             self.lr_scheduler,
-        ) = megatron_train.setup_model_and_optimizer(
-            neox_args=self.neox_args, inference=False, get_key_value=True
-        )
+        ) = megatron_train.setup_model_and_optimizer(neox_args=self.neox_args)
         self.model = self.context.wrap_model_engine(model)
         self.timers("model and optimizer").stop()
 

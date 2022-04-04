@@ -5,13 +5,10 @@ import (
 	"math"
 	"sort"
 
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
-
-func lengthPtr(val expconf.Length) *expconf.Length {
-	return &val
-}
 
 func getBracketMaxTrials(
 	maxTrials int, divisor float64, brackets []int) []int {
@@ -31,11 +28,11 @@ func getBracketMaxTrials(
 	allocated := 0
 	for i := 0; i < len(brackets); i++ {
 		bracketTrials = append(
-			bracketTrials, max(int(bracketWeight[i]/totalWeight*float64(maxTrials)), 1))
+			bracketTrials, mathx.Max(int(bracketWeight[i]/totalWeight*float64(maxTrials)), 1))
 
 		allocated += bracketTrials[i]
 	}
-	remainder := max(maxTrials-allocated, 0)
+	remainder := mathx.Max(maxTrials-allocated, 0)
 	bracketTrials[0] += remainder
 	return bracketTrials
 }
@@ -51,11 +48,11 @@ func getBracketMaxConcurrentTrials(
 	numBrackets := len(maxTrials)
 	bracketMaxConcurrentTrials := make([]int, 0, numBrackets)
 	if maxConcurrentTrials == 0 {
-		minTrials = max(maxTrials[numBrackets-1], int(divisor))
+		minTrials = mathx.Max(maxTrials[numBrackets-1], int(divisor))
 	} else {
 		// Without this, the remainder will be less than numBrackets and later brackets willgit pu
 		// not receive a constraint on bracketMaxConcurrentTrials.
-		maxConcurrentTrials = max(maxConcurrentTrials, numBrackets)
+		maxConcurrentTrials = mathx.Max(maxConcurrentTrials, numBrackets)
 		minTrials = maxConcurrentTrials / numBrackets
 		remainder = maxConcurrentTrials % numBrackets
 	}
@@ -75,11 +72,9 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 	brackets := config.BracketRungs()
 	if len(brackets) == 0 {
 		maxRungs := config.MaxRungs()
-		maxRungs = min(
+		maxRungs = mathx.Min(
 			maxRungs,
-			int(math.Log(float64(config.MaxLength().Units))/math.Log(config.Divisor()))+1)
-		maxRungs = min(
-			maxRungs,
+			int(math.Log(float64(config.MaxLength().Units))/math.Log(config.Divisor()))+1,
 			int(math.Log(float64(config.MaxTrials()))/math.Log(config.Divisor()))+1)
 		brackets = modeFunc(maxRungs)
 	}
@@ -93,12 +88,12 @@ func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bo
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
 		c := expconf.AsyncHalvingConfig{
-			RawNumRungs:            ptrs.IntPtr(numRungs),
-			RawMaxLength:           lengthPtr(config.MaxLength()),
+			RawNumRungs:            ptrs.Ptr(numRungs),
+			RawMaxLength:           ptrs.Ptr(config.MaxLength()),
 			RawMaxTrials:           &bracketMaxTrials[i],
-			RawDivisor:             ptrs.Float64Ptr(config.Divisor()),
-			RawMaxConcurrentTrials: ptrs.IntPtr(bracketMaxConcurrentTrials[i]),
-			RawStopOnce:            ptrs.BoolPtr(config.StopOnce()),
+			RawDivisor:             ptrs.Ptr(config.Divisor()),
+			RawMaxConcurrentTrials: ptrs.Ptr(bracketMaxConcurrentTrials[i]),
+			RawStopOnce:            ptrs.Ptr(config.StopOnce()),
 		}
 		if config.StopOnce() {
 			methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter))
@@ -143,34 +138,4 @@ func parseAdaptiveMode(rawMode expconf.AdaptiveMode) adaptiveMode {
 	default:
 		panic(fmt.Sprintf("unexpected adaptive mode: %s", rawMode))
 	}
-}
-
-func max(initial int, values ...int) int {
-	maxValue := initial
-	for _, value := range values {
-		if value > maxValue {
-			maxValue = value
-		}
-	}
-	return maxValue
-}
-
-func u64max(initial uint64, values ...uint64) uint64 {
-	maxValue := initial
-	for _, value := range values {
-		if value > maxValue {
-			maxValue = value
-		}
-	}
-	return maxValue
-}
-
-func min(initial int, values ...int) int {
-	minValue := initial
-	for _, value := range values {
-		if value < minValue {
-			minValue = value
-		}
-	}
-	return minValue
 }

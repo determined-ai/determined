@@ -460,6 +460,7 @@ export interface ExperimentItem {
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
+  trialIds?: number[];
   username: string;
 }
 

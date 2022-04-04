@@ -168,7 +168,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
             <Link path={paths.modelDetails(modelVersion.model.name)}>
-              {modelVersion.model.name}
+              {modelVersion.model.name} ({modelVersion.model.id})
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />

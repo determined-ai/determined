@@ -36,7 +36,6 @@ VALUES (:job_id, :job_type, :owner_id, :q_position)
 	return nil
 }
 
-//nolint:interfacer
 // UpdateJobPosition propagates the new queue position to the job.
 func (db *PgDB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error {
 	if jobID.String() == "" {

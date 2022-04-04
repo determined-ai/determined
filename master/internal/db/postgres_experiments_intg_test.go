@@ -123,7 +123,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 3,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetDescription(ptrs.StringPtr(adesc))
+				cfg.SetDescription(ptrs.Ptr(adesc))
 
 				var exps []model.Experiment
 				for i := 0; i < 3; i++ {
@@ -141,7 +141,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 3,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname)})
+				cfg.SetName(expconf.Name{RawString: ptrs.Ptr(aname)})
 
 				var exps []model.Experiment
 				for i := 0; i < 3; i++ {
@@ -160,7 +160,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 2,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname + "1")})
+				cfg.SetName(expconf.Name{RawString: ptrs.Ptr(aname + "1")})
 
 				var exps []model.Experiment
 				for i := 0; i < 3; i++ {
@@ -180,7 +180,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 2,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname + "1")})
+				cfg.SetName(expconf.Name{RawString: ptrs.Ptr(aname + "1")})
 
 				var exps []model.Experiment
 				for i := 0; i < 6; i++ {
@@ -246,16 +246,16 @@ func mockExpconf() expconf.ExperimentConfig {
 	return schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.StringPtr("/home/ckpts"),
+				RawHostPath: ptrs.Ptr("/home/ckpts"),
 			},
 		},
 		RawEntrypoint: &expconf.EntrypointV0{
-			RawEntrypoint: ptrs.StringPtr("model.Classifier"),
+			RawEntrypoint: ptrs.Ptr("model.Classifier"),
 		},
 		RawHyperparameters: map[string]expconf.HyperparameterV0{
 			"global_batch_size": {
 				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.IntPtr(1),
+					RawVal: ptrs.Ptr(1),
 				},
 			},
 		},
@@ -266,7 +266,7 @@ func mockExpconf() expconf.ExperimentConfig {
 					Units: 1,
 				},
 			},
-			RawMetric: ptrs.StringPtr(defaultSearcherMetric),
+			RawMetric: ptrs.Ptr(defaultSearcherMetric),
 		},
 	}).(expconf.ExperimentConfigV0)
 }

@@ -101,7 +101,7 @@ const ModelHeader: React.FC<Props> = (
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
-          <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
+          <Breadcrumb.Item>{model.name} ({model.id})</Breadcrumb.Item>
         </Breadcrumb>
       </div>
       {model.archived && (

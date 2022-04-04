@@ -11,7 +11,7 @@ import (
 
 func TestRandomSearcherRecords(t *testing.T) {
 	actual := expconf.RandomConfig{
-		RawMaxTrials: ptrs.IntPtr(4), RawMaxLength: lengthPtr(expconf.NewLengthInRecords(19200)),
+		RawMaxTrials: ptrs.Ptr(4), RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(19200)),
 	}
 	actual = schemas.WithDefaults(actual).(expconf.RandomConfig)
 	expected := [][]ValidateAfter{
@@ -26,7 +26,7 @@ func TestRandomSearcherRecords(t *testing.T) {
 
 func TestRandomSearcherBatches(t *testing.T) {
 	actual := expconf.RandomConfig{
-		RawMaxTrials: ptrs.IntPtr(4), RawMaxLength: lengthPtr(expconf.NewLengthInBatches(300)),
+		RawMaxTrials: ptrs.Ptr(4), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
 	}
 	actual = schemas.WithDefaults(actual).(expconf.RandomConfig)
 	expected := [][]ValidateAfter{
@@ -41,7 +41,7 @@ func TestRandomSearcherBatches(t *testing.T) {
 
 func TestRandomSearcherReproducibility(t *testing.T) {
 	conf := expconf.RandomConfig{
-		RawMaxTrials: ptrs.IntPtr(4), RawMaxLength: lengthPtr(expconf.NewLengthInBatches(300)),
+		RawMaxTrials: ptrs.Ptr(4), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
 	}
 	conf = schemas.WithDefaults(conf).(expconf.RandomConfig)
 	gen := func() SearchMethod { return newRandomSearch(conf) }
@@ -60,9 +60,9 @@ func TestRandomSearchMethod(t *testing.T) {
 			},
 			config: expconf.SearcherConfig{
 				RawRandomConfig: &expconf.RandomConfig{
-					RawMaxLength:           lengthPtr(expconf.NewLengthInBatches(500)),
-					RawMaxTrials:           ptrs.IntPtr(4),
-					RawMaxConcurrentTrials: ptrs.IntPtr(2),
+					RawMaxLength:           ptrs.Ptr(expconf.NewLengthInBatches(500)),
+					RawMaxTrials:           ptrs.Ptr(4),
+					RawMaxConcurrentTrials: ptrs.Ptr(2),
 				},
 			},
 		},
@@ -76,8 +76,8 @@ func TestRandomSearchMethod(t *testing.T) {
 			},
 			config: expconf.SearcherConfig{
 				RawRandomConfig: &expconf.RandomConfig{
-					RawMaxLength: lengthPtr(expconf.NewLengthInRecords(32017)),
-					RawMaxTrials: ptrs.IntPtr(4),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(32017)),
+					RawMaxTrials: ptrs.Ptr(4),
 				},
 			},
 		},
@@ -95,7 +95,7 @@ func TestSingleSearchMethod(t *testing.T) {
 			},
 			config: expconf.SearcherConfig{
 				RawSingleConfig: &expconf.SingleConfig{
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(500)),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(500)),
 				},
 			},
 		},

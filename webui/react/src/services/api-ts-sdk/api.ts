@@ -1642,6 +1642,12 @@ export interface V1Experiment {
      */
     numTrials: number;
     /**
+     * The ids of trials linked to the experiment.
+     * @type {Array<number>}
+     * @memberof V1Experiment
+     */
+    trialIds?: Array<number>;
+    /**
      * The display name of the user that created the experiment.
      * @type {string}
      * @memberof V1Experiment

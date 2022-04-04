@@ -11,10 +11,10 @@ import (
 
 func TestASHASearcherRecords(t *testing.T) {
 	actual := expconf.AsyncHalvingConfig{
-		RawNumRungs:  ptrs.IntPtr(3),
-		RawMaxLength: lengthPtr(expconf.NewLengthInRecords(576000)),
-		RawDivisor:   ptrs.Float64Ptr(3),
-		RawMaxTrials: ptrs.IntPtr(12),
+		RawNumRungs:  ptrs.Ptr(3),
+		RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(576000)),
+		RawDivisor:   ptrs.Ptr[float64](3),
+		RawMaxTrials: ptrs.Ptr(12),
 	}
 	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
 	expected := [][]ValidateAfter{
@@ -31,10 +31,10 @@ func TestASHASearcherRecords(t *testing.T) {
 
 func TestASHASearcherBatches(t *testing.T) {
 	actual := expconf.AsyncHalvingConfig{
-		RawNumRungs:  ptrs.IntPtr(3),
-		RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-		RawDivisor:   ptrs.Float64Ptr(3),
-		RawMaxTrials: ptrs.IntPtr(12),
+		RawNumRungs:  ptrs.Ptr(3),
+		RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+		RawDivisor:   ptrs.Ptr[float64](3),
+		RawMaxTrials: ptrs.Ptr(12),
 	}
 	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
 	expected := [][]ValidateAfter{
@@ -51,10 +51,10 @@ func TestASHASearcherBatches(t *testing.T) {
 
 func TestASHASearcherEpochs(t *testing.T) {
 	actual := expconf.AsyncHalvingConfig{
-		RawNumRungs:  ptrs.IntPtr(3),
-		RawMaxLength: lengthPtr(expconf.NewLengthInEpochs(12)),
-		RawDivisor:   ptrs.Float64Ptr(3),
-		RawMaxTrials: ptrs.IntPtr(12),
+		RawNumRungs:  ptrs.Ptr(3),
+		RawMaxLength: ptrs.Ptr(expconf.NewLengthInEpochs(12)),
+		RawDivisor:   ptrs.Ptr[float64](3),
+		RawMaxTrials: ptrs.Ptr(12),
 	}
 	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
 	expected := [][]ValidateAfter{
@@ -88,12 +88,12 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B"), 0.12),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(true),
+				RawSmallerIsBetter: ptrs.Ptr(true),
 				RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-					RawNumRungs:  ptrs.IntPtr(3),
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-					RawMaxTrials: ptrs.IntPtr(12),
-					RawDivisor:   ptrs.Float64Ptr(3),
+					RawNumRungs:  ptrs.Ptr(3),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+					RawMaxTrials: ptrs.Ptr(12),
+					RawDivisor:   ptrs.Ptr[float64](3),
 				},
 			},
 		},
@@ -114,12 +114,12 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B"), 0.12),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(true),
+				RawSmallerIsBetter: ptrs.Ptr(true),
 				RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-					RawNumRungs:  ptrs.IntPtr(3),
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-					RawMaxTrials: ptrs.IntPtr(12),
-					RawDivisor:   ptrs.Float64Ptr(3),
+					RawNumRungs:  ptrs.Ptr(3),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+					RawMaxTrials: ptrs.Ptr(12),
+					RawDivisor:   ptrs.Ptr[float64](3),
 				},
 			},
 		},
@@ -140,12 +140,12 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B"), 0.01),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(false),
+				RawSmallerIsBetter: ptrs.Ptr(false),
 				RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-					RawNumRungs:  ptrs.IntPtr(3),
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-					RawMaxTrials: ptrs.IntPtr(12),
-					RawDivisor:   ptrs.Float64Ptr(3),
+					RawNumRungs:  ptrs.Ptr(3),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+					RawMaxTrials: ptrs.Ptr(12),
+					RawDivisor:   ptrs.Ptr[float64](3),
 				},
 			},
 		},
@@ -166,12 +166,12 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B"), 0.01),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(false),
+				RawSmallerIsBetter: ptrs.Ptr(false),
 				RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-					RawNumRungs:  ptrs.IntPtr(3),
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-					RawMaxTrials: ptrs.IntPtr(12),
-					RawDivisor:   ptrs.Float64Ptr(3),
+					RawNumRungs:  ptrs.Ptr(3),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+					RawMaxTrials: ptrs.Ptr(12),
+					RawDivisor:   ptrs.Ptr[float64](3),
 				},
 			},
 		},
@@ -195,12 +195,12 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B"), 0.09),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(true),
+				RawSmallerIsBetter: ptrs.Ptr(true),
 				RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-					RawNumRungs:  ptrs.IntPtr(3),
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-					RawMaxTrials: ptrs.IntPtr(12),
-					RawDivisor:   ptrs.Float64Ptr(3),
+					RawNumRungs:  ptrs.Ptr(3),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+					RawMaxTrials: ptrs.Ptr(12),
+					RawDivisor:   ptrs.Ptr[float64](3),
 				},
 			},
 		},
@@ -216,12 +216,12 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("9000B"), 0.08),
 			},
 			config: expconf.SearcherConfig{
-				RawSmallerIsBetter: ptrs.BoolPtr(true),
+				RawSmallerIsBetter: ptrs.Ptr(true),
 				RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-					RawNumRungs:  ptrs.IntPtr(1),
-					RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-					RawMaxTrials: ptrs.IntPtr(4),
-					RawDivisor:   ptrs.Float64Ptr(3),
+					RawNumRungs:  ptrs.Ptr(1),
+					RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
+					RawMaxTrials: ptrs.Ptr(4),
+					RawDivisor:   ptrs.Ptr[float64](3),
 				},
 			},
 		},

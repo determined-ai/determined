@@ -473,27 +473,45 @@ example:
 
    hyperparameters:
      global_batch_size: 64
-     optimizer:
-       type: categorical
-       vals:
-         - SGD
-         - Adam
-         - RMSprop
+     optimizer_config:
+       optimizer:
+         type: categorical
+         vals:
+           - SGD
+           - Adam
+           - RMSprop
+       learning_rate:
+         type: log
+         minval: -5.0
+         maxval: 1.0
+         base: 10.0
+     num_layers:
+       type: int
+       minval: 1
+       maxval: 3
      layer1_dropout:
        type: double
        minval: 0.2
        maxval: 0.5
-     learning_rate:
-       type: log
-       minval: -5.0
-       maxval: 1.0
-       base: 10.0
 
-This configuration defines four hyperparameters: ``global_batch_size``, ``optimizer``,
-``layer1_dropout``, and ``learning_rate``. ``global_batch_size`` is set to a constant value; the
-other hyperparameters can take on a range of possible values. A hyperparameter's range is configured
-by the ``type`` field of the map; it must be one of ``categorical``, ``double``, ``int``, or
-``log``. More details on these types are given below.
+This configuration defines the following hyperparameters:
+
+-  ``global_batch_size``: a constant value
+
+-  ``optimizer_config``: a top level nested hyperparameter with two child hyperparameters:
+
+   -  ``optimizer``: a categorical hyperparameter
+   -  ``learning_rate``: a log scale hyperparameter
+
+-  ``num_layers``: an integer hyperparameter
+
+-  ``layer1_dropout``: a double hyperparameter
+
+The field ``optimizer_config`` demonstrates how nesting can be used to organize hyperparameters.
+Arbitrary levels of nesting is supported with all types of hyperparameters. Aside from
+hyperparameters with constant values, the four types of hyperparameters -- ``categorical``,
+``double``, ``int``, and ``log`` -- can take on a range of possible values. The following sections
+cover how to configure the hyperparameter range for each type of hyperparameter.
 
 Categorical
 ===========
