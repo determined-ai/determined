@@ -33,7 +33,8 @@ message GetNotebooksRequest {
   int32 offset = 3;
   // Limit the number of notebooks. A value of 0 denotes no limit.
   int32 limit = 4;
-  // Limit notebooks to those that are owned by users with the specified userIds.
+  // Limit notebooks to those that are owned by users with the specified
+  // userIds.
   repeated int32 user_ids = 6;
 }
 // Response to GetNotebooksRequest.

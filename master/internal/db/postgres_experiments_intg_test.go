@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -211,7 +212,7 @@ func TestGetExperiments(t *testing.T) {
 				resp,
 				tt.stateFilter,
 				tt.archivedFilter,
-				user.Username, // Always filter by a random user so the state is inconsequential.
+				strconv.Itoa(int(user.ID)), // Always filter by a random user so the state is inconsequential.
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,
@@ -237,7 +238,6 @@ func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) mo
 		ModelDefinitionBytes: []byte{1, 0, 1, 0, 1, 0},
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
-		Username:             user.Username,
 		Archived:             false,
 	}
 }
