@@ -359,9 +359,15 @@ func RecordTaskEndStats(stats *model.TaskStats) error {
 	db := Bun()
 	now := time.Now().UTC()
 	stats.EndTime = &now
-	_, err := db.NewUpdate().Model(stats).Column("end_time").Where(
-		"task_id = ?", stats.TaskID,
-	).Exec(context.TODO())
+	_, err := db.NewUpdate().Model(stats).Column("end_time").Where("task_id = ? AND end_time IS NULL", stats.TaskID).Exec(context.TODO())
+	// .WhereGroup(
+	// 	" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+	// 		return q.Where("task_id = ?", stats.TaskID)
+	// 	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+	// 	return q.Where("event_type = ?", stats.EventType)
+	// }).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+	// 	return q.Where("end_time IS NULL")
+	// }).Exec(context.TODO())
 	return err
 }
 
