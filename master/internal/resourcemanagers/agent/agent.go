@@ -422,6 +422,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.DockerImagePull != nil:
 		var err error
 		if msg.DockerImagePull.EndStats {
+			ctx.Log().Info("record end status")
 			err = db.RecordTaskEndStats(msg.DockerImagePull.Stats)
 		} else {
 			err = db.RecordTaskStartStats(msg.DockerImagePull.Stats)
