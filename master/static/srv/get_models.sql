@@ -3,7 +3,7 @@ LEFT JOIN model_versions as mv ON mv.model_id = m.id
 LEFT JOIN users as u ON u.id = m.user_id
 WHERE ($1 = 0 OR m.id = $1)
 AND ($2 = '' OR m.archived = $2::BOOL)
-AND ($3 = '' OR (CAST(m.user_id AS varchar) IN (SELECT unnest(string_to_array($3, ',')))))
+AND ($3 = '' OR m.user_id IN (SELECT unnest(string_to_array($3, ',')::int [])))
 AND ($4 = '' OR (m.labels <@ string_to_array($4, ',')))
 AND ($5 = '' OR m.name = $5 OR ($6 AND m.name ILIKE $5))
 AND ($7 = '' OR m.description ILIKE $7)

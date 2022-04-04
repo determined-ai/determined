@@ -7,7 +7,7 @@ WITH page_info AS (
         WHERE
             ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
             AND ($2 = '' OR e.archived = $2::BOOL)
-            AND ($3 = '' OR (CAST(e.owner_id AS varchar) IN (SELECT unnest(string_to_array($3, ',')))))
+            AND ($3 = '' OR e.owner_id IN (SELECT unnest(string_to_array($3, ',')::int [])))
             AND (
                     $4 = ''
                     OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
@@ -49,7 +49,7 @@ WITH page_info AS (
     WHERE
         ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
         AND ($2 = '' OR e.archived = $2::BOOL)
-        AND ($3 = '' OR (CAST(e.owner_id AS varchar) IN (SELECT unnest(string_to_array($3, ',')))))
+        AND ($3 = '' OR e.owner_id IN (SELECT unnest(string_to_array($3, ',')::int [])))
         AND (
                 $4 = ''
                 OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
