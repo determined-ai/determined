@@ -31,12 +31,12 @@ func TestGetCheckpoint(t *testing.T) {
 	testGetCheckpoint(t, creds, cl, pgDB)
 }
 
-func TestGetCheckpoints(t *testing.T) {
+func TestGetExperimentCheckpoints(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
-	testGetCheckpoints(t, creds, cl, pgDB)
+	testGetExperimentCheckpoints(t, creds, cl, pgDB)
 }
 
 func testGetCheckpoint(
@@ -60,14 +60,7 @@ func testGetCheckpoint(
 
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment := model.ExperimentModel()
-			err := db.AddExperiment(experiment)
-			assert.NilError(t, err, "failed to insert experiment")
-
-			trial := model.TrialModel(
-				experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
-			err = db.AddTrial(trial)
-			assert.NilError(t, err, "failed to insert trial")
+			experiment, trial := createExperimentAndTrial(t, db)
 
 			latestBatch := int32(10)
 			if tc.validate {
@@ -78,7 +71,7 @@ func testGetCheckpoint(
 					Metrics:     nil,
 				}
 
-				err = db.AddValidationMetrics(context.Background(), &trialMetrics)
+				err := db.AddValidationMetrics(context.Background(), &trialMetrics)
 				assert.NilError(t, err, "failed to add validation metrics")
 			}
 
@@ -93,11 +86,12 @@ func testGetCheckpoint(
 				DeterminedVersion: "1.0.0",
 				LatestBatch:       latestBatch,
 			}
-			err = db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 
 			assert.NilError(t, err, "failed to add checkpoint meta")
 
-			ctx, _ := context.WithTimeout(creds, 10*time.Second)
+			ctx, cancel := context.WithTimeout(creds, 10*time.Second)
+			defer cancel()
 			req := apiv1.GetCheckpointRequest{CheckpointUuid: checkpointUuid}
 
 			ckptResp, err := cl.GetCheckpoint(ctx, &req)
@@ -127,18 +121,10 @@ func testGetCheckpoint(
 	}
 }
 
-func testGetCheckpoints(
+func testGetExperimentCheckpoints(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
-	experiment := model.ExperimentModel()
-	err := db.AddExperiment(experiment)
-	assert.NilError(t, err, "failed to insert experiment")
-	t.Logf("experiment.ID=%d", experiment.ID)
-
-	trial := model.TrialModel(
-		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
-	err = db.AddTrial(trial)
-	assert.NilError(t, err, "failed to insert trial")
+	experiment, trial := createExperimentAndTrial(t, db)
 
 	var uuids []string
 	for i := 0; i < 5; i++ {
@@ -154,11 +140,12 @@ func testGetCheckpoints(
 			DeterminedVersion: "1.0.0",
 			LatestBatch:       int32(10 * i),
 		}
-		err = db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 	}
 
-	ctx, _ := context.WithTimeout(creds, 10*time.Second)
+	ctx, cancel := context.WithTimeout(creds, 10*time.Second)
+	defer cancel()
 
 	req := apiv1.GetExperimentCheckpointsRequest{
 		Id: int32(experiment.ID),
@@ -208,4 +195,17 @@ func testGetCheckpoints(
 		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
 	}
 
+}
+
+func createExperimentAndTrial(t *testing.T, db *db.PgDB) (*model.Experiment, *model.Trial) {
+	experiment := model.ExperimentModel()
+	err := db.AddExperiment(experiment)
+	assert.NilError(t, err, "failed to insert experiment")
+
+	trial := model.TrialModel(
+		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
+	err = db.AddTrial(trial)
+	assert.NilError(t, err, "failed to insert trial")
+
+	return experiment, trial
 }
