@@ -136,6 +136,16 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 				TaskID:       model.TaskID(msg.TaskID),
 				EventType:    "IMAGEPULL",
 			}})
+
+		defer func() {
+			ctx.Log().Info("---------> about to record end status")
+			ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
+				EndStats: true,
+				Stats: &model.TaskStats{
+					TaskID:    model.TaskID(msg.TaskID),
+					EventType: "IMAGEPULL",
+				}})
+		}()
 	}
 
 	// TODO: replace with command.EncodeAuthToBase64
@@ -182,15 +192,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	if err = logs.Close(); err != nil {
 		sendErr(ctx, errors.Wrap(err, "error closing log stream"))
 		return
-	}
-
-	if taskNeedsRecording(msg) {
-		ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
-			EndStats: true,
-			Stats: &model.TaskStats{
-				TaskID:    model.TaskID(msg.TaskID),
-				EventType: "IMAGEPULL",
-			}})
 	}
 
 	ctx.Tell(ctx.Sender(), imagePulled{})
