@@ -28,12 +28,12 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetNotebooksRequest:
 		resp := &apiv1.GetNotebooksResponse{}
-		users := make(map[string]bool)
-		for _, user := range msg.Users {
+		users := make(map[int32]bool)
+		for _, user := range msg.UserIds {
 			users[user] = true
 		}
 		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
-			if typed := notebook.(*notebookv1.Notebook); len(users) == 0 || users[typed.Username] {
+			if typed := notebook.(*notebookv1.Notebook); len(users) == 0 || users[typed.UserId] {
 				resp.Notebooks = append(resp.Notebooks, typed)
 			}
 		}

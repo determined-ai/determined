@@ -461,6 +461,7 @@ export interface ExperimentItem {
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
+  userId?: number;
   username: string;
 }
 
@@ -547,6 +548,7 @@ export interface ExperimentTask extends Task {
   progress?: number;
   resourcePool: string;
   state: CompoundRunState;
+  userId?: number;
   username: string;
 }
 
@@ -556,6 +558,7 @@ export interface CommandTask extends Task {
   resourcePool: string;
   state: CommandState;
   type: CommandType;
+  userId?: number;
   username: string;
 }
 

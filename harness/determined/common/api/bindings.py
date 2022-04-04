@@ -5718,14 +5718,14 @@ def get_GetCommands(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
-        "users": users,
+        "userIds": userIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -5888,7 +5888,7 @@ def get_GetExperiments(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetExperimentsResponse":
     _params = {
         "archived": archived,
@@ -5900,7 +5900,7 @@ def get_GetExperiments(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
-        "users": users,
+        "userIds": userIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -6113,7 +6113,7 @@ def get_GetModels(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": archived,
@@ -6126,7 +6126,7 @@ def get_GetModels(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
-        "users": users,
+        "userIds": userIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -6167,14 +6167,14 @@ def get_GetNotebooks(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
-        "users": users,
+        "userIds": userIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -6238,14 +6238,14 @@ def get_GetShells(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
-        "users": users,
+        "userIds": userIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -6409,14 +6409,14 @@ def get_GetTensorboards(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
-        "users": users,
+        "userIds": userIds,
     }
     _resp = session._do_request(
         method="GET",
