@@ -420,10 +420,14 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
 	case msg.DockerImagePull != nil:
+		var err error
 		if msg.DockerImagePull.EndStats {
-			db.RecordTaskEndStats(msg.DockerImagePull.Stats)
+			err = db.RecordTaskEndStats(msg.DockerImagePull.Stats)
 		} else {
-			db.RecordTaskStartStats(msg.DockerImagePull.Stats)
+			err = db.RecordTaskStartStats(msg.DockerImagePull.Stats)
+		}
+		if err != nil {
+			ctx.Log().Errorf("Error record task stats %s", err)
 		}
 
 	default:
