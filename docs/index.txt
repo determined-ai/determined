@@ -60,10 +60,7 @@
 
    integrations/ecosystem-integration
    integrations/prometheus
-
-.. toctree::
-   :caption: Further
-   :hidden:
+   attributions.txt
 
 ###############
  Determined AI
