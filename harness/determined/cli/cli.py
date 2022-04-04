@@ -32,6 +32,7 @@ from determined.cli.template import args_description as template_args_descriptio
 from determined.cli.tensorboard import args_description as tensorboard_args_description
 from determined.cli.top_arg_descriptions import deploy_cmd
 from determined.cli.trial import args_description as trial_args_description
+from determined.cli.support_bundle import args_description as support_bundle_args_description 
 from determined.cli.user import args_description as user_args_description
 from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
@@ -149,6 +150,7 @@ all_args_description = (
     + version_args_description
     + auth_args_description
     + oauth_args_description
+    + support_bundle_args_description
 )
 
 
