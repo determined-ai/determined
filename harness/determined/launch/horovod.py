@@ -188,12 +188,38 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
         hvd_args = []
 
     # Then parse the rest of the commands normally.
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--autohorovod", action="store_true")
+    parser = argparse.ArgumentParser(
+        usage="%(prog)s [[HVD_OVERRIDES...] --] [--autohorovod] (--trial TRIAL)|(SCRIPT...)",
+        description=(
+            "Launch a script under horovodrun on a Determined cluster, with automatic handling of "
+            "IP addresses, sshd containers, and shutdown mechanics."
+        ),
+        epilog=(
+            "HVD_OVERRIDES may be a list of arguments to pass directly to horovodrun to override "
+            "the values set by Determined automatically.  When provided, the list of override "
+            "arguments must be terminated by a `--` argument."
+        ),
+    )
+    parser.add_argument(
+        "--autohorovod",
+        action="store_true",
+        help="run the script directly (without horovodrun) in single-slot task containers",
+    )
     # For legacy Trial classes.
-    parser.add_argument("--trial")
+    parser.add_argument(
+        "--trial",
+        help=(
+            "use a Trial class as the entrypoint to training.  When --trial is used, the SCRIPT "
+            "positional argument must be omitted."
+        )
+    )
     # For training scripts.
-    parser.add_argument("script", nargs=argparse.REMAINDER)
+    parser.add_argument(
+        "script",
+        metavar="SCRIPT...",
+        nargs=argparse.REMAINDER,
+        help="script to launch for training",
+    )
     parsed = parser.parse_args(args)
 
     script = parsed.script or []
