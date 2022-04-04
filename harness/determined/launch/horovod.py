@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 import time
+from typing import List, Tuple
 
 import determined as det
 from determined import horovod, util
@@ -18,10 +19,16 @@ from determined.common.api import certs
 from determined.constants import DTRAIN_SSH_PORT
 
 
-def main(train_entrypoint: str) -> int:
+def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
+    hvd_args = hvd_args or []
+
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
+
+    # When --autohorovod was set, detect single-slot trials.
+    if autohorovod and len(info.container_addrs) == 1 and len(info.slot_ids) == 1:
+        return subprocess.Popen(script).wait()
 
     # Hack: get the resources id from the environment.
     resources_id = os.environ.get("DET_RESOURCES_ID")
@@ -120,6 +127,7 @@ def main(train_entrypoint: str) -> int:
 
     # TODO: remove this (very old) hack when we have a configurable launch layer.
     hvd_optional_args = experiment_config.get("data", {}).get("__det_dtrain_args", [])
+    hvd_optional_args += hvd_args
 
     hvd_cmd = horovod.create_run_command(
         num_proc_per_machine=len(info.slot_ids),
@@ -146,13 +154,7 @@ def main(train_entrypoint: str) -> int:
         "--",
     ]
 
-    harness_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
+    harness_cmd = script
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
 
@@ -163,8 +165,42 @@ def main(train_entrypoint: str) -> int:
     ).wait()
 
 
-if __name__ == "__main__":
+def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
+    # Manually extract anything before the first "--" to pass through to horovodrun.
+    if "--" in args:
+        split = args.index("--")
+        hvd_args = args[:split]
+        args = args[split + 1 :]
+    else:
+        hvd_args = []
+
+    # Then parse the rest of the commands normally.
     parser = argparse.ArgumentParser()
-    parser.add_argument("train_entrypoint", type=str)
-    args = parser.parse_args()
-    sys.exit(main(args.train_entrypoint))
+    parser.add_argument("--autohorovod", action="store_true")
+    # For legacy Trial classes.
+    parser.add_argument("--trial")
+    # For training scripts.
+    parser.add_argument("script", nargs=argparse.REMAINDER)
+    parsed = parser.parse_args(args)
+
+    script = parsed.script or []
+
+    if parsed.trial is not None:
+        if script:
+            # When --trial is set, any other args are an error.
+            parser.print_usage()
+            print("error: extra arguments to --trial:", script, file=sys.stderr)
+            sys.exit(1)
+        script = det.util.legacy_trial_entrypoint_to_script(parsed.trial)
+    elif not script:
+        # There needs to be at least one script argument.
+        parser.print_usage()
+        print("error: emtpy script is not allowed", file=sys.stderr)
+        sys.exit(1)
+
+    return hvd_args, script, parsed.autohorovod
+
+
+if __name__ == "__main__":
+    hvd_args, script, autohorovod = parse_args(sys.argv[1:])
+    sys.exit(main(hvd_args, script, autohorovod))

@@ -2,7 +2,6 @@ import argparse
 import contextlib
 import faulthandler
 import logging
-import os
 import sys
 from typing import Iterator, Optional
 
@@ -80,9 +79,9 @@ def main(train_entrypoint: Optional[str]) -> int:
 
     with maybe_periodic_stacktraces(env.debug):
         # Step 1: Load user code.
-        # We can't build a core.Context until we have a RankInfo, and we can't build a RankInfo
-        # without horovod, and we can't load the right horovod until we know which Trial class the
-        # user implemented.
+        # We can't build a core.Context without rank information, and we can't gather rank
+        # information until the distributed backend is initialized, and we can't initialize the
+        # correct distributed backend until we know which Trial class the user implemented.
         trial_class, controller_class = load.get_trial_and_controller_class(
             env.experiment_config, train_entrypoint
         )
@@ -92,49 +91,33 @@ def main(train_entrypoint: Optional[str]) -> int:
             except Exception as e:
                 logging.debug(f"Cannot send analytics: {e}")
 
-        # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
+        # Step 2: Initialize framework-specific details (dtrain framework, random seeds, etc).
         distributed_backend = det._DistributedBackend()
         controller_class.pre_execute_hook(env, distributed_backend)
 
-        # Step 3: Now that horovod is initialized, we can build a RankInfo object.
-        # It is always expected that the training code can figure this out based on how the
-        # launch layer launched the code.
-        chief_ip = os.environ.get("DET_CHIEF_IP", "")
+        # Step 3: Now that the dtrain framework is initialized, build the DistributedContext object.
+        # For harness.py, we only support a fixed set of Determined-provided launch layers, since
+        # the TrialControllers only support a fixed set of launch layers.
+        distributed = None
         if distributed_backend.use_horovod():
-            distributed = _core.DistributedContext(
-                rank=horovod.hvd.rank(),
-                size=horovod.hvd.size(),
-                local_rank=horovod.hvd.local_rank(),
-                local_size=horovod.hvd.local_size(),
-                cross_rank=horovod.hvd.cross_rank(),
-                cross_size=horovod.hvd.cross_size(),
-                chief_ip=chief_ip,
-                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
-            )
+            distributed = _core.DistributedContext.from_horovod(horovod.hvd)
         elif distributed_backend.use_deepspeed():
-            # World size and rank information set as environment variables in deepspeed launcher.
-            # We pull the relevant fields here and pass them to create the DistributedContext.
-            distributed = _core.DistributedContext(
-                rank=int(os.environ["RANK"]),
-                size=int(os.environ["WORLD_SIZE"]),
-                local_rank=int(os.environ["LOCAL_RANK"]),
-                local_size=int(os.environ["LOCAL_SIZE"]),
-                cross_rank=int(os.environ["CROSS_RANK"]),
-                cross_size=int(os.environ["CROSS_SIZE"]),
-                chief_ip=chief_ip,
-                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
+            distributed = _core.DistributedContext.from_deepspeed()
+        elif len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
+            raise ValueError(
+                "In multi-slot tasks, the determined.exec.harness module must not be invoked "
+                "directly.  Instead, it must be wrapped in one of the following launch layers: "
+                "determined.launch.horovod, determined.launch.deepspeed"
             )
-        else:
-            distributed = _core.DummyDistributed()
 
         # Step 4: Let core.init() create the core.Context.
         with _core.init(distributed=distributed) as core_context:
             trial_context = trial_class.trial_context_class(core_context, env)
 
-            # Step 5: Instantiate the user's Trial.
+            # Step 4: Instantiate the user's Trial.
             trial_inst = trial_class(trial_context)
 
-            # Step 6: Create a TrialController and execute training
+            # Step 5: Create a TrialController and execute training
             logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
             controller = controller_class.from_trial(
                 trial_inst=trial_inst,
@@ -149,6 +132,6 @@ def main(train_entrypoint: Optional[str]) -> int:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train-entrypoint")
+    parser.add_argument("train-entrypoint")
     args = parser.parse_args()
     sys.exit(main(args.train_entrypoint))

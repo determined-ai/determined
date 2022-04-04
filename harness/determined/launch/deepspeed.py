@@ -10,7 +10,7 @@ import pathlib
 import subprocess
 import sys
 import time
-from typing import List
+from typing import List, Tuple
 
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
@@ -75,16 +75,6 @@ def create_log_redirect_cmd() -> List[str]:
     ]
 
 
-def create_harness_cmd(train_entrypoint: str) -> List[str]:
-    return [
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
-
-
 def create_sshd_cmd() -> List[str]:
     return [
         "/usr/sbin/sshd",
@@ -113,7 +103,7 @@ def create_deepspeed_env_file() -> None:
                 f.write(f"{k}={v}\n")
 
 
-def create_run_command(master_address: str, hostfile_path: str) -> List[str]:
+def create_run_command(master_address: str, hostfile_path: str, ds_args: List[str]) -> List[str]:
     # Construct the deepspeed command.
     deepspeed_process_cmd = [
         "deepspeed",
@@ -123,12 +113,13 @@ def create_run_command(master_address: str, hostfile_path: str) -> List[str]:
         master_address,
         "--no_python",
         "--no_local_rank",
+        *ds_args,
         "--",
     ]
     return deepspeed_process_cmd
 
 
-def main(train_entrypoint: str) -> int:
+def main(ds_args: List[str], script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
@@ -192,13 +183,13 @@ def main(train_entrypoint: str) -> int:
         num_proc_per_machine=len(info.slot_ids),
         ip_addresses=info.container_addrs,
     )
-    cmd = create_run_command(master_address, hostfile_path)
+    cmd = create_run_command(master_address, hostfile_path, ds_args)
 
     pid_client_cmd = create_pid_client_cmd(info.allocation_id)
 
     log_redirect_cmd = create_log_redirect_cmd()
 
-    harness_cmd = create_harness_cmd(train_entrypoint)
+    harness_cmd = script
 
     logging.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
 
@@ -236,8 +227,41 @@ def main(train_entrypoint: str) -> int:
         sshd_process.wait()
 
 
-if __name__ == "__main__":
+def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
+    # Manually extract anything before the first "--" to pass through to deepspeed.
+    if "--" in args:
+        split = args.index("--")
+        ds_args = args[:split]
+        args = args[split + 1 :]
+    else:
+        ds_args = []
+
+    # Then parse the rest of the commands normally.
     parser = argparse.ArgumentParser()
-    parser.add_argument("train_entrypoint", type=str)
-    args = parser.parse_args()
-    sys.exit(main(args.train_entrypoint))
+    # For legacy Trial classes.
+    parser.add_argument("--trial")
+    # For training scripts.
+    parser.add_argument("script", nargs=argparse.REMAINDER)
+    parsed = parser.parse_args(args)
+
+    script = parsed.script or []
+
+    if parsed.trial is not None:
+        if script:
+            # When --trial is set, any other args are an error.
+            parser.print_usage()
+            print("error: extra arguments to --trial:", script, file=sys.stderr)
+            sys.exit(1)
+        script = det.util.legacy_trial_entrypoint_to_script(parsed.trial)
+    elif not script:
+        # There needs to be at least one script argument.
+        parser.print_usage()
+        print("error: emtpy script is not allowed", file=sys.stderr)
+        sys.exit(1)
+
+    return ds_args, script
+
+
+if __name__ == "__main__":
+    ds_args, script = parse_args(sys.argv[1:])
+    sys.exit(main(ds_args, script))

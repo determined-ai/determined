@@ -2,7 +2,6 @@ import copy
 import json
 import logging
 import os
-import re
 import subprocess
 import sys
 from typing import Dict
@@ -12,39 +11,31 @@ import determined.common
 from determined.common import constants, storage
 
 
-def match_legacy_trial_class(arg: str) -> bool:
-    trial_class_regex = re.compile("^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$")
-    if trial_class_regex.match(arg):
-        return True
-    return False
-
-
 def launch(experiment_config: det.ExperimentConfig) -> int:
-    slots_per_trial = experiment_config.slots_per_trial()
     entrypoint = experiment_config.get_entrypoint()
 
     # If native is enabled, harness will load from native entrypoint command
     if experiment_config.native_enabled():
-        if slots_per_trial < 2:
-            from determined.exec import harness
-
-            return harness.main(train_entrypoint=None)
-        else:
-            entrypoint = ["python3", "-m", "determined.launch.autohorovod", "__NATIVE__"]
-
-    if not entrypoint:
+        entrypoint = [
+            "python3",
+            "-m",
+            "determined.launch.horovod",
+            "--autohorovod",
+            "--trial",
+            "__NATIVE__",
+        ]
+    elif not entrypoint:
         raise AssertionError("Entrypoint not found in experiment config")
-
-    if isinstance(entrypoint, str) and match_legacy_trial_class(entrypoint):
+    elif isinstance(entrypoint, str) and det.util.match_legacy_trial_class(entrypoint):
         # Legacy entrypoint ("model_def:Trial") detected
-        if slots_per_trial < 2:
-            # If non-distributed training, continue in non-distributed training mode
-            from determined.exec import harness
-
-            return harness.main(train_entrypoint=entrypoint)
-        else:
-            # Default to horovod if distributed training
-            entrypoint = f"python3 -m determined.launch.autohorovod {entrypoint}"
+        entrypoint = [
+            "python3",
+            "-m",
+            "determined.launch.horovod",
+            "--autohorovod",
+            "--trial",
+            entrypoint,
+        ]
 
     if isinstance(entrypoint, str):
         entrypoint = ["sh", "-c", entrypoint]
