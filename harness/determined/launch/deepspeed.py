@@ -256,7 +256,7 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
     elif not script:
         # There needs to be at least one script argument.
         parser.print_usage()
-        print("error: emtpy script is not allowed", file=sys.stderr)
+        print("error: empty script is not allowed", file=sys.stderr)
         sys.exit(1)
 
     return ds_args, script

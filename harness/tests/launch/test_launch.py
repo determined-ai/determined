@@ -1,12 +1,12 @@
-from unittest.mock import MagicMock, patch
+from unittest import mock
 
 import determined as det
 from determined.exec import launch
 
 
-@patch("subprocess.Popen")
-@patch("determined.exec.harness.main")
-def test_launch_native(mock_harness: MagicMock, mock_subprocess: MagicMock) -> None:
+@mock.patch("subprocess.Popen")
+@mock.patch("determined.exec.harness.main")
+def test_launch_native(mock_harness: mock.MagicMock, mock_subprocess: mock.MagicMock) -> None:
     """
     entrypoint: None
     Native enabled -> launch harness.py
@@ -21,9 +21,11 @@ def test_launch_native(mock_harness: MagicMock, mock_subprocess: MagicMock) -> N
     mock_subprocess.assert_not_called()
 
 
-@patch("subprocess.Popen")
-@patch("determined.exec.harness.main")
-def test_launch_native_parallel(mock_harness: MagicMock, mock_subprocess: MagicMock) -> None:
+@mock.patch("subprocess.Popen")
+@mock.patch("determined.exec.harness.main")
+def test_launch_native_parallel(
+    mock_harness: mock.MagicMock, mock_subprocess: mock.MagicMock
+) -> None:
     """
     entrypoint: None
     Native enabled -> launch harness.py
@@ -39,9 +41,9 @@ def test_launch_native_parallel(mock_harness: MagicMock, mock_subprocess: MagicM
     mock_subprocess.assert_called_once_with(entrypoint_list)
 
 
-@patch("subprocess.Popen")
-@patch("determined.exec.harness.main")
-def test_launch_legacy(mock_harness: MagicMock, mock_subprocess: MagicMock) -> None:
+@mock.patch("subprocess.Popen")
+@mock.patch("determined.exec.harness.main")
+def test_launch_legacy(mock_harness: mock.MagicMock, mock_subprocess: mock.MagicMock) -> None:
     """
     entrypoint: "model_def:TrialClass"
     Distributed training -> launch with autohorovod
@@ -67,9 +69,9 @@ def test_launch_legacy(mock_harness: MagicMock, mock_subprocess: MagicMock) -> N
     mock_subprocess.reset_mock()
 
 
-@patch("subprocess.Popen")
-@patch("determined.exec.harness.main")
-def test_launch(mock_harness: MagicMock, mock_subprocess: MagicMock) -> None:
+@mock.patch("subprocess.Popen")
+@mock.patch("determined.exec.harness.main")
+def test_launch(mock_harness: mock.MagicMock, mock_subprocess: mock.MagicMock) -> None:
     """
     entrypoint: "python3 train.py" or ["python3", "train.py"]
     Launch generic shell script

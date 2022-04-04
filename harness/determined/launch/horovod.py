@@ -19,6 +19,71 @@ from determined.common.api import certs
 from determined.constants import DTRAIN_SSH_PORT
 
 
+def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[str], List[str]]:
+    # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
+    # TODO: After the upstream horovod bugfix (github.com/horovod/horovod/pull/3060) is in a
+    # widely-used release of horovod, we should remove this pid_server layer, which just adds
+    # unnecessary complexity.
+    pid_server_cmd = [
+        "python3",
+        "-m",
+        "determined.exec.pid_server",
+        "--on-fail",
+        "SIGTERM",
+        "--on-exit",
+        "WAIT",
+        f"/tmp/pid_server-{allocation_id}",
+        str(num_slot_ids),
+        "--",
+    ]
+
+    run_sshd_command = [
+        "/usr/sbin/sshd",
+        "-p",
+        str(DTRAIN_SSH_PORT),
+        "-f",
+        "/run/determined/ssh/sshd_config",
+        "-D",
+    ]
+    return pid_server_cmd, run_sshd_command
+
+
+def create_hvd_pid_server_cmd(allocation_id: str, num_slot_ids: int) -> List[str]:
+    return [
+        "python3",
+        "-m",
+        "determined.exec.pid_server",
+        # Use SIGINT on horovod, because it freaks out with SIGTERM.
+        "--on-fail",
+        "SIGINT",
+        "--on-exit",
+        "WAIT",
+        f"/tmp/pid_server-{allocation_id}",
+        str(num_slot_ids),
+        "--",
+    ]
+
+
+def create_worker_wrapper_cmd(allocation_id: str) -> List[str]:
+    pid_client_cmd = [
+        "python3",
+        "-m",
+        "determined.exec.pid_client",
+        f"/tmp/pid_server-{allocation_id}",
+        "--",
+    ]
+
+    log_redirect_cmd = [
+        "python3",
+        "-m",
+        "determined.exec.worker_process_wrapper",
+        "HOROVOD_RANK",
+        "--",
+    ]
+
+    return pid_client_cmd + log_redirect_cmd
+
+
 def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     hvd_args = hvd_args or []
 
@@ -62,31 +127,9 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
             cert=cert,
         )
 
-        # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
-        # TODO: After the upstream horovod bugfix (github.com/horovod/horovod/pull/3060) is in a
-        # widely-used release of horovod, we should remove this pid_server layer, which just adds
-        # unnecessary complexity.
-        pid_server_cmd = [
-            "python3",
-            "-m",
-            "determined.exec.pid_server",
-            "--on-fail",
-            "SIGTERM",
-            "--on-exit",
-            "WAIT",
-            f"/tmp/pid_server-{info.allocation_id}",
-            str(len(info.slot_ids)),
-            "--",
-        ]
-
-        run_sshd_command = [
-            "/usr/sbin/sshd",
-            "-p",
-            str(DTRAIN_SSH_PORT),
-            "-f",
-            "/run/determined/ssh/sshd_config",
-            "-D",
-        ]
+        pid_server_cmd, run_sshd_command = create_sshd_worker_cmd(
+            info.allocation_id, len(info.slot_ids)
+        )
 
         logging.debug(
             f"Non-chief [{info.container_rank}] training process launch "
@@ -111,19 +154,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # We can remove these layers when the upstream fix has been around for long enough that we can
     # reasonably require user images to have patched horovod installations.
 
-    pid_server_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_server",
-        # Use SIGINT on horovod, because it freaks out with SIGTERM.
-        "--on-fail",
-        "SIGINT",
-        "--on-exit",
-        "WAIT",
-        f"/tmp/pid_server-{info.allocation_id}",
-        str(len(info.slot_ids)),
-        "--",
-    ]
+    pid_server_cmd = create_hvd_pid_server_cmd(info.allocation_id, len(info.slot_ids))
 
     # TODO: remove this (very old) hack when we have a configurable launch layer.
     hvd_optional_args = experiment_config.get("data", {}).get("__det_dtrain_args", [])
@@ -138,31 +169,13 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
         optional_args=hvd_optional_args,
     )
 
-    pid_client_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.pid_client",
-        f"/tmp/pid_server-{info.allocation_id}",
-        "--",
-    ]
-
-    log_redirect_cmd = [
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-        "HOROVOD_RANK",
-        "--",
-    ]
-
-    harness_cmd = script
+    worker_wrapper_cmd = create_worker_wrapper_cmd(info.allocation_id)
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
 
-    os.environ["USE_HOROVOD"] = "True"
+    os.environ["USE_HOROVOD"] = "1"
 
-    return subprocess.Popen(
-        pid_server_cmd + hvd_cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
-    ).wait()
+    return subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script).wait()
 
 
 def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
@@ -195,7 +208,7 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
     elif not script:
         # There needs to be at least one script argument.
         parser.print_usage()
-        print("error: emtpy script is not allowed", file=sys.stderr)
+        print("error: empty script is not allowed", file=sys.stderr)
         sys.exit(1)
 
     return hvd_args, script, parsed.autohorovod
