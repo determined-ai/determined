@@ -17,7 +17,7 @@ import (
 const (
 	defaultOtelEndpoint         = "localhost:4317"
 	defaultServiceName          = "determined-master"
-	OTEL_EXPORTER_OTLP_ENDPOINT = ""
+	OTEL_EXPORTER_OTLP_ENDPOINT = "OTEL_EXPORTER_OTLP_ENDPOINT"
 )
 
 // maintain a single tracer provider
