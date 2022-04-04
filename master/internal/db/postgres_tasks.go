@@ -360,9 +360,8 @@ func RecordTaskEndStats(stats *model.TaskStats) error {
 	now := time.Now().UTC()
 	stats.EndTime = &now
 	_, err := db.NewUpdate().Model(stats).Column("end_time").Where(
-		"task_id = ?", stats.TaskID).Where(
-		"event_type = ?", stats.EventType).Where(
-		"end_time = NULL").Exec(context.TODO())
+		"task_id = ? AND event_type = ? AND end_time = NULL", stats.TaskID, stats.EventType,
+	).Exec(context.TODO())
 	return err
 }
 
