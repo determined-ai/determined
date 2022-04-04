@@ -79,7 +79,8 @@ type TaskSpec struct {
 	Devices                []device.Device
 
 	UserSessionToken string
-	ResourcePool string
+	ResourcePool     string
+	TaskType         model.TaskType
 }
 
 // ResolveWorkDir resolves the work dir.
@@ -188,7 +189,8 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 	}
 
 	spec := cproto.Spec{
-		TaskID: t.TaskID,
+		TaskID:       t.TaskID,
+		TaskType:     string(t.TaskType),
 		ResourcePool: t.ResourcePool,
 		PullSpec: cproto.PullSpec{
 			Registry:  env.RegistryAuth(),
