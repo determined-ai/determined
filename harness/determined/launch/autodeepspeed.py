@@ -105,7 +105,7 @@ def create_deepspeed_env_file() -> None:
     There are certain variables that we need to be set that we can pass to deepspeed using
     a custom env vars file.
     """
-    INCLUDE = ["PATH", "USE_DEEPSPEED", "DET_CHIEF_IP"]
+    INCLUDE = ["PATH", "USE_DEEPSPEED", "DET_CHIEF_IP", "DET_MANUAL_INIT_DISTRIBUTED"]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()
         for k, v in environ.items():
