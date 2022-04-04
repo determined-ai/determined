@@ -75,6 +75,7 @@ type ContainerStarted struct {
 	ContainerInfo types.ContainerJSON
 }
 
+// DockerImagePull notifies the master that about the image pull stats of docker.
 type DockerImagePull struct {
 	EndStats bool
 	Stats    *model.TaskStats

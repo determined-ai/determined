@@ -347,6 +347,7 @@ WHERE task_id = $1
 	return count, nil
 }
 
+// RecordTaskStartStats record start stats for tasks.
 func RecordTaskStartStats(stats *model.TaskStats) error {
 	db := Bun()
 	now := time.Now().UTC()
@@ -355,22 +356,18 @@ func RecordTaskStartStats(stats *model.TaskStats) error {
 	return err
 }
 
+// RecordTaskEndStats record end stats for tasks.
 func RecordTaskEndStats(stats *model.TaskStats) error {
 	db := Bun()
 	now := time.Now().UTC()
 	stats.EndTime = &now
-	_, err := db.NewUpdate().Model(stats).Column("end_time").Where("task_id = ? AND event_type = ? AND end_time IS NULL", stats.TaskID, stats.EventType).Exec(context.TODO())
-	// .WhereGroup(
-	// 	" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-	// 		return q.Where("task_id = ?", stats.TaskID)
-	// 	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-	// 	return q.Where("event_type = ?", stats.EventType)
-	// }).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-	// 	return q.Where("end_time IS NULL")
-	// }).Exec(context.TODO())
+	_, err := db.NewUpdate().Model(stats).Column("end_time").Where(
+		"task_id = ? AND event_type = ? AND end_time IS NULL", stats.TaskID, stats.EventType,
+	).Exec(context.TODO())
 	return err
 }
 
+// EndAllTaskStats called at master starts, in case master previously crushed.
 func (db *PgDB) EndAllTaskStats() error {
 	_, err := db.sql.Exec(`
 UPDATE task_stats SET end_time = greatest(cluster_heartbeat, start_time) FROM cluster_id

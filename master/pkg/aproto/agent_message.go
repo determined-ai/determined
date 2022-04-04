@@ -31,7 +31,7 @@ type MasterSetAgentOptions struct {
 type StartContainer struct {
 	Container cproto.Container
 	Spec      cproto.Spec
-	TaskID string
+	TaskID    string
 }
 
 // SignalContainer notifies the agent to send the requested signal to the container.

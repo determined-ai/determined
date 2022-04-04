@@ -44,11 +44,14 @@ type (
 )
 
 func newContainerActor(msg aproto.StartContainer, client *client.Client, pool string) actor.Actor {
-	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client, ResourcePool: pool}
+	return &containerActor{
+		Container: msg.Container, spec: &msg.Spec, client: client, ResourcePool: pool}
 }
 
-func reattachContainerActor(container cproto.Container, client *client.Client, pool string) actor.Actor {
-	return &containerActor{Container: container, client: client, reattached: true, ResourcePool: pool}
+func reattachContainerActor(
+	container cproto.Container, client *client.Client, pool string) actor.Actor {
+	return &containerActor{
+		Container: container, client: client, reattached: true, ResourcePool: pool}
 }
 
 // getBaseTaskLog computes the container-specific extra fields to be injected into each Fluent
