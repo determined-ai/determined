@@ -252,16 +252,14 @@ func newFakeAgentState(
 			SlotsNeeded: slotsUsed,
 			Preemptible: true,
 		}
-		container := newContainer(req, req.SlotsNeeded)
-		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, container.id); err != nil {
+		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
 			panic(err)
 		}
 	}
 
 	for i := 0; i < zeroSlotContainers; i++ {
 		req := &sproto.AllocateRequest{}
-		container := newContainer(req, req.SlotsNeeded)
-		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, container.id); err != nil {
+		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
 			panic(err)
 		}
 	}
@@ -400,20 +398,20 @@ func setupSchedulerStates(
 			assert.Assert(t, mockTask.allocatedAgent.slots >= mockTask.slotsNeeded)
 			agentRef := system.Get(actor.Addr(mockTask.allocatedAgent.id))
 			agentState := agents[agentRef]
-			container := newContainer(req, req.SlotsNeeded)
+			containerID := cproto.NewID()
 
 			devices := make([]device.Device, 0)
 			if mockTask.containerStarted {
 				if mockTask.slotsNeeded == 0 {
-					agentState.ZeroSlotContainers[container.id] = true
+					agentState.ZeroSlotContainers[containerID] = true
 				} else {
 					i := 0
-					for d, containerID := range agentState.Devices {
-						if containerID != nil {
+					for d, currContainerID := range agentState.Devices {
+						if currContainerID != nil {
 							continue
 						}
 						if i < mockTask.slotsNeeded {
-							agentState.Devices[d] = &container.id
+							agentState.Devices[d] = &containerID
 							devices = append(devices, d)
 							i++
 						}
@@ -427,10 +425,10 @@ func setupSchedulerStates(
 				ID: req.AllocationID,
 				Resources: []sproto.Resources{
 					&containerResources{
-						req:       req,
-						agent:     agentState,
-						container: container,
-						devices:   devices,
+						req:         req,
+						agent:       agentState,
+						containerID: containerID,
+						devices:     devices,
 					},
 				},
 			}

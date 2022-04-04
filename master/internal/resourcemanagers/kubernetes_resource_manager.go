@@ -369,22 +369,23 @@ func (k *kubernetesResourceManager) assignResources(
 
 	allocations := make([]sproto.Resources, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
-		container := newContainer(req, slotsPerPod)
+		containerID := cproto.NewID()
 		allocations = append(allocations, &k8sPodResources{
-			req:       req,
-			podsActor: k.podsActor,
-			container: container,
-			group:     k.groups[req.Group],
+			req:         req,
+			podsActor:   k.podsActor,
+			containerID: containerID,
+			slots:       slotsPerPod,
+			group:       k.groups[req.Group],
 		})
 
-		k.addrToContainerID[req.TaskActor] = container.id
+		k.addrToContainerID[req.TaskActor] = containerID
 		ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
 			QPosition: -1,
-			PodID:     container.id,
+			PodID:     containerID,
 		})
 
-		k.addrToContainerID[req.TaskActor] = container.id
-		k.containerIDtoAddr[container.id.String()] = req.TaskActor
+		k.addrToContainerID[req.TaskActor] = containerID
+		k.containerIDtoAddr[containerID.String()] = req.TaskActor
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
@@ -456,24 +457,25 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 }
 
 type k8sPodResources struct {
-	req       *sproto.AllocateRequest
-	container *container
-	podsActor *actor.Ref
-	group     *group
+	req         *sproto.AllocateRequest
+	podsActor   *actor.Ref
+	group       *group
+	containerID cproto.ID
+	slots       int
 }
 
 // Summary summarizes a container allocation.
 func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 	return sproto.ResourcesSummary{
 		AllocationID:  p.req.AllocationID,
-		ResourcesID:   sproto.ResourcesID(p.container.id),
+		ResourcesID:   sproto.ResourcesID(p.containerID),
 		ResourcesType: sproto.ResourcesTypeK8sPod,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
 			aproto.ID(p.podsActor.Address().Local()): nil,
 		},
 
-		ContainerID: &p.container.id,
+		ContainerID: &p.containerID,
 	}
 }
 
@@ -481,8 +483,8 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 func (p k8sPodResources) Start(
 	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) {
-	spec.ContainerID = string(p.container.id)
-	spec.ResourcesID = string(p.container.id)
+	spec.ContainerID = string(p.containerID)
+	spec.ResourcesID = string(p.containerID)
 	spec.AllocationID = string(p.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)
@@ -497,7 +499,7 @@ func (p k8sPodResources) Start(
 	ctx.Tell(p.podsActor, kubernetes.StartTaskPod{
 		TaskActor:  p.req.TaskActor,
 		Spec:       spec,
-		Slots:      p.container.slots,
+		Slots:      p.slots,
 		Rank:       rri.AgentRank,
 		LogContext: logCtx,
 	})
@@ -506,6 +508,6 @@ func (p k8sPodResources) Start(
 // Kill notifies the pods actor that it should stop the pod.
 func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 	ctx.Tell(p.podsActor, kubernetes.KillTaskPod{
-		PodID: p.container.id,
+		PodID: p.containerID,
 	})
 }
