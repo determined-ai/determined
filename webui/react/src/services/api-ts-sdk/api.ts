@@ -17560,17 +17560,17 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
+        getUser(username: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling getUser.');
             }
-            const localVarPath = `/api/v1/users/{userId}`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -17628,22 +17628,22 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling patchUser.');
+        patchUser(username: string, body: V1PatchUser, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling patchUser.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchUser.');
             }
-            const localVarPath = `/api/v1/users/{userId}`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -17714,22 +17714,22 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling setUserPassword.');
+        setUserPassword(username: string, body: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling setUserPassword.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setUserPassword.');
             }
-            const localVarPath = `/api/v1/users/{userId}/password`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}/password`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -17769,12 +17769,12 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
+        getUser(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(username, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17806,13 +17806,13 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(userId, body, options);
+        patchUser(username: string, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(username, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17845,13 +17845,13 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(userId, body, options);
+        setUserPassword(username: string, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(username, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17874,12 +17874,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options?: any) {
-            return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
+        getUser(username: string, options?: any) {
+            return UsersApiFp(configuration).getUser(username, options)(fetch, basePath);
         },
         /**
          * 
@@ -17893,13 +17893,13 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options?: any) {
-            return UsersApiFp(configuration).patchUser(userId, body, options)(fetch, basePath);
+        patchUser(username: string, body: V1PatchUser, options?: any) {
+            return UsersApiFp(configuration).patchUser(username, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17914,13 +17914,13 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options?: any) {
-            return UsersApiFp(configuration).setUserPassword(userId, body, options)(fetch, basePath);
+        setUserPassword(username: string, body: string, options?: any) {
+            return UsersApiFp(configuration).setUserPassword(username, body, options)(fetch, basePath);
         },
     };
 };
@@ -17935,13 +17935,13 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get the requested user.
-     * @param {number} userId The id of the user.
+     * @param {string} username The username of the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUser(userId: number, options?: any) {
-        return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    public getUser(username: string, options?: any) {
+        return UsersApiFp(this.configuration).getUser(username, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17958,14 +17958,14 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Patch a user's fields.
-     * @param {number} userId The id of the user.
+     * @param {string} username The username of the user.
      * @param {V1PatchUser} body The updated user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public patchUser(userId: number, body: V1PatchUser, options?: any) {
-        return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath);
+    public patchUser(username: string, body: V1PatchUser, options?: any) {
+        return UsersApiFp(this.configuration).patchUser(username, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17983,14 +17983,14 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Set the requested user's password.
-     * @param {number} userId The id of the user.
+     * @param {string} username The username of the user.
      * @param {string} body The password of the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public setUserPassword(userId: number, body: string, options?: any) {
-        return UsersApiFp(this.configuration).setUserPassword(userId, body, options)(this.fetch, this.basePath);
+    public setUserPassword(username: string, body: string, options?: any) {
+        return UsersApiFp(this.configuration).setUserPassword(username, body, options)(this.fetch, this.basePath);
     }
 
 }

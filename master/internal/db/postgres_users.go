@@ -287,7 +287,7 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 
 	if len(toUpdate) > 0 {
 		query := fmt.Sprintf(
-			"UPDATE users %v WHERE id = :id",
+			"UPDATE users %v WHERE username = :username",
 			setClause(toUpdate))
 
 		if _, err = tx.NamedExec(query, updated); err != nil {
@@ -349,7 +349,7 @@ func (db *PgDB) UserByID(userID model.UserID) (*model.FullUser, error) {
 	var fu model.FullUser
 	if err := db.query(`
 SELECT
-	u.id, u.username, u.display_name, u.admin, u.active,
+	u.id, u.username, u.admin, u.active,
 	h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group
 FROM users u
 LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)

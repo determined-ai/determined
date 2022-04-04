@@ -6485,12 +6485,12 @@ def get_GetTrialCheckpoints(
 def get_GetUser(
     session: "client.Session",
     *,
-    userId: int,
+    username: str,
 ) -> "v1GetUserResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/users/{userId}",
+        path=f"/api/v1/users/{username}",
         params=_params,
         json=None,
         data=None,
@@ -6850,12 +6850,12 @@ def patch_PatchUser(
     session: "client.Session",
     *,
     body: "v1PatchUser",
-    userId: int,
+    username: str,
 ) -> "v1PatchUserResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/users/{userId}",
+        path=f"/api/v1/users/{username}",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7273,12 +7273,12 @@ def post_SetUserPassword(
     session: "client.Session",
     *,
     body: str,
-    userId: int,
+    username: str,
 ) -> "v1SetUserPasswordResponse":
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/users/{userId}/password",
+        path=f"/api/v1/users/{username}/password",
         params=_params,
         json=body,
         data=None,
