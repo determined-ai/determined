@@ -100,7 +100,6 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
-		rmJobInfo             *job.RMJobInfo
 
 		logCtx logger.Context
 	}
@@ -304,12 +303,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
-	case *job.RMJobInfo:
-		e.rmJobInfo = msg
-
-	case job.GetJobSummary:
-		ctx.Respond(e.toV1Job().Summary)
-
 	case job.SetResourcePool:
 		if err := e.setRP(ctx, msg); err != nil {
 			ctx.Respond(err)
@@ -410,7 +403,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
-		e.clearJobInfo()
 
 	case *apiv1.CancelExperimentRequest:
 		switch {
@@ -425,7 +417,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.CancelExperimentResponse{})
 			}
 		}
-		e.clearJobInfo()
 
 	case *apiv1.KillExperimentRequest:
 		switch {
@@ -440,7 +431,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
-		e.clearJobInfo()
 
 	default:
 		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
@@ -734,7 +724,6 @@ func (e *experiment) toV1Job() *jobv1.Job {
 	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
-	job.UpdateJobQInfo(&j, e.rmJobInfo)
 
 	if config.IsUsingKubernetesRM() {
 		j.ResourcePool = resourcemanagers.KubernetesDummyResourcePool
@@ -743,9 +732,4 @@ func (e *experiment) toV1Job() *jobv1.Job {
 	}
 
 	return &j
-}
-
-// clearJobInfo clears the job info from the experiment.
-func (e *experiment) clearJobInfo() {
-	e.rmJobInfo = nil
 }

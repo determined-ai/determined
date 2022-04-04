@@ -36,19 +36,6 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 		rp.agentStatesCache, rp.fittingMethod)
 }
 
-func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group,
-	jobPositions jobSortState) {
-	reqs := sortTasksWithPosition(taskList, groups, jobPositions, false)
-	jobQInfo, jobActors := reduceToJobQInfo(reqs)
-	for jobID, jobActor := range jobActors {
-		rmJobInfo, ok := jobQInfo[jobID]
-		if jobActor == nil || !ok || rmJobInfo == nil {
-			continue
-		}
-		jobActor.System().Tell(jobActor, rmJobInfo)
-	}
-}
-
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
 	jobQInfo, _ := reduceToJobQInfo(reqs)
@@ -78,8 +65,6 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
-
-	p.reportJobQInfo(taskList, groups, jobPositions)
 
 	return toAllocate, toRelease
 }
