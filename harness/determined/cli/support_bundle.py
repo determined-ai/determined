@@ -10,15 +10,15 @@ def output_logs(args: Namespace):
 
     err = write_trial_logs(args.trial_id, output_dir_tar)
     if err != nil:
-        raise.Error("Unable to write trial logs to a tar file")
+        raise.Error("Unable to write trial logs to a json file")
     
     err = write_master_logs(args.trial_id, output_dir_tar)
      if err != nil:
-        raise.Error("Unable to write master logs to a tar file")
+        raise.Error("Unable to write master logs to a json file")
    
     err = write_api_logs(args.trial_id, output_dir_tar)
      if err != nil:
-        raise.Error("Unable to api logs to a tar file")
+        raise.Error("Unable to write api logs to a json file")
 
 def write_trial_logs(trial_id, output_dir):  #difference between this trial_logs and api call? There doesn't seem to be any. 
     trial_logs = api.trial_logs(args.master, trial_id)
