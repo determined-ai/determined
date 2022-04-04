@@ -52,34 +52,26 @@ func (g groupState) String() string {
 }
 
 func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	defer f.updateJobs(rp)
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (f *fairShare) createJobQInfo(
 	taskList *taskList,
-) (job.AQueue, map[model.JobID]*actor.Ref) {
+) job.AQueue {
 	reqs := make(AllocReqs, 0)
 	for _, req := range taskList.taskByID {
 		reqs = append(reqs, req)
 	}
-	jobQ, jobActors := reduceToJobQInfo(reqs)
+	jobQ := reduceToJobQInfo(reqs)
 	for _, j := range jobQ {
 		j.JobsAhead = -1 // unsupported.
 	}
-	return jobQ, jobActors
-}
-
-func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	jobQ, _ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
 
-func (f *fairShare) updateJobs(rp *ResourcePool) {
-	jobQ, jobActors := f.createJobQInfo(rp.taskList)
-	for jobID, jobActor := range jobActors {
-		jobActor.System().Tell(jobActor, jobQ[jobID])
-	}
+func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	jobQ := f.createJobQInfo(rp.taskList)
+	return jobQ
 }
 
 func fairshareSchedule(

@@ -38,7 +38,7 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
-	jobQInfo, _ := reduceToJobQInfo(reqs)
+	jobQInfo := reduceToJobQInfo(reqs)
 	return jobQInfo
 }
 
