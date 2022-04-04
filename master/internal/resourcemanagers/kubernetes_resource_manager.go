@@ -2,7 +2,7 @@ package resourcemanagers
 
 import (
 	"fmt"
-
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/shopspring/decimal"
@@ -327,7 +327,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case job.MoveJob:
 		err := k.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
 		ctx.Respond(err)
-		
+
 	case job.SetGroupWeight:
 		// setting weights in kubernetes is not supported
 
@@ -383,7 +383,7 @@ func (k *kubernetesResourceManager) moveJob(
 
 	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList, k.groups, k.queuePositions, false)
 
-	if secondAnchor != "" {
+	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
 	}
 
@@ -485,6 +485,7 @@ func (k *kubernetesResourceManager) assignResources(
 			containerID: containerID,
 			slots:       slotsPerPod,
 			group:       k.groups[req.Group],
+			initialPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
 		})
 
 		k.addrToContainerID[req.TaskActor] = containerID
@@ -572,6 +573,7 @@ type k8sPodResources struct {
 	group       *group
 	containerID cproto.ID
 	slots       int
+	initialPosition decimal.Decimal
 }
 
 // Summary summarizes a container allocation.
@@ -593,6 +595,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 func (p k8sPodResources) Start(
 	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
+	p.setPosition(&spec)
 	spec.ContainerID = string(p.containerID)
 	spec.ResourcesID = string(p.containerID)
 	spec.AllocationID = string(p.req.AllocationID)
@@ -613,6 +616,18 @@ func (p k8sPodResources) Start(
 		Rank:       rri.AgentRank,
 		LogContext: logCtx,
 	}).Error()
+}
+
+func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
+	newSpec := spec.Environment.PodSpec()
+	if newSpec == nil {
+		newSpec = &expconf.PodSpec{}
+	}
+	if newSpec.Labels == nil {
+		newSpec.Labels = make(map[string]string)
+	}
+	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
+	spec.Environment.SetPodSpec(newSpec)
 }
 
 // Kill notifies the pods actor that it should stop the pod.

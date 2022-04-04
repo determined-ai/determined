@@ -386,6 +386,13 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 					"received change position command for unregistered container id")
 				return
 			}
+			ref, ok := p.podNameToPodHandler[podName]
+			if !ok {
+				ctx.Log().WithField("pod-id", msg.PodID).Debug(
+					"received change position command for unregistered container id")
+				return
+			}
+
 			// check that the pod exists
 			_, err := p.clientSet.CoreV1().Pods("default").Get(context.TODO(), podName, metaV1.GetOptions{})
 			if err != nil {
@@ -407,6 +414,8 @@ func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
 			if err != nil {
 				ctx.Log().Infof("Failed to set the order of pod %s: ", podName)
 			}
+
+			ctx.Tell(ref, ChangePriority{PodID: msg.PodID})
 		}
 	}
 }
