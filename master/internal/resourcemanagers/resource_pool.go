@@ -725,8 +725,8 @@ func (c containerResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
-	spec.TaskType = model.TaskType(logCtx["task-type"].(string))
-	ctx.Log().Infof("------------> set task type to spec: %s..", logCtx["task-type"].(string))
+	spec.TaskType = logCtx["task-type"].(model.TaskType)
+	ctx.Log().Infof("------------> set task type to spec: %s..", logCtx["task-type"].(model.TaskType))
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{
