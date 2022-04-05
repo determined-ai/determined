@@ -132,6 +132,6 @@ def main(train_entrypoint: Optional[str]) -> int:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("train-entrypoint")
+    parser.add_argument("train_entrypoint")
     args = parser.parse_args()
     sys.exit(main(args.train_entrypoint))

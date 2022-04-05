@@ -165,6 +165,7 @@ class DistributedContext:
         Example:
 
         .. code:: python
+
            import horovod.torch as hvd
            hvd.init()
            distributed = DistributedContext.from_horovod(hvd)
