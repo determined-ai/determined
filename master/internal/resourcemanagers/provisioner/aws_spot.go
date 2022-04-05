@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -497,7 +498,7 @@ func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
 func (c *awsCluster) createSpotInstanceRequest(
 	ctx *actor.Context,
 	numInstances int,
-	instanceType ec2InstanceType,
+	instanceType provconfig.Ec2InstanceType,
 	launchTimeOffset time.Duration,
 	dryRun bool,
 ) (*ec2.RequestSpotInstancesOutput, error) {
@@ -524,7 +525,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 				},
 			},
 			ImageId:      aws.String(c.ImageID),
-			InstanceType: aws.String(instanceType.name()),
+			InstanceType: aws.String(instanceType.Name()),
 			KeyName:      aws.String(c.SSHKeyName),
 
 			UserData: aws.String(base64.StdEncoding.EncodeToString(c.ec2UserData)),
@@ -556,7 +557,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 	}
 
 	// Excluding the SpotPrice param automatically uses the on-demand price
-	if c.SpotMaxPrice != spotPriceNotSetPlaceholder {
+	if c.SpotMaxPrice != provconfig.SpotPriceNotSetPlaceholder {
 		spotInput.SpotPrice = aws.String(c.AWSClusterConfig.SpotMaxPrice)
 	}
 

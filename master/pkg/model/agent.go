@@ -66,3 +66,10 @@ func (s SlotSummary) ToProto() *agentv1.Slot {
 		Draining:  s.Draining,
 	}
 }
+
+// AgentStats stores the start/end status of instance.
+type AgentStats struct {
+	ResourcePool string `db:"resource_pool"`
+	AgentID      string `db:"agent_id"`
+	Slots        int    `db:"slots"`
+}

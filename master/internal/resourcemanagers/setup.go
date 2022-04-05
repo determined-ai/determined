@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/labstack/echo/v4"
@@ -53,6 +54,7 @@ func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 // Setup sets up the actor and endpoints for resource managers.
 func Setup(
 	system *actor.System,
+	db *db.PgDB,
 	echo *echo.Echo,
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
@@ -61,7 +63,7 @@ func Setup(
 	var ref *actor.Ref
 	switch {
 	case config.ResourceManager.AgentRM != nil:
-		ref = setupAgentResourceManager(system, echo, config, opts, cert)
+		ref = setupAgentResourceManager(system, db, echo, config, opts, cert)
 	case config.ResourceManager.KubernetesRM != nil:
 		tlsConfig, err := makeTLSConfig(cert)
 		if err != nil {
@@ -83,6 +85,7 @@ func Setup(
 
 func setupAgentResourceManager(
 	system *actor.System,
+	db *db.PgDB,
 	echo *echo.Echo,
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
@@ -90,7 +93,7 @@ func setupAgentResourceManager(
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("agentRM"),
-		newAgentResourceManager(config, cert),
+		newAgentResourceManager(db, config, cert),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 

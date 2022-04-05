@@ -4,8 +4,10 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/mathx"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -45,13 +47,18 @@ type scaleDecider struct {
 	idle             map[string]time.Time
 	longDisconnected map[string]bool
 	longIdle         map[string]bool
+
+	db           db.DB
+	resourcePool string
 }
 
 func newScaleDecider(
+	resourcePool string,
 	maxIdlePeriod, maxStartingPeriod,
 	maxDisconnectPeriod time.Duration,
 	minInstanceNum int,
 	maxInstanceNum int,
+	db db.DB,
 ) *scaleDecider {
 	return &scaleDecider{
 		maxStartingPeriod:      maxStartingPeriod,
@@ -70,6 +77,8 @@ func newScaleDecider(
 		idle:                   make(map[string]time.Time),
 		longDisconnected:       make(map[string]bool),
 		longIdle:               make(map[string]bool),
+		db:                     db,
+		resourcePool:           resourcePool,
 	}
 }
 
@@ -105,6 +114,62 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 		}
 	}
 	return false
+}
+
+func (s *scaleDecider) recordInstanceStats(slots int) error {
+	if s.db == nil {
+		return nil
+	}
+	for _, inst := range s.instances {
+		instID := inst.ID
+		err := s.updateInstanceStartStats(s.resourcePool, instID, slots)
+		if err != nil {
+			continue
+		}
+	}
+	for instID := range s.disconnected {
+		err := s.updateInstanceEndStats(instID)
+		if err != nil {
+			return err
+		}
+	}
+	for instID := range s.stopped {
+		err := s.updateInstanceEndStats(instID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *scaleDecider) updateInstanceStartStats(poolName string, instID string, slots int) error {
+	return s.db.RecordInstanceStats(&model.InstanceStats{
+		ResourcePool: poolName,
+		InstanceID:   instID,
+		Slots:        slots,
+	})
+}
+
+func (s *scaleDecider) updateInstanceEndStats(instID string) error {
+	return s.db.EndInstanceStats(&model.InstanceStats{
+		InstanceID: instID,
+	})
+}
+
+func (s *scaleDecider) updateInstancesEndStats(instIDs []string) error {
+	if s.db == nil {
+		return nil
+	}
+	var err error
+	for _, instID := range instIDs {
+		err = s.db.EndInstanceStats(&model.InstanceStats{
+			InstanceID: instID,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *scaleDecider) calculateInstanceStates() {

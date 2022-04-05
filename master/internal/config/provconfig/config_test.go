@@ -1,4 +1,4 @@
-package provisioner
+package provconfig
 
 import (
 	"encoding/json"
@@ -50,7 +50,7 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 	assert.NilError(t, err)
 	err = check.Validate(&config)
 	assert.NilError(t, err)
-	err = config.initMasterAddress()
+	err = config.InitMasterAddress()
 	assert.NilError(t, err)
 	awsConfig := defaultAWSClusterConfig
 	awsConfig.Region = "test.region3"
@@ -101,7 +101,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 	assert.NilError(t, err)
 	err = check.Validate(&config)
 	assert.NilError(t, err)
-	err = config.initMasterAddress()
+	err = config.InitMasterAddress()
 	assert.NilError(t, err)
 	awsConfig := defaultAWSClusterConfig
 	awsConfig.Region = "test.region2"
@@ -135,7 +135,7 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 	assert.NilError(t, err)
 	err = check.Validate(&config)
 	assert.NilError(t, err)
-	err = config.initMasterAddress()
+	err = config.InitMasterAddress()
 	assert.NilError(t, err)
 	expected := *DefaultGCPClusterConfig()
 	expected.Project = "test_project2"
@@ -179,7 +179,7 @@ boot_disk_source_image: test-source_image3
 	assert.NilError(t, err)
 	err = check.Validate(&unmarshaled)
 	assert.NilError(t, err)
-	err = unmarshaled.initMasterAddress()
+	err = unmarshaled.InitMasterAddress()
 	assert.NilError(t, err)
 
 	expectedGCP := *DefaultGCPClusterConfig()

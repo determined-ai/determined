@@ -15,6 +15,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -168,6 +169,7 @@ func (m *mockAgent) Receive(ctx *actor.Context) error {
 
 func setupResourcePool(
 	t *testing.T,
+	db db.DB,
 	system *actor.System,
 	conf *config.ResourcePoolConfig,
 	mockTasks []*mockTask,
@@ -185,7 +187,7 @@ func setupResourcePool(
 	}
 
 	rp := NewResourcePool(
-		conf, nil, MakeScheduler(conf.Scheduler),
+		conf, db, nil, MakeScheduler(conf.Scheduler),
 		MakeFitFunction(conf.Scheduler.FittingPolicy))
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,

@@ -12,6 +12,7 @@ from botocore import exceptions as boto_exc
 
 from tests import config
 from tests.experiment import profile_test
+from tests.nightly.compute_stats import compare_stats
 
 from .cluster_log_manager import ClusterLogManager
 
@@ -108,6 +109,8 @@ def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogMana
     else:
         # Yield `None` so that pytest handles the no log manager case correctly.
         yield None
+
+    compare_stats()
 
 
 def pytest_itemcollected(item: Any) -> None:

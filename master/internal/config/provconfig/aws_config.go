@@ -1,4 +1,4 @@
-package provisioner
+package provconfig
 
 import (
 	"encoding/json"
@@ -6,6 +6,9 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg"
@@ -13,7 +16,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-const spotPriceNotSetPlaceholder = "OnDemand"
+// SpotPriceNotSetPlaceholder set placeholder.
+const SpotPriceNotSetPlaceholder = "OnDemand"
 
 // AWSClusterConfig describes the configuration for an EC2 cluster managed by Determined.
 type AWSClusterConfig struct {
@@ -30,7 +34,7 @@ type AWSClusterConfig struct {
 	NetworkInterface      ec2NetworkInterface `json:"network_interface"`
 	IamInstanceProfileArn string              `json:"iam_instance_profile_arn"`
 
-	InstanceType  ec2InstanceType `json:"instance_type"`
+	InstanceType  Ec2InstanceType `json:"instance_type"`
 	InstanceSlots *int            `json:"instance_slots,omitempty"`
 
 	LogGroup  string `json:"log_group"`
@@ -69,7 +73,8 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	CPUSlotsAllowed: false,
 }
 
-func (c *AWSClusterConfig) buildDockerLogString() string {
+// BuildDockerLogString build docker log string.
+func (c *AWSClusterConfig) BuildDockerLogString() string {
 	logString := ""
 	if c.LogGroup != "" {
 		logString += "--log-driver=awslogs --log-opt awslogs-group=" + c.LogGroup
@@ -80,7 +85,8 @@ func (c *AWSClusterConfig) buildDockerLogString() string {
 	return logString
 }
 
-func (c *AWSClusterConfig) initDefaultValues() error {
+// InitDefaultValues init default values.
+func (c *AWSClusterConfig) InitDefaultValues() error {
 	metadata, err := getEC2MetadataSess()
 	if err != nil {
 		return err
@@ -93,7 +99,7 @@ func (c *AWSClusterConfig) initDefaultValues() error {
 	}
 
 	if len(c.SpotMaxPrice) == 0 {
-		c.SpotMaxPrice = spotPriceNotSetPlaceholder
+		c.SpotMaxPrice = SpotPriceNotSetPlaceholder
 	}
 
 	if len(c.ImageID) == 0 {
@@ -143,7 +149,7 @@ func validateInstanceTypeSlots(c AWSClusterConfig) error {
 
 	strs := make([]string, 0, len(ec2InstanceSlots))
 	for t := range ec2InstanceSlots {
-		strs = append(strs, t.name())
+		strs = append(strs, t.Name())
 	}
 	return errors.Errorf("Either ec2 'instance_type' and 'instance_slots' must be specified or "+
 		"the ec2 'instance_type' must be one of types: %s", strings.Join(strs, ", "))
@@ -152,7 +158,7 @@ func validateInstanceTypeSlots(c AWSClusterConfig) error {
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
 	var spotPriceIsNotValidNumberErr error
-	if c.SpotEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
+	if c.SpotEnabled && c.SpotMaxPrice != SpotPriceNotSetPlaceholder {
 		spotPriceIsNotValidNumberErr = validateMaxSpotPrice(c.SpotMaxPrice)
 	}
 	return []error{
@@ -225,22 +231,26 @@ type ec2Tag struct {
 	Value string `json:"value"`
 }
 
-type ec2InstanceType string
+// Ec2InstanceType is Ec2InstanceType.
+type Ec2InstanceType string
 
-func (t ec2InstanceType) name() string {
+// Name returns the string representation of instance type.
+func (t Ec2InstanceType) Name() string {
 	return string(t)
 }
 
-func (t ec2InstanceType) Slots() int {
+// Slots returns number of slots.
+func (t Ec2InstanceType) Slots() int {
 	if s, ok := ec2InstanceSlots[t]; ok {
 		return s
 	}
 	return 0
 }
 
-// source: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
-func (t ec2InstanceType) Accelerator() string {
-	instanceType := t.name()
+// Accelerator source:
+// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html
+func (t Ec2InstanceType) Accelerator() string {
+	instanceType := t.Name()
 	numGpu := t.Slots()
 	accelerator := ""
 	if strings.HasPrefix(instanceType, "p2") {
@@ -274,7 +284,7 @@ func (t ec2InstanceType) Accelerator() string {
 // serves as the list of instance types that the provisioner may provision - if
 // the master.yaml is configured with an instance type and instance slots are
 // not specified the provisioner will consider it an error.
-var ec2InstanceSlots = map[ec2InstanceType]int{
+var ec2InstanceSlots = map[Ec2InstanceType]int{
 	"g4dn.xlarge":   1,
 	"g4dn.2xlarge":  1,
 	"g4dn.4xlarge":  1,
@@ -380,4 +390,28 @@ var ec2InstanceSlots = map[ec2InstanceType]int{
 	"m5zn.3xlarge":  0,
 	"m5zn.6xlarge":  0,
 	"m5zn.12xlarge": 0,
+}
+
+func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {
+	sess, err := session.NewSession(&aws.Config{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create AWS session")
+	}
+	return ec2metadata.New(sess), nil
+}
+
+func getEC2Metadata(field string) (string, error) {
+	ec2Metadata, err := getEC2MetadataSess()
+	if err != nil {
+		return "", err
+	}
+	return ec2Metadata.GetMetadata(field)
+}
+
+func onEC2() bool {
+	ec2Metadata, err := getEC2MetadataSess()
+	if err != nil {
+		return false
+	}
+	return ec2Metadata.Available()
 }

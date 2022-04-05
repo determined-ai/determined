@@ -280,6 +280,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
+
 		a.socket = nil
 		a.awaitingReconnect = true
 
@@ -296,6 +297,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Enabled: &a.agentState.enabled,
 			Drain:   &a.agentState.draining,
 		})
+
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
@@ -427,7 +429,10 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
 	a.agentState.agentStarted(ctx, agentStarted)
-	ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label})
+	ctx.Tell(a.resourcePool, sproto.AddAgent{
+		Agent: ctx.Self(),
+		Label: agentStarted.Label,
+		Slots: a.agentState.NumSlots()})
 
 	// TODO(ilia): Deprecate together with the old slots API.
 	ctx.Tell(a.slots, *agentStarted)
