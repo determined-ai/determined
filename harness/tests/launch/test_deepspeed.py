@@ -16,17 +16,17 @@ from determined import constants, launch
 
 def test_parse_args() -> None:
     positive_test_cases = {
-        "--trial my_module:MyTrial": (
-            [],
-            ["python3", "-m", "determined.exec.harness", "my_module:MyTrial"],
-        ),
-        "script arg": ([], ["script", "arg"]),
-        "-- script arg": ([], ["script", "arg"]),
-        "d1 d2 -- script arg": (["d1", "d2"], ["script", "arg"]),
+        "--trial my_module:MyTrial": [
+            "python3",
+            "-m",
+            "determined.exec.harness",
+            "my_module:MyTrial",
+        ],
+        "script arg": ["script", "arg"],
         # The script is allowed to have conflicting args.
-        "script --trial": ([], ["script", "--trial"]),
-        # Scripts which require -- still work if the initial -- is present.
-        "-- script -- arg": ([], ["script", "--", "arg"]),
+        "script --trial": ["script", "--trial"],
+        # Scripts which require -- still work.
+        "script -- arg": ["script", "--", "arg"],
     }
     for args, exp in positive_test_cases.items():
         assert exp == launch.deepspeed.parse_args(args.split()), f"test case failed, args = {args}"
@@ -68,14 +68,13 @@ def test_launch_multi_slot_chief(
     mock_cluster_info.return_value = cluster_info
     mock_start_time = time.time()
     mock_time.return_value = mock_start_time
-    ds_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
     sshd_cmd = launch.deepspeed.create_sshd_cmd()
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
     deepspeed_cmd = launch.deepspeed.create_run_command(
-        cluster_info.container_addrs[0], launch.deepspeed.hostfile_path, ds_args
+        cluster_info.container_addrs[0], launch.deepspeed.hostfile_path
     )
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
@@ -95,7 +94,7 @@ def test_launch_multi_slot_chief(
     mock_subprocess.side_effect = mock_process
 
     with set_resources_id_env_var():
-        launch.deepspeed.main(ds_args, script)
+        launch.deepspeed.main(script)
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -142,14 +141,13 @@ def test_launch_multi_slot_fail(
     mock_time.return_value = mock_start_time
     mock_check_sshd.side_effect = ValueError("no sshd greeting")
 
-    ds_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
     sshd_cmd = launch.deepspeed.create_sshd_cmd()
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
     deepspeed_cmd = launch.deepspeed.create_run_command(
-        cluster_info.container_addrs[0], launch.deepspeed.hostfile_path, ds_args
+        cluster_info.container_addrs[0], launch.deepspeed.hostfile_path
     )
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
@@ -170,7 +168,7 @@ def test_launch_multi_slot_fail(
 
     with set_resources_id_env_var():
         with pytest.raises(ValueError, match="no sshd greeting"):
-            launch.deepspeed.main(ds_args, script)
+            launch.deepspeed.main(script)
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -202,20 +200,17 @@ def test_launch_one_slot(
 ) -> None:
     cluster_info = make_mock_cluster_info(["0.0.0.0"], 0)
     mock_cluster_info.return_value = cluster_info
-    ds_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command(
-        "localhost", launch.deepspeed.hostfile_path, ds_args
-    )
+    deepspeed_cmd = launch.deepspeed.create_run_command("localhost", launch.deepspeed.hostfile_path)
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
     with set_resources_id_env_var():
-        launch.deepspeed.main(ds_args, script)
+        launch.deepspeed.main(script)
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -230,20 +225,17 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
     cluster_info = make_mock_cluster_info(["0.0.0.0"], 0)
     mock_cluster_info.return_value = cluster_info
     mock_subprocess.return_value.wait.return_value = 1
-    ds_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command(
-        "localhost", launch.deepspeed.hostfile_path, ds_args
-    )
+    deepspeed_cmd = launch.deepspeed.create_run_command("localhost", launch.deepspeed.hostfile_path)
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
     with set_resources_id_env_var():
-        assert launch.deepspeed.main(ds_args, script) == 1
+        assert launch.deepspeed.main(script) == 1
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -261,7 +253,7 @@ def test_launch_worker(
     cluster_info = make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1)
     mock_cluster_info.return_value = cluster_info
     with set_resources_id_env_var():
-        launch.deepspeed.main([], ["script"])
+        launch.deepspeed.main(["script"])
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]

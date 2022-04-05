@@ -10,7 +10,7 @@ import pathlib
 import subprocess
 import sys
 import time
-from typing import List, Tuple
+from typing import List
 
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
@@ -103,7 +103,7 @@ def create_deepspeed_env_file() -> None:
                 f.write(f"{k}={v}\n")
 
 
-def create_run_command(master_address: str, hostfile_path: str, ds_args: List[str]) -> List[str]:
+def create_run_command(master_address: str, hostfile_path: str) -> List[str]:
     # Construct the deepspeed command.
     deepspeed_process_cmd = [
         "deepspeed",
@@ -113,13 +113,12 @@ def create_run_command(master_address: str, hostfile_path: str, ds_args: List[st
         master_address,
         "--no_python",
         "--no_local_rank",
-        *ds_args,
         "--",
     ]
     return deepspeed_process_cmd
 
 
-def main(ds_args: List[str], script: List[str]) -> int:
+def main(script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
@@ -183,7 +182,7 @@ def main(ds_args: List[str], script: List[str]) -> int:
         num_proc_per_machine=len(info.slot_ids),
         ip_addresses=info.container_addrs,
     )
-    cmd = create_run_command(master_address, hostfile_path, ds_args)
+    cmd = create_run_command(master_address, hostfile_path)
 
     pid_client_cmd = create_pid_client_cmd(info.allocation_id)
 
@@ -227,26 +226,13 @@ def main(ds_args: List[str], script: List[str]) -> int:
         sshd_process.wait()
 
 
-def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
-    # Manually extract anything before the first "--" to pass through to deepspeed.
-    if "--" in args:
-        split = args.index("--")
-        ds_args = args[:split]
-        args = args[split + 1 :]
-    else:
-        ds_args = []
-
+def parse_args(args: List[str]) -> List[str]:
     # Then parse the rest of the commands normally.
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [[DS_OVERRIDES...] --] (--trial TRIAL)|(SCRIPT...)",
+        usage="%(prog)s (--trial TRIAL)|(SCRIPT...)",
         description=(
             "Launch a script under deepspeed on a Determined cluster, with automatic handling of "
             "IP addresses, sshd containers, and shutdown mechanics."
-        ),
-        epilog=(
-            "DS_OVERRIDES may be a list of arguments to pass directly to deepspeed to override the "
-            "values set by Determined automatically.  When provided, the list of override "
-            "arguments must be terminated by a `--` argument."
         ),
     )
     # For legacy Trial classes.
@@ -281,9 +267,9 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
         print("error: empty script is not allowed", file=sys.stderr)
         sys.exit(1)
 
-    return ds_args, script
+    return script
 
 
 if __name__ == "__main__":
-    ds_args, script = parse_args(sys.argv[1:])
-    sys.exit(main(ds_args, script))
+    script = parse_args(sys.argv[1:])
+    sys.exit(main(script))
