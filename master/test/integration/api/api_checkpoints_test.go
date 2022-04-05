@@ -39,6 +39,14 @@ func TestGetExperimentCheckpoints(t *testing.T) {
 	testGetExperimentCheckpoints(t, creds, cl, pgDB)
 }
 
+func TestGetTrialCheckpoints(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	defer cancel()
+	assert.NilError(t, err, "failed to start master")
+	testGetTrialCheckpoints(t, creds, cl, pgDB)
+}
+
 func testGetCheckpoint(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
@@ -186,6 +194,82 @@ func testGetExperimentCheckpoints(
 
 	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetExperimentCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	// ascending uuid
+	assert.Equal(t, len(ckptsCl), 3)
+	sort.Strings(uuids)
+	for j := 2; j < 5; j += 1 {
+		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
+	}
+
+}
+
+func testGetTrialCheckpoints(
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+) {
+	_, trial := createExperimentAndTrial(t, db)
+
+	var uuids []string
+	for i := 0; i < 5; i++ {
+		checkpointUuid := uuid.NewString()
+		uuids = append(uuids, checkpointUuid)
+		checkpointMeta := trialv1.CheckpointMetadata{
+			TrialId:           int32(trial.ID),
+			TrialRunId:        int32(0),
+			Uuid:              checkpointUuid,
+			Resources:         map[string]int64{"ok": 1.0},
+			Framework:         "some framework",
+			Format:            "some format",
+			DeterminedVersion: "1.0.0",
+			LatestBatch:       int32(10 * i),
+		}
+		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		assert.NilError(t, err, "failed to add checkpoint meta")
+	}
+
+	ctx, cancel := context.WithTimeout(creds, 10*time.Second)
+	defer cancel()
+
+	req := apiv1.GetTrialCheckpointsRequest{
+		Id: int32(trial.ID),
+	}
+
+	resp, err := cl.GetTrialCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetTrialCheckpoints error")
+	ckptsCl := resp.Checkpoints
+
+	// default sort order is unspecified
+	assert.Equal(t, len(ckptsCl), 5)
+
+	// check sorting by assending end time
+	req.SortBy = apiv1.GetTrialCheckpointsRequest_SORT_BY_END_TIME
+	resp, err = cl.GetTrialCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetTrialCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	assert.Equal(t, len(ckptsCl), 5)
+	for j := 0; j < 5; j += 1 {
+		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
+	}
+
+	// check sorting by assending uuid
+	req.SortBy = apiv1.GetTrialCheckpointsRequest_SORT_BY_UUID
+	resp, err = cl.GetTrialCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetTrialCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	assert.Equal(t, len(ckptsCl), 5)
+	sort.Strings(uuids)
+	for j := 0; j < 5; j += 1 {
+		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
+	}
+
+	req.Limit = 3
+	req.Offset = 2
+
+	resp, err = cl.GetTrialCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetTrialCheckpoints error")
 	ckptsCl = resp.Checkpoints
 
 	// ascending uuid
