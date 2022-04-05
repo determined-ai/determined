@@ -609,128 +609,96 @@ class v1AwsCustomTag:
             "value": self.value,
         }
 
-class v1Checkpoint:
+class v1CheckpointMetadata:
     def __init__(
         self,
-        batchNumber: int,
-        experimentId: int,
+        metadata: "typing.Dict[str, typing.Any]",
+        reportTime: str,
+        resources: "typing.Dict[str, str]",
         state: "determinedcheckpointv1State",
-        trialId: int,
-        determinedVersion: "typing.Optional[str]" = None,
-        endTime: "typing.Optional[str]" = None,
-        experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        format: "typing.Optional[str]" = None,
-        framework: "typing.Optional[str]" = None,
-        hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        metrics: "typing.Optional[v1Metrics]" = None,
-        resources: "typing.Optional[typing.Dict[str, str]]" = None,
-        searcherMetric: "typing.Optional[float]" = None,
-        uuid: "typing.Optional[str]" = None,
-        validationState: "typing.Optional[determinedcheckpointv1State]" = None,
+        training: "v1CheckpointTrainingMetadata",
+        uuid: str,
+        allocationId: "typing.Optional[str]" = None,
+        taskId: "typing.Optional[str]" = None,
     ):
+        self.taskId = taskId
+        self.allocationId = allocationId
         self.uuid = uuid
-        self.experimentConfig = experimentConfig
-        self.experimentId = experimentId
-        self.trialId = trialId
-        self.hparams = hparams
-        self.batchNumber = batchNumber
-        self.endTime = endTime
+        self.reportTime = reportTime
         self.resources = resources
         self.metadata = metadata
-        self.framework = framework
-        self.format = format
-        self.determinedVersion = determinedVersion
-        self.metrics = metrics
-        self.validationState = validationState
         self.state = state
+        self.training = training
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CheckpointMetadata":
+        return cls(
+            taskId=obj.get("taskId", None),
+            allocationId=obj.get("allocationId", None),
+            uuid=obj["uuid"],
+            reportTime=obj["reportTime"],
+            resources=obj["resources"],
+            metadata=obj["metadata"],
+            state=determinedcheckpointv1State(obj["state"]),
+            training=v1CheckpointTrainingMetadata.from_json(obj["training"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "taskId": self.taskId if self.taskId is not None else None,
+            "allocationId": self.allocationId if self.allocationId is not None else None,
+            "uuid": self.uuid,
+            "reportTime": self.reportTime,
+            "resources": self.resources,
+            "metadata": self.metadata,
+            "state": self.state.value,
+            "training": self.training.to_json(),
+        }
+
+class v1CheckpointTrainingMetadata:
+    def __init__(
+        self,
+        experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        experimentId: "typing.Optional[int]" = None,
+        hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        runId: "typing.Optional[int]" = None,
+        searcherMetric: "typing.Optional[float]" = None,
+        trainingMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        trialId: "typing.Optional[int]" = None,
+        validationMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+    ):
+        self.trialId = trialId
+        self.experimentId = experimentId
+        self.runId = runId
+        self.experimentConfig = experimentConfig
+        self.hparams = hparams
+        self.trainingMetrics = trainingMetrics
+        self.validationMetrics = validationMetrics
         self.searcherMetric = searcherMetric
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1Checkpoint":
+    def from_json(cls, obj: Json) -> "v1CheckpointTrainingMetadata":
         return cls(
-            uuid=obj.get("uuid", None),
+            trialId=obj.get("trialId", None),
+            experimentId=obj.get("experimentId", None),
+            runId=obj.get("runId", None),
             experimentConfig=obj.get("experimentConfig", None),
-            experimentId=obj["experimentId"],
-            trialId=obj["trialId"],
             hparams=obj.get("hparams", None),
-            batchNumber=obj["batchNumber"],
-            endTime=obj.get("endTime", None),
-            resources=obj.get("resources", None),
-            metadata=obj.get("metadata", None),
-            framework=obj.get("framework", None),
-            format=obj.get("format", None),
-            determinedVersion=obj.get("determinedVersion", None),
-            metrics=v1Metrics.from_json(obj["metrics"]) if obj.get("metrics", None) is not None else None,
-            validationState=determinedcheckpointv1State(obj["validationState"]) if obj.get("validationState", None) is not None else None,
-            state=determinedcheckpointv1State(obj["state"]),
+            trainingMetrics=obj.get("trainingMetrics", None),
+            validationMetrics=obj.get("validationMetrics", None),
             searcherMetric=float(obj["searcherMetric"]) if obj.get("searcherMetric", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "uuid": self.uuid if self.uuid is not None else None,
+            "trialId": self.trialId if self.trialId is not None else None,
+            "experimentId": self.experimentId if self.experimentId is not None else None,
+            "runId": self.runId if self.runId is not None else None,
             "experimentConfig": self.experimentConfig if self.experimentConfig is not None else None,
-            "experimentId": self.experimentId,
-            "trialId": self.trialId,
             "hparams": self.hparams if self.hparams is not None else None,
-            "batchNumber": self.batchNumber,
-            "endTime": self.endTime if self.endTime is not None else None,
-            "resources": self.resources if self.resources is not None else None,
-            "metadata": self.metadata if self.metadata is not None else None,
-            "framework": self.framework if self.framework is not None else None,
-            "format": self.format if self.format is not None else None,
-            "determinedVersion": self.determinedVersion if self.determinedVersion is not None else None,
-            "metrics": self.metrics.to_json() if self.metrics is not None else None,
-            "validationState": self.validationState.value if self.validationState is not None else None,
-            "state": self.state.value,
+            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
-        }
-
-class v1CheckpointMetadata:
-    def __init__(
-        self,
-        determinedVersion: str,
-        format: str,
-        framework: str,
-        resources: "typing.Dict[str, str]",
-        trialId: int,
-        trialRunId: int,
-        uuid: str,
-        latestBatch: "typing.Optional[int]" = None,
-    ):
-        self.trialId = trialId
-        self.trialRunId = trialRunId
-        self.uuid = uuid
-        self.resources = resources
-        self.framework = framework
-        self.format = format
-        self.determinedVersion = determinedVersion
-        self.latestBatch = latestBatch
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CheckpointMetadata":
-        return cls(
-            trialId=obj["trialId"],
-            trialRunId=obj["trialRunId"],
-            uuid=obj["uuid"],
-            resources=obj["resources"],
-            framework=obj["framework"],
-            format=obj["format"],
-            determinedVersion=obj["determinedVersion"],
-            latestBatch=obj.get("latestBatch", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "trialId": self.trialId,
-            "trialRunId": self.trialRunId,
-            "uuid": self.uuid,
-            "resources": self.resources,
-            "framework": self.framework,
-            "format": self.format,
-            "determinedVersion": self.determinedVersion,
-            "latestBatch": self.latestBatch if self.latestBatch is not None else None,
         }
 
 class v1CheckpointWorkload:
@@ -1305,14 +1273,14 @@ class v1GetBestSearcherValidationMetricResponse:
 class v1GetCheckpointResponse:
     def __init__(
         self,
-        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1CheckpointMetadata]" = None,
     ):
         self.checkpoint = checkpoint
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCheckpointResponse":
         return cls(
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+            checkpoint=v1CheckpointMetadata.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -1397,16 +1365,14 @@ class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
     SORT_BY_UUID = "SORT_BY_UUID"
     SORT_BY_TRIAL_ID = "SORT_BY_TRIAL_ID"
     SORT_BY_BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
     SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_VALIDATION_STATE = "SORT_BY_VALIDATION_STATE"
     SORT_BY_STATE = "SORT_BY_STATE"
     SORT_BY_SEARCHER_METRIC = "SORT_BY_SEARCHER_METRIC"
 
 class v1GetExperimentCheckpointsResponse:
     def __init__(
         self,
-        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
+        checkpoints: "typing.Optional[typing.Sequence[v1CheckpointMetadata]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.checkpoints = checkpoints
@@ -1415,7 +1381,7 @@ class v1GetExperimentCheckpointsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentCheckpointsResponse":
         return cls(
-            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
+            checkpoints=[v1CheckpointMetadata.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
@@ -2115,15 +2081,13 @@ class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
     SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     SORT_BY_UUID = "SORT_BY_UUID"
     SORT_BY_BATCH_NUMBER = "SORT_BY_BATCH_NUMBER"
-    SORT_BY_START_TIME = "SORT_BY_START_TIME"
     SORT_BY_END_TIME = "SORT_BY_END_TIME"
-    SORT_BY_VALIDATION_STATE = "SORT_BY_VALIDATION_STATE"
     SORT_BY_STATE = "SORT_BY_STATE"
 
 class v1GetTrialCheckpointsResponse:
     def __init__(
         self,
-        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
+        checkpoints: "typing.Optional[typing.Sequence[v1CheckpointMetadata]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
         self.checkpoints = checkpoints
@@ -2132,7 +2096,7 @@ class v1GetTrialCheckpointsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialCheckpointsResponse":
         return cls(
-            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
+            checkpoints=[v1CheckpointMetadata.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
             pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
@@ -2836,28 +2800,6 @@ class v1MetricType(enum.Enum):
     METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
     METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
 
-class v1Metrics:
-    def __init__(
-        self,
-        numInputs: "typing.Optional[int]" = None,
-        validationMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-    ):
-        self.numInputs = numInputs
-        self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1Metrics":
-        return cls(
-            numInputs=obj.get("numInputs", None),
-            validationMetrics=obj.get("validationMetrics", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "numInputs": self.numInputs if self.numInputs is not None else None,
-            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
-        }
-
 class v1MetricsWorkload:
     def __init__(
         self,
@@ -2957,7 +2899,7 @@ class v1Model:
 class v1ModelVersion:
     def __init__(
         self,
-        checkpoint: "v1Checkpoint",
+        checkpoint: "v1CheckpointMetadata",
         creationTime: str,
         id: int,
         model: "v1Model",
@@ -2989,7 +2931,7 @@ class v1ModelVersion:
     def from_json(cls, obj: Json) -> "v1ModelVersion":
         return cls(
             model=v1Model.from_json(obj["model"]),
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]),
+            checkpoint=v1CheckpointMetadata.from_json(obj["checkpoint"]),
             version=obj["version"],
             creationTime=obj["creationTime"],
             id=obj["id"],
@@ -3268,7 +3210,7 @@ class v1PatchModelResponse:
 class v1PatchModelVersion:
     def __init__(
         self,
-        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1CheckpointMetadata]" = None,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
@@ -3285,7 +3227,7 @@ class v1PatchModelVersion:
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModelVersion":
         return cls(
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+            checkpoint=v1CheckpointMetadata.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
             name=obj.get("name", None),
             metadata=obj.get("metadata", None),
             comment=obj.get("comment", None),
@@ -3360,14 +3302,14 @@ class v1PatchUserResponse:
 class v1PostCheckpointMetadataRequest:
     def __init__(
         self,
-        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1CheckpointMetadata]" = None,
     ):
         self.checkpoint = checkpoint
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostCheckpointMetadataRequest":
         return cls(
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+            checkpoint=v1CheckpointMetadata.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -3378,14 +3320,14 @@ class v1PostCheckpointMetadataRequest:
 class v1PostCheckpointMetadataResponse:
     def __init__(
         self,
-        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        checkpoint: "typing.Optional[v1CheckpointMetadata]" = None,
     ):
         self.checkpoint = checkpoint
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostCheckpointMetadataResponse":
         return cls(
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+            checkpoint=v1CheckpointMetadata.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -5787,7 +5729,6 @@ def get_GetExperimentCheckpoints(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
-    validationStates: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -5795,7 +5736,6 @@ def get_GetExperimentCheckpoints(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
-        "validationStates": [x.value for x in validationStates] if validationStates else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6459,7 +6399,6 @@ def get_GetTrialCheckpoints(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
-    validationStates: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -6467,7 +6406,6 @@ def get_GetTrialCheckpoints(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
-        "validationStates": [x.value for x in validationStates] if validationStates else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -7041,16 +6979,15 @@ def put_PutTemplate(
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
 
-def post_ReportTrialCheckpointMetadata(
+def post_ReportCheckpointMetadata(
     session: "client.Session",
     *,
     body: "v1CheckpointMetadata",
-    checkpointMetadata_trialId: int,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/trials/{checkpointMetadata_trialId}/checkpoint_metadata",
+        path="/api/v1/checkpoint_metadata",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7059,7 +6996,7 @@ def post_ReportTrialCheckpointMetadata(
     )
     if _resp.status_code == 200:
         return
-    raise APIHttpError("post_ReportTrialCheckpointMetadata", _resp)
+    raise APIHttpError("post_ReportCheckpointMetadata", _resp)
 
 def post_ReportTrialProgress(
     session: "client.Session",

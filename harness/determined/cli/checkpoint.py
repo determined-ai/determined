@@ -76,17 +76,13 @@ def list_checkpoints(args: Namespace) -> None:
     checkpoints = r.checkpoints or []
     searcher_metric = ""
     if len(checkpoints) > 0:
-        config = checkpoints[0].experimentConfig or {}
+        config = checkpoints[0].training.experimentConfig or {}
         if "searcher" in config and "metric" in config["searcher"]:
             searcher_metric = str(config["searcher"]["metric"])
 
-    def get_validation_metric(c: bindings.v1Checkpoint, metric: str) -> str:
-        if (
-            c.metrics
-            and c.metrics.validationMetrics
-            and searcher_metric in c.metrics.validationMetrics
-        ):
-            return str(c.metrics.validationMetrics[searcher_metric])
+    def get_validation_metric(c: bindings.v1CheckpointMetadata, metric: str) -> str:
+        if c.training.validationMetrics and metric in c.training.validationMetrics:
+            return str(c.training.validationMetrics[metric])
         return ""
 
     headers = [
@@ -100,8 +96,8 @@ def list_checkpoints(args: Namespace) -> None:
     ]
     values = [
         [
-            c.trialId,
-            c.batchNumber,
+            c.training.trialId,
+            c.metadata.get("latest_batch", None),
             c.state.value.replace("STATE_", ""),
             get_validation_metric(c, searcher_metric),
             c.uuid,
