@@ -17,7 +17,6 @@ interface Props {
 const ChangePassword: React.FC<Props> = ({ onComplete }) => {
   const { auth } = useStore();
   const username = auth.user?.username ?? '';
-  const userId = auth.user?.id ?? 0;
   const [ form ] = Form.useForm();
   const [ isUpdating, setIsUpdating ] = useState(false);
 
@@ -31,7 +30,7 @@ const ChangePassword: React.FC<Props> = ({ onComplete }) => {
     try {
       await setUserPassword({
         password: form.getFieldValue('newPassword'),
-        userId,
+        username,
       });
       message.success('Password updated');
       form.resetFields();
@@ -41,7 +40,7 @@ const ChangePassword: React.FC<Props> = ({ onComplete }) => {
       handleError(e);
     }
     setIsUpdating(false);
-  }, [ form, onComplete, userId ]);
+  }, [ form, onComplete, username ]);
 
   return (
     <div className={css.base}>
@@ -54,19 +53,14 @@ const ChangePassword: React.FC<Props> = ({ onComplete }) => {
             {
               message: 'Incorrect password',
               validator: async (rule, value) => {
-                setIsUpdating(true); // prevent resubmission while validating
-                try {
-                  return await login({
-                    password: value ?? '',
-                    username,
-                  });
-                } finally {
-                  setIsUpdating(false);
-                }
+                return await login({
+                  password: value ?? '',
+                  username,
+                });
               },
             },
           ]}
-          validateTrigger={[ 'onSubmit' ]}>
+          validateTrigger={[ 'onBlur', 'onSubmit' ]}>
           <Input.Password />
         </Form.Item>
         <Form.Item
