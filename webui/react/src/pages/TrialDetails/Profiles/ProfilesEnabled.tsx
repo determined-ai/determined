@@ -15,7 +15,7 @@ import css from './ProfilesEnabled.module.scss';
 import { MetricType } from './types';
 
 const CHART_HEIGHT = 300;
-const CHART_STYLE: React.CSSProperties = { height: '100%', paddingBottom: 16 };
+const CHART_STYLE: React.CSSProperties = { height: '100%', paddingBottom: 0 };
 
 /*
  * Shared uPlot chart options.
@@ -171,8 +171,7 @@ const ProfilesEnabled: React.FC = () => {
       <Section
         bodyBorder
         bodyNoPadding
-        loading={metrics[MetricType.Throughput].isLoading}
-        title="Throughput">
+        loading={metrics[MetricType.Throughput].isLoading}>
         <UPlotChart
           data={chartInfo[MetricType.Throughput].data}
           options={chartInfo[MetricType.Throughput].options}
@@ -182,8 +181,7 @@ const ProfilesEnabled: React.FC = () => {
       <Section
         bodyBorder={!metrics[MetricType.Timing].isEmpty}
         bodyNoPadding
-        loading={metrics[MetricType.Timing].isLoading}
-        title="Timing Metrics">
+        loading={metrics[MetricType.Timing].isLoading}>
         {metrics[MetricType.Timing].isEmpty ? (
           <Alert
             description="Timing metrics may not be available for your framework."
@@ -202,8 +200,7 @@ const ProfilesEnabled: React.FC = () => {
         bodyBorder
         bodyNoPadding
         filters={<SystemMetricFilter />}
-        loading={metrics[MetricType.System].isLoading}
-        title="System Metrics">
+        loading={metrics[MetricType.System].isLoading}>
         <UPlotChart
           data={chartInfo[MetricType.System].data}
           options={chartInfo[MetricType.System].options}

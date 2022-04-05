@@ -1,5 +1,8 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+// @ts-nocheck
 
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+
+import useInterval from 'hooks/useInterval';
 import useSettings from 'hooks/useSettings';
 import { TrialDetails } from 'types';
 
@@ -62,6 +65,11 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     MetricType.Timing,
   );
 
+  const [ tickThrottle, setTickThrottle ] = useState(false);
+  useInterval(() => {
+    setTickThrottle(!tickThrottle);
+  }, 20000);
+
   /*
    * Set default filter settings.
    */
@@ -92,13 +100,49 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     settings,
     systemSeries,
     updateSettings,
-  }), [ settings, systemMetrics, systemSeries, throughputMetrics, timingMetrics, updateSettings ]);
+  }), [ tickThrottle ]);
+
+  //Throttling with useMemo hook
+  // const Provider = useCallback(
+  //   ({ children }) => {
+  //     return (
+  //       <ProfilesFiltersContext.Provider value={context}>
+  //         {children}
+  //       </ProfilesFiltersContext.Provider>
+  //     );
+  //   },
+  //   [ tickThrottle ],
+  // );
+  // return (
+  //   <Provider>
+  //     {children}
+  //   </Provider>
+  // );
 
   return (
     <ProfilesFiltersContext.Provider value={context}>
       {children}
     </ProfilesFiltersContext.Provider>
   );
+
 };
 
 export default ProfilesFiltersProvider;
+
+// const hasTicked = (prevProps, nextProps) => {
+//   console.log(prevProps);
+//   return prevTick !== nextTick;
+// };
+// export default React.memo(ProfilesFiltersProvider, hasTicked);
+
+// //Throttling with useMemo hook
+// const throttledDataVisdsualizator = useMemo(
+//   () => <DataVisualizator dataToVisualize={data} />,
+//   // eslint-disable-next-line react-hooks/exhaustive-deps
+//   [ tickThrottle ],
+// );
+// return (
+//   <>
+//     {throttledDataVisdsualizator}
+//   </>
+// );

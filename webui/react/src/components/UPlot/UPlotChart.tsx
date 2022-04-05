@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useMemo, useRef } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
@@ -35,6 +36,12 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
   const isZoomed = useRef<boolean>(false);
   const mousePosition = useRef<[number, number]>();
+  // console.log('renderplot');
+  const ser = options.series.slice(2, 5).map(s => s.label?.slice(0, 16) ?? '').filter(x => !!x).join(' ');
+  // console.log({ ser: options.series.reduce((s, acc) => [ s.label ?? '', acc ].join(' '), '') });
+  // ) });
+  console.log({ isZoomed: isZoomed.current, ser, zoomData: scalesZoomData.current?.x?.isZoomed || scalesZoomData.current?.y?.isZoomed });
+  // console.log(data, focusIndex, options, style);
 
   const [ hasData, normalizedData ] = useMemo(() => {
     if (!data || data.length < 2) return [ false, undefined ];
@@ -63,6 +70,9 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
    * Chart mount and dismount.
    */
   useEffect(() => {
+    // console.log(scalesRef.current);
+    // console.log({ options });
+
     // console.log(chartDivRef, hasData, JSON.stringify(options));
     if (!chartDivRef.current || !hasData || !options) return;
 
@@ -108,6 +118,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
             chartRef.current = chart;
           } ],
           setScale: [ (uPlot: uPlot, scaleKey: string) => {
+            console.log('scale set');
             const currentMax = uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
             const currentMin = uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
             let max = scalesZoomData.current[scaleKey]?.max;
@@ -127,6 +138,8 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
             if (!scalesRef.current) scalesRef.current = {};
             if (isZoomed.current) {
               scalesRef.current[scaleKey] = uPlot.scales[scaleKey];
+              console.log(uPlot.scales);
+
             } else {
               delete scalesRef.current[scaleKey];
             }
@@ -142,21 +155,25 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
     const plotChart = new uPlot(optionsExtended, normalizedData, chartDivRef.current);
 
     return () => {
+      console.log('chart destroy');
       plotChart.destroy();
       chartRef.current = undefined;
     };
     // eslint-disable-next-linez
-  }, [ chartDivRef, hasData, JSON.stringify(options) ]);
+  }, [ chartDivRef, hasData ]);
+  // }, [ chartDivRef, hasData, options, normalizedData ]);
 
   /*
    * Chart data when data changes.
    */
   useEffect(() => {
     if (!chartRef.current || !normalizedData) return;
-    // console.log(normalizedData[0].slice(-1)[0]);
-    chartRef.current.setData(normalizedData, isZoomed.current);
+    // console.log('data hook');
+    // let bool = isZoomed.current;
+    const bool = false;
+    chartRef.current.setData(normalizedData, bool);
   }, [ normalizedData ]);
-  // [ chartDivRef, hasData, normalizedData, options ]
+  //
   /*
    * When a focus index is provided, highlight applicable series.
    */
@@ -213,4 +230,28 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   );
 };
 
+const propsAreEqual = ((
+  {
+    data: prevData,
+    focusIndex: prevFocusIndex,
+    options: prevOptions,
+    style: prevStyle,
+  }: Props,
+  {
+    data: nextData,
+    focusIndex: nextFocusIndex,
+    options: nextOptions,
+    style: nextStyle,
+  } : Props,
+) => {
+  const dataAreEqual = prevData.length === nextData.length;
+  const optionsAreEqual = JSON.stringify(prevOptions) === JSON.stringify(nextOptions);
+  const focusIndicesAreEqual = JSON.stringify(prevFocusIndex) === JSON.stringify(nextFocusIndex);
+  const stylesAreEqual = JSON.stringify(prevStyle) === JSON.stringify(nextStyle);
+  const propsAreEqual = dataAreEqual && optionsAreEqual && focusIndicesAreEqual && stylesAreEqual;
+  console.log(propsAreEqual);
+  return propsAreEqual;
+});
+
 export default UPlotChart;
+// export default React.memo(UPlotChart, propsAreEqual);

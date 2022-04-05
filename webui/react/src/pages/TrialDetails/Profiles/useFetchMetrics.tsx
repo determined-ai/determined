@@ -35,6 +35,7 @@ export const useFetchMetrics = (
 
     const canceler = new AbortController();
     const follow = !terminalRunStates.has(trialState);
+    // console.log({ follow });
 
     consumeStream(
       detApi.StreamingProfiler.getTrialProfilerMetrics(
@@ -43,18 +44,20 @@ export const useFetchMetrics = (
         labelsAgentId,
         labelsGpuUuid,
         labelsMetricType,
-        follow,
-        { signal: canceler.signal },
+        true,
+        // { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerMetricsResponse) => {
         setData(prev => {
           if (event.batch.values.length !== 0) {
+            console.log('more data', event.batch.values);
             for (let i = 0; i < event.batch.values.length; i++) {
               const batch: number = event.batch.batches[i];
               const value: number = event.batch.values[i];
               const time: number = Date.parse(event.batch.timestamps[i] as unknown as string);
               const labelName: string = event.batch.labels.gpuUuid || event.batch.labels.name;
 
+              // console.log(labelsName, event.batch.values);
               if (!prev.names.includes(labelName)) prev.names.push(labelName);
               if (!prev.dataByTime[time]) prev.dataByTime[time] = {};
               prev.dataByTime[time].batch = batch;
