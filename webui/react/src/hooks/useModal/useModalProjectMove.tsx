@@ -9,7 +9,7 @@ import { getWorkspaces, moveProject } from 'services/api';
 import { Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
-import css from './useModalWorkspaceCreate.module.scss';
+import css from './useModalProjectMove.module.scss';
 
 const { Option } = Select;
 
@@ -58,6 +58,7 @@ const useModalProjectMove = ({ onClose, projectId }: Props): ModalHooks => {
         <SelectFilter
           id="workspace"
           placeholder="Select a destination workspace."
+          style={{ width: '100%' }}
           onChange={handleWorkspaceSelect}>
           {workspaces.map(workspace => {
             return (

@@ -10,7 +10,7 @@ import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/ap
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
-import css from './useModalWorkspaceCreate.module.scss';
+import css from './useModalExperimentMove.module.scss';
 
 const { Option } = Select;
 
@@ -90,29 +90,34 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <label className={css.label} htmlFor="workspace">Workspace</label>
-        <SelectFilter
-          id="workspace"
-          placeholder="Select a destination workspace."
-          onChange={handleWorkspaceSelect}>
-          {workspaces.map(workspace => {
-            return (
-              <Option key={workspace.id} value={workspace.id}>
-                {workspace.name}
-              </Option>
-            );
-          })}
-        </SelectFilter>
-        <label htmlFor="project">Project</label>
-        <List
-          className={css.listContainer}
-          height={200}
-          innerElementType="ul"
-          itemCount={projects.length}
-          itemSize={24}
-          width="100%">
-          {renderRow}
-        </List>
+        <div>
+          <label className={css.label} htmlFor="workspace">Workspace</label>
+          <SelectFilter
+            id="workspace"
+            placeholder="Select a destination workspace."
+            style={{ width: '100%' }}
+            onChange={handleWorkspaceSelect}>
+            {workspaces.map(workspace => {
+              return (
+                <Option key={workspace.id} value={workspace.id}>
+                  {workspace.name}
+                </Option>
+              );
+            })}
+          </SelectFilter>
+        </div>
+        <div>
+          <label className={css.label} htmlFor="project">Project</label>
+          <List
+            className={css.listContainer}
+            height={200}
+            innerElementType="ul"
+            itemCount={projects.length}
+            itemSize={24}
+            width="100%">
+            {renderRow}
+          </List>
+        </div>
       </div>
     );
   }, [ handleWorkspaceSelect, projects.length, renderRow, workspaces ]);
