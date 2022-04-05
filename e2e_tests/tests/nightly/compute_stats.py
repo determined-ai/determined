@@ -67,7 +67,7 @@ def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
     global_end = datetime.fromtimestamp(max_ts, tz=timezone(timedelta(hours=0))).strftime(
         "%Y-%m-%dT%H:%M:%S.000Z"
     )
-    print(f"Master log time period: {global_start} to {global_end} \n")
+    print(f"\nMaster log time period: {global_start} to {global_end} \n")
     print(f"Total agent up seconds: {total_agent_uptime_sec} ")
     return total_agent_uptime_sec, global_start, global_end
 
@@ -122,4 +122,4 @@ def compare_stats() -> None:
         assert instance_from_api_map[ins] - gpu_from_api_map[ins] < 60 * 5
 
     # make sure agent stats get from script is less than 5% difference with those get from api
-    assert abs(gpu_from_log - gpu_from_api) < max(gpu_from_api, gpu_from_log) * 0.05
+    assert abs(gpu_from_log - gpu_from_api) <= max(gpu_from_api, gpu_from_log) * 0.05
