@@ -3,6 +3,7 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/shopspring/decimal"
 
@@ -127,12 +128,6 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 		rp.IDToGroupActor[msg.JobID] = msg.Group
 	}
 	rp.taskList.AddTask(&msg)
-	ctx.Log().Infof("------------>   about to record queue start stats %s", msg.TaskID)
-	db.RecordTaskStartStats(&model.TaskStats{
-		ResourcePool: rp.config.PoolName,
-		TaskID:       msg.TaskID,
-		EventType:    "QUEUED",
-	})
 }
 
 func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
@@ -167,11 +162,6 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 				devices:      devices,
 				resourcePool: rp.config.PoolName,
 			})
-			ctx.Log().Infof("------------>   about to record queue end stats %s", req.TaskID)
-			db.RecordTaskEndStats(&model.TaskStats{
-				TaskID:    req.TaskID,
-				EventType: "QUEUED",
-			})
 		case error:
 			// Rollback previous allocations.
 			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
@@ -203,6 +193,14 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
 
 	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
+	now := time.Now().UTC()
+	db.RecordTaskStartStats(&model.TaskStats{
+		AllocationID: req.AllocationID,
+		ResourcePool: rp.config.PoolName,
+		EventType:    "QUEUED",
+		StartTime:    &req.JobSubmissionTime,
+		EndTime:      &now,
+	})
 
 	return true
 }

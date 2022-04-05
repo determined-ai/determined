@@ -41,9 +41,8 @@ type (
 	pullImage struct {
 		cproto.PullSpec
 		Name         string
-		ResourcePool string
-		TaskID       string
 		TaskType     string
+		AllocationID model.AllocationID
 	}
 	runContainer struct {
 		cproto.RunSpec
@@ -132,8 +131,7 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
 			EndStats: false,
 			Stats: &model.TaskStats{
-				ResourcePool: msg.ResourcePool,
-				TaskID:       model.TaskID(msg.TaskID),
+				AllocationID: msg.AllocationID,
 				EventType:    "IMAGEPULL",
 			}})
 
@@ -141,8 +139,8 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 			ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
 				EndStats: true,
 				Stats: &model.TaskStats{
-					TaskID:    model.TaskID(msg.TaskID),
-					EventType: "IMAGEPULL",
+					AllocationID: msg.AllocationID,
+					EventType:    "IMAGEPULL",
 				}})
 		}()
 	}

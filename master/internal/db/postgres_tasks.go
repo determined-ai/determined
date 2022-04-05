@@ -350,8 +350,6 @@ WHERE task_id = $1
 // RecordTaskStartStats record start stats for tasks.
 func RecordTaskStartStats(stats *model.TaskStats) error {
 	db := Bun()
-	now := time.Now().UTC()
-	stats.StartTime = &now
 	_, err := db.NewInsert().Model(stats).Exec(context.TODO())
 	return err
 }
@@ -362,7 +360,7 @@ func RecordTaskEndStats(stats *model.TaskStats) error {
 	now := time.Now().UTC()
 	stats.EndTime = &now
 	_, err := db.NewUpdate().Model(stats).Column("end_time").Where(
-		"task_id = ? AND event_type = ? AND end_time IS NULL", stats.TaskID, stats.EventType,
+		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
 	).Exec(context.TODO())
 	return err
 }

@@ -86,16 +86,16 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
 		if !c.reattached {
+			taskLog := getBaseTaskLog(c.spec)
 			c.transition(ctx, cproto.Pulling)
 			pull := pullImage{
 				PullSpec:     c.spec.PullSpec,
 				Name:         c.spec.RunSpec.ContainerConfig.Image,
-				ResourcePool: c.ResourcePool,
-				TaskID:       c.spec.TaskID,
 				TaskType:     c.spec.TaskType,
+				AllocationID: model.AllocationID(*taskLog.AllocationID),
 			}
 			ctx.Tell(c.docker, pull)
-			c.baseTaskLog = getBaseTaskLog(c.spec)
+			c.baseTaskLog = taskLog
 		} else {
 			ctx.Tell(c.docker, reattachContainer{ID: c.Container.ID})
 		}
