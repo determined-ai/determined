@@ -15,22 +15,22 @@ import (
 )
 
 const (
-	defaultOtelEndpoint         = "localhost:4317"
-	defaultServiceName          = "determined-master"
-	OTEL_EXPORTER_OTLP_ENDPOINT = "OTEL_EXPORTER_OTLP_ENDPOINT"
+	defaultOtelEndpoint      = "localhost:4317"
+	defaultServiceName       = "determined-master"
+	otelExportedOtlpEndpoint = "OTEL_EXPORTER_OTLP_ENDPOINT"
 )
 
-// maintain a single tracer provider
+// maintain a single tracer provider.
 var tracer *sdktrace.TracerProvider
 
-// otelConfig initiates a new tracer and sets it as the default for otel
+// otelConfig initiates a new tracer and sets it as the default for otel.
 func otelConfig() *sdktrace.TracerProvider {
-	// avoid repeatedly re-creating the tracer
+	// avoid repeatedly re-creating the tracer.
 	if tracer != nil {
 		return tracer
 	}
 
-	endpoint := os.Getenv(OTEL_EXPORTER_OTLP_ENDPOINT)
+	endpoint := os.Getenv(otelExportedOtlpEndpoint)
 	if len(endpoint) == 0 {
 		endpoint = defaultOtelEndpoint
 	}
