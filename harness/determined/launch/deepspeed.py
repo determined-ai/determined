@@ -1,5 +1,5 @@
 """
-autodeepspeed.py is the launch layer for DeepSpeedTrial in Determined.
+deepspeed.py is the launch layer for DeepSpeedTrial in Determined.
 
 It launches the entrypoint script using DeepSpeed's launch process.
 """

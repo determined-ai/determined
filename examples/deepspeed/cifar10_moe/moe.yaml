@@ -3,7 +3,7 @@ debug: false
 hyperparameters:
   deepspeed_config: ds_config.json
   moe: true
-  num_experts: 
+  num_experts:
     - 2
   ep_world_size: 2
   mlp_type: standard
@@ -34,10 +34,11 @@ searcher:
   smaller_is_better: false
   max_length:
     epochs: 2
-entrypoint: 
+entrypoint:
   - python3
   - -m
-  - determined.launch.autodeepspeed
+  - determined.launch.deepspeed
+  - --trial
   - model_def:CIFARTrial
 checkpoint_policy: none
 max_restarts: 0
