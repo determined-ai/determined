@@ -78,41 +78,6 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
 
     const optionsExtended = uPlot.assign(
       {
-        cursor: {
-          bind: {
-            dblclick: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-              return (e: Event) => {
-                isZoomed.current = false;
-                handler(e);
-              };
-            },
-            mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-              return (e: MouseEvent) => {
-                mousePosition.current = [ e.clientX, e.clientY ];
-                handler(e);
-              };
-            },
-            mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-              return (e: MouseEvent) => {
-                if (!mousePosition.current) {
-                  handler(e);
-                  return;
-                }
-                if (distance(
-                  e.clientX,
-                  e.clientY,
-                  mousePosition.current[0],
-                  mousePosition.current[1],
-                ) > 5) {
-                  isZoomed.current = true;
-                }
-                mousePosition.current = undefined;
-                handler(e);
-              };
-            },
-          },
-          drag: { dist: 5, uni: 10, x: true, y: true },
-        },
         hooks: {
           ready: [ (chart: uPlot) => {
             chartRef.current = chart;
@@ -136,13 +101,9 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
              * changes, etc.
              */
             if (!scalesRef.current) scalesRef.current = {};
-            if (isZoomed.current) {
-              scalesRef.current[scaleKey] = uPlot.scales[scaleKey];
-              console.log(uPlot.scales);
 
-            } else {
-              delete scalesRef.current[scaleKey];
-            }
+            scalesRef.current[scaleKey] = uPlot.scales[scaleKey];
+
             if (Object.keys(scalesRef.current).length === 0) scalesRef.current = undefined;
           } ],
         },
@@ -152,7 +113,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       options,
     ) as uPlot.Options;
 
-    const plotChart = new uPlot(optionsExtended, normalizedData, chartDivRef.current);
+    const plotChart = new uPlot(optionsExtended, [], chartDivRef.current);
 
     return () => {
       console.log('chart destroy');
@@ -160,7 +121,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       chartRef.current = undefined;
     };
     // eslint-disable-next-linez
-  }, [ chartDivRef, hasData ]);
+  }, [ chartDivRef ]);
   // }, [ chartDivRef, hasData, options, normalizedData ]);
 
   /*
@@ -171,8 +132,8 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
     // console.log('data hook');
     // let bool = isZoomed.current;
     const bool = false;
-    chartRef.current.setData(normalizedData, bool);
-  }, [ normalizedData ]);
+    chartRef.current.setData(normalizedData, hasData);
+  }, [ hasData, normalizedData ]);
   //
   /*
    * When a focus index is provided, highlight applicable series.

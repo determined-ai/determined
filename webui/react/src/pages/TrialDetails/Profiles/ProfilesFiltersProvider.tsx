@@ -68,7 +68,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
   const [ tickThrottle, setTickThrottle ] = useState(false);
   useInterval(() => {
     setTickThrottle(!tickThrottle);
-  }, 20000);
+  }, 2000);
 
   /*
    * Set default filter settings.
