@@ -48,7 +48,8 @@ func otelConfig() *sdktrace.TracerProvider {
 	// Set the Tracer Provider and the W3C Trace Context propagator as globals
 	otel.SetTracerProvider(tracer)
 
-	// Register the trace context and baggage propagators so data is propagated across services/processes.
+	// Register the trace context and baggage propagators
+	// so data is propagated across services/processes.
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{},
