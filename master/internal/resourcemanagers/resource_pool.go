@@ -127,6 +127,12 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 		rp.IDToGroupActor[msg.JobID] = msg.Group
 	}
 	rp.taskList.AddTask(&msg)
+	ctx.Log().Infof("------------>   about to record queue start stats %s", msg.TaskID)
+	db.RecordTaskStartStats(model.TaskStats{
+		ResourcePool: rp.config.PoolName,
+		TaskID:       msg.TaskID,
+		EventType:    "QUEUED",
+	})
 }
 
 func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
@@ -160,6 +166,11 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 				containerID:  containerID,
 				devices:      devices,
 				resourcePool: rp.config.PoolName,
+			})
+			ctx.Log().Infof("------------>   about to record queue end stats %s", req.TaskID)
+			db.RecordTaskEndStats(model.TaskStats{
+				TaskID:    req.TaskID,
+				EventType: "QUEUED",
 			})
 		case error:
 			// Rollback previous allocations.
@@ -726,7 +737,6 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	spec.TaskType = logCtx["task-type"].(model.TaskType)
-	ctx.Log().Infof("------------> set task type to spec: %s..", logCtx["task-type"].(model.TaskType))
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{

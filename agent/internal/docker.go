@@ -138,7 +138,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 			}})
 
 		defer func() {
-			ctx.Log().Info("---------> about to record end status")
 			ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
 				EndStats: true,
 				Stats: &model.TaskStats{
