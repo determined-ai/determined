@@ -128,7 +128,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	}
 	rp.taskList.AddTask(&msg)
 	ctx.Log().Infof("------------>   about to record queue start stats %s", msg.TaskID)
-	db.RecordTaskStartStats(model.TaskStats{
+	db.RecordTaskStartStats(&model.TaskStats{
 		ResourcePool: rp.config.PoolName,
 		TaskID:       msg.TaskID,
 		EventType:    "QUEUED",
@@ -168,7 +168,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 				resourcePool: rp.config.PoolName,
 			})
 			ctx.Log().Infof("------------>   about to record queue end stats %s", req.TaskID)
-			db.RecordTaskEndStats(model.TaskStats{
+			db.RecordTaskEndStats(&model.TaskStats{
 				TaskID:    req.TaskID,
 				EventType: "QUEUED",
 			})
