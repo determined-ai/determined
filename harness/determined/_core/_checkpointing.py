@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterator, Optional, Tuple
 import determined as det
 from determined import _core, tensorboard
 from determined.common import storage
+from determined.common.api import bindings
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.core")
@@ -20,16 +21,15 @@ class Checkpointing:
         dist: _core.DistributedContext,
         storage_manager: storage.StorageManager,
         session: Session,
-        api_path: str,
-        static_metadata: Optional[Dict[str, Any]] = None,
+        task_id: str,
+        allocation_id: str,
         tbd_mgr: Optional[tensorboard.TensorboardManager] = None,
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
         self._session = session
-        self._static_metadata = static_metadata or {}
-        self._static_metadata["determined_version"] = det.__version__
-        self._api_path = api_path
+        self._task_id = task_id
+        self._allocation_id = allocation_id
         self._tbd_mgr = tbd_mgr
 
     @contextlib.contextmanager
@@ -99,32 +99,32 @@ class Checkpointing:
         """
         After having uploaded a checkpoint, report its existence to the master.
         """
-
         resources = resources or {}
         metadata = metadata or {}
-        required = {"latest_batch"}
-        allowed = required.union({"framework", "format", "total_records", "total_epochs"})
-        missing = [k for k in required if k not in metadata]
-        extra = [k for k in metadata.keys() if k not in allowed]
-        if missing:
+
+        if "latest_batch" not in metadata:
             raise ValueError(
-                "metadata for reported checkpoints, in the current implementation, requires all of "
-                f"the following items that have not been provided: {missing}"
-            )
-        if extra:
-            raise ValueError(
-                "metadata for reported checkpoints, in the current implementation, cannot support "
-                f"the following items that were provided: {extra}"
+                "metadata for reported checkpoints, in the current implementation, requires a "
+                "'latest_batch' item, which has not been provided"
             )
 
-        body = {
-            "uuid": uuid,
-            "resources": resources,
-            **self._static_metadata,
-            **metadata,
-        }
+        # XXX: is this really a good idea?
+        metadata = {"determined_version": det.__version__, **metadata}
+
+        ckpt = bindings.v1Checkpoint(
+            allocationId=self._allocation_id,
+            metadata=metadata,
+            resources=resources,
+            taskId=self._task_id,
+            training=bindings.v1CheckpointTrainingMetadata(),
+            uuid=uuid,
+        )
+
         logger.debug(f"_report_checkpoint({uuid})")
-        self._session.post(self._api_path, data=det.util.json_encode(body))
+        bindings.post_ReportCheckpoint(self._session, body=ckpt)
+
+        # XXX: need to figure out how to invoke the right json encoder! old code was:
+        # self._session.post(self._api_path, data=det.util.json_encode(body))
 
         # Also sync tensorboard.
         if self._tbd_mgr:
