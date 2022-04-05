@@ -100,6 +100,18 @@ func requireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Tria
 	return &tr
 }
 
+func requireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allocation {
+	a := model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tID)),
+		TaskID:       tID,
+		StartTime:    ptrs.Ptr(time.Now().UTC()),
+		State:        ptrs.Ptr(model.AllocationStateTerminated),
+	}
+	err := db.AddAllocation(&a)
+	require.NoError(t, err, "failed to add allocation")
+	return &a
+}
+
 func requireMockModel(t *testing.T, db *PgDB, user model.User) *modelv1.Model {
 	now := time.Now()
 	m := model.Model{
@@ -140,21 +152,4 @@ func requireMockMetrics(
 	err := db.AddValidationMetrics(context.TODO(), &m)
 	require.NoError(t, err)
 	return &m
-}
-
-func requireMockCheckpoint(
-	t *testing.T, db *PgDB, tr *model.Trial, latestBatch int,
-) *trialv1.CheckpointMetadata {
-	ckpt := trialv1.CheckpointMetadata{
-		TrialId:           int32(tr.ID),
-		Uuid:              uuid.NewString(),
-		Resources:         map[string]int64{"ok": 1.0},
-		Framework:         "some framework",
-		Format:            "some format",
-		DeterminedVersion: "1.0.0",
-		LatestBatch:       int32(latestBatch),
-	}
-	err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
-	require.NoError(t, err)
-	return &ckpt
 }

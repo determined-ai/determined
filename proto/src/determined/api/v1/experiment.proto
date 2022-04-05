@@ -209,20 +209,16 @@ message GetExperimentCheckpointsRequest {
     // Returns checkpoints sorted by UUID.
     SORT_BY_UUID = 1;
     // Returns checkpoints sorted by trial id.
-    SORT_BY_TRIAL_ID = 4;
+    SORT_BY_TRIAL_ID = 2;
     // Returns checkpoints sorted by batch number.
-    SORT_BY_BATCH_NUMBER = 6;
-    // Returns checkpoints sorted by start time.
-    SORT_BY_START_TIME = 7;
+    SORT_BY_BATCH_NUMBER = 3;
     // Returns checkpoints sorted by end time.
-    SORT_BY_END_TIME = 8;
-    // Returns checkpoints sorted by validation state.
-    SORT_BY_VALIDATION_STATE = 15;
+    SORT_BY_END_TIME = 4;
     // Returns checkpoints sorted by state.
-    SORT_BY_STATE = 16;
+    SORT_BY_STATE = 5;
     // Returns checkpoints sorted by the experiment's `searcher.metric`
     // configuration setting.
-    SORT_BY_SEARCHER_METRIC = 17;
+    SORT_BY_SEARCHER_METRIC = 6;
   }
   // The experiment id.
   int32 id = 1;
@@ -236,8 +232,6 @@ message GetExperimentCheckpointsRequest {
   // Limit the number of checkpoints. A value of 0 denotes no limit.
   int32 limit = 5;
 
-  // Limit the checkpoints to those that match the validation states.
-  repeated determined.checkpoint.v1.State validation_states = 6;
   // Limit the checkpoints to those that match the states.
   repeated determined.checkpoint.v1.State states = 7;
 }

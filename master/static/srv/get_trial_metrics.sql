@@ -24,15 +24,15 @@ FROM
             FROM
               (SELECT c.id,
                       c.trial_id,
-                      c.total_batches,
+                      c.latest_batch AS total_batches,
                       c.state,
-                      c.end_time,
+                      c.report_time AS end_time,
                       c.uuid,
                       c.resources,
                       c.metadata
-               FROM checkpoints c
+               FROM checkpoints_view c
                WHERE c.trial_id = t.id
-                 AND c.total_batches = s.total_batches ) r3) AS CHECKPOINT,
+                 AND c.latest_batch = s.total_batches ) r3) AS CHECKPOINT,
 
            (SELECT row_to_json(r4)
             FROM
