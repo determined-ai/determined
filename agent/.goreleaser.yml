@@ -5,6 +5,8 @@ snapshot:
 
 builds:
   - main: ./cmd/determined-agent
+    id: determined-agent
+    binary: determined-agent
     goos:
       - linux
       - darwin
