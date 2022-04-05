@@ -200,11 +200,6 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
             "arguments must be terminated by a `--` argument."
         ),
     )
-    parser.add_argument(
-        "--autohorovod",
-        action="store_true",
-        help="run the script directly (without horovodrun) in single-slot task containers",
-    )
     # For legacy Trial classes.
     parser.add_argument(
         "--trial",
@@ -220,6 +215,21 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
         nargs=argparse.REMAINDER,
         help="script to launch for training",
     )
+
+    # --autohorovod is an internal-only flag.  What it does is it causes the code skip the
+    # horovodrun wrapper when slots_per_trial == 1.  This has two effects:
+    # 1. the execution stack for non-distributed training is simpler, because horovodrun would only
+    #    add complexity, and
+    # 2. the training code becomes more complex because it has to be aware of multi-vs-single-slot
+    #    configuration and avoiding using horovod in the single-slot case.
+    # In Determined-owned training loops, we pay the code complexity cost so that the execution of
+    # single-slot training stays as simple as possible.  Determined users should not have to pay for
+    # dtrain if they don't use it.  However, if a user is writing a custom horovod-based training
+    # script and using this det.launch.horovod module as their launch layer, presumably they are
+    # already comfortable with horovod and they are not likely to want to pay the code complexity
+    # cost.  That is why this flag is internal; we don't really expect any users to ever use it.
+    parser.add_argument("--autohorovod", action="store_true", help=argparse.SUPPRESS)
+
     parsed = parser.parse_args(args)
 
     script = parsed.script or []
