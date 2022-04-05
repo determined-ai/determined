@@ -4,6 +4,7 @@ import math
 from typing import Iterator, Optional
 
 import determined as det
+from determined import _core
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.core")
@@ -32,10 +33,12 @@ class SearcherOp:
         session: Session,
         trial_id: int,
         length: int,
+        is_chief: bool,
     ) -> None:
         self._session = session
         self._trial_id = trial_id
         self._length = length
+        self._is_chief = is_chief
         self._completed = False
 
     @property
@@ -43,6 +46,8 @@ class SearcherOp:
         return self._length
 
     def report_progress(self, length: float) -> None:
+        if not self._is_chief:
+            raise RuntimeError("you must only call op.report_progress() from the chief worker")
         if self._completed and length != self._length:
             raise RuntimeError("you must not call op.report_progress() after op.complete()")
         logger.debug(f"op.report_progress({length})")
@@ -52,6 +57,8 @@ class SearcherOp:
         )
 
     def complete(self, searcher_metric: float) -> None:
+        if not self._is_chief:
+            raise RuntimeError("you must only call op.complete() from the chief worker")
         if self._completed:
             raise RuntimeError("you may only call op.complete() once")
         if math.isnan(searcher_metric):
@@ -119,12 +126,14 @@ class Searcher:
     def __init__(
         self,
         session: Session,
+        dist: _core.DistributedContext,
         trial_id: int,
         run_id: int,
         allocation_id: str,
         units: Optional[Unit] = None,
     ) -> None:
         self._session = session
+        self._dist = dist
         self._trial_id = trial_id
         self._run_id = run_id
         self._allocation_id = allocation_id
@@ -139,24 +148,47 @@ class Searcher:
 
         # grpc-gateway encodes uint64 as a string, since it is bigger than a JavaScript `number`.
         length = int(body["op"]["validateAfter"]["length"])
-        return SearcherOp(self._session, self._trial_id, length=length)
+        is_chief = self._dist.rank == 0
+        return SearcherOp(self._session, self._trial_id, length=length, is_chief=is_chief)
 
-    def ops(self, auto_ack: bool = True) -> Iterator[SearcherOp]:
+    def ops(self, chief_only: bool = False, auto_ack: bool = True) -> Iterator[SearcherOp]:
         """
         Iterate through all the ops this searcher has to offer.
 
-        The caller must call op.complete() on each operation.
+        During a multi-worker task, when chief_only=False (the default), the chief will fetch
+        operations from the Determined master and communicate each op to the other workers, which
+        makes calling next() on the iterator of ops a synchronization point across workers.
+
+        The chief, and only the chief, must call op.complete() on each operation.  This is true
+        regardless of the chief_only setting, since the Determined master needs a clear, unambiguous
+        report of when an operation is completed.
         """
 
-        while True:
-            op = self._get_searcher_op()
-            if op is None:
-                if auto_ack:
-                    self.acknowledge_out_of_ops()
-                break
-            yield op
-            if not op._completed:
-                raise RuntimeError("you must call op.complete() on each operation")
+        if self._dist.rank == 0:
+            # Chief gets ops from master.
+            while True:
+                op = self._get_searcher_op()
+                if not chief_only:
+                    # Broadcast op.length (or None) to workers.
+                    _ = self._dist._zmq_broadcast(op and op.length)
+                if op is None:
+                    if auto_ack:
+                        self.acknowledge_out_of_ops()
+                    break
+                yield op
+                if not op._completed:
+                    raise RuntimeError("you must call op.complete() on each operation")
+        else:
+            if chief_only:
+                raise RuntimeError(
+                    "you cannot call searcher.ops(chief_only=True) from a non-chief worker."
+                )
+            # Worker gets ops from chief.
+            while True:
+                op_length = self._dist._zmq_broadcast(None)
+                if op_length is None:
+                    break
+                yield SearcherOp(self._session, self._trial_id, length=op_length, is_chief=False)
 
     def acknowledge_out_of_ops(self) -> None:
         """
@@ -198,16 +230,21 @@ class Searcher:
 
 
 class DummySearcherOp(SearcherOp):
-    def __init__(self, length: int) -> None:
+    def __init__(self, length: int, is_chief: bool) -> None:
         self._length = length
+        self._is_chief = is_chief
         self._completed = False
 
     def report_progress(self, length: float) -> None:
+        if not self._is_chief:
+            raise RuntimeError("you must only call op.report_progress() from the chief worker")
         if self._completed and length != self._length:
             raise RuntimeError("you must not call op.report_progress() after op.complete()")
         logger.info("progress report: {length}/{self._length}")
 
     def complete(self, searcher_metric: float) -> None:
+        if not self._is_chief:
+            raise RuntimeError("you must only call op.complete() from the chief worker")
         if self._completed:
             raise RuntimeError("you may only call op.complete() once")
         if math.isnan(searcher_metric):
@@ -219,14 +256,34 @@ class DummySearcherOp(SearcherOp):
 class DummySearcher(Searcher):
     """Yield a singe search op.  We need a way for this to be configurable."""
 
-    def __init__(self, length: int = 1) -> None:
+    def __init__(self, dist: _core.DistributedContext, length: int = 1) -> None:
+        self._dist = dist
         self._length = length
 
-    def ops(self, auto_ack: bool = True) -> Iterator[SearcherOp]:
-        op = DummySearcherOp(self._length)
-        yield op
-        if not op._completed:
-            raise RuntimeError("you must call op.complete() on each operation")
+    def ops(self, chief_only: bool = False, auto_ack: bool = True) -> Iterator[SearcherOp]:
+        # Force the same synchronization behavior in the DummySearcher as the real one.
+        if self._dist.rank == 0:
+            # Chief makes a dummy op.
+            op = DummySearcherOp(self._length, self._dist.rank == 0)
+            if not chief_only:
+                # Broadcast op to workers.
+                _ = self._dist._zmq_broadcast(op and op.length)
+            yield op
+            if not op._completed:
+                raise RuntimeError("you must call op.complete() on each operation")
+            if not chief_only:
+                _ = self._dist._zmq_broadcast(None)
+        else:
+            if chief_only:
+                raise RuntimeError(
+                    "you cannot call searcher.ops(chief_only=True) from a non-chief worker."
+                )
+            # Worker gets ops from chief.
+            while True:
+                op_length = self._dist._zmq_broadcast(None)
+                if op_length is None:
+                    break
+                yield DummySearcherOp(op_length, False)
 
     def acknowledge_out_of_ops(self) -> None:
         pass
