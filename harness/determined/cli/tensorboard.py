@@ -59,7 +59,8 @@ def start_tensorboard(args: Namespace) -> None:
 
 @authentication.required
 def open_tensorboard(args: Namespace) -> None:
-    resp = api.get(args.master, "api/v1/tensorboards/{}".format(args.tensorboard_id)).json()[
+    tensorboard_id = command.expand_uuid_prefixes(args)
+    resp = api.get(args.master, "api/v1/tensorboards/{}".format(tensorboard_id)).json()[
         "tensorboard"
     ]
     check_eq(resp["state"], "STATE_RUNNING", "TensorBoard must be in a running state")
@@ -96,7 +97,7 @@ args_description = [
         ]),
         Cmd("config", command.config,
             "display TensorBoard config", [
-                Arg("id", type=str, help="TensorBoard ID")
+                Arg("tensorboard_id", type=str, help="TensorBoard ID")
             ]),
         Cmd("open", open_tensorboard,
             "open existing TensorBoard instance", [
