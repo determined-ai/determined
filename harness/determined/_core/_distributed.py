@@ -181,7 +181,7 @@ class DistributedContext:
             cross_rank=hvd.cross_rank(),
             cross_size=hvd.cross_size(),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_default_port_offset(),
+            port_offset=_get_training_port_offset(),
         )
 
     @classmethod
@@ -202,7 +202,7 @@ class DistributedContext:
             cross_rank=int(os.environ["CROSS_RANK"]),
             cross_size=int(os.environ["CROSS_SIZE"]),
             chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
-            port_offset=_get_default_port_offset(),
+            port_offset=_get_training_port_offset(),
         )
 
     def close(self) -> None:
@@ -407,7 +407,7 @@ class DummyDistributed(DistributedContext):
         )
 
 
-def _get_default_port_offset() -> int:
+def _get_training_port_offset() -> int:
     info = det.get_cluster_info()
     if info and info.task_type == "TRIAL":
         return info.trial._unique_port_offset
