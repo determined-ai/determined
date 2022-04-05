@@ -14,7 +14,7 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.autohorovod model_def:CIFARTrial"
+        config, "python3 -m determined.launch.horovod --autohorovod --trial model_def:CIFARTrial"
     )
 
     experiment_id = exp.run_basic_test_with_temp_config(

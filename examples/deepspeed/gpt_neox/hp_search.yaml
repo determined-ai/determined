@@ -9,13 +9,13 @@ hyperparameters:
       - determined_cluster.yml
   overwrite_values:
     log_interval: 10
-    pipe_parallel_size: 
+    pipe_parallel_size:
       type:  categorical
       vals:
         - 2
         - 4
         - 8
-    model_parallel_size: 
+    model_parallel_size:
       type:  categorical
       vals:
         - 2
@@ -55,8 +55,9 @@ min_validation_period:
 # Disabling checkpointing so that interval time is correct.
 checkpoint_policy: none
 max_restarts: 2
-entrypoint: 
+entrypoint:
   - python3
   - -m
-  - determined.launch.autodeepspeed
+  - determined.launch.deepspeed
+  - --trial
   - gpt2_trial:GPT2Trial

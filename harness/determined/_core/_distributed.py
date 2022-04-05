@@ -1,11 +1,13 @@
 import contextlib
 import functools
 import logging
+import os
 import shutil
 import socket
 import tempfile
 from typing import Any, Callable, List, Optional
 
+import determined as det
 from determined import constants, ipc
 
 
@@ -21,7 +23,7 @@ class DistributedContext:
      - cross_rank: the index of this machine in the entire job
      - cross_size: the number of this machines in the entire job
 
-    Additionally, any time that cross_size > 0, you must also provide:
+    Additionally, any time that cross_size > 1, you must also provide:
      - chief_ip: the ip address to reach the chief worker (where rank==0)
     """
 
@@ -154,6 +156,55 @@ class DistributedContext:
             logging.debug(f"Local Worker setting up server with urls {pub_url}/{pull_url}.")
             self._local_worker_zmq = ipc.ZMQBroadcastClient(pub_url, pull_url)
             self._local_worker_zmq.safe_start()
+
+    @classmethod
+    def from_horovod(cls, hvd: Any, chief_ip: Optional[str] = None) -> "DistributedContext":
+        """
+        Create a DistributedContext using the provided hvd module to determine rank information.
+
+        Example:
+
+        .. code:: python
+
+           import horovod.torch as hvd
+           hvd.init()
+           distributed = DistributedContext.from_horovod(hvd)
+
+        The IP address for the chief worker is required whenver hvd.cross_size() > 1.  The value may
+        be provided via the chief_ip arugment or the DET_CHIEF_IP environment variable.
+        """
+
+        return cls(
+            rank=hvd.rank(),
+            size=hvd.size(),
+            local_rank=hvd.local_rank(),
+            local_size=hvd.local_size(),
+            cross_rank=hvd.cross_rank(),
+            cross_size=hvd.cross_size(),
+            chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
+            port_offset=_get_training_port_offset(),
+        )
+
+    @classmethod
+    def from_deepspeed(cls, chief_ip: Optional[str] = None) -> "DistributedContext":
+        """
+        Create a DistributedContext using the standard deepspeed environment variables to determine
+        rank information.
+
+        The IP address for the chief worker is required whenver CROSS_SIZE > 1.  The value may
+        be provided via the chief_ip arugment or the DET_CHIEF_IP environment variable.
+        """
+
+        return cls(
+            rank=int(os.environ["RANK"]),
+            size=int(os.environ["WORLD_SIZE"]),
+            local_rank=int(os.environ["LOCAL_RANK"]),
+            local_size=int(os.environ["LOCAL_SIZE"]),
+            cross_rank=int(os.environ["CROSS_RANK"]),
+            cross_size=int(os.environ["CROSS_SIZE"]),
+            chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
+            port_offset=_get_training_port_offset(),
+        )
 
     def close(self) -> None:
         # if statements in close() mirror the if statements of _init_ipc().
@@ -355,3 +406,10 @@ class DummyDistributed(DistributedContext):
             cross_rank=0,
             cross_size=1,
         )
+
+
+def _get_training_port_offset() -> int:
+    info = det.get_cluster_info()
+    if info and info.task_type == "TRIAL":
+        return info.trial._unique_port_offset
+    return 0

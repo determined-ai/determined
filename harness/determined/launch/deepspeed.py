@@ -1,5 +1,5 @@
 """
-autodeepspeed.py is the launch layer for DeepSpeedTrial in Determined.
+deepspeed.py is the launch layer for DeepSpeedTrial in Determined.
 
 It launches the entrypoint script using DeepSpeed's launch process.
 """
@@ -75,16 +75,6 @@ def create_log_redirect_cmd() -> List[str]:
     ]
 
 
-def create_harness_cmd(train_entrypoint: str) -> List[str]:
-    return [
-        "python3",
-        "-m",
-        "determined.exec.harness",
-        "--train-entrypoint",
-        train_entrypoint,
-    ]
-
-
 def create_sshd_cmd() -> List[str]:
     return [
         "/usr/sbin/sshd",
@@ -128,7 +118,7 @@ def create_run_command(master_address: str, hostfile_path: str) -> List[str]:
     return deepspeed_process_cmd
 
 
-def main(train_entrypoint: str) -> int:
+def main(script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
@@ -198,7 +188,7 @@ def main(train_entrypoint: str) -> int:
 
     log_redirect_cmd = create_log_redirect_cmd()
 
-    harness_cmd = create_harness_cmd(train_entrypoint)
+    harness_cmd = script
 
     logging.debug(f"chief worker calling deepspeed with args: {cmd[1:]} ...")
 
@@ -236,8 +226,50 @@ def main(train_entrypoint: str) -> int:
         sshd_process.wait()
 
 
+def parse_args(args: List[str]) -> List[str]:
+    # Then parse the rest of the commands normally.
+    parser = argparse.ArgumentParser(
+        usage="%(prog)s (--trial TRIAL)|(SCRIPT...)",
+        description=(
+            "Launch a script under deepspeed on a Determined cluster, with automatic handling of "
+            "IP addresses, sshd containers, and shutdown mechanics."
+        ),
+    )
+    # For legacy Trial classes.
+    parser.add_argument(
+        "--trial",
+        help=(
+            "use a Trial class as the entrypoint to training.  When --trial is used, the SCRIPT "
+            "positional argument must be omitted."
+        ),
+    )
+    # For training scripts.
+    parser.add_argument(
+        "script",
+        metavar="SCRIPT...",
+        nargs=argparse.REMAINDER,
+        help="script to launch for training",
+    )
+    parsed = parser.parse_args(args)
+
+    script = parsed.script or []
+
+    if parsed.trial is not None:
+        if script:
+            # When --trial is set, any other args are an error.
+            parser.print_usage()
+            print("error: extra arguments to --trial:", script, file=sys.stderr)
+            sys.exit(1)
+        script = det.util.legacy_trial_entrypoint_to_script(parsed.trial)
+    elif not script:
+        # There needs to be at least one script argument.
+        parser.print_usage()
+        print("error: empty script is not allowed", file=sys.stderr)
+        sys.exit(1)
+
+    return script
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("train_entrypoint", type=str)
-    args = parser.parse_args()
-    sys.exit(main(args.train_entrypoint))
+    script = parse_args(sys.argv[1:])
+    sys.exit(main(script))

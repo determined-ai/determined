@@ -40,8 +40,9 @@ searcher:
 min_validation_period:
     batches: 1000
 max_restarts: 0
-entrypoint: 
+entrypoint:
   - python3
   - -m
-  - determined.launch.autodeepspeed
+  - determined.launch.deepspeed
+  - --trial
   - gpt2_trial:GPT2Trial

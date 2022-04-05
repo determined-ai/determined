@@ -95,11 +95,11 @@ def init(
     cert = certs.default_load(info.master_url)
     session = Session(info.master_url, None, None, cert)
 
-    distributed = distributed or _core.DummyDistributed()
+    if distributed is None:
+        if len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
+            raise ValueError("you must provide a valid DistributedContext for a multi-slot task")
 
-    naddrs = len(info.container_addrs)
-    if naddrs > 1 and isinstance(distributed, _core.DummyDistributed):
-        raise ValueError("you must provide a valid DistributedContext for a multi-container task")
+    distributed = distributed or _core.DummyDistributed()
 
     preemption = _core.Preemption(session, info.allocation_id, distributed)
 
