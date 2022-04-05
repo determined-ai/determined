@@ -14,7 +14,7 @@ import determined.launch.deepspeed
 from determined import constants, launch
 
 
-def test_parse_args():
+def test_parse_args() -> None:
     positive_test_cases = {
         "--trial my_module:MyTrial": (
             [],

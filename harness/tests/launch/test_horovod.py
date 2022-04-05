@@ -1,10 +1,9 @@
 import contextlib
 import io
 import os
-import subprocess
 import sys
 import time
-from typing import Any, Iterator, List
+from typing import Iterator, List
 from unittest import mock
 
 import pytest
@@ -16,7 +15,7 @@ from determined.common.api import certs
 from tests.experiment import utils  # noqa: I100
 
 
-def test_parse_args():
+def test_parse_args() -> None:
     positive_test_cases = {
         "--trial my_module:MyTrial": (
             [],
@@ -83,7 +82,9 @@ def test_horovod_chief(
     hvd_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
 
-    pid_server_cmd = launch.horovod.create_hvd_pid_server_cmd(info.allocation_id, len(info.slot_ids))
+    pid_server_cmd = launch.horovod.create_hvd_pid_server_cmd(
+        info.allocation_id, len(info.slot_ids)
+    )
 
     hvd_cmd = horovod.create_run_command(
         num_proc_per_machine=len(info.slot_ids),
@@ -129,7 +130,6 @@ def test_horovod_chief(
         mock_proc.wait.assert_called_once()
 
 
-
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
 @mock.patch("determined.common.api.post")
@@ -139,13 +139,13 @@ def test_sshd_worker(
     mock_popen: mock.MagicMock,
 ) -> None:
     info = make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, num_slots=1)
-    experiment_config = info.trial._config
     mock_cluster_info.return_value = info
     hvd_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
 
     pid_server_cmd, run_sshd_cmd = launch.horovod.create_sshd_worker_cmd(
-        info.allocation_id, len(info.slot_ids),
+        info.allocation_id,
+        len(info.slot_ids),
     )
 
     launch_cmd = pid_server_cmd + run_sshd_cmd

@@ -211,7 +211,7 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
         help=(
             "use a Trial class as the entrypoint to training.  When --trial is used, the SCRIPT "
             "positional argument must be omitted."
-        )
+        ),
     )
     # For training scripts.
     parser.add_argument(
