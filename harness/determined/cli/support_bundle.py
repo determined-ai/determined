@@ -29,7 +29,11 @@ def write_trial_logs(args,trial_id, output_dir):  #difference between this trial
     trial_logs = api.task_logs(args.master, trial_id)
     # use trial logs to get the experiment id 
     file_name = 'trial_logs'
-    create_json_file_in_dir(trial_logs,file_name, output_dir)
+    trial_logs_list = []
+    for log in trial_logs: 
+        trial_logs_list.append(log)
+
+    create_json_file_in_dir(trial_logs_list,file_name, output_dir)
     return file_name
 
 def write_master_logs(args, trial_id, output_dir):
