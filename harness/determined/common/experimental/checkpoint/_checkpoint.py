@@ -398,7 +398,7 @@ class Checkpoint(object):
             data.get("experiment_config", data.get("experimentConfig")),
             data.get("experiment_id", data.get("experimentId")),
             data.get("trial_id", data.get("trialId")),
-            data["hparams"],
+            data["training"].get("hparams"),
             data.get("batch_number", data.get("batchNumber")),
             data.get("start_time", data.get("startTime")),
             data.get("end_time", data.get("endTime")),
