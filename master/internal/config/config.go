@@ -168,6 +168,11 @@ func (c Config) Printable() ([]byte, error) {
 	if c.Telemetry.SegmentWebUIKey != "" {
 		c.Telemetry.SegmentWebUIKey = hiddenValue
 	}
+	if c.TaskContainerDefaults.RegistryAuth != nil {
+		if c.TaskContainerDefaults.RegistryAuth.Password != "" {
+			c.TaskContainerDefaults.RegistryAuth.Password = hiddenValue
+		}
+	}
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
 
