@@ -1,5 +1,5 @@
 import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd';
-import React, { ReactNode, useCallback, useMemo, useRef } from 'react';
+import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { useStore } from 'contexts/Store';
@@ -15,11 +15,12 @@ import css from './ManageJob.module.scss';
 const { Option } = Select;
 
 interface Props {
+  initialPool: string;
   job: Job;
   jobs: Job[];
   onFinish?: () => void;
+  rpStats: RPStats[];
   schedulerType: api.V1SchedulerType;
-  selectedRPStats: RPStats;
 }
 
 /*
@@ -67,10 +68,13 @@ const formValuesToUpdate = (
   }
 };
 
-const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, schedulerType }) => {
+const ManageJob: React.FC<Props> = (
+  { onFinish, rpStats, job, jobs, schedulerType, initialPool },
+) => {
   const formRef = useRef <FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
   const { resourcePools } = useStore();
+  const [ selectedPoolName, setSelectedPoolName ] = useState(initialPool);
 
   const details = useMemo(() => {
     interface Item {
@@ -120,8 +124,12 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
   }, [ job, isOrderedQ ]);
 
   const currentPool = useMemo(() => {
-    return resourcePools.find(rp => rp.name === selectedRPStats.resourcePool);
-  }, [ resourcePools, selectedRPStats.resourcePool ]);
+    return resourcePools.find(rp => rp.name === selectedPoolName);
+  }, [ resourcePools, selectedPoolName ]);
+
+  const currentPoolStats = useMemo(() => {
+    return rpStats.find(rp => rp.resourcePool === selectedPoolName);
+  }, [ rpStats, selectedPoolName ]);
 
   const poolDetails = useMemo(() => {
     return (
@@ -130,13 +138,18 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
           {currentPool?.slotsUsed} / {currentPool?.slotsAvailable} (used / total)
           <br />
           Jobs in queue:
-          {selectedRPStats.stats.queuedCount + selectedRPStats.stats.scheduledCount}
+          {(currentPoolStats?.stats.queuedCount ?? 0) +
+          (currentPoolStats?.stats.scheduledCount ?? 0)}
           <br />
           Spot instance pool: {!!currentPool?.details.aws?.spotEnabled + ''}
         </p>
       </div>
     );
-  }, [ currentPool, selectedRPStats ]);
+  }, [ currentPool, currentPoolStats ]);
+
+  const handleUpdateResourcePool = useCallback((changedValues) => {
+    if (changedValues.resourcePool) setSelectedPoolName(changedValues.resourcePool);
+  }, []);
 
   const onOk = useCallback(
     async () => {
@@ -178,12 +191,13 @@ const ManageJob: React.FC<Props> = ({ onFinish, selectedRPStats, job, jobs, sche
         initialValues={{
           position: job.summary.jobsAhead + 1,
           priority: job.priority,
-          resourcePool: selectedRPStats.resourcePool,
+          resourcePool: initialPool,
           weight: job.weight,
         }}
         labelCol={{ span: 6 }}
         name="form basic"
-        ref={formRef}>
+        ref={formRef}
+        onValuesChange={handleUpdateResourcePool}>
         <Form.Item
           extra="Priority is a whole number from 1 to 99 with 1 being the highest priority."
           hidden={schedulerType !== api.V1SchedulerType.PRIORITY}
