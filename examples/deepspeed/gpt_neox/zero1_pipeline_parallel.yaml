@@ -25,7 +25,7 @@ environment:
     environment_variables:
         - NCCL_DEBUG=INFO
         # You may need to modify this to match your network configuration.
-        - NCCL_SOCKET_IFNAME=ens
+        - NCCL_SOCKET_IFNAME=ens,eth,ib
     force_pull_image: true
     image:
       gpu: liamdetermined/gpt-neox
