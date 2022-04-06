@@ -230,7 +230,7 @@ export const paths = {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
   projectDetails: (projectId: number | string): string => {
-    return `projects/${projectId}`;
+    return `/projects/${projectId}`;
   },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
