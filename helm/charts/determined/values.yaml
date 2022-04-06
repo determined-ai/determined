@@ -116,7 +116,7 @@ checkpointStorage:
 # Distributed tasks with sizes that are not divisible by `maxSlotsPerPod` are never scheduled. If
 # you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set `maxSlotsPerPod` to
 # the greatest common divisor of all the sizes (4, in that case).
-maxSlotsPerPod: 1
+maxSlotsPerPod:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
@@ -198,7 +198,7 @@ telemetry:
 ## Configure the default Determined scheduler
 ## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
 ## scheduling with preemption
-defaultScheduler: preemption
+# defaultScheduler: preemption
 
 ## Configure settings about how Determined launches the Fluentbit sidecar.
 # fluent:

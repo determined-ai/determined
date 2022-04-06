@@ -104,8 +104,6 @@ func (j jobSortState) RecoverJobPosition(jobID model.JobID, position decimal.Dec
 	j[jobID] = position
 }
 
-func (j jobSortState) OrderedList() 
-
 func initalizeJobSortState() jobSortState {
 	state := make(jobSortState)
 	state[job.HeadAnchor] = decimal.New(1, job.DecimalExp)
