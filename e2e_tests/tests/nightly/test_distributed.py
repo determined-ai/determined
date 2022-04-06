@@ -224,3 +224,12 @@ def test_gpt_neox_zero_3D_parallel() -> None:
     config = conf.set_min_validation_period(config, {"batches": 100})
 
     exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
+
+
+@pytest.mark.deepspeed
+@pytest.mark.gpu_required
+def test_deepspeed_dcgan() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("dcgan/mnist.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("dcgan"), 1)
