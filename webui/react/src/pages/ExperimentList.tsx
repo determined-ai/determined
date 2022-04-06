@@ -8,7 +8,7 @@ import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, {
-  ColumnDefs,
+  ColumnDef,
   InteractiveTableSettings,
 } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
@@ -47,7 +47,6 @@ import {
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { sentenceToCamelCase } from 'utils/string';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
@@ -61,7 +60,12 @@ import settingsConfig, {
 
 const filterKeys: Array<keyof ExperimentListSettings> = [ 'label', 'search', 'state', 'user' ];
 
-type ExperimentColumnDefs = ColumnDefs<ExperimentColumnName, ExperimentItem>
+/*
+ * This indicates that the cell contents are rightClickable
+ * and we should disable custom context menu on cell context hover
+ */
+const onRightClickableCell = () =>
+  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
 const ExperimentList: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -286,7 +290,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ ]);
 
-  const columnDefs = useMemo(() => {
+  const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
         compact
@@ -318,113 +322,83 @@ const ExperimentList: React.FC = () => {
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null
     );
 
-    const tableColumns: ExperimentColumnDefs = {
-      action:
-      {
-        align: 'right',
-        className: 'fullCell',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-        fixed: 'right',
-        key: 'action',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: actionRenderer,
-        title: '',
-        width: DEFAULT_COLUMN_WIDTHS['action' as ExperimentColumnName],
-      },
-      archived:
-      {
-        dataIndex: 'archived',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
-        key: 'archived',
-        render: checkmarkRenderer,
-        title: 'Archived',
-      },
-      description:
-      {
-        dataIndex: 'description',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: descriptionRenderer,
-        title: 'Description',
-      },
-      duration:
-      {
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
-        key: 'duration',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: expermentDurationRenderer,
-        title: 'Duration',
-      },
-      forkedFrom:
-      {
-        dataIndex: 'forkedFrom',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
-        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: forkedFromRenderer,
-        sorter: true,
-        title: 'Forked From',
-      },
-      id:
+    return [
       {
         dataIndex: 'id',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
         key: V1GetExperimentsRequestSortBy.ID,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        onCell: onRightClickableCell,
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
       },
-      name:
       {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: settings => !!settings.search,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.search,
         key: V1GetExperimentsRequestSortBy.NAME,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        onCell: onRightClickableCell,
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
       },
-      progress:
       {
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
-        key: V1GetExperimentsRequestSortBy.PROGRESS,
-        render: experimentProgressRenderer,
+        dataIndex: 'description',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
+        onCell: onRightClickableCell,
+        render: descriptionRenderer,
+        title: 'Description',
+      },
+      {
+        dataIndex: 'tags',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
+        filterDropdown: labelFilterDropdown,
+        filters: labels.map(label => ({ text: label, value: label })),
+        isFiltered: (settings: ExperimentListSettings) => !!settings.label,
+        key: 'labels',
+        onCell: onRightClickableCell,
+        render: tagsRenderer,
+        title: 'Tags',
+      },
+      {
+        dataIndex: 'forkedFrom',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
+        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        onCell: onRightClickableCell,
+        render: forkedFromRenderer,
         sorter: true,
-        title: 'Progress',
+        title: 'Forked From',
       },
-      resourcePool:
       {
-        dataIndex: 'resourcePool',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
-        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        sorter: true,
-        title: 'Resource Pool',
-      },
-      searcherType:
-      {
-        dataIndex: 'searcherType',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
-        key: 'searcherType',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        title: 'Searcher Type',
-      },
-      startTime:
-      {
+        dataIndex: 'startTime',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
         key: V1GetExperimentsRequestSortBy.STARTTIME,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        onCell: onRightClickableCell,
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
         title: 'Start Time',
       },
-      state:
       {
+        dataIndex: 'duration',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
+        key: 'duration',
+        onCell: onRightClickableCell,
+        render: expermentDurationRenderer,
+        title: 'Duration',
+      },
+      {
+        dataIndex: 'numTrials',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['numTrials'],
+        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        onCell: onRightClickableCell,
+        sorter: true,
+        title: 'Trials',
+      },
+      {
+        dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
@@ -445,41 +419,60 @@ const ExperimentList: React.FC = () => {
         sorter: true,
         title: 'State',
       },
-      tags:
       {
-        dataIndex: 'labels',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['tags' as ExperimentColumnName],
-        filterDropdown: labelFilterDropdown,
-        filters: labels.map(label => ({ text: label, value: label })),
-        isFiltered: settings => !!settings.label,
-        key: 'labels',
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
-        render: tagsRenderer,
-        title: 'Tags',
+        dataIndex: 'searcherType',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
+        key: 'searcherType',
+        onCell: onRightClickableCell,
+        title: 'Searcher Type',
       },
-      trials:
       {
-        dataIndex: 'numTrials',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['trials' as ExperimentColumnName],
-        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
-        onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
+        dataIndex: 'resourcePool',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
+        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        onCell: onRightClickableCell,
         sorter: true,
-        title: 'Trials',
+        title: 'Resource Pool',
       },
-      user:
       {
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['user' as ExperimentColumnName],
+        dataIndex: 'progress',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
+        key: V1GetExperimentsRequestSortBy.PROGRESS,
+        render: experimentProgressRenderer,
+        sorter: true,
+        title: 'Progress',
+      },
+      {
+        dataIndex: 'archived',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
+        key: 'archived',
+        render: checkmarkRenderer,
+        title: 'Archived',
+      },
+      {
+        dataIndex: 'user',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
-        isFiltered: settings => !!settings.user,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
         sorter: true,
         title: 'User',
       },
-    };
-
-    return tableColumns;
+      {
+        align: 'right',
+        className: 'fullCell',
+        dataIndex: 'action',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        fixed: 'right',
+        key: 'action',
+        onCell: onRightClickableCell,
+        render: actionRenderer,
+        title: '',
+        width: DEFAULT_COLUMN_WIDTHS['action'],
+      },
+    ] as ColumnDef<ExperimentItem>[];
 
   }, [
     user,
@@ -497,10 +490,12 @@ const ExperimentList: React.FC = () => {
   ]);
 
   const transferColumns = useMemo(() => {
-    return Object.values(columnDefs)
-      .filter((column) => column.title !== '' && column.title !== 'Archived')
-      .map((column) => sentenceToCamelCase(column.title as string));
-  }, [ columnDefs ]);
+    return columns
+      .filter(
+        (column) => column.title !== '' && column.title !== 'Action' && column.title !== 'Archived',
+      )
+      .map((column) => column.dataIndex?.toString() ?? '');
+  }, [ columns ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
@@ -725,7 +720,7 @@ const ExperimentList: React.FC = () => {
       />
       <InteractiveTable
         areRowsSelected={!!settings.row}
-        columnDefs={columnDefs}
+        columns={columns}
         containerRef={pageRef}
         ContextMenu={ExperimentActionDropdown}
         dataSource={experiments}

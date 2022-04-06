@@ -18,7 +18,7 @@ export type ExperimentColumnName =
   | 'startTime'
   | 'state'
   | 'tags'
-  | 'trials'
+  | 'numTrials'
   | 'user';
 
 export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
@@ -41,13 +41,13 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   forkedFrom: 128,
   id: 57,
   name: 150,
+  numTrials: 74,
   progress: 111,
   resourcePool: 128,
   searcherType: 129,
   startTime: 117,
   state: 106,
   tags: 106,
-  trials: 74,
   user: 85,
 };
 

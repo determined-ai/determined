@@ -65,7 +65,7 @@ export type ColumnDefs<ColumnName extends string, RecordType> = Record<
 interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
-  columnDefs: ColumnDefs<string, RecordType>;
+  columns: ColumnDef<RecordType>[],
   containerRef: MutableRefObject<HTMLElement | null>,
   settings: InteractiveTableSettings;
   updateSettings: UpdateSettings<InteractiveTableSettings>
@@ -280,7 +280,7 @@ const InteractiveTable: InteractiveTable = ({
   loading,
   scroll,
   dataSource,
-  columnDefs,
+  columns,
   containerRef,
   settings,
   updateSettings,
@@ -288,6 +288,14 @@ const InteractiveTable: InteractiveTable = ({
   areRowsSelected,
   ...props
 }) => {
+
+  const columnDefs = useMemo(
+    () =>
+      columns
+        ?.map((col) => ({ [col.dataIndex as string]: col }))
+        .reduce((a, b) => ({ ...a, ...b })),
+    [ columns ],
+  ) as ColumnDefs<string, RecordType>;
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({
@@ -477,7 +485,7 @@ const InteractiveTable: InteractiveTable = ({
           const column = columnDefs[columnName];
           const columnWidth = widthData.widths[index];
           const sortOrder =
-          column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
+            column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
           return {
             onHeaderCell: onHeaderCell(index, column),
