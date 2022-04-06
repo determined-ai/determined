@@ -18837,17 +18837,17 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
+        getUser(username: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling getUser.');
             }
-            const localVarPath = `/api/v1/users/{userId}`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -18905,22 +18905,22 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling patchUser.');
+        patchUser(username: string, body: V1PatchUser, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling patchUser.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchUser.');
             }
-            const localVarPath = `/api/v1/users/{userId}`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -18991,22 +18991,22 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling setUserPassword.');
+        setUserPassword(username: string, body: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling setUserPassword.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setUserPassword.');
             }
-            const localVarPath = `/api/v1/users/{userId}/password`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarPath = `/api/v1/users/{username}/password`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -19046,12 +19046,12 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
+        getUser(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(username, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19083,13 +19083,13 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(userId, body, options);
+        patchUser(username: string, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(username, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19122,13 +19122,13 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(userId, body, options);
+        setUserPassword(username: string, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(username, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19151,12 +19151,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get the requested user.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options?: any) {
-            return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
+        getUser(username: string, options?: any) {
+            return UsersApiFp(configuration).getUser(username, options)(fetch, basePath);
         },
         /**
          * 
@@ -19170,13 +19170,13 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Patch a user's fields.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUser, options?: any) {
-            return UsersApiFp(configuration).patchUser(userId, body, options)(fetch, basePath);
+        patchUser(username: string, body: V1PatchUser, options?: any) {
+            return UsersApiFp(configuration).patchUser(username, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19191,13 +19191,13 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Set the requested user's password.
-         * @param {number} userId The id of the user.
+         * @param {string} username The username of the user.
          * @param {string} body The password of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(userId: number, body: string, options?: any) {
-            return UsersApiFp(configuration).setUserPassword(userId, body, options)(fetch, basePath);
+        setUserPassword(username: string, body: string, options?: any) {
+            return UsersApiFp(configuration).setUserPassword(username, body, options)(fetch, basePath);
         },
     };
 };
@@ -19212,13 +19212,13 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get the requested user.
-     * @param {number} userId The id of the user.
+     * @param {string} username The username of the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUser(userId: number, options?: any) {
-        return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    public getUser(username: string, options?: any) {
+        return UsersApiFp(this.configuration).getUser(username, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19235,14 +19235,14 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Patch a user's fields.
-     * @param {number} userId The id of the user.
+     * @param {string} username The username of the user.
      * @param {V1PatchUser} body The updated user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public patchUser(userId: number, body: V1PatchUser, options?: any) {
-        return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath);
+    public patchUser(username: string, body: V1PatchUser, options?: any) {
+        return UsersApiFp(this.configuration).patchUser(username, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19260,14 +19260,14 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Set the requested user's password.
-     * @param {number} userId The id of the user.
+     * @param {string} username The username of the user.
      * @param {string} body The password of the user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public setUserPassword(userId: number, body: string, options?: any) {
-        return UsersApiFp(this.configuration).setUserPassword(userId, body, options)(this.fetch, this.basePath);
+    public setUserPassword(username: string, body: string, options?: any) {
+        return UsersApiFp(this.configuration).setUserPassword(username, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -19280,18 +19280,55 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
     return {
         /**
          * 
-         * @summary Get the requested user.
-         * @param {string} username The username of the user.
+         * @summary Delete a workspace.
+         * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(username: string, options: any = {}): FetchArgs {
-            // verify required parameter 'username' is not null or undefined
-            if (username === null || username === undefined) {
-                throw new RequiredError('username','Required parameter username was null or undefined when calling getUser.');
+        deleteWorkspace(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling deleteWorkspace.');
             }
-            const localVarPath = `/api/v1/users/{username}`
-                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
+            const localVarPath = `/api/v1/workspaces/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspace(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -19353,34 +19390,13 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarQueryParameter['sortBy'] = sortBy;
             }
 
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Patch a user's fields.
-         * @param {string} username The username of the user.
-         * @param {V1PatchUser} body The updated user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        patchUser(username: string, body: V1PatchUser, options: any = {}): FetchArgs {
-            // verify required parameter 'username' is not null or undefined
-            if (username === null || username === undefined) {
-                throw new RequiredError('username','Required parameter username was null or undefined when calling patchUser.');
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
             }
 
             if (offset !== undefined) {
                 localVarQueryParameter['offset'] = offset;
             }
-            const localVarPath = `/api/v1/users/{username}`
-                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
@@ -19476,16 +19492,34 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
-         * @summary Set the requested user's password.
-         * @param {string} username The username of the user.
-         * @param {string} body The password of the user.
+         * @summary Update a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(username: string, body: string, options: any = {}): FetchArgs {
-            // verify required parameter 'username' is not null or undefined
-            if (username === null || username === undefined) {
-                throw new RequiredError('username','Required parameter username was null or undefined when calling setUserPassword.');
+        patchWorkspace(id: number, body: V1PatchWorkspace, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling patchWorkspace.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -19514,8 +19548,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postWorkspace.');
             }
-            const localVarPath = `/api/v1/users/{username}/password`
-                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
+            const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -19554,13 +19587,13 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get the requested user.
-         * @param {string} username The username of the user.
+         * @summary Delete a workspace.
+         * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(username, options);
+        deleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19592,14 +19625,20 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Patch a user's fields.
-         * @param {string} username The username of the user.
-         * @param {V1PatchUser} body The updated user.
+         * @summary Get projects associated with a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the projects to those matching the name.
+         * @param {boolean} [archived] Limit the projects to those with an archived status.
+         * @param {Array<string>} [users] Limit the projects to those from particular users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(username: string, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(username, body, options);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19637,14 +19676,33 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Set the requested user's password.
-         * @param {string} username The username of the user.
-         * @param {string} body The password of the user.
+         * @summary Update a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(username: string, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(username, body, options);
+        patchWorkspace(id: number, body: V1PatchWorkspace, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).patchWorkspace(id, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Create a workspace.
+         * @param {V1PostWorkspaceRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWorkspace(body: V1PostWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).postWorkspace(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19666,13 +19724,13 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
     return {
         /**
          * 
-         * @summary Get the requested user.
-         * @param {string} username The username of the user.
+         * @summary Delete a workspace.
+         * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(username: string, options?: any) {
-            return UsersApiFp(configuration).getUser(username, options)(fetch, basePath);
+        deleteWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).deleteWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -19686,14 +19744,20 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary Patch a user's fields.
-         * @param {string} username The username of the user.
-         * @param {V1PatchUser} body The updated user.
+         * @summary Get projects associated with a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Limit the projects to those matching the name.
+         * @param {boolean} [archived] Limit the projects to those with an archived status.
+         * @param {Array<string>} [users] Limit the projects to those from particular users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(username: string, body: V1PatchUser, options?: any) {
-            return UsersApiFp(configuration).patchUser(username, body, options)(fetch, basePath);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
         },
         /**
          * 
@@ -19713,14 +19777,24 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary Set the requested user's password.
-         * @param {string} username The username of the user.
-         * @param {string} body The password of the user.
+         * @summary Update a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(username: string, body: string, options?: any) {
-            return UsersApiFp(configuration).setUserPassword(username, body, options)(fetch, basePath);
+        patchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
+            return WorkspacesApiFp(configuration).patchWorkspace(id, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Create a workspace.
+         * @param {V1PostWorkspaceRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
+            return WorkspacesApiFp(configuration).postWorkspace(body, options)(fetch, basePath);
         },
     };
 };
@@ -19731,19 +19805,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
  * @class WorkspacesApi
  * @extends {BaseAPI}
  */
-export class UsersApi extends BaseAPI {
-    /**
-     * 
-     * @summary Get the requested user.
-     * @param {string} username The username of the user.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getUser(username: string, options?: any) {
-        return UsersApiFp(this.configuration).getUser(username, options)(this.fetch, this.basePath);
-    }
-
+export class WorkspacesApi extends BaseAPI {
     /**
      * 
      * @summary Delete a workspace.
@@ -19770,15 +19832,21 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
-     * @summary Patch a user's fields.
-     * @param {string} username The username of the user.
-     * @param {V1PatchUser} body The updated user.
+     * @summary Get projects associated with a workspace.
+     * @param {number} id The id of the workspace.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID'} [sortBy] Sort the projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order projects in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+     * @param {string} [name] Limit the projects to those matching the name.
+     * @param {boolean} [archived] Limit the projects to those with an archived status.
+     * @param {Array<string>} [users] Limit the projects to those from particular users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public patchUser(username: string, body: V1PatchUser, options?: any) {
-        return UsersApiFp(this.configuration).patchUser(username, body, options)(this.fetch, this.basePath);
+    public getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19801,15 +19869,27 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
-     * @summary Set the requested user's password.
-     * @param {string} username The username of the user.
-     * @param {string} body The password of the user.
+     * @summary Update a workspace.
+     * @param {number} id The id of the workspace.
+     * @param {V1PatchWorkspace} body The desired workspace fields and values to update.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public setUserPassword(username: string, body: string, options?: any) {
-        return UsersApiFp(this.configuration).setUserPassword(username, body, options)(this.fetch, this.basePath);
+    public patchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
+        return WorkspacesApiFp(this.configuration).patchWorkspace(id, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Create a workspace.
+     * @param {V1PostWorkspaceRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
+        return WorkspacesApiFp(this.configuration).postWorkspace(body, options)(this.fetch, this.basePath);
     }
 
 }
