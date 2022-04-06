@@ -5839,6 +5839,44 @@ def post_ArchiveModel(
         return
     raise APIHttpError("post_ArchiveModel", _resp)
 
+def post_ArchiveProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{id}/archive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ArchiveProject", _resp)
+
+def post_ArchiveWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/archive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ArchiveWorkspace", _resp)
+
 def post_CancelExperiment(
     session: "client.Session",
     *,
@@ -8109,6 +8147,44 @@ def post_UnarchiveModel(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveModel", _resp)
+
+def post_UnarchiveProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{id}/unarchive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnarchiveProject", _resp)
+
+def post_UnarchiveWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/unarchive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnarchiveWorkspace", _resp)
 
 def post_UpdateJobQueue(
     session: "client.Session",

@@ -215,3 +215,31 @@ func (a *apiServer) MoveProject(
 	return &apiv1.MoveProjectResponse{},
 		errors.Wrapf(err, "error moving project (%d)", req.ProjectId)
 }
+
+func (a *apiServer) ArchiveProject(
+	_ context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse, error) {
+	holder := &projectv1.Project{}
+	err := a.m.db.QueryProto("archive_project", holder, req.Id, true)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) does not exist or not archive-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.ArchiveProjectResponse{},
+		errors.Wrapf(err, "error archiving project (%d)", req.Id)
+}
+
+func (a *apiServer) UnarchiveProject(
+	_ context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse, error) {
+	holder := &projectv1.Project{}
+	err := a.m.db.QueryProto("archive_project", holder, req.Id, false)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) does not exist or not unarchive-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.UnarchiveProjectResponse{},
+		errors.Wrapf(err, "error unarchiving project (%d)", req.Id)
+}

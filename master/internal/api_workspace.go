@@ -206,3 +206,31 @@ func (a *apiServer) DeleteWorkspace(
 	return &apiv1.DeleteWorkspaceResponse{},
 		errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
 }
+
+func (a *apiServer) ArchiveWorkspace(
+	_ context.Context, req *apiv1.ArchiveWorkspaceRequest) (*apiv1.ArchiveWorkspaceResponse, error) {
+	holder := &workspacev1.Workspace{}
+	err := a.m.db.QueryProto("archive_workspace", holder, req.Id, true)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not archive-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.ArchiveWorkspaceResponse{},
+		errors.Wrapf(err, "error archiving workspace (%d)", req.Id)
+}
+
+func (a *apiServer) UnarchiveWorkspace(
+	_ context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse, error) {
+	holder := &workspacev1.Workspace{}
+	err := a.m.db.QueryProto("archive_workspace", holder, req.Id, false)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not unarchive-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.UnarchiveWorkspaceResponse{},
+		errors.Wrapf(err, "error unarchiving workspace (%d)", req.Id)
+}

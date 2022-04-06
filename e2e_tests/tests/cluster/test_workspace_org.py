@@ -22,11 +22,11 @@ def test_workspace_org() -> None:
     try:
         # Uncategorized workspace / project should exist already.
         r = bindings.get_GetWorkspaces(sess, name="Uncategorized")
-        assert r.workspaces and len(r.workspaces) == 1
+        assert len(r.workspaces) == 1
         default_workspace = r.workspaces[0]
         assert default_workspace.immutable
         r2 = bindings.get_GetWorkspaceProjects(sess, id=default_workspace.id)
-        assert r2.projects and len(r2.projects) == 1
+        assert len(r2.projects) == 1
         default_project = r2.projects[0]
         assert default_project.name == "Uncategorized"
         assert default_project.immutable
@@ -36,10 +36,9 @@ def test_workspace_org() -> None:
             sess, body=bindings.v1PostWorkspaceRequest(name="_TestOnly")
         )
         made_workspace = r3.workspace
-        assert made_workspace is not None
         test_workspaces.append(made_workspace)
         get_workspace = bindings.get_GetWorkspace(sess, id=made_workspace.id).workspace
-        assert get_workspace and get_workspace.name == "_TestOnly"
+        assert get_workspace.name == made_workspace.name
         assert not made_workspace.immutable and not get_workspace.immutable
 
         # Patch the workspace
@@ -49,9 +48,17 @@ def test_workspace_org() -> None:
         get_workspace = bindings.get_GetWorkspace(sess, id=made_workspace.id).workspace
         assert get_workspace.name == "_TestPatched"
 
+        # Archive the workspace
+        assert not made_workspace.archived
+        bindings.post_ArchiveWorkspace(sess, id=made_workspace.id)
+        get_workspace_2 = bindings.get_GetWorkspace(sess, id=made_workspace.id).workspace
+        assert get_workspace_2.archived
+        bindings.post_UnarchiveWorkspace(sess, id=made_workspace.id)
+        get_workspace_3 = bindings.get_GetWorkspace(sess, id=made_workspace.id).workspace
+        assert not get_workspace_3.archived
+
         # Sort test and default workspaces.
         ww = bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS"))
-        assert ww.workspace is not None
         test_workspaces.append(ww.workspace)
         list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
         assert ["Uncategorized", "_TestPatched", "_TestWS"] == list(
@@ -77,10 +84,9 @@ def test_workspace_org() -> None:
             workspaceId=made_workspace.id,
         )
         made_project = r4.project
-        assert made_project is not None
         test_projects.append(made_project)
         get_project = bindings.get_GetProject(sess, id=made_project.id).project
-        assert get_project and get_project.name == "_TestOnly"
+        assert get_project.name == made_project.name
         assert not made_project.immutable and not get_project.immutable
 
         # Patch the project
@@ -90,9 +96,22 @@ def test_workspace_org() -> None:
         get_project = bindings.get_GetProject(sess, id=made_project.id).project
         assert get_project.name == "_TestPatchedProject"
 
-        # Refuse to patch the default project
+        # Archive the project
+        assert not made_project.archived
+        bindings.post_ArchiveProject(sess, id=made_project.id)
+        get_project_2 = bindings.get_GetProject(sess, id=made_project.id).project
+        assert get_project_2.archived
+        bindings.post_UnarchiveProject(sess, id=made_project.id)
+        get_project_3 = bindings.get_GetProject(sess, id=made_project.id).project
+        assert not get_project_3.archived
+
+        # Refuse to patch, archive, or delete the default project
         with pytest.raises(errors.APIException):
             bindings.patch_PatchProject(sess, body=p_patch, id=default_project.id)
+        with pytest.raises(errors.APIException):
+            bindings.post_ArchiveProject(sess, id=default_project.id)
+        with pytest.raises(errors.APIException):
+            bindings.delete_DeleteProject(sess, id=default_project.id)
 
         # Sort workspaces' projects.
         p1 = bindings.post_PostProject(
@@ -105,17 +124,14 @@ def test_workspace_org() -> None:
             body=bindings.v1PostProjectRequest(name="_TestEarly", workspaceId=made_workspace.id),
             workspaceId=made_workspace.id,
         ).project
-        assert p1 and p2
         test_projects += [p1, p2]
         list_test_4 = bindings.get_GetWorkspaceProjects(sess, id=made_workspace.id).projects
-        assert list_test_4 is not None
         assert ["_TestPatchedProject", "_TestPRJ", "_TestEarly"] == list(
             map(lambda w: w.name, list_test_4)
         )
         list_test_5 = bindings.get_GetWorkspaceProjects(
             sess, id=made_workspace.id, orderBy=bindings.v1OrderBy.ORDER_BY_DESC
         ).projects
-        assert list_test_5 is not None
         assert ["_TestEarly", "_TestPRJ", "_TestPatchedProject"] == list(
             map(lambda w: w.name, list_test_5)
         )
@@ -124,7 +140,6 @@ def test_workspace_org() -> None:
             id=made_workspace.id,
             sortBy=bindings.v1GetWorkspaceProjectsRequestSortBy.SORT_BY_NAME,
         ).projects
-        assert list_test_6 is not None
         assert ["_TestEarly", "_TestPatchedProject", "_TestPRJ"] == list(
             map(lambda w: w.name, list_test_6)
         )
@@ -154,7 +169,7 @@ def test_workspace_org() -> None:
             projectId=made_project.id,
         )
         returned_notes = r5.notes
-        assert returned_notes and len(returned_notes) == 2
+        assert len(returned_notes) == 2
 
         # Create an experiment in the default project and move to a test project.
         test_exp_id = run_basic_test(
