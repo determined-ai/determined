@@ -2,7 +2,12 @@ import argparse
 import base64
 import io
 import os
+import socket
 import tarfile
+import uuid
+from typing import List, Optional, cast
+
+import psutil
 
 import determined as det
 from determined import constants
@@ -54,22 +59,125 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
         model_def.extractall(path=".")
 
 
-def do_rendezvous(info: det.ClusterInfo, cert: certs.Cert) -> None:
-    # Even though resources_id is not part of the ClusterInfo API, we still depend on it in all
-    # current Determined backends (agents and k8s).
-    resources_id = os.environ.get("DET_RESOURCES_ID")
-    assert resources_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
-
+def do_rendezvous_rm_provided(
+    info: det.ClusterInfo, cert: certs.Cert, resources_id: str
+) -> "det.RendezvousInfo":
     r = request.get(
         info.master_url,
         path=f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/rendezvous",
         cert=cert,
     )
-
     jri = r.json()["rendezvousInfo"]
-    rendezvous_info = det.RendezvousInfo(
-        container_addrs=jri["addresses"], container_rank=jri["rank"]
+    addrs, rank = jri["addresses"], jri["rank"]
+    return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
+
+
+def do_rendezvous_slurm(
+    info: det.ClusterInfo, cert: certs.Cert, resources_id: str
+) -> "det.RendezvousInfo":
+    rank_str = os.environ.get("SLURM_PROCID")
+    assert rank_str, "Unable to complete rendezvous without SLURM_PROCID"
+    rank = int(rank_str)
+
+    num_peers_str = os.environ.get("SLURM_NPROCS")
+    assert num_peers_str, "Unable to complete rendezvous without SLURM_NPROCS"
+    num_peers = int(num_peers_str)
+
+    rendezvous_ip, resolution_error = None, None
+    for rendezvous_iface in rendezvous_ifaces():
+        try:
+            rendezvous_ip = get_ip_from_interface(rendezvous_iface)
+            break
+        except ValueError as e:
+            resolution_error = e
+    if not rendezvous_ip:
+        raise resolution_error or ValueError("unable to resolve rendezvous ip")
+
+    r = request.post(
+        info.master_url,
+        path=f"/api/v1/allocations/{info.allocation_id}/all_gather",
+        cert=cert,
+        json={
+            "request_uuid": uuid.uuid4(),
+            "num_peers": num_peers,
+            "data": {
+                "rendezvous_ip": rendezvous_ip,
+            },
+        },
     )
+    addrs = [d["rendezvous_ip"] for d in r.json()["data"]]
+    return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
+
+
+def rendezvous_ifaces() -> List[str]:
+    # First case is a manual override. For maximum flexibility, this can be a comma-delimited list.
+    rendezvous_iface = os.environ.get("DET_SLURM_RENDEZVOUS_IFACE")
+
+    # If it doesn't work, fallback to just eth. Rendezvous over eth is fine since horovod will
+    # still use DET_INTER_NODE_NETWORK_INTERFACE for everything important, and SSH over IB mostly
+    # won't work.
+    if not rendezvous_iface:
+        rendezvous_iface = get_eth_interface_name()
+
+    # On systems where there is no eth, DET_INTER_NODE_NETWORK_INTERFACE should work, though.
+    if not rendezvous_iface:
+        rendezvous_iface = os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE")
+
+    # If none of these resolved, we're out of luck.
+    if not rendezvous_iface:
+        raise ValueError("unable to resolve rendezvous iface")
+
+    return rendezvous_iface.split(",")
+
+
+def get_eth_interface_name() -> Optional[str]:
+    net_if_addrs = list(psutil.net_if_addrs())
+    for interface in net_if_addrs:
+        if interface.startswith("eth"):
+            return cast(str, interface)
+    return None
+
+
+def get_ip_from_interface(interface: str) -> str:
+    net_if_addrs = psutil.net_if_addrs()
+
+    if interface not in net_if_addrs:
+        available = list(net_if_addrs.keys())
+        raise ValueError(
+            f"{interface} is not a valid network interface. "
+            f"Valid network interfaces are: {available}"
+        )
+
+    for info in net_if_addrs[interface]:
+        if info.family == socket.AF_INET:
+            return cast(str, info.address)
+
+    raise ValueError(f"interface {interface} doesn't have an IPv4 address")
+
+
+# The canonical definitions of these consts live in Go code.
+RESOURCES_TYPE_K8S_POD = "k8s-pod"
+RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
+RESOURCES_TYPE_SLURM_JOB = "slurm-job"
+
+
+def do_rendezvous(info: det.ClusterInfo, cert: certs.Cert) -> None:
+    # Even though resources_id and resources type is not part of the ClusterInfo API, we still
+    # depend on them in all current Determined backends.
+    r_id = os.environ.get("DET_RESOURCES_ID")
+    assert r_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
+
+    r_type = os.environ.get("DET_RESOURCES_TYPE")
+    assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
+
+    rendezvous_info = None
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+        rendezvous_info = do_rendezvous_rm_provided(info, cert, r_id)
+    elif r_type == RESOURCES_TYPE_SLURM_JOB:
+        rendezvous_info = do_rendezvous_slurm(info, cert, r_id)
+    else:
+        raise ValueError(f"unsupported resources type: {r_type}")
+
     rendezvous_info._to_file()
 
 
