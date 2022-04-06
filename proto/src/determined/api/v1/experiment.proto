@@ -244,6 +244,10 @@ message GetExperimentCheckpointsRequest {
 
 // Response to GetExperimentCheckpointsRequest.
 message GetExperimentCheckpointsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoints", "pagination" ] }
+  };
+
   // The list of returned checkpoints.
   repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
   // Pagination information of the full dataset.

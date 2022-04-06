@@ -553,7 +553,7 @@ def is_number(value: Any) -> bool:
 
 
 def scalar_training_metrics_names(
-    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
 ) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
@@ -574,7 +574,7 @@ def scalar_training_metrics_names(
 
 
 def scalar_validation_metrics_names(
-    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
 ) -> Set[str]:
     for workload in workloads:
         if workload.validation:

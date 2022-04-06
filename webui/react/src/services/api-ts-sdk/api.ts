@@ -1970,13 +1970,13 @@ export interface V1GetExperimentCheckpointsResponse {
      * @type {Array<V1Checkpoint>}
      * @memberof V1GetExperimentCheckpointsResponse
      */
-    checkpoints?: Array<V1Checkpoint>;
+    checkpoints: Array<V1Checkpoint>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetExperimentCheckpointsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
