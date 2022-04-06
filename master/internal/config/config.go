@@ -370,3 +370,9 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 	}
 	return weight
 }
+
+// IsUsingKubernetesRM returns whether the master is configured with Kubernetes.
+func IsUsingKubernetesRM() bool {
+	config := GetMasterConfig()
+	return config.ResourceManager.KubernetesRM != nil
+}

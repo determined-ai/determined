@@ -724,7 +724,6 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		JobId:          e.JobID.String(),
 		EntityId:       fmt.Sprint(e.ID),
 		Type:           jobv1.Type_TYPE_EXPERIMENT,
-		ResourcePool:   e.Config.Resources().ResourcePool(),
 		SubmissionTime: timestamppb.New(e.StartTime),
 		Username:       e.Username,
 		UserId:         int32(*e.OwnerID),
@@ -736,6 +735,12 @@ func (e *experiment) toV1Job() *jobv1.Job {
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
 	job.UpdateJobQInfo(&j, e.rmJobInfo)
+
+	if config.IsUsingKubernetesRM() {
+		j.ResourcePool = resourcemanagers.KubernetesDummyResourcePool
+	} else {
+		j.ResourcePool = e.Config.Resources().ResourcePool()
+	}
 
 	return &j
 }
