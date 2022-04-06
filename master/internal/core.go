@@ -740,8 +740,6 @@ func (m *Master) Run(ctx context.Context) error {
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
-	otelConfig()
-	m.echo.Use(otelecho.Middleware("determined-master"))
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
@@ -786,6 +784,9 @@ func (m *Master) Run(ctx context.Context) error {
 	if m.config.InternalConfig.AuditLoggingEnabled {
 		m.echo.Use(auditLogMiddleware())
 	}
+
+	otelConfig()
+	m.echo.Use(otelecho.Middleware("determined-master"))
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
