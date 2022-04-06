@@ -375,13 +375,16 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	now := time.Now().UTC()
-	db.RecordTaskStartStats(&model.TaskStats{
+	err := db.RecordTaskStats(&model.TaskStats{
 		AllocationID: msg.ID,
 		ResourcePool: msg.ResourcePool,
 		EventType:    "QUEUED",
 		StartTime:    &msg.JobSubmissionTime,
 		EndTime:      &now,
 	})
+	if err != nil {
+		return errors.Wrap(err, "recording task queued stats")
+	}
 
 	token, err := a.db.StartAllocationSession(a.model.AllocationID)
 	if err != nil {

@@ -347,8 +347,8 @@ WHERE task_id = $1
 	return count, nil
 }
 
-// RecordTaskStartStats record start stats for tasks.
-func RecordTaskStartStats(stats *model.TaskStats) error {
+// RecordTaskStats record start stats for tasks.
+func RecordTaskStats(stats *model.TaskStats) error {
 	db := Bun()
 	_, err := db.NewInsert().Model(stats).Exec(context.TODO())
 	return err

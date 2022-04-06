@@ -35,7 +35,6 @@ type containerActor struct {
 
 	baseTaskLog  model.TaskLog
 	reattached   bool
-	ResourcePool string
 }
 
 type (
@@ -43,15 +42,15 @@ type (
 	containerReady      struct{}
 )
 
-func newContainerActor(msg aproto.StartContainer, client *client.Client, pool string) actor.Actor {
+func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
 	return &containerActor{
-		Container: msg.Container, spec: &msg.Spec, client: client, ResourcePool: pool}
+		Container: msg.Container, spec: &msg.Spec, client: client}
 }
 
 func reattachContainerActor(
-	container cproto.Container, client *client.Client, pool string) actor.Actor {
+	container cproto.Container, client *client.Client) actor.Actor {
 	return &containerActor{
-		Container: container, client: client, reattached: true, ResourcePool: pool}
+		Container: container, client: client, reattached: true}
 }
 
 // getBaseTaskLog computes the container-specific extra fields to be injected into each Fluent

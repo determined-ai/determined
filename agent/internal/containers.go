@@ -135,7 +135,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		// actually overwrite the spec.
 		msg.Spec = enrichedSpec
 		if ref, ok := ctx.ActorOf(
-			msg.Container.ID, newContainerActor(msg, c.docker, msg.Spec.ResourcePool)); !ok {
+			msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
 			if ctx.ExpectingResponse() {
 				ctx.Respond(errors.Errorf("container already created: %s", msg.Container.ID))
@@ -372,7 +372,7 @@ func (c *containerManager) reattachContainer(
 	}
 
 	cid := containerPrevState.ID
-	_, ok := ctx.ActorOf(cid, reattachContainerActor(*containerCurrState, c.docker, c.ResourcePool))
+	_, ok := ctx.ActorOf(cid, reattachContainerActor(*containerCurrState, c.docker))
 	if !ok {
 		errorMsg := fmt.Sprintf("failed to reattach container %s: actor already exists", cid)
 		ctx.Log().Warnf(errorMsg)

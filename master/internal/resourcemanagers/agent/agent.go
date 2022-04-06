@@ -427,7 +427,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			now := time.Now().UTC()
 			msg.DockerImagePull.Stats.ResourcePool = a.resourcePoolName
 			msg.DockerImagePull.Stats.StartTime = &now
-			err = db.RecordTaskStartStats(msg.DockerImagePull.Stats)
+			err = db.RecordTaskStats(msg.DockerImagePull.Stats)
 		}
 		if err != nil {
 			ctx.Log().Errorf("Error record task stats %s", err)

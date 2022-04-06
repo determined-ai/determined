@@ -79,7 +79,6 @@ type TaskSpec struct {
 	Devices                []device.Device
 
 	UserSessionToken string
-	ResourcePool     string
 	TaskType         model.TaskType
 }
 
@@ -189,9 +188,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 	}
 
 	spec := cproto.Spec{
-		TaskID:       t.TaskID,
-		TaskType:     string(t.TaskType),
-		ResourcePool: t.ResourcePool,
+		TaskType: string(t.TaskType),
 		PullSpec: cproto.PullSpec{
 			Registry:  env.RegistryAuth(),
 			ForcePull: env.ForcePullImage(),
