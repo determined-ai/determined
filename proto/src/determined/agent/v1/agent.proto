@@ -29,6 +29,8 @@ message Agent {
   // Flag notifying if this agent is in the draining mode: current containers
   // will be allowed to finish but no new ones will be scheduled.
   bool draining = 9;
+  // The Determined version that this agent was built from.
+  string version = 10;
 }
 
 // Slot wraps a single device on the agent.
