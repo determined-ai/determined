@@ -122,9 +122,10 @@ type (
 	}
 	// ResourcesAllocated notifies the task actor of assigned resources.
 	ResourcesAllocated struct {
-		ID           model.AllocationID
-		ResourcePool string
-		Resources    []Resources
+		ID                model.AllocationID
+		ResourcePool      string
+		Resources         []Resources
+		JobSubmissionTime time.Time
 	}
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {

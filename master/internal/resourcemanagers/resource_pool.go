@@ -3,7 +3,6 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
-	"time"
 
 	"github.com/shopspring/decimal"
 
@@ -178,7 +177,10 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	}
 
 	allocated := sproto.ResourcesAllocated{
-		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Resources: resources,
+		ID:                req.AllocationID,
+		ResourcePool:      rp.config.PoolName,
+		Resources:         resources,
+		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
@@ -193,14 +195,6 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	rp.refreshAgentStateCacheFor(ctx, allocatedAgents)
 
 	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
-	now := time.Now().UTC()
-	db.RecordTaskStartStats(&model.TaskStats{
-		AllocationID: req.AllocationID,
-		ResourcePool: rp.config.PoolName,
-		EventType:    "QUEUED",
-		StartTime:    &req.JobSubmissionTime,
-		EndTime:      &now,
-	})
 
 	return true
 }
