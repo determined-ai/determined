@@ -399,11 +399,11 @@ const InteractiveTable: InteractiveTable = ({
           let targetWidths;
           if (x < minWidth) {
             targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              resizeIndex === prevWidthIndex ? minWidth : prevWidth);
+              prevWidthIndex === resizeIndex ? minWidth : prevWidth);
           } else {
             const newWidth = x;
             targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
-              resizeIndex === prevWidthIndex ? newWidth : prevWidth);
+              prevWidthIndex === resizeIndex ? newWidth : prevWidth);
           }
 
           const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
@@ -417,7 +417,7 @@ const InteractiveTable: InteractiveTable = ({
           if (shortage > 0) {
             const compensatingPortion = shortage / (prevWidths.length - 1);
             targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
-              resizeIndex === targetWidthIndex ? targetWidth : targetWidth + compensatingPortion);
+              targetWidthIndex === resizeIndex ? targetWidth : targetWidth + compensatingPortion);
           }
           return { widths: targetWidths, ...rest };
         });
