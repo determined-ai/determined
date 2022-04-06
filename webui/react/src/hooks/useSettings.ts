@@ -51,11 +51,13 @@ export interface SettingsHookOptions {
   storagePath?: string;
 }
 
+export type UpdateSettings<T> = (newSettings: Partial<T>, push?: boolean) => void;
+
 export interface SettingsHook<T> {
   activeSettings: (keys?: string[]) => string[];
   resetSettings: (keys?: string[]) => void;
   settings: T;
-  updateSettings: (newSettings: Partial<T>, push?: boolean) => void;
+  updateSettings: UpdateSettings<T>;
 }
 
 export const validateBaseType = (type: BaseType, value: unknown): boolean => {

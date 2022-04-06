@@ -1,3 +1,4 @@
+import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -33,7 +34,7 @@ export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
-  action: 40,
+  action: 46,
   archived: 75,
   description: 147,
   duration: 96,
@@ -50,18 +51,13 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   user: 85,
 };
 
-export interface Settings {
+export interface ExperimentListSettings extends InteractiveTableSettings {
   archived?: boolean;
-  columnWidths: number[];
   columns: ExperimentColumnName[];
   label?: string[];
-  row?: number[];
   search?: string;
-  sortDesc: boolean;
   sortKey: V1GetExperimentsRequestSortBy;
   state?: RunState[];
-  tableLimit: number;
-  tableOffset: number;
   user?: string[];
 }
 

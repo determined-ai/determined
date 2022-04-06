@@ -7,7 +7,10 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDefs } from 'components/InteractiveTable';
+import InteractiveTable, {
+  ColumnDefs,
+  InteractiveTableSettings,
+} from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -28,7 +31,7 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
@@ -53,10 +56,10 @@ import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
   ExperimentColumnName,
-  Settings,
+  ExperimentListSettings,
 } from './ExperimentList.settings';
 
-const filterKeys: Array<keyof Settings> = [ 'label', 'search', 'state', 'user' ];
+const filterKeys: Array<keyof ExperimentListSettings> = [ 'label', 'search', 'state', 'user' ];
 
 type ExperimentColumnDefs = ColumnDefs<ExperimentColumnName, ExperimentItem>
 
@@ -74,7 +77,7 @@ const ExperimentList: React.FC = () => {
     resetSettings,
     settings,
     updateSettings,
-  } = useSettings<Settings>(settingsConfig);
+  } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -320,6 +323,7 @@ const ExperimentList: React.FC = () => {
       {
         align: 'right',
         className: 'fullCell',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
@@ -330,6 +334,7 @@ const ExperimentList: React.FC = () => {
       archived:
       {
         dataIndex: 'archived',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
         render: checkmarkRenderer,
         title: 'Archived',
@@ -337,12 +342,14 @@ const ExperimentList: React.FC = () => {
       description:
       {
         dataIndex: 'description',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: descriptionRenderer,
         title: 'Description',
       },
       duration:
       {
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
         key: 'duration',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: expermentDurationRenderer,
@@ -351,6 +358,7 @@ const ExperimentList: React.FC = () => {
       forkedFrom:
       {
         dataIndex: 'forkedFrom',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
         key: V1GetExperimentsRequestSortBy.FORKEDFROM,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: forkedFromRenderer,
@@ -360,6 +368,7 @@ const ExperimentList: React.FC = () => {
       id:
       {
         dataIndex: 'id',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
         key: V1GetExperimentsRequestSortBy.ID,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: experimentNameRenderer,
@@ -369,6 +378,7 @@ const ExperimentList: React.FC = () => {
       name:
       {
         dataIndex: 'name',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         isFiltered: settings => !!settings.search,
@@ -380,6 +390,7 @@ const ExperimentList: React.FC = () => {
       },
       progress:
       {
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
         key: V1GetExperimentsRequestSortBy.PROGRESS,
         render: experimentProgressRenderer,
         sorter: true,
@@ -388,6 +399,7 @@ const ExperimentList: React.FC = () => {
       resourcePool:
       {
         dataIndex: 'resourcePool',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
         key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
@@ -396,12 +408,14 @@ const ExperimentList: React.FC = () => {
       searcherType:
       {
         dataIndex: 'searcherType',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
         key: 'searcherType',
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         title: 'Searcher Type',
       },
       startTime:
       {
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
         key: V1GetExperimentsRequestSortBy.STARTTIME,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         render: (_: number, record: ExperimentItem): React.ReactNode =>
@@ -411,6 +425,7 @@ const ExperimentList: React.FC = () => {
       },
       state:
       {
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
           .filter(value => [
@@ -433,6 +448,7 @@ const ExperimentList: React.FC = () => {
       tags:
       {
         dataIndex: 'labels',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['tags' as ExperimentColumnName],
         filterDropdown: labelFilterDropdown,
         filters: labels.map(label => ({ text: label, value: label })),
         isFiltered: settings => !!settings.label,
@@ -444,6 +460,7 @@ const ExperimentList: React.FC = () => {
       trials:
       {
         dataIndex: 'numTrials',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['trials' as ExperimentColumnName],
         key: V1GetExperimentsRequestSortBy.NUMTRIALS,
         onCell: () => ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>),
         sorter: true,
@@ -451,6 +468,7 @@ const ExperimentList: React.FC = () => {
       },
       user:
       {
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['user' as ExperimentColumnName],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
         isFiltered: settings => !!settings.user,
@@ -479,8 +497,9 @@ const ExperimentList: React.FC = () => {
   ]);
 
   const transferColumns = useMemo(() => {
-    return Object.values(columnDefs).filter(column => column.title !== '')
-      .map(column => sentenceToCamelCase(column.title as string));
+    return Object.values(columnDefs)
+      .filter((column) => column.title !== '' && column.title !== 'Archived')
+      .map((column) => sentenceToCamelCase(column.title as string));
   }, [ columnDefs ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
@@ -605,19 +624,36 @@ const ExperimentList: React.FC = () => {
   }, [ settings.columns, modalOpen ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
-    if (!showArchived || settings.columns?.includes('archived')) {
-      updateSettings({ archived: showArchived, row: undefined });
+    let newColumns: ExperimentColumnName[];
+    let newColumnWidths: number[];
+
+    if (showArchived) {
+      if (settings.columns?.includes('archived')) {
+        // just some defensive coding: don't add archived twice
+        newColumns = settings.columns;
+        newColumnWidths = settings.columnWidths;
+      } else {
+        newColumns = [ ...settings.columns, 'archived' ];
+        newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
+      }
     } else {
-      if (!settings.columns?.length || !settings.columnWidths?.length) return;
-      const columns = [ ...settings.columns, 'archived' ] as ExperimentColumnName[];
-      const columnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
-      updateSettings({
-        archived: showArchived,
-        columns: columns,
-        columnWidths: columnWidths,
-        row: undefined,
-      });
+      const archivedIndex = settings.columns.indexOf('archived');
+      if (archivedIndex !== -1) {
+        newColumns = [ ...settings.columns ];
+        newColumnWidths = [ ...settings.columnWidths ];
+        newColumns.splice(archivedIndex, 1);
+        newColumnWidths.splice(archivedIndex, 1);
+      } else {
+        newColumns = settings.columns;
+        newColumnWidths = settings.columnWidths;
+      }
     }
+    updateSettings({
+      archived: showArchived,
+      columns: newColumns,
+      columnWidths: newColumnWidths,
+      row: undefined,
+    });
 
   }, [ settings, updateSettings ]);
 
@@ -705,10 +741,10 @@ const ExperimentList: React.FC = () => {
           preserveSelectedRowKeys: true,
           selectedRowKeys: settings.row ?? [],
         }}
-        settings={settings}
+        settings={settings as InteractiveTableSettings}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings}
+        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       />
     </Page>
   );

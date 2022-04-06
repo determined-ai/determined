@@ -5,7 +5,8 @@
     cursor: pointer;
   }
   .dropTarget {
-    background: var(--theme-colors-action-normal);
+    // for debugging
+    // background: var(--theme-colors-action-normal);
     border-radius: 4px;
     bottom: 0;
     height: 250px;
@@ -16,7 +17,6 @@
     z-index: 4;
   }
   .dropTargetActive {
-    background: var(--theme-colors-action-normal);
     opacity: 0.2;
   }
   .dropTargetIndicator {

@@ -13,20 +13,34 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import 'antd/dist/antd.min.css';
+// import 'antd/dist/antd.min.css';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
-import { DEFAULT_COLUMN_WIDTHS, Settings } from 'pages/ExperimentList.settings';
-import { ExperimentItem } from 'types';
+import { UpdateSettings } from 'hooks/useSettings';
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+type Comparable = any;
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+type RecordType = any;
+export interface InteractiveTableSettings {
+  columnWidths: number[];
+  columns: string[];
+  row?: number[];
+  sortDesc: boolean;
+  sortKey: Comparable;
+  tableLimit: number;
+  tableOffset: number;
+}
 
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
 
 export const WIDGET_COLUMN_WIDTH = 46;
-const DEFAULT_RESIZE_THROTTLE_TIME = 10;
+const DEFAULT_RESIZE_THROTTLE_TIME = 30;
 
 const type = 'DraggableColumn';
 
@@ -38,8 +52,10 @@ interface ContextMenuProps {
   record: Record<string, unknown>;
 }
 
-interface ColumnDef<RecordType> extends ColumnType<RecordType> {
-  isFiltered?: (s: Settings) => boolean;
+export interface ColumnDef<RecordType> extends ColumnType<RecordType> {
+  defaultWidth: number;
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  isFiltered?: (s: any) => boolean; // any extends Settings
 }
 export type ColumnDefs<ColumnName extends string, RecordType> = Record<
   ColumnName,
@@ -51,8 +67,8 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   areRowsSelected?: boolean;
   columnDefs: ColumnDefs<string, RecordType>;
   containerRef: MutableRefObject<HTMLElement | null>,
-  settings: Settings;
-  updateSettings: (settings: Partial<Settings>, shouldPush?: boolean) => void;
+  settings: InteractiveTableSettings;
+  updateSettings: UpdateSettings<InteractiveTableSettings>
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
@@ -185,7 +201,7 @@ const HeaderCell = ({
   const [ { isOver }, drop ] = useDrop({
     accept: type,
     canDrop: (_, monitor) => {
-      const dragItem = (monitor.getItem() || {}); // as DndItem;
+      const dragItem = (monitor.getItem() || {});
       const dragIndex = dragItem?.index;
       const deltaX = monitor.getDifferenceFromInitialOffset()?.x;
       const dragState = deltaX ? (deltaX > 0 ? 'draggingRight' : 'draggingLeft') : 'notDragging';
@@ -231,9 +247,7 @@ const HeaderCell = ({
         <span
           className={css.columnResizeHandle}
           ref={resizingRef}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
+          onClick={(e) => e.stopPropagation()}
         />
       </DraggableCore>
       <span
@@ -320,14 +334,13 @@ const InteractiveTable: InteractiveTable = ({
   useLayoutEffect(() => {
     const newSettingsWidths = settings.columnWidths;
     const widths = getUpscaledWidths(newSettingsWidths);
-    const c = 0.95;
-    const dropRightStyles = widths.map((w, i) => ({
-      left: `${(w / 2) }px`,
-      width: `${(w + (widths[i + 1] ?? WIDGET_COLUMN_WIDTH)) * c / 2}px`,
+    const dropRightStyles = widths.map((width, idx) => ({
+      left: `${(width / 2)}px`,
+      width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
     }));
-    const dropLeftStyles = widths.map((w, i) => ({
-      left: `${-((widths[i - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
-      width: `${(w + (widths[i - 1] ?? WIDGET_COLUMN_WIDTH)) * c / 2}px`,
+    const dropLeftStyles = widths.map((width, idx) => ({
+      left: `${-((widths[idx - 1] ?? WIDGET_COLUMN_WIDTH) / 2)}px`,
+      width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
   }, [ settings.columnWidths,
@@ -370,34 +383,39 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const handleResize = useCallback(
-    (index) => {
+    (resizeIndex) => {
       return throttle(DEFAULT_RESIZE_THROTTLE_TIME, (e: Event, { x }: DraggableData) => {
         setWidthData(({ widths: prevWidths, ...rest }) => {
-          const column = settings.columns[index];
-          const minWidth = DEFAULT_COLUMN_WIDTHS[column];
+          const column = settings.columns[resizeIndex];
+          const minWidth = columnDefs[column].defaultWidth;
           let targetWidths;
           if (x < minWidth) {
-            targetWidths = prevWidths.map((w: number, i: number) =>
-              index === i ? minWidth : w);
-
+            targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
+              resizeIndex === prevWidthIndex ? minWidth : prevWidth);
           } else {
             const newWidth = x;
-            targetWidths = prevWidths.map((w: number, i: number) =>
-              index === i ? newWidth : w);
+            targetWidths = prevWidths.map((prevWidth: number, prevWidthIndex: number) =>
+              resizeIndex === prevWidthIndex ? newWidth : prevWidth);
           }
 
           const targetWidthSum = getAdjustedColumnWidthSum(targetWidths);
-
+          /**
+           * If the table width is less than the page width, the browser upscales,
+           * and then the resize no longer tracks with the cursor.
+           * we manually do the scaling here to keep the tableWidth >= pageWidth
+           * in particular, we distribute the deficit among the other columns
+           */
           const shortage = pageWidth - targetWidthSum;
           if (shortage > 0) {
             const compensatingPortion = shortage / (prevWidths.length - 1);
-            targetWidths = targetWidths.map((w, i) => index === i ? w : w + compensatingPortion);
+            targetWidths = targetWidths.map((targetWidth, targetWidthIndex) =>
+              resizeIndex === targetWidthIndex ? targetWidth : targetWidth + compensatingPortion);
           }
           return { widths: targetWidths, ...rest };
         });
       });
     },
-    [ settings.columns, pageWidth, getAdjustedColumnWidthSum ],
+    [ settings.columns, pageWidth, getAdjustedColumnWidthSum, columnDefs ],
   );
 
   const handleResizeStart = useCallback(
@@ -406,13 +424,13 @@ const InteractiveTable: InteractiveTable = ({
       setWidthData(({ widths, ...rest }) => {
         const column = settings.columns[index];
         const startWidth = widths[index];
-        const minWidth = DEFAULT_COLUMN_WIDTHS[column];
+        const minWidth = columnDefs[column].defaultWidth;
         const deltaX = startWidth - minWidth;
         const minX = x - deltaX;
         return { minX, widths, ...rest };
       });
     },
-    [ setWidthData, settings.columns ],
+    [ setWidthData, settings.columns, columnDefs ],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -452,7 +470,7 @@ const InteractiveTable: InteractiveTable = ({
     ],
   );
 
-  const renderColumns: ColumnsType<ExperimentItem> = useMemo(
+  const renderColumns: ColumnsType<RecordType> = useMemo(
     () =>
       [
         ...settings.columns.map((columnName, index) => {
@@ -469,7 +487,7 @@ const InteractiveTable: InteractiveTable = ({
           };
         }),
         { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH },
-      ] as ColumnsType<ExperimentItem>,
+      ] as ColumnsType<RecordType>,
 
     [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
   );
