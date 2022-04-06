@@ -152,7 +152,8 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 	}
 
 	getResp := &apiv1.GetModelsResponse{}
-	err := a.m.db.QueryProtof("get_models", []interface{}{"id"}, &getResp.Models, 0, "", "", "", modelName, "")
+	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
+		&getResp.Models, 0, "", "", "", modelName, "")
 	if err != nil {
 		return err
 	}
