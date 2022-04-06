@@ -349,7 +349,7 @@ def describe(args: Namespace) -> None:
     wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
-            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
+            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
@@ -563,7 +563,7 @@ def scalar_training_metrics_names(
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
     """
-    for workload in workloads or []:
+    for workload in workloads:
         if workload.training:
             metrics = workload.training.metrics
             if not metrics:
@@ -576,7 +576,7 @@ def scalar_training_metrics_names(
 def scalar_validation_metrics_names(
     workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
 ) -> Set[str]:
-    for workload in workloads or []:
+    for workload in workloads:
         if workload.validation:
             metrics = workload.validation.metrics
             if not metrics:

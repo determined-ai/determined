@@ -2729,7 +2729,7 @@ export interface V1GetTrialResponse {
      * @type {Array<GetTrialResponseWorkloadContainer>}
      * @memberof V1GetTrialResponse
      */
-    workloads?: Array<GetTrialResponseWorkloadContainer>;
+    workloads: Array<GetTrialResponseWorkloadContainer>;
 }
 
 /**
@@ -3449,7 +3449,7 @@ export interface V1MetricsWorkload {
      * @type {any}
      * @memberof V1MetricsWorkload
      */
-    metrics?: any;
+    metrics: any;
     /**
      * Number of inputs processed.
      * @type {number}

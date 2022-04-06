@@ -30,7 +30,9 @@ message CheckpointWorkload {
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "state", "num_inputs", "total_batches" ] }
+    json_schema: {
+      required: [ "metrics", "state", "num_inputs", "total_batches" ]
+    }
   };
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
