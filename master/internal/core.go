@@ -58,6 +58,8 @@ import (
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 const (
@@ -782,6 +784,9 @@ func (m *Master) Run(ctx context.Context) error {
 	if m.config.InternalConfig.AuditLoggingEnabled {
 		m.echo.Use(auditLogMiddleware())
 	}
+
+	otelConfig()
+	m.echo.Use(otelecho.Middleware("determined-master"))
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
