@@ -13,7 +13,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-// import 'antd/dist/antd.min.css';
 import { useDrag, useDragLayer, useDrop } from 'react-dnd';
 import { DraggableCore, DraggableData, DraggableEventHandler } from 'react-draggable';
 import { throttle } from 'throttle-debounce';
