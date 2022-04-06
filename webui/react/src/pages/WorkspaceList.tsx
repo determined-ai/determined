@@ -1,13 +1,21 @@
-import React from 'react';
+import { Button } from 'antd';
+import React, { useCallback } from 'react';
 
 import Page from 'components/Page';
-import Section from 'components/Section';
+import useModalWorkspaceCreate from 'hooks/useModal/useModalWorkspaceCreate';
 
 const WorkspaceList: React.FC = () => {
+  const { modalOpen } = useModalWorkspaceCreate({});
+
+  const handleWorkspaceCreateClick = useCallback(() => {
+    modalOpen();
+  }, [ modalOpen ]);
   return (
-    <Page docTitle="Workspaces" id="workspaces">
-      <Section title="Workspaces" />
-    </Page>
+    <Page
+      id="workspaces"
+      options={<Button onClick={handleWorkspaceCreateClick}>New Workspace</Button>}
+      title="Workspaces"
+    />
   );
 };
 

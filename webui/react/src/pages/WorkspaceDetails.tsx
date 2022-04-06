@@ -1,13 +1,28 @@
-import React from 'react';
+import { Button } from 'antd';
+import React, { useCallback } from 'react';
+import { useParams } from 'react-router';
 
 import Page from 'components/Page';
-import Section from 'components/Section';
+import useModalProjectCreate from 'hooks/useModal/useModalProjectCreate';
+
+interface Params {
+  workspaceId: string;
+}
 
 const WorkspaceDetails: React.FC = () => {
+  const { workspaceId } = useParams<Params>();
+  const { modalOpen } = useModalProjectCreate({ workspaceId: parseInt(workspaceId) });
+
+  const handleProjectCreateClick = useCallback(() => {
+    modalOpen();
+  }, [ modalOpen ]);
+
   return (
-    <Page docTitle="Workspace Details" id="workspaceDetails">
-      <Section title="Workspace Details" />
-    </Page>
+    <Page
+      id="workspaceDetails"
+      options={<Button onClick={handleProjectCreateClick}>New Project</Button>}
+      title="Workspace Details"
+    />
   );
 };
 
