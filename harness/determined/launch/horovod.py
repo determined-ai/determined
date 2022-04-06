@@ -189,7 +189,7 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
 
     # Then parse the rest of the commands normally.
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [[HVD_OVERRIDES...] --] [--autohorovod] (--trial TRIAL)|(SCRIPT...)",
+        usage="%(prog)s [[HVD_OVERRIDES...] --] (--trial TRIAL)|(SCRIPT...)",
         description=(
             "Launch a script under horovodrun on a Determined cluster, with automatic handling of "
             "IP addresses, sshd containers, and shutdown mechanics."
