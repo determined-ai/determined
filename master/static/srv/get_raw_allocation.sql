@@ -129,6 +129,7 @@ SELECT
         ) AS seconds
 FROM
     agent_stats, const
+WHERE const.period && tstzrange(start_time, end_time)
 UNION 
 SELECT
     NULL AS experiment_id,
