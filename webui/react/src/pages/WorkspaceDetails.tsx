@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
+import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { getWorkspace, getWorkspaceProjects, isNotFound } from 'services/api';
+import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
+import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 
 interface Params {
@@ -69,8 +73,23 @@ const WorkspaceDetails: React.FC = () => {
   return (
     <Page
       headerComponent={<WorkspaceDetailsHeader workspace={workspace} />}
-      id="workspaceDetails"
-    />
+      id="workspaceDetails">
+      <Spinner spinning={isLoading}>
+        {projects.length !== 0 ? (
+          <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
+            {projects.map(project => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </Grid>
+        ) : (
+          <Message
+            title="No projects matching the current filters"
+            type={MessageType.Empty}
+          />
+        )}
+      </Spinner>
+
+    </Page>
   );
 };
 
