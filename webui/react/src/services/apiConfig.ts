@@ -378,7 +378,7 @@ export const getExpTrials: Service.DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial })),
+      trials: response.trials.map(trial => ({ workloads: [], ...decoder.decodeV1TrialToTrialItem(trial)})),
     };
   },
   request: (params, options) => {
