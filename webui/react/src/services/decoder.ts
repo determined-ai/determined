@@ -450,16 +450,18 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
     resources[res] = parseFloat(val);
   });
 
+  // TODO the following has been brainlessly changed to compile
+
   return {
-    batch: data.batchNumber,
-    endTime: data.endTime && data.endTime as unknown as string,
-    experimentId: data.experimentId,
-    metrics: data.metrics,
+    batch: data.metadata["latest_batch"],
+    endTime: data.reportTime && data.reportTime as unknown as string,
+    experimentId: data.training.experimentId,
+    metrics: data.training.trainingMetrics,
     resources,
-    state: decodeCheckpointState(data.state),
-    trialId: data.trialId,
+    state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
+    trialId: data.training.trialId || -1, // TODO maybe it becomes required again
     uuid: data.uuid,
-    validationMetric: data.searcherMetric,
+    validationMetric: data.training.searcherMetric,
   };
 };
 

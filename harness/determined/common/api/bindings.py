@@ -612,14 +612,14 @@ class v1AwsCustomTag:
 class v1Checkpoint:
     def __init__(
         self,
+        allocationId: str,
         metadata: "typing.Dict[str, typing.Any]",
-        reportTime: str,
         resources: "typing.Dict[str, str]",
-        state: "determinedcheckpointv1State",
+        taskId: str,
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
-        allocationId: "typing.Optional[str]" = None,
-        taskId: "typing.Optional[str]" = None,
+        reportTime: "typing.Optional[str]" = None,
+        state: "typing.Optional[determinedcheckpointv1State]" = None,
     ):
         self.taskId = taskId
         self.allocationId = allocationId
@@ -633,25 +633,25 @@ class v1Checkpoint:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Checkpoint":
         return cls(
-            taskId=obj.get("taskId", None),
-            allocationId=obj.get("allocationId", None),
+            taskId=obj["taskId"],
+            allocationId=obj["allocationId"],
             uuid=obj["uuid"],
-            reportTime=obj["reportTime"],
+            reportTime=obj.get("reportTime", None),
             resources=obj["resources"],
             metadata=obj["metadata"],
-            state=determinedcheckpointv1State(obj["state"]),
+            state=determinedcheckpointv1State(obj["state"]) if obj.get("state", None) is not None else None,
             training=v1CheckpointTrainingMetadata.from_json(obj["training"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "taskId": self.taskId if self.taskId is not None else None,
-            "allocationId": self.allocationId if self.allocationId is not None else None,
+            "taskId": self.taskId,
+            "allocationId": self.allocationId,
             "uuid": self.uuid,
-            "reportTime": self.reportTime,
+            "reportTime": self.reportTime if self.reportTime is not None else None,
             "resources": self.resources,
             "metadata": self.metadata,
-            "state": self.state.value,
+            "state": self.state.value if self.state is not None else None,
             "training": self.training.to_json(),
         }
 
@@ -661,7 +661,6 @@ class v1CheckpointTrainingMetadata:
         experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         experimentId: "typing.Optional[int]" = None,
         hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
-        runId: "typing.Optional[int]" = None,
         searcherMetric: "typing.Optional[float]" = None,
         trainingMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         trialId: "typing.Optional[int]" = None,
@@ -669,7 +668,6 @@ class v1CheckpointTrainingMetadata:
     ):
         self.trialId = trialId
         self.experimentId = experimentId
-        self.runId = runId
         self.experimentConfig = experimentConfig
         self.hparams = hparams
         self.trainingMetrics = trainingMetrics
@@ -681,7 +679,6 @@ class v1CheckpointTrainingMetadata:
         return cls(
             trialId=obj.get("trialId", None),
             experimentId=obj.get("experimentId", None),
-            runId=obj.get("runId", None),
             experimentConfig=obj.get("experimentConfig", None),
             hparams=obj.get("hparams", None),
             trainingMetrics=obj.get("trainingMetrics", None),
@@ -693,7 +690,6 @@ class v1CheckpointTrainingMetadata:
         return {
             "trialId": self.trialId if self.trialId is not None else None,
             "experimentId": self.experimentId if self.experimentId is not None else None,
-            "runId": self.runId if self.runId is not None else None,
             "experimentConfig": self.experimentConfig if self.experimentConfig is not None else None,
             "hparams": self.hparams if self.hparams is not None else None,
             "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
