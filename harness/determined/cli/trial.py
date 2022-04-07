@@ -134,10 +134,10 @@ def output_logs(args: Namespace):
     trial_logs_file = write_trial_logs(args, args.trial_id, output_dir_tar)
     output_dir_tar.add(f'{trial_logs_file}.json')
     
-    master_logs_file = write_master_logs(args, output_dir_tar)
+    master_logs_file = write_master_logs(args.trial_id, output_dir_tar)
     output_dir_tar.add(f'{master_logs_file}.json')
 
-    api_trail_file, api_experiment_file = write_api_call(args, output_dir_tar)
+    api_trail_file, api_experiment_file = write_api_call(args.trial_id, output_dir_tar)
     output_dir_tar.add(f'{api_trail_file}.json')
     output_dir_tar.add(f'{api_experiment_file}.json')
 
@@ -158,21 +158,23 @@ def write_trial_logs(args,trial_id, output_dir):  #difference between this trial
     create_json_file_in_dir(trial_logs_list,file_name, output_dir)
     return file_name
 
-def write_master_logs(args, output_dir):
+def write_master_logs(args, trial_id, output_dir):
     response = api.get(
                 args.master, "logs"
             )
     file_name = 'master_logs'
-    create_json_file_in_dir(response.json(),file_name, output_dir)
+    create_json_file_in_dir(response,file_name, output_dir)
     return file_name
 
-def write_api_call(args, output_dir): 
+def write_api_call(trial_id, output_dir): 
+    #r = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment -> how would I get experiment id associated with trial? From task table in database?
+    bindings.get_GetExperiment()
     file_name1 = 'api_experiment_call'
     file_name2 = 'api_trial_call'
 
-    trial_obj = bindings.get_GetTrial(setup_session(args), trialId=args.trial_id).trial
+    trial_obj = bindings.get_GetTrial(trialId=trial_id)
     experiment_id = trial_obj.experimentId
-    exp_obj = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
+    exp_obj = bindings.get_GetExperiment(experimentId=experiment_id)
 
     trial_obj.to_json(), exp_obj.to_json()
     create_json_file_in_dir(exp_obj.to_json(), file_name1, output_dir)
@@ -180,7 +182,7 @@ def write_api_call(args, output_dir):
     return file_name1, file_name2
 
 def create_json_file_in_dir(content, file_name, output_dir): 
-    with open(f'{file_name}.json', 'w') as f: 
+    with open('{file_name}.json', 'w') as f: 
         json.dump(content, f)
     
     f.close()
