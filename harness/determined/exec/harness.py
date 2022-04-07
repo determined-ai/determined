@@ -10,15 +10,6 @@ from determined import _core, horovod, load
 from determined.common.api import analytics, certs
 
 
-def config_logging(debug: bool) -> None:
-    log_level = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(
-        level=log_level, format="%(asctime)s:%(levelname)s [%(process)s]: %(message)s"
-    )
-    logging.getLogger().setLevel(log_level)
-    logging.debug("Starting harness.")
-
-
 @contextlib.contextmanager
 def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
     if debug_enabled:
@@ -75,7 +66,8 @@ def main(train_entrypoint: Optional[str]) -> int:
         on_cluster=True,
     )
 
-    config_logging(env.debug)
+    det.common.set_logger(env.debug)
+    logging.debug("Starting harness.")
 
     with maybe_periodic_stacktraces(env.debug):
         # Step 1: Load user code.
