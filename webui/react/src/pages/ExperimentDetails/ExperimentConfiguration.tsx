@@ -14,6 +14,15 @@ interface Props {
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
+  let publicConfig = {};
+  if (experiment.configRaw) {
+    const {
+      environment: { registry_auth, ...restEnvironment },
+      ...restConfig
+    } = experiment.configRaw;
+    publicConfig = { environment: restEnvironment, ...restConfig };
+  }
+
   return (
     <Section bodyNoPadding bodyScroll maxHeight>
       <React.Suspense fallback={(
@@ -25,7 +34,7 @@ const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
             occurrencesHighlight: false,
             readOnly: true,
           }}
-          value={yaml.dump(experiment.configRaw)}
+          value={yaml.dump(publicConfig)}
         />
       </React.Suspense>
     </Section>
