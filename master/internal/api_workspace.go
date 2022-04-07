@@ -222,7 +222,8 @@ func (a *apiServer) ArchiveWorkspace(
 }
 
 func (a *apiServer) UnarchiveWorkspace(
-	_ context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse, error) {
+	_ context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse,
+	error) {
 	holder := &workspacev1.Workspace{}
 	err := a.m.db.QueryProto("archive_workspace", holder, req.Id, false)
 
