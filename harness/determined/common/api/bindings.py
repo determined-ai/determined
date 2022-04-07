@@ -387,6 +387,7 @@ class v1Agent:
         registeredTime: "typing.Optional[str]" = None,
         resourcePool: "typing.Optional[str]" = None,
         slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None,
+        version: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.registeredTime = registeredTime
@@ -397,6 +398,7 @@ class v1Agent:
         self.addresses = addresses
         self.enabled = enabled
         self.draining = draining
+        self.version = version
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
@@ -410,6 +412,7 @@ class v1Agent:
             addresses=obj.get("addresses", None),
             enabled=obj.get("enabled", None),
             draining=obj.get("draining", None),
+            version=obj.get("version", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -423,6 +426,7 @@ class v1Agent:
             "addresses": self.addresses if self.addresses is not None else None,
             "enabled": self.enabled if self.enabled is not None else None,
             "draining": self.draining if self.draining is not None else None,
+            "version": self.version if self.version is not None else None,
         }
 
 class v1AgentUserGroup:

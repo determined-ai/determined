@@ -829,6 +829,12 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     draining?: boolean;
+    /**
+     * The Determined version that this agent was built from.
+     * @type {string}
+     * @memberof V1Agent
+     */
+    version?: string;
 }
 
 /**

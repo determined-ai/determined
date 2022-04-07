@@ -34,6 +34,7 @@ type (
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
 		started bool
+		version string
 
 		maxZeroSlotContainers int
 		agentReconnectWait    time.Duration
@@ -118,6 +119,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
 		check.Panic(check.True(ok, "failed to accept websocket connection"))
 		a.socket = socket
+		a.version = msg.Ctx.QueryParam("version")
 
 		lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")
 		if lastColonIndex == -1 {
@@ -470,6 +472,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		Enabled:       true,
 		Draining:      false,
 		NumContainers: 0,
+		Version:       a.version,
 	}
 
 	if a.agentState != nil {
