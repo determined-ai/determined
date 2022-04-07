@@ -20,6 +20,7 @@ type AgentSummary struct {
 	Addresses      []string     `json:"addresses"`
 	Enabled        bool         `json:"enabled"`
 	Draining       bool         `json:"draining"`
+	Version        string       `json:"version"`
 }
 
 // ToProto converts an agent summary to a proto struct.
@@ -38,6 +39,7 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 		Addresses:      a.Addresses,
 		Enabled:        a.Enabled,
 		Draining:       a.Draining,
+		Version:        a.Version,
 	}
 }
 

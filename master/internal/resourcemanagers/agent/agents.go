@@ -68,7 +68,8 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			return nil
 		}
 
-		if ref, err := a.createAgentActor(ctx, id, resourcePool, a.opts); err != nil {
+		version := msg.Ctx.QueryParam("version")
+		if ref, err := a.createAgentActor(ctx, id, version, resourcePool, a.opts); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(ctx.Ask(ref, msg).Get())
@@ -89,7 +90,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 }
 
 func (a *agents) createAgentActor(
-	ctx *actor.Context, id, resourcePool string, opts *aproto.MasterSetAgentOptions,
+	ctx *actor.Context, id, version, resourcePool string, opts *aproto.MasterSetAgentOptions,
 ) (*actor.Ref, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
@@ -107,6 +108,7 @@ func (a *agents) createAgentActor(
 	ref, ok := ctx.ActorOf(id, &agent{
 		resourcePool:          resourcePoolRef,
 		resourcePoolName:      resourcePool,
+		version:               version,
 		maxZeroSlotContainers: rpConfig.MaxZeroSlotContainers,
 		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
 		agentReattachEnabled:  rpConfig.AgentReattachEnabled,
