@@ -49,7 +49,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await createProject({ name, workspaceId });
+      const response = await createProject({ name, workspaceId, description });
       routeToReactUrl(paths.projectDetails(response.id));
     } catch (e) {
       handleError(e, {
@@ -60,7 +60,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ name, workspaceId ]);
+  }, [ name, workspaceId, description ]);
 
   const getModalProps = useCallback((name: string): ModalFuncProps => {
     return {
