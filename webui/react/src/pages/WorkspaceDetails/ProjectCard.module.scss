@@ -33,7 +33,7 @@
     overflow: hidden;
   }
   .experiments {
-    align-items: end;
+    align-items: flex-end;
     align-self: end;
     display: flex;
     gap: var(--theme-sizes-layout-tiny);

@@ -1,0 +1,103 @@
+import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { RunState } from 'types';
+
+export type ProjectColumnName =
+  | 'action'
+  | 'archived'
+  | 'description'
+  | 'id'
+  | 'lastUpdated'
+  | 'name'
+  | 'numExperiments'
+  | 'user';
+
+export const DEFAULT_COLUMNS: ProjectColumnName[] = [
+  'id',
+  'name',
+  'description',
+  'numExperiments',
+  'lastUpdated',
+  'user',
+  'archived',
+];
+
+export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
+  action: 46,
+  archived: 75,
+  description: 147,
+  id: 57,
+  lastUpdated: 100,
+  name: 150,
+  numExperiments: 74,
+  user: 85,
+};
+
+export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
+  archived?: boolean;
+  name?: string;
+  sortKey: V1GetWorkspaceProjectsRequestSortBy;
+  state?: RunState[];
+  user?: string[];
+}
+
+const config: SettingsConfig = {
+  settings: [
+    {
+      defaultValue: false,
+      key: 'archived',
+      storageKey: 'archived',
+      type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS.map((col: ProjectColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+      key: 'columnWidths',
+      skipUrlEncoding: true,
+      storageKey: 'columnWidths',
+      type: {
+        baseType: BaseType.Float,
+        isArray: true,
+      },
+    },
+    {
+      key: 'name',
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: true,
+      key: 'sortDesc',
+      storageKey: 'sortDesc',
+      type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME,
+      key: 'sortKey',
+      storageKey: 'sortKey',
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: MINIMUM_PAGE_SIZE,
+      key: 'tableLimit',
+      storageKey: 'tableLimit',
+      type: { baseType: BaseType.Integer },
+    },
+    {
+      defaultValue: 0,
+      key: 'tableOffset',
+      type: { baseType: BaseType.Integer },
+    },
+    {
+      key: 'user',
+      storageKey: 'user',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+  ],
+  storagePath: 'workspace-details',
+};
+
+export default config;

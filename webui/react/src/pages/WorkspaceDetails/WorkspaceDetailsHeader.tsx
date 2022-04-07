@@ -1,6 +1,6 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Space } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import useModalProjectCreate from 'hooks/useModal/useModalProjectCreate';
