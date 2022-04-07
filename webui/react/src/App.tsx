@@ -1,5 +1,7 @@
 import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 
 import Link from 'components/Link';
@@ -141,7 +143,9 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <StoreProvider>
-        <AppView />
+        <DndProvider backend={HTML5Backend}>
+          <AppView />
+        </DndProvider>
       </StoreProvider>
     </HelmetProvider>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
@@ -17,6 +17,7 @@ export interface BreadCrumbRoute {
 export interface Props extends CommonProps {
   bodyNoPadding?: boolean;
   breadcrumb?: BreadCrumbRoute[];
+  containerRef?: MutableRefObject<HTMLElement | null>,
   docTitle?: string;
   headerComponent?: React.ReactNode,
   id?: string;
@@ -55,7 +56,7 @@ const Page: React.FC<Props> = (props: Props) => {
   if (props.stickyHeader) classes.push(css.stickyHeader);
 
   return (
-    <main className={classes.join(' ')} id={props.id}>
+    <main className={classes.join(' ')} id={props.id} ref={props.containerRef}>
       <Helmet>
         <title>{docTitle}</title>
         {info.checked && (
