@@ -1046,13 +1046,13 @@ export interface V1Checkpoint {
      * @type {string}
      * @memberof V1Checkpoint
      */
-    taskId?: string;
+    taskId: string;
     /**
      * ID of the allocation which generated this checkpoint.
      * @type {string}
      * @memberof V1Checkpoint
      */
-    allocationId?: string;
+    allocationId: string;
     /**
      * UUID of the checkpoint.
      * @type {string}
@@ -1064,7 +1064,7 @@ export interface V1Checkpoint {
      * @type {Date}
      * @memberof V1Checkpoint
      */
-    reportTime: Date;
+    reportTime?: Date;
     /**
      * Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
      * @type {{ [key: string]: string; }}
@@ -1082,7 +1082,7 @@ export interface V1Checkpoint {
      * @type {Determinedcheckpointv1State}
      * @memberof V1Checkpoint
      */
-    state: Determinedcheckpointv1State;
+    state?: Determinedcheckpointv1State;
     /**
      * Training-related data for this checkpoint.
      * @type {V1CheckpointTrainingMetadata}
@@ -1109,12 +1109,6 @@ export interface V1CheckpointTrainingMetadata {
      * @memberof V1CheckpointTrainingMetadata
      */
     experimentId?: number;
-    /**
-     * The run number for this training.
-     * @type {number}
-     * @memberof V1CheckpointTrainingMetadata
-     */
-    runId?: number;
     /**
      * The configuration of the experiment that created this checkpoint.
      * @type {any}
