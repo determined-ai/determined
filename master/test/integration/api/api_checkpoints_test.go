@@ -5,9 +5,12 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 
@@ -20,6 +23,8 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -66,9 +71,11 @@ func testGetCheckpoint(
 		},
 	}
 
+	conv := &protoconverter.ProtoConverter{}
+
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment, trial := createExperimentAndTrial(t, db)
+			experiment, trial, allocation := createPrereqs(t, db)
 
 			latestBatch := int32(10)
 			if tc.validate {
@@ -84,15 +91,18 @@ func testGetCheckpoint(
 			}
 
 			checkpointUuid := uuid.NewString()
-			checkpointMeta := trialv1.CheckpointMetadata{
-				TrialId:           int32(trial.ID),
-				TrialRunId:        int32(0),
-				Uuid:              checkpointUuid,
-				Resources:         map[string]int64{"ok": 1.0},
-				Framework:         "some framework",
-				Format:            "some format",
-				DeterminedVersion: "1.0.0",
-				LatestBatch:       latestBatch,
+			checkpointMeta := model.CheckpointV2{
+				UUID:         conv.ToUUID(checkpointUuid),
+				TaskID:       trial.TaskID,
+				AllocationID: allocation.AllocationID,
+				ReportTime:   timestamppb.Now().AsTime(),
+				State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
+				Resources:    map[string]int64{"ok": 1.0},
+				Metadata: map[string]interface{}{
+					"latest_batch":       latestBatch,
+					"framework":          "some framework",
+					"determined_version": "1.0.0",
+				},
 			}
 			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 
@@ -107,18 +117,21 @@ func testGetCheckpoint(
 			ckptCl := *ckptResp.Checkpoint
 			assert.Equal(t, ckptCl.Uuid, checkpointUuid)
 
-			entrypoint := ckptCl.ExperimentConfig.GetFields()["entrypoint"].GetStringValue()
+			entrypoint := ckptCl.Training.ExperimentConfig.GetFields()["entrypoint"].GetStringValue()
 			assert.Equal(t, entrypoint, "model_def:SomeTrialClass")
 
-			assert.Equal(t, ckptCl.ExperimentId, int32(experiment.ID))
-			assert.Equal(t, ckptCl.TrialId, int32(trial.ID))
-			assert.Equal(t, ckptCl.Framework, "some framework")
-			assert.Equal(t, ckptCl.Format, "some format")
+			assert.Equal(t, ckptCl.Training.ExperimentId.Value, int32(experiment.ID))
+			assert.Equal(t, ckptCl.Training.TrialId.Value, int32(trial.ID))
+			actualFramework := ckptCl.Metadata.GetFields()["framework"].GetStringValue()
+			assert.Equal(t, actualFramework, "some framework")
+			// assert.Equal(t, ckptCl.Format, "some format")
 
+			t.Logf("validationMetrics: %v", ckptCl.Training.ValidationMetrics)
+			// where did ValidationState go?
 			if tc.validate {
-				assert.Equal(t, ckptCl.ValidationState, checkpointv1.State_STATE_COMPLETED)
+				assert.Assert(t, ckptCl.Training.ValidationMetrics != nil)
 			} else {
-				assert.Equal(t, ckptCl.ValidationState, checkpointv1.State_STATE_UNSPECIFIED)
+				assert.Assert(t, ckptCl.Training.ValidationMetrics == nil)
 			}
 			assert.Equal(t, ckptCl.State, checkpointv1.State_STATE_COMPLETED)
 		})
@@ -132,22 +145,28 @@ func testGetCheckpoint(
 func testGetExperimentCheckpoints(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
-	experiment, trial := createExperimentAndTrial(t, db)
+	experiment, trial, allocation := createPrereqs(t, db)
+	conv := &protoconverter.ProtoConverter{}
 
 	var uuids []string
 	for i := 0; i < 5; i++ {
 		checkpointUuid := uuid.NewString()
 		uuids = append(uuids, checkpointUuid)
-		checkpointMeta := trialv1.CheckpointMetadata{
-			TrialId:           int32(trial.ID),
-			TrialRunId:        int32(0),
-			Uuid:              checkpointUuid,
-			Resources:         map[string]int64{"ok": 1.0},
-			Framework:         "some framework",
-			Format:            "some format",
-			DeterminedVersion: "1.0.0",
-			LatestBatch:       int32(10 * i),
+		latestBatch := 10 * i
+		checkpointMeta := model.CheckpointV2{
+			UUID:         conv.ToUUID(checkpointUuid),
+			TaskID:       trial.TaskID,
+			AllocationID: allocation.AllocationID,
+			ReportTime:   timestamppb.Now().AsTime(),
+			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
+			Resources:    map[string]int64{"ok": 1.0},
+			Metadata: map[string]interface{}{
+				"latest_batch":       latestBatch,
+				"framework":          "some framework",
+				"determined_version": "1.0.0",
+			},
 		}
+
 		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 	}
@@ -208,21 +227,26 @@ func testGetExperimentCheckpoints(
 func testGetTrialCheckpoints(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
-	_, trial := createExperimentAndTrial(t, db)
+	_, trial, allocation := createPrereqs(t, db)
+	conv := &protoconverter.ProtoConverter{}
 
 	var uuids []string
 	for i := 0; i < 5; i++ {
 		checkpointUuid := uuid.NewString()
 		uuids = append(uuids, checkpointUuid)
-		checkpointMeta := trialv1.CheckpointMetadata{
-			TrialId:           int32(trial.ID),
-			TrialRunId:        int32(0),
-			Uuid:              checkpointUuid,
-			Resources:         map[string]int64{"ok": 1.0},
-			Framework:         "some framework",
-			Format:            "some format",
-			DeterminedVersion: "1.0.0",
-			LatestBatch:       int32(10 * i),
+		latestBatch := 10 * i
+		checkpointMeta := model.CheckpointV2{
+			UUID:         conv.ToUUID(checkpointUuid),
+			TaskID:       trial.TaskID,
+			AllocationID: allocation.AllocationID,
+			ReportTime:   timestamppb.Now().AsTime(),
+			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
+			Resources:    map[string]int64{"ok": 1.0},
+			Metadata: map[string]interface{}{
+				"latest_batch":       latestBatch,
+				"framework":          "some framework",
+				"determined_version": "1.0.0",
+			},
 		}
 		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 		assert.NilError(t, err, "failed to add checkpoint meta")
@@ -281,7 +305,8 @@ func testGetTrialCheckpoints(
 
 }
 
-func createExperimentAndTrial(t *testing.T, db *db.PgDB) (*model.Experiment, *model.Trial) {
+func createPrereqs(t *testing.T, db *db.PgDB) (
+	*model.Experiment, *model.Trial, *model.Allocation) {
 	experiment := model.ExperimentModel()
 	err := db.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
@@ -290,6 +315,19 @@ func createExperimentAndTrial(t *testing.T, db *db.PgDB) (*model.Experiment, *mo
 		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
+	t.Logf("Created trial=%v", trial)
 
-	return experiment, trial
+	startTime := time.Now().UTC()
+	a := &model.Allocation{
+		AllocationID: model.NewAllocationID(fmt.Sprintf("%s-%d", trial.TaskID, 1)),
+		TaskID:       trial.TaskID,
+		StartTime:    ptrs.Ptr(startTime),
+		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
+	}
+	err = db.AddAllocation(a)
+	assert.NilError(t, err, "failed to add allocation")
+	err = db.CompleteAllocation(a)
+	assert.NilError(t, err, "failed to complete allocation")
+
+	return experiment, trial, a
 }
