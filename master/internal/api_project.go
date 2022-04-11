@@ -110,6 +110,15 @@ func (a *apiServer) PostProject(
 		return nil, err
 	}
 
+	w, err := a.GetWorkspaceFromID(req.WorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if w.Immutable {
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.",
+			w.Id)
+	}
+
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
 		req.WorkspaceId, user.User.Id)
@@ -203,8 +212,18 @@ func (a *apiServer) DeleteProject(
 
 func (a *apiServer) MoveProject(
 	_ context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse, error) {
+
+	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if w.Immutable {
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.",
+			w.Id)
+	}
+
 	holder := &projectv1.Project{}
-	err := a.m.db.QueryProto("move_project", holder, req.ProjectId,
+	err = a.m.db.QueryProto("move_project", holder, req.ProjectId,
 		req.DestinationWorkspaceId)
 
 	if holder.Id == 0 {
