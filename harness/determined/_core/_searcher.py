@@ -93,9 +93,8 @@ class Searcher:
 
     .. code:: python
 
-       # We'll pretend we configured we configured the searcher
-       # in terms of batches, so we will interpet the the op.length as a
-       # count of batches.
+       # We'll pretend we configured the searcher in terms of batches,
+       # so we will interpet the the op.length as a count of batches.
        # Note that you'll have to load your starting point from a
        # checkpoint if you want to support pausing/continuing training.
        batches_trained = 0
@@ -169,7 +168,9 @@ class Searcher:
             while True:
                 op = self._get_searcher_op()
                 if not chief_only:
-                    # Broadcast op.length (or None) to workers.
+                    # Broadcast op.length (or None) to workers.  We broadcast just the length
+                    # because SearcherOp is not serializable, and the is_chief attribute obviously
+                    # must be set on a per-worker basis.
                     _ = self._dist._zmq_broadcast(op and op.length)
                 if op is None:
                     if auto_ack:
