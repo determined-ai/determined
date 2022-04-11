@@ -1976,13 +1976,13 @@ export interface V1GetExperimentCheckpointsResponse {
      * @type {Array<V1Checkpoint>}
      * @memberof V1GetExperimentCheckpointsResponse
      */
-    checkpoints?: Array<V1Checkpoint>;
+    checkpoints: Array<V1Checkpoint>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetExperimentCheckpointsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -2735,7 +2735,7 @@ export interface V1GetTrialResponse {
      * @type {Array<GetTrialResponseWorkloadContainer>}
      * @memberof V1GetTrialResponse
      */
-    workloads?: Array<GetTrialResponseWorkloadContainer>;
+    workloads: Array<GetTrialResponseWorkloadContainer>;
 }
 
 /**
@@ -3455,7 +3455,7 @@ export interface V1MetricsWorkload {
      * @type {any}
      * @memberof V1MetricsWorkload
      */
-    metrics?: any;
+    metrics: any;
     /**
      * Number of inputs processed.
      * @type {number}

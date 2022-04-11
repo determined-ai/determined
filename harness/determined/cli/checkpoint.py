@@ -73,7 +73,7 @@ def list_checkpoints(args: Namespace) -> None:
         limit=args.best,
         sortBy=sorter,
     )
-    checkpoints = r.checkpoints or []
+    checkpoints = r.checkpoints
     searcher_metric = ""
     if len(checkpoints) > 0:
         config = checkpoints[0].experimentConfig or {}

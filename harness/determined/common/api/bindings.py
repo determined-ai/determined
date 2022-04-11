@@ -1410,8 +1410,8 @@ class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
 class v1GetExperimentCheckpointsResponse:
     def __init__(
         self,
-        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
-        pagination: "typing.Optional[v1Pagination]" = None,
+        checkpoints: "typing.Sequence[v1Checkpoint]",
+        pagination: "v1Pagination",
     ):
         self.checkpoints = checkpoints
         self.pagination = pagination
@@ -1419,14 +1419,14 @@ class v1GetExperimentCheckpointsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentCheckpointsResponse":
         return cls(
-            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
-            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpoints": [x.to_json() for x in self.checkpoints] if self.checkpoints is not None else None,
-            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "checkpoints": [x.to_json() for x in self.checkpoints],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetExperimentLabelsResponse:
@@ -2186,7 +2186,7 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "typing.Optional[typing.Sequence[GetTrialResponseWorkloadContainer]]" = None,
+        workloads: "typing.Sequence[GetTrialResponseWorkloadContainer]",
     ):
         self.trial = trial
         self.workloads = workloads
@@ -2195,13 +2195,13 @@ class v1GetTrialResponse:
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]] if obj.get("workloads", None) is not None else None,
+            workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "workloads": [x.to_json() for x in self.workloads] if self.workloads is not None else None,
+            "workloads": [x.to_json() for x in self.workloads],
         }
 
 class v1GetUserResponse:
@@ -2865,11 +2865,11 @@ class v1Metrics:
 class v1MetricsWorkload:
     def __init__(
         self,
+        metrics: "typing.Dict[str, typing.Any]",
         numInputs: int,
         state: "determinedexperimentv1State",
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
-        metrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.endTime = endTime
         self.state = state
@@ -2882,7 +2882,7 @@ class v1MetricsWorkload:
         return cls(
             endTime=obj.get("endTime", None),
             state=determinedexperimentv1State(obj["state"]),
-            metrics=obj.get("metrics", None),
+            metrics=obj["metrics"],
             numInputs=obj["numInputs"],
             totalBatches=obj["totalBatches"],
         )
@@ -2891,7 +2891,7 @@ class v1MetricsWorkload:
         return {
             "endTime": self.endTime if self.endTime is not None else None,
             "state": self.state.value,
-            "metrics": self.metrics if self.metrics is not None else None,
+            "metrics": self.metrics,
             "numInputs": self.numInputs,
             "totalBatches": self.totalBatches,
         }

@@ -108,10 +108,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             trials = exp.experiment_trials(experiment_id)
             assert len(trials) == 1
 
-            cpoints = []
-            for cpoint in exp.workloads_for_mode(trials[0].workloads, "checkpoint"):
-                if cpoint.checkpoint:
-                    cpoints.append(cpoint.checkpoint)
+            cpoints = exp.workloads_with_checkpoint(trials[0].workloads)
             sorted_checkpoints = sorted(
                 cpoints,
                 key=lambda ckp: int(ckp.totalBatches),
@@ -144,7 +141,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
-                    assert checkpoint.uuid
+                    assert checkpoint.uuid is not None
                     storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
                     if checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED:

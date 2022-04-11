@@ -203,7 +203,7 @@ message GetTrialRequest {
 // Response to GetTrialRequest.
 message GetTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial" ] }
+    json_schema: { required: [ "trial", "workloads" ] }
   };
   // WorkloadContainer is a wrapper for Determined workloads to allow repeated
   // oneof types.
