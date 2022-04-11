@@ -3,15 +3,15 @@ import itertools
 import multiprocessing
 import sys
 import textwrap
-import threading
 import time
 import traceback
-from typing import Any, Callable, List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import pytest
 
 import determined as det
 from determined import _core, ipc
+from tests import parallel
 
 
 class Subproc(multiprocessing.Process):
@@ -148,92 +148,61 @@ def test_zmq_server_client() -> None:
 def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) -> None:
     size = cross_size * local_size
 
-    def do_parallel(fn: Callable) -> List:
-        """
-        Run the same function on one-thread-per-rank, assert there were no exceptions, and return
-        the results from each rank.
-        """
-        results = [None] * size  # type: List
-        errors = [None] * size  # type: List
-        threads = []
+    with parallel.Execution(size, local_size=local_size, make_distributed_context=False) as pex:
 
-        for cross_rank, local_rank in itertools.product(range(cross_size), range(local_size)):
-            rank = cross_rank * local_size + local_rank
+        @pex.run
+        def contexts() -> _core.DistributedContext:
+            return _core.DistributedContext(
+                rank=pex.rank,
+                size=pex.size,
+                local_rank=pex.local_rank,
+                local_size=pex.local_size,
+                cross_rank=pex.cross_rank,
+                cross_size=pex.cross_size,
+                chief_ip="localhost",
+                force_tcp=force_tcp,
+            )
 
-            def _fn(rank: int, cross_rank: int, local_rank: int) -> None:
-                try:
-                    results[rank] = fn(rank, cross_rank, local_rank)
-                except Exception:
-                    errors[rank] = traceback.format_exc()
-                    raise
+        # Perform a broadcast.
+        results = pex.run(lambda: contexts[pex.rank]._zmq_broadcast(pex.rank))  # type: ignore
+        assert results == [0] * size, "not all threads ran broadcast correctly"
 
-            threads.append(threading.Thread(target=_fn, args=(rank, cross_rank, local_rank)))
+        # Perform a local broadcast.
+        results = pex.run(lambda: contexts[pex.rank]._zmq_broadcast_local(pex.rank))
+        expect = [rank - (rank % local_size) for rank in range(size)]  # type: Any
 
-        for thread in threads:
-            thread.start()
+        assert results == expect, "not all threads ran broadcast_local correctly"
 
-        for thread in threads:
-            thread.join()
+        # Perform a gather.
+        results = pex.run(lambda: set(contexts[pex.rank]._zmq_gather(pex.rank) or []))
+        chief = set(range(size))
+        expect = [set(range(size)) if rank == 0 else set() for rank in range(size)]
+        assert results == [chief] + [set()] * (size - 1), "not all threads ran gather correctly"
 
-        assert errors == [None] * size, "not all threads exited without error"
+        # Perform a local gather.
+        results = pex.run(lambda: set(contexts[pex.rank]._zmq_gather_local(pex.rank) or []))
+        expect = [
+            set(range(rank, rank + local_size)) if rank % local_size == 0 else set()
+            for rank in range(size)
+        ]
+        assert results == expect, "not all threads ran gather correctly"
 
-        return results
+        # Perform an allgather.
+        results = pex.run(lambda: set(contexts[pex.rank]._zmq_allgather(pex.rank)))
+        expect = set(range(size))
+        assert results == [expect] * size, "not all threads ran allgather correctly"
 
-    # Create all of the DistributedContexts.
-    def make_distributed_context(rank: int, cross_rank: int, local_rank: int) -> Any:
-        return _core.DistributedContext(
-            rank=cross_rank * local_size + local_rank,
-            size=cross_size * local_size,
-            local_rank=local_rank,
-            local_size=local_size,
-            cross_rank=cross_rank,
-            cross_size=cross_size,
-            chief_ip="localhost",
-            force_tcp=force_tcp,
-        )
+        # Perform a local allgather.
+        results = pex.run(lambda: set(contexts[pex.rank]._zmq_allgather_local(pex.rank)))
+        expect = [
+            set(range(cross_rank * local_size, (cross_rank + 1) * local_size))
+            for cross_rank, _ in itertools.product(range(cross_size), range(local_size))
+        ]
+        assert results == expect, "not all threads ran allgather_local correctly"
 
-    contexts = do_parallel(make_distributed_context)
-
-    # Perform a broadcast.
-    results = do_parallel(lambda rank, _, __: contexts[rank]._zmq_broadcast(rank))
-    assert results == [0] * size, "not all threads ran broadcast correctly"
-
-    # Perform a local broadcast.
-    results = do_parallel(lambda rank, _, __: contexts[rank]._zmq_broadcast_local(rank))
-    expect = [rank - (rank % local_size) for rank in range(size)]  # type: Any
-
-    assert results == expect, "not all threads ran broadcast_local correctly"
-
-    # Perform a gather.
-    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_gather(rank) or []))
-    chief = set(range(size))
-    expect = [set(range(size)) if rank == 0 else set() for rank in range(size)]
-    assert results == [chief] + [set()] * (size - 1), "not all threads ran gather correctly"
-
-    # Perform a local gather.
-    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_gather_local(rank) or []))
-    expect = [
-        set(range(rank, rank + local_size)) if rank % local_size == 0 else set()
-        for rank in range(size)
-    ]
-    assert results == expect, "not all threads ran gather correctly"
-
-    # Perform an allgather.
-    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_allgather(rank)))
-    expect = set(range(size))
-    assert results == [expect] * size, "not all threads ran allgather correctly"
-
-    # Perform a local allgather.
-    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_allgather_local(rank)))
-    expect = [
-        set(range(cross_rank * local_size, (cross_rank + 1) * local_size))
-        for cross_rank, _ in itertools.product(range(cross_size), range(local_size))
-    ]
-    assert results == expect, "not all threads ran allgather_local correctly"
-
-    # Close all contexts.
-    for context in contexts:
-        context.close()
+        # Close all contexts.
+        for context in contexts:
+            context.close()
 
 
 class TestPIDServer:

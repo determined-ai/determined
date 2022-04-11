@@ -29,7 +29,7 @@ class Context:
         self.distributed = distributed or _core.DummyDistributed()
         self.preemption = preemption or _core.DummyPreemption()
         self.training = training or _core.DummyTraining()
-        self.searcher = searcher or _core.DummySearcher()
+        self.searcher = searcher or _core.DummySearcher(self.distributed)
 
     def __enter__(self) -> "Context":
         self.preemption.start()
@@ -66,7 +66,7 @@ def _dummy_init(
     checkpointing = _core.DummyCheckpointing(distributed, storage_manager)
 
     training = _core.DummyTraining()
-    searcher = _core.DummySearcher()
+    searcher = _core.DummySearcher(distributed)
 
     return Context(
         distributed=distributed,
@@ -131,7 +131,12 @@ def init(
         )
         units = _core._parse_searcher_units(info.trial._config)
         searcher = _core.Searcher(
-            session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id, units
+            session,
+            distributed,
+            info.trial.trial_id,
+            info.trial._trial_run_id,
+            info.allocation_id,
+            units,
         )
 
         if storage_manager is None:
