@@ -212,7 +212,6 @@ func (a *apiServer) DeleteProject(
 
 func (a *apiServer) MoveProject(
 	_ context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse, error) {
-
 	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId)
 	if err != nil {
 		return nil, err
