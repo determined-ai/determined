@@ -67,6 +67,12 @@ def mask_config_dict(d: Dict) -> Dict:
     except KeyError:
         pass
 
+    try:
+        if new_dict["environment"]["registry_auth"].get("password") is not None:
+            new_dict["environment"]["registry_auth"]["password"] = mask
+    except KeyError:
+        pass
+
     return new_dict
 
 

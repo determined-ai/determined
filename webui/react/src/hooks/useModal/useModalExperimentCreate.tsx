@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
