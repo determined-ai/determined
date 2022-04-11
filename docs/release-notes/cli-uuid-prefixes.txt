@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  CLI: Allow the CLI to accept any unique prefix of a task UUID to refer to the task, rather than
-   requiring the entire UUID. In some places, Determined only displays the first few characters of a
-   UUID.
