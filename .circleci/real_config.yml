@@ -1331,9 +1331,12 @@ jobs:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
-      - make-package
-      - run: make -C master publish
-      - run: make -C agent publish
+      - run:
+          no_output_timeout: 30m
+          command: make -C master release
+      - run:
+          no_output_timeout: 30m
+          command: make -C agent release
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1431,8 +1434,6 @@ jobs:
       - skip-if-webui-only
       - attach_workspace:
           at: .
-      - run: export DEBIAN_FRONTEND=noninteractive
-      - run: sudo apt-get update
       - run: sudo apt-get install -y $(pwd)/master/dist/hpe-mlde-master*.deb
       - run: sudo apt-get install -y $(pwd)/agent/dist/hpe-mlde-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
@@ -2578,6 +2579,16 @@ workflows:
             branches:
               only:
                 - main
+
+      - package-and-push-system-dev:
+          requires:
+            - build-react
+            - build-docs
+          context: determined-ee
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
 
       - test-debian-packaging:
           requires:
