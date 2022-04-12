@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"log"
-	"os"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -15,25 +14,19 @@ import (
 )
 
 const (
-	defaultOtelEndpoint      = "localhost:4317"
-	defaultServiceName       = "determined-master"
-	otelExportedOtlpEndpoint = "OTEL_EXPORTER_OTLP_ENDPOINT"
+	defaultServiceName = "determined-master"
 )
 
 // maintain a single tracer provider.
 var tracer *sdktrace.TracerProvider
 
 // otelConfig initiates a new tracer and sets it as the default for otel.
-func otelConfig() *sdktrace.TracerProvider {
+func otelConfig(endpoint string) *sdktrace.TracerProvider {
 	// avoid repeatedly re-creating the tracer.
 	if tracer != nil {
 		return tracer
 	}
 
-	endpoint := os.Getenv(otelExportedOtlpEndpoint)
-	if len(endpoint) == 0 {
-		return nil
-	}
 	ctx := context.Background()
 
 	// Configure a new exporter using environment variables for sending data to Honeycomb over gRPC.

@@ -785,7 +785,9 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(auditLogMiddleware())
 	}
 
-	if otelConfig() != nil { // returns nil if user did not set otelExportedOtlpEndpoint.
+	if m.config.Telemetry.OtelEnabled {
+		endpoint := m.config.Telemetry.OtelExportedOtlpEndpoint
+		otelConfig(endpoint)
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
