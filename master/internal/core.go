@@ -785,8 +785,10 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(auditLogMiddleware())
 	}
 
-	otelConfig()
-	m.echo.Use(otelecho.Middleware("determined-master"))
+	if m.config.Telemetry.OtelEnabled {
+		configureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint)
+		m.echo.Use(otelecho.Middleware("determined-master"))
+	}
 
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true

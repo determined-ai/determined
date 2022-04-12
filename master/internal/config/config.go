@@ -90,6 +90,7 @@ func DefaultConfig() *Config {
 		Root:        "/usr/share/determined/master",
 		Telemetry: config.TelemetryConfig{
 			Enabled:          true,
+			OtelEnabled:      false,
 			SegmentMasterKey: DefaultSegmentMasterKey,
 			SegmentWebUIKey:  DefaultSegmentWebUIKey,
 		},
