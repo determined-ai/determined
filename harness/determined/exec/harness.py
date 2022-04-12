@@ -104,7 +104,7 @@ def main(train_entrypoint: Optional[str]) -> int:
 
         # Step 4: Let core.init() create the core.Context.
         with _core.init(
-            distributed=distributed, preemption_decision_mode=_core.DecisionMode.ChiefOnly
+            distributed=distributed, preempt_mode=_core.PreemptMode.ChiefOnly
         ) as core_context:
             trial_context = trial_class.trial_context_class(core_context, env)
 

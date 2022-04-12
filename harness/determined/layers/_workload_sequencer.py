@@ -383,7 +383,7 @@ class WorkloadSequencer(workload.Source):
             ):
                 yield from self.validate(None)
 
-            for op in self.core_context.searcher.ops(decision_mode=_core.DecisionMode.ChiefOnly):
+            for op in self.core_context.searcher.ops(ops_mode=_core.OpsMode.ChiefOnly):
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(

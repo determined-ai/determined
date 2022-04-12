@@ -88,7 +88,7 @@ def init(
     distributed: Optional[_core.DistributedContext] = None,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
-    preemption_decision_mode: _core.DecisionMode = _core.DecisionMode.WorkersAskChief,
+    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
 ) -> Context:
     info = det.get_cluster_info()
     if info is None:
@@ -104,9 +104,7 @@ def init(
 
     distributed = distributed or _core.DummyDistributed()
 
-    preemption = _core.Preemption(
-        session, info.allocation_id, distributed, preemption_decision_mode
-    )
+    preemption = _core.Preemption(session, info.allocation_id, distributed, preempt_mode)
 
     # At present, we only support tensorboards in Trial tasks.
     tbd_mgr = None

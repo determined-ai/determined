@@ -108,4 +108,4 @@ def test_chief_only(dummy: bool) -> None:
                 searcher = _core.DummySearcher(dist=pex.distributed)
 
             with parallel.raises_when(pex.rank != 0, RuntimeError, match="searcher.ops.*chief"):
-                next(iter(searcher.ops(_core.DecisionMode.ChiefOnly)))
+                next(iter(searcher.ops(_core.OpsMode.ChiefOnly)))
