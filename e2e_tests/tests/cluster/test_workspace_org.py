@@ -150,7 +150,7 @@ def test_workspace_org() -> None:
         get_project_3 = bindings.get_GetProject(sess, id=made_project.id).project
         assert not get_project_3.archived
 
-        # Project is archived and cannot archive, un-archive or move while parent workspace is archived
+        # Can't archive, un-archive, or move while parent workspace is archived
         bindings.post_ArchiveWorkspace(sess, id=made_workspace.id)
         get_project_4 = bindings.get_GetProject(sess, id=made_project.id).project
         assert get_project_4.archived
