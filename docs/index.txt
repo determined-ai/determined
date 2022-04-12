@@ -40,12 +40,6 @@
    Best Practices <training/best-practices/overview>
 
 .. toctree::
-   :caption: Model Deployment
-   :hidden:
-
-   Distributed Inference <model-deployment/effective-distributed-training>
-
-.. toctree::
    :caption: Model Hub Library
    :hidden:
 

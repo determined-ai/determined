@@ -10,3 +10,4 @@ TBD
 
    optimize-training
    debug-models
+   effective-distributed-training
