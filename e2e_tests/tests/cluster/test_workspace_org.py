@@ -105,6 +105,14 @@ def test_workspace_org() -> None:
         get_project_3 = bindings.get_GetProject(sess, id=made_project.id).project
         assert not get_project_3.archived
 
+        # Project is archived and cannot un-archive while parent workspace is archived
+        bindings.post_ArchiveWorkspace(sess, id=made_workspace.id)
+        get_project_4 = bindings.get_GetProject(sess, id=made_project.id).project
+        assert get_project_4.archived
+        with pytest.raises(errors.APIException):
+            bindings.post_UnarchiveProject(sess, id=made_project.id)
+        bindings.post_UnarchiveWorkspace(sess, id=made_workspace.id)
+
         # Refuse to patch, archive, or delete the default project
         with pytest.raises(errors.APIException):
             bindings.patch_PatchProject(sess, body=p_patch, id=default_project.id)
