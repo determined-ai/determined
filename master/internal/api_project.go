@@ -215,13 +215,18 @@ func (a *apiServer) DeleteProject(
 }
 
 func (a *apiServer) MoveProject(
-	_ context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse, error) {
+	_ context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
+	error) {
 	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId)
 	if err != nil {
 		return nil, err
 	}
 	if w.Immutable {
 		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.",
+			w.Id)
+	}
+	if w.Archived {
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.",
 			w.Id)
 	}
 
@@ -239,9 +244,16 @@ func (a *apiServer) MoveProject(
 }
 
 func (a *apiServer) ArchiveProject(
-	_ context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse, error) {
+	ctx context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &projectv1.Project{}
-	err := a.m.db.QueryProto("archive_project", holder, req.Id, true)
+	err = a.m.db.QueryProto("archive_project", holder, req.Id, true,
+		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "project (%d) does not exist or not archive-able by this user",
@@ -253,9 +265,16 @@ func (a *apiServer) ArchiveProject(
 }
 
 func (a *apiServer) UnarchiveProject(
-	_ context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse, error) {
+	ctx context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &projectv1.Project{}
-	err := a.m.db.QueryProto("archive_project", holder, req.Id, false)
+	err = a.m.db.QueryProto("archive_project", holder, req.Id, false,
+		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "project (%d) does not exist or not unarchive-able by this user",
