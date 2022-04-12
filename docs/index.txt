@@ -1,72 +1,92 @@
 .. toctree::
    :hidden:
 
-   getting-started
+   quickstart-mdldev
+   quickstart-cluster
 
 .. toctree::
    :caption: Introduction to Determined
    :hidden:
 
-   tutorials/index
-   examples
-   model-hub/index
-   concepts/index
-   interact/index
+   Features <intro/features/list>
+   System Architecture <intro/architecture/overview>
+   Concepts <intro/concepts/overview>
+   Interactive Environments <intro/interact/overview>
 
 .. toctree::
-   :caption: Preparation
+   :caption: Cluster Setup Guide
    :hidden:
 
-   prepare-environment/index
-   prepare-data/index
+   Requirements <cluster-setup-guide/requirements>
+   Deploy a Cluster <cluster-setup-guide/deploy-cluster/overview>
+   Cluster Configuration <cluster-setup-guide/cluster-config>
+   Upgrade <cluster-setup-guide/upgrade>
+   User Teams <cluster-setup-guide/users/overview>
+   Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
+   Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   Troubleshooting <cluster-setup-guide/troubleshooting>
 
 .. toctree::
    :caption: Training
    :hidden:
 
-   training-apis/index
-   training-run/index
-   training-debug/index
-   training-distributed/index
-   training-hyperparameter/index
-   training-reproducibility/index
-   post-training/index
+   Training Setup Guide <training/setup-guide/overview>
+   Basic Tasks <training/basic-tasks/overview>
+   How to Work with the Training APIs <training/apis-howto/overview>
+   Distributed Training <training/distributed/distributed>
+   Hyperparameter Tuning <training/hyperparameter/overview>
+   Reproducibility <training/reproducibility/reproducibility>
+   Model Management <training/model-management/overview>
+   Best Practices <training/best-practices/overview>
 
 .. toctree::
-   :caption: Additional Features
+   :caption: Model Deployment
    :hidden:
 
-   features/command-notebook-config
-   features/commands-and-shells
-   features/config-template
-   features/job-queue
-   features/model-registry
-   features/notebooks
-   features/tensorboard
+   Distributed Inference <model-deployment/effective-distributed-training>
 
 .. toctree::
-   :caption: Cluster Setup
+   :caption: Model Hub Library
    :hidden:
 
-   sysadmin-basics/index
-   sysadmin-deploy-on-aws/index
-   sysadmin-deploy-on-gcp/index
-   sysadmin-deploy-on-prem/index
-   sysadmin-deploy-on-k8s/index
+   Huggingface Trainsformers <model-hub-library/transformers/overview>
+   MMDetection <model-hub-library/mmdetection/overview>
 
 .. toctree::
    :caption: Integrations
    :hidden:
 
-   integrations/ecosystem-integration
-   integrations/prometheus
-   attributions.txt
+   Works with Determined <integrations/ecosystem/ecosystem-integration>
+   Prometheus and Grafana <integrations/prometheus/prometheus>
+
+.. toctree::
+   :caption: Tutorials
+   :hidden:
+
+   PyTorch MNIST Tutorial <tutorials/pytorch-mnist-tutorial>
+   PyTorch Porting Tutorial <tutorials/pytorch-porting-tutorial>
+   TensorFlow Keras Fashion MNIST Tutorial <tutorials/tf-mnist-tutorial>
+
+.. toctree::
+   :caption: Example Solutions
+   :hidden:
+
+   Examples <example-solutions/examples>
+
+.. toctree::
+   :caption: Reference
+   :hidden:
+
+   Command Line Interface (CLI) <reference/cli>
+   Configuration Files <reference/config/overview>
+   Training APIs <reference/training/overview>
+   Determined APIs <reference/determined/python-api-reference>
 
 ###############
  Determined AI
 ###############
 
-|h3| *Welcome to Determined!*
+|h3| *Welcome to Determined AI!*
 
 ************************
  What is Determined AI?
@@ -93,8 +113,8 @@ With Determined you can:
 Determined integrates these features into an easy-to-use, high-performance deep learning
 environment. Spend your time building models instead of managing infrastructure. At the same time,
 Determined lets you continue using popular Deep Learning libraries, such as :doc:`TensorFlow Keras
-</training-apis/api-keras>`, :doc:`TensorFlow Estimator </training-apis/api-estimator>`, and
-:doc:`PyTorch </training-apis/api-pytorch>`. Simply integrate the Determined API with your existing
+</training/apis-howto/api-keras>`, :doc:`TensorFlow Estimator </training/apis-howto/api-estimator>`, and
+:doc:`PyTorch </training/apis-howto/api-pytorch>`. Simply integrate the Determined API with your existing
 model code.
 
 .. |h3| raw:: html
