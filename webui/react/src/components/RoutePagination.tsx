@@ -60,6 +60,7 @@ const RoutePagination: React.FC<Props> =
           }
         }}
         pageSize={1}
+        showSizeChanger={false}
         total={ids.length}
         onChange={navigateToId}
       />
