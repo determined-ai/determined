@@ -37,7 +37,7 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         e.config AS experiment_config,
         t.hparams AS hparams,
         s.metrics AS training_metrics,
-        v.metrics AS validation_metrics,
+        v.metrics->'validation_metrics' AS validation_metrics,
         (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
         c.total_batches as latest_batch,
         1 as checkpoint_version
@@ -63,7 +63,7 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         e.config AS experiment_config,
         t.hparams AS hparams,
         s.metrics AS training_metrics,
-        v.metrics AS validation_metrics,
+        v.metrics->'validation_metrics' AS validation_metrics,
         (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
         CAST(c.metadata->>'latest_batch' AS int) as latest_batch,
         2 AS checkpoint_version
@@ -92,7 +92,7 @@ CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
             'experiment_config', c.experiment_config,
             'hparams', c.hparams,
             'training_metrics', c.training_metrics,
-            'validation_metrics', c.validation_metrics,
+            'validation_metrics', json_build_object('avg_metrics', c.validation_metrics),
             'searcher_metric', c.searcher_metric
         ) AS training
     FROM checkpoints_view AS c;

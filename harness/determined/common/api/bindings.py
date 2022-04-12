@@ -662,9 +662,9 @@ class v1CheckpointTrainingMetadata:
         experimentId: "typing.Optional[int]" = None,
         hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         searcherMetric: "typing.Optional[float]" = None,
-        trainingMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        trainingMetrics: "typing.Optional[v1Metrics]" = None,
         trialId: "typing.Optional[int]" = None,
-        validationMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
+        validationMetrics: "typing.Optional[v1Metrics]" = None,
     ):
         self.trialId = trialId
         self.experimentId = experimentId
@@ -681,8 +681,8 @@ class v1CheckpointTrainingMetadata:
             experimentId=obj.get("experimentId", None),
             experimentConfig=obj.get("experimentConfig", None),
             hparams=obj.get("hparams", None),
-            trainingMetrics=obj.get("trainingMetrics", None),
-            validationMetrics=obj.get("validationMetrics", None),
+            trainingMetrics=v1Metrics.from_json(obj["trainingMetrics"]) if obj.get("trainingMetrics", None) is not None else None,
+            validationMetrics=v1Metrics.from_json(obj["validationMetrics"]) if obj.get("validationMetrics", None) is not None else None,
             searcherMetric=float(obj["searcherMetric"]) if obj.get("searcherMetric", None) is not None else None,
         )
 
@@ -692,8 +692,8 @@ class v1CheckpointTrainingMetadata:
             "experimentId": self.experimentId if self.experimentId is not None else None,
             "experimentConfig": self.experimentConfig if self.experimentConfig is not None else None,
             "hparams": self.hparams if self.hparams is not None else None,
-            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
-            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
+            "trainingMetrics": self.trainingMetrics.to_json() if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics.to_json() if self.validationMetrics is not None else None,
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
         }
 
@@ -2795,6 +2795,28 @@ class v1MetricType(enum.Enum):
     METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
     METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
+
+class v1Metrics:
+    def __init__(
+        self,
+        avgMetrics: "typing.Dict[str, typing.Any]",
+        batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
+    ):
+        self.avgMetrics = avgMetrics
+        self.batchMetrics = batchMetrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Metrics":
+        return cls(
+            avgMetrics=obj["avgMetrics"],
+            batchMetrics=obj.get("batchMetrics", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "avgMetrics": self.avgMetrics,
+            "batchMetrics": self.batchMetrics if self.batchMetrics is not None else None,
+        }
 
 class v1MetricsWorkload:
     def __init__(

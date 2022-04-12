@@ -1123,16 +1123,16 @@ export interface V1CheckpointTrainingMetadata {
     hparams?: any;
     /**
      * Training metrics reported at the same latest_batch as the checkpoint.
-     * @type {any}
+     * @type {V1Metrics}
      * @memberof V1CheckpointTrainingMetadata
      */
-    trainingMetrics?: any;
+    trainingMetrics?: V1Metrics;
     /**
      * Validation metrics reported at the same latest_batch as the checkpoint.
-     * @type {any}
+     * @type {V1Metrics}
      * @memberof V1CheckpointTrainingMetadata
      */
-    validationMetrics?: any;
+    validationMetrics?: V1Metrics;
     /**
      * Searcher metric (as specified by the expconf) at the same latest_batch of the checkpoint.
      * @type {number}
@@ -3346,6 +3346,26 @@ export enum V1MetricType {
     UNSPECIFIED = <any> 'METRIC_TYPE_UNSPECIFIED',
     TRAINING = <any> 'METRIC_TYPE_TRAINING',
     VALIDATION = <any> 'METRIC_TYPE_VALIDATION'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1Metrics
+ */
+export interface V1Metrics {
+    /**
+     * 
+     * @type {any}
+     * @memberof V1Metrics
+     */
+    avgMetrics: any;
+    /**
+     * 
+     * @type {Array<any>}
+     * @memberof V1Metrics
+     */
+    batchMetrics?: Array<any>;
 }
 
 /**

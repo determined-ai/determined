@@ -444,19 +444,25 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
+const decodeValidationMetrics = (data: Sdk.V1Metrics): types.Metrics => {
+  return { validationMetrics: data.avgMetrics };
+};
+
 export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail => {
   const resources: Record<string, number> = {};
   Object.entries(data.resources || {}).forEach(([ res, val ]) => {
     resources[res] = parseFloat(val);
   });
 
-  // TODO the following has been brainlessly changed to compile
+  // TODO @emily the following has been brainlessly changed to compile
 
   return {
-    batch: data.metadata["latest_batch"],
+    batch: data.metadata['latest_batch'],
     endTime: data.reportTime && data.reportTime as unknown as string,
     experimentId: data.training.experimentId,
-    metrics: data.training.trainingMetrics,
+    metrics: data.training.validationMetrics ? decodeValidationMetrics(
+      data.training.validationMetrics,
+    ) : undefined,
     resources,
     state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
     trialId: data.training.trialId || -1, // TODO maybe it becomes required again
