@@ -50,9 +50,9 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
         ["Experiment ID", checkpoint.experiment_id],
         ["Trial ID", checkpoint.trial_id],
         ["Batch #", checkpoint.batch_number],
-        ["Report Time", render.format_time(checkpoint.end_time)],
+        ["Report Time", render.format_time(checkpoint.report_time)],
         ["Checkpoint UUID", checkpoint.uuid],
-        ["Validation Metrics", json.dumps(checkpoint.validation["metrics"], indent=4)],
+        ["Validation Metrics", json.dumps(checkpoint.validation_metrics, indent=4)],
         ["Metadata", json.dumps(checkpoint.metadata or {}, indent=4)],
     ]
 
@@ -81,8 +81,12 @@ def list_checkpoints(args: Namespace) -> None:
             searcher_metric = str(config["searcher"]["metric"])
 
     def get_validation_metric(c: bindings.v1Checkpoint, metric: str) -> str:
-        if c.training.validationMetrics and metric in c.training.validationMetrics:
-            return str(c.training.validationMetrics[metric])
+        if (
+            c.training.validationMetrics
+            and c.training.validationMetrics.avgMetrics
+            and metric in c.training.validationMetrics.avgMetrics
+        ):
+            return str(c.training.validationMetrics.avgMetrics[metric])
         return ""
 
     headers = [
