@@ -34,7 +34,8 @@ message GetCommandsRequest {
   int32 limit = 4;
   // Limit commands to those that are owned by users with the specified userIds.
   repeated int32 user_ids = 6;
-  // Limit commands to those that are owned by users with the specified usernames.
+  // Limit commands to those that are owned by users with the specified
+  // usernames.
   repeated string users = 7;
 }
 // Response to GetCommandsRequest.
