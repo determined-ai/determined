@@ -72,6 +72,22 @@ class SearcherOp:
         )
 
 
+class OpsMode(enum.Enum):
+    """
+    OpsMode defines the calling behavior of the Searcher.ops() call.
+
+    When mode=WorkersAskChief (the default), all workers must call Searcher.ops() in step with each
+    other.  The chief will iterate through searcher operations from the master, and then propagate
+    the operations to each worker, introducing a synchronization point between workers.
+
+    When mode=ChiefOnly, only the chief may call Searcher.ops().  Usually this implies you must
+    manually inform the workers of what work to do next.
+    """
+
+    WorkersAskChief = "WORKERS_ASK_CHIEF"
+    ChiefOnly = "CHEIF_ONLY"
+
+
 class Searcher:
     """
     Searcher gives direct access to operations emitted by the search algorithm in the master.  Each
@@ -150,24 +166,34 @@ class Searcher:
         is_chief = self._dist.rank == 0
         return SearcherOp(self._session, self._trial_id, length=length, is_chief=is_chief)
 
-    def ops(self, chief_only: bool = False, auto_ack: bool = True) -> Iterator[SearcherOp]:
+    def ops(
+        self,
+        ops_mode: OpsMode = OpsMode.WorkersAskChief,
+        auto_ack: bool = True,
+    ) -> Iterator[SearcherOp]:
         """
         Iterate through all the ops this searcher has to offer.
 
-        During a multi-worker task, when chief_only=False (the default), the chief will fetch
-        operations from the Determined master and communicate each op to the other workers, which
-        makes calling next() on the iterator of ops a synchronization point across workers.
+        During a multi-worker task, when ops_mode=WorkersAskChief (the default), the chief will
+        fetch operations from the Determined master and communicate each op to the other workers,
+        which makes calling next() on the iterator of ops a synchronization point across workers.
 
-        The chief, and only the chief, must call op.complete() on each operation.  This is true
-        regardless of the chief_only setting, since the Determined master needs a clear, unambiguous
-        report of when an operation is completed.
+        The other supported mode is ChiefOnly, where there is no synchronization point, but workers
+        are not allowed to call .ops() at all.  This is probably only useful if you have another
+        mechanism for the chief to communicate the training plan to workers.
+
+        After training to the point specified by each SearcherOp, The chief, and only the chief,
+        must call op.complete() on each operation.  This is true regardless of the ops_mode
+        setting, since the Determined master needs a clear, unambiguous report of when an operation
+        is completed.
         """
+        ops_mode = OpsMode(ops_mode)
 
         if self._dist.rank == 0:
             # Chief gets ops from master.
             while True:
                 op = self._get_searcher_op()
-                if not chief_only:
+                if ops_mode == OpsMode.WorkersAskChief:
                     # Broadcast op.length (or None) to workers.  We broadcast just the length
                     # because SearcherOp is not serializable, and the is_chief attribute obviously
                     # must be set on a per-worker basis.
@@ -180,9 +206,9 @@ class Searcher:
                 if not op._completed:
                     raise RuntimeError("you must call op.complete() on each operation")
         else:
-            if chief_only:
+            if ops_mode != OpsMode.WorkersAskChief:
                 raise RuntimeError(
-                    "you cannot call searcher.ops(chief_only=True) from a non-chief worker."
+                    "you cannot call searcher.ops(ops_mode=ChiefOnly) from a non-chief worker."
                 )
             # Worker gets ops from chief.
             while True:
@@ -261,23 +287,28 @@ class DummySearcher(Searcher):
         self._dist = dist
         self._length = length
 
-    def ops(self, chief_only: bool = False, auto_ack: bool = True) -> Iterator[SearcherOp]:
+    def ops(
+        self,
+        ops_mode: OpsMode = OpsMode.WorkersAskChief,
+        auto_ack: bool = True,
+    ) -> Iterator[SearcherOp]:
+        ops_mode = OpsMode(ops_mode)
         # Force the same synchronization behavior in the DummySearcher as the real one.
         if self._dist.rank == 0:
             # Chief makes a dummy op.
             op = DummySearcherOp(self._length, self._dist.rank == 0)
-            if not chief_only:
+            if ops_mode == OpsMode.WorkersAskChief:
                 # Broadcast op to workers.
                 _ = self._dist._zmq_broadcast(op and op.length)
             yield op
             if not op._completed:
                 raise RuntimeError("you must call op.complete() on each operation")
-            if not chief_only:
+            if ops_mode == OpsMode.WorkersAskChief:
                 _ = self._dist._zmq_broadcast(None)
         else:
-            if chief_only:
+            if ops_mode != OpsMode.WorkersAskChief:
                 raise RuntimeError(
-                    "you cannot call searcher.ops(chief_only=True) from a non-chief worker."
+                    "you cannot call searcher.ops(ops_mode=ChiefOnly) from a non-chief worker."
                 )
             # Worker gets ops from chief.
             while True:
