@@ -32,7 +32,7 @@ func otelConfig() *sdktrace.TracerProvider {
 
 	endpoint := os.Getenv(otelExportedOtlpEndpoint)
 	if len(endpoint) == 0 {
-		endpoint = defaultOtelEndpoint
+		return nil
 	}
 	ctx := context.Background()
 
