@@ -168,6 +168,11 @@ To disable telemetry reporting in both the master and the WebUI, start the maste
 setting an environment variable, as with any other configuration option). Disabling telemetry
 reporting will not affect the functionality of Determined in any way.
 
+Separate from the telemetry reporting mentioned above we also provide functionality to use opentelemetry to collect traces. 
+By default, this is disabled. To enable this start the master with the ``--telemetry-otel_enabled=true``. This can also be done by editing the master config file or
+setting an environment variable, as with any other configuration option. By default, the opentelemetry collector
+starts with this endpoint = "localhost:4317". To change this endpoint, set telemetry-otel_enabled to the endpoint you would like. 
+
 .. _master-configuration:
 
 **********************
