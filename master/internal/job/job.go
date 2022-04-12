@@ -17,6 +17,7 @@ import (
 
 // DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.
 const DecimalExp = 1000
+const K8sExp = 30
 
 var (
 	// JobsActorAddr is the address of the jobs actor.

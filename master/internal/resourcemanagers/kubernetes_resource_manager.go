@@ -69,7 +69,7 @@ func newKubernetesResourceManager(
 		groupActorToID:    make(map[*actor.Ref]model.JobID),
 		IDToGroupActor:    make(map[model.JobID]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
-		queuePositions:    initalizeJobSortState(),
+		queuePositions:    initalizeJobSortState(true),
 
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
@@ -296,7 +296,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	)
 	if msg.IsUserVisible {
 		if _, ok := k.queuePositions[msg.JobID]; !ok {
-			k.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
+			k.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime, true)
 		}
 		k.jobIDtoAddr[msg.JobID] = msg.TaskActor
 		k.addrToJobID[msg.TaskActor] = msg.JobID
@@ -394,7 +394,7 @@ func (k *kubernetesResourceManager) moveJob(
 	if prioChange {
 		resp := ctx.Ask(k.IDToGroupActor[jobID], job.SetGroupPriority{
 			Priority:     anchorPriority,
-			ResourcePool: kubernetesDummyResourcePool,
+			ResourcePool: KubernetesDummyResourcePool,
 		})
 		if resp.Error() != nil {
 			return resp.Error()
@@ -409,7 +409,7 @@ func (k *kubernetesResourceManager) moveJob(
 		}
 	}
 
-	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
+	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
 	if err != nil {
 		return err
 	}
@@ -424,7 +424,7 @@ func (k *kubernetesResourceManager) moveJob(
 	}
 
 	ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
-		QPosition: decimal.Zero,
+		QPosition: msg.JobPosition,
 		PodID:     containerID,
 	})
 

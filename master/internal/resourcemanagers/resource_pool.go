@@ -76,7 +76,7 @@ func NewResourcePool(
 		agents:         make(map[*actor.Ref]bool),
 		taskList:       newTaskList(),
 		groups:         make(map[*actor.Ref]*group),
-		queuePositions: initalizeJobSortState(),
+		queuePositions: initalizeJobSortState(false),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
 		IDToGroupActor: make(map[model.JobID]*actor.Ref),
 		scalingInfo:    &sproto.ScalingInfo{},
@@ -121,7 +121,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
-			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
+			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime, false)
 		}
 		rp.groupActorToID[msg.Group] = msg.JobID
 		rp.IDToGroupActor[msg.JobID] = msg.Group
@@ -481,7 +481,7 @@ func (rp *ResourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
 	if err != nil {
 		return err
 	}
@@ -609,7 +609,7 @@ func (rp *ResourcePool) setGroupPriority(ctx *actor.Context, msg job.SetGroupPri
 			ctx.Log().Errorf("failed to get job submission time: %s", err)
 			return nil
 		}
-		rp.queuePositions[jobID] = initalizeQueuePosition(time)
+		rp.queuePositions[jobID] = initalizeQueuePosition(time, false)
 	}
 	return nil
 }

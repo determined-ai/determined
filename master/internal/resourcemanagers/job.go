@@ -74,6 +74,7 @@ func (j jobSortState) SetJobPosition(
 	anchor1 model.JobID,
 	anchor2 model.JobID,
 	aheadOf bool,
+	isK8s bool,
 ) (job.RegisterJobPosition, error) {
 	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, j)
 	if err != nil {
@@ -88,7 +89,7 @@ func (j jobSortState) SetJobPosition(
 		newPos = j[anchor1].Add(decimal.New(1, job.DecimalExp))
 	}
 
-	j[job.TailAnchor] = initalizeQueuePosition(time.Now())
+	j[job.TailAnchor] = initalizeQueuePosition(time.Now(), isK8s)
 	j[jobID] = newPos
 
 	return job.RegisterJobPosition{
@@ -101,10 +102,14 @@ func (j jobSortState) RecoverJobPosition(jobID model.JobID, position decimal.Dec
 	j[jobID] = position
 }
 
-func initalizeJobSortState() jobSortState {
+func initalizeJobSortState(isK8s bool) jobSortState {
 	state := make(jobSortState)
-	state[job.HeadAnchor] = decimal.New(1, job.DecimalExp)
-	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
+	if isK8s {
+		state[job.HeadAnchor] = decimal.New(1, job.K8sExp)
+	} else {
+		state[job.HeadAnchor] = decimal.New(1, job.DecimalExp)
+	}
+	state[job.TailAnchor] = initalizeQueuePosition(time.Now(), isK8s)
 	return state
 }
 
@@ -150,8 +155,11 @@ func computeNewJobPos(
 	return newPos, nil
 }
 
-func initalizeQueuePosition(aTime time.Time) decimal.Decimal {
+func initalizeQueuePosition(aTime time.Time, isK8s bool) decimal.Decimal {
 	// we could add exponent to give us more insertions if needed.
+	if isK8s {
+		return decimal.New(aTime.UnixMicro(), job.K8sExp)
+	}
 	return decimal.New(aTime.UnixMicro(), job.DecimalExp)
 }
 
