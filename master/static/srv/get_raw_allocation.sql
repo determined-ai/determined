@@ -79,7 +79,18 @@ workloads AS (
                                 trial_id,
                                 end_time
                             FROM
-                                raw_checkpoints
+                                raw_checkpoints  
+                            UNION ALL
+                            SELECT
+                                'imagepulling' AS kind,
+                                trials.id,
+                                task_stats.end_time
+                            FROM
+                                task_stats, trials, allocations
+                            WHERE 
+                                task_stats.event_type = 'IMAGEPULL' 
+                                AND allocations.allocation_id = task_stats.allocation_id
+                                AND allocations.task_id = trials.task_id
                         ) metric_reports
                 ) derived_workload_spans
             WHERE

@@ -33,8 +33,8 @@ type containerActor struct {
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
 
-	baseTaskLog  model.TaskLog
-	reattached   bool
+	baseTaskLog model.TaskLog
+	reattached  bool
 }
 
 type (
