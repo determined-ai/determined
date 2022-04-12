@@ -114,7 +114,7 @@ class Checkpointing:
         ckpt = bindings.v1Checkpoint(
             allocationId=self._allocation_id,
             metadata=metadata,
-            resources=resources,
+            resources={k: str(v) for k, v in resources.items()},
             taskId=self._task_id,
             training=bindings.v1CheckpointTrainingMetadata(),
             uuid=uuid,

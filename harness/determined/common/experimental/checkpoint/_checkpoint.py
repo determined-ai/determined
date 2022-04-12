@@ -1,6 +1,5 @@
 import enum
 import json
-import logging
 import pathlib
 import shutil
 import warnings
@@ -47,7 +46,7 @@ class Checkpoint(object):
         trial_id: int,
         hparams: Dict[str, Any],
         batch_number: int,
-        report_time: str,
+        report_time: Optional[str],
         resources: Dict[str, Any],
         validation_metrics: Dict[str, Any],
         metadata: Dict[str, Any],
@@ -386,8 +385,6 @@ class Checkpoint(object):
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
-        logging.warning(f"data={json.dumps(data, indent=2)}")
-
         metadata = data.get("metadata", {})
         training = data["training"]
 

@@ -445,10 +445,8 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
 };
 
 const decodeValidationMetrics = (data: Sdk.V1Metrics): types.Metrics => {
-  return {
-    validationMetrics: data.avgMetrics
-  }
-}
+  return { validationMetrics: data.avgMetrics };
+};
 
 export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail => {
   const resources: Record<string, number> = {};
@@ -459,11 +457,11 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
   // TODO @emily the following has been brainlessly changed to compile
 
   return {
-    batch: data.metadata["latest_batch"],
+    batch: data.metadata['latest_batch'],
     endTime: data.reportTime && data.reportTime as unknown as string,
     experimentId: data.training.experimentId,
     metrics: data.training.validationMetrics ? decodeValidationMetrics(
-      data.training.validationMetrics
+      data.training.validationMetrics,
     ) : undefined,
     resources,
     state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
