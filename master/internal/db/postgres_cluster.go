@@ -105,6 +105,15 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 			periodStart, time.Since(t0),
 		)
 	}
+	db.updateTaskQueuedTimeAggregation(targetDate)
+	return nil
+}
 
+func (db *PgDB) updateTaskQueuedTimeAggregation(targetDate time.Time) error {
+	if _, err := db.sql.Exec(
+		db.queries.getOrLoad("update_aggregated_queued_time"), targetDate,
+	); err != nil {
+		return errors.Wrap(err, "failed to add aggregate")
+	}
 	return nil
 }

@@ -108,7 +108,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	ref = reference.TagNameOnly(ref)
 
 	_, _, err = d.ImageInspectWithRaw(context.Background(), ref.String())
-	msg.ForcePull = true
 	switch {
 	case msg.ForcePull:
 		if err == nil {
