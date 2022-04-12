@@ -61,7 +61,7 @@ respectively.
 
 Note that ``context.get_hparams()`` and ``context.get_data_config()`` returns the
 ``hyperparameters`` and ``data`` section respectively of the :ref:`experiment configuration
-<experiment-configuration>` file squad.yaml_.
+<experiment-config-reference>` file squad.yaml_.
 
 Building **transformers** config, tokenizer, and model
 ======================================================

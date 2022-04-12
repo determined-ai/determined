@@ -256,7 +256,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
 
    If you can run local test mode inside a notebook or shell but are unable to successfully submit
    an experiment, make sure that notebook or shell customizations you might have made are replicated
-   in your :ref:`experiment configuration <experiment-configuration>`, such as:
+   in your :ref:`experiment configuration <experiment-config-reference>`, such as:
 
    -  If required, a custom Docker image is set in the experiment configuration.
 
@@ -278,7 +278,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
       the experiment or trials are created. Correct this by providing a ``checkpoint_storage``
       configuration in one of the following locations:
 
-      -  :ref:`master-configuration`
+      -  :ref:`master-config-reference`
       -  :ref:`experiment-configuration`
 
    -  For a cluster-based experiment, configured ``checkpoint_storage`` settings are validated
@@ -288,7 +288,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
    -  The experiment configuration is more strictly validated for cluster-managed experiments than
       for ``--local --test`` mode. Errors related to ``invalid experiment configuration`` when
       attempting to submit the experiment to the cluster indicate that the experiment configuration
-      has errors. Review the :ref:`experiment configuration <experiment-configuration>`.
+      has errors. Review the :ref:`experiment configuration <experiment-config-reference>`.
 
 If you are unable to identify the cause of the problem, contact Determined `community support
 <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__!

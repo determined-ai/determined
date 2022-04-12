@@ -79,7 +79,7 @@ distributed file system. An example of how to do this on GCP can be :ref:`found 
 
 Next, you will need to ensure the file system is accessible to each trial container. This can be
 done by configuring a bind mount in the :ref:`experiment configuration file
-<experiment-configuration>`. Each bind mount consists of a ``host_path`` and a ``container_path``;
+<experiment-config-reference>`. Each bind mount consists of a ``host_path`` and a ``container_path``;
 the host path specifies the absolute path where the distributed file system has been mounted on the
 agent, while the container path specifies the path within the container's file system where the
 distributed file system will be accessible.

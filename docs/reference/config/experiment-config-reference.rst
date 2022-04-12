@@ -198,7 +198,7 @@ contains the architecture and weights of the model being trained. Each checkpoin
 is used as the name of the checkpoint directory on the external storage system.
 
 If this field is not specified, the experiment will default to the checkpoint storage configured in
-the :ref:`master-configuration`.
+the :ref:`master-config-reference`.
 
 .. _checkpoint-garbage-collection:
 
@@ -913,7 +913,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
 ``shm_size``
    The size in bytes of ``/dev/shm`` for trial containers. Defaults to ``4294967296`` (4GiB). If
    set, this value overrides the value specified in the :ref:`master configuration
-   <master-configuration>`.
+   <master-config-reference>`.
 
 ``priority``
    The priority assigned to this experiment. Only applicable when using the ``priority`` scheduler.
@@ -932,7 +932,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
    A list of device strings to pass to the Docker daemon. Each entry in the list is equivalent to a
    ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is honored by resource
    managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``. See
-   :ref:`master configuration <master-configuration>` for details about resource managers.
+   :ref:`master configuration <master-config-reference>` for details about resource managers.
 
 .. _exp-bind-mounts:
 
@@ -1046,7 +1046,7 @@ workloads for this experiment. For more information on customizing the trial env
    A list of Linux capabilities to grant to task containers. Each entry in the list is equivalent to
    a ``--cap-add CAP`` command line argument to ``docker run``. ``add_capabilities`` is honored by
    resource managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``.
-   See :ref:`master configuration <master-configuration>` for details about resource managers.
+   See :ref:`master configuration <master-config-reference>` for details about resource managers.
 
 ``drop_capabilities``
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``

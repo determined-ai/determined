@@ -276,7 +276,7 @@ because our trial class is named ``MNistTrial`` and it is defined in a Python fi
 ``model_def.py``.
 
 For more information on experiment configuration, see the :ref:`experiment configuration reference
-<experiment-configuration>`.
+<experiment-config-reference>`.
 
 ***********************
  Running an Experiment

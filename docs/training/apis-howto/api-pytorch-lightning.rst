@@ -91,7 +91,7 @@ In addition, we also patched some ``LightningModule`` methods to make porting yo
 .. note::
 
    Make sure to return the metric you defined as ``searcher.metric`` in your experiment's
-   :ref:`configuration <experiment-configuration>` from your ``validation_step``.
+   :ref:`configuration <experiment-config-reference>` from your ``validation_step``.
 
 .. note::
 

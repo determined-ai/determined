@@ -5,7 +5,7 @@
 ############
 
 This document covers the two different scheduling policies that are supported in Determined.
-Administrators can configure the desired scheduler in :ref:`master-configuration`. It is also
+Administrators can configure the desired scheduler in :ref:`master-config-reference`. It is also
 possible to configure different scheduling behavior for different :ref:`resource pools
 <resource-pools>`.
 
@@ -53,7 +53,7 @@ make space for pending high-priority tasks if possible. Tasks of equal priority 
 order in which they were created.
 
 By default, the priority scheduler does not use preemption. If preemption is enabled
-(:ref:`master-configuration`), when a higher priority task is pending and cannot be scheduled
+(:ref:`master-config-reference`), when a higher priority task is pending and cannot be scheduled
 because no idle resources are available, the scheduler will attempt to schedule it by preempting
 lower priority tasks, starting with the task with the lowest priority. If there are no tasks to
 preempt, lower priority tasks might be backfilled on the idle resources. When a trial is preempted,

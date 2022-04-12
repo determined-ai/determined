@@ -47,7 +47,7 @@ The following configuration settings are supported:
       the list is equivalent to a ``--cap-add CAP`` command line argument to ``docker run``.
       ``add_capabilities`` is honored by resource managers of type ``agent`` but is ignored by
       resource managers of type ``kubernetes``. See :ref:`master configuration
-      <master-configuration>` for details about resource managers.
+      <master-config-reference>` for details about resource managers.
 
    -  ``drop_capabilities``: Just like ``add_capabilities`` but corresponding to the ``--cap-drop``
       argument of ``docker run`` rather than ``--cap-add``.
@@ -67,7 +67,7 @@ The following configuration settings are supported:
 
    -  ``shm_size``: The size in bytes of ``/dev/shm`` for task containers. Defaults to
       ``4294967296`` (4GiB). If set, this value overrides the value specified in the :ref:`master
-      configuration <master-configuration>`.
+      configuration <master-config-reference>`.
 
    -  ``priority``: The priority assigned to this task. Tasks with smaller priority values are
       scheduled before tasks with higher priority values. Only applicable when using the
@@ -81,7 +81,7 @@ The following configuration settings are supported:
    -  ``devices``: A list of device strings to pass to the Docker daemon. Each entry in the list is
       equivalent to a ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is
       honored by resource managers of type ``agent`` but is ignored by resource managers of type
-      ``kubernetes``. See :ref:`master configuration <master-configuration>` for details about
+      ``kubernetes``. See :ref:`master configuration <master-config-reference>` for details about
       resource managers.
 
 -  ``bind_mounts``: Specifies a collection of directories that are bind-mounted into the Docker

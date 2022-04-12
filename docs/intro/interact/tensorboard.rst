@@ -179,7 +179,7 @@ Determined will automatically terminate idle TensorBoard instances. A TensorBoar
 considered idle if it is does not receive HTTP traffic (a TensorBoard that is still being viewed by
 a web browser will not be considered idle). By default, idle TensorBoards will be terminated after 5
 minutes; the timeout duration can be changed by editing ``tensorboard_timeout`` in the :ref:`master
-config file <master-configuration>`.
+config file <master-config-reference>`.
 
 You can also terminate TensorBoard instances by hand using ``det tensorboard kill
 <tensorboard-id>``:

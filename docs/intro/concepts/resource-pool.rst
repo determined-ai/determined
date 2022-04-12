@@ -85,7 +85,7 @@ GitHub issues or in our community Slack.
  Setting Up Resource Pools
 ***************************
 
-Resource pools are configured via the :ref:`master-configuration`. For each resource pool, you can
+Resource pools are configured via the :ref:`master-config-reference`. For each resource pool, you can
 configure scheduler and provider information.
 
 If you are using static resource pools and launching agents by hand, you will need to update the
@@ -95,7 +95,7 @@ If you are using static resource pools and launching agents by hand, you will ne
  Migrating to Resource Pools
 *****************************
 
-With the introduction of resource pools, the :ref:`master-configuration` format has changed to a new
+With the introduction of resource pools, the :ref:`master-config-reference` format has changed to a new
 format.
 
 This is a backwards compatible change and cluster configurations in the old format will continue to
@@ -176,7 +176,7 @@ When creating a task, the job configuration file has a section called "resources
        resource_pool: pool1
 
 If this field is not set, the task will be launched into one of the two default pools defined in the
-:ref:`master-configuration`. Experiments will be launched into the default compute pool.
+:ref:`master-config-reference`. Experiments will be launched into the default compute pool.
 Tensorboards will be launched into the default auxiliary pool. Commands, Shells, and Notebooks that
 request a slot (which is the default behavior if the ``resources.slots`` field is not set) will be
 launched into the default compute pool. Commands, Shells, and Notebooks that explicitly request 0

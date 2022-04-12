@@ -1,4 +1,4 @@
-.. _master-configuration-reference:
+.. _master-config-reference:
 
 ###############################
  Master Configuration Reference

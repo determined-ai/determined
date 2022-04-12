@@ -12,7 +12,7 @@ authorization code flow. Currently, only the SCIM endpoints are supported.
 ***************
 
 To enable OAuth support, set ``scim.auth.type`` to ``oauth`` in the Determined :ref:`master
-configuration <master-configuration>`.
+configuration <master-config-reference>`.
 
 The values you'll need to configure an OAuth client application are as follows:
 

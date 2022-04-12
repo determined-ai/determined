@@ -67,7 +67,7 @@ Then navigate to ``Determined -> Provisioning -> To App`` and enable the provisi
 organization wants to use with Okta.
 
 To configure Determined for this integration, update the :ref:`master configuration
-<master-configuration>` to provide the client's credentials and enable the SCIM server.
+<master-config-reference>` to provide the client's credentials and enable the SCIM server.
 
 .. code:: yaml
 

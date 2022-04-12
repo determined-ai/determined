@@ -33,7 +33,7 @@ Do not:
 **********************************
 
 We encourage a clean separation of code from configuration via the :ref:`experiment configuration
-<experiment-configuration>`. Specifically, you are encouraged to use the pre-defined fields in the
+<experiment-config-reference>`. Specifically, you are encouraged to use the pre-defined fields in the
 experiment configuration, such as the ``searcher``, ``hyperparameters``, ``optimizations``, and
 ``resources``. This not only allows you to reuse the trial definition when you tune different
 configuration fields but also improve the visualibility because those fields can be browsed in our
@@ -60,7 +60,7 @@ Do not:
 *************************
 
 We encourage tracking the dependencies associated with every workflow via the :ref:`environment
-<experiment-configuration>` field. Understanding and standardizing the environment you use to
+<experiment-config-reference>` field. Understanding and standardizing the environment you use to
 execute Python in your development environment will pay off dividends in **portability**, allowing
 you to flexibly move between local, cloud, and on-premise cluster environments.
 

@@ -115,7 +115,7 @@ the name ``const.yaml``:
 For now, we don’t have to worry much about the other fields; however, we suggest setting
 ``max_restarts`` to zero so Determined will not retry running the experiment. For more information
 on experiment configuration, see the :ref:`experiment configuration reference
-<experiment-configuration>`.
+<experiment-config-reference>`.
 
 Model
 =====

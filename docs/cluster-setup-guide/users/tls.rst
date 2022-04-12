@@ -20,7 +20,7 @@ will not use TLS, nor will proxied connections from the master to a :ref:`Tensor
 Master
 ======
 
-In order to :ref:`configure the master <master-configuration>` to use TLS, set the
+In order to :ref:`configure the master <master-config-reference>` to use TLS, set the
 ``security.tls.cert`` and ``security.tls.key`` options to paths to a TLS certificate file and key
 file.
 

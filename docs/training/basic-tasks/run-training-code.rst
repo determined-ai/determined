@@ -21,7 +21,7 @@ experiment is as follows:
 
 The ``det experiment create`` command requires two arguments:
 
--  The :ref:`configuration file <experiment-configuration>` is a :ref:`YAML <topic-guides_yaml>`
+-  The :ref:`configuration file <experiment-config-reference>` is a :ref:`YAML <topic-guides_yaml>`
    file that configures the experiment.
 -  The context directory contains all code that are relevant to training and will be uploaded to the
    master.

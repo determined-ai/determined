@@ -59,7 +59,7 @@ pass ``--network host`` instead of ``-p 5432:5432``.
 Determined Master
 =================
 
-Determined master :ref:`configuration values <master-configuration>` can come from a file,
+Determined master :ref:`configuration values <master-config-reference>` can come from a file,
 environment variables, or command-line arguments.
 
 To start the master with a configuration file, we recommend starting from our `default master

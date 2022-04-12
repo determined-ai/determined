@@ -22,7 +22,7 @@ If you're using Determined on Kubernetes, review the supplementary :ref:`Custom 
 
 For both trial runners and commands, Determined allows users to configure the environment variables
 inside the container through the ``environment.environment_variables`` configuration field of the
-:ref:`experiment <experiment-configuration>` or :ref:`task <command-notebook-configuration>` config.
+:ref:`experiment <experiment-config-reference>` or :ref:`task <command-notebook-configuration>` config.
 The format is a list of strings in the format ``NAME=VALUE``:
 
 .. code:: yaml
@@ -202,7 +202,7 @@ Images will be fetched via HTTPS by default. An HTTPS proxy can be configured us
 
 Your custom image and credentials can also be set as the defaults for all tasks launched in
 Determined. This can be done under ``image`` and ``registry_auth`` in the
-:ref:`master-configuration`. Please note that for this to take effect you will have to restart the
+:ref:`master-config-reference`. Please note that for this to take effect you will have to restart the
 master.
 
 .. _virtual-env:

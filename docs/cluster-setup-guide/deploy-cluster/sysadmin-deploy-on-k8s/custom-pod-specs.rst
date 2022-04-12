@@ -37,7 +37,7 @@ Determined provides two ways to configure pod specs. When Determined is installe
 administrator can configure pod specs that are used by default for all GPU and CPU tasks. In
 addition, users can specify a custom pod spec for individual tasks (e.g., for an experiment by
 specifying ``environment.pod_spec`` in the :ref:`experiment configuration
-<experiment-configuration>`). If a custom pod spec is specified for a task, it overrides the default
+<experiment-config-reference>`). If a custom pod spec is specified for a task, it overrides the default
 pod spec (if any).
 
 ***************************
@@ -52,7 +52,7 @@ Determined does not currently support configuring:
 -  Pod Name - Determined automatically assigns a name for every pod that is created.
 -  Pod Namespace - Determined launches all tasks in the Namespace in which the Determined master is
    running.
--  Host Networking - This must be configured via the :ref:`master-configuration`.
+-  Host Networking - This must be configured via the :ref:`master-config-reference`.
 -  Restart Policy - This is always set to ``Never``.
 
 As part of their pod spec, users can specify ``initContainers`` and ``containers``. Additionally

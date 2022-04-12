@@ -5,7 +5,7 @@
 ####################
 
 `YAML <https://yaml.org/>`__ is a markup language often used for configuration. Determined uses YAML
-for configuring tasks such as :ref:`experiments <experiment-configuration>` and :ref:`notebooks
+for configuring tasks such as :ref:`experiments <experiment-config-reference>` and :ref:`notebooks
 <notebook-configuration>`, as well as configuring the Determined :ref:`cluster as a whole
 <cluster-configuration>`. This guide describes a subset of YAML that we recommend for use with
 Determined. This is not a full description of YAML; see the `specification

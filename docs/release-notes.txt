@@ -770,7 +770,7 @@ Version 0.16.0
 
 -  Scheduling: Support backfilling in the priority scheduler. If there are slots that cannot be
    filled with high-priority tasks, low-priority tasks will be scheduled onto them. This requires
-   preemption to be enabled in the :ref:`master configuration <master-configuration>`.
+   preemption to be enabled in the :ref:`master configuration <master-config-reference>`.
 
 -  WebUI: Improve task list filtering by moving column filters to the table header.
 
@@ -1329,7 +1329,7 @@ Version 0.13.10
    restart when ``max_restarts`` is greater than ``0``.
 
 -  Allow configurations with a ``.`` character in the keys for map fields in the
-   :ref:`master-configuration` (e.g. ``task_container_defaults.cpu_pod_spec.metadata.labels``).
+   :ref:`master-config-reference` (e.g. ``task_container_defaults.cpu_pod_spec.metadata.labels``).
 
 -  Fix a bug where restoring a large number of experiments after a failure could lead to deadlock.
 
@@ -1649,7 +1649,7 @@ Version 0.13.4
 **Improvements**
 
 -  Support configuring default values for the task image, Docker pull policy, and Docker registry
-   credentials via the :ref:`master-configuration` and the :ref:`helm-config`. In previous versions
+   credentials via the :ref:`master-config-reference` and the :ref:`helm-config`. In previous versions
    of Determined, these values had to be specified on a per-task basis (e.g., in the experiment
    configuration). Per-task configuration is still supported and will overwrite the default value
    (if any).
