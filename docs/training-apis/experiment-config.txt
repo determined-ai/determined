@@ -83,10 +83,12 @@ example:
    preemption, in the unit of batches. The number of records in a batch is controlled by the
    :ref:`global_batch_size <config-global-batch-size>` hyperparameter. Defaults to ``100``.
 
-   -  Setting this to be a small number can reduce the overhead of system operations.
-   -  Setting this to be too large might prevent the system to preempt the resources of this trial
-      to run other tasks.
-   -  As a rule of thumb, it should be set to make each step take 60--180 seconds.
+   -  Setting this value too small can increase the overhead of system operations and decrease
+      training throughput.
+   -  Setting this value too large might prevent the system from reallocating resources from this
+      workload to another, potentially more important, workload.
+   -  As a rule of thumb, it should be set to the number of batches that can be trained in roughly
+      60--180 seconds.
 
 .. _config-records-per-epoch:
 
@@ -508,7 +510,7 @@ This configuration defines the following hyperparameters:
 -  ``layer1_dropout``: a double hyperparameter
 
 The field ``optimizer_config`` demonstrates how nesting can be used to organize hyperparameters.
-Arbitrary levels of nesting is supported with all types of hyperparameters. Aside from
+Arbitrary levels of nesting are supported with all types of hyperparameters. Aside from
 hyperparameters with constant values, the four types of hyperparameters -- ``categorical``,
 ``double``, ``int``, and ``log`` -- can take on a range of possible values. The following sections
 cover how to configure the hyperparameter range for each type of hyperparameter.
@@ -936,7 +938,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
 ``priority``
    The priority assigned to this experiment. Only applicable when using the ``priority`` scheduler.
    Experiments with smaller priority values are scheduled before experiments with higher priority
-   values. If using Kubernetes, the opposite is true; experiments with higher priorites are
+   values. If using Kubernetes, the opposite is true; experiments with higher priorities are
    scheduled before those with lower priorities. Refer to :ref:`scheduling` for more information.
 
 ``resource_pool``
@@ -1278,9 +1280,10 @@ would read as shown below.
    max_length:
      batches: 900
 
-To express it terms of records or epochs, ``records`` or ``epochs`` would be specified in place of
-``batches``. In the case of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also be
-specified. Below is an example that configures a ``single`` searcher to train a model for 64 epochs.
+To express it in terms of records or epochs, ``records`` or ``epochs`` would be specified in place
+of ``batches``. In the case of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also
+be specified. Below is an example that configures a ``single`` searcher to train a model for 64
+epochs.
 
 .. code:: yaml
 
