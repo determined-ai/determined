@@ -4,8 +4,10 @@ import React, { useCallback, useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
+import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import useModalProjectMove from 'hooks/useModal/useModalProjectMove';
+import { paths } from 'routes/utils';
 import { Project } from 'types';
 import handleError from 'utils/error';
 
@@ -62,7 +64,11 @@ const ProjectCard: React.FC<Props> = ({ project }: Props) => {
   return (
     <Dropdown disabled={project.immutable} overlay={ActionMenu} trigger={[ 'contextMenu' ]}>
       <div className={css.base}>
-        <h6 className={css.name}>{project.name}</h6>
+        <h6 className={css.name}>
+          <Link inherit path={paths.projectDetails(project.id)}>
+            {project.name}
+          </Link>
+        </h6>
         {!project.immutable && (
           <Dropdown arrow className={css.action} overlay={ActionMenu} trigger={[ 'click' ]}>
             <EllipsisOutlined />
