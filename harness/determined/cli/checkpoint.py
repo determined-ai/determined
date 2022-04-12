@@ -102,7 +102,7 @@ def list_checkpoints(args: Namespace) -> None:
         [
             c.training.trialId,
             c.metadata.get("latest_batch", None),
-            c.state.value.replace("STATE_", ""),
+            c.state.value.replace("STATE_", "") if c.state is not None else "UNSPECIFIED",
             get_validation_metric(c, searcher_metric),
             c.uuid,
             render.format_resources(c.resources),
