@@ -1,15 +1,3 @@
-.. _agent-configuration:
-.. _client:
-.. _concept-experiment:
-.. _data-layer:
-.. _det-system-architecture:
-.. _estimators-custom-reducers:
-.. _experiment-configuration:
-.. _install-cluster:
-.. _master-configuration:
-.. _model-hub:
-.. _rest-api:
-
 #################################
  Quickstart for Model Developers
 #################################
