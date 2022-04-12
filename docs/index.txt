@@ -80,7 +80,7 @@
    Command Line Interface (CLI) <reference/cli>
    Configuration Files <reference/config/overview>
    Training APIs <reference/training/overview>
-   Determined APIs <reference/determined/python-api-reference>
+   Python API <reference/determined/python-api-reference>
    attributions.txt
 
 ###############

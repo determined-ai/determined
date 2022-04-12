@@ -4,10 +4,6 @@
  TensorBoards
 ##############
 
-`TensorBoard <https://www.tensorflow.org/tensorboard>`__ is a widely used tool for visualizing and
-inspecting deep learning models. Determined makes it easy to use TensorBoard to examine a single
-experiment or to compare multiple experiments.
-
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
