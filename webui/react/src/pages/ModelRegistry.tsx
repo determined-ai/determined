@@ -378,9 +378,8 @@ const ModelRegistry: React.FC = () => {
         width: 120,
       },
       {
-        dataIndex: 'username',
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
         onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         title: 'User',

@@ -207,20 +207,23 @@ export type EmptyParams = {}
 
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+  users?: string[];
 }
 
 export interface GetJupyterLabsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+  users?: string[];
 }
 
 export interface GetShellsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+  users?: string[];
 }
 
 export interface GetTensorBoardsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+  users?: string[];
 }
-
 export interface GetResourceAllocationAggregatedParams {
   endDate: Dayjs,
   period: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'

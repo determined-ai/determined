@@ -253,6 +253,10 @@ func (a *apiServer) GetExperiments(
 	}
 	stateFilterExpr := strings.Join(allStates, ",")
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIdFilterExpr := strings.Trim(
+		strings.Join(strings.Split(fmt.Sprint(req.UserIds), " "), ","),
+		"[]",
+	)
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	archivedExpr := ""
 	if req.Archived != nil {
@@ -300,6 +304,7 @@ func (a *apiServer) GetExperiments(
 		stateFilterExpr,
 		archivedExpr,
 		userFilterExpr,
+		userIdFilterExpr,
 		labelFilterExpr,
 		req.Description,
 		req.Name,

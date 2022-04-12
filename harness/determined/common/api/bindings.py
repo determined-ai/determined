@@ -5718,6 +5718,7 @@ def get_GetCommands(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
@@ -5725,6 +5726,7 @@ def get_GetCommands(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -5888,6 +5890,7 @@ def get_GetExperiments(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
     _params = {
@@ -5900,6 +5903,7 @@ def get_GetExperiments(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -6113,6 +6117,7 @@ def get_GetModels(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
@@ -6126,6 +6131,7 @@ def get_GetModels(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -6167,6 +6173,7 @@ def get_GetNotebooks(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
@@ -6174,6 +6181,7 @@ def get_GetNotebooks(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -6238,6 +6246,7 @@ def get_GetShells(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
@@ -6245,6 +6254,7 @@ def get_GetShells(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -6409,6 +6419,7 @@ def get_GetTensorboards(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
@@ -6416,6 +6427,7 @@ def get_GetTensorboards(
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(

@@ -175,7 +175,7 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T, users?: string[],
 ): boolean => {
   if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
-  return users.findIndex(user => task.username === user) !== -1;
+  return users.findIndex(user => task.userId === parseInt(user)) !== -1;
 };
 
 export const filterTasks = <

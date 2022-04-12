@@ -33,8 +33,12 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		for _, user := range msg.Users {
 			users[user] = true
 		}
+		userIds := make(map[int32]bool)
+		for _, user := range msg.UserIds {
+			userIds[user] = true
+		}
 		for _, shell := range ctx.AskAll(&shellv1.Shell{}, ctx.Children()...).GetAll() {
-			if typed := shell.(*shellv1.Shell); len(users) == 0 || users[typed.Username] {
+			if typed := shell.(*shellv1.Shell); len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
 				resp.Shells = append(resp.Shells, typed)
 			}
 		}

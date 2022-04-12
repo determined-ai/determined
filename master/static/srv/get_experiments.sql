@@ -8,9 +8,10 @@ WITH page_info AS (
             ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
             AND ($2 = '' OR e.archived = $2::BOOL)
             AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
+            AND ($4 = '' OR e.owner_id IN (SELECT unnest(string_to_array($4, ',')::int [])))
             AND (
-                    $4 = ''
-                    OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
+                    $5 = ''
+                    OR string_to_array($5, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
                         -- In the event labels were removed, if all were removed we insert null,
                         -- which previously broke this query.
                         CASE WHEN e.config->'labels'::text = 'null'
@@ -18,9 +19,9 @@ WITH page_info AS (
                         ELSE e.config->'labels' END
                     ))
                 )
-            AND ($5 = '' OR (e.config->>'description') ILIKE  ('%%' || $5 || '%%'))
-            AND ($6 = '' OR (e.config->>'name') ILIKE ('%%' || $6 || '%%'))
-    ), $7, $8) AS page_info
+            AND ($6 = '' OR (e.config->>'description') ILIKE  ('%%' || $6 || '%%'))
+            AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
+    ), $8, $9) AS page_info
 ), exps AS (
     SELECT
         e.id AS id,
@@ -50,9 +51,10 @@ WITH page_info AS (
         ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
         AND ($2 = '' OR e.archived = $2::BOOL)
         AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
+        AND ($3 = '' OR e.owner_id IN (SELECT unnest(string_to_array($3, ',')::int [])))
         AND (
-                $4 = ''
-                OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
+                $5 = ''
+                OR string_to_array($5, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
                     -- In the event labels were removed, if all were removed we insert null,
                     -- which previously broke this query.
                     CASE WHEN e.config->'labels'::text = 'null'
@@ -60,8 +62,8 @@ WITH page_info AS (
                     ELSE e.config->'labels' END
                 ))
             )
-        AND ($5 = '' OR (e.config->>'description') ILIKE  ('%%' || $5 || '%%'))
-        AND ($6 = '' OR (e.config->>'name') ILIKE ('%%' || $6 || '%%'))
+        AND ($6 = '' OR (e.config->>'description') ILIKE  ('%%' || $6 || '%%'))
+        AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
     ORDER BY %s
     OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
     LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
