@@ -9,6 +9,7 @@ origin_w AS (
   SELECT workspaces.id FROM workspaces, p
   WHERE workspaces.id = p.workspace_id
   AND NOT workspaces.archived
+  AND NOT workspaces.immutable
 )
 UPDATE projects SET workspace_id = $2
 WHERE id = (SELECT id FROM p)

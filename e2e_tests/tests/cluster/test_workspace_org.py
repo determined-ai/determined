@@ -78,7 +78,9 @@ def test_workspace_org() -> None:
             bindings.delete_DeleteWorkspace(sess, id=default_workspace.id)
 
         # Sort test and default workspaces.
-        workspace2 = bindings.post_PostWorkspace(sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS")).workspace
+        workspace2 = bindings.post_PostWorkspace(
+            sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS")
+        ).workspace
         test_workspaces.append(workspace2)
         list_test_1 = bindings.get_GetWorkspaces(sess).workspaces
         assert ["Uncategorized", "_TestPatched", "_TestWS"] == list(

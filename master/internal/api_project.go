@@ -40,9 +40,8 @@ func (a *apiServer) ConfirmParentWorkspaceUnarchived(pid int32) error {
 	if w.Archived {
 		return errors.Errorf("This project belongs to an archived workspace. " +
 			"To make changes, first unarchive the workspace.")
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (a *apiServer) GetProject(
