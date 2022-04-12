@@ -16,8 +16,8 @@ experiment with a single trial, which corresponds to training a single deep lear
 
 In order to run experiments, you need to write your model training code. We use **model definition**
 to represent a specification of a deep learning model and its training procedure. It contains
-training code that implements :doc:`training APIs </training-apis/index>`.
+training code that implements :doc:`training APIs </training/apis-howto/overview>`.
 
 For each experiment, you can configure a **searcher**, also known as a **search algorithm**. The
 search algorithm determines how many trials will be run for a particular experiment and how the
-hyperparameters will be set. More information can be found at :doc:`/training-hyperparameter/index`.
+hyperparameters will be set. More information can be found at :doc:`/training/hyperparameter/overview`.

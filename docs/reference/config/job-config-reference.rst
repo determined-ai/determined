@@ -63,7 +63,7 @@ The following configuration settings are supported:
    -  ``agent_label``: If set, the task will *only* be scheduled on agents that have the given label
       set. If this is not set (the default behavior), the task will only be scheduled on unlabeled
       agents. An agent's label can be configured via the ``label`` field in the :ref:`agent
-      configuration <agent-configuration>`.
+      configuration <agent-config-reference>`.
 
    -  ``shm_size``: The size in bytes of ``/dev/shm`` for task containers. Defaults to
       ``4294967296`` (4GiB). If set, this value overrides the value specified in the :ref:`master

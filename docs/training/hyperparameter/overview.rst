@@ -130,7 +130,7 @@ runtime, Determined injects a value for the hyperparameter. For example, to inje
    nn.Dropout(p=self.context.get_hparam("dropout_probability"))
 
 To see hyperparameter injection throughout a complete trial implementation, refer to the
-:doc:`/training-apis/index`.
+:doc:`/training/apis-howto/overview`.
 
 ***************************************************
  Handling Trial Errors and Early Stopping Requests

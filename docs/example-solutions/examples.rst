@@ -19,8 +19,7 @@ of hyperparameters:
    cd mnist_pytorch
    det experiment create const.yaml .
 
-For an introduction to using the training API, please see the documentation on how to
-:doc:`/training-apis/index`.
+For an introduction to using the training API, please see the Training APIs section.
 
 *****************
  Computer Vision

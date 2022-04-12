@@ -279,7 +279,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
       configuration in one of the following locations:
 
       -  :ref:`master-config-reference`
-      -  :ref:`experiment-configuration`
+      -  :ref:`experiment-config-reference`
 
    -  For a cluster-based experiment, configured ``checkpoint_storage`` settings are validated
       before training starts. The message ``Checkpoint storage validation failed``, indicates that
@@ -387,5 +387,4 @@ step only applies if you have multiple GPUs and want to use distributed training
       training job and averaged afterward. Those metrics are handled automatically by Determined and
       do not need special handling. Other metrics, such as F1 score, cannot be averaged from
       individual worker F1 scores. Determined has tooling for handling these metrics. See the
-      documentation for using custom metric reducers with :ref:`PyTorch <pytorch-custom-reducers>`
-      and :ref:`TensorFlow Estimator <estimators-custom-reducers>`.
+      documentation for using custom metric reducers with :ref:`PyTorch <pytorch-custom-reducers>`.

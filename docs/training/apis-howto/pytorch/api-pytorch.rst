@@ -8,7 +8,7 @@
 
 This document guides you through training a PyTorch model in Determined. You need to implement a
 trial class that inherits :class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint
-in the :doc:`experiment configuration </training-apis/experiment-config>`.
+in the :doc:`experiment configuration </reference/config/experiment-config-reference>`.
 
 To implement :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions that
 represent the components that are used in the training procedure. It is helpful to work off of a
@@ -41,7 +41,7 @@ If you want to port training code that defines the training procedure and can al
 Determined, we suggest you read through the whole document to ensure you understand the API. Also,
 we suggest you use a couple of PyTorch API features at one time and running the code will help
 debug. You can also use fake data to test your training code with PyTorch API to get quicker
-iteration. For more debugging tips, check out the document :doc:`/training-debug/index`.
+iteration. For more debugging tips, see :doc:`/training/best-practices/debug-models`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 
@@ -57,7 +57,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   Before loading data, read this document :doc:`/training/setup-guide/load-model-data` to understand how to work with
    different sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
@@ -94,7 +94,7 @@ directories on different ranks. See the following code example:
 
 .. note::
 
-   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   Before loading data, read this document :doc:`/training/setup-guide/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data into :class:`~determined.pytorch.PyTorchTrial` models is done by defining two
@@ -111,7 +111,7 @@ to the :meth:`~determined.pytorch.PyTorchTrial.train_batch` and
 :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` functions. The batch size of the data loader
 will be set to the per-slot batch size, which is calculated based on ``global_batch_size`` and
 ``slots_per_trial`` as defined in the :doc:`experiment configuration
-</training-apis/experiment-config>`.
+</reference/config/experiment-config-reference>`.
 
 See the following code as an example:
 

@@ -34,7 +34,7 @@ training with Determined to speed up the training of a single trial.
 Setting Slots Per Trial
 =======================
 
-In the :ref:`experiment-configuration`, the ``resources.slots_per_trial`` field controls the number
+In the :ref:`experiment-config-reference`, the ``resources.slots_per_trial`` field controls the number
 of GPUs that will be used to train a single trial.
 
 The default value is 1, which disables distributed training. Setting ``slots_per_trial`` to a larger
@@ -76,7 +76,7 @@ Setting Global Batch Size
 =========================
 
 When doing distributed training, the ``global_batch_size`` specified in the
-:ref:`experiment-configuration` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
+:ref:`experiment-config-reference` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
 size is set to: ``global_batch_size`` / ``slots_per_trial``. If ``slots_per_trial`` does not divide
 the ``global_batch_size`` evenly, the batch size is rounded down. For convenience, the per-GPU batch
 size can be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
@@ -94,7 +94,7 @@ Advanced Optimizations
 ======================
 
 Determined supports several optimizations to further reduce training time. These optimizations are
-available in :ref:`experiment-configuration` under ``optimizations``.
+available in :ref:`experiment-config-reference` under ``optimizations``.
 
 -  ``optimizations.aggregation_frequency`` controls how many batches are evaluated before exchanging
    gradients. It is helpful in situations where it is not possible to increase the batch size

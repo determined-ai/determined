@@ -1,3 +1,4 @@
+.. _install-cluster:
 .. _network-requirements:
 
 ######################

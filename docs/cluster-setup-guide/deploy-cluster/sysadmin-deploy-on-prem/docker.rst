@@ -22,8 +22,7 @@
    <https://hub.docker.com/_/postgres>`_ for more information.
 
 #. Pull the Docker image for the master or agent on each machine where these services will run.
-   There is a single master container running in a :ref:`Determined cluster
-   <det-system-architecture>`, and typically there is one agent container running on a given
+   There is a single master container running in a Determined cluster, and typically there is one agent container running on a given
    machine. A single machine can host both the master container and an agent container. Run the
    commands below, replacing ``VERSION`` with a valid Determined version, such as the current
    version, |version|:
@@ -100,7 +99,7 @@ machine, you may specify the loopback interface in the published port mapping, i
 Determined Agents
 =================
 
-As is the case for the master, Determined agent :ref:`configuration values <agent-configuration>`
+As is the case for the master, Determined agent :ref:`configuration values <agent-config-reference>`
 can come from a file, environment variables, or command-line arguments.
 
 To start the agent with a configuration file, we recommend starting from our `default agent

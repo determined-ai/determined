@@ -1,4 +1,5 @@
 .. _experiment-config-reference:
+.. _experiment-configuration:
 
 ###################################
  Experiment Configuration Reference
@@ -891,7 +892,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
    If set, tasks launched for this experiment will *only* be scheduled on agents that have the given
    label set. If this is not set (the default behavior), tasks launched for this experiment will
    only be scheduled on unlabeled agents. An agent's label can be configured via the ``label`` field
-   in the :ref:`agent configuration <agent-configuration>`.
+   in the :ref:`agent configuration <agent-config-reference>`.
 
 ``max_slots``
    The maximum number of scheduler slots that this experiment is allowed to use at any one time. The
@@ -1150,7 +1151,7 @@ The ``profiling`` section specifies configuration options related to profiling e
  Data Layer
 ************
 
-The ``data_layer`` section specifies configuration options related to the :ref:`data-layer`.
+The ``data_layer`` section specifies configuration options related to the data-layer.
 Determined currently supports three types of storage for the ``data_layer``: ``s3``, ``gcs``, and
 ``shared_fs``, identified by the ``type`` subfield. Defaults to ``shared_fs``.
 

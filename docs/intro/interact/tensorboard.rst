@@ -151,7 +151,7 @@ which Determined then moves to ``/tmp/tensorboard``.
 PyTorch
 =======
 
-To add TensorBoard support for models that use the :doc:`PyTorch API </training-apis/api-pytorch>`,
+To add TensorBoard support for models that use the :doc:`PyTorch API </training/apis-howto/pytorch/overview>`,
 use the ``writer`` field in an instance of the
 :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter` class:
 

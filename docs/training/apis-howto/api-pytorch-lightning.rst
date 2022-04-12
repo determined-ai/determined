@@ -9,18 +9,18 @@
 This document guides you through training a PyTorch Lightning model in Determined. You need to
 implement a trial class that inherits :class:`~determined.pytorch.lightning.LightningAdapter` and
 specify it as the entrypoint in the :doc:`experiment configuration
-</training-apis/experiment-config>`.
+</reference/config/experiment-config-reference>`.
 
 PyTorch Lightning Adapter, defined here as ``LightningAdapter``, provides a quick way to train your
 PyTorch Lightning models with all the Determined features, such as mid-epoch preemption, easy
 distributed training, simple job submission to the Determined cluster, and so on.
 
-LightningAdapter is built on top of our :doc:`PyTorch API </training-apis/api-pytorch>`, which has a
+LightningAdapter is built on top of our :doc:`PyTorch API </training/apis-howto/pytorch/overview>`, which has a
 built-in training loop that integrates with the Determined features. However, it only supports
 `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html>`_
 (v1.2.0). To migrate your code from the `Trainer
 <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_, please read more about
-:doc:`PyTorch API </training-apis/api-pytorch>` and :ref:`experiment-configuration`.
+:doc:`PyTorch API </training/apis-howto/pytorch/overview>` and :ref:`experiment-config-reference`.
 
 Porting your ``PyTorchLightning`` code is often pretty simple:
 
@@ -109,11 +109,11 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   Before loading data, read this document :doc:`/training/setup-guide/load-model-data` to understand how to work with
    different sources of data.
 
-Loading your dataset when using the :doc:`/training-apis/api-pytorch-lightning` works the same way
-as it does with :doc:`PyTorch API </training-apis/api-pytorch>`.
+Loading your dataset when using the :doc:`/training/apis-howto/api-pytorch-lightning` works the same way
+as it does with :doc:`PyTorch API </training/apis-howto/pytorch/overview>`.
 
 If you already have a ``LightningDataModule`` you can bring it in and use it to implement
 ``build_training_data_loader`` and ``build_validation_data_loader`` methods easily. For more

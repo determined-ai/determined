@@ -109,7 +109,7 @@ with ``slots_per_trial``, it's possible that training performance is being bottl
 communication or disk I/O.
 
 To check if your training is bottlenecked by communication, we suggest setting
-``optimizations.aggregation_frequency`` in the :ref:`experiment-configuration` to a very large
+``optimizations.aggregation_frequency`` in the :ref:`experiment-config-reference` to a very large
 number (e.g., 1000). This setting results in communicating updates once every 1000 batches.
 Comparing throughput with ``aggregation_frequency`` of 1 vs. ``aggregation_frequency`` of 1000 will
 demonstrate the communication overhead. If you do observe significant communication overhead, refer

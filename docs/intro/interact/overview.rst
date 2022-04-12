@@ -25,9 +25,8 @@ wheel is installed, use the CLI ``det`` command to interact with the cluster.
  Automation
 ************
 
-Python and REST APIs are provided for programmatic interfaces. The :ref:`Python API <client>`
-defines a Pythonic way to access the cluster. The :ref:`REST API <rest-api>` is another way to
-programmatically interact with a cluster.
+Python and REST APIs are provided for programmatic interfaces. The Python API
+defines a Pythonic way to access the cluster.
 
 .. toctree::
    :maxdepth: 1
@@ -37,4 +36,4 @@ programmatically interact with a cluster.
    interactive-job-config
    notebooks
    tensorboard
-
+   python-api

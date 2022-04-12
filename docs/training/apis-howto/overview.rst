@@ -12,21 +12,20 @@ way, Determined is able to run the training loop and provide advanced training a
 capabilities.
 
 Once users' model code are ported to Determined's APIs, they can use an :doc:`experiment
-configuration </training-apis/experiment-config>` to configure how Determined should train the model
+configuration </reference/config/experiment-config-reference>` to configure how Determined should train the model
 - e.g. multi-GPU, hyperparameter search, etc.
 
 If you have existing model code that you'd like to train with Determined, continue to one of the API
 docs below depending on your ML Framework.
 
--  :doc:`/training-apis/api-pytorch`
--  :doc:`/training-apis/api-pytorch-lightning`
--  :doc:`/training-apis/deepspeed/index`
--  :doc:`/training-apis/api-keras`
--  :doc:`/training-apis/api-estimator`
+-  :doc:`/training/apis-howto/pytorch/overview`
+-  :doc:`/training/apis-howto/api-pytorch-lightning`
+-  :doc:`/training/apis-howto/deepspeed/overview`
+-  :doc:`/training/apis-howto/api-keras`
 
 If you'd like a review of implementing the Determined APIs on example models, please take a look
-   at our :doc:`Tutorials </tutorials/index>`. Or, if you'd like to build off of an existing model
-   that already runs on Determined, take a look at our :doc:`examples </examples>` to see if the
+   at our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an existing model
+   that already runs on Determined, take a look at our :doc:`examples </example-solutions/examples>` to see if the
    model you'd like to train is already available.
 
 ********************
@@ -36,11 +35,7 @@ If you'd like a review of implementing the Determined APIs on example models, pl
 TensorFlow Core Models
 ======================
 
-Determined has support for TensorFlow models that use the :doc:`/training-apis/api-keras` or
-:doc:`/training-apis/api-estimator` APIs. For models that use the low-level TensorFlow Core APIs, we
-recommend porting your model to use :doc:`/training-apis/api-estimator`. `Example of converting a
-TensorFlow graph into an Estimator
-<https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
+Determined has support for TensorFlow models that use the :doc:`/training/apis-howto/api-keras` API.
 
 TensorFlow 1 vs 2
 =================
@@ -93,5 +88,4 @@ Known limitations:
    api-pytorch-lightning
    deepspeed/overview
    api-keras
-   python-api
    best-practices

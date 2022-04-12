@@ -148,7 +148,7 @@ the ``model`` attribute of the ``Trial`` object, as shown in the following snipp
    predictions = model(samples)
 
 PyTorch checkpoints are saved using `pickle <https://docs.python.org/3/library/pickle.html>`__ and
-loaded as :doc:`/training-apis/api-pytorch` objects (see `the PyTorch documentation
+loaded as :doc:`/training/apis-howto/pytorch/overview` objects (see `the PyTorch documentation
 <https://pytorch.org/docs/stable/notes/serialization.html>`__ for details).
 
 TensorFlow Checkpoints
@@ -403,5 +403,5 @@ The checkpoint can then be loaded in Python with this code:
  Next Steps
 ************
 
--  :ref:`client`: The reference documentation for this API.
+-  :ref:`python-api-reference`: The reference documentation for this API.
 -  :ref:`organizing-models`

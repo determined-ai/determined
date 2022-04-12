@@ -114,9 +114,8 @@ With Determined you can:
 Determined integrates these features into an easy-to-use, high-performance deep learning
 environment. Spend your time building models instead of managing infrastructure. At the same time,
 Determined lets you continue using popular Deep Learning libraries, such as :doc:`TensorFlow Keras
-</training/apis-howto/api-keras>`, :doc:`TensorFlow Estimator </training/apis-howto/api-estimator>`,
-and :doc:`PyTorch </training/apis-howto/api-pytorch>`. Simply integrate the Determined API with your
-existing model code.
+</training/apis-howto/api-keras>` and :doc:`PyTorch </training/apis-howto/pytorch/overview>`. Simply
+integrate the Determined API with your existing model code.
 
 .. |h3| raw:: html
 

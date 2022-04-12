@@ -1,4 +1,4 @@
-.. _agent-configuration-reference:
+.. _agent-config-reference:
 
 ##############################
  Agent Configuration Reference

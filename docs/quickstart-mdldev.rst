@@ -51,7 +51,7 @@ Docker
 
 For the examples that use an agent, install Docker to run containerized workloads. If you do not
 already have Docker installed, follow the :doc:`Installing Docker
-</sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
+</cluster-setup-guide/requirements>` instructions to install and run Docker on Linux or macOS.
 
 Training Example
 ================
@@ -290,20 +290,20 @@ to use and how many model configurations to explore.
 
 For instructions on installing Determined in different environments, see:
 
--  :doc:`/sysadmin-basics/index` for administrator setup tasks.
--  :doc:`/sysadmin-deploy-on-prem/index` for local setup and deployment tasks.
--  :doc:`/sysadmin-deploy-on-aws/index` for AWS deployment.
--  :doc:`/sysadmin-deploy-on-gcp/index` for GCP deployment.
--  :doc:`/sysadmin-deploy-on-k8s/index` for installation and running Determined on Kubernetes.
+-  :doc:`/cluster-setup-guide/requirements` for administrator setup tasks.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/overview` for local setup and deployment tasks.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-aws/overview` for AWS deployment.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-gcp/overview` for GCP deployment.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/overview` for installation and running Determined on Kubernetes.
 
 For faster, less structured ways to run a Determined cluster without writing a model, see:
 
 -  :ref:`commands-and-shells`
 -  :ref:`notebooks`
 
-In the :doc:`/examples` section, you can find a list of example machine learning models that have
+In the :doc:`/example-solutions/examples` section, you can find a list of example machine learning models that have
 been ported to the Determined APIs. Each example includes a model definition and one or more
 experiment configuration files, with instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
-</training-hyperparameter/index>` section.
+</training/hyperparameter/overview>` section.

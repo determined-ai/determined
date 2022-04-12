@@ -125,7 +125,7 @@ In this example experiment configuration, we use numbers, strings, maps, and an 
  Next Steps
 ************
 
--  :ref:`experiment-configuration`
+-  :ref:`experiment-config-reference`
 -  :ref:`command-notebook-configuration`
 -  :ref:`cluster-configuration`
 

@@ -8,7 +8,7 @@
 
 This document guides you through training a Keras model in Determined. You need to implement a trial
 class that inherits :class:`~determined.keras.TFKerasTrial` and specify it as the entrypoint in the
-:doc:`experiment configuration </training-apis/experiment-config>`.
+:doc:`experiment configuration </reference/config/experiment-config-reference>`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 
@@ -21,7 +21,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   Before loading data, read :doc:`/training/setup-guide/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`

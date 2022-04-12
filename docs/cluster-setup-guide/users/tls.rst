@@ -35,7 +35,7 @@ Agents
 ======
 
 When the Determined master is using TLS, set the ``security.tls.enabled`` :ref:`agent configuration
-option <agent-configuration>` to ``true``. If the master's certificate is signed by a well-known CA,
+option <agent-config-reference>` to ``true``. If the master's certificate is signed by a well-known CA,
 then no other TLS-specific configuration is necessary. Otherwise, for the best security, place the
 master's certificate file somewhere accessible to the agent and set the agent's
 ``security.tls.master_cert`` option to the path to that file. For a more convenient but less secure
@@ -78,6 +78,6 @@ Tasks
 =====
 
 Once the master and agent are configured to use TLS, no further configuration is required for tasks
-that are run in the cluster. In shells and notebooks, the Determined :ref:`Python libraries
-<client>` will automatically make connections to the master using TLS with the appropriate
+that are run in the cluster. In shells and notebooks, the Determined Python libraries
+will automatically make connections to the master using TLS with the appropriate
 certificate.

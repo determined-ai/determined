@@ -131,7 +131,7 @@ Take the following code for example.
            model = models.__dict__[args.arch]()
 
 ``args.arch`` is a hyperparameter. You should define the hyperparameter space in the
-:doc:`experiment configuration </training-apis/experiment-config>` and use
+:doc:`experiment configuration </reference/config/experiment-config-reference>` and use
 ``self.context.get_hparams()``, which gives you access to all the hyperparameters for the current
 trial. By doing so, you get better tracking in the WebUI, especially for experiments that use a
 searcher.

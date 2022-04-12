@@ -89,7 +89,7 @@ Resource pools are configured via the :ref:`master-config-reference`. For each r
 configure scheduler and provider information.
 
 If you are using static resource pools and launching agents by hand, you will need to update the
-:ref:`agent-configuration` to specify which resource pool the agent should join.
+:ref:`agent-config-reference` to specify which resource pool the agent should join.
 
 *****************************
  Migrating to Resource Pools

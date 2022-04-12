@@ -38,7 +38,7 @@ Variables are set sequentially, which affect variables that depend on the expans
 variables.
 
 Proxy variables set in this way will take precedent over those set using the :ref:`agent
-configuration <agent-configuration>`.
+configuration <agent-config-reference>`.
 
 It is also possible to set these variables for each accelerator type separately:
 
@@ -198,7 +198,7 @@ If your image has been published to a private `Docker Registry
      image: "myregistry.local:5000/my-user-name/my-repo-name:my-tag"
 
 Images will be fetched via HTTPS by default. An HTTPS proxy can be configured using the
-``https_proxy`` field as part of the :ref:`agent configuration <agent-configuration>`.
+``https_proxy`` field as part of the :ref:`agent configuration <agent-config-reference>`.
 
 Your custom image and credentials can also be set as the defaults for all tasks launched in
 Determined. This can be done under ``image`` and ``registry_auth`` in the

@@ -473,7 +473,7 @@ The master supports the following configuration settings:
             is ``5m``.
 
 -  ``checkpoint_storage``: Specifies where model checkpoints will be stored. This can be overridden
-   on a per-experiment basis in the :ref:`experiment-configuration`. A checkpoint contains the
+   on a per-experiment basis in the :ref:`experiment-config-reference`. A checkpoint contains the
    architecture and weights of the model being trained. Determined currently supports several kinds
    of checkpoint storage, ``gcs``, ``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the
    ``type`` subfield.
