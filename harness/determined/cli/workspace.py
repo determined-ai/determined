@@ -125,6 +125,22 @@ def delete_workspace(args: Namespace) -> None:
 
 
 @authentication.required
+def archive_workspace(args: Namespace) -> None:
+    sess = setup_session(args)
+    current = workspace_by_name(sess, args.workspace_name)
+    bindings.post_ArchiveWorkspace(sess, id=current.id)
+    print(f"Successfully archived workspace {args.workspace_name}.")
+
+
+@authentication.required
+def unarchive_workspace(args: Namespace) -> None:
+    sess = setup_session(args)
+    current = workspace_by_name(sess, args.workspace_name)
+    bindings.post_UnarchiveWorkspace(sess, id=current.id)
+    print(f"Successfully un-archived workspace {args.workspace_name}.")
+
+
+@authentication.required
 def edit_workspace(args: Namespace) -> None:
     sess = setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
@@ -229,6 +245,22 @@ args_description = [
                     Arg("workspace_name", type=str, help="current name of the workspace"),
                     Arg("new_name", type=str, help="new name of the workspace"),
                     Arg("--json", action="store_true", help="print as JSON"),
+                ],
+            ),
+            Cmd(
+                "archive",
+                archive_workspace,
+                "archive workspace",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
+                ],
+            ),
+            Cmd(
+                "unarchive",
+                unarchive_workspace,
+                "unarchive workspace",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
                 ],
             ),
         ],
