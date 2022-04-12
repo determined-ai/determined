@@ -9,9 +9,9 @@
    :hidden:
 
    Features <intro/features/list>
-   System Architecture <intro/architecture/overview>
    Concepts <intro/concepts/overview>
-   Interactive Environments <intro/interact/overview>
+   System Architecture <intro/architecture/overview>
+   Determined Interfaces <intro/det-if/overview>
 
 .. toctree::
    :caption: Cluster Setup Guide
