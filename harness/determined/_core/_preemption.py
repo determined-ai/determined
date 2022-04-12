@@ -249,7 +249,7 @@ class Preemption:
 
 
 class DummyPreemption(Preemption):
-    """Present an Preemption API that never returns True."""
+    """Present a Preemption API that never returns True."""
 
     def __init__(
         self,
