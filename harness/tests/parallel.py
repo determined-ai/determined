@@ -89,6 +89,8 @@ class Execution:
                     results[rank] = fn()
                 # Catch anything, including a pytest.Fail (so we can preserve it).
                 except BaseException as e:
+                    # Print the error to stderr immediately, in case it results in a hang.
+                    traceback.print_exc()
                     errors[rank] = (rank, e, sys.exc_info())
                 finally:
                     del self._info[thread_id]

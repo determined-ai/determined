@@ -155,18 +155,22 @@ class Preemption:
         session: Session,
         allocation_id: str,
         dist: _core.DistributedContext,
-        prempt_mode: PreemptMode,
+        preempt_mode: PreemptMode = PreemptMode.WorkersAskChief,
     ) -> None:
         self._session = session
         self._allocation_id = allocation_id
         self._dist = dist
-        self._preempt_mode = PreemptMode(prempt_mode)
+        self._preempt_mode = PreemptMode(preempt_mode)
         self._watcher = None
+        self._started = False
         if self._dist.get_rank() == 0 or self._preempt_mode == PreemptMode.WorkersAskMaster:
             self._watcher = _PreemptionWatcher(session, allocation_id)
         self._ack_sent = False
 
     def start(self) -> "Preemption":
+        if self._started:
+            raise RuntimeError("you cannot call Preemption.start() multiple times")
+        self._started = True
         if self._watcher is not None:
             self._watcher.start()
         return self
@@ -201,18 +205,24 @@ class Preemption:
                 preemption signal, it will be your responsibility to call
                 acknowledge_preemption_signal() manually any time before exiting.
         """
+        if not self._started:
+            # Calling should_preempt on the watcher without starting the watcher would hang.
+            raise RuntimeError(
+                "you cannot call Preemption.should_preempt() before Preemption.start()"
+            )
         if self._watcher is not None:
             # Have watcher; either this is the chief or we are in WorkersAskMaster mode.
             out = self._watcher.should_preempt()
             if auto_ack and out and not self._ack_sent:
                 # Tell the master that user code has received the preemption signal.
                 self.acknowledge_preemption_signal()
+                self._ack_sent = True
             if self._preempt_mode == PreemptMode.WorkersAskChief:
                 _ = self._dist._zmq_broadcast(out)
         else:
             # No watcher; we should ask the chief or either we should not be here.
             if self._preempt_mode == PreemptMode.ChiefOnly:
-                raise ValueError(
+                raise RuntimeError(
                     "Preemption was configured with preempt_mode=ChiefOnly but .should_preempt() "
                     f"was called from non-chief worker of rank={self._dist.get_rank()}"
                 )
@@ -241,10 +251,19 @@ class Preemption:
 class DummyPreemption(Preemption):
     """Present an Preemption API that never returns True."""
 
-    def __init__(self) -> None:
-        pass
+    def __init__(
+        self,
+        dist: _core.DistributedContext,
+        preempt_mode: PreemptMode = PreemptMode.WorkersAskChief,
+    ) -> None:
+        self._dist = dist
+        self._preempt_mode = PreemptMode(preempt_mode)
+        self._started = False
 
     def start(self) -> "Preemption":
+        if self._started:
+            raise RuntimeError("you cannot call Preemption.start() multiple times")
+        self._started = True
         return self
 
     def close(self) -> None:
@@ -257,6 +276,25 @@ class DummyPreemption(Preemption):
         pass
 
     def should_preempt(self, auto_ack: bool = True) -> bool:
+        if not self._started:
+            # Match the requirements of the real Preemption class.
+            raise RuntimeError(
+                "you cannot call Preemption.should_preempt() before Preemption.start()"
+            )
+        if self._dist.rank == 0:
+            if self._preempt_mode == PreemptMode.WorkersAskChief:
+                # Even though we always return False, preserve the synchronization behavior to avoid
+                # giving the user a weird inconsistency between managed and unmanaged dtrain code.
+                _ = self._dist._zmq_broadcast(False)
+        else:
+            if self._preempt_mode == PreemptMode.ChiefOnly:
+                raise RuntimeError(
+                    "Preemption was configured with preempt_mode=ChiefOnly but "
+                    ".should_preempt() was called from non-chief worker of "
+                    f"rank={self._dist.get_rank()}"
+                )
+            if self._preempt_mode == PreemptMode.WorkersAskChief:
+                _ = self._dist._zmq_broadcast(None)
         return False
 
     def acknowledge_preemption_signal(self) -> None:

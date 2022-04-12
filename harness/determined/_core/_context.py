@@ -29,7 +29,7 @@ class Context:
     ) -> None:
         self.checkpointing = checkpointing
         self.distributed = distributed or _core.DummyDistributed()
-        self.preemption = preemption or _core.DummyPreemption()
+        self.preemption = preemption or _core.DummyPreemption(self.distributed)
         self.training = training or _core.DummyTraining()
         self.searcher = searcher or _core.DummySearcher(self.distributed)
 
@@ -52,6 +52,7 @@ def _dummy_init(
     distributed: Optional[_core.DistributedContext] = None,
     # TODO(DET-6153): allow a Union[StorageManager, str] here.
     storage_manager: Optional[storage.StorageManager] = None,
+    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
 ) -> Context:
     """
     Build a core.Context suitable for running off-cluster.  This is normally called by init()
@@ -59,7 +60,7 @@ def _dummy_init(
     e.g. local test mode.
     """
     distributed = distributed or _core.DummyDistributed()
-    preemption = _core.DummyPreemption()
+    preemption = _core.DummyPreemption(distributed, preempt_mode)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
