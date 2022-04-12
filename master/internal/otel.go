@@ -21,7 +21,7 @@ const (
 var tracer *sdktrace.TracerProvider
 
 // otelConfig initiates a new tracer and sets it as the default for otel.
-func otelConfig(endpoint string) *sdktrace.TracerProvider {
+func configureOtel(endpoint string) *sdktrace.TracerProvider {
 	// avoid repeatedly re-creating the tracer.
 	if tracer != nil {
 		return tracer
