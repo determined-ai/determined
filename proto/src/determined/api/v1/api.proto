@@ -1324,6 +1324,26 @@ service Determined {
       tags: "Workspaces"
     };
   }
+  // Archive a workspace.
+  rpc ArchiveWorkspace(ArchiveWorkspaceRequest)
+      returns (ArchiveWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Unarchive a workspace.
+  rpc UnarchiveWorkspace(UnarchiveWorkspaceRequest)
+      returns (UnarchiveWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/unarchive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
 
   // Get the requested project.
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
@@ -1378,6 +1398,25 @@ service Determined {
   rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
     option (google.api.http) = {
       delete: "/api/v1/projects/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Archive a project.
+  rpc ArchiveProject(ArchiveProjectRequest) returns (ArchiveProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Unarchive a project.
+  rpc UnarchiveProject(UnarchiveProjectRequest)
+      returns (UnarchiveProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{id}/unarchive"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

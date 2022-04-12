@@ -1008,6 +1008,22 @@ export interface V1ArchiveModelResponse {
 }
 
 /**
+ * Response to ArchiveProjectRequest.
+ * @export
+ * @interface V1ArchiveProjectResponse
+ */
+export interface V1ArchiveProjectResponse {
+}
+
+/**
+ * Response to ArchiveWorkspaceRequest.
+ * @export
+ * @interface V1ArchiveWorkspaceResponse
+ */
+export interface V1ArchiveWorkspaceResponse {
+}
+
+/**
  * 
  * @export
  * @interface V1AwsCustomTag
@@ -6374,6 +6390,22 @@ export interface V1UnarchiveExperimentResponse {
  * @interface V1UnarchiveModelResponse
  */
 export interface V1UnarchiveModelResponse {
+}
+
+/**
+ * Response to UnarchiveProjectRequest.
+ * @export
+ * @interface V1UnarchiveProjectResponse
+ */
+export interface V1UnarchiveProjectResponse {
+}
+
+/**
+ * Response to UnarchiveWorkspaceRequest.
+ * @export
+ * @interface V1UnarchiveWorkspaceResponse
+ */
+export interface V1UnarchiveWorkspaceResponse {
 }
 
 /**
@@ -16093,6 +16125,43 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Unarchive a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveProject(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveProject.');
+            }
+            const localVarPath = `/api/v1/projects/{id}/unarchive`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -16135,6 +16204,25 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          */
         getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
             const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Archive a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).archiveProject(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16272,6 +16360,25 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Unarchive a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).unarchiveProject(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -16305,6 +16412,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          */
         getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
             return ShellsApiFp(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Archive a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).archiveProject(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -16379,6 +16496,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
             return ProjectsApiFp(configuration).postProject(workspaceId, body, options)(fetch, basePath);
         },
+        /**
+         * 
+         * @summary Unarchive a project.
+         * @param {number} id The id of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).unarchiveProject(id, options)(fetch, basePath);
+        },
     };
 };
 
@@ -16404,6 +16531,18 @@ export class ProjectsApi extends BaseAPI {
      */
     public getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
         return ShellsApiFp(this.configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Archive a project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public archiveProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).archiveProject(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -16489,6 +16628,18 @@ export class ProjectsApi extends BaseAPI {
      */
     public postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
         return ProjectsApiFp(this.configuration).postProject(workspaceId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Unarchive a project.
+     * @param {number} id The id of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public unarchiveProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).unarchiveProject(id, options)(this.fetch, this.basePath);
     }
 
 }
@@ -19518,6 +19669,43 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Unarchive a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveWorkspace(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}/unarchive`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -19630,6 +19818,25 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Unarchive a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unarchiveWorkspace(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -19697,6 +19904,16 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         setUserPassword(userId: number, body: string, options?: any) {
             return UsersApiFp(configuration).setUserPassword(userId, body, options)(fetch, basePath);
         },
+        /**
+         * 
+         * @summary Unarchive a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).unarchiveWorkspace(id, options)(fetch, basePath);
+        },
     };
 };
 
@@ -19717,6 +19934,18 @@ export class UsersApi extends BaseAPI {
      */
     public getUser(userId: number, options?: any) {
         return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Archive a workspace.
+     * @param {number} id The id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public archiveWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).archiveWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19785,6 +20014,18 @@ export class UsersApi extends BaseAPI {
      */
     public setUserPassword(userId: number, body: string, options?: any) {
         return UsersApiFp(this.configuration).setUserPassword(userId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Unarchive a workspace.
+     * @param {number} id The id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public unarchiveWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).unarchiveWorkspace(id, options)(this.fetch, this.basePath);
     }
 
 }

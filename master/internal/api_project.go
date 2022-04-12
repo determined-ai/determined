@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 func (a *apiServer) GetProjectFromID(id int32) (*projectv1.Project, error) {
@@ -26,6 +27,21 @@ func (a *apiServer) GetProjectFromID(id int32) (*projectv1.Project, error) {
 		return p, errors.Wrapf(err,
 			"error fetching project (%d) from database", id)
 	}
+}
+
+func (a *apiServer) ConfirmParentWorkspaceUnarchived(pid int32) error {
+	w := &workspacev1.Workspace{}
+	err := a.m.db.QueryProto("get_workspace_from_project", w, pid)
+	if err != nil {
+		return errors.Wrapf(err,
+			"error fetching project (%v)'s workspace from database", pid)
+	}
+
+	if w.Archived {
+		return errors.Errorf("This project belongs to an archived workspace. " +
+			"To make changes, first unarchive the workspace.")
+	}
+	return nil
 }
 
 func (a *apiServer) GetProject(
@@ -110,6 +126,19 @@ func (a *apiServer) PostProject(
 		return nil, err
 	}
 
+	w, err := a.GetWorkspaceFromID(req.WorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if w.Immutable {
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.",
+			w.Id)
+	}
+	if w.Archived {
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.",
+			w.Id)
+	}
+
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
 		req.WorkspaceId, user.User.Id)
@@ -119,7 +148,7 @@ func (a *apiServer) PostProject(
 }
 
 func (a *apiServer) AddProjectNote(
-	ctx context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
+	_ context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
 	p, err := a.GetProjectFromID(req.ProjectId)
 	if err != nil {
 		return nil, err
@@ -202,10 +231,29 @@ func (a *apiServer) DeleteProject(
 }
 
 func (a *apiServer) MoveProject(
-	_ context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse, error) {
+	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
+	error) {
+	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if w.Immutable {
+		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.",
+			w.Id)
+	}
+	if w.Archived {
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.",
+			w.Id)
+	}
+
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &projectv1.Project{}
-	err := a.m.db.QueryProto("move_project", holder, req.ProjectId,
-		req.DestinationWorkspaceId)
+	err = a.m.db.QueryProto("move_project", holder, req.ProjectId,
+		req.DestinationWorkspaceId, user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "project (%d) does not exist or not moveable by this user",
@@ -214,4 +262,56 @@ func (a *apiServer) MoveProject(
 
 	return &apiv1.MoveProjectResponse{},
 		errors.Wrapf(err, "error moving project (%d)", req.ProjectId)
+}
+
+func (a *apiServer) ArchiveProject(
+	ctx context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.ConfirmParentWorkspaceUnarchived(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &projectv1.Project{}
+	err = a.m.db.QueryProto("archive_project", holder, req.Id, true,
+		user.User.Id, user.User.Admin)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) is not archive-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.ArchiveProjectResponse{},
+		errors.Wrapf(err, "error archiving project (%d)", req.Id)
+}
+
+func (a *apiServer) UnarchiveProject(
+	ctx context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.ConfirmParentWorkspaceUnarchived(req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &projectv1.Project{}
+	err = a.m.db.QueryProto("archive_project", holder, req.Id, false,
+		user.User.Id, user.User.Admin)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) is not unarchive-able by this user",
+			req.Id)
+	}
+
+	return &apiv1.UnarchiveProjectResponse{},
+		errors.Wrapf(err, "error unarchiving project (%d)", req.Id)
 }
