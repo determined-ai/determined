@@ -208,4 +208,5 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
    supports the ``coscheduler`` option, which enables the `lightweight coscheduling plugin
    <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, and
    the ``preemption`` option, which enables a priority-based preemption scheduler. Unless specified
-   as ``coscheduler``, Determined will use the default Kubernetes scheduler.
+   as ``coscheduler``, Determined will use the default Kubernetes scheduler. See
+   :ref:`scheduling-on-kubernetes` for more details.
