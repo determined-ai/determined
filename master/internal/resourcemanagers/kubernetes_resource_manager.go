@@ -22,8 +22,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+// KubernetesDummyResourcePool is the name of the dummy resource pool for kubernetes.
+const KubernetesDummyResourcePool = "kubernetes"
 const kubernetesScheduler = "kubernetes"
-const kubernetesDummyResourcePool = "kubernetes"
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -183,7 +184,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	// that this RP does support the aux containers.
 
 	return &resourcepoolv1.ResourcePool{
-		Name:                         kubernetesDummyResourcePool,
+		Name:                         KubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    int32(pods.NumAgents),
@@ -291,7 +292,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		}
 		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
 			Stats:        jobStats(k.reqList),
-			ResourcePool: kubernetesDummyResourcePool},
+			ResourcePool: KubernetesDummyResourcePool},
 		)
 		ctx.Respond(resp)
 

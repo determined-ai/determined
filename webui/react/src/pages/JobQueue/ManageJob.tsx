@@ -231,6 +231,7 @@ const ManageJob: React.FC<Props> = (
         </Form.Item>
         <Form.Item
           extra={poolDetails}
+          hidden={schedulerType === api.V1SchedulerType.KUBERNETES}
           label="Resource Pool"
           name="resourcePool">
           <Select disabled={job.type !== JobType.EXPERIMENT}>

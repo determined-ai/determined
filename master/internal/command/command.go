@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -510,7 +511,6 @@ func (c *command) toV1Job() *jobv1.Job {
 		JobId:          c.jobID.String(),
 		EntityId:       string(c.taskID),
 		Type:           c.jobType.Proto(),
-		ResourcePool:   c.Config.Resources.ResourcePool,
 		SubmissionTime: timestamppb.New(c.registeredTime),
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),
@@ -521,6 +521,12 @@ func (c *command) toV1Job() *jobv1.Job {
 	j.IsPreemptible = false
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
+
+	if config.IsUsingKubernetesRM() {
+		j.ResourcePool = resourcemanagers.KubernetesDummyResourcePool
+	} else {
+		j.ResourcePool = c.Config.Resources.ResourcePool
+	}
 
 	job.UpdateJobQInfo(&j, c.rmJobInfo)
 
