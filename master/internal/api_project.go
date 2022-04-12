@@ -118,6 +118,10 @@ func (a *apiServer) PostProject(
 		return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.",
 			w.Id)
 	}
+	if w.Archived {
+		return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.",
+			w.Id)
+	}
 
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,

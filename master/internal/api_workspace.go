@@ -208,9 +208,16 @@ func (a *apiServer) DeleteWorkspace(
 }
 
 func (a *apiServer) ArchiveWorkspace(
-	_ context.Context, req *apiv1.ArchiveWorkspaceRequest) (*apiv1.ArchiveWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.ArchiveWorkspaceRequest) (*apiv1.ArchiveWorkspaceResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &workspacev1.Workspace{}
-	err := a.m.db.QueryProto("archive_workspace", holder, req.Id, true)
+	err = a.m.db.QueryProto("archive_workspace", holder, req.Id, true,
+		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not archive-able by this user",
@@ -222,10 +229,16 @@ func (a *apiServer) ArchiveWorkspace(
 }
 
 func (a *apiServer) UnarchiveWorkspace(
-	_ context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse,
+	ctx context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse,
 	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &workspacev1.Workspace{}
-	err := a.m.db.QueryProto("archive_workspace", holder, req.Id, false)
+	err = a.m.db.QueryProto("archive_workspace", holder, req.Id, false,
+		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not unarchive-able by this user",
