@@ -15,6 +15,8 @@ logger = logging.getLogger("determined.core")
 class Context:
     """
     core.Context is a simple composition of several other APIs.
+
+    You should use core.init instead of creating a core.Context manually.
     """
 
     def __init__(
@@ -86,6 +88,7 @@ def init(
     distributed: Optional[_core.DistributedContext] = None,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
+    preemption_decision_mode: _core.DecisionMode = _core.DecisionMode.WorkersAskChief,
 ) -> Context:
     info = det.get_cluster_info()
     if info is None:
@@ -101,7 +104,9 @@ def init(
 
     distributed = distributed or _core.DummyDistributed()
 
-    preemption = _core.Preemption(session, info.allocation_id, distributed)
+    preemption = _core.Preemption(
+        session, info.allocation_id, distributed, preemption_decision_mode
+    )
 
     # At present, we only support tensorboards in Trial tasks.
     tbd_mgr = None

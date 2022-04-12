@@ -123,6 +123,21 @@ class _PreemptionWatcher(threading.Thread):
 class Preemption:
     """
     Some preemption-related APIs.
+
+    The allowable calling patterns and behavior are configured by the decision_mode argument:
+
+      - When the decision_mode is ChiefOnly, only the chief may call should_preempt().  It is the
+        caller's responsibility to shut down any workers.
+
+      - When the decision_mode is WorkersAskChief, the chief will communicate with the
+        master to detect the preemption signal, then the chief will broadcast its decision to all
+        workers.  All workers must therefore call should_preempt() in-step with the chief,
+        but all workers will have the same decision afterwards.
+
+      - When the decision_mode is WorkersAskMaster, all workers will make their own decision
+        independently by communicating to the master.  Calls to should_prempt() need not be in-step
+        across workers, but it is the responsibility of the calling code to tolerate situations
+        where some workers have exited due to preemption and others have not.
     """
 
     def __init__(
@@ -130,16 +145,15 @@ class Preemption:
         session: Session,
         allocation_id: str,
         dist: _core.DistributedContext,
+        decision_mode: _core.DecisionMode,
     ) -> None:
         self._session = session
         self._allocation_id = allocation_id
         self._dist = dist
-        if self._dist.get_rank() == 0:
-            self._watcher = _PreemptionWatcher(
-                session, allocation_id
-            )  # type: Optional[_PreemptionWatcher]
-        else:
-            self._watcher = None
+        self._decision_mode = decision_mode
+        self._watcher = None
+        if self._dist.get_rank() == 0 or self._decision_mode == _core.DecisionMode.WorkersAskMaster:
+            self._watcher = _PreemptionWatcher(session, allocation_id)
         self._ack_sent = False
 
     def start(self) -> "Preemption":
@@ -157,20 +171,16 @@ class Preemption:
     def __exit__(self, *_: Any) -> None:
         self.close()
 
-    def should_preempt(self, chief_only: bool = False, auto_ack: bool = True) -> bool:
+    def should_preempt(self, auto_ack: bool = True) -> bool:
         """
         Currently, we only support blocking behavior when checking should_preempt(), so it is not
         performant enough to call every batch.
 
+        The requirements on the the caller and the synchronization between workers during a call
+        to should_preempt() are defined by the decision_mode argument passed to the Preemption
+        constructor.
+
         Arguments:
-            chief_only (``bool``, default ``False``): In multi-worker training, chief_only
-                configures whether or not the result of should_preempt() is being checked on every
-                worker or whether it is only being checked on the chief worker.  When all workers
-                are checking should_preempt() (the default case), the chief will broadcast its
-                decision to all the workers in order to guarantee that all workers agree on the
-                decision to preempt.  You should set chief_only if only the chief worker is making
-                the call to should_preempt(), in which case it is your responsiblity to have the
-                chief shut down training on all workers via some other means.
             auto_ack (``bool``, default ``True``): In order for the task to be restarted by the
                 Determined master after shutting down due to preemption, the task must acknowledge
                 the preemption signal to the Determined master.  When auto_ack is True (the default
@@ -182,19 +192,19 @@ class Preemption:
                 acknowledge_preemption_signal() manually any time before exiting.
         """
         if self._watcher is not None:
-            # Chief.
+            # Have watcher; either this is the chief or we are in WorkersAskMaster mode.
             out = self._watcher.should_preempt()
             if auto_ack and out and not self._ack_sent:
                 # Tell the master that user code has received the preemption signal.
                 self.acknowledge_preemption_signal()
-            if not chief_only:
+            if self._decision_mode == _core.DecisionMode.WorkersAskChief:
                 _ = self._dist._zmq_broadcast(out)
         else:
-            # Non-chief.
-            if chief_only:
+            # No watcher; we should ask the chief or either we should not be here.
+            if self._decision_mode == _core.DecisionMode.ChiefOnly:
                 raise ValueError(
-                    "should_preempt(chief_only=True) was called from non-chief worker of "
-                    f"rank={self._dist.get_rank()}"
+                    "Preemption was configured with decision_mode=ChiefOnly but .should_preempt() "
+                    f"was called from non-chief worker of rank={self._dist.get_rank()}"
                 )
             out = self._dist._zmq_broadcast(None)
             assert isinstance(out, bool)
@@ -236,7 +246,7 @@ class DummyPreemption(Preemption):
     def __exit__(self, *_: Any) -> None:
         pass
 
-    def should_preempt(self, chief_only: bool = False, auto_ack: bool = True) -> bool:
+    def should_preempt(self, auto_ack: bool = True) -> bool:
         return False
 
     def acknowledge_preemption_signal(self) -> None:

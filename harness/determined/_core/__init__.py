@@ -1,3 +1,4 @@
+from determined._core._decision_mode import DecisionMode
 from determined._core._distributed import DistributedContext, DummyDistributed
 from determined._core._checkpointing import Checkpointing, DummyCheckpointing
 from determined._core._training import Training, DummyTraining, EarlyExitReason

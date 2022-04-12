@@ -150,24 +150,40 @@ class Searcher:
         is_chief = self._dist.rank == 0
         return SearcherOp(self._session, self._trial_id, length=length, is_chief=is_chief)
 
-    def ops(self, chief_only: bool = False, auto_ack: bool = True) -> Iterator[SearcherOp]:
+    def ops(
+        self,
+        decision_mode: _core.DecisionMode = _core.DecisionMode.WorkersAskChief,
+        auto_ack: bool = True,
+    ) -> Iterator[SearcherOp]:
         """
         Iterate through all the ops this searcher has to offer.
 
-        During a multi-worker task, when chief_only=False (the default), the chief will fetch
-        operations from the Determined master and communicate each op to the other workers, which
-        makes calling next() on the iterator of ops a synchronization point across workers.
+        During a multi-worker task, when decision_mode=DecisionMode.WorkersAskChief (the default),
+        the chief will fetch operations from the Determined master and communicate each op to the
+        other workers, which makes calling next() on the iterator of ops a synchronization point
+        across workers.
 
-        The chief, and only the chief, must call op.complete() on each operation.  This is true
-        regardless of the chief_only setting, since the Determined master needs a clear, unambiguous
-        report of when an operation is completed.
+        The other supported decision mode is ChiefOnly, where there is no synchronization point, but
+        workers are not allowed to call .ops() at all.  This is probably only useful if you have
+        another mechanism for the chief to communicate the training plan to workers.
+
+        After training to the point specified by each SearcherOp, The chief, and only the chief,
+        must call op.complete() on each operation.  This is true regardless of the decision_mode
+        setting, since the Determined master needs a clear, unambiguous report of when an operation
+        is completed.
         """
+
+        if decision_mode not in (_core.DecisionMode.WorkersAskChief, _core.DecisionMode.ChiefOnly):
+            raise ValueError(
+                f"decision_mode {decision_mode.name} is not supported for Searcher.ops, use "
+                "WorkersAskChief or ChiefOnly instead"
+            )
 
         if self._dist.rank == 0:
             # Chief gets ops from master.
             while True:
                 op = self._get_searcher_op()
-                if not chief_only:
+                if decision_mode == _core.DecisionMode.WorkersAskChief:
                     # Broadcast op.length (or None) to workers.  We broadcast just the length
                     # because SearcherOp is not serializable, and the is_chief attribute obviously
                     # must be set on a per-worker basis.
@@ -180,9 +196,9 @@ class Searcher:
                 if not op._completed:
                     raise RuntimeError("you must call op.complete() on each operation")
         else:
-            if chief_only:
+            if decision_mode != _core.DecisionMode.WorkersAskChief:
                 raise RuntimeError(
-                    "you cannot call searcher.ops(chief_only=True) from a non-chief worker."
+                    "you cannot call searcher.ops(decision_mode=ChiefOnly) from a non-chief worker."
                 )
             # Worker gets ops from chief.
             while True:
@@ -261,23 +277,33 @@ class DummySearcher(Searcher):
         self._dist = dist
         self._length = length
 
-    def ops(self, chief_only: bool = False, auto_ack: bool = True) -> Iterator[SearcherOp]:
+    def ops(
+        self,
+        decision_mode: _core.DecisionMode = _core.DecisionMode.ChiefOnly,
+        auto_ack: bool = True,
+    ) -> Iterator[SearcherOp]:
+        if decision_mode not in (_core.DecisionMode.WorkersAskChief, _core.DecisionMode.ChiefOnly):
+            raise ValueError(
+                f"decision_mode {decision_mode.name} is not supported for Searcher.ops, use "
+                "WorkersAskChief or ChiefOnly instead"
+            )
+
         # Force the same synchronization behavior in the DummySearcher as the real one.
         if self._dist.rank == 0:
             # Chief makes a dummy op.
             op = DummySearcherOp(self._length, self._dist.rank == 0)
-            if not chief_only:
+            if decision_mode == _core.DecisionMode.WorkersAskChief:
                 # Broadcast op to workers.
                 _ = self._dist._zmq_broadcast(op and op.length)
             yield op
             if not op._completed:
                 raise RuntimeError("you must call op.complete() on each operation")
-            if not chief_only:
+            if decision_mode == _core.DecisionMode.WorkersAskChief:
                 _ = self._dist._zmq_broadcast(None)
         else:
-            if chief_only:
+            if decision_mode != _core.DecisionMode.WorkersAskChief:
                 raise RuntimeError(
-                    "you cannot call searcher.ops(chief_only=True) from a non-chief worker."
+                    "you cannot call searcher.ops(decision_mode=ChiefOnly) from a non-chief worker."
                 )
             # Worker gets ops from chief.
             while True:

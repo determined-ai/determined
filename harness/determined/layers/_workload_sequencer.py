@@ -173,7 +173,7 @@ class WorkloadSequencer(workload.Source):
         raise ValueError("invalid length")
 
     def check_for_preemption(self) -> None:
-        if self.core_context.preemption.should_preempt(chief_only=True):
+        if self.core_context.preemption.should_preempt():
             raise ShouldExit()
 
     def train(self, num_batches: int, op: _core.SearcherOp) -> WorkloadGenerator:
@@ -383,7 +383,7 @@ class WorkloadSequencer(workload.Source):
             ):
                 yield from self.validate(None)
 
-            for op in self.core_context.searcher.ops(chief_only=True):
+            for op in self.core_context.searcher.ops(decision_mode=_core.DecisionMode.ChiefOnly):
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
