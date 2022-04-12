@@ -42,9 +42,9 @@ class GPT2Trial(DeepSpeedTrial):
         self.wrapped_writer = TorchWriter()
         self.neox_args.tensorboard_writer = self.wrapped_writer.writer
         self.neox_args.configure_distributed_args()
-        # The tokenizer needs to be built before model initialization in order to set the 
+        # The tokenizer needs to be built before model initialization in order to set the
         # required padded_vocab_size argument.
-        self.neox_args.build_tokenizer()  
+        self.neox_args.build_tokenizer()
         megatron_train.initialize_megatron(neox_args=self.neox_args)
         self.timers = megatron_utils.Timers(
             use_wandb=False, tensorboard_writer=self.neox_args.tensorboard_writer

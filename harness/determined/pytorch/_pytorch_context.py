@@ -50,7 +50,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         det.TrialContext.__init__(self, *args, **kwargs)
-        pytorch._PyTorchReducerContext.__init__(self, self.distributed._zmq_allgather)
+        pytorch._PyTorchReducerContext.__init__(self, self.distributed.allgather)
         self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
             self.get_hparams(),
             self.env.experiment_config.slots_per_trial(),

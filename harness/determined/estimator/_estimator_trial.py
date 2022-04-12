@@ -313,7 +313,7 @@ class DeterminedControlHook(estimator.RunHook):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
                         }
-                        with _core.checkpointing.store_path(metadata) as (storage_id, path):
+                        with _core.checkpoint.store_path(metadata) as (storage_id, path):
                             self._checkpoint_model(pathlib.Path(path))
                         response = {"uuid": storage_id}
                     else:
@@ -732,7 +732,7 @@ class EstimatorTrialController(det.TrialController):
             return
 
         logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-        with self.context._core.checkpointing.restore_path(self.env.latest_checkpoint) as load_path:
+        with self.context._core.checkpoint.restore_path(self.env.latest_checkpoint) as load_path:
             for callback in self.train_hooks:
                 if isinstance(callback, estimator.RunHook):
                     callback.on_checkpoint_load(str(load_path))
@@ -780,10 +780,10 @@ class EstimatorTrialController(det.TrialController):
         assert (
             self.context.distributed.size > 1
         ), "average_metrics can only be called during distributed training"
-        all_metrics = self.context.distributed._zmq_gather(metrics)
+        all_metrics = self.context.distributed.gather(metrics)
         if not self.is_chief:
             return None
-        assert all_metrics is not None, "chief did not get metrics from _zmq_gather()"
+        assert all_metrics is not None, "chief did not get metrics from gather()"
 
         for key in metrics:
             if isinstance(metrics[key], numbers.Number):

@@ -109,7 +109,7 @@ class WorkloadSequencer(workload.Source):
             unit = _core.Unit.EPOCHS
         self._unit = unit
 
-        self.val_from_previous_run = self.core_context.training.get_last_validation()
+        self.val_from_previous_run = self.core_context.train.get_last_validation()
 
         self.want_initial_val = self.env.experiment_config.get("perform_initial_validation", False)
 
@@ -173,12 +173,12 @@ class WorkloadSequencer(workload.Source):
         raise ValueError("invalid length")
 
     def check_for_preemption(self) -> None:
-        if self.core_context.preemption.should_preempt():
+        if self.core_context.preempt.should_preempt():
             raise ShouldExit()
 
-    def train(self, num_batches: int, op: _core.SearcherOp) -> WorkloadGenerator:
+    def train(self, num_batches: int, op: _core.SearcherOperation) -> WorkloadGenerator:
         # Report a train step is starting.
-        self.core_context.training.set_status("training")
+        self.core_context.train.set_status("training")
 
         wkld = workload.Workload(
             kind=workload.Workload.Kind.RUN_STEP,
@@ -195,7 +195,7 @@ class WorkloadSequencer(workload.Source):
 
         if isinstance(response, workload.InvalidHP):
             # Exit before reporting metrics (which would be empty anyway).
-            self.core_context.training.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.core_context.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response.get("metrics", {}).get("avg_metrics", {})
@@ -203,7 +203,7 @@ class WorkloadSequencer(workload.Source):
 
         self.state.latest_batch += num_batches
         self.state.step_id += 1
-        self.core_context.training.report_training_metrics(
+        self.core_context.train.report_training_metrics(
             latest_batch=self.state.latest_batch,
             metrics=metrics,
             batch_metrics=batch_metrics,
@@ -231,9 +231,9 @@ class WorkloadSequencer(workload.Source):
         smaller_is_better = self.env.experiment_config["searcher"]["smaller_is_better"]
         return (now < before) if smaller_is_better else (now > before)
 
-    def validate(self, op: Optional[_core.SearcherOp]) -> WorkloadGenerator:
+    def validate(self, op: Optional[_core.SearcherOperation]) -> WorkloadGenerator:
         # Report a validation step is starting.
-        self.core_context.training.set_status("validating")
+        self.core_context.train.set_status("validating")
 
         wkld = workload.Workload(
             kind=workload.Workload.Kind.COMPUTE_VALIDATION_METRICS,
@@ -249,7 +249,7 @@ class WorkloadSequencer(workload.Source):
         # Validation step is complete, process the result.
 
         if isinstance(response, workload.InvalidHP):
-            self.core_context.training.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.core_context.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response["metrics"]["validation_metrics"]
@@ -292,15 +292,15 @@ class WorkloadSequencer(workload.Source):
         #
         # But we can't do that without breaking behavior.
         if op is not None and self.batches_until_op_complete(op) < 1:
-            op.complete(searcher_metric)
+            op.report_completed(searcher_metric)
 
         if self.ckpt_policy == "best" and not self.checkpoint_is_current():
             # Before reporting our own validation metric, check what the best known validation is
             # without it.
-            best_validation_before = self.core_context.training.get_experiment_best_validation()
+            best_validation_before = self.core_context.train.get_experiment_best_validation()
 
         self.state.last_val = self.state.latest_batch
-        self.core_context.training.report_validation_metrics(
+        self.core_context.train.report_validation_metrics(
             latest_batch=self.state.latest_batch,
             metrics=metrics,
         )
@@ -318,7 +318,7 @@ class WorkloadSequencer(workload.Source):
         self.check_for_preemption()
 
     def checkpoint(self, already_exiting: bool) -> WorkloadGenerator:
-        self.core_context.training.set_status("checkpointing")
+        self.core_context.train.set_status("checkpointing")
 
         # Update the last_ckpt now so it can be captured by get_state() after we yield.
         self.state.last_ckpt = self.state.latest_batch
@@ -334,7 +334,7 @@ class WorkloadSequencer(workload.Source):
         response = yield from yield_and_await_response(wkld)
 
         if isinstance(response, workload.InvalidHP):
-            self.core_context.training.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.core_context.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
             if not already_exiting:
                 raise ShouldExit(skip_exit_checkpoint=True)
             return
@@ -357,7 +357,7 @@ class WorkloadSequencer(workload.Source):
     def batches_until_ckpt(self) -> int:
         return self.state.last_ckpt + self.min_ckpt_period_batches - self.state.latest_batch
 
-    def batches_until_op_complete(self, op: _core.SearcherOp) -> int:
+    def batches_until_op_complete(self, op: _core.SearcherOperation) -> int:
         return (
             self.as_batches(
                 batches=op.length if self._unit == _core.Unit.BATCHES else None,
@@ -383,7 +383,7 @@ class WorkloadSequencer(workload.Source):
             ):
                 yield from self.validate(None)
 
-            for op in self.core_context.searcher.ops(ops_mode=_core.OpsMode.ChiefOnly):
+            for op in self.core_context.searcher.operations(_core.SearcherMode.ChiefOnly):
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
@@ -452,22 +452,22 @@ def make_compatibility_workloads(
             # Workloads are generated only on the chief worker.
             for wkld, response_fn in wlsq:
                 # Distribute to peers.
-                _ = core_context.distributed._zmq_broadcast(wkld)
+                _ = core_context.distributed.broadcast(wkld)
                 # Process workload.
                 yield wkld, response_fn
                 # Wait for peers.
-                _ = core_context.distributed._zmq_gather(None)
+                _ = core_context.distributed.gather(None)
             # Break the workers out of their loop.
-            _ = core_context.distributed._zmq_broadcast(None)
+            _ = core_context.distributed.broadcast(None)
         else:
             while True:
                 # Wait for chief to broadcast workload.
-                wkld = core_context.distributed._zmq_broadcast(None)
+                wkld = core_context.distributed.broadcast(None)
                 if wkld is None:
                     break
                 # Process workload.
                 yield wkld, lambda _: None
                 # Tell chief we finished.
-                _ = core_context.distributed._zmq_gather(None)
+                _ = core_context.distributed.gather(None)
 
     return workloads(), wlsq

@@ -76,7 +76,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         det.TrialContext.__init__(self, *args, **kwargs)
-        pytorch._PyTorchReducerContext.__init__(self, self.distributed._zmq_allgather)
+        pytorch._PyTorchReducerContext.__init__(self, self.distributed.allgather)
 
         self._init_device()
 

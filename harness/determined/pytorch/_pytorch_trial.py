@@ -225,7 +225,7 @@ class PyTorchTrialController(det.TrialController):
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
                 logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-                with self.context._core.checkpointing.restore_path(
+                with self.context._core.checkpoint.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
@@ -273,7 +273,7 @@ class PyTorchTrialController(det.TrialController):
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",
                         }
-                        with self.context._core.checkpointing.store_path(metadata) as (
+                        with self.context._core.checkpoint.store_path(metadata) as (
                             storage_id,
                             path,
                         ):
@@ -532,7 +532,7 @@ class PyTorchTrialController(det.TrialController):
             )
 
             # Gather a list of per-worker (num_inputs, num_batches) tuples.
-            input_counts = self.context.distributed._zmq_gather((num_inputs, idx + 1))
+            input_counts = self.context.distributed.gather((num_inputs, idx + 1))
             if self.context.distributed.rank == 0:
                 assert input_counts is not None
                 # Reshape and sum.

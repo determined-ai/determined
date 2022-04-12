@@ -17,7 +17,7 @@ class EarlyExitReason(enum.Enum):
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
 
 
-class Training:
+class TrainContext:
     """
     Some training-related REST API wrappers.
     """
@@ -154,7 +154,7 @@ class Training:
         return float(r.json()["metric"])
 
 
-class DummyTraining(Training):
+class DummyTrainContext(TrainContext):
     """ """
 
     def __init__(self) -> None:

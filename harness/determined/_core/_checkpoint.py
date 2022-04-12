@@ -10,7 +10,7 @@ from determined.common.experimental.session import Session
 logger = logging.getLogger("determined.core")
 
 
-class Checkpointing:
+class CheckpointContext:
     """
     Some checkpoint-related REST API wrappers.
     """
@@ -131,7 +131,7 @@ class Checkpointing:
             self._tbd_mgr.sync()
 
 
-class DummyCheckpointing(Checkpointing):
+class DummyCheckpointContext(CheckpointContext):
     def __init__(
         self,
         dist: _core.DistributedContext,
