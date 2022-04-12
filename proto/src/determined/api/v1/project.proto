@@ -191,3 +191,29 @@ message MoveProjectRequest {
 
 // Response to MoveProjectRequest.
 message MoveProjectResponse {}
+
+// Request for archiving a project.
+message ArchiveProjectRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the project.
+  int32 id = 1;
+}
+
+// Response to ArchiveProjectRequest.
+message ArchiveProjectResponse {}
+
+// Request for un-archiving a project.
+message UnarchiveProjectRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the project.
+  int32 id = 1;
+}
+
+// Response to UnarchiveProjectRequest.
+message UnarchiveProjectResponse {}

@@ -1307,8 +1307,17 @@ func (a *apiServer) GetModelDef(
 
 func (a *apiServer) MoveExperiment(
 	_ context.Context, req *apiv1.MoveExperimentRequest) (*apiv1.MoveExperimentResponse, error) {
+	p, err := a.GetProjectFromID(req.DestinationProjectId)
+	if err != nil {
+		return nil, err
+	}
+	if p.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+			req.DestinationProjectId)
+	}
+
 	holder := &experimentv1.Experiment{}
-	err := a.m.db.QueryProto("move_experiment", holder, req.ExperimentId,
+	err = a.m.db.QueryProto("move_experiment", holder, req.ExperimentId,
 		req.DestinationProjectId)
 
 	if holder.Id == 0 {

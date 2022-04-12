@@ -182,3 +182,29 @@ message DeleteWorkspaceRequest {
 
 // Response to DeleteWorkspaceRequest.
 message DeleteWorkspaceResponse {}
+
+// Request for archiving a workspace.
+message ArchiveWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the workspace.
+  int32 id = 1;
+}
+
+// Response to ArchiveWorkspaceRequest.
+message ArchiveWorkspaceResponse {}
+
+// Request for un-archiving a workspace.
+message UnarchiveWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the workspace.
+  int32 id = 1;
+}
+
+// Response to UnarchiveWorkspaceRequest.
+message UnarchiveWorkspaceResponse {}
