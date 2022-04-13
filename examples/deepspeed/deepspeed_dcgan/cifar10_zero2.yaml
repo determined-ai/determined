@@ -30,6 +30,7 @@ min_validation_period:
 entrypoint:
   - python3
   - -m
-  - determined.launch.autodeepspeed
+  - determined.launch.deepspeed
+  - --trial
   - model_def:DCGANTrial
 max_restarts: 0
