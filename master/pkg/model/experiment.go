@@ -461,9 +461,8 @@ type CheckpointTrainingMetadata struct {
 	HParams           JSONObj `db:"hparams"`
 	TrainingMetrics   JSONObj `db:"training_metrics"`
 	ValidationMetrics JSONObj `db:"validation_metrics"`
-	SearcherMetrics   JSONObj `db:"searcher_metric"`
-
-	LatestBatch int `db:"latest_batch"`
+	SearcherMetric    float64 `db:"searcher_metric"`
+	LatestBatch       int     `db:"latest_batch"`
 }
 
 // Checkpoint represents a row from the `checkpoints_view` view.
