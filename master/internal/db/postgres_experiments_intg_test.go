@@ -205,7 +205,7 @@ func TestGetExperiments(t *testing.T) {
 				err := db.AddExperiment(&exp)
 				require.NoError(t, err, "failed to add experiment")
 			}
-			userIdFilterExpr := strings.Trim(
+			userIDFilterExpr := strings.Trim(
 				strings.Join(strings.Split(fmt.Sprint([]int32{int32(user.ID)}), " "), ","),
 				"[]",
 			)
@@ -217,7 +217,7 @@ func TestGetExperiments(t *testing.T) {
 				tt.stateFilter,
 				tt.archivedFilter,
 				user.Username, // Always filter by a random user so the state is inconsequential.
-				userIdFilterExpr,
+				userIDFilterExpr,
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,

@@ -81,7 +81,7 @@ func (a *apiServer) GetModels(
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
-	userIdFilterExpr := strings.Trim(
+	userIDFilterExpr := strings.Trim(
 		strings.Join(strings.Split(fmt.Sprint(req.UserIds), " "), ","),
 		"[]",
 	)
@@ -119,7 +119,7 @@ func (a *apiServer) GetModels(
 		idFilterExpr,
 		archFilterExpr,
 		userFilterExpr,
-		userIdFilterExpr,
+		userIDFilterExpr,
 		labelFilterExpr,
 		nameFilter,
 		descFilterExpr,
