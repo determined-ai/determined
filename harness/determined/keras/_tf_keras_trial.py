@@ -377,7 +377,7 @@ class TFKerasTrialController(det.TrialController):
             with self.context._core.checkpoint.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
-                self._load(pathlib.Path(load_path))
+                self._load(load_path)
 
         self._configure_callbacks(train_config.callbacks)
 
@@ -829,10 +829,10 @@ class TFKerasTrialController(det.TrialController):
                             "format": "saved_weights",
                         }
                         with self.context._core.checkpoint.store_path(metadata) as (
-                            storage_id,
                             path,
+                            storage_id,
                         ):
-                            self._save_checkpoint(pathlib.Path(path))
+                            self._save_checkpoint(path)
                         response = {"uuid": storage_id}
                     else:
                         response = {}

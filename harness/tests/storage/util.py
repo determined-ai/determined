@@ -1,5 +1,8 @@
 import os
+import pathlib
+import shutil
 import time
+import uuid
 from typing import Callable, Dict, List, Optional, Tuple
 
 import pytest
@@ -16,30 +19,31 @@ EXPECTED_FILES = {
 }
 
 
-def create_checkpoint(checkpoint_dir: str) -> None:
+def create_checkpoint(checkpoint_dir: pathlib.Path) -> None:
     """Create a new checkpoint."""
-    os.makedirs(checkpoint_dir, exist_ok=False)
+    checkpoint_dir.mkdir(parents=True, exist_ok=False)
     for file, content in EXPECTED_FILES.items():
-        file = os.path.join(checkpoint_dir, file)
-        os.makedirs(os.path.dirname(file), exist_ok=True)
+        path = checkpoint_dir.joinpath(file)
+        path.parent.mkdir(parents=True, exist_ok=True)
         if content is None:
+            path.mkdir()
             continue
-        with open(file, "w") as fp:
-            fp.write(content)
+        with path.open("w") as f:
+            f.write(content)
 
 
-def validate_checkpoint(checkpoint_dir: str) -> None:
+def validate_checkpoint(checkpoint_dir: pathlib.Path) -> None:
     """Make sure an existing checkpoint looks correct."""
-    assert os.path.exists(checkpoint_dir)
+    assert checkpoint_dir.exists()
     files_found = set(storage.StorageManager._list_directory(checkpoint_dir))
-    assert files_found == set(EXPECTED_FILES.keys())
+    assert files_found == set(EXPECTED_FILES.keys()), (files_found, EXPECTED_FILES)
     for found in files_found:
-        path = os.path.join(checkpoint_dir, found)
+        path = checkpoint_dir.joinpath(found)
         if EXPECTED_FILES[found] is None:
-            assert os.path.isdir(path)
+            assert path.is_dir(), path
         else:
-            assert os.path.isfile(path)
-            with open(path) as f:
+            assert path.is_file(), path
+            with path.open() as f:
                 assert f.read() == EXPECTED_FILES[found]
 
 
@@ -48,8 +52,9 @@ def run_storage_lifecycle_test(
     post_delete_cb: Optional[Callable] = None,
 ) -> None:
     checkpoints = []
-    for _ in range(5):
-        with manager.store_path() as (storage_id, path):
+    for _ in range(2):
+        storage_id = str(uuid.uuid4())
+        with manager.store_path(storage_id) as path:
             create_checkpoint(path)
             checkpoints.append(storage_id)
 
@@ -64,6 +69,31 @@ def run_storage_lifecycle_test(
             with manager.restore_path(storage_id) as path:
                 pass
         # Allow for backend-specific inspection.
+        if post_delete_cb is not None:
+            post_delete_cb(storage_id)
+
+    # Again, using upload/download instead of store_path/restore_path.
+    checkpoints = []
+    for _ in range(2):
+        storage_id = str(uuid.uuid4())
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
+            create_checkpoint(path)
+            manager.upload(path, storage_id)
+            checkpoints.append(storage_id)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+    for storage_id in checkpoints:
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
+            manager.download(storage_id, path)
+            validate_checkpoint(path)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+        manager.delete(storage_id)
+        with pytest.raises(errors.CheckpointNotFound):
+            manager.download(storage_id, path)
         if post_delete_cb is not None:
             post_delete_cb(storage_id)
 

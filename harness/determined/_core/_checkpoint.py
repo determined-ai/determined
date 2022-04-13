@@ -1,10 +1,14 @@
 import contextlib
 import logging
-from typing import Any, Dict, Iterator, Optional, Tuple
+import os
+import pathlib
+import uuid
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 import determined as det
 from determined import _core, tensorboard
 from determined.common import storage
+from determined.common.api import bindings
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.core")
@@ -32,8 +36,64 @@ class CheckpointContext:
         self._api_path = api_path
         self._tbd_mgr = tbd_mgr
 
+    def upload(
+        self, ckpt_dir: Union[str, os.PathLike], metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        upload() chooses a random storage_id, then uploads the contents of ckpt_dir to checkpoint
+        storage into a directory by the name of the storage_id.  The name of the ckpt_dir will not
+        be preserved.
+
+        Note that with multiple workers, only the chief worker (distributed.rank==0) is allowed to
+        call upload.
+
+        Returns:  The storage_id for this checkpoint.
+        """
+
+        if self._dist.rank != 0:
+            raise ValueError(
+                "cannot call checkpointing.upload() from non-chief worker "
+                f"(rank={self._dist.rank})"
+            )
+
+        ckpt_dir = os.fspath(ckpt_dir)
+
+        storage_id = str(uuid.uuid4())
+        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+        resources = storage.StorageManager._list_directory(ckpt_dir)
+        self._report_checkpoint(storage_id, resources, metadata)
+        return storage_id
+
+    def download(self, storage_id: str, ckpt_dir: Union[str, os.PathLike]) -> None:
+        """
+        Download the contents of a checkpoint from checkpoint storage into a directory specified by
+        ckpt_dir, which will be created if it does not exist.
+
+        .. note::
+
+            This .download() method is similar to but less flexible than the .download() method of
+            the :class:`~determined.experiment.common.Checkpoint` class in the Determined Python
+            SDK.  This .download() is here as a convenience.
+        """
+
+        ckpt_dir = os.fspath(ckpt_dir)
+
+        self._storage_manager.download(src=storage_id, dst=ckpt_dir)
+
+    def get_metadata(self, storage_id: str) -> Dict[str, Any]:
+        """
+        Returns the current metadata associated with the checkpoint.
+        """
+
+        resp = bindings.get_GetCheckpoint(self._session, checkpointUuid=storage_id)
+        if not resp.checkpoint or not resp.checkpoint.metadata:
+            return {}
+        return resp.checkpoint.metadata
+
     @contextlib.contextmanager
-    def store_path(self, metadata: Optional[Dict[str, Any]] = None) -> Iterator[Tuple[str, str]]:
+    def store_path(
+        self, metadata: Optional[Dict[str, Any]] = None
+    ) -> Iterator[Tuple[pathlib.Path, str]]:
         """
         store_path is a context manager which chooses a random path and prepares a directory you
         should save your model to.  When the context manager exits, the model will be automatically
@@ -46,10 +106,10 @@ class CheckpointContext:
 
         .. code::
 
-           with checkpointing.store_path() as (uuid, path):
+           with checkpointing.store_path() as (path, storage_id):
                my_save_model(my_model, path)
-               print(f"done saving checkpoint {uuid}")
-           print(f"done uploading checkpoint {uuid}")
+               print(f"done saving checkpoint {storage_id}")
+           print(f"done uploading checkpoint {storage_id}")
         """
 
         if self._dist.rank != 0:
@@ -58,13 +118,14 @@ class CheckpointContext:
                 f"(rank={self._dist.rank})"
             )
 
-        with self._storage_manager.store_path() as (uuid, path):
-            yield uuid, path
+        storage_id = str(uuid.uuid4())
+        with self._storage_manager.store_path(storage_id) as path:
+            yield path, storage_id
             resources = storage.StorageManager._list_directory(path)
-        self._report_checkpoint(uuid, resources, metadata)
+        self._report_checkpoint(storage_id, resources, metadata)
 
     @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[str]:
+    def restore_path(self, storage_id: str) -> Iterator[pathlib.Path]:
         """
         restore_path is a context manager which downloads a checkpoint (if required by the storage
         backend) and cleans it up afterwards (if necessary).
@@ -92,7 +153,7 @@ class CheckpointContext:
 
     def _report_checkpoint(
         self,
-        uuid: str,
+        storage_id: str,
         resources: Optional[Dict[str, int]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -118,12 +179,12 @@ class CheckpointContext:
             )
 
         body = {
-            "uuid": uuid,
+            "uuid": storage_id,
             "resources": resources,
             **self._static_metadata,
             **metadata,
         }
-        logger.debug(f"_report_checkpoint({uuid})")
+        logger.debug(f"_report_checkpoint({storage_id})")
         self._session.post(self._api_path, data=det.util.json_encode(body))
 
         # Also sync tensorboard.
@@ -142,9 +203,9 @@ class DummyCheckpointContext(CheckpointContext):
 
     def _report_checkpoint(
         self,
-        uuid: str,
+        storage_id: str,
         resources: Optional[Dict[str, int]] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         # No master to report to; just log the event.
-        logger.info(f"saved checkpoint {uuid}")
+        logger.info(f"saved checkpoint {storage_id}")

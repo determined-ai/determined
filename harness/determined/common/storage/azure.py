@@ -1,17 +1,15 @@
-import contextlib
 import logging
 import os
 import tempfile
-from typing import Iterator, Optional
+from typing import Optional, Union
 
 from determined import errors
-from determined.common import util
-from determined.common.storage.base import StorageManager
+from determined.common import storage, util
 
 import posixpath  # isort:skip
 
 
-class AzureStorageManager(StorageManager):
+class AzureStorageManager(storage.CloudStorageManager):
     """
     Store and load checkpoints from Azure Blob Storage.
 
@@ -35,35 +33,13 @@ class AzureStorageManager(StorageManager):
         )
         self.container = container if not container.endswith("/") else container[:-1]
 
-    def post_store_path(self, storage_id: str, storage_dir: str) -> None:
-        """post_store_path uploads the checkpoint to Azure Blob Storage and deletes the original
-        files.
-        """
-        try:
-            logging.info(f"Uploading checkpoint {storage_id} to Azure Blob Storage.")
-            self.upload(storage_id, storage_dir)
-        finally:
-            self._remove_checkpoint_directory(storage_id)
-
-    @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[str]:
-        storage_dir = os.path.join(self._base_path, storage_id)
-        os.makedirs(storage_dir, exist_ok=True)
-
-        logging.info(f"Downloading checkpoint {storage_id} from Azure Blob Storage")
-        self.download(storage_id, storage_dir)
-
-        try:
-            yield os.path.join(self._base_path, storage_id)
-        finally:
-            self._remove_checkpoint_directory(storage_id)
-
     @util.preserve_random_state
-    def upload(self, storage_id: str, storage_dir: str) -> None:
-        storage_prefix = storage_id
-        for rel_path in sorted(self._list_directory(storage_dir)):
+    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+        src = os.fspath(src)
+        logging.info(f"Uploading to Azure Blob Storage: {dst}")
+        for rel_path in sorted(self._list_directory(src)):
             # Use posixpath so that we always use forward slashes, even on Windows.
-            container_blob = posixpath.join(self.container, storage_prefix, rel_path)
+            container_blob = posixpath.join(self.container, dst, rel_path)
 
             if rel_path.endswith("/"):
                 blob_dir, blob_base = posixpath.split(container_blob.rstrip("/"))
@@ -72,40 +48,39 @@ class AzureStorageManager(StorageManager):
                 logging.debug(f"Uploading blob empty {blob_base} to container {blob_dir}.")
             else:
                 blob_dir, blob_base = posixpath.split(container_blob)
-                abs_path = os.path.join(storage_dir, rel_path)
+                abs_path = os.path.join(src, rel_path)
                 logging.debug(f"Uploading blob {blob_base} to container {blob_dir}.")
 
             self.client.put(blob_dir, blob_base, abs_path)
 
     @util.preserve_random_state
-    def download(self, storage_id: str, storage_dir: str) -> None:
-        storage_prefix = storage_id
+    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+        dst = os.fspath(dst)
+        logging.info(f"Downloading {src} from Azure Blob Storage")
         found = False
-        for blob in self.client.list_files(self.container, file_prefix=storage_prefix):
+        for blob in self.client.list_files(self.container, file_prefix=src):
             found = True
-            dst = os.path.join(storage_dir, os.path.relpath(blob, storage_prefix))
-            dst_dir = os.path.dirname(dst)
+            _dst = os.path.join(dst, os.path.relpath(blob, src))
+            dst_dir = os.path.dirname(_dst)
             os.makedirs(dst_dir, exist_ok=True)
 
             # Only create empty directory for keys that end with "/".
             if blob.endswith("/"):
-                os.makedirs(dst, exist_ok=True)
+                os.makedirs(_dst, exist_ok=True)
                 continue
 
             # Use posixpath so that we always use forward slashes, even on Windows.
             container_blob = posixpath.join(self.container, blob)
             blob_dir, blob_base = posixpath.split(container_blob)
-            self.client.get(blob_dir, blob_base, dst)
+            self.client.get(blob_dir, blob_base, _dst)
 
         if not found:
-            raise errors.CheckpointNotFound(
-                f"Did not find checkpoint {storage_id} in Azure Blob Storage"
-            )
+            raise errors.CheckpointNotFound(f"Did not find checkpoint {src} in Azure Blob Storage")
 
     @util.preserve_random_state
-    def delete(self, storage_id: str) -> None:
-        storage_prefix = storage_id
-        logging.info(f"Deleting checkpoint {storage_id} from Azure Blob Storage")
+    def delete(self, tgt: str) -> None:
+        storage_prefix = tgt
+        logging.info(f"Deleting {tgt} from Azure Blob Storage")
 
         files = self.client.list_files(self.container, file_prefix=storage_prefix)
         self.client.delete_files(self.container, files)
