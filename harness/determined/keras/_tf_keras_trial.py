@@ -374,7 +374,7 @@ class TFKerasTrialController(det.TrialController):
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
             logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-            with self.context._core.checkpointing.restore_path(
+            with self.context._core.checkpoint.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self._load(pathlib.Path(load_path))
@@ -828,7 +828,7 @@ class TFKerasTrialController(det.TrialController):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_weights",
                         }
-                        with self.context._core.checkpointing.store_path(metadata) as (
+                        with self.context._core.checkpoint.store_path(metadata) as (
                             storage_id,
                             path,
                         ):
@@ -962,7 +962,7 @@ class TFKerasTrialController(det.TrialController):
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.
-            _ = self.context.distributed._zmq_gather(None)
+            _ = self.context.distributed.gather(None)
 
             num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
             if isinstance(num_inputs, EagerTensor):

@@ -164,23 +164,23 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
             )
 
         # Perform a broadcast.
-        results = pex.run(lambda: contexts[pex.rank]._zmq_broadcast(pex.rank))  # type: ignore
+        results = pex.run(lambda: contexts[pex.rank].broadcast(pex.rank))  # type: ignore
         assert results == [0] * size, "not all threads ran broadcast correctly"
 
         # Perform a local broadcast.
-        results = pex.run(lambda: contexts[pex.rank]._zmq_broadcast_local(pex.rank))
+        results = pex.run(lambda: contexts[pex.rank].broadcast_local(pex.rank))
         expect = [rank - (rank % local_size) for rank in range(size)]  # type: Any
 
         assert results == expect, "not all threads ran broadcast_local correctly"
 
         # Perform a gather.
-        results = pex.run(lambda: set(contexts[pex.rank]._zmq_gather(pex.rank) or []))
+        results = pex.run(lambda: set(contexts[pex.rank].gather(pex.rank) or []))
         chief = set(range(size))
         expect = [set(range(size)) if rank == 0 else set() for rank in range(size)]
         assert results == [chief] + [set()] * (size - 1), "not all threads ran gather correctly"
 
         # Perform a local gather.
-        results = pex.run(lambda: set(contexts[pex.rank]._zmq_gather_local(pex.rank) or []))
+        results = pex.run(lambda: set(contexts[pex.rank].gather_local(pex.rank) or []))
         expect = [
             set(range(rank, rank + local_size)) if rank % local_size == 0 else set()
             for rank in range(size)
@@ -188,12 +188,12 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
         assert results == expect, "not all threads ran gather correctly"
 
         # Perform an allgather.
-        results = pex.run(lambda: set(contexts[pex.rank]._zmq_allgather(pex.rank)))
+        results = pex.run(lambda: set(contexts[pex.rank].allgather(pex.rank)))
         expect = set(range(size))
         assert results == [expect] * size, "not all threads ran allgather correctly"
 
         # Perform a local allgather.
-        results = pex.run(lambda: set(contexts[pex.rank]._zmq_allgather_local(pex.rank)))
+        results = pex.run(lambda: set(contexts[pex.rank].allgather_local(pex.rank)))
         expect = [
             set(range(cross_rank * local_size, (cross_rank + 1) * local_size))
             for cross_rank, _ in itertools.product(range(cross_size), range(local_size))

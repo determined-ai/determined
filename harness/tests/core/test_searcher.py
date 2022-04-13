@@ -7,13 +7,15 @@ from determined import _core
 from tests import parallel
 
 
-def make_test_searcher(ops: List[int], dist: _core.DistributedContext) -> _core.Searcher:
+def make_test_searcher(ops: List[int], dist: _core.DistributedContext) -> _core.SearcherContext:
     # Mock the session.get to return a few searcher ops
     final_op = ops[-1]
     ops = list(ops)
 
     def session_get(_: Any) -> Any:
-        assert dist.rank == 0, "worker Searchers must not GET new ops, but ask the chief instead"
+        assert (
+            dist.rank == 0
+        ), "worker SearcherContexts must not GET new ops, but ask the chief instead"
         resp = mock.MagicMock()
         if ops:
             resp.json.return_value = {
@@ -30,7 +32,7 @@ def make_test_searcher(ops: List[int], dist: _core.DistributedContext) -> _core.
     session = mock.MagicMock()
     session.get.side_effect = session_get
 
-    searcher = _core.Searcher(
+    searcher = _core.SearcherContext(
         session=session,
         dist=dist,
         trial_id=1,
@@ -41,29 +43,31 @@ def make_test_searcher(ops: List[int], dist: _core.DistributedContext) -> _core.
 
 
 @pytest.mark.parametrize("dummy", [False, True])
-def test_parallel_searcher(dummy: bool) -> None:
+def test_searcher_workers_ask_chief(dummy: bool) -> None:
     with parallel.Execution(2) as pex:
 
         @pex.run
-        def searchers() -> _core.Searcher:
+        def searchers() -> _core.SearcherContext:
             if not dummy:
                 searcher = make_test_searcher([5, 10, 15], pex.distributed)
             else:
-                searcher = _core.DummySearcher(dist=pex.distributed)
+                searcher = _core.DummySearcherContext(dist=pex.distributed)
             epochs_trained = 0
             # Iterate through ops.
-            for op in searcher.ops():
-                assert pex.distributed._zmq_allgather(op.length) == [op.length] * pex.size
+            for op in searcher.operations():
+                assert pex.distributed.allgather(op.length) == [op.length] * pex.size
                 while epochs_trained < op.length:
                     epochs_trained += 1
                     expect = [epochs_trained] * pex.size
-                    assert pex.distributed._zmq_allgather(epochs_trained) == expect
+                    assert pex.distributed.allgather(epochs_trained) == expect
                     with parallel.raises_when(
                         pex.rank != 0, RuntimeError, match="op.report_progress.*chief"
                     ):
                         op.report_progress(epochs_trained)
-                with parallel.raises_when(pex.rank != 0, RuntimeError, match="op.complete.*chief"):
-                    op.complete(0.0)
+                with parallel.raises_when(
+                    pex.rank != 0, RuntimeError, match="op.report_completed.*chief"
+                ):
+                    op.report_completed(0.0)
 
             return searcher
 
@@ -86,18 +90,20 @@ def test_completion_check() -> None:
         def do_test() -> None:
             searcher = make_test_searcher([5], pex.distributed)
 
-            ops = iter(searcher.ops())
+            ops = iter(searcher.operations())
             next(ops)
             # Don't complete the op.
-            with parallel.raises_when(pex.rank == 0, RuntimeError, match="must call op.complete"):
+            with parallel.raises_when(
+                pex.rank == 0, RuntimeError, match="must call op.report_completed"
+            ):
                 next(ops)
             # Wake up worker manually; it is hung waiting for the now-failed chief.
             if pex.rank == 0:
-                pex.distributed._zmq_broadcast(10)
+                pex.distributed.broadcast(10)
 
 
 @pytest.mark.parametrize("dummy", [False, True])
-def test_chief_only(dummy: bool) -> None:
+def test_searcher_chief_only(dummy: bool) -> None:
     with parallel.Execution(2) as pex:
 
         @pex.run
@@ -105,7 +111,9 @@ def test_chief_only(dummy: bool) -> None:
             if not dummy:
                 searcher = make_test_searcher([5, 10, 15], pex.distributed)
             else:
-                searcher = _core.DummySearcher(dist=pex.distributed)
+                searcher = _core.DummySearcherContext(dist=pex.distributed)
 
-            with parallel.raises_when(pex.rank != 0, RuntimeError, match="searcher.ops.*chief"):
-                next(iter(searcher.ops(_core.OpsMode.ChiefOnly)))
+            with parallel.raises_when(
+                pex.rank != 0, RuntimeError, match="searcher.operations.*chief"
+            ):
+                next(iter(searcher.operations(_core.SearcherMode.ChiefOnly)))

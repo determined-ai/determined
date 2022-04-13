@@ -186,7 +186,7 @@ class DeepSpeedTrialController(det.TrialController):
         self.context._epoch_len = (
             len(self.training_loader) if self.training_loader is not None else None
         )
-        all_epoch_lens = self.context.distributed._zmq_gather(self.context._epoch_len)
+        all_epoch_lens = self.context.distributed.gather(self.context._epoch_len)
         if self.is_chief:
             all_epoch_lens = [le for le in all_epoch_lens if le is not None]
             if min(all_epoch_lens) < max(all_epoch_lens):
@@ -195,9 +195,9 @@ class DeepSpeedTrialController(det.TrialController):
                     "Using the minimum for epoch length."
                 )
             self.context._epoch_len = min(all_epoch_lens) // self.context.num_micro_batches_per_slot
-        self.context._epoch_len = self.context.distributed._zmq_broadcast(self.context._epoch_len)
+        self.context._epoch_len = self.context.distributed.broadcast(self.context._epoch_len)
 
-        all_tuples = self.context.distributed._zmq_gather(
+        all_tuples = self.context.distributed.gather(
             (self.num_validation_batches, self.validation_batch_size)
         )
         if self.is_chief:
@@ -220,7 +220,7 @@ class DeepSpeedTrialController(det.TrialController):
         (
             self.num_validation_batches,
             self.validation_batch_size,
-        ) = self.context.distributed._zmq_broadcast(
+        ) = self.context.distributed.broadcast(
             (self.num_validation_batches, self.validation_batch_size)
         )
 
@@ -273,7 +273,7 @@ class DeepSpeedTrialController(det.TrialController):
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
                 logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-                with self.context._core.checkpointing.restore_path(
+                with self.context._core.checkpoint.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
@@ -317,7 +317,7 @@ class DeepSpeedTrialController(det.TrialController):
                     # more flexibility.  Since checkpoints can be distributed across multiple
                     # nodes, we will use the same uuid and separate path but each node
                     # will upload its checkpoints to the storage manager individually.
-                    storage_manager = self.context._core.checkpointing._storage_manager
+                    storage_manager = self.context._core.checkpoint._storage_manager
                     if self.is_chief:
                         metadata = {
                             "latest_batch": self.latest_batch,
@@ -329,23 +329,23 @@ class DeepSpeedTrialController(det.TrialController):
                             path,
                         ):
                             # Broadcast checkpoint path to all ranks.
-                            self.context.distributed._zmq_broadcast((storage_id, path))
+                            self.context.distributed.broadcast((storage_id, path))
                             self._save(pathlib.Path(path))
                             # Gather resources across nodes.
-                            all_resources = self.context.distributed._zmq_gather(
+                            all_resources = self.context.distributed.gather(
                                 storage.StorageManager._list_directory(path)
                             )
                         resources = {k: v for d in all_resources for k, v in d.items()}
 
-                        self.context._core.checkpointing._report_checkpoint(
+                        self.context._core.checkpoint._report_checkpoint(
                             storage_id, resources, metadata
                         )
                         response = {"uuid": storage_id}
                     else:
-                        storage_id, path = self.context.distributed._zmq_broadcast(None)
+                        storage_id, path = self.context.distributed.broadcast(None)
                         self._save(pathlib.Path(path))
                         # Gather resources across nodes.
-                        _ = self.context.distributed._zmq_gather(
+                        _ = self.context.distributed.gather(
                             storage.StorageManager._list_directory(path)
                         )
                         if self.context.distributed.local_rank == 0:
@@ -554,11 +554,11 @@ class DeepSpeedTrialController(det.TrialController):
         # keys and list(keys) does not satisfy all cases because it will return dict_keys type if
         # keys is an empty dict. this will then break when passed to zmq_broadcast since it does
         # not know how to serialize dict_keys type.
-        all_keys = self.context.distributed._zmq_gather(keys if keys is None else list(keys))
+        all_keys = self.context.distributed.gather(keys if keys is None else list(keys))
         if self.is_chief:
             all_keys = [k for k in all_keys if k is not None]
             keys = all_keys[0]
-        keys = self.context.distributed._zmq_broadcast(keys)
+        keys = self.context.distributed.broadcast(keys)
 
         for callback in self.callbacks.values():
             callback.on_validation_epoch_end(batch_metrics)
@@ -584,7 +584,7 @@ class DeepSpeedTrialController(det.TrialController):
                 "Broadcasting metrics to all worker processes to execute a "
                 "validation step end callback"
             )
-            metrics = self.context.distributed._zmq_broadcast(metrics)
+            metrics = self.context.distributed.broadcast(metrics)
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
@@ -678,7 +678,7 @@ class DeepSpeedTrialController(det.TrialController):
     def _save(self, path: pathlib.Path) -> None:
         if self.context.distributed.local_rank == 0:
             path.mkdir(parents=True, exist_ok=True)
-        _ = self.context.distributed._zmq_gather_local(None)  # sync
+        _ = self.context.distributed.gather_local(None)  # sync
 
         if self.is_chief:
             # We assume these stateful objects should be the same across slots and only have

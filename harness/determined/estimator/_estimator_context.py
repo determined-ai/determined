@@ -36,7 +36,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
 
     def __init__(self, *arg: Any, **kwarg: Any) -> None:
         det.TrialContext.__init__(self, *arg, **kwarg)
-        estimator._EstimatorReducerContext.__init__(self, self.distributed._zmq_allgather)
+        estimator._EstimatorReducerContext.__init__(self, self.distributed.allgather)
 
         self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
             self.get_hparams(),

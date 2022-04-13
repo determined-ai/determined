@@ -123,13 +123,13 @@ class _PreemptionWatcher(threading.Thread):
 
 class PreemptMode(enum.Enum):
     """
-    PreemptMode defines the calling behavior of the Preemption.should_preempt() call.
+    PreemptMode defines the calling behavior of the PreemptContext.should_preempt() call.
 
     When mode=WorkersAskChief (the default), all workers must call should_preempt() in-step.  Only
     the chief will actually communicate with the master, then the chief will broadcast its decision
     to all workers.  This guarantees that all workers will decide to preempt at the exact same time.
 
-    When mode=ChiefOnly, only the chief is allowed to call Preemption.should_preempt().  Usually
+    When mode=ChiefOnly, only the chief is allowed to call PreemptContext.should_preempt().  Usually
     this implies you must manually inform the workers if they should preempt or not.
 
     When mode=WorkersAskMaster, each worker will contact the master independently in order to decide
@@ -143,7 +143,7 @@ class PreemptMode(enum.Enum):
     WorkersAskMaster = "WORKERS_ASK_MASTER"
 
 
-class Preemption:
+class PreemptContext:
     """
     Some preemption-related APIs.
 
@@ -167,9 +167,9 @@ class Preemption:
             self._watcher = _PreemptionWatcher(session, allocation_id)
         self._ack_sent = False
 
-    def start(self) -> "Preemption":
+    def start(self) -> "PreemptContext":
         if self._started:
-            raise RuntimeError("you cannot call Preemption.start() multiple times")
+            raise RuntimeError("you cannot call PreemptContext.start() multiple times")
         self._started = True
         if self._watcher is not None:
             self._watcher.start()
@@ -179,7 +179,7 @@ class Preemption:
         if self._watcher is not None:
             self._watcher.close()
 
-    def __enter__(self) -> "Preemption":
+    def __enter__(self) -> "PreemptContext":
         return self.start()
 
     def __exit__(self, *_: Any) -> None:
@@ -191,7 +191,7 @@ class Preemption:
         performant enough to call every batch.
 
         The requirements on the the caller and the synchronization between workers during a call
-        to should_preempt() are defined by the preempt_mode argument passed to the Preemption
+        to should_preempt() are defined by the preempt_mode argument passed to the PreemptContext
         constructor.
 
         Arguments:
@@ -208,7 +208,7 @@ class Preemption:
         if not self._started:
             # Calling should_preempt on the watcher without starting the watcher would hang.
             raise RuntimeError(
-                "you cannot call Preemption.should_preempt() before Preemption.start()"
+                "you cannot call PreemptContext.should_preempt() before PreemptContext.start()"
             )
         if self._watcher is not None:
             # Have watcher; either this is the chief or we are in WorkersAskMaster mode.
@@ -218,15 +218,16 @@ class Preemption:
                 self.acknowledge_preemption_signal()
                 self._ack_sent = True
             if self._preempt_mode == PreemptMode.WorkersAskChief:
-                _ = self._dist._zmq_broadcast(out)
+                _ = self._dist.broadcast(out)
         else:
             # No watcher; we should ask the chief or either we should not be here.
             if self._preempt_mode == PreemptMode.ChiefOnly:
                 raise RuntimeError(
-                    "Preemption was configured with preempt_mode=ChiefOnly but .should_preempt() "
-                    f"was called from non-chief worker of rank={self._dist.get_rank()}"
+                    "PreemptContext was configured with preempt_mode=ChiefOnly but "
+                    ".should_preempt() was called from non-chief worker of "
+                    f"rank={self._dist.get_rank()}"
                 )
-            out = self._dist._zmq_broadcast(None)
+            out = self._dist.broadcast(None)
             assert isinstance(out, bool)
 
         logger.debug(f"should_preempt() -> {out}")
@@ -248,8 +249,8 @@ class Preemption:
         self._session.post(f"/api/v1/allocations/{self._allocation_id}/signals/ack_preemption")
 
 
-class DummyPreemption(Preemption):
-    """Present a Preemption API that never returns True."""
+class DummyPreemptContext(PreemptContext):
+    """Present a PreemptContext API that never returns True."""
 
     def __init__(
         self,
@@ -260,16 +261,16 @@ class DummyPreemption(Preemption):
         self._preempt_mode = PreemptMode(preempt_mode)
         self._started = False
 
-    def start(self) -> "Preemption":
+    def start(self) -> "PreemptContext":
         if self._started:
-            raise RuntimeError("you cannot call Preemption.start() multiple times")
+            raise RuntimeError("you cannot call PreemptContext.start() multiple times")
         self._started = True
         return self
 
     def close(self) -> None:
         pass
 
-    def __enter__(self) -> "Preemption":
+    def __enter__(self) -> "PreemptContext":
         return self.start()
 
     def __exit__(self, *_: Any) -> None:
@@ -277,24 +278,24 @@ class DummyPreemption(Preemption):
 
     def should_preempt(self, auto_ack: bool = True) -> bool:
         if not self._started:
-            # Match the requirements of the real Preemption class.
+            # Match the requirements of the real PreemptContext class.
             raise RuntimeError(
-                "you cannot call Preemption.should_preempt() before Preemption.start()"
+                "you cannot call PreemptContext.should_preempt() before PreemptContext.start()"
             )
         if self._dist.rank == 0:
             if self._preempt_mode == PreemptMode.WorkersAskChief:
                 # Even though we always return False, preserve the synchronization behavior to avoid
                 # giving the user a weird inconsistency between managed and unmanaged dtrain code.
-                _ = self._dist._zmq_broadcast(False)
+                _ = self._dist.broadcast(False)
         else:
             if self._preempt_mode == PreemptMode.ChiefOnly:
                 raise RuntimeError(
-                    "Preemption was configured with preempt_mode=ChiefOnly but "
+                    "PreemptContext was configured with preempt_mode=ChiefOnly but "
                     ".should_preempt() was called from non-chief worker of "
                     f"rank={self._dist.get_rank()}"
                 )
             if self._preempt_mode == PreemptMode.WorkersAskChief:
-                _ = self._dist._zmq_broadcast(None)
+                _ = self._dist.broadcast(None)
         return False
 
     def acknowledge_preemption_signal(self) -> None:
