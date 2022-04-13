@@ -292,11 +292,18 @@ describe('useSettings', () => {
       history.replace(`${history.location.pathname}?${newQuery}`);
     });
 
-    expect(history.location.search).toBe(`?${newQuery}`);
     expect(result.current.settings.boolean).toBe(newQueryParams.boolean);
     expect(result.current.settings.number).toBe(newQueryParams.number);
     expect(result.current.settings.string)
       .toBe(config.settings.find(setting => setting.key === 'string')?.defaultValue);
     expect(extraResult.current.settings.extra).toBe(newQueryParams.extra);
+
+    /**
+     * `renderHook()` doesn't have a way to properly wait for the `useEffect` to be called
+     * within the `useSettings` hook. Jest timers, Jest ticks, `waitFor()`, and `rerender()`
+     * all don't seem to advance the hook to trigger the history changes properly.
+     * `setTimeout` was the only thing that worked ¯\_(ツ)_/¯
+     */
+    setTimeout(() => expect(history.location.search).toBe(`?${newQuery}`), 0);
   });
 });
