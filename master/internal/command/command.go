@@ -135,7 +135,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		priority := c.Config.Resources.Priority
 		if priority != nil {
-			c.setPriority(ctx, *priority, true)
+			if err := c.setPriority(ctx, *priority, true); err != nil {
+				return errors.Wrapf(err, "setting priority of task %v", c.taskID)
+			}
 		}
 
 		var portProxyConf *sproto.PortProxyConfig
@@ -373,8 +375,8 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 			c.jobType)
 	}
 
-	currPriority := c.Config.Resources.Priority
-	if currPriority != nil && *currPriority != priority {
+	curPriority := c.Config.Resources.Priority
+	if curPriority == nil || (curPriority != nil && *curPriority != priority) {
 		c.Config.Resources.Priority = &priority
 	}
 
