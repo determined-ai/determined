@@ -120,16 +120,12 @@ func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 	}
 }
 
-type ParsedNotes struct {
-	Notes []*projectv1.Note
-}
-
-func (c *ProtoConverter) ToProjectNotes(j model.JSONObj) ([]*projectv1.Note, error) {
-	var notes ParsedNotes
+func (c *ProtoConverter) ToProjectNotes(j []model.JSONObj) ([]*projectv1.Note, error) {
+	var notes []*projectv1.Note
 	b, err := json.Marshal(j)
 	if err != nil {
-		return notes.Notes, err
+		return notes, err
 	}
 	err = json.Unmarshal(b, &notes)
-	return notes.Notes, err
+	return notes, err
 }
