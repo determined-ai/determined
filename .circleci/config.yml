@@ -2081,6 +2081,7 @@ workflows:
               agent-version: ['0.17.10']
 
       - deploy:
+          name: deploy-latest-master-cluster
           enable-cors: true
           context: aws
           filters:
