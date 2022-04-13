@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.13-dev0
+    default: 0.17.14-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
@@ -32,7 +32,7 @@ parameters:
     default: ubuntu-2004:202101-01
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01 
+    default: ubuntu-2004-cuda-11.2:202103-01
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -1940,7 +1940,7 @@ workflows:
       - test-unit-react
       - test-unit-harness-cpu
       # Exclude gpu tests for now since we do not have access to those instance types on circleci.
-      #- test-unit-harness-gpu 
+      #- test-unit-harness-gpu
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -2254,7 +2254,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p3.16xlarge"]
+              compute-agent-instance-type: ["p3.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
@@ -2514,7 +2514,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["g4dn.8xlarge"] # k80 not supported for deepspeed
+              compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
 
@@ -2581,9 +2581,9 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["transformers"]
+              cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
-              compute-agent-instance-type: ["p3.16xlarge"]
+              compute-agent-instance-type: ["p3.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:

@@ -1,9 +1,27 @@
+import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
 
-export const DEFAULT_COLUMNS = [
+export type ExperimentColumnName =
+  | 'action'
+  | 'archived'
+  | 'description'
+  | 'duration'
+  | 'forkedFrom'
+  | 'id'
+  | 'name'
+  | 'progress'
+  | 'resourcePool'
+  | 'searcherType'
+  | 'startTime'
+  | 'state'
+  | 'tags'
+  | 'numTrials'
+  | 'user';
+
+export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
   'id',
   'name',
   'description',
@@ -15,17 +33,31 @@ export const DEFAULT_COLUMNS = [
   'user',
 ];
 
-export interface Settings {
+export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
+  action: 46,
+  archived: 75,
+  description: 147,
+  duration: 96,
+  forkedFrom: 128,
+  id: 57,
+  name: 150,
+  numTrials: 74,
+  progress: 111,
+  resourcePool: 128,
+  searcherType: 129,
+  startTime: 117,
+  state: 106,
+  tags: 106,
+  user: 85,
+};
+
+export interface ExperimentListSettings extends InteractiveTableSettings {
   archived?: boolean;
-  columns?: string[];
+  columns: ExperimentColumnName[];
   label?: string[];
-  row?: number[];
   search?: string;
-  sortDesc: boolean;
   sortKey: V1GetExperimentsRequestSortBy;
   state?: RunState[];
-  tableLimit: number;
-  tableOffset: number;
   user?: string[];
 }
 
@@ -45,6 +77,17 @@ const config: SettingsConfig = {
         baseType: BaseType.String,
         isArray: true,
       },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS.map((col: ExperimentColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+      key: 'columnWidths',
+      skipUrlEncoding: true,
+      storageKey: 'columnWidths',
+      type: {
+        baseType: BaseType.Float,
+        isArray: true,
+      },
+
     },
     {
       key: 'label',

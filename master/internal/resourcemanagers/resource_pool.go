@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
@@ -49,6 +50,8 @@ type ResourcePool struct {
 	// Track notifyOnStop for testing purposes.
 	saveNotifications bool
 	notifications     []<-chan struct{}
+
+	db db.DB
 }
 
 // GetResourceSummary is a message to request a summary of the resources used by the
@@ -58,6 +61,7 @@ type GetResourceSummary struct{}
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
 	config *config.ResourcePoolConfig,
+	db db.DB,
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
@@ -78,6 +82,7 @@ func NewResourcePool(
 		scalingInfo:    &sproto.ScalingInfo{},
 
 		reschedule: false,
+		db:         db,
 	}
 	return d
 }
@@ -87,7 +92,7 @@ func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 		ctx.Log().Infof("not enabling provisioner for resource pool: %s", rp.config.PoolName)
 		return nil
 	}
-	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert)
+	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert, rp.db)
 	if err != nil {
 		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
 	}
@@ -365,12 +370,24 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
-		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
+		agentID := msg.Agent.Address().Local()
+		ctx.Log().Infof("adding agent: %s", agentID)
 		rp.agents[msg.Agent] = true
+		err := rp.updateAgentStartStats(rp.config.PoolName, agentID, msg.Slots)
+		if err != nil {
+			ctx.Log().WithError(err).Error("failed to update agent start stats")
+		}
 
 	case sproto.RemoveAgent:
-		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
+		agentID := msg.Agent.Address().Local()
+		ctx.Log().Infof("removing agent: %s", agentID)
+
 		delete(rp.agents, msg.Agent)
+		err := rp.updateAgentEndStats(agentID)
+		if err != nil {
+			ctx.Log().WithError(err).Error("failed to update agent end stats")
+		}
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -589,6 +606,21 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (rp *ResourcePool) updateAgentStartStats(
+	poolName string, agentID string, slots int) error {
+	return rp.db.RecordAgentStats(&model.AgentStats{
+		ResourcePool: poolName,
+		AgentID:      agentID,
+		Slots:        slots,
+	})
+}
+
+func (rp *ResourcePool) updateAgentEndStats(agentID string) error {
+	return rp.db.EndAgentStats(&model.AgentStats{
+		AgentID: agentID,
+	})
 }
 
 func (rp *ResourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*agent.AgentState {

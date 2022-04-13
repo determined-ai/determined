@@ -26,6 +26,7 @@ def list_agents(args: argparse.Namespace) -> None:
         OrderedDict(
             [
                 ("id", local_id(agent_id)),
+                ("version", agent["version"]),
                 ("registered_time", render.format_time(agent["registered_time"])),
                 ("num_slots", len(agent["slots"])),
                 ("num_containers", agent["num_containers"]),
@@ -45,6 +46,7 @@ def list_agents(args: argparse.Namespace) -> None:
 
     headers = [
         "Agent ID",
+        "Version",
         "Registered Time",
         "Slots",
         "Containers",

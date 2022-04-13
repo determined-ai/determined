@@ -1,4 +1,4 @@
-package provisioner
+package provconfig
 
 import (
 	"encoding/json"

@@ -106,6 +106,9 @@ def make_default_exp_config(
             "aggregation_frequency": 1,
             "gradient_compression": False,
             "average_training_metrics": False,
+            "auto_tune_tensor_fusion": False,
+            "tensor_fusion_threshold": 100,
+            "tensor_fusion_cycle_time": 3.5,
         },
         "data_layer": {"type": "shared_fs"},
         "checkpoint_storage": {

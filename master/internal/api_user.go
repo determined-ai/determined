@@ -36,8 +36,8 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	}
 }
 
-func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
-	user, err := d.UserByID(userID)
+func getUser(d *db.PgDB, username string) (*userv1.User, error) {
+	user, err := d.UserByUsername(username)
 	switch {
 	case err == db.ErrNotFound:
 		return nil, errUserNotFound
@@ -81,7 +81,7 @@ func (a *apiServer) GetUsers(
 
 func (a *apiServer) GetUser(
 	_ context.Context, req *apiv1.GetUserRequest) (*apiv1.GetUserResponse, error) {
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(a.m.db, req.Username)
 	return &apiv1.GetUserResponse{User: fullUser}, err
 }
 
@@ -123,7 +123,7 @@ func (a *apiServer) PostUser(
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, model.UserID(req.User.Id))
+	fullUser, err := getUser(a.m.db, req.User.Username)
 	return &apiv1.PostUserResponse{User: fullUser}, err
 }
 
@@ -134,10 +134,10 @@ func (a *apiServer) SetUserPassword(
 	if err != nil {
 		return nil, err
 	}
-	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
+	if !curUser.Admin && curUser.Username != req.Username {
 		return nil, grpcutil.ErrPermissionDenied
 	}
-	user := &model.User{ID: model.UserID(req.UserId)}
+	user := &model.User{Username: req.Username}
 	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (a *apiServer) SetUserPassword(
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(a.m.db, req.Username)
 	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
 }
 func (a *apiServer) PatchUser(
@@ -156,10 +156,10 @@ func (a *apiServer) PatchUser(
 	if err != nil {
 		return nil, err
 	}
-	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
+	if !curUser.Admin && curUser.Username != req.Username {
 		return nil, grpcutil.ErrPermissionDenied
 	}
-	user := &model.User{ID: model.UserID(req.UserId)}
+	user := &model.User{Username: req.Username}
 	// TODO: handle any field name:
 	if req.User.DisplayName != "" {
 		user.DisplayName = null.StringFrom(req.User.DisplayName)
@@ -170,6 +170,6 @@ func (a *apiServer) PatchUser(
 			return nil, err
 		}
 	}
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(a.m.db, req.Username)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }

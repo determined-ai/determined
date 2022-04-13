@@ -8,7 +8,7 @@ import (
 
 // instanceType describes an instance type.
 type instanceType interface {
-	name() string
+	Name() string
 	Slots() int
 }
 

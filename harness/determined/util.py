@@ -9,6 +9,7 @@ import numbers
 import os
 import pathlib
 import random
+import re
 import shutil
 import socket
 import time
@@ -325,3 +326,17 @@ def check_sshd(peer_addr: str, deadline: float, port: int) -> None:
                         f"{peer_addr}:{port}"
                     )
                 time.sleep(0.1)
+
+
+def match_legacy_trial_class(arg: str) -> bool:
+    """
+    Legacy trial-class entrypoints are of the form: module.submodule:ClassName
+    """
+    trial_class_regex = re.compile("^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$")
+    if trial_class_regex.match(arg):
+        return True
+    return False
+
+
+def legacy_trial_entrypoint_to_script(trial_entrypoint: str) -> List[str]:
+    return ["python3", "-m", "determined.exec.harness", trial_entrypoint]

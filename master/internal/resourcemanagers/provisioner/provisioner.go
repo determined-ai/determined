@@ -6,6 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -44,8 +46,10 @@ type provider interface {
 }
 
 // New creates a new Provisioner.
-func New(resourcePool string, config *Config, cert *tls.Certificate) (*Provisioner, error) {
-	if err := config.initMasterAddress(); err != nil {
+func New(
+	resourcePool string, config *provconfig.Config, cert *tls.Certificate, db db.DB,
+) (*Provisioner, error) {
+	if err := config.InitMasterAddress(); err != nil {
 		return nil, err
 	}
 	var cluster provider
@@ -65,11 +69,13 @@ func New(resourcePool string, config *Config, cert *tls.Certificate) (*Provision
 	return &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
+			resourcePool,
 			time.Duration(config.MaxIdleAgentPeriod),
 			time.Duration(config.MaxAgentStartingPeriod),
 			maxDisconnectPeriod,
 			config.MinInstances,
 			config.MaxInstances,
+			db,
 		),
 	}, nil
 }
@@ -107,22 +113,34 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		ctx.Log().WithError(err).Error("cannot list instances")
 		return
 	}
-	if p.scaleDecider.updateInstanceSnapshot(instances) {
+	updated := p.scaleDecider.updateInstanceSnapshot(instances)
+	if updated {
 		ctx.Log().Infof("found state changes in %d instances: %s",
 			len(instances), fmtInstances(instances))
 	}
 
 	p.scaleDecider.calculateInstanceStates()
 
+	if updated {
+		err = p.scaleDecider.recordInstanceStats(p.SlotsPerInstance())
+		if err != nil {
+			ctx.Log().WithError(err).Error("cannot record instance stats")
+		}
+	}
+
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
 		ctx.Log().Infof("decided to terminate %d instances: %s",
 			len(toTerminate.InstanceIDs), toTerminate.String())
 		p.provider.terminate(ctx, toTerminate.InstanceIDs)
+		err = p.scaleDecider.updateInstancesEndStats(toTerminate.InstanceIDs)
+		if err != nil {
+			ctx.Log().WithError(err).Error("cannot update end stats for terminated instance")
+		}
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
-			numToLaunch, p.provider.instanceType().name())
+			numToLaunch, p.provider.instanceType().Name())
 		p.provider.launch(ctx, numToLaunch)
 	}
 }

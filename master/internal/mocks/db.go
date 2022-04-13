@@ -460,6 +460,62 @@ func (_m *DB) DeleteUserSessionByToken(userSessionToken string) error {
 	return r0
 }
 
+// EndAgentStats provides a mock function with given fields: a
+func (_m *DB) EndAgentStats(a *model.AgentStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAllAgentStats provides a mock function with given fields:
+func (_m *DB) EndAllAgentStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAllInstanceStats provides a mock function with given fields:
+func (_m *DB) EndAllInstanceStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndInstanceStats provides a mock function with given fields: a
+func (_m *DB) EndInstanceStats(a *model.InstanceStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ExperimentBestSearcherValidation provides a mock function with given fields: id
 func (_m *DB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	ret := _m.Called(id)
@@ -1257,6 +1313,34 @@ func (_m *DB) RawQuery(queryName string, params ...interface{}) ([]byte, error) 
 	}
 
 	return r0, r1
+}
+
+// RecordAgentStats provides a mock function with given fields: a
+func (_m *DB) RecordAgentStats(a *model.AgentStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RecordInstanceStats provides a mock function with given fields: a
+func (_m *DB) RecordInstanceStats(a *model.InstanceStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SaveExperimentArchiveStatus provides a mock function with given fields: experiment

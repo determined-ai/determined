@@ -90,6 +90,7 @@ func DefaultConfig() *Config {
 		Root:        "/usr/share/determined/master",
 		Telemetry: config.TelemetryConfig{
 			Enabled:          true,
+			OtelEnabled:      false,
 			SegmentMasterKey: DefaultSegmentMasterKey,
 			SegmentWebUIKey:  DefaultSegmentWebUIKey,
 		},
@@ -369,4 +370,10 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
+}
+
+// IsUsingKubernetesRM returns whether the master is configured with Kubernetes.
+func IsUsingKubernetesRM() bool {
+	config := GetMasterConfig()
+	return config.ResourceManager.KubernetesRM != nil
 }

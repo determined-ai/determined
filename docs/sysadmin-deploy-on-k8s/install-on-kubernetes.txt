@@ -6,7 +6,7 @@
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. The
 installation is performed using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
-For general information about using Determined with Kubernetes, refer the
+For general information about using Determined with Kubernetes, refer to the
 :ref:`determined-on-kubernetes` guide.
 
 ***************
@@ -16,7 +16,7 @@ For general information about using Determined with Kubernetes, refer the
 Before installing Determined on a Kubernetes cluster, please ensure that the following prerequisites
 are satisfied:
 
--  The Kubernetes cluster should be running Kubernetes versoin >= 1.19 and <= 1.21, though later
+-  The Kubernetes cluster should be running Kubernetes version >= 1.19 and <= 1.21, though later
    versions may work.
 
 -  You should have access to the cluster via `kubectl
@@ -114,9 +114,9 @@ Resource configuration (CPU-based setups)
 For CPU-only configurations, users need to set ``slotType: cpu`` as well as
 ``slotResourceRequests.cpu: <number of cpus per slot>`` in ``values.yaml``. Please note that the
 number of CPUs allocatable by Kubernetes may be lower than the number of "hardware" CPU cores. For
-example, 8-core node may provide 7.91 CPUs, with the rest allocated for the Kubernetes system tasks.
-If ``slotResourceRequests.cpu`` was set to 8 in this example, the pods would fail to allocate, so it
-should be set to a lower number instead, such as 7.5.
+example, an 8-core node may provide 7.91 CPUs, with the rest allocated for the Kubernetes system
+tasks. If ``slotResourceRequests.cpu`` was set to 8 in this example, the pods would fail to
+allocate, so it should be set to a lower number instead, such as 7.5.
 
 Then, similarly to GPU-based configuration, ``maxSlotsPerPod`` needs to be set to the greatest
 common divisor of all the node sizes. For example, if you have 16-core nodes with 15 allocatable
@@ -137,7 +137,7 @@ system. This configuration is intended for *initial testing only*; users are str
 from using ``shared_fs`` for actual deployments of Determined on Kubernetes, because most Kubernetes
 cluster nodes do not have a shared file system.
 
-Instead of using ``shared_fs``, users should configure either AWS S3, Microsoft Azure Blob Storage
+Instead of using ``shared_fs``, users should configure either AWS S3, Microsoft Azure Blob Storage,
 or GCS:
 
 -  **AWS S3**: To configure Determined to use AWS S3 for checkpoint and TensorBoard storage, users
@@ -212,9 +212,9 @@ cluster.
    Ingress service to perform TLS termination and forward the plain text traffic to the Determined
    master.
 
-#. **TLS termination in the Determined master.** This option will provide TLS encrytption inside the
-   Kubernetes cluster. All communication with the master will encrypted. Communication between task
-   containers (distributed training) will not be encrypted. To configure this option create a
+#. **TLS termination in the Determined master.** This option will provide TLS encryption inside the
+   Kubernetes cluster. All communication with the master will be encrypted. Communication between
+   task containers (distributed training) will not be encrypted. To configure this option create a
    Kubernetes TLS secret within the namespace where Determined is being installed and set
    ``tlsSecret`` to be the name of this secret. Users will also have to set ``useNodePortForMaster``
    to ``true``. Once the NodePort service is created, users can configure an Ingress to forward TLS
@@ -232,7 +232,7 @@ by default:
      annotations:
        kubernetes.io/ingress.class: "nginx"
 
-       # Uncommenting this option instucts the created load-balancer
+       # Uncommenting this option instructs the created load-balancer
        # to forward TLS encrypted data to the NodePort service and
        # perform TLS termination in the Determined master. In order
        # to configure ssl-passthrough, your nginx ingress controller
@@ -267,7 +267,7 @@ scheduler to schedule all experiments and tasks.
 
    defaultScheduler: coscheduler
 
-Determined also includes support for priority based scheduling with preemption. This feature allows
+Determined also includes support for priority-based scheduling with preemption. This feature allows
 experiments to be preempted if higher priority ones are submitted. This feature is also in beta and
 is not enabled by default. To activate priority-based preemption scheduling, set
 ``defaultScheduler`` to ``preemption``.

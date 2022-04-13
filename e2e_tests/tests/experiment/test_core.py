@@ -65,10 +65,8 @@ def test_metric_gathering() -> None:
         batches_trained = step["total_batches"]
 
     # Check validation metrics.
-    validation_workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
-    for val in validation_workloads:
-        validation = val.validation
-        assert validation
+    validation_workloads = exp.workloads_with_validation(trials[0].workloads)
+    for validation in validation_workloads:
         actual = validation.metrics
         batches_trained = validation.totalBatches
 
@@ -112,10 +110,8 @@ def test_nan_metrics() -> None:
         batches_trained = step["total_batches"]
 
     # Check validation metrics.
-    validation_workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
-    for val in validation_workloads:
-        validation = val.validation
-        assert validation and validation.metrics
+    validation_workloads = exp.workloads_with_validation(trials[0].workloads)
+    for validation in validation_workloads:
         actual = validation.metrics
         batches_trained = validation.totalBatches
         expected = structure_to_metrics(base_value, validation_structure)
@@ -254,10 +250,9 @@ def test_end_to_end_adaptive() -> None:
     trials = exp.experiment_trials(exp_id)
     best = None
     for trial in trials:
-        assert len(trial.workloads or [])
-        last_validation = exp.workloads_for_mode(trial.workloads, "validation")[-1]
-        assert last_validation.validation and last_validation.validation.metrics
-        accuracy = last_validation.validation.metrics["accuracy"]
+        assert len(trial.workloads) > 0
+        last_validation = exp.workloads_with_validation(trial.workloads)[-1]
+        accuracy = last_validation.metrics["accuracy"]
         if not best or accuracy > best:
             best = accuracy
 

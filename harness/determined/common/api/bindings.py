@@ -387,6 +387,7 @@ class v1Agent:
         registeredTime: "typing.Optional[str]" = None,
         resourcePool: "typing.Optional[str]" = None,
         slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None,
+        version: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.registeredTime = registeredTime
@@ -397,6 +398,7 @@ class v1Agent:
         self.addresses = addresses
         self.enabled = enabled
         self.draining = draining
+        self.version = version
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
@@ -410,6 +412,7 @@ class v1Agent:
             addresses=obj.get("addresses", None),
             enabled=obj.get("enabled", None),
             draining=obj.get("draining", None),
+            version=obj.get("version", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -423,6 +426,7 @@ class v1Agent:
             "addresses": self.addresses if self.addresses is not None else None,
             "enabled": self.enabled if self.enabled is not None else None,
             "draining": self.draining if self.draining is not None else None,
+            "version": self.version if self.version is not None else None,
         }
 
 class v1AgentUserGroup:
@@ -1406,8 +1410,8 @@ class v1GetExperimentCheckpointsRequestSortBy(enum.Enum):
 class v1GetExperimentCheckpointsResponse:
     def __init__(
         self,
-        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
-        pagination: "typing.Optional[v1Pagination]" = None,
+        checkpoints: "typing.Sequence[v1Checkpoint]",
+        pagination: "v1Pagination",
     ):
         self.checkpoints = checkpoints
         self.pagination = pagination
@@ -1415,14 +1419,14 @@ class v1GetExperimentCheckpointsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentCheckpointsResponse":
         return cls(
-            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
-            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpoints": [x.to_json() for x in self.checkpoints] if self.checkpoints is not None else None,
-            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "checkpoints": [x.to_json() for x in self.checkpoints],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetExperimentLabelsResponse:
@@ -2182,7 +2186,7 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "typing.Optional[typing.Sequence[GetTrialResponseWorkloadContainer]]" = None,
+        workloads: "typing.Sequence[GetTrialResponseWorkloadContainer]",
     ):
         self.trial = trial
         self.workloads = workloads
@@ -2191,13 +2195,13 @@ class v1GetTrialResponse:
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]] if obj.get("workloads", None) is not None else None,
+            workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "workloads": [x.to_json() for x in self.workloads] if self.workloads is not None else None,
+            "workloads": [x.to_json() for x in self.workloads],
         }
 
 class v1GetUserResponse:
@@ -2861,11 +2865,11 @@ class v1Metrics:
 class v1MetricsWorkload:
     def __init__(
         self,
+        metrics: "typing.Dict[str, typing.Any]",
         numInputs: int,
         state: "determinedexperimentv1State",
         totalBatches: int,
         endTime: "typing.Optional[str]" = None,
-        metrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
     ):
         self.endTime = endTime
         self.state = state
@@ -2878,7 +2882,7 @@ class v1MetricsWorkload:
         return cls(
             endTime=obj.get("endTime", None),
             state=determinedexperimentv1State(obj["state"]),
-            metrics=obj.get("metrics", None),
+            metrics=obj["metrics"],
             numInputs=obj["numInputs"],
             totalBatches=obj["totalBatches"],
         )
@@ -2887,7 +2891,7 @@ class v1MetricsWorkload:
         return {
             "endTime": self.endTime if self.endTime is not None else None,
             "state": self.state.value,
-            "metrics": self.metrics if self.metrics is not None else None,
+            "metrics": self.metrics,
             "numInputs": self.numInputs,
             "totalBatches": self.totalBatches,
         }
@@ -6113,7 +6117,6 @@ def get_GetModels(
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     name: "typing.Optional[str]" = None,
-    nameCaseInsensitive: "typing.Optional[bool]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
@@ -6127,7 +6130,6 @@ def get_GetModels(
         "labels": labels,
         "limit": limit,
         "name": name,
-        "nameCaseInsensitive": nameCaseInsensitive,
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
@@ -6497,12 +6499,12 @@ def get_GetTrialCheckpoints(
 def get_GetUser(
     session: "client.Session",
     *,
-    userId: int,
+    username: str,
 ) -> "v1GetUserResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/users/{userId}",
+        path=f"/api/v1/users/{username}",
         params=_params,
         json=None,
         data=None,
@@ -6862,12 +6864,12 @@ def patch_PatchUser(
     session: "client.Session",
     *,
     body: "v1PatchUser",
-    userId: int,
+    username: str,
 ) -> "v1PatchUserResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/users/{userId}",
+        path=f"/api/v1/users/{username}",
         params=_params,
         json=body.to_json(),
         data=None,
@@ -7285,12 +7287,12 @@ def post_SetUserPassword(
     session: "client.Session",
     *,
     body: str,
-    userId: int,
+    username: str,
 ) -> "v1SetUserPasswordResponse":
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/users/{userId}/password",
+        path=f"/api/v1/users/{username}/password",
         params=_params,
         json=body,
         data=None,

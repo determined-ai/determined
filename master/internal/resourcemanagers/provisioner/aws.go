@@ -9,43 +9,19 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
-
-func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {
-	sess, err := session.NewSession(&aws.Config{})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create AWS session")
-	}
-	return ec2metadata.New(sess), nil
-}
-
-func getEC2Metadata(field string) (string, error) {
-	ec2Metadata, err := getEC2MetadataSess()
-	if err != nil {
-		return "", err
-	}
-	return ec2Metadata.GetMetadata(field)
-}
-
-func onEC2() bool {
-	ec2Metadata, err := getEC2MetadataSess()
-	if err != nil {
-		return false
-	}
-	return ec2Metadata.Available()
-}
 
 // awsCluster wraps an EC2 client. Determined recognizes agent EC2 instances by:
 // 1. A specific key/value pair tag.
 // 2. Names of agents that are equal to the instance IDs.
 type awsCluster struct {
-	*AWSClusterConfig
+	*provconfig.AWSClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	ec2UserData  []byte
@@ -56,9 +32,9 @@ type awsCluster struct {
 }
 
 func newAWSCluster(
-	resourcePool string, config *Config, cert *tls.Certificate,
+	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*awsCluster, error) {
-	if err := config.AWS.initDefaultValues(); err != nil {
+	if err := config.AWS.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
 
@@ -129,7 +105,7 @@ func newAWSCluster(
 			AgentFluentImage:             config.AgentFluentImage,
 			AgentID:                      `$(ec2metadata --instance-id)`,
 			ResourcePool:                 resourcePool,
-			LogOptions:                   config.AWS.buildDockerLogString(),
+			LogOptions:                   config.AWS.BuildDockerLogString(),
 		}),
 	}
 
@@ -361,7 +337,7 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 		},
 		DryRun:       aws.Bool(dryRun),
 		ImageId:      aws.String(c.ImageID),
-		InstanceType: aws.String(c.AWSClusterConfig.InstanceType.name()),
+		InstanceType: aws.String(c.AWSClusterConfig.InstanceType.Name()),
 		KeyName:      aws.String(c.SSHKeyName),
 		MaxCount:     aws.Int64(int64(instanceNum)),
 		MinCount:     aws.Int64(1),

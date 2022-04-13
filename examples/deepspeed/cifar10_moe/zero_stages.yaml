@@ -35,10 +35,11 @@ searcher:
   smaller_is_better: false
   max_length:
     epochs: 2
-entrypoint: 
+entrypoint:
   - python3
   - -m
-  - determined.launch.autodeepspeed
+  - determined.launch.deepspeed
+  - --trial
   - model_def:CIFARTrial
 checkpoint_policy: none
 max_restarts: 0

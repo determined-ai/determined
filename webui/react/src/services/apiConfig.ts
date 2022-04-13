@@ -125,7 +125,7 @@ export const setUserPassword: Service.DetApi<
   name: 'setUserPassword',
   postProcess: (response) => response,
   request: (params) => detApi.Users.setUserPassword(
-    params.userId,
+    params.username,
     params.password,
   ),
 };
@@ -136,7 +136,7 @@ export const patchUser: Service.DetApi<
   name: 'patchUser',
   postProcess: (response) => decoder.mapV1User(response.user),
   request: (params) => detApi.Users.patchUser(
-    params.userId,
+    params.username,
     params.userParams,
   ),
 };
@@ -379,7 +379,10 @@ export const getExpTrials: Service.DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial })),
+      trials: response.trials.map(trial => ({
+        workloads: [],
+        ...decoder.decodeV1TrialToTrialItem(trial),
+      })),
     };
   },
   request: (params, options) => {

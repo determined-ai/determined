@@ -74,9 +74,8 @@ func (a *apiServer) GetModels(
 	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
 	idFilterExpr := req.Id
-	nameFilter := req.Name
-	nameFilterCaseInsensitive := req.NameCaseInsensitive
-	descFilterExpr := req.Description
+	nameFilter := "%" + req.Name + "%"
+	descFilterExpr := "%" + req.Description + "%"
 	archFilterExpr := ""
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
@@ -123,7 +122,6 @@ func (a *apiServer) GetModels(
 		userIdFilterExpr,
 		labelFilterExpr,
 		nameFilter,
-		nameFilterCaseInsensitive,
 		descFilterExpr,
 	)
 	if err != nil {
@@ -157,8 +155,10 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 	if len(re.FindAllString(modelName, 1)) > 0 {
 		return status.Errorf(codes.InvalidArgument, "model names cannot be only numbers")
 	}
-	getResp, err := a.GetModels(ctx,
-		&apiv1.GetModelsRequest{Name: modelName, NameCaseInsensitive: true})
+
+	getResp := &apiv1.GetModelsResponse{}
+	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
+		&getResp.Models, 0, "", "", "", modelName, "")
 	if err != nil {
 		return err
 	}

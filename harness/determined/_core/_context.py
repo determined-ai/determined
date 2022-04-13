@@ -15,6 +15,8 @@ logger = logging.getLogger("determined.core")
 class Context:
     """
     core.Context is a simple composition of several other APIs.
+
+    You should use core.init instead of creating a core.Context manually.
     """
 
     def __init__(
@@ -27,9 +29,9 @@ class Context:
     ) -> None:
         self.checkpointing = checkpointing
         self.distributed = distributed or _core.DummyDistributed()
-        self.preemption = preemption or _core.DummyPreemption()
+        self.preemption = preemption or _core.DummyPreemption(self.distributed)
         self.training = training or _core.DummyTraining()
-        self.searcher = searcher or _core.DummySearcher()
+        self.searcher = searcher or _core.DummySearcher(self.distributed)
 
     def __enter__(self) -> "Context":
         self.preemption.start()
@@ -50,6 +52,7 @@ def _dummy_init(
     distributed: Optional[_core.DistributedContext] = None,
     # TODO(DET-6153): allow a Union[StorageManager, str] here.
     storage_manager: Optional[storage.StorageManager] = None,
+    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
 ) -> Context:
     """
     Build a core.Context suitable for running off-cluster.  This is normally called by init()
@@ -57,7 +60,7 @@ def _dummy_init(
     e.g. local test mode.
     """
     distributed = distributed or _core.DummyDistributed()
-    preemption = _core.DummyPreemption()
+    preemption = _core.DummyPreemption(distributed, preempt_mode)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
@@ -66,7 +69,7 @@ def _dummy_init(
     checkpointing = _core.DummyCheckpointing(distributed, storage_manager)
 
     training = _core.DummyTraining()
-    searcher = _core.DummySearcher()
+    searcher = _core.DummySearcher(distributed)
 
     return Context(
         distributed=distributed,
@@ -86,6 +89,7 @@ def init(
     distributed: Optional[_core.DistributedContext] = None,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
+    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
 ) -> Context:
     info = det.get_cluster_info()
     if info is None:
@@ -95,13 +99,13 @@ def init(
     cert = certs.default_load(info.master_url)
     session = Session(info.master_url, None, None, cert)
 
+    if distributed is None:
+        if len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
+            raise ValueError("you must provide a valid DistributedContext for a multi-slot task")
+
     distributed = distributed or _core.DummyDistributed()
 
-    naddrs = len(info.container_addrs)
-    if naddrs > 1 and isinstance(distributed, _core.DummyDistributed):
-        raise ValueError("you must provide a valid DistributedContext for a multi-container task")
-
-    preemption = _core.Preemption(session, info.allocation_id, distributed)
+    preemption = _core.Preemption(session, info.allocation_id, distributed, preempt_mode)
 
     # At present, we only support tensorboards in Trial tasks.
     tbd_mgr = None
@@ -131,7 +135,12 @@ def init(
         )
         units = _core._parse_searcher_units(info.trial._config)
         searcher = _core.Searcher(
-            session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id, units
+            session,
+            distributed,
+            info.trial.trial_id,
+            info.trial._trial_run_id,
+            info.allocation_id,
+            units,
         )
 
         if storage_manager is None:

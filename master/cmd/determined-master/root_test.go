@@ -10,7 +10,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -44,8 +44,8 @@ task_container_defaults:
         - name: determined-container
 `
 	expected := config.DefaultConfig()
-	providerConf := provisioner.DefaultConfig()
-	providerConf.GCP = provisioner.DefaultGCPClusterConfig()
+	providerConf := provconfig.DefaultConfig()
+	providerConf.GCP = provconfig.DefaultGCPClusterConfig()
 	providerConf.GCP.BaseConfig = &compute.Instance{
 		Disks: []*compute.AttachedDisk{
 			{

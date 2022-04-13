@@ -34,6 +34,7 @@ type (
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
 		started bool
+		version string
 
 		maxZeroSlotContainers int
 		agentReconnectWait    time.Duration
@@ -118,6 +119,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
 		check.Panic(check.True(ok, "failed to accept websocket connection"))
 		a.socket = socket
+		a.version = msg.Ctx.QueryParam("version")
 
 		lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")
 		if lastColonIndex == -1 {
@@ -280,6 +282,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
+
 		a.socket = nil
 		a.awaitingReconnect = true
 
@@ -296,6 +299,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Enabled: &a.agentState.enabled,
 			Drain:   &a.agentState.draining,
 		})
+
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
@@ -427,7 +431,10 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
 	a.agentState.agentStarted(ctx, agentStarted)
-	ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label})
+	ctx.Tell(a.resourcePool, sproto.AddAgent{
+		Agent: ctx.Self(),
+		Label: agentStarted.Label,
+		Slots: a.agentState.NumSlots()})
 
 	// TODO(ilia): Deprecate together with the old slots API.
 	ctx.Tell(a.slots, *agentStarted)
@@ -465,6 +472,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		Enabled:       true,
 		Draining:      false,
 		NumContainers: 0,
+		Version:       a.version,
 	}
 
 	if a.agentState != nil {

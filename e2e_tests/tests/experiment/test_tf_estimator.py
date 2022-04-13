@@ -59,11 +59,9 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     first_trial = trials[0]
     first_trial_id = first_trial.trial.id
 
-    assert len(first_trial.workloads or []) == 3
-    checkpoint_workloads = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
-    assert len(checkpoint_workloads)
-    assert checkpoint_workloads[0].checkpoint
-    first_checkpoint_uuid = checkpoint_workloads[0].checkpoint.uuid
+    assert len(first_trial.workloads) == 3
+    checkpoint_workloads = exp.workloads_with_checkpoint(first_trial.workloads)
+    first_checkpoint_uuid = checkpoint_workloads[0].uuid
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
 
@@ -106,8 +104,7 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     )
 
     trial = exp.experiment_trials(experiment_id)[0]
-    last_validation = exp.workloads_for_mode(trial.workloads, "validation")[-1].validation
-    assert last_validation and last_validation.metrics
+    last_validation = exp.workloads_with_validation(trial.workloads)[-1]
     metrics = last_validation.metrics
     label_sum = 2 * sum(range(16))
     assert metrics["label_sum_fn"] == label_sum

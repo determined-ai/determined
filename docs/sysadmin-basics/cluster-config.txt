@@ -168,6 +168,18 @@ To disable telemetry reporting in both the master and the WebUI, start the maste
 setting an environment variable, as with any other configuration option). Disabling telemetry
 reporting will not affect the functionality of Determined in any way.
 
+.. _open_telemetry:
+
+OpenTelemetry
+=============
+
+Separate from the telemetry reporting mentioned above we also provide functionality to use
+opentelemetry to collect traces. By default, this is disabled. To enable this start the master with
+the ``--telemetry-otel-enabled=true``. This can also be done by editing the master config file or
+setting an environment variable, as with any other configuration option. By default, the
+opentelemetry collector starts with this endpoint = "localhost:4317". To change this endpoint, set
+telemetry-otel-enabled to the endpoint you would like.
+
 .. _master-configuration:
 
 **********************
@@ -186,8 +198,8 @@ The master supports the following configuration settings:
 
 -  ``config_file``: Path to the master configuration file. Normally this should only be set via an
    environment variable or command-line option. Defaults to ``/etc/determined/master.yaml``.
--  ``port``: The TCP port on which the master accepts all incoming connections. Defaults to
-   ``8080``.
+-  ``port``: The TCP port on which the master accepts incoming connections. If TLS has been enabled,
+   defaults to ``8443``; otherwise defaults to ``8080``.
 
 .. _master-task-container-defaults:
 
@@ -310,7 +322,7 @@ The master supports the following configuration settings:
                   first.
 
                -  ``default_priority``: The priority that is assigned to tasks that do not specify a
-                  priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
+                  priority. Can be configured to 1 to 99 inclusively. Defaults to ``42``.
 
          -  ``fitting_policy``: The scheduling policy to use when assigning tasks to agents in the
             cluster. Defaults to ``best``.
@@ -322,18 +334,18 @@ The master supports the following configuration settings:
 
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to ``default`` if no
-         resource pool is specified. Prior to 0.16.1, this field was called
-         ``default_cpu_resource_pool``.
+         resource pool is specified.
 
       -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to ``default`` if no resource pool
-         is specified. Prior to 0.16.1, this field was called ``default_gpu_resource_pool``.
+         is specified.
 
    -  ``type: kubernetes``: The ``kubernetes`` resource manager launches tasks on a Kubernetes
       cluster. The Determined master must be running within the Kubernetes cluster. When using the
-      ``kubernetes`` resource provider, we recommend deploying Determined using the :ref:`Determined
+      ``kubernetes`` resource manager, we recommend deploying Determined using the :ref:`Determined
       Helm Chart <install-on-kubernetes>`. When installed via Helm, the configuration settings below
-      will be set automatically.
+      will be set automatically. For more information on using Determined with Kubernetes, see the
+      :ref:`documentation <determined-on-kubernetes>`.
 
       -  ``namespace``: The namespace where Determined will deploy Pods and ConfigMaps.
 
@@ -355,15 +367,17 @@ The master supports the following configuration settings:
             ``slot_resource_requests.cpu`` option is required to specify the specific amount of the
             resources.
 
-      -  ``slot_resource_requests``: - ``cpu``: number of kubernetes CPUs to request per compute
-         slot.
+      -  ``slot_resource_requests``: Supports customizing the resource requests made when scheduling
+         Kubernetes pods.
+
+         -  ``cpu``: The number of Kubernetes CPUs to request per compute slot.
 
       -  ``master_service_name``: The service account Determined uses to interact with the
          Kubernetes API.
 
       -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
 
-            -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.6``.
+         -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.6``.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
@@ -375,8 +389,7 @@ The master supports the following configuration settings:
    -  ``description``: The description of the resource pool.
 
    -  ``max_aux_containers_per_agent``: The maximum number of auxiliary or system containers that
-      can be scheduled on each agent in this pool. Prior to 0.16.1, this field was called
-      ``max_cpu_containers_per_agent``.
+      can be scheduled on each agent in this pool.
 
    -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
       overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
@@ -409,7 +422,7 @@ The master supports the following configuration settings:
                first.
 
             -  ``default_priority``: The priority that is assigned to tasks that do not specify a
-               priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
+               priority. Can be configured to 1 to 99 inclusively. Defaults to ``42``.
 
       -  ``fitting_policy``: The scheduling policy to use when assigning tasks to agents in the
          cluster. Defaults to ``best``.
@@ -476,9 +489,9 @@ The master supports the following configuration settings:
          such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value is
          ``20m``.
 
-      -  ``min_instances``: Min number of Determined agent instances. Defaults to 0.
+      -  ``min_instances``: Min number of Determined agent instances. Defaults to ``0``.
 
-      -  ``max_instances``: Max number of Determined agent instances. Defaults to 5.
+      -  ``max_instances``: Max number of Determined agent instances. Defaults to ``5``.
 
       -  ``type: aws``: Specifies running dynamic agents on AWS. (*Required*)
 
@@ -499,7 +512,7 @@ The master supports the following configuration settings:
 
          -  ``custom_tags``: List of arbitrary user-defined tags that are added to the Determined
             agent instances and do not affect how Determined works. Each tag must specify ``key``
-            and ``value`` fields. Defaults to empty list.
+            and ``value`` fields. Defaults to the empty list.
 
             -  ``key``: Key of custom tag.
             -  ``value``: value of custom tag.
@@ -683,8 +696,8 @@ The master supports the following configuration settings:
       -  ``bucket``: The S3 bucket name to use.
       -  ``access_key``: The AWS access key to use.
       -  ``secret_key``: The AWS secret key to use.
-      -  ``prefix``: The optional path prefix to use. Must not contain `..`. Note: Prefix is
-         normalized, e.g., `/pre/.//fix` -> `/pre/fix`
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
       -  ``endpoint_url``: The optional endpoint to use for S3 clones, e.g.,
          ``http://127.0.0.1:8080/``.
 
@@ -823,12 +836,9 @@ The master supports the following configuration settings:
 -  ``container-master-port``: Master port that containers started by this agent will connect to.
    Defaults to the value of ``master_port``.
 
--  ``resource_pool``: Which resource pool the agent should join. Defaults to the value of
-   ``default``, which will work if and only if there is a resource pool named ``default``. If you
-   are using the old version of the master configuration (which predates resource pools) a resource
-   pool named ``default`` is automatically created. If you are using the new version of the master
-   configuration and have specified resource pools, this field will need to be set correctly for the
-   agent to join successfully. For more information please see :ref:`resource-pools`.
+-  ``resource_pool``: Which resource pool the agent should join. Defaults to the
+      value of ``default``, which will work if and only if there is a resource pool named
+      ``default``. For more information please see :ref:`resource-pools`.
 
 -  ``label``: The label to assign to this agent. An agent with a label will only be assigned
    workloads that have been assigned the same label (e.g., via the :ref:`agent_label

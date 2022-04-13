@@ -66,7 +66,8 @@ def start_shell(args: Namespace) -> None:
 
 @authentication.required
 def open_shell(args: Namespace) -> None:
-    shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
+    shell_id = command.expand_uuid_prefixes(args)
+    shell = api.get(args.master, "api/v1/shells/{}".format(shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(
         args.master,
@@ -79,7 +80,8 @@ def open_shell(args: Namespace) -> None:
 
 @authentication.required
 def show_ssh_command(args: Namespace) -> None:
-    shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
+    shell_id = command.expand_uuid_prefixes(args)
+    shell = api.get(args.master, "api/v1/shells/{}".format(shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
 
@@ -182,7 +184,7 @@ args_description = [
         ], is_default=True),
         Cmd("config", command.config,
             "display shell config", [
-                Arg("id", type=str, help="shell ID"),
+                Arg("shell_id", type=str, help="shell ID"),
             ]),
         Cmd("start", start_shell, "start a new shell", [
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),

@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 
 import tabulate
 
+import determined as det
 import determined.experimental
 import determined.load
 from determined import _local_execution_manager
@@ -171,6 +172,15 @@ def local_experiment(args: Namespace) -> None:
         )
 
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
+
+    # --local --test mode only makes sense for the legacy trial entrypoints.  Otherwise the user
+    # would just run their training script directly.
+    if not det.util.match_legacy_trial_class(experiment_config["entrypoint"]):
+        raise NotImplementedError(
+            "Local test mode (--local --test) is only supported for Trial-like entrypoints. "
+            "Script-like entrypoints are not supported, but maybe you can just invoke your script "
+            "directly?"
+        )
 
     set_logger(bool(experiment_config.get("debug", False)))
 
@@ -339,7 +349,7 @@ def describe(args: Namespace) -> None:
     wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
-            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads or []
+            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
@@ -543,7 +553,7 @@ def is_number(value: Any) -> bool:
 
 
 def scalar_training_metrics_names(
-    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
 ) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
@@ -553,7 +563,7 @@ def scalar_training_metrics_names(
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
     """
-    for workload in workloads or []:
+    for workload in workloads:
         if workload.training:
             metrics = workload.training.metrics
             if not metrics:
@@ -564,9 +574,9 @@ def scalar_training_metrics_names(
 
 
 def scalar_validation_metrics_names(
-    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
 ) -> Set[str]:
-    for workload in workloads or []:
+    for workload in workloads:
         if workload.validation:
             metrics = workload.validation.metrics
             if not metrics:

@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
@@ -29,7 +30,7 @@ type (
 // with the operation the actor tracks. If the actor is alive, it tracks a GCP operation
 // every one second.
 type gcpOperationTracker struct {
-	config *GCPClusterConfig
+	config *provconfig.GCPClusterConfig
 	client *compute.Service
 
 	op      *compute.Operation
@@ -111,7 +112,7 @@ func (t *gcpOperationTracker) pollOperation() (*trackOperationDone, error) {
 }
 
 type gcpBatchOperationTracker struct {
-	config *GCPClusterConfig
+	config *provconfig.GCPClusterConfig
 	client *compute.Service
 
 	ops         []*compute.Operation

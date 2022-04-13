@@ -10,7 +10,7 @@ import (
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -69,7 +69,7 @@ resource_pools:
 			ResourcePools: []ResourcePoolConfig{
 				{
 					PoolName: "default",
-					Provider: &provisioner.Config{
+					Provider: &provconfig.Config{
 						AgentDockerRuntime:     "runc",
 						AgentDockerNetwork:     "default",
 						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
@@ -131,7 +131,7 @@ resource_pools:
 			ResourcePools: []ResourcePoolConfig{
 				{
 					PoolName: "cpu-pool",
-					Provider: &provisioner.Config{
+					Provider: &provconfig.Config{
 						AgentDockerRuntime:     "runc",
 						AgentDockerNetwork:     "default",
 						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
@@ -146,7 +146,7 @@ resource_pools:
 				},
 				{
 					PoolName: "gpu-pool",
-					Provider: &provisioner.Config{
+					Provider: &provconfig.Config{
 						AgentDockerRuntime:     "runc",
 						AgentDockerNetwork:     "default",
 						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),

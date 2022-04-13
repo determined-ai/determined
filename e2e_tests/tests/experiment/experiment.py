@@ -182,7 +182,7 @@ def wait_for_experiment_workload_progress(
         trials = experiment_trials(experiment_id)
         if len(trials) > 0:
             only_trial = trials[0]
-            if len(only_trial.workloads or []) > 1:
+            if len(only_trial.workloads) > 1:
                 return
         time.sleep(1)
 
@@ -200,7 +200,7 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
         return False
 
     for t in trials:
-        for s in t.workloads or []:
+        for s in t.workloads:
             if (
                 s.training is not None
                 and s.training.state == determinedexperimentv1State.STATE_COMPLETED
@@ -231,7 +231,7 @@ def experiment_state(experiment_id: int) -> determinedexperimentv1State:
 
 def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
     r1 = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
-    src_trials = r1.trials or []
+    src_trials = r1.trials
     trials = []
     for trial in src_trials:
         r2 = bindings.get_GetTrial(test_session(), trialId=trial.id)
@@ -297,14 +297,34 @@ def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
 
 
-def workloads_for_mode(
-    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]], mode: str
-) -> Sequence[bindings.GetTrialResponseWorkloadContainer]:
-    if workloads is None:
-        return []
-    if mode not in ["training", "validation", "checkpoint"]:
-        raise Exception("Mode must be one of (training, validation, checkpoint)")
-    return list(filter(lambda w: w.__getattribute__(mode) is not None, workloads) or [])
+def workloads_with_training(
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+) -> List[bindings.v1MetricsWorkload]:
+    ret: List[bindings.v1MetricsWorkload] = []
+    for w in workloads:
+        if w.training:
+            ret.append(w.training)
+    return ret
+
+
+def workloads_with_validation(
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+) -> List[bindings.v1MetricsWorkload]:
+    ret: List[bindings.v1MetricsWorkload] = []
+    for w in workloads:
+        if w.validation:
+            ret.append(w.validation)
+    return ret
+
+
+def workloads_with_checkpoint(
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+) -> List[bindings.v1CheckpointWorkload]:
+    ret: List[bindings.v1CheckpointWorkload] = []
+    for w in workloads:
+        if w.checkpoint:
+            ret.append(w.checkpoint)
+    return ret
 
 
 def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> bool:
@@ -366,34 +386,33 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     assert len(trials) > 0
     workloads = trials[0].workloads
 
-    assert len(workloads or []) > 0
-    zeroth_step = workloads_for_mode(workloads, "validation")[0]
+    assert len(workloads) > 0
+    zeroth_step = workloads_with_validation(workloads)[0]
 
-    assert zeroth_step.validation
-    assert zeroth_step.validation.totalBatches == 0
-    assert zeroth_step.validation.state == determinedexperimentv1State.STATE_COMPLETED
+    assert zeroth_step.totalBatches == 0
+    assert zeroth_step.state == determinedexperimentv1State.STATE_COMPLETED
 
 
 def last_workload_matches_last_checkpoint(
-    workloads: Optional[Sequence[bindings.GetTrialResponseWorkloadContainer]],
+    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
 ) -> None:
-    assert (workloads is not None) and len(workloads) > 0
+    assert len(workloads) > 0
 
-    checkpoint_workloads = workloads_for_mode(workloads, "checkpoint")
+    checkpoint_workloads = workloads_with_checkpoint(workloads)
     assert len(checkpoint_workloads) > 0
     last_checkpoint = checkpoint_workloads[-1]
-    assert last_checkpoint.checkpoint
-    assert last_checkpoint.checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
+    assert last_checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
 
     last_workload = workloads[-1]
     if last_workload.training or last_workload.validation:
         last_workload_detail = last_workload.training or last_workload.validation
-        assert last_workload_detail
-        assert last_workload_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
+        assert last_workload_detail is not None
+        assert last_workload_detail.totalBatches == last_checkpoint.totalBatches
         assert last_workload_detail.state == determinedexperimentv1State.STATE_COMPLETED
     elif last_workload.checkpoint:
         last_checkpoint_detail = last_workload.checkpoint
-        assert last_checkpoint_detail.totalBatches == last_checkpoint.checkpoint.totalBatches
+        assert last_checkpoint_detail is not None
+        assert last_checkpoint_detail.totalBatches == last_checkpoint.totalBatches
         assert last_checkpoint_detail.state == bindings.determinedcheckpointv1State.STATE_COMPLETED
 
 
@@ -561,7 +580,7 @@ def verify_completed_experiment_metadata(
             report_failed_trial(trial.id, trial.state.value)
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
 
-        if len(t.workloads or []) == 0:
+        if len(t.workloads) == 0:
             print_trial_logs(trial.id)
             raise AssertionError(
                 f"trial {trial.id} is in {trial.state.value} state but has 0 steps/workloads"
@@ -569,7 +588,7 @@ def verify_completed_experiment_metadata(
 
         # Check that batches appear in increasing order.
         batch_ids = []
-        for s in t.workloads or []:
+        for s in t.workloads:
             if s.training:
                 batch_ids.append(s.training.totalBatches)
                 assert s.training.state == determinedexperimentv1State.STATE_COMPLETED
@@ -586,7 +605,7 @@ def verify_completed_experiment_metadata(
 
     # The last step of every trial should be the same batch number as the last checkpoint.
     for t in trials:
-        last_workload_matches_last_checkpoint(t.workloads or [])
+        last_workload_matches_last_checkpoint(t.workloads)
 
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might
