@@ -44,12 +44,6 @@ func (a *apiServer) ConfirmParentWorkspaceUnarchived(pid int32) error {
 	return nil
 }
 
-func (a *apiServer) GetProject(
-	_ context.Context, req *apiv1.GetProjectRequest) (*apiv1.GetProjectResponse, error) {
-	p, err := a.GetProjectFromID(req.Id)
-	return &apiv1.GetProjectResponse{Project: p}, err
-}
-
 func (a *apiServer) GetProjectExperiments(_ context.Context,
 	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
 	error) {
