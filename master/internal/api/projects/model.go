@@ -16,38 +16,38 @@ import (
 type ProjectMetadata struct {
 	bun.BaseModel `bun:"select:projects_view"`
 
-	Id                      int            `bun:"id,nullzero"`
-  Name                    string         `bun:"name"`
-  Description             string         `bun:"description"`
-  WorkspaceId             int            `bun:"workspace_id"`
-  LastExperimentStartedAt time.Time      `bun:"last_experiment_started_at"`
-  Notes                   model.JSONObj  `bun:"notes"`
-  NumExperiments          int            `bun:"num_experiments"`
-  NumActiveExperiments    int            `bun:"num_active_experiments"`
-  Archived                bool           `bun:"archived"`
-  Username                string         `bun:"username"`
-  Immutable               bool           `bun:"immutable"`
+	Id                      int           `bun:"id,nullzero"`
+	Name                    string        `bun:"name"`
+	Description             string        `bun:"description"`
+	WorkspaceId             int           `bun:"workspace_id"`
+	LastExperimentStartedAt time.Time     `bun:"last_experiment_started_at"`
+	Notes                   model.JSONObj `bun:"notes"`
+	NumExperiments          int           `bun:"num_experiments"`
+	NumActiveExperiments    int           `bun:"num_active_experiments"`
+	Archived                bool          `bun:"archived"`
+	Username                string        `bun:"username"`
+	Immutable               bool          `bun:"immutable"`
 }
 
 func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 	conv := protoconverter.ProtoConverter{}
-  notes, err := conv.ToProjectNotes(p.Notes)
-  if err != nil {
-    return nil, fmt.Errorf("conversion of notes: %w", err)
-  }
+	notes, err := conv.ToProjectNotes(p.Notes)
+	if err != nil {
+		return nil, fmt.Errorf("conversion of notes: %w", err)
+	}
 
 	out := &projectv1.Project{
 		Id:                      conv.ToInt32(p.Id),
 		Name:                    p.Name,
 		Description:             p.Description,
-    WorkspaceId:             conv.ToInt32(p.WorkspaceId),
-    LastExperimentStartedAt: conv.ToTimestamp(p.LastExperimentStartedAt),
-    Notes:                   notes,
-    NumExperiments:          conv.ToInt32(p.NumExperiments),
-    NumActiveExperiments:    conv.ToInt32(p.NumActiveExperiments),
-    Archived:                p.Archived,
-    Username:                p.Username,
-    Immutable:               p.Immutable,
+		WorkspaceId:             conv.ToInt32(p.WorkspaceId),
+		LastExperimentStartedAt: conv.ToTimestamp(p.LastExperimentStartedAt),
+		Notes:                   notes,
+		NumExperiments:          conv.ToInt32(p.NumExperiments),
+		NumActiveExperiments:    conv.ToInt32(p.NumActiveExperiments),
+		Archived:                p.Archived,
+		Username:                p.Username,
+		Immutable:               p.Immutable,
 	}
 	if err = conv.Error(); err != nil {
 		return nil, fmt.Errorf("converting project to proto: %w", err)

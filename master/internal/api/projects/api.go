@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
 type ProjectServer struct {
@@ -45,17 +46,17 @@ func (s *ProjectServer) GetProject(
 func (s *ProjectServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
-  orderByColumn := ""
+	orderByColumn := ""
 	switch req.SortBy {
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME:
 		orderByColumn = "created_at"
-  case apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME:
+	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME:
 		orderByColumn = "last_experiment_started_at"
-  case apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:
+	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:
 		orderByColumn = "id"
-  case apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:
+	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:
 		orderByColumn = "name"
-  case apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:
+	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:
 		orderByColumn = "description"
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:
 		orderByColumn = "id"
@@ -72,15 +73,15 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	cs, err := List(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 		q = q.Where("workspace_id = ?", req.Id)
 
-    if req.Archived != nil {
-      q = q.Where("archived = ?", req.Archived.Value)
-    }
-    if req.Name != "" {
-      q = q.Where("name ILIKE ?", "%" + req.Name + "%")
-    }
-    if len(req.Users) > 0 {
-    	q = q.Where("username IN (?)", bun.In(req.Users))
-    }
+		if req.Archived != nil {
+			q = q.Where("archived = ?", req.Archived.Value)
+		}
+		if req.Name != "" {
+			q = q.Where("name ILIKE ?", "%"+req.Name+"%")
+		}
+		if len(req.Users) > 0 {
+			q = q.Where("username IN (?)", bun.In(req.Users))
+		}
 
 		q, pageInfo, err = db.AddPagination(ctx, q, int(req.Offset), int(req.Limit))
 		if err != nil {
@@ -101,8 +102,8 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	}
 
 	return &apiv1.GetWorkspaceProjectsResponse{
-		Projects:    pcs,
-		Pagination:  pageInfo.ToProto(),
+		Projects:   pcs,
+		Pagination: pageInfo.ToProto(),
 	}, nil
 }
 
