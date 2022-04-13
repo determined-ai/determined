@@ -232,4 +232,4 @@ def test_deepspeed_dcgan() -> None:
     config = conf.load_config(conf.deepspeed_examples_path("deepspeed_dcgan/mnist.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
-    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("dcgan"), 1)
+    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("deepspeed_dcgan"), 1)
