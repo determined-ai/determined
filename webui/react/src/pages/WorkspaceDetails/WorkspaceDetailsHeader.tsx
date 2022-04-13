@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import useModalProjectCreate from 'hooks/useModal/useModalProjectCreate';
+import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -23,18 +24,18 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace }: Props) => {
   const handleArchiveClick = useCallback(() => {
     if (workspace.archived) {
       try {
-        // unarchive workspace
+        unarchiveWorkspace({ id: workspace.id });
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
       }
     } else {
       try {
-        // archive workspace
+        archiveWorkspace({ id: workspace.id });
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ workspace.archived ]);
+  }, [ workspace.archived, workspace.id ]);
 
   const handleDeleteClick = useCallback(() => {
     // bring up delete workspace modal

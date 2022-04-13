@@ -8,6 +8,7 @@ import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import useModalProjectMove from 'hooks/useModal/useModalProjectMove';
 import { paths } from 'routes/utils';
+import { archiveProject, unarchiveProject } from 'services/api';
 import { Project } from 'types';
 import handleError from 'utils/error';
 
@@ -31,18 +32,18 @@ const ProjectCard: React.FC<Props> = ({ project }: Props) => {
   const handleArchiveClick = useCallback(() => {
     if (project.archived) {
       try {
-        // unarchive project
+        unarchiveProject({ id: project.id });
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
       }
     } else {
       try {
-        // archive project
+        archiveProject({ id: project.id });
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ project.archived ]);
+  }, [ project.archived, project.id ]);
 
   const handleDeleteClick = useCallback(() => {
     // bring up delete workspace modal
