@@ -299,7 +299,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
-		job.RecoverJobPosition:
+		job.RecoverJobPosition,
+		job.DeleteJob:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -553,6 +554,14 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 
 	case job.RecoverJobPosition:
 		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
+
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in determined-agents world.
+		respC := make(chan error, 1)
+		respC <- nil
+		resp := job.DeleteJobResponse{Err: respC}
+		ctx.Respond(resp)
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

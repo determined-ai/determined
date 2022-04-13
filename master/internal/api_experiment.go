@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/prom"
+	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -225,6 +226,16 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
 
+	var resp job.DeleteJobResponse
+	if err = a.ask(sproto.GetCurrentRM(a.m.system).Address(), job.DeleteJob{
+		JobID: exp.JobID,
+	}, &resp); err != nil {
+		return fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
+	}
+	if err = <-resp.Err; err != nil {
+		return fmt.Errorf("cleaning up resource mananger resources: %w", err)
+	}
+
 	trialIDs, taskIDs, err := a.m.db.ExperimentTrialAndTaskIDs(exp.ID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to gather trial IDs for experiment")
@@ -241,6 +252,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	if err = a.m.db.DeleteExperiment(exp.ID); err != nil {
 		return errors.Wrapf(err, "deleting experiment from database")
 	}
+
 	return nil
 }
 
