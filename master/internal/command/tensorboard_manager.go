@@ -37,7 +37,8 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 			userIds[user] = true
 		}
 		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
-			if typed := tensorboard.(*tensorboardv1.Tensorboard); len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
+			typed := tensorboard.(*tensorboardv1.Tensorboard)
+			if len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
 				resp.Tensorboards = append(resp.Tensorboards, typed)
 			}
 		}

@@ -36,7 +36,8 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 			userIds[user] = true
 		}
 		for _, command := range ctx.AskAll(&commandv1.Command{}, ctx.Children()...).GetAll() {
-			if typed := command.(*commandv1.Command); len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
+			typed := command.(*commandv1.Command)
+			if len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
 				resp.Commands = append(resp.Commands, typed)
 			}
 		}
