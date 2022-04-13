@@ -53,6 +53,7 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+// Pagination data
 type PageInfo struct {
 	StartIndex int
 	EndIndex   int
@@ -71,6 +72,7 @@ func newPageInfo(offset, limit, count int) PageInfo {
 	}
 }
 
+// Sharing pagination over API
 func (p *PageInfo) ToProto() *apiv1.Pagination {
 	return &apiv1.Pagination{
 		// TODO these being int32 is totally wrong.

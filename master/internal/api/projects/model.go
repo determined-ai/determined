@@ -16,10 +16,10 @@ import (
 type ProjectMetadata struct {
 	bun.BaseModel `bun:"select:projects_view"`
 
-	Id                      int             `bun:"id,nullzero"`
+	ID                      int             `bun:"id,nullzero"`
 	Name                    string          `bun:"name"`
 	Description             string          `bun:"description"`
-	WorkspaceId             int             `bun:"workspace_id"`
+	WorkspaceID             int             `bun:"workspace_id"`
 	LastExperimentStartedAt time.Time       `bun:"last_experiment_started_at"`
 	Notes                   []model.JSONObj `bun:"notes"`
 	NumExperiments          int             `bun:"num_experiments"`
@@ -37,10 +37,10 @@ func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 	}
 
 	out := &projectv1.Project{
-		Id:                      conv.ToInt32(p.Id),
+		Id:                      conv.ToInt32(p.ID),
 		Name:                    p.Name,
 		Description:             p.Description,
-		WorkspaceId:             conv.ToInt32(p.WorkspaceId),
+		WorkspaceId:             conv.ToInt32(p.WorkspaceID),
 		LastExperimentStartedAt: conv.ToTimestamp(p.LastExperimentStartedAt),
 		Notes:                   notes,
 		NumExperiments:          conv.ToInt32(p.NumExperiments),
@@ -55,6 +55,7 @@ func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 	return out, nil
 }
 
+// Fetch single Project
 func Single(ctx context.Context, opts db.SelectExtension) (*ProjectMetadata, error) {
 	p := ProjectMetadata{}
 
@@ -71,6 +72,7 @@ func Single(ctx context.Context, opts db.SelectExtension) (*ProjectMetadata, err
 	return &p, nil
 }
 
+// Fetch list of Projects
 func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, error) {
 	ps := []*ProjectMetadata{}
 
@@ -87,6 +89,7 @@ func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, err
 	return ps, nil
 }
 
+// Fetch single Project by its ID
 func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 	return Single(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 		return q.Where("id = ?", id), nil

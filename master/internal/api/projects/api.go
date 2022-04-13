@@ -28,10 +28,10 @@ func (s *ProjectServer) GetProject(
 ) (*apiv1.GetProjectResponse, error) {
 	switch p, err := ByID(ctx, req.Id); err {
 	case nil:
-		pc, err := p.ToProto()
-		if err != nil {
+		pc, err2 := p.ToProto()
+		if err2 != nil {
 			return nil, status.Errorf(
-				codes.InvalidArgument, "converting project to proto: %s", err)
+				codes.InvalidArgument, "converting project to proto: %s", err2)
 		}
 		return &apiv1.GetProjectResponse{Project: pc}, nil
 	case db.ErrNotFound, sql.ErrNoRows:
@@ -46,6 +46,7 @@ func (s *ProjectServer) GetProject(
 func (s *ProjectServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
+	const byid = "id"
 	orderByColumn := ""
 	switch req.SortBy {
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME:
@@ -53,13 +54,13 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME:
 		orderByColumn = "last_experiment_started_at"
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:
-		orderByColumn = "id"
+		orderByColumn = byid
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:
 		orderByColumn = "name"
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:
 		orderByColumn = "description"
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:
-		orderByColumn = "id"
+		orderByColumn = byid
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "interpreting sort by: %s", req.SortBy)
 	}
@@ -108,13 +109,14 @@ func (s *ProjectServer) GetWorkspaceProjects(
 }
 
 func apiOrderByToSQL(orderBy apiv1.OrderBy) (string, error) {
+	const asc = "ASC"
 	switch orderBy {
 	case apiv1.OrderBy_ORDER_BY_ASC:
-		return "ASC", nil
+		return asc, nil
 	case apiv1.OrderBy_ORDER_BY_DESC:
 		return "DESC", nil
 	case apiv1.OrderBy_ORDER_BY_UNSPECIFIED:
-		return "ASC", nil
+		return asc, nil
 	default:
 		return "", status.Errorf(codes.InvalidArgument, "interpreting order by: %s", orderBy)
 	}
