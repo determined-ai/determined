@@ -105,8 +105,7 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 			periodStart, time.Since(t0),
 		)
 	}
-	db.updateTaskQueuedTimeAggregation(targetDate)
-	return nil
+	return db.updateTaskQueuedTimeAggregation(targetDate)
 }
 
 func (db *PgDB) updateTaskQueuedTimeAggregation(targetDate time.Time) error {

@@ -26,7 +26,7 @@ sevenday_agg AS (SELECT
             ) 
     ) AS seconds
 FROM task_stats, const
-WHERE end_time <= const.target_date AND end_time > (const.target_date - interval '7 day') AND event_type = 'IMAGEPULL'
+WHERE end_time <= const.target_date AND end_time > (const.target_date - interval '7 days') AND event_type = 'IMAGEPULL'
 GROUP BY resource_pool),
 
 thirtyday_agg AS (SELECT
@@ -39,7 +39,7 @@ thirtyday_agg AS (SELECT
             ) 
     ) AS seconds
 FROM task_stats, const
-WHERE end_time <= const.target_date AND end_time > (const.target_date - interval '30 day') AND event_type = 'IMAGEPULL'
+WHERE end_time <= const.target_date AND end_time > (const.target_date - interval '30 days') AND event_type = 'IMAGEPULL'
 GROUP BY resource_pool),
 
 all_aggs AS (
@@ -67,3 +67,5 @@ INSERT INTO
         FROM
             all_aggs, const
     )
+    ON CONFLICT ON CONSTRAINT resource_aggregates_keys_unique
+    DO UPDATE SET seconds = EXCLUDED.seconds
