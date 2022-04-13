@@ -378,6 +378,11 @@ func TestCheckpointMetadata(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, retCkpts, 1)
 			requireCheckpointOk(&ckpt, retCkpts[0])
+
+			latestCkpt, err := db.LatestCheckpointForTrial(tr.ID)
+			require.NoError(t, err, "failed to obtain latest checkpoint")
+			require.NotNil(t, latestCkpt, "checkpoint is nil")
+			require.Equal(t, latestCkpt.TrialID, tr.ID)
 		})
 	}
 }
