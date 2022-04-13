@@ -19,6 +19,7 @@ jest.mock('services/api', () => ({
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
+const USER_ID = 1;
 const DISPLAY_NAME = 'Test Name';
 const CHANGE_NAME_TEXT = 'Change name';
 const USER_SETTINGS_HEADER = 'Account';
@@ -26,7 +27,7 @@ const UPDATED_DISPLAY_NAME = 'New Displayname';
 
 const currentUser: DetailedUser = {
   displayName: DISPLAY_NAME,
-  id: 1,
+  id: USER_ID,
   isActive: true,
   isAdmin: false,
   username: USERNAME,
@@ -120,7 +121,7 @@ describe('useModalChangeName', () => {
     // api method was called:
     expect(mockPatchUser).toHaveBeenCalledWith(
       {
-        username: USERNAME,
+        userId: USER_ID,
         userParams: { displayName: UPDATED_DISPLAY_NAME },
       },
     );
