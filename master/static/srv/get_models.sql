@@ -7,6 +7,6 @@ AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
 AND ($4 = '' OR m.user_id IN (SELECT unnest(string_to_array($4, ',')::int [])))
 AND ($5 = '' OR (m.labels <@ string_to_array($5, ',')))
 AND ($6 = '' OR m.name ILIKE $6))
-AND ($8 = '' OR m.description ILIKE $8)
+AND ($7 = '' OR m.description ILIKE $7)
 GROUP BY m.id, u.id
 ORDER BY %s;
