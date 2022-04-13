@@ -99,3 +99,6 @@ CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
 
 ALTER TABLE public.model_versions
 DROP CONSTRAINT model_versions_checkpoint_uuid_fkey;
+
+ALTER TABLE public.trials
+DROP CONSTRAINT trials_warm_start_checkpoint_id_fkey;

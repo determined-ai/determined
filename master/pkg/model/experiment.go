@@ -455,14 +455,14 @@ type CheckpointV2 struct {
 // CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific
 // information.
 type CheckpointTrainingMetadata struct {
-	TrialID           int     `db:"trial_id"`
-	ExperimentID      int     `db:"experiment_id"`
-	ExperimentConfig  JSONObj `db:"experiment_config"`
-	HParams           JSONObj `db:"hparams"`
-	TrainingMetrics   JSONObj `db:"training_metrics"`
-	ValidationMetrics JSONObj `db:"validation_metrics"`
-	SearcherMetric    float64 `db:"searcher_metric"`
-	LatestBatch       int     `db:"latest_batch"`
+	TrialID           int      `db:"trial_id"`
+	ExperimentID      int      `db:"experiment_id"`
+	ExperimentConfig  JSONObj  `db:"experiment_config"`
+	HParams           JSONObj  `db:"hparams"`
+	TrainingMetrics   JSONObj  `db:"training_metrics"`
+	ValidationMetrics JSONObj  `db:"validation_metrics"`
+	SearcherMetric    *float64 `db:"searcher_metric"`
+	LatestBatch       int      `db:"latest_batch"`
 }
 
 // Checkpoint represents a row from the `checkpoints_view` view.
