@@ -8,15 +8,11 @@ import time
 
 
 def create_exp_get_trial_id():
-    exp_id = exp.create_experiment(conf.cv_examples_path("cifar10_pytorch/const.yaml"),conf.cv_examples_path("cifar10_pytorch"))
-    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_ACTIVE) 
+    exp_id = exp.create_experiment(conf.fixtures_path("no_op/single-one-short-step.yaml"),conf.fixtures_path("no_op"))
+    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED) 
     session = test_session()
-    trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials    
-    while(len(trials) <= 0):
-        print(f'no of trials: {len(trials)}')
-        time.sleep(5 * 60) # wait for 5 minutes to check again whether trials were added 
-        trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials    
-
+    trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials     
+    print(f'no of trials: {len(trials)}')
     assert len(trials) > 0
     trial_example = trials[0]
     trial_id = trial_example.id
