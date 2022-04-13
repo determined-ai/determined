@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import useModalProjectCreate from 'hooks/useModal/useModalProjectCreate';
+import useModalWorkspaceDelete from 'hooks/useModal/useModalWorkspaceDelete';
 import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
@@ -15,11 +16,12 @@ interface Props {
 }
 
 const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace }: Props) => {
-  const { modalOpen } = useModalProjectCreate({ workspaceId: workspace.id });
+  const { modalOpen: openProjectCreate } = useModalProjectCreate({ workspaceId: workspace.id });
+  const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({ workspace });
 
   const handleProjectCreateClick = useCallback(() => {
-    modalOpen();
-  }, [ modalOpen ]);
+    openProjectCreate();
+  }, [ openProjectCreate ]);
 
   const handleArchiveClick = useCallback(() => {
     if (workspace.archived) {
@@ -38,8 +40,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace }: Props) => {
   }, [ workspace.archived, workspace.id ]);
 
   const handleDeleteClick = useCallback(() => {
-    // bring up delete workspace modal
-  }, []);
+    openWorkspaceDelete();
+  }, [ openWorkspaceDelete ]);
 
   const ActionMenu = useMemo(() => {
     return (

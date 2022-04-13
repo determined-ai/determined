@@ -6,6 +6,7 @@ import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
+import useModalProjectDelete from 'hooks/useModal/useModalProjectDelete';
 import useModalProjectMove from 'hooks/useModal/useModalProjectMove';
 import { paths } from 'routes/utils';
 import { archiveProject, unarchiveProject } from 'services/api';
@@ -19,15 +20,16 @@ interface Props {
 }
 
 const ProjectCard: React.FC<Props> = ({ project }: Props) => {
-  const { modalOpen: openMoveModal } = useModalProjectMove({ projectId: project.id });
+  const { modalOpen: openProjectMove } = useModalProjectMove({ projectId: project.id });
+  const { modalOpen: openProjectDelete } = useModalProjectDelete({ project: project });
 
   const handleEditClick = useCallback(() => {
     // bring up edit project modal
   }, [ ]);
 
   const handleMoveClick = useCallback(() => {
-    openMoveModal();
-  }, [ openMoveModal ]);
+    openProjectMove();
+  }, [ openProjectMove ]);
 
   const handleArchiveClick = useCallback(() => {
     if (project.archived) {
@@ -46,8 +48,8 @@ const ProjectCard: React.FC<Props> = ({ project }: Props) => {
   }, [ project.archived, project.id ]);
 
   const handleDeleteClick = useCallback(() => {
-    // bring up delete workspace modal
-  }, []);
+    openProjectDelete();
+  }, [ openProjectDelete ]);
 
   const ActionMenu = useMemo(() => {
     return (

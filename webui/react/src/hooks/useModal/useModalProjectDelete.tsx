@@ -4,19 +4,19 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { paths, routeToReactUrl } from 'routes/utils';
-import { createProject } from 'services/api';
+import { deleteProject } from 'services/api';
+import { Project } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
-import css from './useModalProjectCreate.module.scss';
+import css from './useModalProjectDelete.module.scss';
 
 interface Props {
   onClose?: () => void;
-  workspaceId: number;
+  project: Project;
 }
 
-const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
+const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
   const [ name, setName ] = useState('');
-  const [ description, setDescription ] = useState('');
 
   const handleClose = useCallback(() => {
     onClose?.();
@@ -28,55 +28,46 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
     setName(e.target.value);
   }, []);
 
-  const handleDescriptionInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setDescription(e.target.value);
-  }, []);
-
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
-        <div>
-          <label className={css.label} htmlFor="name">Name</label>
-          <Input id="name" value={name} onChange={handleNameInput} />
-        </div>
-        <div>
-          <label className={css.label} htmlFor="description">Description</label>
-          <Input id="description" value={description} onChange={handleDescriptionInput} />
-        </div>
+        <p>Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?</p>
+        <p>All experiments within it will also be deleted. This cannot be undone.</p>
+        <label className={css.label} htmlFor="name">Enter project name to confirm deletion</label>
+        <Input id="name" value={name} onChange={handleNameInput} />
       </div>
     );
-  }, [ description, handleDescriptionInput, handleNameInput, name ]);
+  }, [ handleNameInput, name, project.name ]);
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await createProject({ description, name, workspaceId });
-      routeToReactUrl(paths.projectDetails(response.id));
+      await deleteProject({ id: project.id });
+      routeToReactUrl(paths.workspaceDetails(project.workspaceId));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to create project.',
+        publicSubject: 'Unable to delete project.',
         silent: false,
         type: ErrorType.Server,
       });
     }
-  }, [ name, workspaceId, description ]);
+  }, [ project.id, project.workspaceId ]);
 
   const getModalProps = useCallback((name: string): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
-      okText: 'Create Project',
+      okButtonProps: { danger: true, disabled: name !== project.name },
+      okText: 'Delete Project',
       onOk: handleOk,
-      title: 'New Project',
+      title: 'Delete Project',
     };
-  }, [ handleOk, modalContent ]);
+  }, [ handleOk, modalContent, project.name ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setName('');
-    setDescription('');
     openOrUpdate({ ...getModalProps(''), ...initialModalProps });
   }, [ getModalProps, openOrUpdate ]);
 
@@ -91,4 +82,4 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
   return { modalClose, modalOpen, modalRef };
 };
 
-export default useModalProjectCreate;
+export default useModalProjectDelete;
