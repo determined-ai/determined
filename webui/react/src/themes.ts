@@ -1,5 +1,5 @@
 import {
-  BrandingType, CheckpointState, CommandState, ResourceState, RunState, SlotState,
+  BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState,
 } from 'types';
 
 /*
@@ -296,6 +296,7 @@ const darkDeterminedTheme: Theme = {
       free: '#eee',
       inactive: '#666666',
       pending: '#6666cc',
+      potential: '#ffffff',
       success: '#009900',
       suspended: '#cc9900',
     },
@@ -330,6 +331,13 @@ const darkDeterminedTheme: Theme = {
       small: '16px',
       medium: '20px',
       large: '24px',
+      big: '28px',
+      great: '32px',
+      huge: '36px',
+      enormous: '40px',
+      giant: '44px',
+      jumbo: '48px',
+      mega: '52px',
     },
     layout: {
       micro: '2px',
@@ -350,7 +358,6 @@ const darkDeterminedTheme: Theme = {
       maxWidth: '240px',
       minWidth: '56px',
       toolbarHeight: '56px',
-      topbarHeight: '56px',
     },
   },
 };
