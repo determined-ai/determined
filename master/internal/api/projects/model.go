@@ -7,11 +7,68 @@ import (
 
 	"github.com/uptrace/bun"
 
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
+
+type ExperimentMetadata struct {
+	bun.BaseModel `bun:"select:experiments_view"`
+
+	ID           int       `bun:"id,nullzero"`
+	Name         string    `bun:"name"`
+	Description  string    `bun:"description"`
+	ProjectID    int       `bun:"project_id"`
+	JobID        string    `bun:"job_id"`
+	Archived     bool      `bun:"archived"`
+	Username     string    `bun:"username"`
+	Labels       []string  `bun:"labels"`
+	ResourcePool string    `bun:"resource_pool"`
+	SearcherType string    `bun:"searcher_type"`
+	Notes        string    `bun:"notes"`
+	StartTime    time.Time `bun:"start_time"`
+	EndTime      time.Time `bun:"end_time"`
+	State        string    `bun:"state"`
+	Progress     float64   `bun:"progress"`
+	ForkedFrom   int32     `bun:"forked_from"`
+	UserId       int       `bun:"user_id"`
+}
+
+func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
+	conv := protoconverter.ProtoConverter{}
+	var trialIDs []int32
+	parsedForkedFrom := wrapperspb.Int32(p.ForkedFrom)
+	parsedProgress := wrapperspb.Double(p.Progress)
+	out := &experimentv1.Experiment{
+		Id:          conv.ToInt32(p.ID),
+		Name:        p.Name,
+		Description: p.Description,
+		Archived:    p.Archived,
+		Username:    p.Username,
+		StartTime:   conv.ToTimestamp(p.StartTime),
+		EndTime:     conv.ToTimestamp(p.EndTime),
+		ProjectId:   conv.ToInt32(p.ProjectID),
+		JobId:       p.JobID,
+		// State:        experimentv1.State,
+		Progress:     parsedProgress,
+		ForkedFrom:   parsedForkedFrom,
+		UserId:       conv.ToInt32(p.UserId),
+		ResourcePool: p.ResourcePool,
+		Notes:        p.Notes,
+		Labels:       p.Labels,
+		SearcherType: p.SearcherType,
+		TrialIds:     trialIDs,
+		NumTrials:    0,
+	}
+	if err := conv.Error(); err != nil {
+		return nil, fmt.Errorf("converting experiment to proto: %w", err)
+	}
+	return out, nil
+}
 
 type ProjectMetadata struct {
 	bun.BaseModel `bun:"select:projects_view"`
@@ -87,6 +144,24 @@ func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, err
 		return nil, fmt.Errorf("listing projects: %w", err)
 	}
 	return ps, nil
+}
+
+// Fetch list of Experiments
+func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*ExperimentMetadata,
+	error) {
+	exps := []*ExperimentMetadata{}
+
+	q, err := opts(db.Bun().
+		NewSelect().
+		Model(&exps))
+	if err != nil {
+		return nil, fmt.Errorf("building query: %w", err)
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("listing experiments: %w", err)
+	}
+	return exps, nil
 }
 
 // Fetch single Project by its ID

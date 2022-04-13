@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
@@ -83,6 +85,12 @@ func (s *ProjectServer) GetWorkspaceProjects(
 		if len(req.Users) > 0 {
 			q = q.Where("username IN (?)", bun.In(req.Users))
 		}
+		if req.Limit > 0 {
+			q = q.Limit(int(req.Limit))
+		}
+		if req.Offset > 0 {
+			q = q.Offset(int(req.Offset))
+		}
 
 		q, pageInfo, err = db.AddPagination(ctx, q, int(req.Offset), int(req.Limit))
 		if err != nil {
@@ -105,6 +113,105 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	return &apiv1.GetWorkspaceProjectsResponse{
 		Projects:   pcs,
 		Pagination: pageInfo.ToProto(),
+	}, nil
+}
+
+func (s *ProjectServer) GetProjectExperiments(ctx context.Context,
+	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
+	error) {
+	// Verify that project exists.
+	_, err := ByID(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Construct the ordering expression.
+	const byid = "id"
+	orderByColumn := ""
+	switch req.SortBy {
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_START_TIME:
+		orderByColumn = "start_time"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_END_TIME:
+		orderByColumn = "end_time"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_ID:
+		orderByColumn = byid
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_NAME:
+		orderByColumn = "name"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_DESCRIPTION:
+		orderByColumn = "description"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_STATE:
+		orderByColumn = "state"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_NUM_TRIALS:
+		orderByColumn = "num_trials"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_PROGRESS:
+		orderByColumn = "COALESCE(progress, 0)"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_USER:
+		orderByColumn = "username"
+	case apiv1.GetProjectExperimentsRequest_SORT_BY_UNSPECIFIED:
+		orderByColumn = byid
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "interpreting sort by: %s", req.SortBy)
+	}
+
+	orderByDirection, err := apiOrderByToSQL(req.OrderBy)
+	if err != nil {
+		return nil, err
+	}
+
+	var pageInfo db.PageInfo
+	resp, err := ExperimentList(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+		q = q.Where("project_id = ?", req.Id)
+
+		if req.Archived != nil {
+			q = q.Where("archived = ?", req.Archived.Value)
+		}
+		if req.Name != "" {
+			q = q.Where("name ILIKE ?", "%"+req.Name+"%")
+		}
+		if req.Description != "" {
+			q = q.Where("description ILIKE ?", "%"+req.Description+"%")
+		}
+		if req.Labels != nil {
+			q = q.Where("labels = ?", req.Labels)
+		}
+		if req.States != nil {
+			var allStates []string
+			for _, state := range req.States {
+				allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+			}
+			q = q.Where("state IN (?)", bun.In(allStates))
+		}
+		if len(req.Users) > 0 {
+			q = q.Where("username IN (?)", bun.In(req.Users))
+		}
+		if req.Limit > 0 {
+			q = q.Limit(int(req.Limit))
+		}
+		if req.Offset > 0 {
+			q = q.Offset(int(req.Offset))
+		}
+
+		q, pageInfo, err = db.AddPagination(ctx, q, int(req.Offset), int(req.Limit))
+		if err != nil {
+			return nil, fmt.Errorf("converting offset: %w", err)
+		}
+
+		q = q.OrderExpr(fmt.Sprintf("%s %s", orderByColumn, orderByDirection))
+		return q, nil
+	})
+
+	exps := []*experimentv1.Experiment{}
+	for _, exp := range resp {
+		pexp, err := exp.ToProto()
+		if err != nil {
+			return nil, fmt.Errorf("converting experiments to proto: %w", err)
+		}
+		exps = append(exps, pexp)
+	}
+
+	return &apiv1.GetProjectExperimentsResponse{
+		Experiments: exps,
+		Pagination:  pageInfo.ToProto(),
 	}, nil
 }
 
