@@ -15,7 +15,20 @@ REMOVE_KEY = "removing"
 
 
 def iso_date_to_epoch(iso_date: str) -> int:
-    return calendar.timegm(datetime.strptime(iso_date[:-4], DATE_PATTERN).timetuple())
+    iso_format = re.compile(r"^\d{4}-\d{2}-\d{2}\S\d{2}:\d{2}:\d{2}\.\d{3,}-\d{2}:\d{2}$")
+    utc_format = re.compile(r"^\d{4}-\d{2}-\d{2}\S\d{2}:\d{2}:\d{2}\.\d+Z$")
+
+    if iso_format.match(iso_date):
+        # because time may came with different number of digits, only keep the first 3 digits
+        # i.e. 2022-04-13T10:10:46.7982-07:00 -> 2022-04-13T10:10:46.798-07:00
+        iso_date_split = iso_date.split(".")
+        iso_date = (
+            iso_date_split[0] + "." + iso_date_split[1][:3] + "-" + iso_date_split[1].split("-")[-1]
+        )
+        return calendar.timegm(datetime.fromisoformat(iso_date).timetuple())
+    if utc_format.match(iso_date):
+        return calendar.timegm(datetime.strptime(iso_date[:-4], DATE_PATTERN).timetuple())
+    return -2
 
 
 def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
@@ -34,6 +47,9 @@ def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
             match_date = date_parsing_re.match(line)
             if match_date:
                 ts = iso_date_to_epoch(match_date.group(1))
+                if ts == -2:
+                    print("Skip unrecognized date time format ", match_date.group(1))
+                    continue
                 max_ts = ts if max_ts == -1 or ts > max_ts else max_ts
                 min_ts = ts if min_ts == -1 or ts < min_ts else min_ts
             match_line = line_parsing_re.match(line)
