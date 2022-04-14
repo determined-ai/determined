@@ -331,7 +331,7 @@ func (a *apiServer) DeleteModel(
 		user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model %q does not exist or not delete-able by this user",
+		return nil, errors.Wrapf(err, "model %q does not exist or not deletable by this user",
 			req.ModelName)
 	}
 
@@ -523,7 +523,7 @@ func (a *apiServer) DeleteModelVersion(
 		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model version %v does not exist or not delete-able by this user",
+		return nil, errors.Wrapf(err, "model version %v does not exist or not deletable by this user",
 			req.ModelVersionId)
 	}
 

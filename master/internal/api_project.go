@@ -222,7 +222,7 @@ func (a *apiServer) DeleteProject(
 		user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "project (%d) does not exist or not delete-able by this user",
+		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
 			req.Id)
 	}
 
