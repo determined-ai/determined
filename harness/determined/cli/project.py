@@ -74,9 +74,16 @@ def list_project_experiments(args: Namespace) -> None:
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
     sortArg = bindings.v1GetProjectExperimentsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
-    experiments = bindings.get_GetProjectExperiments(
-        sess, id=p.id, orderBy=orderArg, sortBy=sortArg
-    ).experiments
+    users: List[str] = []
+    if args.all:
+        experiments = bindings.get_GetProjectExperiments(
+            sess, id=p.id, orderBy=orderArg, sortBy=sortArg
+        ).experiments
+    else:
+        users = [authentication.must_cli_auth().get_session_user()]
+        experiments = bindings.get_GetProjectExperiments(
+            sess, archived="false", id=p.id, orderBy=orderArg, sortBy=sortArg, users=users
+        ).experiments
     if args.json:
         print(json.dumps([e.to_json() for e in experiments], indent=2))
     else:
@@ -106,14 +113,21 @@ def describe_project(args: Namespace) -> None:
     else:
         render_project(p)
         print("\nAssociated Experiments")
-        experiments = bindings.get_GetProjectExperiments(sess, id=p.id).experiments
+        users: List[str] = []
+        if args.all:
+            experiments = bindings.get_GetProjectExperiments(sess, id=p.id).experiments
+        else:
+            users = [authentication.must_cli_auth().get_session_user()]
+            experiments = bindings.get_GetProjectExperiments(
+                sess, archived="false", id=p.id, users=users
+            ).experiments
         render_experiments(args, experiments)
 
 
 @authentication.required
 def delete_project(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
-        "Deleting project \"" + args.project_name + "\" will result in the \n"
+        'Deleting project "' + args.project_name + '" will result in the \n'
         "unrecoverable deletion of all associated experiments. For a recoverable \n"
         "alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
@@ -179,6 +193,7 @@ args_description = [
                         "--all",
                         "-a",
                         action="store_true",
+                        default=False,
                         help="show all experiments (including archived and other users')",
                     ),
                     Arg(
@@ -235,6 +250,7 @@ args_description = [
                         "--all",
                         "-a",
                         action="store_true",
+                        default=False,
                         help="show all experiments (including archived and other users')",
                     ),
                     Arg("--json", action="store_true", help="print as JSON"),

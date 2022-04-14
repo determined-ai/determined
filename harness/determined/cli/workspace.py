@@ -113,7 +113,7 @@ def describe_workspace(args: Namespace) -> None:
 @authentication.required
 def delete_workspace(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
-        "Deleting workspace \"" + args.workspace_name + "\" will result \n"
+        'Deleting workspace "' + args.workspace_name + '" will result \n'
         "in the unrecoverable deletion of all associated projects. For a \n"
         "recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
