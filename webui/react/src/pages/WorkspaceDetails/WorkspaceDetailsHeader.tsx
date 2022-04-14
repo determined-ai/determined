@@ -3,8 +3,8 @@ import { Button, Dropdown, Menu, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
-import useModalProjectCreate from 'hooks/useModal/useModalProjectCreate';
-import useModalWorkspaceDelete from 'hooks/useModal/useModalWorkspaceDelete';
+import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
+import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
