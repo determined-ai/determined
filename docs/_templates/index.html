@@ -1,0 +1,140 @@
+{# Overrides the output of converting index.rst to enable a custom landing page for the docs #}
+{# Ensure that all links found within the index.rst are transposed here as well. #}
+
+{# - extends "layout.html" #}
+
+<!doctype html>
+<html class="no-js"{% if language is not none %} lang="{{ language }}"{% endif %}>
+  <head>
+    <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Quickstart for Model Developers" href="quickstart-mdldev.html" />
+
+        <link rel="shortcut icon" href="_static/favicon.ico"/><meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+            <title>Determined AI Documentation</title>
+          <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+        <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
+        <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+        <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+        <link rel="stylesheet" type="text/css" href="_static/styles/determined.css" />
+    <style>
+      body {
+        --color-code-background: #eeffcc;
+      --color-code-foreground: black;
+      --color-brand-primary: #f37a22;
+      --color-brand-content: #f37a22;
+      --font-stack: Open Sans, Metric HPE, Arial, sans-serif;
+      
+      }
+      body[data-theme="dark"] {
+        --color-code-background: #272822;
+      --color-code-foreground: #f8f8f2;
+      --color-brand-primary: #f37a22;
+      --color-brand-content: #f37a22;
+      
+      }
+      @media (prefers-color-scheme: dark) {
+        body:not([data-theme="light"]) {
+          --color-code-background: #272822;
+      --color-code-foreground: #f8f8f2;
+      --color-brand-primary: #f37a22;
+      --color-brand-content: #f37a22;
+      
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    {% set title = _('Determined Documentation') %}
+
+    {% block body %}
+      <header class="header__container">
+        <div class="header__content">
+          <img src="_static/images/logo-determined-ai.svg" alt="Light Logo">
+          <ul class="menu-right">
+              <li>
+                  <a href="https://determined-community.slack.com/join/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew#/shared-invite/email">Slack</a>
+              </li>
+              <li>
+                  <a href="https://determined.ai/blog/">Blog</a>
+              </li>
+              <li>
+                  <a href="https://github.com/determined-ai/determined">GitHub</a>
+              </li>
+          </ul>
+        </div>
+      </header>
+      <div class="landing-main-content">
+        <div class="hero">
+
+          <h2>Welcome to Determined!</h2>
+
+          <h3>What is Determined AI?</h3>
+
+          <p>Determined is an open source deep learning training platform that makes building models fast and
+          easy.</p>
+
+          <h3>Why Determined AI?</h3>
+
+          <p>With Determined you can integrate these features into an easy-to-use, high-performance deep learning environment:</p>
+          <ul>
+            <li>Train models faster using state-of-the-art multi-gpu-training, without changing your model code.</li>
+             <li>Automatically find high-quality models using advanced hyperparameter-tuning from the creators of Hyperband.</li>
+             <li>Get more from your GPUs with smart scheduling, reducing cloud GPU costs by seamlessly using preemptible instances.</li>
+             <li>Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code versions, metrics, checkpoints, and hyperparameters.</li>
+          </ul>
+          <p>Spend your time building models instead of managing infrastructure, and continue using popular Deep Learning libraries, such as TensorFlow Keras and PyTorch, calling the Determined API from your existing model code.</p>
+        </div>
+        <div class="landing">
+            <div class="tiles-flex">
+                <a class="tile" href="quickstart-mdldev.html">
+                    <h2 class="tile-title">Start here ...</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="intro/features/list.html">
+                    <h2 class="tile-title">Introduction to Determined</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="cluster-setup-guide/requirements.html">
+                    <h2 class="tile-title">Cluster Setup Guide</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="tutorials/pytorch-mnist-tutorial.html">
+                    <h2 class="tile-title">Tutorials</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+
+                <a class="tile" href="training/setup-guide/overview.html">
+                    <h2 class="tile-title">Training</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="example-solutions/examples.html">
+                    <h2 class="tile-title">Example Solutions</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="model-hub-library/transformers/overview.html">
+                    <h2 class="tile-title">Model Hub Library</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+                <a class="tile" href="reference/cli.html">
+                    <h2 class="tile-title">Reference</h2>
+                    <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </a>
+            </div>
+        </div>
+        <div class="hero">
+          <ul>
+            <li>
+              <a class="reference internal" href="release-notes.html">Release Notes</a>
+            </li>
+            <li>
+              <a class="reference internal" href="attributions.html">Open Source Licenses</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    {% endblock %}
+
+  </body>
+</html>

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _release-notes:
 
 ###############
@@ -7,17 +9,6 @@
 **************
  Version 0.17
 **************
-
-Version 0.17.14
-===============
-
-**Release Date:** April 13, 2022
-
-**Bug Fixes**
-
--  Resource Pool: Fix a bug that causes the resource pool and resource manager to crash after
-   submitting a command with a non-default priority. We recommend that all users on 0.17.12 and
-   0.17.13 update to 0.17.14 or later.
 
 Version 0.17.13
 ===============
@@ -190,8 +181,8 @@ Version 0.17.9
 
 -  Notebooks: Add a config field ``notebook_idle_type`` that changes how the idleness of a notebook
    is determined for the idle timeout feature. If the value is different from the default, users do
-   not need to manually shut down kernels to allow the idle timeout to take effect. See :ref:`the
-   documentation <command-notebook-configuration>` for more information.
+   not need to manually shut down kernels to allow the idle timeout to take effect. See the notebook
+   documentation for more information.
 
 -  Web: Use the `Page Visiblity API
    <https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API>`__ to detect changes in
@@ -293,13 +284,13 @@ Version 0.17.6
 **New Features**
 
 -  Master: Add support for `systemd socket activation
-   <https://0pointer.de/blog/projects/socket-activation.html>`__ to the master. See :ref:`the
-   documentation <socket-activation>` for more information.
+   <https://0pointer.de/blog/projects/socket-activation.html>`__ to the master. See the socket
+   activation documentation for more information.
 
 -  Scheduling/CLI: Add support for adjusting job priority and weight through the WebUI and CLI.
 
 -  Add experimental ROCm support. In the environment config for images and environment variables,
-   the ``rocm`` key configures ROCm support. See :ref:`the documentation <rocm-support>` for more
+   the ``rocm`` key configures ROCm support. See the rocm support documentation for more
    information. The ``gpu`` key has been renamed to ``cuda``; ``gpu`` is still supported for
    backward compatibility, but its use is discouraged.
 
@@ -371,8 +362,8 @@ Version 0.17.4
 
 **New Features**
 
--  WebUI: Add the :ref:`model registry <organizing-models>` as a new top-level navigation option,
-   allowing for viewing, editing, and deleting existing models created using the CLI.
+-  WebUI: Add the model registry as a new top-level navigation option, allowing for viewing,
+   editing, and deleting existing models created using the CLI.
 
 -  Add experimental support for `Multi-Instance GPUs
    <https://www.nvidia.com/en-us/technologies/multi-instance-gpu/>`__ (MIGs) to agent-based setups,
@@ -544,8 +535,8 @@ Version 0.17.0
    /some/path`` will have two effects: first, ``/some/path`` will be bind-mounted into the container
    (still as ``/some/path``); second, interactive jobs (notebooks, shells, and commands) will run in
    the provided working directory by default. Note that containers run as the root user by default,
-   so you may want to :ref:`configure your user <run-as-user>` with ``det user`` such that
-   interactive jobs run as your regular user.
+   so you may want to configure your user with ``det user`` such that interactive jobs run as your
+   regular user.
 
 -  Commands/shells/notebooks: Support configuring the working directory using the ``work_dir``
    configuration field for commands, shells, and notebooks. You can also optionally set it in the
@@ -568,8 +559,8 @@ Version 0.17.0
 -  Model Hub: Support the `MMDetection <https://github.com/open-mmlab/mmdetection>`__ library to
    easily train object detection models. MMDetection provides efficient implementations of popular
    object detection methods like Mask R-CNN, Faster R-CNN, and DETR on par with Detectron2. In
-   addition, cutting-edge approaches from academia are regularly added to the library. See :ref:`the
-   documentation <model-hub-mmdetection>` for more information.
+   addition, cutting-edge approaches from academia are regularly added to the library. See the model
+   hub library mmdetection documentation for more information.
 
 -  Deploy: Add the ability to use customizable master configuration templates in ``det deploy
    aws|gcp``.
@@ -646,8 +637,8 @@ Version 0.16.4
    experiment trials and experiment visualization pages.
 
 -  Scheduling/CLI: Support changing task priorities using the ``det
-   experiment/command/notebook/shell/tensorboard set priority`` commands. See :ref:`scheduling` for
-   more information on task priorities.
+   experiment/command/notebook/shell/tensorboard set priority`` commands. See the scheduling
+   documentation for more information on task priorities.
 
 -  CLI: Allow command-line config overrides in experiment creation, e.g., ``det e create const.yaml
    . --config key=value``.
@@ -700,7 +691,7 @@ Version 0.16.2
 
 -  Make ``det deploy local`` bind-mount the user's home directory into task containers. The mounted
    directory can be changed with the ``--auto-bind-mount=<path>`` option and mounting can be
-   disabled entirely with ``--no-auto-bind-mount``. See :ref:`install-using-deploy` for details.
+   disabled entirely with ``--no-auto-bind-mount``. See the deployment documentation for details.
 
 **Improvements**
 
@@ -757,9 +748,8 @@ Version 0.16.0
 -  Trials: Add new support for profiling model code. For all frameworks, collecting system metrics,
    such as GPU utilization and memory, is supported. For PyTorch, additional profiling for timing is
    available. To quickly try out profiling, set ``profiling.enabled = true`` in the experiment
-   configuration. For a longer introduction to the features, see the :ref:`guide on profiling
-   <how-to-profiling>` or view details on available configuration options in the :ref:`reference
-   <experiment-configuration_profiling>`.
+   configuration. For a longer introduction to the features, see the guide on profiling or view
+   details on available configuration options.
 
 -  Experiments: Add new ``notes`` and ``name`` fields to experiments.
 
@@ -779,7 +769,7 @@ Version 0.16.0
 
 -  Scheduling: Support backfilling in the priority scheduler. If there are slots that cannot be
    filled with high-priority tasks, low-priority tasks will be scheduled onto them. This requires
-   preemption to be enabled in the :ref:`master configuration <master-configuration>`.
+   preemption to be enabled in the master configuration documentation.
 
 -  WebUI: Improve task list filtering by moving column filters to the table header.
 
@@ -802,8 +792,8 @@ Version 0.16.0
 **Deprecated Features**
 
 -  The method :meth:`~determined.experimental.create_trial_instance` is now deprecated. Users should
-   instead use the more flexible ``TrialContext.from_config()``, which is described in
-   :ref:`model-debug`.
+   instead use the more flexible ``TrialContext.from_config()``, which is described in the debugging
+   best practices documentation.
 
 **Removed Features**
 
@@ -826,7 +816,7 @@ Version 0.15.6
    <https://github.com/RehanSD/determined/blob/master/examples/nlp/word_language_model/README.md>`__.
 
 -  Support using the Determined shell as a remote host inside Visual Studio Code and PyCharm IDEs.
-   See :ref:`commands-and-shells` for more information.
+   See the commands and shells documentation for more information.
 
 **Improvements**
 
@@ -861,7 +851,7 @@ Version 0.15.5
 
 -  Deprecate the ``scheduler`` and ``provisioner`` fields in the master configuration in favor of
    ``resource_manager`` and ``resource_pools``. They will be removed in the next minor release,
-   Determined 0.16.0. See :ref:`resource-pools` for more information.
+   Determined 0.16.0. See the resource pools documentation for more information.
 
 Version 0.15.4
 ==============
@@ -872,8 +862,8 @@ Version 0.15.4
 
 -  Model Hub: Publish Determined's Model Hub library to make it easy to train models from supported
    third-party libraries with a Determined cluster. The first library supported in Model Hub is the
-   `HuggingFace transformers library for NLP <https://huggingface.co/transformers>`__. See
-   :ref:`model-hub` to get started.
+   `HuggingFace transformers library for NLP <https://huggingface.co/transformers>`__. See the model
+   hub library documentation to get started.
 
 **Minor Changes**
 
@@ -903,17 +893,16 @@ Version 0.15.2
 **New Features**
 
 -  Kubernetes: Support priority scheduling with preemption. The preemption scheduler is able to
-   preempt experiments when higher priority ones are submitted. See :ref:`Priority Scheduling with
-   Preemption on Kubernetes <priority-scheduling-on-kubernetes>` for more information.
+   preempt experiments when higher priority ones are submitted. See Priority Scheduling with
+   Preemption on Kubernetes for more information.
 
--  APIs: Promote the custom metric reducer APIs for both :ref:`pytorch <pytorch-custom-reducers>`
-   and :ref:`estimators <estimators-custom-reducers>` from experimental status to general
-   availability.
+-  APIs: Promote the custom metric reducer APIs for both pytorch and estimators from experimental
+   status to general availability.
 
 -  Resource pools: Support configuring distinct ``task_container_defaults`` for each resource pool
    configured on the cluster. This can allow different resource pools which may have very different
    hardware to configure tasks in each pool with the correct settings. See Resource Pool
-   configuration under :ref:`cluster-configuration` for more information.
+   configuration under in the cluster configuration documentation for more information.
 
 **Improvements**
 
@@ -924,9 +913,9 @@ Version 0.15.2
    ``docker run`` command. These are configured in an experiment or command/notebook config via
    ``resources.devices``, ``environment.add_capabilities``, and ``environment.drop_capabilities``.
    These settings can combine to allow an experiment to take advantage of cluster hardware not
-   previously available to training or notebook task. See :ref:`experiment-configuration` for more
-   details. These configurations are only honored by resource managers of type ``agent``, and are
-   ignored by resource managers of type ``kubernetes``.
+   previously available to training or notebook task. See the experiment configuration reference
+   documentation for more details. These configurations are only honored by resource managers of
+   type ``agent``, and are ignored by resource managers of type ``kubernetes``.
 
 **Bug Fixes**
 
@@ -969,7 +958,9 @@ Version 0.15.0
 **New Features**
 
 -  WebUI: Provide historical allocation data on the Cluster page. This page breaks down GPU hours by
-   user, label, and resource pool. See :ref:`historical-cluster-usage-data` for more information.
+   user, label, and resource pool. See the historical cluster usage data documentation for more
+   information.
+
 -  WebUI: Add a gallery mode to the hyperparameter scatter plot and heatmap visualizaztions to allow
    users to inspect each scatter plot in full detail.
 
@@ -1023,7 +1014,7 @@ Version 0.14.6
    allocation information.
 
 -  PyTorch Lightning: Add an adapter to support ``LightningModule`` from PyTorch Lightning in the
-   PyTorchTrial API. See :doc:`/training-apis/api-pytorch-lightning` for more information.
+   PyTorchTrial API. See the PyTorch Lightning API documentation for more information.
 
 **Improvements**
 
@@ -1031,7 +1022,7 @@ Version 0.14.6
    TensorFlow 1.15.5 with Python 3.7. Previous images are still available but must be specified in
    the experiment or command configuration. It is recommended to validate the performance of models
    when changing CUDA versions as some models can experience significant changes in training time,
-   etc. See :ref:`custom-env` for more information.
+   etc. See the documentation about custom environments for more information.
 
 -  WebUI: Improve the hyperparameter scatter plot and heat map visualizations by adding support for
    showing categorical hyperparameters.
@@ -1049,21 +1040,19 @@ Version 0.14.5
 **New Features**
 
 -  REST API: Add a REST API endpoint exposing historical cluster resource allocation. Currently,
-   information about experiment workloads (training, checkpoints, and validations) is included. Use
-   the :ref:`rest-api` for more information.
+   information about experiment workloads (training, checkpoints, and validations) is included.
 
--  Hyperparameter Search: Introduce a stopping-based variant of
-   :ref:`topic-guides_hp-tuning-det_adaptive-asha` that will continue training trials by default
-   unless stopped by the algorithm. Compared to the default promotions-based algorithm, the stopping
-   variant will promote to higher rungs faster and does not require fault tolerance since it will
-   not resume stopped trials. See the :ref:`experiment-configuration` reference for more
-   information.
+-  Hyperparameter Search: Introduce a stopping-based variant of adaptive asha that will continue
+   training trials by default unless stopped by the algorithm. Compared to the default
+   promotions-based algorithm, the stopping variant will promote to higher rungs faster and does not
+   require fault tolerance since it will not resume stopped trials. See the experiment configuration
+   reference documentation for more information.
 
 -  PyTorch: Add an option to :class:`~determined.pytorch.LRScheduler` to accept a frequency option
    alongside batch and epoch step modes.
 
 -  Kubernetes: Add support for priority scheduling, with gang-scheduling for distributed training,
-   on Kubernetes. See :ref:`scheduling` for more information.
+   on Kubernetes. See the scheduling documentation for more information.
 
 **Improvements**
 
@@ -1092,7 +1081,7 @@ Version 0.14.3
    in the Determined repository.
 
 -  Searcher: Support programmatic rejection of certain hyperparameters to further optimize your
-   hyperparameter search. See :ref:`topic-guides_hp-constraints-det` for more details.
+   hyperparameter search.
 
 -  WebUI: Add additional hyperparameter visualizations to multi-trial experiments. The new parallel
    coordinate, scatter plot, and heat map visualizations will allow you to better explore
@@ -1119,10 +1108,10 @@ Version 0.14.2
 -  Support CUDA 11. New Docker images are available for experiments and commands to support CUDA 11,
    as well as some updated versions of frameworks on CUDA 10.1. It is recommended to validate the
    performance of models when changing CUDA versions as some models can experience significant
-   changes in training time, etc. See :ref:`custom-env` for more details.
+   changes in training time, etc.
 
 -  Support ``startup-hook.sh`` for notebooks and shells. This is the same mechanism supported by
-   experiments. See :ref:`notebook-configuration` for more details.
+   experiments.
 
 **Improvements**
 
@@ -1158,7 +1147,7 @@ Version 0.14.0
 **New Features**
 
 -  Add resource pools, which allows for different types of tasks to be scheduled onto different
-   types of agents. For more information see :ref:`resource-pools`.
+   types of agents.
 -  ``det-deploy`` will now create clusters with two resource pools, one that uses GPU instances and
    one that uses CPU instances for tasks that only require CPUs.
 -  WebUI: Revamp cluster page with information about configured resource pools.
@@ -1187,14 +1176,13 @@ Version 0.14.0
    metric values, which are represented as JSON objects or `protobuf structs
    <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct>`__.
 
--  Documentation: Add a topic guide on :ref:`debugging models <model-debug>`. The new guide will
-   walk you step-by-step through solving problems with a model in Determined, with a focus on
-   testing features incrementally until the model is fully working. It may also be useful when
-   porting new models to Determined.
+-  Documentation: Add a topic guide on debugging models. The new guide will walk you step-by-step
+   through solving problems with a model in Determined, with a focus on testing features
+   incrementally until the model is fully working. It may also be useful when porting new models to
+   Determined.
 
--  Documentation: Add a topic guide on :ref:`commands and shells <commands-and-shells>`. It
-   describes how to use Determined's support for managing GPU-powered batch commands and interactive
-   shells.
+-  Documentation: Add a topic guide on commands and shells. It describes how to use Determined's
+   support for managing GPU-powered batch commands and interactive shells.
 
 -  REST API: Improve the performance of the experiments API.
 
@@ -1234,8 +1222,7 @@ Version 0.13.13
 
 -  Update experiment details pages to include a learning curve visualization. This will enable a
    comparison of hyperparameter performance among many different trials within an experiment.
--  Support Elasticsearch as an alternative backend for logging. Read more about
-   :ref:`elasticsearch-logging-backend` to see if it's appropriate for your Determined deployment.
+-  Support Elasticsearch as an alternative backend for logging.
 
 **Improvements**
 
@@ -1308,13 +1295,12 @@ Version 0.13.10
 **New Features**
 
 -  WebUI: Add support for mobile and tablet devices. Check your experiment results on the go!
--  Scheduler: Update the priority scheduler to support specifying priorities and preemption. See
-   :ref:`experiment-configuration` for details on how to set individual experiment priorities.
+-  Scheduler: Update the priority scheduler to support specifying priorities and preemption.
 
 **Improvements**
 
 -  Improve the scheduling and scaling behavior of CPU tasks, and allow the maximum number of CPU
-   tasks per agent to be configured via the :ref:`cluster-configuration`.
+   tasks per agent to be configured via cluster configuration.
 
 -  Add custom tagging support to AWS dynamic agents. Thank you to ``sean-adler`` for contributing
    this improvement!
@@ -1337,8 +1323,8 @@ Version 0.13.10
 -  Fix a bug causing `active` trials that have failed to not be restored properly on a master
    restart when ``max_restarts`` is greater than ``0``.
 
--  Allow configurations with a ``.`` character in the keys for map fields in the
-   :ref:`master-configuration` (e.g. ``task_container_defaults.cpu_pod_spec.metadata.labels``).
+-  Allow configurations with a ``.`` character in the keys for map fields in the master
+   configuration (e.g. ``task_container_defaults.cpu_pod_spec.metadata.labels``).
 
 -  Fix a bug where restoring a large number of experiments after a failure could lead to deadlock.
 
@@ -1359,7 +1345,7 @@ Version 0.13.9
 **Improvements**
 
 -  Commands: Support configuring ``shmSize`` for commands (e.g., notebooks, shells, TensorBoards) in
-   :ref:`command configurations <command-notebook-configuration>`.
+   command configurations.
 
 **Bug Fixes**
 
@@ -1414,17 +1400,16 @@ Version 0.13.8
    to one of ``auto``, ``gpu``, and ``none`` in the field ``slot_type`` of the agent configuration
    ``agent.yaml``. Dynamic agents having GPUs will be configured to ``gpu`` while those agents
    having no GPUs will be configured to ``none``. For static agents this field defaults to ``auto``.
-   See :ref:`Agent configuration <agent-configuration>` for details.
 
--  API: Add ``self.context.wrap_optimizer()`` to the Determined TFKerasTrial API. Please see
-   :doc:`/training-apis/api-keras` for detail.
+-  API: Add ``self.context.wrap_optimizer()`` to the Determined TFKerasTrial API. See the Keras API
+   documentation for detail.
 
 -  API: Add tf.keras DCGAN example that subclasses ``tf.keras.Model``.
 
 -  API: Add ``self.context.configure_fit()`` to the Determined TFKerasTrial API. Many parameters
    which would be passed to ``model.fit()``, such as ``class_weight``, ``verbose``, or ``workers``,
-   can now be passed to ``configure_fit()`` and will be honored by ``TFKerasTrial``. Please see
-   :doc:`/training-apis/api-keras` for detail.
+   can now be passed to ``configure_fit()`` and will be honored by ``TFKerasTrial``. See the Keras
+   API documentation for detail.
 
 -  Kubernetes: Add option to configure the service type of the Determined deployed database in the
    Determined Helm Chart. This is useful if your cluster does not support ClusterIP, which is the
@@ -1496,8 +1481,7 @@ Version 0.13.7
 -  Add support for running workloads on spot instances on AWS. Spot instances can be up to 70%
    cheaper than on-demand instances. If a spot instance is terminated, Determined's built-in fault
    tolerance means that model training will continue on a different agent automatically. Spot
-   instances can be enabled by setting ``spot: true`` in the :ref:`cluster-configuration`. For more
-   details, see the guide on using :ref:`aws-spot`.
+   instances can be enabled by setting ``spot: true`` in the the cluster configuration.
 
 -  Support `MMDetection <https://github.com/open-mmlab/mmdetection>`__, a popular library for object
    detection, in Determined. MMDetection allows users to easily train state-of-the-art object
@@ -1513,18 +1497,17 @@ Version 0.13.7
 **Deprecated Features**
 
 -  Deprecate the simple and advanced adaptive hyperparameter search algorithms. They will be removed
-   in a future release. Both algorithms have been replaced with
-   :ref:`topic-guides_hp-tuning-det_adaptive-asha`, which has state-of-the-art performance, as well
-   as better scalability and resource-efficiency.
+   in a future release. Both algorithms have been replaced with adaptive asha, which has
+   state-of-the-art performance, as well as better scalability and resource-efficiency.
 
 **Improvements**
 
--  Documentation: Add a guide for :ref:`setup-eks-cluster`.
+-  Documentation: Add a guide for how to set up an eks cluster.
 
 -  Master: Support a minimum instance count for dynamic agents. The master will attempt to scale the
    cluster to at least the configured value at all times. This is configurable via
-   ``provisioner.min_instances`` in the :ref:`cluster-configuration`. This will increase
-   responsiveness to workload demand because agent(s) will be ready even when the cluster is idle.
+   ``provisioner.min_instances`` in the cluster configuration. This will increase responsiveness to
+   workload demand because agent(s) will be ready even when the cluster is idle.
 
 -  Kubernetes: Improve the performance of the ``/agents`` endpoint for Kubernetes deployments. This
    will improve the performance of the cluster page in the WebUI, as well as when using ``det slot
@@ -1546,8 +1529,8 @@ Version 0.13.7
 -  WebUI: Fix an issue with rendering boolean hyperparameters in the WebUI.
 -  CLI: Fix an issue where trial IDs were occasionally not displayed when running ``det task list``
    or ``det slot list`` in the CLI.
--  Master: Fix the default value for the ``fit`` field if the ``scheduler`` is set in the
-   :ref:`cluster-configuration`.
+-  Master: Fix the default value for the ``fit`` field if the ``scheduler`` is set in the cluster
+   configuration.
 
 Version 0.13.6
 ==============
@@ -1563,7 +1546,7 @@ Version 0.13.6
 -  Documentation: Ship Swagger UI with Determined documentation. The ``/swagger-ui`` endpoint has
    been renamed to ``/docs/rest-api``.
 
--  Documentation: Add a :ref:`guide on configuring TLS <tls>` in Determined.
+-  Documentation: Add a guide on configuring TLS in Determined.
 
 -  Kubernetes: Add support for configuring memory and CPU requirements for the Determined database
    when installing via the Determined Helm Chart.
@@ -1600,7 +1583,7 @@ Version 0.13.5
       accepted; the master can no longer be configured to listen over HTTP and HTTPS simultaneously.
 
 -  Security: Support configuring TLS encryption when deploying Determined on Kubernetes. For more
-   details please see :ref:`install-on-kubernetes`.
+   details please see the Kubernetes installation documentation.
 
 -  Agent: Increase default max agent starting and idle timeouts to 20 minutes and increase max
    disconnected period from 5 to 10 minutes.
@@ -1616,7 +1599,7 @@ Version 0.13.5
 -  Documentation: Add a ``tf.layers-in-Estimator`` example.
 
 -  Kubernetes: Add support for users to specify ``initContainers`` and ``containers`` as part of
-   their custom pod specs. Please see :ref:`custom-pod-specs` for details.
+   their custom pod specs.
 
 -  Kubernetes: Publish version 0.2.0 of the Determined Helm chart.
 
@@ -1658,8 +1641,8 @@ Version 0.13.4
 **Improvements**
 
 -  Support configuring default values for the task image, Docker pull policy, and Docker registry
-   credentials via the :ref:`master-configuration` and the :ref:`helm-config`. In previous versions
-   of Determined, these values had to be specified on a per-task basis (e.g., in the experiment
+   credentials via the master configuration and the helm configuration. In previous versions of
+   Determined, these values had to be specified on a per-task basis (e.g., in the experiment
    configuration). Per-task configuration is still supported and will overwrite the default value
    (if any).
 
@@ -1737,13 +1720,11 @@ Version 0.13.2
       scheduler.
 
    -  Users can configure the behavior of the pods that are launched for Determined workloads by
-      specifying a :ref:`custom pod spec <custom-pod-specs>`. A default pod spec can be configured
-      when installing Kubernetes, but a custom pod spec can also be specified on a per-task basis
-      (e.g., via the :ref:`environment.pod_spec <exp-environment-pod-spec>` field in the experiment
-      configuration file).
+      specifying a custom pod spec. A default pod spec can be configured when installing Kubernetes,
+      but a custom pod spec can also be specified on a per-task basis (e.g., via the
+      environment.pod_spec field in the experiment configuration file).
 
-   -  For more information on using Determined with Kubernetes, see the :ref:`documentation
-      <determined-on-kubernetes>`.
+   -  For more information on using Determined with Kubernetes, see the Kubernetes documentation.
 
 -  Support running multiple distributed training jobs on a single agent.
 
@@ -1822,7 +1803,7 @@ to the following changes:
    cancel`` or ``det experiment kill``). The format of the experiment config file has changed --
    configuration files that worked with previous versions of Determined will need to be updated to
    work with Determined >= 0.13.0. For more details, see the notes below or the `migration guide
-   <https://docs.determined.ai/0.17.3/training-apis/experiment-config.html#migration-from-v0-12-13-to-v0-13-0>`_.
+   <https://docs.determined.ai/0.17.3/reference/config/experiment-config-reference.html#migration-from-v0-12-13-to-v0-13-0>`_.
 
 -  The WebUI has been partially rewritten, moving several components that were implemented in Elm to
    now being written in React and TypeScript. As part of this change, many improvements to the
@@ -1851,7 +1832,7 @@ to the following changes:
 -  **Remove Steps from the UX:** Remove the concept of a "step" from the CLI, WebUI, and
    configuration files. Add new configuration settings to allow settings previously in terms of
    steps to be configured instead in terms of records, batches or epochs. See the `migration guide
-   <https://docs.determined.ai/0.17.3/training-apis/experiment-config.html#migration-from-v0-12-13-to-v0-13-0>`_
+   <https://docs.determined.ai/0.17.3/reference/config/experiment-config-reference.html#migration-from-v0-12-13-to-v0-13-0>`_
    for details on migrating from the old configuration to the new configuration.
 
    -  Many configuration settings can now be set in terms of records, batches or epochs. For
@@ -2016,8 +1997,7 @@ Version 0.12.13
 **New Features**
 
 -  **Model Registry:** Determined now includes a built-in model registry, which makes it easy to
-   organize trained models by providing versioning and labeling tools. See :ref:`organizing-models`
-   to get started.
+   organize trained models by providing versioning and labeling tools.
 
 -  **New PyTorch API:** Add a new version of the PyTorch API that is more flexible and supports deep
    learning experiments that use multiple models, optimizers, and LR schedulers. The old API is
@@ -2053,13 +2033,11 @@ Version 0.12.13
 -  **More Efficient Hyperparameter Search:** This release introduces a new hyperparameter search
    method, ``adaptive_asha``. This is based on an asynchronous version of the ``adaptive``
    algorithm, and should enable large searches to find high-quality hyperparameter configurations
-   more quickly. See the :ref:`documentation <topic-guides_hp-tuning-det_adaptive-asha>` and the
-   `associated paper <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
+   more quickly.
 
 **Improvements**
 
--  Allow proxy environment variables to be set in the agent config. See :ref:`environment-variables`
-   for more information.
+-  Allow proxy environment variables to be set in the agent config.
 -  Preserve random state for PyTorch experiments when checkpointing and restoring.
 -  Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using
    highly customized ``nn.Module`` implementations.
@@ -2086,9 +2064,6 @@ Version 0.12.12
 -  Remove support for ``on_train_step_begin`` and ``on_train_step_end``, deprecate
    ``on_validation_step_end``, and introduce new callback ``on_validation_end`` with same
    functionality. Add helper methods ``is_epoch_start`` and ``is_epoch_end`` to PyTorch context.
-
--  Add a new API to support custom reducers in ``EstimatorTrial``. See
-   :doc:`/training-apis/api-estimator` for details.
 
 -  CLI: Add the ``register_version`` command for registering a new version of a model.
 
@@ -2158,7 +2133,7 @@ Version 0.12.10
 -  CLI: Improve performance when retrieving trial logs.
 -  CLI: Add the ``det user rename`` command for administrators to change the username of existing
    users.
--  Expand documentation on :ref:`use-trained-models` by including checkpoint metadata management.
+-  Expand documentation on trained models by including checkpoint metadata management.
 -  Reorganize examples by splitting the Trial examples into separate folders.
 
 **Bug Fixes**
@@ -2194,8 +2169,7 @@ Version 0.12.7
 
 -  Add a ``metadata`` field to checkpoints. Checkpoints can now have arbitrary key-value pairs
    associated with them. Metadata can be added, queried, and removed via a :class:`Python API
-   <determined.experimental.Checkpoint>`. See the :ref:`documentation <store-checkpoint-metadata>`
-   for details.
+   <determined.experimental.Checkpoint>`.
 
 -  Add support for Keras callbacks that stop training early, including the `official EarlyStopping
    callback <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping>`__. When a
@@ -2292,19 +2266,16 @@ Version 0.12.5
 
 Enterprise:
 
--  Add support for using SCIM (System for Cross-domain Identity Management) to provision users. For
-   usage, see :ref:`scim`.
--  Add support for using OAuth2 to secure Determined's SCIM integration. For usage, see
-   :ref:`oauth`.
--  Add support for users to sign-on through an external IdP with SAML. For usage, see :ref:`saml`.
+-  Add support for using SCIM (System for Cross-domain Identity Management) to provision users.
+-  Add support for using OAuth2 to secure Determined's SCIM integration.
+-  Add support for users to sign-on through an external IdP with SAML.
 
 Version 0.12.4
 ==============
 
 **Release Date:** May 14, 2020
 
--  **Breaking Change:** Users are no longer automatically logged in as the "determined" user. Refer
-   to :ref:`users` for more details.
+-  **Breaking Change:** Users are no longer automatically logged in as the "determined" user.
 
 -  Support multi-slot notebooks. The number of slots per notebook cannot exceed the size of the
    largest available agent. The number of slots to use for a notebook task can be configured when
@@ -2322,7 +2293,7 @@ Version 0.12.4
 
 -  The ``tf.keras`` examples for the Native and Trial APIs now refer to the same model.
 
--  Add a topic guide explaining Determined's approach to :ref:`elastic-infrastructure`.
+-  Add a topic guide explaining Determined's approach to elastic infrastructure.
 
 -  Add a topic guide explaining the Native API (since deprecated).
 
@@ -2436,7 +2407,7 @@ Version 0.12.2
    must be specified in the configuration of every experiment). Previously, the hyperparameter
    ``batch_size`` was required and was manipulated automatically for distributed training. Now
    ``global_batch_size`` will not be manipulated; users should train based on
-   ``context.get_per_slot_batch_size()``. See :ref:`multi-gpu-training` for more context.
+   ``context.get_per_slot_batch_size()``.
 
 -  Remove ``download_data()``. If users wish to download data at runtime, they should make sure that
    each process (one process per slot) downloads to a unique location. This can be accomplished by
