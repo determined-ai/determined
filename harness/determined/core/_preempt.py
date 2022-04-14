@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 import requests
 
-from determined import _core
+from determined import core
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.core")
@@ -153,7 +153,7 @@ class PreemptContext:
         self,
         session: Session,
         allocation_id: str,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         preempt_mode: PreemptMode = PreemptMode.WorkersAskChief,
     ) -> None:
         self._session = session
@@ -255,7 +255,7 @@ class DummyPreemptContext(PreemptContext):
 
     def __init__(
         self,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         preempt_mode: PreemptMode = PreemptMode.WorkersAskChief,
     ) -> None:
         self._dist = dist
