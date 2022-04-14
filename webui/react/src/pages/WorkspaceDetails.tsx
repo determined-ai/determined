@@ -101,19 +101,23 @@ const WorkspaceDetails: React.FC = () => {
     setProjectFilter(value as ProjectFilters);
   }, []);
 
-  // useEffect(() => {
-  //   switch (projectFilter) {
-  //     case ProjectFilters.All:
-  //       updateSettings({ user: undefined });
-  //       break;
-  //     case ProjectFilters.Mine:
-  //       updateSettings({ user: user ? [ user.username ] : undefined });
-  //       break;
-  //     case ProjectFilters.Others:
-  //       updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
-  //       break;
-  //   }
-  // }, [ projectFilter, updateSettings, user, users ]);
+  useEffect(() => {
+    switch (projectFilter) {
+      case ProjectFilters.All:
+        updateSettings({ user: undefined });
+        break;
+      case ProjectFilters.Mine:
+        updateSettings({ user: user ? [ user.username ] : undefined });
+        break;
+      case ProjectFilters.Others:
+        updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
+        break;
+    }
+  }, [ projectFilter, updateSettings, user, users ]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [ fetchAll ]);
 
   useEffect(() => {
     return () => canceler.abort();
