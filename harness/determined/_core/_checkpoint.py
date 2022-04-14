@@ -44,16 +44,15 @@ class CheckpointContext:
         dist: _core.DistributedContext,
         storage_manager: storage.StorageManager,
         session: Session,
-        api_path: str,
-        static_metadata: Optional[Dict[str, Any]] = None,
+        task_id: str,
+        allocation_id: str,
         tbd_mgr: Optional[tensorboard.TensorboardManager] = None,
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
         self._session = session
-        self._static_metadata = static_metadata or {}
-        self._static_metadata["determined_version"] = det.__version__
-        self._api_path = api_path
+        self._task_id = task_id
+        self._allocation_id = allocation_id
         self._tbd_mgr = tbd_mgr
 
     def upload(
@@ -222,22 +221,13 @@ class CheckpointContext:
         """
         After having uploaded a checkpoint, report its existence to the master.
         """
-
         resources = resources or {}
         metadata = metadata or {}
-        required = {"latest_batch"}
-        allowed = required.union({"framework", "format", "total_records", "total_epochs"})
-        missing = [k for k in required if k not in metadata]
-        extra = [k for k in metadata.keys() if k not in allowed]
-        if missing:
+
+        if "latest_batch" not in metadata:
             raise ValueError(
-                "metadata for reported checkpoints, in the current implementation, requires all of "
-                f"the following items that have not been provided: {missing}"
-            )
-        if extra:
-            raise ValueError(
-                "metadata for reported checkpoints, in the current implementation, cannot support "
-                f"the following items that were provided: {extra}"
+                "metadata for reported checkpoints, in the current implementation, requires a "
+                "'latest_batch' item, which has not been provided"
             )
 
         body = {
@@ -248,6 +238,7 @@ class CheckpointContext:
         }
         logger.info(f"Reported checkpoint to master {storage_id}")
         self._session.post(self._api_path, data=det.util.json_encode(body))
+        # XXX: confirm that this implementation is ok for now
 
         # Also sync tensorboard.
         if self._tbd_mgr:
