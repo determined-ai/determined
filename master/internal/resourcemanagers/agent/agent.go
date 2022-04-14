@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -60,11 +59,6 @@ type (
 		preDisconnectEnabled  bool
 		preDisconnectDraining bool
 
-		// uuid is an anonymous ID that is used when reporting telemetry
-		// information to allow agent connection and disconnection events
-		// to be correlated.
-		uuid uuid.UUID
-
 		// opts are additional agent options the master sends to the agent.
 		opts *aproto.MasterSetAgentOptions
 
@@ -110,7 +104,6 @@ func (a *agent) Receive(ctx *actor.Context) error {
 func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	switch msg := msg.(type) {
 	case actor.PreStart:
-		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
 		ctx.Respond(a.summarize(ctx))
@@ -163,12 +156,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 				Drain:   &a.agentState.draining,
 			})
 
-			for msg := range a.reconnectBacklog {
+			for _, msg := range a.reconnectBacklog {
 				if err := a.receive(ctx, msg); err != nil {
 					return errors.Wrapf(err, "replaying backlog")
 				}
 			}
 			a.reconnectBacklog = nil
+
+			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		}
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
@@ -246,6 +241,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Drain:   &a.agentState.draining,
 		})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case *proto.DisableAgentRequest:
 		if a.awaitingReconnect {
 			ctx.Respond(errRecovering)
@@ -271,6 +267,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
@@ -299,7 +296,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Enabled: &a.agentState.enabled,
 			Drain:   &a.agentState.draining,
 		})
-
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
