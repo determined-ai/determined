@@ -19,7 +19,8 @@ class EarlyExitReason(enum.Enum):
 
 class TrainContext:
     """
-    Some training-related REST API wrappers.
+    TrainContext gives access to report training and validation metrics to the Determined master
+    during trial tasks.
     """
 
     def __init__(
@@ -39,11 +40,21 @@ class TrainContext:
         self._tbd_writer = tbd_writer
 
     def set_status(self, status: str) -> None:
+        """
+        set_status reports a short user-facing string that the WebUI can render to indicate what
+        a trial is working on.
+        """
+
         body = {"state": status}
         logger.debug(f"set_status({status})")
         self._session.post(f"/api/v1/trials/{self._trial_id}/runner/metadata", json=body)
 
     def get_last_validation(self) -> Optional[int]:
+        """
+        get_last_validation will report the latest_batch from the most recent call to
+        report_validation_metrics().
+        """
+
         r = self._session.get(f"/api/v1/trials/{self._trial_id}")
         val = r.json()["trial"].get("latestValidation") or {}
         latest_batch = val.get("totalBatches")
@@ -56,6 +67,13 @@ class TrainContext:
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
+        """
+        Report training metrics to the master.
+
+        Optionally, you may include a list of batch_metrics.  Batch metrics will not be shown in the
+        WebUI but may be accessed from the master via the CLI for post-processing.
+        """
+
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
@@ -113,6 +131,13 @@ class TrainContext:
         latest_batch: int,
         metrics: Dict[str, Any],
     ) -> None:
+        """
+        Report validation metrics to the master.
+
+        Note that for hyperparameter search, this is independent of the need to report the searcher
+        metric via SearcherOperation.report_completed() in the Searcher API.
+        """
+
         serializable_metrics = self._get_serializable_metrics(metrics)
         reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
@@ -133,6 +158,14 @@ class TrainContext:
             self._tbd_mgr.sync()
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
+        """
+        Report an early exit reason to the Determined master.
+
+        Presently, the only meaningful value to report is EarlyExitReason.INVALID_HP, which is
+        reported automatically in core.Context.__exit__() detects an exception of type
+        det.InvalidHP.
+        """
+
         body = {"reason": EarlyExitReason(reason).value}
         logger.info(f"report_early_exit({reason})")
         r = self._session.post(
@@ -143,6 +176,13 @@ class TrainContext:
             logger.warn("early exit has already been reported for this trial, ignoring new value")
 
     def get_experiment_best_validation(self) -> Optional[float]:
+        """
+        Get the best reported validation metric reported so far, across the whole experiment.
+
+        The value returned will be the highest or lowest reported validation metric value, using
+        searcher.metric as the key and searcher.smaller_is_better for the comparison.
+        """
+
         logger.debug("get_experiment_best_validation()")
         try:
             r = self._session.get(
@@ -155,8 +195,6 @@ class TrainContext:
 
 
 class DummyTrainContext(TrainContext):
-    """ """
-
     def __init__(self) -> None:
         pass
 

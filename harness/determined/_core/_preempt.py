@@ -145,9 +145,8 @@ class PreemptMode(enum.Enum):
 
 class PreemptContext:
     """
-    Some preemption-related APIs.
-
-    The allowable calling patterns and behavior are configured by the preempt_mode argument:
+    PreemptContext gives access to preemption signals that originate either from a user action,
+    like pausing an experiemnt via the WebUI or the CLI, or in the Determined scheduler.
     """
 
     def __init__(
@@ -250,7 +249,9 @@ class PreemptContext:
 
 
 class DummyPreemptContext(PreemptContext):
-    """Present a PreemptContext API that never returns True."""
+    """
+    DummyPreemptContext is a PreemptContext where should_preempt() always returns False.
+    """
 
     def __init__(
         self,

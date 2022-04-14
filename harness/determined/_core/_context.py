@@ -14,9 +14,11 @@ logger = logging.getLogger("determined.core")
 
 class Context:
     """
-    core.Context is a simple composition of several other APIs.
+    core.Context is a simple composition of several component APIs.
 
-    You should use core.init instead of creating a core.Context manually.
+    core.Context is a tool for integrating arbitrary distributed tasks into a Determined cluster.
+
+    You should always use core.init() instead of creating a core.Context manually.
     """
 
     def __init__(
@@ -87,10 +89,25 @@ def _dummy_init(
 def init(
     *,
     distributed: Optional[_core.DistributedContext] = None,
+    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
-    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
 ) -> Context:
+    """
+    core.init() builds a core.Context for use with the Core API.
+
+    You should always use core.init() instead of instantiating a core.Context directly.  Certain
+    components of the Core API may be configured directly by passing arguments to core.init().  The
+    only component that must be passed in, and even then, only for multi-slot tasks, is a valid
+    DistributedContext.
+
+    Arguments:
+        distributed (``core.DistributedContext``, default: ``None``): Passing a DistributedContext is
+            required for multi-slot training, but unnecessary for single-slot training.
+        preempt_mode (``core.PreemptMode``, default: ``WorkersAskChief``): Configure the calling
+            pattern for the core_context.preempt.should_preempt() method.
+        storage_manager: this argument is currently reserved for internal use only.
+    """
     info = det.get_cluster_info()
     if info is None:
         return _dummy_init(distributed=distributed, storage_manager=storage_manager)
