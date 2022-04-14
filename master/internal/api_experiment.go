@@ -96,7 +96,6 @@ func (a *apiServer) GetExperiment(
 	resp := apiv1.GetExperimentResponse{
 		Experiment: exp,
 		Config:     protoutils.ToStruct(conf),
-		JobSummary: &jobv1.JobSummary{},
 	}
 
 	if model.TerminalStates[model.StateFromProto(exp.State)] {
@@ -105,10 +104,11 @@ func (a *apiServer) GetExperiment(
 
 	jobID := model.JobID(exp.JobId)
 
+	jobSummary := &jobv1.JobSummary{}
 	err = a.ask(job.JobsActorAddr, job.GetJobSummary{
 		JobID:        jobID,
 		ResourcePool: exp.ResourcePool,
-	}, &resp.JobSummary)
+	}, &jobSummary)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't
@@ -123,6 +123,8 @@ func (a *apiServer) GetExperiment(
 			return nil, err
 		}
 		logrus.WithError(err).Debugf("asking for job summary")
+	} else {
+		resp.JobSummary = jobSummary
 	}
 
 	return &resp, nil
