@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 import determined as det
-from determined import _core, constants, gpu, load
+from determined import constants, core, gpu, load
 from determined.common import api
 
 
@@ -94,7 +94,7 @@ def _make_local_execution_env(
     checkpoint_dir: str,
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
-) -> Tuple[_core.Context, det.EnvContext]:
+) -> Tuple[core.Context, det.EnvContext]:
     config = det.ExperimentConfig(
         _make_local_execution_exp_config(
             config, checkpoint_dir, managed_training=managed_training, test_mode=test_mode
@@ -128,7 +128,7 @@ def _make_local_execution_env(
         on_cluster=False,
     )
 
-    core_context = _core._dummy_init()
+    core_context = core._dummy_init()
 
     return core_context, env
 

@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict
 
 import determined as det
-from determined import _core
+from determined import core
 
 
 class TrialContext(metaclass=abc.ABCMeta):
@@ -13,7 +13,7 @@ class TrialContext(metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        core_context: _core.Context,
+        core_context: core.Context,
         env: det.EnvContext,
     ) -> None:
         self._core = core_context

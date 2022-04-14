@@ -282,7 +282,7 @@ class DeterminedControlHook(estimator.RunHook):
         return self.estimator_trial_controller.compute_validation_metrics()
 
     def control_loop(self) -> None:
-        _core = self.estimator_trial_controller.context._core
+        core = self.estimator_trial_controller.context._core
 
         assert self.estimator_trial_controller.workloads is not None
         for wkld, response_func in self.estimator_trial_controller.workloads:
@@ -315,7 +315,7 @@ class DeterminedControlHook(estimator.RunHook):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
                         }
-                        with _core.checkpoint.store_path(metadata) as (path, storage_id):
+                        with core.checkpoint.store_path(metadata) as (path, storage_id):
                             self._checkpoint_model(path)
                         response = {"uuid": storage_id}
                     else:
