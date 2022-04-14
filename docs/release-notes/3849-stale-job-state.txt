@@ -1,5 +1,5 @@
 :orphan:
 
-**Bug Fix**
+**Bug Fixes**
 
--  Fix an issue where the reported job state could be stale.
+-  API: Fix an issue where a reported job state could be stale due to a faulty caching mechanism.
