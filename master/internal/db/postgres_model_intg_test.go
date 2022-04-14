@@ -121,10 +121,10 @@ func TestModels(t *testing.T) {
 					require.Equal(t,
 						expected.Checkpoint.Training.SearcherMetric.Value,
 						actual.Checkpoint.Training.SearcherMetric.Value)
-					require.NotNil(t, actual.Checkpoint.Training.ValidationMetrics)
+					require.NotNil(t, actual.Checkpoint.Training.ValidationMetrics.AvgMetrics)
 				} else {
 					require.Nil(t, actual.Checkpoint.Training.SearcherMetric)
-					require.Nil(t, actual.Checkpoint.Training.ValidationMetrics)
+					require.Nil(t, actual.Checkpoint.Training.ValidationMetrics.AvgMetrics)
 				}
 			}
 

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -83,7 +84,15 @@ func testGetCheckpoint(
 					TrialId:     int32(trial.ID),
 					TrialRunId:  int32(0),
 					LatestBatch: latestBatch,
-					Metrics:     nil,
+					Metrics: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"okness": {
+								Kind: &structpb.Value_NumberValue{
+									NumberValue: float64(0.5),
+								},
+							},
+						},
+					},
 				}
 
 				err := db.AddValidationMetrics(context.Background(), &trialMetrics)
@@ -122,16 +131,16 @@ func testGetCheckpoint(
 
 			assert.Equal(t, ckptCl.Training.ExperimentId.Value, int32(experiment.ID))
 			assert.Equal(t, ckptCl.Training.TrialId.Value, int32(trial.ID))
+
 			actualFramework := ckptCl.Metadata.GetFields()["framework"].GetStringValue()
 			assert.Equal(t, actualFramework, "some framework")
-			// assert.Equal(t, ckptCl.Format, "some format")
 
 			t.Logf("validationMetrics: %v", ckptCl.Training.ValidationMetrics)
-			// where did ValidationState go?
+
 			if tc.validate {
-				assert.Assert(t, ckptCl.Training.ValidationMetrics != nil)
+				assert.Assert(t, ckptCl.Training.ValidationMetrics.AvgMetrics != nil)
 			} else {
-				assert.Assert(t, ckptCl.Training.ValidationMetrics == nil)
+				assert.Assert(t, ckptCl.Training.ValidationMetrics.AvgMetrics == nil)
 			}
 			assert.Equal(t, ckptCl.State, checkpointv1.State_STATE_COMPLETED)
 		})
