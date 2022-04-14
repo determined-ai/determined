@@ -144,7 +144,7 @@ process's ``rank`` is automatically assigned by Determined, and will be unique a
 processes in a trial.
 
 You can do this by leveraging the :func:`self.context.distributed.get_rank()
-<determined._core._distributed.DistributedContext.get_rank>` function. Below is an example of how to
+<determined.core._distributed.DistributedContext.get_rank>` function. Below is an example of how to
 do this when downloading data from S3. In this example, the S3 bucket name is configured via a field
 ``data.bucket`` in the experiment configuration.
 
