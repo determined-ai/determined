@@ -48,8 +48,8 @@ def test_checkpoint_context(dummy: bool, mode: _core.DownloadMode) -> None:
                     pex.distributed,
                     storage_manager,
                     session=session,
-                    api_path="",
-                    static_metadata=None,
+                    task_id="task-id",
+                    allocation_id="allocation-id",
                     tbd_mgr=tbd_mgr,
                 )
             else:
