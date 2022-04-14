@@ -7,6 +7,7 @@ import Icon from 'components/Icon';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import useModalProjectDelete from 'hooks/useModal/useModalProjectDelete';
+import useModalProjectEdit from 'hooks/useModal/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/useModalProjectMove';
 import { paths } from 'routes/utils';
 import { archiveProject, unarchiveProject } from 'services/api';
@@ -22,10 +23,11 @@ interface Props {
 const ProjectCard: React.FC<Props> = ({ project }: Props) => {
   const { modalOpen: openProjectMove } = useModalProjectMove({ projectId: project.id });
   const { modalOpen: openProjectDelete } = useModalProjectDelete({ project: project });
+  const { modalOpen: openProjectEdit } = useModalProjectEdit({ project: project });
 
   const handleEditClick = useCallback(() => {
-    // bring up edit project modal
-  }, [ ]);
+    openProjectEdit();
+  }, [ openProjectEdit ]);
 
   const handleMoveClick = useCallback(() => {
     openProjectMove();
