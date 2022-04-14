@@ -20,7 +20,7 @@
     align-items: center;
     color: var(--theme-colors-monochrome-17);
     display: flex;
-    height: var(--theme-sizes-navigation-toolbarHeight);
+    height: var(--nav-bottom-bar-height);
 
     [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
     .label { font-size: var(--theme-sizes-font-medium); }

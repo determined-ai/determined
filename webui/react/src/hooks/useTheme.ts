@@ -1,7 +1,9 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { RecordKey } from 'shared/types';
 import { isObject } from 'shared/utils/data';
-import themes, { DarkLight, Theme } from 'themes';
+import { camelCaseToKebab } from 'shared/utils/string';
+import themes, { DarkLight, globalCssVars, Theme } from 'themes';
 import { BrandingType } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -76,10 +78,17 @@ export const useTheme = (): ThemeHook => {
 
   useEffect(() => {
     const root = document.documentElement;
-    const cssVars = flattenTheme(theme);
+    const themeCssVars = flattenTheme(theme);
 
-    // Set each theme property as top level CSS variable
-    Object.keys(cssVars).forEach(key => root.style.setProperty(`--${key}`, cssVars[key]));
+    // Set global CSS variables shared across themes.
+    Object.keys(globalCssVars).forEach(key => {
+      const value = (globalCssVars as Record<RecordKey, string>)[key];
+      root.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+      console.log(`--${camelCaseToKebab(key)}`, value);
+    });
+
+    // Set each theme property as top level CSS variable.
+    Object.keys(themeCssVars).forEach(key => root.style.setProperty(`--${key}`, themeCssVars[key]));
   }, [ theme ]);
 
   // Detect browser/OS level dark/light mode changes.

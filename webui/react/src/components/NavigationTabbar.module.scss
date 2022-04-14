@@ -1,6 +1,6 @@
 .base {
   background-color: var(--theme-colors-base-2);
-  height: var(--theme-sizes-navigation-toolbarHeight);
+  height: var(--nav-bottom-bar-height);
 
   .toolbar {
     align-items: center;
@@ -12,7 +12,7 @@
     align-items: center;
     color: var(--theme-colors-monochrome-17);
     display: flex;
-    height: var(--theme-sizes-navigation-toolbarHeight);
+    height: var(--nav-bottom-bar-height);
     justify-content: center;
     position: relative;
 

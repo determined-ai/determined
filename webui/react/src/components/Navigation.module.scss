@@ -26,7 +26,7 @@
     [class*=NavigationSideBar_base_] { display: none; }
     [class*=NavigationTabbar_base] { display: flex; }
     & > main {
-      height: calc(var(--vh, 1vh) * 100 - var(--theme-sizes-navigation-toolbarHeight));
+      height: calc(var(--vh, 1vh) * 100 - var(--nav-bottom-bar-height));
     }
   }
 }

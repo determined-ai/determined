@@ -1,3 +1,5 @@
+import { string } from 'io-ts';
+
 import {
   BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState,
 } from 'types';
@@ -90,11 +92,6 @@ export interface Theme {
     };
     /* eslint-enable @typescript-eslint/member-ordering */
     layout: {[size in ShirtSize]: string};
-    navigation: {
-      maxWidth: string;
-      minWidth: string;
-      toolbarHeight: string;
-    };
   };
 }
 
@@ -223,12 +220,6 @@ const lightDeterminedTheme: Theme = {
       jumbo: '36px',
       mega: '40px',
     },
-    /* eslint-enable sort-keys-fix/sort-keys-fix */
-    navigation: {
-      maxWidth: '240px',
-      minWidth: '56px',
-      toolbarHeight: '56px',
-    },
   },
 };
 
@@ -353,12 +344,6 @@ const darkDeterminedTheme: Theme = {
       jumbo: '36px',
       mega: '40px',
     },
-    /* eslint-enable sort-keys-fix/sort-keys-fix */
-    navigation: {
-      maxWidth: '240px',
-      minWidth: '56px',
-      toolbarHeight: '56px',
-    },
   },
 };
 
@@ -427,6 +412,14 @@ export const getStateColorCssVar = (state: StateOfUnion | undefined): string => 
 export const getStateColor = (state: StateOfUnion | undefined): string => {
   const cssVar = getStateColorCssVar(state);
   return window.getComputedStyle(document.body).getPropertyValue(cssVar);
+};
+
+export const globalCssVars = {
+  fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
+  fontFamilyCode: '"Source Code Pro", monospace',
+  navBottomBarHeight: '56px',
+  navSideBarWidthMax: '240px',
+  navSideBarWidthMin: '56px',
 };
 
 export enum DarkLight {
