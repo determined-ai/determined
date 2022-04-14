@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 import determined as det
-from determined import _core, tensorboard
+from determined import core, tensorboard
 from determined.common import storage
 from determined.common.api import bindings
 from determined.common.experimental.session import Session
@@ -41,7 +41,7 @@ class CheckpointContext:
 
     def __init__(
         self,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         storage_manager: storage.StorageManager,
         session: Session,
         task_id: str,
@@ -248,7 +248,7 @@ class CheckpointContext:
 class DummyCheckpointContext(CheckpointContext):
     def __init__(
         self,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         storage_manager: storage.StorageManager,
     ) -> None:
         self._dist = dist

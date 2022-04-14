@@ -8,7 +8,7 @@ from typing import Any, Callable, List
 import numpy as np
 import pytest
 
-from determined import _core
+from determined import core
 from determined.pytorch import Reducer, _PyTorchReducerContext, _simple_reduce_metrics
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
     def make_reducer_context(
         rank: int, cross_rank: int, local_rank: int
     ) -> DummyDistributedReducerContext:
-        distributed_context = _core.DistributedContext(
+        distributed_context = core.DistributedContext(
             rank=cross_rank * local_size + local_rank,
             size=cross_size * local_size,
             local_rank=local_rank,
