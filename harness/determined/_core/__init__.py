@@ -1,5 +1,9 @@
 from determined._core._distributed import DistributedContext, DummyDistributedContext
-from determined._core._checkpoint import CheckpointContext, DummyCheckpointContext
+from determined._core._checkpoint import (
+    CheckpointContext,
+    DownloadMode,
+    DummyCheckpointContext,
+)
 from determined._core._train import TrainContext, DummyTrainContext, EarlyExitReason
 from determined._core._searcher import (
     DummySearcherContext,

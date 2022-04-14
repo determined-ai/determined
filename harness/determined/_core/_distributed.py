@@ -1,11 +1,9 @@
-import contextlib
-import functools
 import logging
 import os
 import shutil
 import socket
 import tempfile
-from typing import Any, Callable, List, Optional
+from typing import Any, List, Optional
 
 import determined as det
 from determined import constants, ipc
@@ -385,40 +383,6 @@ class DistributedContext:
         else:
             stuff = self._local_worker_zmq.recv()
         return stuff
-
-    def _local_chief_contextmanager(self, fn: Callable) -> Callable:
-        """
-        Wrap a contextmanager such that the real context manager only runs on the chief, but the
-        results are distributed to all the local workers.
-        """
-        if self._is_local_chief:
-
-            @functools.wraps(fn)
-            @contextlib.contextmanager
-            def _fn(*args: Any, **kwargs: Any) -> Any:
-                with fn(*args, **kwargs) as out:
-                    # broadcast to local workers
-                    _ = self.broadcast_local(out)
-                    try:
-                        yield out
-                    finally:
-                        # wait for local workers
-                        _ = self.gather_local(None)
-
-        else:
-
-            @functools.wraps(fn)
-            @contextlib.contextmanager
-            def _fn(*__: Any, **___: Any) -> Any:
-                # wait for local chief
-                out = self.broadcast_local(None)
-                try:
-                    yield out
-                finally:
-                    # wait for local workers
-                    _ = self.gather_local(None)
-
-        return _fn
 
 
 class DummyDistributedContext(DistributedContext):
