@@ -5,13 +5,14 @@ import os
 import socket
 import tarfile
 import uuid
-from typing import List, Optional, cast
+from typing import List, Optional
 
 import psutil
 
 import determined as det
 from determined import constants
-from determined.common.api import certs, request
+from determined.common.api import bindings, certs, request
+from determined.common.experimental import Determined, Session
 
 
 def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
@@ -60,20 +61,18 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
 
 
 def do_rendezvous_rm_provided(
-    info: det.ClusterInfo, cert: certs.Cert, resources_id: str
+    sess: Session, allocation_id: str, resources_id: str
 ) -> "det.RendezvousInfo":
-    r = request.get(
-        info.master_url,
-        path=f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/rendezvous",
-        cert=cert,
+    resp = bindings.get_AllocationRendezvousInfo(
+        sess, allocationId=allocation_id, resourcesId=resources_id
     )
-    jri = r.json()["rendezvousInfo"]
-    addrs, rank = jri["addresses"], jri["rank"]
-    return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
+    return det.RendezvousInfo(
+        container_addrs=list(resp.rendezvousInfo.addresses), container_rank=resp.rendezvousInfo.rank
+    )
 
 
 def do_rendezvous_slurm(
-    info: det.ClusterInfo, cert: certs.Cert, resources_id: str
+    sess: Session, allocation_id: str, resources_id: str
 ) -> "det.RendezvousInfo":
     rank_str = os.environ.get("SLURM_PROCID")
     assert rank_str, "Unable to complete rendezvous without SLURM_PROCID"
@@ -93,19 +92,21 @@ def do_rendezvous_slurm(
     if not rendezvous_ip:
         raise resolution_error or ValueError("unable to resolve rendezvous ip")
 
-    r = request.post(
-        info.master_url,
-        path=f"/api/v1/allocations/{info.allocation_id}/all_gather",
-        cert=cert,
-        json={
-            "request_uuid": uuid.uuid4(),
-            "num_peers": num_peers,
-            "data": {
+    # Note, rendezvous must be sorted in rank order.
+    resp = bindings.post_AllocationAllGather(
+        sess,
+        allocationId=allocation_id,
+        body=bindings.v1AllocationAllGatherRequest(
+            allocationId=allocation_id,
+            requestUuid=str(uuid.uuid4()),
+            numPeers=num_peers,
+            data={
+                "rank": rank,
                 "rendezvous_ip": rendezvous_ip,
             },
-        },
+        ),
     )
-    addrs = [d["rendezvous_ip"] for d in r.json()["data"]]
+    addrs = [d["rendezvous_ip"] for d in sorted(resp.data, key=lambda d: int(d["rank"]))]
     return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
 
 
@@ -115,7 +116,7 @@ def rendezvous_ifaces() -> List[str]:
 
     # If it doesn't work, fallback to just eth. Rendezvous over eth is fine since horovod will
     # still use DET_INTER_NODE_NETWORK_INTERFACE for everything important, and SSH over IB mostly
-    # won't work.
+    # won't work. On systems where we need this, 'eth' will need to be the proper name.
     if not rendezvous_iface:
         rendezvous_iface = get_eth_interface_name()
 
@@ -130,14 +131,6 @@ def rendezvous_ifaces() -> List[str]:
     return rendezvous_iface.split(",")
 
 
-def get_eth_interface_name() -> Optional[str]:
-    net_if_addrs = list(psutil.net_if_addrs())
-    for interface in net_if_addrs:
-        if interface.startswith("eth"):
-            return cast(str, interface)
-    return None
-
-
 def get_ip_from_interface(interface: str) -> str:
     net_if_addrs = psutil.net_if_addrs()
 
@@ -150,9 +143,19 @@ def get_ip_from_interface(interface: str) -> str:
 
     for info in net_if_addrs[interface]:
         if info.family == socket.AF_INET:
-            return cast(str, info.address)
+            assert isinstance(info.address, str)
+            return info.address
 
     raise ValueError(f"interface {interface} doesn't have an IPv4 address")
+
+
+def get_eth_interface_name() -> Optional[str]:
+    net_if_addrs = list(psutil.net_if_addrs())
+    for interface in net_if_addrs:
+        if interface.startswith("eth"):
+            assert isinstance(interface, str)
+            return interface
+    return None
 
 
 # The canonical definitions of these consts live in Go code.
@@ -161,9 +164,7 @@ RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
 RESOURCES_TYPE_SLURM_JOB = "slurm-job"
 
 
-def do_rendezvous(info: det.ClusterInfo, cert: certs.Cert) -> None:
-    # Even though resources_id and resources type is not part of the ClusterInfo API, we still
-    # depend on them in all current Determined backends.
+def do_rendezvous(sess: Session, allocation_id: str) -> None:
     r_id = os.environ.get("DET_RESOURCES_ID")
     assert r_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
 
@@ -172,9 +173,9 @@ def do_rendezvous(info: det.ClusterInfo, cert: certs.Cert) -> None:
 
     rendezvous_info = None
     if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
-        rendezvous_info = do_rendezvous_rm_provided(info, cert, r_id)
+        rendezvous_info = do_rendezvous_rm_provided(sess, allocation_id, r_id)
     elif r_type == RESOURCES_TYPE_SLURM_JOB:
-        rendezvous_info = do_rendezvous_slurm(info, cert, r_id)
+        rendezvous_info = do_rendezvous_slurm(sess, allocation_id, r_id)
     else:
         raise ValueError(f"unsupported resources type: {r_type}")
 
@@ -203,4 +204,4 @@ if __name__ == "__main__":
         det.ResourcesInfo._by_inspection()._to_file()
 
     if args.rendezvous:
-        do_rendezvous(info, cert)
+        do_rendezvous(Determined()._session, info.allocation_id)
