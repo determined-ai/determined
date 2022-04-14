@@ -134,10 +134,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		priority := c.Config.Resources.Priority
 		if priority != nil {
-			ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-				Priority: *priority,
-				Handler:  ctx.Self(),
-			})
+			if err := c.setPriority(ctx, *priority, true); err != nil {
+				return errors.Wrapf(err, "setting priority of task %v", c.taskID)
+			}
 		}
 
 		var portProxyConf *sproto.PortProxyConfig
@@ -374,6 +373,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 		return fmt.Errorf("setting priority for job type %s in kubernetes is not supported",
 			c.jobType)
 	}
+
 	c.Config.Resources.Priority = &priority
 
 	if forward {
