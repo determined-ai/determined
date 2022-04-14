@@ -102,8 +102,8 @@ def init(
     DistributedContext.
 
     Arguments:
-        distributed (``core.DistributedContext``, default: ``None``): Passing a DistributedContext is
-            required for multi-slot training, but unnecessary for single-slot training.
+        distributed (``core.DistributedContext``, default: ``None``): Passing a DistributedContext
+            is required for multi-slot training, but unnecessary for single-slot training.
         preempt_mode (``core.PreemptMode``, default: ``WorkersAskChief``): Configure the calling
             pattern for the core_context.preempt.should_preempt() method.
         storage_manager: this argument is currently reserved for internal use only.

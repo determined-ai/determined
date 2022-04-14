@@ -42,6 +42,7 @@ class SearcherOperation:
     followed by a second SearcherOperation with .length=20.  Using absolute lengths instead of
     incremental lengths makes restarting after crashes simple and robust.
     """
+
     def __init__(
         self,
         session: Session,
