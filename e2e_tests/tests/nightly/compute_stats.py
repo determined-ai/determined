@@ -15,7 +15,7 @@ REMOVE_KEY = "removing"
 
 
 def iso_date_to_epoch(iso_date: str) -> int:
-    iso_format = re.compile(r"^\d{4}-\d{2}-\d{2}\S\d{2}:\d{2}:\d{2}\.\d{3,}-\d{2}:\d{2}$")
+    iso_format = re.compile(r"^\d{4}-\d{2}-\d{2}\S\d{2}:\d{2}:\d{2}\.\d{3,}[-|\+]\d{2}:\d{2}$")
     utc_format = re.compile(r"^\d{4}-\d{2}-\d{2}\S\d{2}:\d{2}:\d{2}\.\d+Z$")
 
     if iso_format.match(iso_date):
