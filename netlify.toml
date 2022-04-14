@@ -16,7 +16,7 @@
   # Default build command.
   command = "npm run build"
 
-  environment = { PUBLIC_URL = "", SERVER_ADDRESS = "https://netlify.determined.ai/dynamic/http/preview-cluster.determined.ai:8080" }
+  environment = { PUBLIC_URL = "" }
 
   # Ignore allows for returning early from a build.
   # ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
