@@ -189,8 +189,6 @@ class NoOpTrialController(det.TrialController):
             raise Exception(self.fail_on_chechpoint_save)
         self.chaos_failure(self.chaos_probability_checkpoint)
         time.sleep(self.save_secs)
-        if not path.exists():
-            path.mkdir(parents=True, exist_ok=True)
         fpath = path.joinpath(self.CHECKPOINT_FILENAME)
         logging.info("Saving checkpoint {}, steps_trained {}".format(fpath, self.steps_trained()))
         with fpath.open("w") as f:

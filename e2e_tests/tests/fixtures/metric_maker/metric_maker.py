@@ -176,7 +176,6 @@ class MetricMaker(det.TrialController):
         metrics, where the overall state of a trial is like a piece-wise
         function which takes into account multiple generations of hparams.
         """
-        path.mkdir()
         with path.joinpath("checkpoint_file").open("w") as f:
             f.write(str(self.value))
 

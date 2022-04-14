@@ -258,6 +258,8 @@ class DeterminedControlHook(estimator.RunHook):
         checkpoint_dir = os.path.dirname(
             self.estimator_trial_controller.estimator.latest_checkpoint()
         )
+        # shuil.copytree doesn't like to copy into a directory, even an empty one.
+        checkpoint_path.rmdir()
         shutil.copytree(checkpoint_dir, str(checkpoint_path))
 
         # Calibrate the CheckpointState metadata file to the new location.

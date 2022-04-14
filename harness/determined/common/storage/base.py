@@ -4,8 +4,6 @@ import os
 import pathlib
 from typing import Any, Dict, Iterator, Optional, Union
 
-from determined.common.check import check_gt, check_true, check_type
-
 
 class StorageManager(metaclass=abc.ABCMeta):
     """
@@ -28,8 +26,10 @@ class StorageManager(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, base_path: str) -> None:
-        check_type(base_path, str)
-        check_gt(len(base_path), 0)
+        if not isinstance(base_path, str):
+            raise ValueError("base_path must be a string, not {type(base_path).__name__}")
+        if not base_path:
+            raise ValueError("base_path must not be an emtpy string")
         self._base_path = base_path
 
     @classmethod
@@ -63,11 +63,13 @@ class StorageManager(metaclass=abc.ABCMeta):
         # Restore the original umask.
         os.umask(old_umask)
 
-        os.makedirs(self._base_path, exist_ok=True)
         storage_dir = os.path.join(self._base_path, dst)
+        os.makedirs(storage_dir, exist_ok=True)
 
         yield pathlib.Path(storage_dir)
-        check_true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
+
+        if not os.listdir(storage_dir):
+            raise RuntimeError("no checkpoint files were written")
 
         self.post_store_path(storage_dir, dst)
 
@@ -104,7 +106,10 @@ class StorageManager(metaclass=abc.ABCMeta):
         `root`; directories are included but have a file size of 0.
         """
         root = os.fspath(root)
-        check_true(os.path.isdir(root), "{} must be an extant directory".format(root))
+        if not os.path.exists(root):
+            raise FileNotFoundError(root)
+        if not os.path.isdir(root):
+            raise NotADirectoryError(root)
         result = {}
         for cur_path, sub_dirs, files in os.walk(root):
             for d in sub_dirs:
