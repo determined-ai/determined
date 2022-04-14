@@ -103,12 +103,26 @@ func (a *apiServer) GetExperiment(
 		return &resp, nil
 	}
 
+	jobID := model.JobID(exp.JobId)
+
 	err = a.ask(job.JobsActorAddr, job.GetJobSummary{
-		JobID:        model.JobID(exp.JobId),
+		JobID:        jobID,
 		ResourcePool: exp.ResourcePool,
 	}, &resp.JobSummary)
 	if err != nil {
-		return nil, errors.WithMessage(err, "fetching job summary")
+		// An error here either is real or just that the experiment was not yet terminal in the DB
+		// when we first queried it but was by the time it got around to handling out ask. We can't
+		// just refresh our DB state to see which it was, since there is a time between an actor
+		// closing and PostStop (where the DB state is set) being received where the actor may not
+		// respond but still is not terminal -- more clearly, there is a time where the actor is
+		// truly non-terminal and not reachable. We _could_ await its stop and recheck, but it's not
+		// easy deducible how long that would block. So the best we can really do is return without
+		// an error if we're in this case and log. This is a debug log because of how often the
+		// happens when polling for an experiment to end.
+		if !strings.Contains(err.Error(), job.ErrJobNotFound(jobID).Error()) {
+			return nil, err
+		}
+		logrus.WithError(err).Debugf("asking for job summary")
 	}
 
 	return &resp, nil

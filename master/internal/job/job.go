@@ -253,7 +253,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		jobInfo, ok := jobs[msg.JobID]
 		if !ok || jobInfo == nil {
 			// job is not active.
-			ctx.Respond(nil)
+			ctx.Respond(ErrJobNotFound(msg.JobID))
 			return nil
 		}
 		summary := jobv1.JobSummary{
