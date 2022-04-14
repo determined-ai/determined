@@ -375,10 +375,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 			c.jobType)
 	}
 
-	curPriority := c.Config.Resources.Priority
-	if curPriority == nil || (curPriority != nil && *curPriority != priority) {
-		c.Config.Resources.Priority = &priority
-	}
+	c.Config.Resources.Priority = &priority
 
 	if forward {
 		resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
