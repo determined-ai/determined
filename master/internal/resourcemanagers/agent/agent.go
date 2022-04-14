@@ -64,6 +64,8 @@ type (
 		opts *aproto.MasterSetAgentOptions
 
 		agentState *AgentState
+
+		db db.DB
 	}
 
 	reconnectTimeout struct{}
@@ -422,12 +424,12 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.DockerImagePull != nil:
 		var err error
 		if msg.DockerImagePull.EndStats {
-			err = db.RecordTaskEndStats(msg.DockerImagePull.Stats)
+			err = a.db.RecordTaskEndStats(msg.DockerImagePull.Stats)
 		} else {
 			now := time.Now().UTC()
 			msg.DockerImagePull.Stats.ResourcePool = a.resourcePoolName
 			msg.DockerImagePull.Stats.StartTime = &now
-			err = db.RecordTaskStats(msg.DockerImagePull.Stats)
+			err = a.db.RecordTaskStats(msg.DockerImagePull.Stats)
 		}
 		if err != nil {
 			ctx.Log().Errorf("Error record task stats %s", err)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -20,9 +21,9 @@ import (
 
 // Initialize creates a new global agent actor.
 func Initialize(
-	system *actor.System, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
+	system *actor.System, e *echo.Echo, opts *aproto.MasterSetAgentOptions, db db.DB,
 ) {
-	_, ok := system.ActorOf(sproto.AgentsAddr, &agents{opts: opts})
+	_, ok := system.ActorOf(sproto.AgentsAddr, &agents{opts: opts, db: db})
 	check.Panic(check.True(ok, "agents address already taken"))
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
@@ -30,6 +31,7 @@ func Initialize(
 
 type agents struct {
 	opts *aproto.MasterSetAgentOptions
+	db   db.DB
 }
 
 func (a *agents) Receive(ctx *actor.Context) error {
@@ -69,7 +71,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		}
 
 		version := msg.Ctx.QueryParam("version")
-		if ref, err := a.createAgentActor(ctx, id, version, resourcePool, a.opts); err != nil {
+		if ref, err := a.createAgentActor(ctx, id, version, resourcePool, a.opts, a.db); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(ctx.Ask(ref, msg).Get())
@@ -90,7 +92,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 }
 
 func (a *agents) createAgentActor(
-	ctx *actor.Context, id, version, resourcePool string, opts *aproto.MasterSetAgentOptions,
+	ctx *actor.Context, id, version, resourcePool string, opts *aproto.MasterSetAgentOptions, db db.DB,
 ) (*actor.Ref, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
@@ -113,6 +115,7 @@ func (a *agents) createAgentActor(
 		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
 		agentReattachEnabled:  rpConfig.AgentReattachEnabled,
 		opts:                  opts,
+		db:                    db,
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

@@ -170,6 +170,9 @@ type DB interface {
 	RecordInstanceStats(a *model.InstanceStats) error
 	EndInstanceStats(a *model.InstanceStats) error
 	EndAllInstanceStats() error
+	EndAllTaskStats() error
+	RecordTaskEndStats(stats *model.TaskStats) error
+	RecordTaskStats(stats *model.TaskStats) error
 }
 
 // ErrNotFound is returned if nothing is found.
