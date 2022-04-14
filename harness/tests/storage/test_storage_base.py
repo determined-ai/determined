@@ -46,12 +46,12 @@ def test_list_directory() -> None:
 def test_list_directory_on_file() -> None:
     root = os.path.join(os.path.dirname(__file__), "fixtures", "root.txt")
     assert os.path.exists(root)
-    with pytest.raises(CheckFailedError, match="must be an extant directory"):
+    with pytest.raises(NotADirectoryError, match=root):
         StorageManager._list_directory(root)
 
 
 def test_list_nonexistent_directory() -> None:
     root = "./non-existent-directory"
     assert not os.path.exists(root)
-    with pytest.raises(CheckFailedError, match="must be an extant directory"):
+    with pytest.raises(FileNotFoundError, match=root):
         StorageManager._list_directory(root)
