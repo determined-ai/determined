@@ -9,7 +9,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import _core, experimental, gpu, keras, workload
+from determined import core, experimental, gpu, keras, workload
 from determined.common import check
 
 
@@ -250,7 +250,7 @@ def make_trial_controller_from_trial_implementation(
     )
 
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
-    core_context = _core._dummy_init(storage_manager=storage_manager)
+    core_context = core._dummy_init(storage_manager=storage_manager)
 
     distributed_backend = det._DistributedBackend()
 

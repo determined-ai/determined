@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Tuple, Union, cast
 import tensorflow as tf
 
 import determined as det
-from determined import _core, _data_layer, estimator, util
+from determined import _data_layer, core, estimator, util
 from determined.common import check
 from determined.horovod import hvd
 
@@ -165,7 +165,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
         self,
         env: det.EnvContext,
         parent: EstimatorTrialContext,
-        distributed_context: _core.DistributedContext,
+        distributed_context: core.DistributedContext,
         per_slot_batch_size: int,
     ) -> None:
         super().__init__(env, distributed_context, per_slot_batch_size)

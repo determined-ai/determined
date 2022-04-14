@@ -140,7 +140,7 @@ The example below demonstrates how to download data from S3 using ``boto``. The 
 specified in the experiment config file (using a field named ``data.bucket``). The
 ``download_directory`` variable defines where data that is downloaded from S3 will be stored. Note
 that we include :func:`self.context.distributed.get_rank()
-<determined._core._distributed.DistributedContext.get_rank>` in the name of this directory: when
+<determined.core._distributed.DistributedContext.get_rank>` in the name of this directory: when
 doing distributed training, multiple processes might be downloading data concurrently (one process
 per GPU), so embedding the rank in the directory name ensures that these processes do not conflict
 with one another. For more detail, see the :ref:`Distributed Training How-To Guide
