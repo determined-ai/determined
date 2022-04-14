@@ -501,17 +501,15 @@ def wait(args: Namespace) -> None:
 
 @authentication.required
 def list_experiments(args: Namespace) -> None:
-    users: List[str] = []
+    kwargs = {
+        "limit": args.limit,
+        "offset": args.offset,
+    }
     if not args.all:
-        users = [authentication.must_cli_auth().get_session_user()]
-
+        kwargs["archived"] = "false"
+        kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
     all_experiments: List[bindings.v1Experiment] = limit_offset_paginator(
-        bindings.get_GetExperiments,
-        "experiments",
-        setup_session(args),
-        users=users,
-        limit=args.limit,
-        offset=args.offset,
+        bindings.get_GetExperiments, "experiments", setup_session(args), **kwargs
     )
 
     def format_experiment(e: Any) -> List[Any]:
