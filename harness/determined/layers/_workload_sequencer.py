@@ -109,7 +109,7 @@ class WorkloadSequencer(workload.Source):
             unit = _core.Unit.EPOCHS
         self._unit = unit
 
-        self.val_from_previous_run = self.core_context.train.get_last_validation()
+        self.val_from_previous_run = self.core_context.train._get_last_validation()
 
         self.want_initial_val = self.env.experiment_config.get("perform_initial_validation", False)
 

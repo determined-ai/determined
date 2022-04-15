@@ -43,11 +43,17 @@ class TrainContext:
         logger.debug(f"set_status({status})")
         self._session.post(f"/api/v1/trials/{self._trial_id}/runner/metadata", json=body)
 
-    def get_last_validation(self) -> Optional[int]:
+    def _get_last_validation(self) -> Optional[int]:
+        # This is needed by the workload sequencer, but it is not generally stable, because it is
+        # easy to call this before reporting any metrics.  If your last checkpoint was older than
+        # your last validation, then the value you get from this function might be higher before
+        # you report metrics than after (since metrics get archived on first report of new metrics,
+        # not on trial restart).  However, this bug does not happen to affect the workload sequencer
+        # because of the workload sequencer's very specific use of this function.
         r = self._session.get(f"/api/v1/trials/{self._trial_id}")
         val = r.json()["trial"].get("latestValidation") or {}
         latest_batch = val.get("totalBatches")
-        logger.debug(f"get_last_validation() -> {latest_batch}")
+        logger.debug(f"_get_last_validation() -> {latest_batch}")
         return latest_batch
 
     def report_training_metrics(
@@ -163,7 +169,7 @@ class DummyTrainContext(TrainContext):
     def set_status(self, status: str) -> None:
         logger.info(f"status: {status}")
 
-    def get_last_validation(self) -> Optional[int]:
+    def _get_last_validation(self) -> Optional[int]:
         return None
 
     def report_training_metrics(
