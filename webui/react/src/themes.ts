@@ -36,7 +36,6 @@ enum StateColors {
 }
 
 export interface ThemeX {
-  animationCurve: string;
   colors: {
     action: {
       dark: string;
@@ -68,12 +67,6 @@ export interface ThemeX {
   };
   outline: string;
   shadow: string;
-  sizes: {
-    border: {
-      radius: string;
-      width: string;
-    };
-  };
 }
 
 const baseTheme = {
@@ -177,7 +170,6 @@ export type Theme = Record<keyof typeof baseTheme, string>;
  * Currently two sources of truth due to Ant Design.
  */
 const lightDeterminedTheme: ThemeX = {
-  animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
   colors: {
     action: {
       dark: '#0088cc',
@@ -249,16 +241,9 @@ const lightDeterminedTheme: ThemeX = {
   focus: { shadow: '0 0 0 2px rgba(0, 155, 222, 0.25)' },
   outline: '0 0 4px 0 #009bde',
   shadow: '2px 2px 4px 0 rgba(0, 0, 0, 0.25)',
-  sizes: {
-    border: {
-      radius: '4px',
-      width: '1px',
-    },
-  },
 };
 
 const darkDeterminedTheme: ThemeX = {
-  animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
   colors: {
     action: {
       dark: '#0088cc',
@@ -330,12 +315,6 @@ const darkDeterminedTheme: ThemeX = {
   focus: { shadow: '0 0 0 2px rgba(0, 155, 222, 0.25)' },
   outline: '0 0 4px 0 #009bde',
   shadow: '2px 2px 4px 0 rgba(0, 0, 0, 0.25)',
-  sizes: {
-    border: {
-      radius: '4px',
-      width: '1px',
-    },
-  },
 };
 
 const lightHpeTheme: ThemeX = {

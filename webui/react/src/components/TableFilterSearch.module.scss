@@ -9,7 +9,7 @@
     color: var(--theme-colors-monochrome-8);
   }
   .footer {
-    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    border-top: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
     display: flex;
     justify-content: flex-end;
     padding: 8px;

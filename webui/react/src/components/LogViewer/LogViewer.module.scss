@@ -47,7 +47,7 @@
     color: var(--theme-colors-monochrome-9);
 
     &::after {
-      border-radius: var(--theme-sizes-border-radius);
+      border-radius: var(--theme-border-radius);
       box-shadow: var(--theme-outline);
       content: '';
       height: 100%;
@@ -62,7 +62,7 @@
     border-color: var(--theme-colors-action-normal);
 
     &::after {
-      border-radius: var(--theme-sizes-border-radius);
+      border-radius: var(--theme-border-radius);
       box-shadow: var(--theme-outline);
       content: '';
       height: 100%;

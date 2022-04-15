@@ -38,7 +38,7 @@
     }
   }
   .experimentId {
-    border-right: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-17);
+    border-right: var(--theme-stroke-width) solid var(--theme-colors-monochrome-17);
     flex-shrink: 0;
     overflow: hidden;
     padding-right: 6px;

@@ -1,9 +1,9 @@
 .base {
   background-color: var(--theme-colors-monochrome-17);
   border-color: var(--theme-colors-monochrome-12);
-  border-radius: var(--theme-sizes-border-radius);
+  border-radius: var(--theme-border-radius);
   border-style: solid;
-  border-width: var(--theme-sizes-border-width);
+  border-width: var(--theme-stroke-width);
   color: var(--theme-colors-monochrome-5);
   display: block;
   overflow: hidden;
@@ -36,9 +36,9 @@
       align-items: center;
       background-color: var(--theme-colors-monochrome-17);
       border:
-        var(--theme-sizes-border-width) solid
+        var(--theme-stroke-width) solid
         var(--theme-colors-monochrome-11);
-      border-radius: var(--theme-sizes-border-radius);
+      border-radius: var(--theme-border-radius);
       display: flex;
       flex-shrink: 0;
       height: 44px;

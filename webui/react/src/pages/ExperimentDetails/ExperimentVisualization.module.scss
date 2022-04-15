@@ -6,8 +6,8 @@
 
   .radioGroup {
     background-color: var(--theme-colors-monochrome-13);
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
+    border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-border-radius);
     display: flex;
     justify-content: center;
     margin-bottom: 16px;

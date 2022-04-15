@@ -68,9 +68,9 @@ describe('Section', () => {
     const section = screen.getByText('section-title') as HTMLElement;
     expect(section).toHaveStyle({ height: 100 });
     expect(section).toHaveStyle(
-      { border: 'solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12)' },
+      { border: 'solid var(--theme-stroke-width) var(--theme-colors-monochrome-12)' },
     );
-    expect(section).toHaveStyle({ borderTopWidth: 'var(--theme-sizes-border-width)' });
+    expect(section).toHaveStyle({ borderTopWidth: 'var(--theme-stroke-width)' });
   });
 
 });

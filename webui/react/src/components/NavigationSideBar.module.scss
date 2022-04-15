@@ -2,7 +2,7 @@
 
 .base {
   background-color: var(--theme-colors-monochrome-15);
-  border-right: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+  border-right: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
   box-sizing: border-box;
   display: flex;
   flex-basis: var(--nav-side-bar-width-max);
@@ -58,9 +58,9 @@
     .launchButton {
       background-color: transparent;
       border-color: var(--theme-colors-monochrome-9);
-      border-radius: var(--theme-sizes-border-radius);
+      border-radius: var(--theme-border-radius);
       border-style: solid;
-      border-width: var(--theme-sizes-border-width);
+      border-width: var(--theme-stroke-width);
       color: var(--theme-colors-monochrome-3);
       flex-grow: 1;
       flex-shrink: 1;
@@ -70,9 +70,9 @@
       align-items: center;
       background-color: transparent;
       border-color: var(--theme-colors-monochrome-9);
-      border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
+      border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
       border-style: solid;
-      border-width: var(--theme-sizes-border-width);
+      border-width: var(--theme-stroke-width);
       color: var(--theme-colors-monochrome-0);
       display: flex;
       flex-shrink: 0;
@@ -364,7 +364,7 @@
       width: 100%;
     }
     .launchIcon {
-      border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
+      border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
       transition: border-radius var(--animation-curve);
     }
   }

@@ -4,7 +4,7 @@ $line-height: 22px;
 
 .base {
   background-color: var(--theme-colors-monochrome-17);
-  border-radius: var(--theme-sizes-border-radius);
+  border-radius: var(--theme-border-radius);
   box-shadow: var(--theme-shadow);
   color: var(--theme-colors-monochrome-0);
   display: flex;
@@ -31,7 +31,7 @@ $line-height: 22px;
       align-items: center;
       background-color: var(--theme-colors-monochrome-17);
       border:
-        var(--theme-sizes-border-width) solid
+        var(--theme-stroke-width) solid
         var(--theme-colors-monochrome-11);
       border-radius: 50%;
       display: flex;

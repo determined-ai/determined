@@ -3,7 +3,7 @@
   flex-direction: column;
 
   .search {
-    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    border-bottom: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
     padding: 6px 0;
   }
   .search :global(.ant-input-affix-wrapper) {
@@ -42,7 +42,7 @@
     display: flex;
   }
   .footer {
-    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    border-top: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
     display: flex;
     justify-content: flex-end;
     padding: 8px;

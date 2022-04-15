@@ -1,7 +1,7 @@
 .tooltip {
   background-color: var(--theme-colors-monochrome-17);
-  border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
-  border-radius: var(--theme-sizes-border-radius);
+  border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
+  border-radius: var(--theme-border-radius);
   box-shadow: var(--theme-shadow);
   cursor: auto;
   display: none;

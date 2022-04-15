@@ -18,13 +18,13 @@
     z-index: 1;
   }
   .option:hover::after {
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-action-light);
+    border: solid var(--theme-stroke-width) var(--theme-colors-action-light);
     content: '';
-    height: calc(100% + 2 * var(--theme-sizes-border-width));
-    left: -var(--theme-sizes-border-width);
+    height: calc(100% + 2 * var(--theme-stroke-width));
+    left: -var(--theme-stroke-width);
     position: absolute;
-    top: -var(--theme-sizes-border-width);
-    width: calc(100% + 2 * var(--theme-sizes-border-width));
+    top: -var(--theme-stroke-width);
+    width: calc(100% + 2 * var(--theme-stroke-width));
   }
   .option:focus {
     box-shadow: var(--theme-focus-shadow);

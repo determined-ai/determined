@@ -2,7 +2,7 @@ $border-color: var(--theme-colors-monochrome-13);
 
 .base {
   border: 1px solid $border-color;
-  border-radius: var(--theme-sizes-border-radius);
+  border-radius: var(--theme-border-radius);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
