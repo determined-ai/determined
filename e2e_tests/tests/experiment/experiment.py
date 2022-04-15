@@ -546,6 +546,8 @@ def run_basic_test(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    expect_workloads: bool = True,
+    expect_checkpoints: bool = True,
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
@@ -556,13 +558,18 @@ def run_basic_test(
     )
     assert num_active_trials(experiment_id) == 0
 
-    verify_completed_experiment_metadata(experiment_id, expected_trials)
+    verify_completed_experiment_metadata(
+        experiment_id, expected_trials, expect_workloads, expect_checkpoints
+    )
 
     return experiment_id
 
 
 def verify_completed_experiment_metadata(
-    experiment_id: int, num_expected_trials: Optional[int]
+    experiment_id: int,
+    num_expected_trials: Optional[int],
+    expect_workloads: bool = True,
+    expect_checkpoints: bool = True,
 ) -> None:
     # If `expected_trials` is None, the expected number of trials is
     # non-deterministic.
@@ -579,6 +586,9 @@ def verify_completed_experiment_metadata(
         if trial.state != determinedexperimentv1State.STATE_COMPLETED:
             report_failed_trial(trial.id, trial.state.value)
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
+
+        if not expect_workloads:
+            continue
 
         if len(t.workloads) == 0:
             print_trial_logs(trial.id)
@@ -605,7 +615,8 @@ def verify_completed_experiment_metadata(
 
     # The last step of every trial should be the same batch number as the last checkpoint.
     for t in trials:
-        last_workload_matches_last_checkpoint(t.workloads)
+        if expect_checkpoints:
+            last_workload_matches_last_checkpoint(t.workloads)
 
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might
