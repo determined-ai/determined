@@ -439,12 +439,12 @@ const themeDark = {
   elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.24)',
 };
 
-const themeLightDetermined: Theme = generateStrongWeak(Object.assign(themeBase, themeLight));
-const themeDarkDetermined: Theme = generateStrongWeak(Object.assign(themeBase, themeDark));
+const themeLightDetermined: Theme = generateStrongWeak(Object.assign({}, themeBase, themeLight));
+const themeDarkDetermined: Theme = generateStrongWeak(Object.assign({}, themeBase, themeDark));
 
 const themeHpe = { brand: 'rgba(1, 169, 130, 1.0)' };
-const themeLightHpe: Theme = generateStrongWeak(Object.assign(themeBase, themeLight, themeHpe));
-const themeDarkHpe: Theme = generateStrongWeak(Object.assign(themeBase, themeDark, themeHpe));
+const themeLightHpe: Theme = generateStrongWeak(Object.assign({}, themeBase, themeLight, themeHpe));
+const themeDarkHpe: Theme = generateStrongWeak(Object.assign({}, themeBase, themeDark, themeHpe));
 
 export type Theme = Record<keyof typeof themeBase, string>;
 
