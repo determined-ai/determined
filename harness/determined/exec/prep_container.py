@@ -206,4 +206,4 @@ if __name__ == "__main__":
         det.ResourcesInfo._by_inspection()._to_file()
 
     if args.rendezvous:
-        do_rendezvous(Determined()._session, info.allocation_id)
+        do_rendezvous(sess, info.allocation_id)
