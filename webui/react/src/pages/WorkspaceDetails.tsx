@@ -56,7 +56,6 @@ const WorkspaceDetails: React.FC = () => {
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ projects, setProjects ] = useState<Project[]>([]);
   const [ projectFilter, setProjectFilter ] = useState<ProjectFilters>(ProjectFilters.All);
-  const [ selectedView, setSelectedView ] = useState(GridListView.Grid);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
@@ -125,8 +124,8 @@ const WorkspaceDetails: React.FC = () => {
   }, [ updateSettings ]);
 
   const handleViewChange = useCallback((value: GridListView) => {
-    setSelectedView(value);
-  }, []);
+    updateSettings({ view: value });
+  }, [ updateSettings ]);
 
   useEffect(() => {
     switch (projectFilter) {
@@ -221,7 +220,7 @@ const WorkspaceDetails: React.FC = () => {
   );
 
   const projectsList = useMemo(() => {
-    switch (selectedView) {
+    switch (settings.view) {
       case GridListView.Grid:
         return (
           <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
@@ -252,7 +251,6 @@ const WorkspaceDetails: React.FC = () => {
     columns,
     isLoading,
     projects,
-    selectedView,
     settings,
     total,
     updateSettings,
@@ -307,7 +305,7 @@ const WorkspaceDetails: React.FC = () => {
               Newest to oldest
             </Option>
           </SelectFilter>
-          <GridListRadioGroup value={selectedView} onChange={handleViewChange} />
+          <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
         </div>
       </div>
       <Spinner spinning={isLoading}>

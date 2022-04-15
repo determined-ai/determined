@@ -67,7 +67,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace }: Props) => {
           </Dropdown>
         )}
       </Space>
-      <Button onClick={handleProjectCreateClick}>New Project</Button>
+      {!workspace.immutable &&
+        <Button onClick={handleProjectCreateClick}>New Project</Button>}
     </div>
   );
 };

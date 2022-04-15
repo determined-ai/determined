@@ -1,3 +1,4 @@
+import { GridListView } from 'components/GridListRadioGroup';
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
@@ -38,6 +39,7 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   sortKey: V1GetWorkspaceProjectsRequestSortBy;
   state?: RunState[];
   user?: string[];
+  view: GridListView;
 }
 
 const config: SettingsConfig = {
@@ -101,6 +103,13 @@ const config: SettingsConfig = {
         baseType: BaseType.String,
         isArray: true,
       },
+    },
+    {
+      defaultValue: GridListView.Grid,
+      key: 'view',
+      skipUrlEncoding: true,
+      storageKey: 'view',
+      type: { baseType: BaseType.String },
     },
   ],
   storagePath: 'workspace-details',
