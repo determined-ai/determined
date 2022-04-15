@@ -127,7 +127,7 @@ def trial_logs(args: Namespace) -> None:
 
 
 @authentication.required
-def output_logs(args: Namespace):
+def generate_support_bundle(args: Namespace):
     temp_dir = tempfile.TemporaryDirectory()
     trial_logs_filepath = write_trial_logs(args, temp_dir)
 
@@ -138,33 +138,43 @@ def output_logs(args: Namespace):
     bundle = None
     if args.output_dir is None:
         output_dir = os.getcwd()
-        formatted_dt = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-        tar = f"det-bundle-trail_{args.trial_id}-{formatted_dt}.tar.gz"
-        fullpath = os.path.join(output_dir, tar)
-        bundle = tarfile.open(fullpath, "w:gz")
 
     else:
         bundle = tarfile.open(f"{args.output_dir}.tar.gz", "w:gz")
+
+    filename_printf = "det-bundle-trial-{trial_id}-{datetime}.tar.gz"
+    tar_filename = filename_printf.format(
+        trial_id=args.trial_id, datetime=datetime.now().strftime("%Y%m%dT%H%M%S")
+    )
+    fullpath = os.path.join(output_dir, tar_filename)
+    bundle = tarfile.open(fullpath, "w:gz")
 
     bundle.add(trial_logs_filepath, arcname=os.path.basename(trial_logs_filepath))
     bundle.add(master_logs_filepath, arcname=os.path.basename(master_logs_filepath))
     bundle.add(api_trail_filepath, arcname=os.path.basename(api_trail_filepath))
     bundle.add(api_experiment_filepath, arcname=os.path.basename(api_experiment_filepath))
 
+    print(f"bundle directory: {bundle.name}")
+
     bundle.close()
 
 
 def write_trial_logs(args, temp_dir):
     trial_logs = api.trial_logs(args.master, args.trial_id)
-    file_path = os.path.join(temp_dir.name, "trial_logs.jsonl")
-    create_jsonl_file_in_dir(trial_logs, file_path)
+    file_path = os.path.join(temp_dir.name, "trial_logs.txt")
+    with open(file_path, "w") as f:
+        for log in trial_logs:
+            f.write(log["message"])
+
     return file_path
 
 
 def write_master_logs(args, temp_dir):
     response = api.get(args.master, "logs")
-    file_path = os.path.join(temp_dir.name, "master_logs.jsonl")
-    create_json_file_in_dir(response.json(), file_path)
+    file_path = os.path.join(temp_dir.name, "master_logs.txt")
+    with open(file_path, "w") as f:
+        for log in response.json():
+            f.write("{} [{}]: {}".format(log["time"], log["level"], log["message"]))
     return file_path
 
 
@@ -180,12 +190,6 @@ def write_api_call(args, temp_dir):
     create_json_file_in_dir(exp_obj.to_json(), file_path1)
     create_json_file_in_dir(trial_obj.to_json(), file_path2)
     return file_path1, file_path2
-
-
-def create_jsonl_file_in_dir(list_logs, file_path):
-    with open(file_path, "w") as f:
-        for log in list_logs:
-            f.write(f"{json.dumps(log)}\n")
 
 
 def create_json_file_in_dir(content, file_path):
@@ -270,7 +274,7 @@ args_description = [
             ),
             Cmd(
                 "support-bundle",
-                output_logs,
+                generate_support_bundle,
                 "support bundle",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
