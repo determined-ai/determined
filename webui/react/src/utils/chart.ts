@@ -11,9 +11,9 @@ export const getColorScale = (
   range?: Range<number>,
   smallerIsBetter?: boolean,
 ): ColorScale[] => {
-  const defaultScale = [ theme.colors.danger.light, theme.colors.action.normal ];
+  const defaultScale = [ theme.statusCriticalWeak, theme.statusActive ];
   const reverseScale = clone(defaultScale).reverse();
-  let colors = [ 'rgb(255, 184, 0)', theme.colors.action.normal ];
+  let colors = [ theme.statusWarningStrong, theme.statusActive ];
 
   if (smallerIsBetter != null) {
     colors = smallerIsBetter ? reverseScale : defaultScale;
