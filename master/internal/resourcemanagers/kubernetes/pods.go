@@ -4,13 +4,9 @@ package kubernetes
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"net/http"
 	"strconv"
-
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -174,9 +170,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
 		}
-
-	case SetPodOrder:
-		p.receiveJobQueueMsg(ctx)
 
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
@@ -374,50 +367,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	}
 
 	return nil
-}
-
-func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
-	switch msg := ctx.Message().(type) {
-	case SetPodOrder:
-		if msg.QPosition.GreaterThan(decimal.Zero) {
-			podName, ok := p.containerIDToPodName[msg.PodID.String()]
-			if !ok {
-				ctx.Log().WithField("pod-id", msg.PodID).Debug(
-					"received change position command for unregistered container id")
-				return
-			}
-			ref, ok := p.podNameToPodHandler[podName]
-			if !ok {
-				ctx.Log().WithField("pod-id", msg.PodID).Debug(
-					"received change position command for unregistered container id")
-				return
-			}
-
-			// check that the pod exists
-			_, err := p.clientSet.CoreV1().Pods("default").Get(context.TODO(), podName, metaV1.GetOptions{})
-			if err != nil {
-				ctx.Log().WithField("pod-id", msg.PodID).Info(
-					"change position command failed with err: ", err)
-			}
-
-			payload := []patchStringValue{{
-				Op:    "replace",
-				Path:  "/metadata/labels/determined-queue-position",
-				Value: msg.QPosition.String(),
-			}}
-
-			payloadBytes, _ := json.Marshal(payload)
-
-			_, err = p.clientSet.CoreV1().Pods("default").Patch(
-				context.TODO(), podName, types.JSONPatchType, payloadBytes, metaV1.PatchOptions{},
-			)
-			if err != nil {
-				ctx.Log().Infof("Failed to set the order of pod %s: ", podName)
-			}
-
-			ctx.Tell(ref, ChangePriority{PodID: msg.PodID})
-		}
-	}
 }
 
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {

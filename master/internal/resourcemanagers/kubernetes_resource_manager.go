@@ -423,12 +423,9 @@ func (k *kubernetesResourceManager) moveJob(
 		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
 	}
 
-	ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
-		QPosition: msg.JobPosition,
-		PodID:     containerID,
-	})
-
 	ctx.Tell(groupAddr, msg)
+
+	ctx.Tell(k.podsActor, kubernetes.ChangePriority{PodID: containerID})
 
 	return nil
 }
@@ -489,10 +486,6 @@ func (k *kubernetesResourceManager) assignResources(
 		})
 
 		k.addrToContainerID[req.TaskActor] = containerID
-		ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
-			QPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
-			PodID:     containerID,
-		})
 
 		k.addrToContainerID[req.TaskActor] = containerID
 		k.containerIDtoAddr[containerID.String()] = req.TaskActor
