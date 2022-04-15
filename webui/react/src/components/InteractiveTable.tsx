@@ -298,8 +298,8 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({
-    dropLeftStyles: settings?.columnWidths.map(() => ({})),
-    dropRightStyles: settings?.columnWidths.map(() => ({})),
+    dropLeftStyles: settings?.columnWidths.map(() => ({})) ?? [],
+    dropRightStyles: settings?.columnWidths.map(() => ({})) ?? [],
     widths: settings?.columnWidths,
   });
 

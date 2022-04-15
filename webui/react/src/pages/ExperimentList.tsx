@@ -492,8 +492,11 @@ const ExperimentList: React.FC = () => {
   useEffect(() => {
     // this is the 'failsafe' for columns settings
     // if they get into a bad state
-    if (settings.columns.length === 0) {
-      resetSettings([ 'columns', 'columnWidths' ]);
+    if (!settings.columns || !settings.columnWidths) {
+      updateSettings({
+        columns: DEFAULT_COLUMNS,
+        columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
+      });
       return;
     }
     if (settings.columns.length !== settings.columnWidths.length){
