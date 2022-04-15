@@ -3,15 +3,15 @@
   border-radius: var(--theme-sizes-border-radius);
   color: var(--theme-colors-monochrome-17);
   display: inline-block;
-  font-size: var(--theme-sizes-font-tiny);
+  font-size: 11px;
   font-weight: bold;
-  line-height: var(--theme-sizes-font-big);
+  line-height: 18px;
   padding: 0 6px;
   text-align: center;
 }
 .id {
   font-family: var(--font-family-code);
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
 }
 .header {
   background-color: #132231;

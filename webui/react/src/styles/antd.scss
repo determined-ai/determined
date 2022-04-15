@@ -48,7 +48,7 @@ html {
   .ant-form-item-explain {
     align-items: center;
     display: flex;
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
   }
 
   /* Input */
@@ -162,10 +162,10 @@ html {
   /* Statistic */
 
   .ant-statistic-title {
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
   }
   .ant-statistic-content {
-    font-size: var(--theme-sizes-font-large);
+    font-size: 16px;
   }
 
   /* Table */

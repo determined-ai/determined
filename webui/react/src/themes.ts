@@ -66,9 +66,6 @@ export interface ThemeX {
   focus: {
     shadow: string;
   };
-  font: {
-    family: string;
-  };
   outline: string;
   shadow: string;
   sizes: {
@@ -76,7 +73,6 @@ export interface ThemeX {
       radius: string;
       width: string;
     };
-    font: {[size in ShirtSize]: string};
   };
 }
 
@@ -251,28 +247,12 @@ const lightDeterminedTheme: ThemeX = {
     underlay: 'rgba(0, 0, 0, 0.65)',
   },
   focus: { shadow: '0 0 0 2px rgba(0, 155, 222, 0.25)' },
-  font: { family: 'Objektiv Mk3' },
   outline: '0 0 4px 0 #009bde',
   shadow: '2px 2px 4px 0 rgba(0, 0, 0, 0.25)',
   sizes: {
     border: {
       radius: '4px',
       width: '1px',
-    },
-    /* eslint-disable sort-keys-fix/sort-keys-fix */
-    font: {
-      micro: '10px',
-      tiny: '11px',
-      small: '12px',
-      medium: '14px',
-      large: '16px',
-      big: '18px',
-      great: '20px',
-      huge: '22px',
-      enormous: '24px',
-      giant: '28px',
-      jumbo: '36px',
-      mega: '40px',
     },
   },
 };
@@ -348,28 +328,12 @@ const darkDeterminedTheme: ThemeX = {
     underlay: 'rgba(0, 0, 0, 0.65)',
   },
   focus: { shadow: '0 0 0 2px rgba(0, 155, 222, 0.25)' },
-  font: { family: 'Objektiv Mk3' },
   outline: '0 0 4px 0 #009bde',
   shadow: '2px 2px 4px 0 rgba(0, 0, 0, 0.25)',
   sizes: {
     border: {
       radius: '4px',
       width: '1px',
-    },
-    /* eslint-disable sort-keys-fix/sort-keys-fix */
-    font: {
-      micro: '10px',
-      tiny: '11px',
-      small: '12px',
-      medium: '14px',
-      large: '16px',
-      big: '18px',
-      great: '20px',
-      huge: '22px',
-      enormous: '24px',
-      giant: '28px',
-      jumbo: '36px',
-      mega: '40px',
     },
   },
 };

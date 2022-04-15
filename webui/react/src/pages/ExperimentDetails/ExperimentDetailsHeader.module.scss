@@ -32,7 +32,7 @@
     }
     .state {
       display: inline-block;
-      font-size: var(--theme-sizes-font-micro);
+      font-size: 10px;
       font-weight: bold;
       text-transform: uppercase;
     }
@@ -51,18 +51,6 @@
     padding-left: 6px;
     text-overflow: ellipsis;
   }
-  // .state {
-  //   border-radius: 100px;
-  //   display: inline-flex;
-  //   font-size: var(--theme-sizes-font-micro);
-  //   font-weight: 600;
-  //   margin-right: 8px;
-  //   padding: 4px 8px;
-  //   text-transform: uppercase;
-  // }
-  // [class*=Icon_base_] {
-  //   padding: 0 8px;
-  // }
 
   @media only screen and (max-width: $breakpoint-tablet) {
     align-items: flex-start;
@@ -75,14 +63,14 @@
     .experimentId {
       border-right: 0;
       flex-shrink: 1;
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
       width: 100%;
     }
     .experimentName {
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
     }
     .trial {
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
     }
   }
 }

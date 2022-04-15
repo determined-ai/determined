@@ -47,8 +47,8 @@
     }
     .name {
       color: var(--theme-colors-monochrome-2);
-      font-size: var(--theme-sizes-font-medium);
-      line-height: var(--theme-sizes-font-great);
+      font-size: 14px;
+      line-height: 20px;
       overflow: hidden;
       padding-bottom: 4px;
       text-overflow: ellipsis;
@@ -56,8 +56,8 @@
     }
     .age {
       display: flex;
-      font-size: var(--theme-sizes-font-small);
-      line-height: var(--theme-sizes-font-big);
+      font-size: 12px;
+      line-height: 18px;
     }
     .event {
       padding-right: 4px;
@@ -81,7 +81,7 @@
     }
     .percent {
       color: black;
-      font-size: var(--theme-sizes-font-small);
+      font-size: 12px;
       font-weight: bold;
       margin-bottom: auto;
       margin-top: auto;

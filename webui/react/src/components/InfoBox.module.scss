@@ -5,7 +5,7 @@
 
   .header {
     color: var(--theme-colors-monochrome-7);
-    font-size: var(--theme-sizes-font-large);
+    font-size: 16px;
     font-weight: 600;
   }
   .separator {
@@ -23,7 +23,7 @@
       align-self: flex-start;
       color: var(--theme-colors-monochrome-8);
       flex-basis: 34%;
-      font-size: var(--theme-sizes-font-small);
+      font-size: 12px;
       margin-right: 20px;
       max-width: 200px;
       min-width: 50px;
@@ -33,14 +33,14 @@
       color: var(--theme-colors-monochrome-6);
       flex-basis: 66%;
       flex-grow: 1;
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
       margin: 0;
     }
     .contentList {
       color: var(--theme-colors-monochrome-6);
       flex-basis: 66%;
       flex-grow: 1;
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
     }
   }
 }

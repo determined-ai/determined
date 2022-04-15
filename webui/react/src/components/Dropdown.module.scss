@@ -21,7 +21,7 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     box-shadow: var(--theme-shadow);
   }
   .content > :global(.ant-menu) > li {
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
     height: 32px;
     line-height: 32px;
   }

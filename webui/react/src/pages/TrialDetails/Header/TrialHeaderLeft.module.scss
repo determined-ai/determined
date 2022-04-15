@@ -24,7 +24,7 @@
   .state {
     border-radius: 100px;
     display: inline-flex;
-    font-size: var(--theme-sizes-font-micro);
+    font-size: 10px;
     font-weight: 600;
     margin-right: 8px;
     padding: 4px 8px;
@@ -38,11 +38,11 @@
     width: 100%;
 
     .experiment {
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
     }
     [class*=Icon_base_] { display: none; }
     .trial {
-      font-size: var(--theme-sizes-font-medium);
+      font-size: 14px;
       margin-top: 8px;
     }
   }

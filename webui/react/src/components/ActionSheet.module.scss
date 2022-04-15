@@ -23,7 +23,7 @@
     height: var(--nav-bottom-bar-height);
 
     [class^=Icon_base_] { padding: 0 16px; }
-    .label { font-size: var(--theme-sizes-font-medium); }
+    .label { font-size: 14px; }
     .spacer {
       width: calc(24px + 2 * 16px);
     }

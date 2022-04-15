@@ -2,7 +2,7 @@
   .header {
     display: flex;
     flex-direction: row;
-    font-size: var(--theme-sizes-font-medium);
+    font-size: 14px;
     justify-content: space-between;
   }
   .bar {
@@ -22,13 +22,13 @@ ul.detailedLegends li {
 div.overallLegends {
   display: flex;
   flex-direction: row;
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
   justify-content: center;
 
   ol {
     display: flex;
     flex-direction: row;
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
     justify-content: center;
     margin: 0 auto;
     padding: 0;
@@ -54,7 +54,7 @@ ul.detailedLegends {
 }
 .footer {
   display: flex;
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
   justify-content: space-between;
   margin-bottom: 8px;
 
