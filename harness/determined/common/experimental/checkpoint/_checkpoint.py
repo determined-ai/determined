@@ -37,6 +37,8 @@ class Checkpoint(object):
     that return instances of this class.
     """
 
+    # XXX: this object ends updating to correspond to new protobuf spec
+    # see breaking change warning: https://determined-ai.slack.com/archives/C7E6HPZ5F/p1644019706340119
     def __init__(
         self,
         session: session.Session,
@@ -156,6 +158,13 @@ class Checkpoint(object):
 
                 manager.download(self.uuid, str(local_ckpt_dir))
 
+        # XXX: this used to be the only place we write metadata but now that we've fixed our
+        # checkpoint protobuf and now that we are releasing a breaking change to the Checkpoint
+        # export api, we need to start writing a different format (the user-defined metadata only),
+        # and we need to start writing it at upload time, not download time.
+        #
+        # see https://determined-ai.slack.com/archives/CSLAGUF3M/p1642188450030600?thread_ts=1642115346.016000&cid=CSLAGUF3M
+        # for more context.
         self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
 
         return str(local_ckpt_dir)
@@ -169,6 +178,9 @@ class Checkpoint(object):
         use this method directly to obtain the latest metadata.
         """
         with open(path, "w") as f:
+            # XXX: this is the old metadata checkpoint protobuf format.  Needs to become the new
+            # user metadata field of the new checkpoint protobuf format.
+            # XXX: maybe we need to look at the determined_version
             json.dump(
                 {
                     "determined_version": self.determined_version,
