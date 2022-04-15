@@ -8,6 +8,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
+// CheckpointLatestBatchLess compares checkpoints by their latest batch, falling back to report
+// time when equal.
 func CheckpointLatestBatchLess(a, b *checkpointv1.Checkpoint) bool {
 	l1, ok := a.Metadata.AsMap()[model.LatestBatchMetadataKey].(float64)
 	if !ok {
@@ -24,6 +26,7 @@ func CheckpointLatestBatchLess(a, b *checkpointv1.Checkpoint) bool {
 	return l1 < l2
 }
 
+// CheckpointTrialIDLess compares checkpoints by their ID, falling back to report time when equal.
 func CheckpointTrialIDLess(ai, aj *checkpointv1.Checkpoint) bool {
 	if ai.Training == nil || ai.Training.TrialId == nil {
 		return true
@@ -37,6 +40,8 @@ func CheckpointTrialIDLess(ai, aj *checkpointv1.Checkpoint) bool {
 	return ai.Training.TrialId.Value < aj.Training.TrialId.Value
 }
 
+// CheckpointSearcherMetricLess compares checkpoints by their searcher metric, falling back to
+// report time when equal.
 func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 	if ai.Training == nil || ai.Training.SearcherMetric == nil {
 		return true
@@ -50,6 +55,7 @@ func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 	return ai.Training.SearcherMetric.Value < aj.Training.SearcherMetric.Value
 }
 
+// CheckpointReportTimeLess compares checkpoints by their report time.
 func CheckpointReportTimeLess(a, b *checkpointv1.Checkpoint) bool {
 	return a.ReportTime.AsTime().Before(b.ReportTime.AsTime())
 }
