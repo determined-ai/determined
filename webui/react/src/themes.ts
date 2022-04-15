@@ -397,10 +397,10 @@ const themeLight = {
   stageBorder: 'rgba(194, 194, 194, 1.0)',
   surface: 'rgba(200, 199, 197, 1.0)',
   surfaceOn: 'rgba(0, 8, 16, 1.0)',
-  surfaceBorder: 'rgba(190, 190, 190, 1.000)',
+  surfaceBorder: 'rgba(190, 190, 190, 1.0)',
   float: 'rgba(195, 195, 195, 1.0)',
   floatOn: 'rgba(49, 49, 49, 1.0)',
-  floatBorder: undefined,
+  floatBorder: 'rgba(100, 100, 100, 1.0)',
 
   // Specialized and unique styles.
   overlay: 'rgba(255, 255, 255, 0.75)',
@@ -425,18 +425,18 @@ const themeDark = {
   stageBorder: 'rgba(61, 61, 61, 1.0)',
   surface: 'rgba(55, 56, 57, 1.0)',
   surfaceOn: 'rgba(255, 247, 239, 1.0)',
-  surfaceBorder: 'rgba(65, 65, 65, 1.000)',
+  surfaceBorder: 'rgba(65, 65, 65, 1.0)',
   float: 'rgba(60, 60, 60, 1.0)',
   floatOn: 'rgba(206, 206, 206, 1.0)',
-  floatBorder: undefined,
+  floatBorder: 'rgba(155, 155, 155, 1.0)',
 
   // Specialized and unique styles.
   overlay: 'rgba(0, 0, 0, 0.75)',
   overlayStrong: 'rgba(0, 0, 0, 1.0)',
   overlayWeak: 'rgba(0, 0, 0, 0.5)',
-  elevation: '0px 6px 12px rgba(255, 255, 255, 0.12)',
-  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.12)',
-  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.24)',
+  elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
+  elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
+  elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
 };
 
 const themeLightDetermined: Theme = generateStrongWeak(Object.assign({}, themeBase, themeLight));
