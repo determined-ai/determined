@@ -31,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -668,43 +669,28 @@ func (a *apiServer) GetExperimentCheckpoints(
 	})
 
 	sort.Slice(resp.Checkpoints, func(i, j int) bool {
-		a1, a2 := resp.Checkpoints[i], resp.Checkpoints[j]
+		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
-			a2, a1 = a1, a2
+			aj, ai = ai, aj
 		}
 
 		switch req.SortBy {
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			l1, ok := a1.Metadata.AsMap()[model.LatestBatchMetadataKey].(float64)
-			if !ok {
-				// Just consider missing as always lower.
-				return true
-			}
-			l2, ok := a2.Metadata.AsMap()[model.LatestBatchMetadataKey].(float64)
-			if !ok {
-				return false
-			}
-			return l1 < l2
+			return protoless.CheckpointLatestBatchLess(ai, aj)
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
-			return a1.Uuid < a2.Uuid
+			return ai.Uuid < aj.Uuid
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
-			if a1.Training.TrialId == nil {
-				return true
-			}
-			if a2.Training.TrialId == nil {
-				return false
-			}
-			return a1.Training.TrialId.Value < a2.Training.TrialId.Value
+			return protoless.CheckpointTrialIDLess(ai, aj)
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
-			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+			return protoless.CheckpointReportTimeLess(ai, aj)
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
-			return a1.State.Number() < a2.State.Number()
+			return ai.State.Number() < aj.State.Number()
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
-			return a1.Training.SearcherMetric.Value < a2.Training.SearcherMetric.Value
+			return protoless.CheckpointSearcherMetricLess(ai, aj)
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
 			fallthrough
 		default:
-			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
 
