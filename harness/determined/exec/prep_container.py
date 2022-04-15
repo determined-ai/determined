@@ -13,7 +13,7 @@ import determined as det
 from determined import constants
 from determined.common import util
 from determined.common.api import bindings, certs, request
-from determined.common.experimental import Determined, Session
+from determined.common.experimental import Session
 
 
 def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
