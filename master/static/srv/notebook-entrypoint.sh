@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
+source /run/determined/task-signal-handling.sh
 source /run/determined/task-logging-setup.sh
+trap 'source /run/determined/task-logging-teardown.sh' EXIT
 
 set -e
 
@@ -42,19 +44,22 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
 JUPYTER_LAB_LOG_FORMAT="%(levelname)s: [%(name)s] %(message)s"
 READINESS_REGEX='^.*Jupyter Server .* is running.*$'
-exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
-                 --ServerApp.allow_origin="*" \
-                 --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
-                 --ServerApp.allow_root=True \
-                 --ServerApp.ip="0.0.0.0" \
-                 --ServerApp.open_browser=False \
-                 --ServerApp.token="" \
-                 --ServerApp.trust_xheaders=True \
-                 --Application.log_format="$JUPYTER_LAB_LOG_FORMAT" \
-                 --JupyterApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
-                 --ExtensionApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
-                 --LabServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
-                 --LabApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
-                 --ServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+
+trap_and_forward_signals
+jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
+    --ServerApp.allow_origin="*" \
+    --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
+    --ServerApp.allow_root=True \
+    --ServerApp.ip="0.0.0.0" \
+    --ServerApp.open_browser=False \
+    --ServerApp.token="" \
+    --ServerApp.trust_xheaders=True \
+    --Application.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+    --JupyterApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+    --ExtensionApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+    --LabServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+    --LabApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+    --ServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
     2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "${READINESS_REGEX}") >&2)
+wait_and_handle_signals $!
 

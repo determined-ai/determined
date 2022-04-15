@@ -63,13 +63,6 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
     )
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 
-    if (
-        rps.resourcePools[0].type == bindings.v1ResourcePoolType.RESOURCE_POOL_TYPE_K8S
-        and task_type == command.TaskTypeCommand
-    ):
-        # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
-        return
-
     body = {}
     if task_type == command.TaskTypeTensorBoard:
         exp_id = exp.run_basic_test(

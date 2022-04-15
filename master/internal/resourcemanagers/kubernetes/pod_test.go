@@ -184,7 +184,19 @@ func setupEntrypoint(t *testing.T) {
 	f, _ = os.OpenFile("task-logging-setup.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	err = f.Close()
 	if err != nil {
-		t.Logf("Failed to close entrypoint")
+		t.Logf("Failed to close task-logging-setup.sh")
+	}
+
+	f, _ = os.OpenFile("task-logging-teardown.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	err = f.Close()
+	if err != nil {
+		t.Logf("Failed to close task-logging-teardown.sh")
+	}
+
+	f, _ = os.OpenFile("task-signal-handling.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	err = f.Close()
+	if err != nil {
+		t.Logf("Failed to close task-signal-handling.sh")
 	}
 }
 
@@ -196,7 +208,17 @@ func cleanup(t *testing.T) {
 
 	err = os.Remove("task-logging-setup.sh")
 	if err != nil {
-		t.Logf("Failed to remove entrypoint")
+		t.Logf("Failed to remove task-logging-setup.sh")
+	}
+
+	err = os.Remove("task-logging-teardown.sh")
+	if err != nil {
+		t.Logf("Failed to remove task-logging-teardown.sh")
+	}
+
+	err = os.Remove("task-signal-handling.sh")
+	if err != nil {
+		t.Logf("Failed to remove task-signal-handling.sh")
 	}
 }
 
