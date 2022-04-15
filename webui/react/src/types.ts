@@ -417,7 +417,7 @@ export interface CoreApiGenericCheckpoint {
   reportTime?: string;
   resources: Record<string, number>;
   searcherMetric?: number;
-  state?: CheckpointState;
+  state: CheckpointState;
   taskId: string;
   totalBatches: number;
   trainingMetrics?: Metrics;
