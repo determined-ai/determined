@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -92,6 +93,7 @@ const DEFAULT_MODAL_STATE = {
 
 const useModalExperimentCreate = (props?: Props): ModalHooks => {
   const formRef = useRef<FormInstance>(null);
+  const [ registryCredentials, setRegistryCredentials ] = useState<RawJson>();
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
 
@@ -215,15 +217,38 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     const error = modalState.error || modalState.configError;
     if (error) throw new Error(error);
 
-    let configString;
+    let fullConfig;
     if (!modalState.isAdvancedMode) {
       await formRef.current?.validateFields();
-      configString = getConfigFromForm(modalState.config);
+      const publicConfig = modalState.config;
+      if (registryCredentials) {
+        const { environment, ...restConfig } = publicConfig;
+        fullConfig = {
+          environment: { registry_auth: registryCredentials, ...environment },
+          ...restConfig,
+        };
+      } else {
+        fullConfig = publicConfig;
+      }
+
     } else {
-      configString = modalState.configString;
+
+      const userConfig = yaml.load(modalState.configString);
+
+      if(!userConfig?.environment?.registry_auth && registryCredentials) {
+        const { environment, ...restConfig } = userConfig;
+        fullConfig = {
+          environment: { registry_auth: registryCredentials, ...environment },
+          ...restConfig,
+        };
+      } else {
+        fullConfig = userConfig;
+      }
+
     }
+    const configString = getConfigFromForm(fullConfig);
     await submitExperiment(configString);
-  }, [ getConfigFromForm, modalState, submitExperiment ]);
+  }, [ getConfigFromForm, modalState, submitExperiment, registryCredentials ]);
 
   const getModalContent = useCallback((state: ModalState) => {
     const { config, configError, configString, error, isAdvancedMode, type } = state;
@@ -298,7 +323,6 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
         </div>
       ),
       visible,
-      width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
     };
 
     return props;
@@ -316,10 +340,14 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
       if (config.description) config.description = `Fork of ${config.description}`;
     }
 
+    const { environment: { registry_auth, ...restEnvironment }, ...restConfig } = config;
+    setRegistryCredentials(registry_auth);
+    const publicConfig = { environment: restEnvironment, ...restConfig };
+
     setModalState(prev => {
       const newModalState = {
-        config,
-        configString: yaml.dump(config),
+        config: publicConfig,
+        configString: yaml.dump(publicConfig),
         experiment,
         isAdvancedMode: false,
         trial,
