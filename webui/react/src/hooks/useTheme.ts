@@ -6,9 +6,6 @@ import { camelCaseToKebab } from 'shared/utils/string';
 import themes, { DarkLight, globalCssVars, Theme } from 'themes';
 import { BrandingType } from 'types';
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-type SubTheme = Record<string, any>;
-
 type ThemeHook = {
   setBranding: Dispatch<SetStateAction<BrandingType>>,
   setMode: Dispatch<SetStateAction<DarkLight>>,
@@ -46,19 +43,6 @@ const updateTheme = (path: string) => {
   link.href = `${process.env.PUBLIC_URL}/themes/${path}`;
 };
 
-const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
-  if (isObject(theme)) {
-    return Object.keys(theme)
-      .map(key => flattenTheme(theme[key], `${basePath}-${key}`))
-      .reduce((acc, sub) => ({ ...acc, ...sub }), {});
-  } else if (Array.isArray(theme)) {
-    return theme
-      .map((sub: SubTheme, index: number) => flattenTheme(sub, `${basePath}-${index}`))
-      .reduce((acc, sub) => ({ ...acc, ...sub }), {});
-  }
-  return { [basePath]: theme };
-};
-
 /*
  * `useTheme` hook takes a `themeId` and converts the theme object and translates into
  * CSS variables that are applied throughout various component CSS modules. Upon a change
@@ -77,17 +61,17 @@ export const useTheme = (): ThemeHook => {
   }, []);
 
   useEffect(() => {
-    const root = document.documentElement;
-    const themeCssVars = flattenTheme(theme);
-
     // Set global CSS variables shared across themes.
     Object.keys(globalCssVars).forEach(key => {
       const value = (globalCssVars as Record<RecordKey, string>)[key];
-      root.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+      document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
     });
 
     // Set each theme property as top level CSS variable.
-    Object.keys(themeCssVars).forEach(key => root.style.setProperty(`--${key}`, themeCssVars[key]));
+    Object.keys(theme).forEach(key => {
+      const value = (theme as Record<RecordKey, string>)[key];
+      document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
+    });
   }, [ theme ]);
 
   // Detect browser/OS level dark/light mode changes.
