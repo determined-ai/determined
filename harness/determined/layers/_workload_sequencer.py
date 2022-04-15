@@ -339,10 +339,6 @@ class WorkloadSequencer(workload.Source):
                 raise ShouldExit(skip_exit_checkpoint=True)
             return
 
-        uuid = response["uuid"]
-
-        logging.info(f"Saved trial to checkpoint {uuid}")
-
         if already_exiting:
             return
 

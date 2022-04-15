@@ -246,7 +246,7 @@ class CheckpointContext:
             **self._static_metadata,
             **metadata,
         }
-        logger.debug(f"_report_checkpoint({storage_id})")
+        logger.info(f"Reported checkpoint to master {storage_id}")
         self._session.post(self._api_path, data=det.util.json_encode(body))
 
         # Also sync tensorboard.
