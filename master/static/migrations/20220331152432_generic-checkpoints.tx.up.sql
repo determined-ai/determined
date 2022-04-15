@@ -30,6 +30,9 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         jsonb_build_object(
             'latest_batch', c.total_batches,
             'framework', c.framework,
+            -- XXX: we definitely need to add this to the migration, so old
+            -- tensorflow checkpoints can be loaded.
+            'format', c.format,
             'determined_version', c.determined_version
         ) || COALESCE(c.metadata, '{}'::jsonb) AS metadata,
         t.id AS trial_id,
