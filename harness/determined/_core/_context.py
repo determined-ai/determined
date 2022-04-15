@@ -96,17 +96,17 @@ def init(
     """
     core.init() builds a core.Context for use with the Core API.
 
-    You should always use core.init() instead of instantiating a core.Context directly.  Certain
-    components of the Core API may be configured directly by passing arguments to core.init().  The
-    only component that must be passed in, and even then, only for multi-slot tasks, is a valid
-    DistributedContext.
+    Always use core.init() instead of instantiating a core.Context directly.  Certain components of
+    the Core API may be configured directly by passing arguments to core.init().  The only arg that
+    is required is a DistributedContext, and even that is only required for for multi-slot tasks.
 
     Arguments:
         distributed (``core.DistributedContext``, default: ``None``): Passing a DistributedContext
             is required for multi-slot training, but unnecessary for single-slot training.
         preempt_mode (``core.PreemptMode``, default: ``WorkersAskChief``): Configure the calling
-            pattern for the core_context.preempt.should_preempt() method.
-        storage_manager: this argument is currently reserved for internal use only.
+            pattern for the core_context.preempt.should_preempt() method.  See
+            :class:`~determined.core.PremptMode` for more detail.
+        storage_manager: Internal use only.
     """
     info = det.get_cluster_info()
     if info is None:

@@ -41,8 +41,8 @@ class TrainContext:
 
     def set_status(self, status: str) -> None:
         """
-        set_status reports a short user-facing string that the WebUI can render to indicate what
-        a trial is working on.
+        Report a short user-facing string that the WebUI can render to indicate what a trial is
+        working on.
         """
 
         body = {"state": status}
@@ -50,11 +50,6 @@ class TrainContext:
         self._session.post(f"/api/v1/trials/{self._trial_id}/runner/metadata", json=body)
 
     def get_last_validation(self) -> Optional[int]:
-        """
-        get_last_validation will report the latest_batch from the most recent call to
-        report_validation_metrics().
-        """
-
         r = self._session.get(f"/api/v1/trials/{self._trial_id}")
         val = r.json()["trial"].get("latestValidation") or {}
         latest_batch = val.get("totalBatches")
@@ -70,8 +65,8 @@ class TrainContext:
         """
         Report training metrics to the master.
 
-        Optionally, you may include a list of batch_metrics.  Batch metrics will not be shown in the
-        WebUI but may be accessed from the master via the CLI for post-processing.
+        You can include a list of *batch_metrics*.  Batch metrics are not be shown in the WebUI but
+        may be accessed from the master via the CLI for post-processing.
         """
 
         body = {
@@ -135,7 +130,7 @@ class TrainContext:
         Report validation metrics to the master.
 
         Note that for hyperparameter search, this is independent of the need to report the searcher
-        metric via SearcherOperation.report_completed() in the Searcher API.
+        metric via ``SearcherOperation.report_completed()`` in the Searcher API.
         """
 
         serializable_metrics = self._get_serializable_metrics(metrics)
@@ -161,9 +156,9 @@ class TrainContext:
         """
         Report an early exit reason to the Determined master.
 
-        Presently, the only meaningful value to report is EarlyExitReason.INVALID_HP, which is
-        reported automatically in core.Context.__exit__() detects an exception of type
-        det.InvalidHP.
+        Currenlty, the only meaningful value to report is ``EarlyExitReason.INVALID_HP``, which is
+        reported automatically in ``core.Context.__exit__()`` detects an exception of type
+        ``det.InvalidHP``.
         """
 
         body = {"reason": EarlyExitReason(reason).value}
@@ -180,7 +175,8 @@ class TrainContext:
         Get the best reported validation metric reported so far, across the whole experiment.
 
         The value returned will be the highest or lowest reported validation metric value, using
-        searcher.metric as the key and searcher.smaller_is_better for the comparison.
+        the searcher.metric field of the experiment config as the key and searcher.smaller_is_better
+        for the comparison.
         """
 
         logger.debug("get_experiment_best_validation()")

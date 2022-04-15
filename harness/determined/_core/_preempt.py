@@ -145,8 +145,8 @@ class PreemptMode(enum.Enum):
 
 class PreemptContext:
     """
-    PreemptContext gives access to preemption signals that originate either from a user action,
-    like pausing an experiemnt via the WebUI or the CLI, or in the Determined scheduler.
+    PreemptContext gives access to preemption signals that originate from a user action, such as
+    pausing an experiment using the WebUI or the CLI, from in the Determined scheduler.
     """
 
     def __init__(
