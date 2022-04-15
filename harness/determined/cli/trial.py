@@ -1,21 +1,21 @@
 import distutils.util
 import json
+import os
+import tarfile
+import tempfile
 from argparse import Namespace
+from datetime import datetime
 from typing import Any, List
 
 from determined.cli import render
+from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
-from determined.cli.session import setup_session
-
 
 from .checkpoint import format_checkpoint, format_validation, render_checkpoint
 
-import tarfile
-import json
-import os
 
 @authentication.required
 def describe_trial(args: Namespace) -> None:
@@ -125,71 +125,72 @@ def trial_logs(args: Namespace) -> None:
         timestamp_after=args.timestamp_after,
     )
 
+
 @authentication.required
-def output_logs(args: Namespace): 
-    if args.output_dir is None: 
-        raise Exception('Please provide the output directory you would like to direct the logs to.')
-    
-    output_dir_tar = tarfile.open(f'{args.output_dir}.tar.gz', 'w:gz')
+def output_logs(args: Namespace):
+    temp_dir = tempfile.TemporaryDirectory()
+    trial_logs_filepath = write_trial_logs(args, temp_dir)
 
-    trial_logs_file = write_trial_logs(args, args.trial_id, output_dir_tar)
-    output_dir_tar.add(f'{trial_logs_file}.json')
-    os.remove(f'{trial_logs_file}.json')
-    
-    master_logs_file = write_master_logs(args, output_dir_tar)
-    output_dir_tar.add(f'{master_logs_file}.json')
-    os.remove(f'{master_logs_file}.json')
+    master_logs_filepath = write_master_logs(args, temp_dir)
+
+    api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
+
+    bundle = None
+    if args.output_dir is None:
+        output_dir = os.getcwd()
+        tar = f"det-bundle-trail_{args.trial_id}-{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}.tar.gz"
+        fullpath = os.path.join(output_dir, tar)
+        bundle = tarfile.open(fullpath, "w:gz")
+
+    else:
+        bundle = tarfile.open(f"{args.output_dir}.tar.gz", "w:gz")
+
+    bundle.add(trial_logs_filepath, arcname=os.path.basename(trial_logs_filepath))
+    bundle.add(master_logs_filepath, arcname=os.path.basename(master_logs_filepath))
+    bundle.add(api_trail_filepath, arcname=os.path.basename(api_trail_filepath))
+    bundle.add(api_experiment_filepath, arcname=os.path.basename(api_experiment_filepath))
+
+    bundle.close()
 
 
-    api_trail_file, api_experiment_file = write_api_call(args, output_dir_tar)
-    output_dir_tar.add(f'{api_trail_file}.json')
-    output_dir_tar.add(f'{api_experiment_file}.json')
-    os.remove(f'{api_trail_file}.json')
-    os.remove(f'{api_experiment_file}.json')
+def write_trial_logs(args, temp_dir):
+    trial_logs = api.trial_logs(args.master, args.trial_id)
+    file_path = os.path.join(temp_dir.name, "trial_logs.jsonl")
+    create_jsonl_file_in_dir(trial_logs, file_path)
+    return file_path
 
-    output_dir_tar.close()
 
-    return f'{args.output_dir}.tar.gz'
+def write_master_logs(args, temp_dir):
+    response = api.get(args.master, "logs")
+    file_path = os.path.join(temp_dir.name, "master_logs.jsonl")
+    create_json_file_in_dir(response.json(), file_path)
+    return file_path
 
-    
 
-def write_trial_logs(args,trial_id, output_dir):  #difference between this trial_logs and api call? There doesn't seem to be any. 
-    trial_logs = api.trial_logs(args.master, trial_id)
-    # use trial logs to get the experiment id 
-    file_name = 'trial_logs'
-    trial_logs_list = []
-    for log in trial_logs: 
-        trial_logs_list.append(log)
-
-    create_json_file_in_dir(trial_logs_list,file_name, output_dir)
-    return file_name
-
-def write_master_logs(args, output_dir):
-    response = api.get(
-                args.master, "logs"
-            )
-    file_name = 'master_logs'
-    create_json_file_in_dir(response.json(),file_name, output_dir)
-    return file_name
-
-def write_api_call(args, output_dir): 
-    file_name1 = 'api_experiment_call'
-    file_name2 = 'api_trial_call'
+def write_api_call(args, temp_dir):
+    file_path1 = os.path.join(temp_dir.name, "api_experiment_call.json")
+    file_path2 = os.path.join(temp_dir.name, "api_trial_call.json")
 
     trial_obj = bindings.get_GetTrial(setup_session(args), trialId=args.trial_id).trial
     experiment_id = trial_obj.experimentId
     exp_obj = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
 
     trial_obj.to_json(), exp_obj.to_json()
-    create_json_file_in_dir(exp_obj.to_json(), file_name1, output_dir)
-    create_json_file_in_dir(trial_obj.to_json(), file_name2, output_dir)
-    return file_name1, file_name2
+    create_json_file_in_dir(exp_obj.to_json(), file_path1)
+    create_json_file_in_dir(trial_obj.to_json(), file_path2)
+    return file_path1, file_path2
 
-def create_json_file_in_dir(content, file_name, output_dir): 
-    with open(f'{file_name}.json', 'w') as f: 
+
+def create_jsonl_file_in_dir(list_logs, file_path):
+    with open(file_path, "w") as f:
+        for log in list_logs:
+            f.write(f"{json.dumps(log)}\n")
+
+
+def create_json_file_in_dir(content, file_path):
+    with open(file_path, "w") as f:
         json.dump(content, f)
-    
-    f.close()
+
 
 args_description = [
     Cmd(
@@ -266,23 +267,21 @@ args_description = [
                     ),
                 ],
             ),
-
             Cmd(
                 "support-bundle",
                 output_logs,
                 "support bundle",
-            [
-                Arg("trial_id", type=int, help="trial ID"),
-                Arg(
-                            "-o",
-                            "--output-dir",
-                            type=str,
-                            default=None,
-                            help="Desired output directory for the logs",
+                [
+                    Arg("trial_id", type=int, help="trial ID"),
+                    Arg(
+                        "-o",
+                        "--output-dir",
+                        type=str,
+                        default=None,
+                        help="Desired output directory for the logs",
+                    ),
+                ],
             ),
-            ],
-            ),
-
             Cmd(
                 "logs",
                 trial_logs,

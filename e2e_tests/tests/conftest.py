@@ -110,7 +110,7 @@ def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogMana
         # Yield `None` so that pytest handles the no log manager case correctly.
         yield None
 
-    #compare_stats()
+    # compare_stats()
 
 
 def pytest_itemcollected(item: Any) -> None:
