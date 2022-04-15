@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,7 +7,12 @@ import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
+import {
+  ExperimentBase,
+  RawJson,
+  TrialDetails,
+  TrialHyperparameters,
+} from 'types';
 import { clone, isEqual } from 'utils/data';
 import handleError, { DetError, isDetError, isError } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
@@ -233,7 +237,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
 
     } else {
 
-      const userConfig = yaml.load(modalState.configString);
+      const userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
 
       if(!userConfig?.environment?.registry_auth && registryCredentials) {
         const { environment, ...restConfig } = userConfig;
