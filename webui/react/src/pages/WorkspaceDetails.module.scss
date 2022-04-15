@@ -3,5 +3,11 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: var(--theme-sizes-layout-big);
+
+    .options {
+      display: flex;
+      flex-direction: row;
+      gap: var(--theme-sizes-layout-tiny)
+    }
   }
 }

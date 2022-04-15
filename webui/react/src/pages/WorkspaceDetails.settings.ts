@@ -8,14 +8,12 @@ export type ProjectColumnName =
   | 'action'
   | 'archived'
   | 'description'
-  | 'id'
   | 'lastUpdated'
   | 'name'
   | 'numExperiments'
   | 'user';
 
 export const DEFAULT_COLUMNS: ProjectColumnName[] = [
-  'id',
   'name',
   'description',
   'numExperiments',
@@ -28,7 +26,6 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   action: 46,
   archived: 75,
   description: 147,
-  id: 57,
   lastUpdated: 100,
   name: 150,
   numExperiments: 74,
@@ -50,6 +47,15 @@ const config: SettingsConfig = {
       key: 'archived',
       storageKey: 'archived',
       type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS,
+      key: 'columns',
+      storageKey: 'columns',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
     },
     {
       defaultValue: DEFAULT_COLUMNS.map((col: ProjectColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
