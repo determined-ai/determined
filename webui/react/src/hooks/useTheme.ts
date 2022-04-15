@@ -84,7 +84,6 @@ export const useTheme = (): ThemeHook => {
     Object.keys(globalCssVars).forEach(key => {
       const value = (globalCssVars as Record<RecordKey, string>)[key];
       root.style.setProperty(`--${camelCaseToKebab(key)}`, value);
-      console.log(`--${camelCaseToKebab(key)}`, value);
     });
 
     // Set each theme property as top level CSS variable.

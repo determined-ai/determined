@@ -1,8 +1,9 @@
-import { string } from 'io-ts';
-
+/* eslint-disable @typescript-eslint/member-ordering */
+/* eslint-disable sort-keys-fix/sort-keys-fix */
 import {
   BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState,
 } from 'types';
+import { isColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 
 /*
  * Where did we get our sizes from?
@@ -34,7 +35,7 @@ enum StateColors {
   potential = 'potential'
 }
 
-export interface Theme {
+export interface ThemeX {
   animationCurve: string;
   colors: {
     action: {
@@ -76,30 +77,111 @@ export interface Theme {
       width: string;
     };
     font: {[size in ShirtSize]: string};
-    /* eslint-disable @typescript-eslint/member-ordering */
-    icon: {
-      tiny: string;
-      small: string;
-      medium: string;
-      large: string;
-      big: string;
-      great: string;
-      huge: string;
-      enormous: string;
-      giant: string;
-      jumbo: string;
-      mega: string;
-    };
-    /* eslint-enable @typescript-eslint/member-ordering */
     layout: {[size in ShirtSize]: string};
   };
 }
+
+const baseTheme = {
+  // Font styles.
+  fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
+  fontFamilyCode: '"Source Code Pro", monospace',
+
+  // Palette colors for strong/weak calculations.
+  strong: undefined,
+  weak: undefined,
+
+  // Area and surface styles.
+  background: undefined,
+  backgroundStrong: undefined,
+  backgroundWeak: undefined,
+  backgroundOn: undefined,
+  backgroundOnStrong: undefined,
+  backgroundOnWeak: undefined,
+  backgroundBorder: undefined,
+  backgroundBorderStrong: undefined,
+  backgroundBorderWeak: undefined,
+  stage: undefined,
+  stageStrong: undefined,
+  stageWeak: undefined,
+  stageOn: undefined,
+  stageOnStrong: undefined,
+  stageOnWeak: undefined,
+  stageBorder: undefined,
+  stageBorderStrong: undefined,
+  stageBorderWeak: undefined,
+  surface: undefined,
+  surfaceStrong: undefined,
+  surfaceWeak: undefined,
+  surfaceOn: undefined,
+  surfaceOnStrong: undefined,
+  surfaceOnWeak: undefined,
+  surfaceBorder: undefined,
+  surfaceBorderStrong: undefined,
+  surfaceBorderWeak: undefined,
+  float: undefined,
+  floatStrong: undefined,
+  floatWeak: undefined,
+  floatOn: undefined,
+  floatOnStrong: undefined,
+  floatOnWeak: undefined,
+  floatBorder: undefined,
+  floatBorderStrong: undefined,
+  floatBorderWeak: undefined,
+
+  // Specialized and unique styles.
+  overlay: undefined,
+  overlayStrong: undefined,
+  overlayWeak: undefined,
+  borderRadius: '4px',
+  borderRadiusStrong: '8px',
+  borderRadiusWeak: '2px',
+  strokeWidth: '1px',
+  strokeWidthStrong: '3px',
+  strokeWidthWeak: '0.5px',
+  elevation: undefined,
+  elevationStrong: undefined,
+  elevationWeak: undefined,
+
+  // Status styles.
+  statusActive: 'rgba(0, 155, 222, 1.0)',
+  statusActiveStrong: undefined,
+  statusActiveWeak: undefined,
+  statusActiveOn: 'rgba(255, 255, 255, 1.0)',
+  statusActiveOnStrong: undefined,
+  statusActiveOnWeak: undefined,
+  statusCritical: 'rgba(204, 0, 0, 1.0)',
+  statusCriticalStrong: undefined,
+  statusCriticalWeak: undefined,
+  statusCriticalOn: 'rgba(255, 255, 255, 1.0)',
+  statusCriticalOnStrong: undefined,
+  statusCriticalOnWeak: undefined,
+  statusInactive: 'rgba(102, 102, 102, 1.0)',
+  statusInactiveStrong: undefined,
+  statusInactiveWeak: undefined,
+  statusInactiveOn: 'rgba(255, 255, 255, 1.0)',
+  statusInactiveOnStrong: undefined,
+  statusInactiveOnWeak: undefined,
+  statusPending: 'rgba(102, 102, 204, 1.0)',
+  statusPendingStrong: undefined,
+  statusPendingWeak: undefined,
+  statusPendingOn: 'rgba(255, 255, 255, 1.0)',
+  statusPendingOnStrong: undefined,
+  statusPendingOnWeak: undefined,
+  statusWarning: 'rgba(204, 153, 0, 1.0)',
+  statusWarningStrong: undefined,
+  statusWarningWeak: undefined,
+  statusWarningOn: 'rgba(255, 255, 255, 1.0)',
+  statusWarningOnStrong: undefined,
+  statusWarningOnWeak: undefined,
+};
+
+export type Theme = Record<keyof typeof baseTheme, string>;
 
 /*
  * When updating colors, update `variables.less` as well.
  * Currently two sources of truth due to Ant Design.
  */
-const lightDeterminedTheme: Theme = {
+const lightDeterminedTheme: ThemeX = {
   animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
   colors: {
     action: {
@@ -193,19 +275,6 @@ const lightDeterminedTheme: Theme = {
       jumbo: '36px',
       mega: '40px',
     },
-    icon: {
-      tiny: '12px',
-      small: '16px',
-      medium: '20px',
-      large: '24px',
-      big: '28px',
-      great: '32px',
-      huge: '36px',
-      enormous: '40px',
-      giant: '44px',
-      jumbo: '48px',
-      mega: '52px',
-    },
     layout: {
       micro: '2px',
       tiny: '4px',
@@ -223,7 +292,7 @@ const lightDeterminedTheme: Theme = {
   },
 };
 
-const darkDeterminedTheme: Theme = {
+const darkDeterminedTheme: ThemeX = {
   animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
   colors: {
     action: {
@@ -317,19 +386,6 @@ const darkDeterminedTheme: Theme = {
       jumbo: '36px',
       mega: '40px',
     },
-    icon: {
-      tiny: '12px',
-      small: '16px',
-      medium: '20px',
-      large: '24px',
-      big: '28px',
-      great: '32px',
-      huge: '36px',
-      enormous: '40px',
-      giant: '44px',
-      jumbo: '48px',
-      mega: '52px',
-    },
     layout: {
       micro: '2px',
       tiny: '4px',
@@ -347,7 +403,7 @@ const darkDeterminedTheme: Theme = {
   },
 };
 
-const lightHpeTheme: Theme = {
+const lightHpeTheme: ThemeX = {
   ...lightDeterminedTheme,
   colors: {
     ...lightDeterminedTheme.colors,
@@ -359,7 +415,7 @@ const lightHpeTheme: Theme = {
   },
 };
 
-const darkHpeTheme: Theme = {
+const darkHpeTheme: ThemeX = {
   ...darkDeterminedTheme,
   colors: {
     ...darkDeterminedTheme.colors,
@@ -414,9 +470,70 @@ export const getStateColor = (state: StateOfUnion | undefined): string => {
   return window.getComputedStyle(document.body).getPropertyValue(cssVar);
 };
 
+const generateStrongWeak = (theme: Theme): Theme => {
+  const rgbaStrong = str2rgba(theme.strong);
+  const rgbaWeak = str2rgba(theme.weak);
+
+  for (const [ key, value ] of Object.entries(theme)) {
+    const matches = key.match(/^(.+)(Strong|Weak)$/);
+    if (matches?.length === 3 && value === undefined) {
+      const isStrong = matches[2] === 'Strong';
+      const baseKey = matches[1] as keyof Theme;
+      const baseValue = theme[baseKey];
+      if (baseValue && isColor(baseValue)) {
+        const rgba = str2rgba(baseValue);
+        const mixer = isStrong ? rgbaStrong : rgbaWeak;
+        theme[key as keyof Theme] = rgba2str(rgbaFromGradient(rgba, mixer, 0.1));
+      }
+    }
+  }
+  return theme as Theme;
+};
+
+const lightDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme, {
+  // Palette colors for strong/weak calculations.
+  strong: 'rgba(0, 0, 0, 1.0)',
+  weak: 'rgba(255, 255, 255, 1.0)',
+
+  // Specialized and unique styles.
+  overlay: 'rgba(255, 255, 255, 0.75)',
+  overlayStrong: 'rgba(255, 255, 255, 1.0)',
+  overlayWeak: 'rgba(255, 255, 255, 0.5)',
+  elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
+  elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
+  elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
+}));
+
+const darkDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme, {
+  // Palette colors for strong/weak calculations.
+  strong: 'rgba(255, 255, 255, 1.0)',
+  weak: 'rgba(0, 0, 0, 1.0)',
+
+  // Specialized and unique styles.
+  overlay: 'rgba(0, 0, 0, 0.75)',
+  overlayStrong: 'rgba(0, 0, 0, 1.0)',
+  overlayWeak: 'rgba(0, 0, 0, 0.5)',
+  elevation: '0px 6px 12px rgba(255, 255, 255, 0.12)',
+  elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.12)',
+  elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.24)',
+}));
+
 export const globalCssVars = {
   fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
   fontFamilyCode: '"Source Code Pro", monospace',
+
+  iconTiny: '12px',
+  iconSmall: '16px',
+  iconMedium: '20px',
+  iconLarge: '24px',
+  iconBig: '28px',
+  iconGreat: '32px',
+  iconHuge: '36px',
+  iconEnormous: '40px',
+  iconGiant: '44px',
+  iconJumbo: '48px',
+  iconMega: '52px',
+
   navBottomBarHeight: '56px',
   navSideBarWidthMax: '240px',
   navSideBarWidthMin: '56px',
@@ -429,11 +546,11 @@ export enum DarkLight {
 
 export default {
   [BrandingType.Determined]: {
-    [DarkLight.Dark]: darkDeterminedTheme,
-    [DarkLight.Light]: lightDeterminedTheme,
+    [DarkLight.Dark]: darkDeterminedThemeX,
+    [DarkLight.Light]: lightDeterminedThemeX,
   },
   [BrandingType.HPE]: {
-    [DarkLight.Dark]: darkHpeTheme,
-    [DarkLight.Light]: lightHpeTheme,
+    [DarkLight.Dark]: darkDeterminedThemeX,
+    [DarkLight.Light]: lightDeterminedThemeX,
   },
 };

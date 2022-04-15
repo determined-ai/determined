@@ -69,8 +69,8 @@
     justify-content: space-between;
 
     & > *:last-child {
-      height: var(--theme-sizes-icon-large);
-      width: var(--theme-sizes-icon-large);
+      height: 24px;
+      width: 24px;
     }
     .badges {
       display: flex;
