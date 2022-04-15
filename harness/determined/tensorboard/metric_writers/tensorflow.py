@@ -43,7 +43,7 @@ class TFWriter(tensorboard.MetricWriter):
         # Fix for protobuf 3.20 breaking change that disallows assigning single-element numpy arrays
         # to float fields.
         if isinstance(value, np.ndarray):
-            value = value[0]
+            value = value.item()
         summary = self.createSummary()
         summary_value = summary.value.add()
         summary_value.tag = name
