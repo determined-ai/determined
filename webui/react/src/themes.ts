@@ -69,102 +69,6 @@ export interface ThemeX {
   shadow: string;
 }
 
-const baseTheme = {
-  // Font styles.
-  fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
-  fontFamilyCode: '"Source Code Pro", monospace',
-
-  // Palette colors for strong/weak calculations.
-  strong: undefined,
-  weak: undefined,
-
-  // Area and surface styles.
-  background: undefined,
-  backgroundStrong: undefined,
-  backgroundWeak: undefined,
-  backgroundOn: undefined,
-  backgroundOnStrong: undefined,
-  backgroundOnWeak: undefined,
-  backgroundBorder: undefined,
-  backgroundBorderStrong: undefined,
-  backgroundBorderWeak: undefined,
-  stage: undefined,
-  stageStrong: undefined,
-  stageWeak: undefined,
-  stageOn: undefined,
-  stageOnStrong: undefined,
-  stageOnWeak: undefined,
-  stageBorder: undefined,
-  stageBorderStrong: undefined,
-  stageBorderWeak: undefined,
-  surface: undefined,
-  surfaceStrong: undefined,
-  surfaceWeak: undefined,
-  surfaceOn: undefined,
-  surfaceOnStrong: undefined,
-  surfaceOnWeak: undefined,
-  surfaceBorder: undefined,
-  surfaceBorderStrong: undefined,
-  surfaceBorderWeak: undefined,
-  float: undefined,
-  floatStrong: undefined,
-  floatWeak: undefined,
-  floatOn: undefined,
-  floatOnStrong: undefined,
-  floatOnWeak: undefined,
-  floatBorder: undefined,
-  floatBorderStrong: undefined,
-  floatBorderWeak: undefined,
-
-  // Specialized and unique styles.
-  overlay: undefined,
-  overlayStrong: undefined,
-  overlayWeak: undefined,
-  borderRadius: '4px',
-  borderRadiusStrong: '8px',
-  borderRadiusWeak: '2px',
-  strokeWidth: '1px',
-  strokeWidthStrong: '3px',
-  strokeWidthWeak: '0.5px',
-  elevation: undefined,
-  elevationStrong: undefined,
-  elevationWeak: undefined,
-
-  // Status styles.
-  statusActive: 'rgba(0, 155, 222, 1.0)',
-  statusActiveStrong: undefined,
-  statusActiveWeak: undefined,
-  statusActiveOn: 'rgba(255, 255, 255, 1.0)',
-  statusActiveOnStrong: undefined,
-  statusActiveOnWeak: undefined,
-  statusCritical: 'rgba(204, 0, 0, 1.0)',
-  statusCriticalStrong: undefined,
-  statusCriticalWeak: undefined,
-  statusCriticalOn: 'rgba(255, 255, 255, 1.0)',
-  statusCriticalOnStrong: undefined,
-  statusCriticalOnWeak: undefined,
-  statusInactive: 'rgba(102, 102, 102, 1.0)',
-  statusInactiveStrong: undefined,
-  statusInactiveWeak: undefined,
-  statusInactiveOn: 'rgba(255, 255, 255, 1.0)',
-  statusInactiveOnStrong: undefined,
-  statusInactiveOnWeak: undefined,
-  statusPending: 'rgba(102, 102, 204, 1.0)',
-  statusPendingStrong: undefined,
-  statusPendingWeak: undefined,
-  statusPendingOn: 'rgba(255, 255, 255, 1.0)',
-  statusPendingOnStrong: undefined,
-  statusPendingOnWeak: undefined,
-  statusWarning: 'rgba(204, 153, 0, 1.0)',
-  statusWarningStrong: undefined,
-  statusWarningWeak: undefined,
-  statusWarningOn: 'rgba(255, 255, 255, 1.0)',
-  statusWarningOnStrong: undefined,
-  statusWarningOnWeak: undefined,
-};
-
-export type Theme = Record<keyof typeof baseTheme, string>;
-
 /*
  * When updating colors, update `variables.less` as well.
  * Currently two sources of truth due to Ant Design.
@@ -317,30 +221,6 @@ const darkDeterminedTheme: ThemeX = {
   shadow: '2px 2px 4px 0 rgba(0, 0, 0, 0.25)',
 };
 
-const lightHpeTheme: ThemeX = {
-  ...lightDeterminedTheme,
-  colors: {
-    ...lightDeterminedTheme.colors,
-    brand: {
-      dark: '#009069',
-      light: '#1bc39c',
-      normal: '#01a982',
-    },
-  },
-};
-
-const darkHpeTheme: ThemeX = {
-  ...darkDeterminedTheme,
-  colors: {
-    ...darkDeterminedTheme.colors,
-    brand: {
-      dark: '#009069',
-      light: '#1bc39c',
-      normal: '#01a982',
-    },
-  },
-};
-
 const stateColorMapping = {
   [RunState.Active]: 'active',
   [RunState.Canceled]: 'inactive',
@@ -404,10 +284,123 @@ const generateStrongWeak = (theme: Theme): Theme => {
   return theme as Theme;
 };
 
-const lightDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme, {
+const themeBase = {
+  // Font styles.
+  fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
+  fontFamilyCode: '"Source Code Pro", monospace',
+
+  // Palette colors for strong/weak calculations.
+  strong: undefined,
+  weak: undefined,
+
+  // Brand colors.
+  brand: 'rgba(247, 123, 33, 1.0)',
+  brandStrong: undefined,
+  brandWeak: undefined,
+
+  // Area and surface styles.
+  background: undefined,
+  backgroundStrong: undefined,
+  backgroundWeak: undefined,
+  backgroundOn: undefined,
+  backgroundOnStrong: undefined,
+  backgroundOnWeak: undefined,
+  backgroundBorder: undefined,
+  backgroundBorderStrong: undefined,
+  backgroundBorderWeak: undefined,
+  stage: undefined,
+  stageStrong: undefined,
+  stageWeak: undefined,
+  stageOn: undefined,
+  stageOnStrong: undefined,
+  stageOnWeak: undefined,
+  stageBorder: undefined,
+  stageBorderStrong: undefined,
+  stageBorderWeak: undefined,
+  surface: undefined,
+  surfaceStrong: undefined,
+  surfaceWeak: undefined,
+  surfaceOn: undefined,
+  surfaceOnStrong: undefined,
+  surfaceOnWeak: undefined,
+  surfaceBorder: undefined,
+  surfaceBorderStrong: undefined,
+  surfaceBorderWeak: undefined,
+  float: undefined,
+  floatStrong: undefined,
+  floatWeak: undefined,
+  floatOn: undefined,
+  floatOnStrong: undefined,
+  floatOnWeak: undefined,
+  floatBorder: undefined,
+  floatBorderStrong: undefined,
+  floatBorderWeak: undefined,
+
+  // Specialized and unique styles.
+  overlay: undefined,
+  overlayStrong: undefined,
+  overlayWeak: undefined,
+  borderRadius: '4px',
+  borderRadiusStrong: '8px',
+  borderRadiusWeak: '2px',
+  strokeWidth: '1px',
+  strokeWidthStrong: '3px',
+  strokeWidthWeak: '0.5px',
+  elevation: undefined,
+  elevationStrong: undefined,
+  elevationWeak: undefined,
+
+  // Status styles.
+  statusActive: 'rgba(0, 155, 222, 1.0)',
+  statusActiveStrong: undefined,
+  statusActiveWeak: undefined,
+  statusActiveOn: 'rgba(255, 255, 255, 1.0)',
+  statusActiveOnStrong: undefined,
+  statusActiveOnWeak: undefined,
+  statusCritical: 'rgba(204, 0, 0, 1.0)',
+  statusCriticalStrong: undefined,
+  statusCriticalWeak: undefined,
+  statusCriticalOn: 'rgba(255, 255, 255, 1.0)',
+  statusCriticalOnStrong: undefined,
+  statusCriticalOnWeak: undefined,
+  statusInactive: 'rgba(102, 102, 102, 1.0)',
+  statusInactiveStrong: undefined,
+  statusInactiveWeak: undefined,
+  statusInactiveOn: 'rgba(255, 255, 255, 1.0)',
+  statusInactiveOnStrong: undefined,
+  statusInactiveOnWeak: undefined,
+  statusPending: 'rgba(102, 102, 204, 1.0)',
+  statusPendingStrong: undefined,
+  statusPendingWeak: undefined,
+  statusPendingOn: 'rgba(255, 255, 255, 1.0)',
+  statusPendingOnStrong: undefined,
+  statusPendingOnWeak: undefined,
+  statusWarning: 'rgba(204, 153, 0, 1.0)',
+  statusWarningStrong: undefined,
+  statusWarningWeak: undefined,
+  statusWarningOn: 'rgba(255, 255, 255, 1.0)',
+  statusWarningOnStrong: undefined,
+  statusWarningOnWeak: undefined,
+};
+
+const themeLight = {
   // Palette colors for strong/weak calculations.
   strong: 'rgba(0, 0, 0, 1.0)',
   weak: 'rgba(255, 255, 255, 1.0)',
+
+  // Area and surface styles.
+  background: 'rgba(204, 204, 202, 1.0)',
+  backgroundOn: 'rgba(18, 18, 18, 1.0)',
+  backgroundBorder: undefined,
+  stage: 'rgba(220, 219, 217, 1.0)',
+  stageOn: 'rgba(69, 69, 69, 1.0)',
+  stageBorder: 'rgba(194, 194, 194, 1.0)',
+  surface: 'rgba(200, 199, 197, 1.0)',
+  surfaceOn: 'rgba(0, 8, 16, 1.0)',
+  surfaceBorder: 'rgba(190, 190, 190, 1.000)',
+  float: 'rgba(195, 195, 195, 1.0)',
+  floatOn: 'rgba(49, 49, 49, 1.0)',
+  floatBorder: undefined,
 
   // Specialized and unique styles.
   overlay: 'rgba(255, 255, 255, 0.75)',
@@ -416,12 +409,26 @@ const lightDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme,
   elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
   elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
   elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
-}));
+};
 
-const darkDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme, {
+const themeDark = {
   // Palette colors for strong/weak calculations.
   strong: 'rgba(255, 255, 255, 1.0)',
   weak: 'rgba(0, 0, 0, 1.0)',
+
+  // Area and surface styles.
+  background: 'rgba(21, 21, 23, 1.0)',
+  backgroundOn: 'rgba(237, 237, 237, 1.0)',
+  backgroundBorder: undefined,
+  stage: 'rgba(35, 36, 38, 1.0)',
+  stageOn: 'rgba(186, 186, 186, 1.0)',
+  stageBorder: 'rgba(61, 61, 61, 1.0)',
+  surface: 'rgba(55, 56, 57, 1.0)',
+  surfaceOn: 'rgba(255, 247, 239, 1.0)',
+  surfaceBorder: 'rgba(65, 65, 65, 1.000)',
+  float: 'rgba(60, 60, 60, 1.0)',
+  floatOn: 'rgba(206, 206, 206, 1.0)',
+  floatBorder: undefined,
 
   // Specialized and unique styles.
   overlay: 'rgba(0, 0, 0, 0.75)',
@@ -430,7 +437,16 @@ const darkDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme, 
   elevation: '0px 6px 12px rgba(255, 255, 255, 0.12)',
   elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.12)',
   elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.24)',
-}));
+};
+
+const themeLightDetermined: Theme = generateStrongWeak(Object.assign(themeBase, themeLight));
+const themeDarkDetermined: Theme = generateStrongWeak(Object.assign(themeBase, themeDark));
+
+const themeHpe = { brand: 'rgba(1, 169, 130, 1.0)' };
+const themeLightHpe: Theme = generateStrongWeak(Object.assign(themeBase, themeLight, themeHpe));
+const themeDarkHpe: Theme = generateStrongWeak(Object.assign(themeBase, themeDark, themeHpe));
+
+export type Theme = Record<keyof typeof themeBase, string>;
 
 export const globalCssVars = {
   animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
@@ -462,11 +478,11 @@ export enum DarkLight {
 
 export default {
   [BrandingType.Determined]: {
-    [DarkLight.Dark]: darkDeterminedThemeX,
-    [DarkLight.Light]: lightDeterminedThemeX,
+    [DarkLight.Dark]: themeDarkDetermined,
+    [DarkLight.Light]: themeLightDetermined,
   },
   [BrandingType.HPE]: {
-    [DarkLight.Dark]: darkDeterminedThemeX,
-    [DarkLight.Light]: lightDeterminedThemeX,
+    [DarkLight.Dark]: themeDarkHpe,
+    [DarkLight.Light]: themeLightHpe,
   },
 };
