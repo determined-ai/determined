@@ -2,11 +2,18 @@ import argparse
 import base64
 import io
 import os
+import socket
 import tarfile
+import uuid
+from typing import List, Optional
+
+import psutil
 
 import determined as det
 from determined import constants
-from determined.common.api import certs, request
+from determined.common import util
+from determined.common.api import bindings, certs, request
+from determined.common.experimental import Session
 
 
 def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
@@ -54,22 +61,125 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
         model_def.extractall(path=".")
 
 
-def do_rendezvous(info: det.ClusterInfo, cert: certs.Cert) -> None:
-    # Even though resources_id is not part of the ClusterInfo API, we still depend on it in all
-    # current Determined backends (agents and k8s).
-    resources_id = os.environ.get("DET_RESOURCES_ID")
-    assert resources_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
-
-    r = request.get(
-        info.master_url,
-        path=f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/rendezvous",
-        cert=cert,
+def do_rendezvous_rm_provided(
+    sess: Session, allocation_id: str, resources_id: str
+) -> "det.RendezvousInfo":
+    resp = bindings.get_AllocationRendezvousInfo(
+        sess, allocationId=allocation_id, resourcesId=resources_id
+    )
+    return det.RendezvousInfo(
+        container_addrs=list(resp.rendezvousInfo.addresses), container_rank=resp.rendezvousInfo.rank
     )
 
-    jri = r.json()["rendezvousInfo"]
-    rendezvous_info = det.RendezvousInfo(
-        container_addrs=jri["addresses"], container_rank=jri["rank"]
+
+def do_rendezvous_slurm(
+    sess: Session, allocation_id: str, resources_id: str
+) -> "det.RendezvousInfo":
+    rank_str = os.environ.get("SLURM_PROCID")
+    assert rank_str, "Unable to complete rendezvous without SLURM_PROCID"
+    rank = int(rank_str)
+
+    num_peers_str = os.environ.get("SLURM_NPROCS")
+    assert num_peers_str, "Unable to complete rendezvous without SLURM_NPROCS"
+    num_peers = int(num_peers_str)
+
+    rendezvous_ip, resolution_error = None, None
+    for rendezvous_iface in rendezvous_ifaces():
+        try:
+            rendezvous_ip = get_ip_from_interface(rendezvous_iface)
+            break
+        except ValueError as e:
+            resolution_error = e
+    if not rendezvous_ip:
+        raise resolution_error or ValueError("unable to resolve rendezvous ip")
+
+    # Note, rendezvous must be sorted in rank order.
+    resp = bindings.post_AllocationAllGather(
+        sess,
+        allocationId=allocation_id,
+        body=bindings.v1AllocationAllGatherRequest(
+            allocationId=allocation_id,
+            requestUuid=str(uuid.uuid4()),
+            numPeers=num_peers,
+            data={
+                "rank": rank,
+                "rendezvous_ip": rendezvous_ip,
+            },
+        ),
     )
+    addrs = [d["rendezvous_ip"] for d in sorted(resp.data, key=lambda d: int(d["rank"]))]
+    return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
+
+
+def rendezvous_ifaces() -> List[str]:
+    # First case is a manual override. For maximum flexibility, this can be a comma-delimited list.
+    rendezvous_iface = os.environ.get("DET_SLURM_RENDEZVOUS_IFACE")
+
+    # If it doesn't work, fallback to just eth. Rendezvous over eth is fine since horovod will
+    # still use DET_INTER_NODE_NETWORK_INTERFACE for everything important, and SSH over IB mostly
+    # won't work. On systems where we need this, 'eth' will need to be the proper name.
+    if not rendezvous_iface:
+        rendezvous_iface = get_eth_interface_name()
+
+    # On systems where there is no eth, DET_INTER_NODE_NETWORK_INTERFACE should work, though.
+    if not rendezvous_iface:
+        rendezvous_iface = os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE")
+
+    # If none of these resolved, we're out of luck.
+    if not rendezvous_iface:
+        raise ValueError("unable to resolve rendezvous iface")
+
+    return rendezvous_iface.split(",")
+
+
+def get_ip_from_interface(interface: str) -> str:
+    net_if_addrs = psutil.net_if_addrs()
+
+    if interface not in net_if_addrs:
+        available = list(net_if_addrs.keys())
+        raise ValueError(
+            f"{interface} is not a valid network interface. "
+            f"Valid network interfaces are: {available}"
+        )
+
+    for info in net_if_addrs[interface]:
+        if info.family == socket.AF_INET:
+            assert isinstance(info.address, str)
+            return info.address
+
+    raise ValueError(f"interface {interface} doesn't have an IPv4 address")
+
+
+def get_eth_interface_name() -> Optional[str]:
+    net_if_addrs = list(psutil.net_if_addrs())
+    for interface in net_if_addrs:
+        if interface.startswith("eth"):
+            assert isinstance(interface, str)
+            return interface
+    return None
+
+
+# The canonical definitions of these consts live in Go code.
+RESOURCES_TYPE_K8S_POD = "k8s-pod"
+RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
+RESOURCES_TYPE_SLURM_JOB = "slurm-job"
+
+
+def do_rendezvous(sess: Session, allocation_id: str) -> None:
+    r_id = os.environ.get("DET_RESOURCES_ID")
+    assert r_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
+
+    r_type = os.environ.get("DET_RESOURCES_TYPE")
+    assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
+
+    rendezvous_info = None
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+        rendezvous_info = do_rendezvous_rm_provided(sess, allocation_id, r_id)
+    elif r_type == RESOURCES_TYPE_SLURM_JOB:
+        rendezvous_info = do_rendezvous_slurm(sess, allocation_id, r_id)
+    else:
+        raise ValueError(f"unsupported resources type: {r_type}")
+
     rendezvous_info._to_file()
 
 
@@ -87,6 +197,7 @@ if __name__ == "__main__":
         info._to_file()
 
     cert = certs.default_load(info.master_url)
+    sess = Session(info.master_url, util.get_container_user_name(), None, cert)
 
     if args.trial:
         trial_prep(info, cert)
@@ -95,4 +206,4 @@ if __name__ == "__main__":
         det.ResourcesInfo._by_inspection()._to_file()
 
     if args.rendezvous:
-        do_rendezvous(info, cert)
+        do_rendezvous(sess, info.allocation_id)
