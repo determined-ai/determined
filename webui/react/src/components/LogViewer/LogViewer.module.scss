@@ -1,6 +1,6 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  color: var(--theme-colors-monochrome-6);
+  background-color: var(--theme-stage);
+  color: var(--theme-stage-on);
   height: 100%;
   position: relative;
   width: 100%;
@@ -28,9 +28,9 @@
     right: 32px;
   }
   .buttons > button {
-    border-color: var(--theme-colors-monochrome-9);
-    box-shadow: var(--theme-shadow);
-    color: var(--theme-colors-monochrome-9);
+    border-color: var(--theme-float-border);
+    box-shadow: var(--theme-elevation);
+    color: var(--theme-float-on);
     transition: opacity 0.2s linear;
     user-select: none;
   }
@@ -43,8 +43,8 @@
     user-select: auto;
   }
   .scrollToOldest:focus {
-    border-color: var(--theme-colors-action-normal);
-    color: var(--theme-colors-monochrome-9);
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active-on);
 
     &::after {
       border-radius: var(--theme-border-radius);
@@ -59,7 +59,7 @@
     transition: all 0.2s linear;
   }
   .enableTailing:focus {
-    border-color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
 
     &::after {
       border-radius: var(--theme-border-radius);
@@ -71,8 +71,8 @@
     }
   }
   .enableTailing.enabled {
-    border-color: var(--theme-colors-action-normal);
-    color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active);
   }
 }
 .options {
