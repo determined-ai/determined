@@ -1,8 +1,8 @@
 /* stylelint-disable no-descending-specificity */
 
 .base {
-  background-color: var(--theme-colors-monochrome-15);
-  border-right: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+  background-color: var(--theme-stage);
+  border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
   box-sizing: border-box;
   display: flex;
   flex-basis: var(--nav-side-bar-width-max);
@@ -34,8 +34,8 @@
     position: relative;
   }
   .version {
-    background-color: var(--theme-colors-monochrome-13);
-    color: var(--theme-colors-monochrome-8);
+    background-color: var(--theme-stage-strong);
+    color: var(--theme-stage-on-strong);
     font-size: 11px;
     font-style: italic;
     height: 32px;
@@ -57,11 +57,11 @@
 
     .launchButton {
       background-color: transparent;
-      border-color: var(--theme-colors-monochrome-9);
+      border-color: var(--theme-stage-border);
       border-radius: var(--theme-border-radius);
       border-style: solid;
       border-width: var(--theme-stroke-width);
-      color: var(--theme-colors-monochrome-3);
+      color: var(--theme-stage-on);
       flex-grow: 1;
       flex-shrink: 1;
       overflow: hidden;
@@ -69,11 +69,11 @@
     .launchIcon {
       align-items: center;
       background-color: transparent;
-      border-color: var(--theme-colors-monochrome-9);
+      border-color: var(--theme-stage-border);
       border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
       border-style: solid;
       border-width: var(--theme-stroke-width);
-      color: var(--theme-colors-monochrome-0);
+      color: var(--theme-stage-on);
       display: flex;
       flex-shrink: 0;
       justify-content: center;
@@ -82,10 +82,10 @@
   }
   .launchBlock:hover {
     .launchButton,
-    .launchIcon { border-color: var(--theme-colors-monochrome-6); }
+    .launchIcon { border-color: var(--theme-stage-border-strong); }
   }
   .navItem {
-    color: var(--theme-colors-monochrome-3);
+    color: var(--theme-stage-on);
     cursor: pointer;
     display: block;
     height: 48px;
@@ -109,10 +109,10 @@
       width: auto;
     }
     .status {
-      background-color: var(--theme-colors-action-normal);
+      background-color: var(--theme-status-active);
       border-radius: 8px;
       bottom: 16px;
-      color: var(--theme-colors-monochrome-17);
+      color: var(--theme-status-active-on);
       font-size: 11px;
       height: 0 16px;
       padding: 0 6px;
@@ -123,18 +123,18 @@
   }
   .navItem.active,
   .navItem.active:hover {
-    background-color: var(--theme-colors-monochrome-17);
-    color: var(--theme-colors-monochrome-0);
+    background-color: var(--theme-stage-strong);
+    color: var(--theme-stage-on-strong);
     cursor: default;
   }
   .navItem:hover {
-    color: var(--theme-colors-action-normal);
+    color: var(--theme-stage-on-strong);
   }
   .user {
-    background-color: var(--theme-colors-base-4);
+    background-color: var(--theme-stage-weak);
   }
   .user:hover > span {
-    color: var(--theme-colors-monochrome-0);
+    color: var(--theme-stage-on-weak);
   }
 }
 .collapsedAppear {
