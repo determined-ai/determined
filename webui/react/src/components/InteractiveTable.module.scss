@@ -85,3 +85,9 @@
     color: var(--theme-colors-action-normal);
   }
 }
+
+.tableContainer {
+  :global(.ant-table) {
+    overflow: scroll;
+  }
+}
