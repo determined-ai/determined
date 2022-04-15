@@ -138,7 +138,8 @@ def output_logs(args: Namespace):
     bundle = None
     if args.output_dir is None:
         output_dir = os.getcwd()
-        tar = f"det-bundle-trail_{args.trial_id}-{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}.tar.gz"
+        formatted_dt = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        tar = f"det-bundle-trail_{args.trial_id}-{formatted_dt}.tar.gz"
         fullpath = os.path.join(output_dir, tar)
         bundle = tarfile.open(fullpath, "w:gz")
 
