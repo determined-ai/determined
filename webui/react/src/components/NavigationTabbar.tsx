@@ -87,7 +87,7 @@ const NavigationTabbar: React.FC = () => {
         actions={[
           {
             render: () => {
-              return <AvatarCard className={css.user} user={auth.user} />;
+              return <AvatarCard key='Avatar' className={css.user} user={auth.user} />;
             },
           },
           {
