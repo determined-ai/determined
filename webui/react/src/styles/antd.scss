@@ -171,7 +171,7 @@ html {
   /* Table */
 
   .ant-table-thead > tr > th {
-    border-color: var(--theme-colors-monochrome-13);
+    border-color: var(--theme-surface-border);
     border-style: solid;
     border-width: var(--theme-stroke-width) var(--theme-stroke-width) var(--theme-stroke-width) 0;
     white-space: nowrap;
@@ -197,7 +197,7 @@ html {
     user-select: auto;
   }
   .ant-table-tbody > tr > td {
-    border-color: var(--theme-colors-monochrome-13);
+    border-color: var(--theme-surface-border);
     border-style: solid;
     border-top-color: transparent;
     border-width: var(--theme-stroke-width) 0;
@@ -212,16 +212,16 @@ html {
     border-width: var(--theme-stroke-width);
   }
   .ant-table-tbody > tr.ant-table-row.highlighted > td {
-    background-color: var(--theme-colors-monochrome-17);
-    border-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-surface-strong);
+    border-color: var(--theme-status-active);
     border-style: solid;
   }
   .ant-table-tbody > tr.ant-table-row.clickable {
     cursor: pointer;
   }
   .ant-table-tbody > tr.ant-table-row.clickable:hover > td {
-    background-color: var(--theme-colors-monochrome-17);
-    border-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-surface-strong);
+    border-color: var(--theme-status-active);
     border-style: solid;
   }
   .ant-table .ant-table-content table > colgroup > col.ant-table-selection-col {
