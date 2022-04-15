@@ -480,19 +480,20 @@ const InteractiveTable: InteractiveTable = ({
   const renderColumns: ColumnsType<RecordType> = useMemo(
     () =>
       [
-        ...settings.columns.map((columnName, index) => {
-          const column = columnDefs[columnName];
-          const columnWidth = widthData.widths[index];
-          const sortOrder =
+        ...settings.columns.filter(columnName => columnDefs[columnName])
+          .map((columnName, index) => {
+            const column = columnDefs[columnName];
+            const columnWidth = widthData.widths[index];
+            const sortOrder =
             column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-          return {
-            onHeaderCell: onHeaderCell(index, column),
-            sortOrder,
-            width: columnWidth,
-            ...column,
-          };
-        }),
+            return {
+              onHeaderCell: onHeaderCell(index, column),
+              sortOrder,
+              width: columnWidth,
+              ...column,
+            };
+          }),
         { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH },
       ] as ColumnsType<RecordType>,
 
