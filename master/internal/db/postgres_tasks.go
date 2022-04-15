@@ -363,7 +363,7 @@ func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
 	return RecordTaskEndStatsBun(stats)
 }
 
-// RecordTaskEndStats record end stats for tasks with bun.
+// RecordTaskEndStatsBun record end stats for tasks with bun.
 func RecordTaskEndStatsBun(stats *model.TaskStats) error {
 	_, err := Bun().NewUpdate().Model(stats).Column("end_time").Where(
 		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
