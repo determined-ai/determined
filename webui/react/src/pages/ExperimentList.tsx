@@ -499,23 +499,16 @@ const ExperimentList: React.FC = () => {
       });
       return;
     }
-    if (settings.columns.length !== settings.columnWidths.length){
-      updateSettings({
-        columnWidths:
-        settings.columns.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
-      });
-      return;
-    }
     const columnNames = columns.map(column => column.dataIndex as ExperimentColumnName);
     const actualColumns = settings.columns.filter((columnName) => columnNames.includes(columnName));
     if (actualColumns.length < settings.columns.length) {
       updateSettings({ columns: actualColumns });
-      if (settings.columnWidths.length !== actualColumns.length) {
-        updateSettings({
-          columnWidths:
-          actualColumns.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
-        });
-      }
+    }
+    if (settings.columnWidths.length !== actualColumns.length) {
+      updateSettings({
+        columnWidths:
+        actualColumns.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
+      });
     }
   }, [ settings.columns, settings.columnWidths, columns, resetSettings, updateSettings ]);
 
