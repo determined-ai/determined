@@ -28,6 +28,21 @@ def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
 
 
 class SearcherOperation:
+    """
+    A SearcherOperation is a request from the hyperparameter-search logic for the training script
+    to execute one train-validate-report cycle.
+
+    Some searchers, such as single, random, or grid, pass only a single SearcherOperation to each
+    trial, while others may pass many SearcherOperations.
+
+    Each SearcherOperation has a length attribute representing the cumulative training that should
+    be completed before the validate-report steps of the cycle.  The length attribute is absolute,
+    not incremental, meaning that if the searcher wants you to train for 10 units and validate, then
+    train for 10 more units and validate, it emits one SearcherOperation with .length=10 followed by
+    a second SearcherOperation with .length=20.  Using absolute lengths instead of incremental
+    lengths makes restarting after crashes simple and robust.
+    """
+
     def __init__(
         self,
         session: Session,
@@ -43,9 +58,22 @@ class SearcherOperation:
 
     @property
     def length(self) -> int:
+        """
+        length represents the total amount of training which should be reached by the train step
+        before the validate-report steps.
+        """
         return self._length
 
     def report_progress(self, length: float) -> None:
+        """
+        report_progress() reports the training progress to the Determined master so the WebUI can
+        show accurate progress to users.
+
+        The unit of the length value passed to report_progress must match the unit of the .length
+        attribute.  The unit of the .length attribute is user-defined.  When treating .length as
+        batches, report_progress should report batches.  When treating .length as epochs,
+        report_progress must also be in epochs.
+        """
         if not self._is_chief:
             raise RuntimeError("you must only call op.report_progress() from the chief worker")
         if self._completed and length != self._length:
@@ -57,6 +85,12 @@ class SearcherOperation:
         )
 
     def report_completed(self, searcher_metric: float) -> None:
+        """
+        report_completed() is the final step of a train-validate-report cycle.
+
+        report_completed() requires the value of the metric you are searching over.  This value is
+        typically the output of the "validate" step of the train-validate-report cycle.
+        """
         if not self._is_chief:
             raise RuntimeError("you must only call op.report_completed() from the chief worker")
         if self._completed:

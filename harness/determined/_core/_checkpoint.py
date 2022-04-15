@@ -36,7 +36,7 @@ class DownloadMode(enum.Enum):
 
 class CheckpointContext:
     """
-    Some checkpoint-related REST API wrappers.
+    CheckpointContext gives access to checkpoint-related features of a Determined cluster.
     """
 
     def __init__(
