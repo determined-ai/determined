@@ -12,7 +12,7 @@ import psutil
 import determined as det
 from determined import constants
 from determined.common import util
-from determined.common.api import authentication, bindings, certs, request
+from determined.common.api import bindings, certs, request
 from determined.common.experimental import Determined, Session
 
 
