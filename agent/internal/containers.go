@@ -43,9 +43,8 @@ type containerManager struct {
 	Labels        map[string]string `json:"labels"`
 	Devices       []device.Device   `json:"devices"`
 
-	fluentPort   int
-	docker       *client.Client
-	ResourcePool string
+	fluentPort int
+	docker     *client.Client
 }
 
 type (
@@ -59,11 +58,10 @@ type (
 
 func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
 	return &containerManager{
-		MasterInfo:   a.MasterSetAgentOptions.MasterInfo,
-		Options:      a.Options,
-		Devices:      a.Devices,
-		ResourcePool: a.ResourcePool,
-		fluentPort:   fluentPort,
+		MasterInfo: a.MasterSetAgentOptions.MasterInfo,
+		Options:    a.Options,
+		Devices:    a.Devices,
+		fluentPort: fluentPort,
 	}, nil
 }
 
@@ -120,7 +118,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(responseReattachContainers{ContainersReattached: reattachedContainers})
 		}
 
-	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog, aproto.DockerImagePull:
+	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog, aproto.ContainerStatsRecord:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:

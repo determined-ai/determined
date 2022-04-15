@@ -129,7 +129,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		c.containerStopped(ctx, aproto.ContainerExited(msg.ExitCode))
 		ctx.Self().Stop()
 
-	case aproto.DockerImagePull:
+	case aproto.ContainerStatsRecord:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.SignalContainer:

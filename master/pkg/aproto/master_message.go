@@ -36,7 +36,7 @@ type MasterMessage struct {
 	AgentStarted          *AgentStarted
 	ContainerStateChanged *ContainerStateChanged
 	ContainerLog          *ContainerLog
-	DockerImagePull       *DockerImagePull
+	ContainerStatsRecord  *ContainerStatsRecord
 }
 
 // ContainerReattach is a struct describing containers that can be reattached.
@@ -75,10 +75,12 @@ type ContainerStarted struct {
 	ContainerInfo types.ContainerJSON
 }
 
-// DockerImagePull notifies the master that about the image pull stats of docker.
-type DockerImagePull struct {
+// ContainerStatsRecord notifies the master that about the container stats of docker.
+// For now this carries stats of docker image pull.
+type ContainerStatsRecord struct {
 	EndStats bool
 	Stats    *model.TaskStats
+	TaskType model.TaskType
 }
 
 // Addresses calculates the address of containers and hosts based on the container

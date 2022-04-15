@@ -347,16 +347,24 @@ WHERE task_id = $1
 	return count, nil
 }
 
-// RecordTaskStats record start stats for tasks.
+// RecordTaskStats record stats for tasks.
 func (db *PgDB) RecordTaskStats(stats *model.TaskStats) error {
+	return RecordTaskStatsBun(stats)
+}
+
+// RecordTaskStatsBun record stats for tasks with bun.
+func RecordTaskStatsBun(stats *model.TaskStats) error {
 	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
 	return err
 }
 
 // RecordTaskEndStats record end stats for tasks.
 func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
-	now := time.Now().UTC()
-	stats.EndTime = &now
+	return RecordTaskEndStatsBun(stats)
+}
+
+// RecordTaskEndStats record end stats for tasks with bun.
+func RecordTaskEndStatsBun(stats *model.TaskStats) error {
 	_, err := Bun().NewUpdate().Model(stats).Column("end_time").Where(
 		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
 	).Exec(context.TODO())

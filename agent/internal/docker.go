@@ -126,23 +126,28 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		sendErr(ctx, errors.Wrapf(err, "error checking if image exists: %s", ref.String()))
 		return
 	}
-	if taskNeedsRecording(msg) {
-		ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
-			EndStats: false,
+
+	now := time.Now().UTC()
+	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStatsRecord{
+		EndStats: false,
+		TaskType: model.TaskType(msg.TaskType),
+		Stats: &model.TaskStats{
+			AllocationID: msg.AllocationID,
+			EventType:    "IMAGEPULL",
+			StartTime:    &now,
+		}})
+
+	defer func() {
+		now := time.Now().UTC()
+		ctx.Tell(ctx.Self().Parent(), aproto.ContainerStatsRecord{
+			EndStats: true,
+			TaskType: model.TaskType(msg.TaskType),
 			Stats: &model.TaskStats{
 				AllocationID: msg.AllocationID,
 				EventType:    "IMAGEPULL",
+				EndTime:      &now,
 			}})
-
-		defer func() {
-			ctx.Tell(ctx.Self().Parent(), aproto.DockerImagePull{
-				EndStats: true,
-				Stats: &model.TaskStats{
-					AllocationID: msg.AllocationID,
-					EventType:    "IMAGEPULL",
-				}})
-		}()
-	}
+	}()
 
 	// TODO: replace with command.EncodeAuthToBase64
 	reg := ""
@@ -191,10 +196,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	}
 
 	ctx.Tell(ctx.Sender(), imagePulled{})
-}
-
-func taskNeedsRecording(msg pullImage) bool {
-	return msg.TaskType == string(model.TaskTypeTrial)
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {

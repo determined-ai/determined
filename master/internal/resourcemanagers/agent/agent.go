@@ -64,8 +64,6 @@ type (
 		opts *aproto.MasterSetAgentOptions
 
 		agentState *AgentState
-
-		db db.DB
 	}
 
 	reconnectTimeout struct{}
@@ -421,15 +419,13 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
-	case msg.DockerImagePull != nil:
+	case msg.ContainerStatsRecord != nil && a.taskNeedsRecording(msg.ContainerStatsRecord):
 		var err error
-		if msg.DockerImagePull.EndStats {
-			err = a.db.RecordTaskEndStats(msg.DockerImagePull.Stats)
+		if msg.ContainerStatsRecord.EndStats {
+			err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
 		} else {
-			now := time.Now().UTC()
-			msg.DockerImagePull.Stats.ResourcePool = a.resourcePoolName
-			msg.DockerImagePull.Stats.StartTime = &now
-			err = a.db.RecordTaskStats(msg.DockerImagePull.Stats)
+			msg.ContainerStatsRecord.Stats.ResourcePool = a.resourcePoolName
+			err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
 		}
 		if err != nil {
 			ctx.Log().Errorf("Error record task stats %s", err)
@@ -438,6 +434,10 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}
+}
+
+func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
+	return record.TaskType == model.TaskTypeTrial
 }
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {

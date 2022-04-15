@@ -97,7 +97,7 @@ func setupAgentResourceManager(
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 
-	agent.Initialize(system, echo, opts, db)
+	agent.Initialize(system, echo, opts)
 	return ref
 }
 
