@@ -444,30 +444,28 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
-const decodeValidationMetrics = (data: Sdk.V1Metrics): types.Metrics => {
-  return { validationMetrics: data.avgMetrics };
-};
-
-export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail => {
+export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCheckpoint => {
   const resources: Record<string, number> = {};
   Object.entries(data.resources || {}).forEach(([ res, val ]) => {
     resources[res] = parseFloat(val);
   });
-
-  // TODO @emily the following has been brainlessly changed to compile
-
   return {
-    batch: data.metadata['latest_batch'],
-    endTime: data.reportTime && data.reportTime as unknown as string,
+    allocationId: data.allocationId,
+    experimentConfig: data.training.experimentConfig,
     experimentId: data.training.experimentId,
-    metrics: data.training.validationMetrics ? decodeValidationMetrics(
-      data.training.validationMetrics,
-    ) : undefined,
-    resources,
+    hparams: data.training.hparams,
+    metadata: data.metadata,
+    reportTime: data.reportTime?.toString(),
+    resources: resources,
+    searcherMetric: data.training.searcherMetric,
     state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
-    trialId: data.training.trialId || -1, // TODO maybe it becomes required again
+    taskId: data.taskId,
+    totalBatches:
+      data.metadata['latest_batch'] ?? data.training.trainingMetrics?.batchMetrics?.length ?? 0,
+    trainingMetrics: data.training.trainingMetrics,
+    trialId: data.training.trialId,
     uuid: data.uuid,
-    validationMetric: data.training.searcherMetric,
+    validationMetrics: data.training.validationMetrics,
   };
 };
 
