@@ -41,7 +41,7 @@ func CheckpointTrialIDLess(ai, aj *checkpointv1.Checkpoint) bool {
 }
 
 // CheckpointSearcherMetricLess compares checkpoints by their searcher metric, falling back to
-// report time when equal.
+// report time when equal. Order makes sure nulls are always last.
 func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 	if ai.Training == nil || ai.Training.SearcherMetric == nil {
 		return true
@@ -53,6 +53,18 @@ func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 		return CheckpointReportTimeLess(ai, aj)
 	}
 	return ai.Training.SearcherMetric.Value < aj.Training.SearcherMetric.Value
+}
+
+// CheckpointSearcherMetricNullsLast compares checkpoints by their searcher metric, return done if
+// one was null and the proper ordering.
+func CheckpointSearcherMetricNullsLast(ai, aj *checkpointv1.Checkpoint) (order bool, done bool) {
+	if ai.Training == nil || ai.Training.SearcherMetric == nil {
+		return false, true
+	}
+	if aj.Training == nil || aj.Training.SearcherMetric == nil {
+		return true, true
+	}
+	return false, false
 }
 
 // CheckpointReportTimeLess compares checkpoints by their report time.
