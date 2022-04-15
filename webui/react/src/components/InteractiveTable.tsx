@@ -300,7 +300,7 @@ const InteractiveTable: InteractiveTable = ({
   const [ widthData, setWidthData ] = useState({
     dropLeftStyles: settings?.columnWidths.map(() => ({})) ?? [],
     dropRightStyles: settings?.columnWidths.map(() => ({})) ?? [],
-    widths: settings?.columnWidths,
+    widths: settings?.columnWidths ?? [],
   });
 
   const [ isResizing, setIsResizing ] = useState(false);
@@ -446,11 +446,11 @@ const InteractiveTable: InteractiveTable = ({
   }, [ updateSettings, widthData ]);
 
   const onHeaderCell = useCallback(
-    (index, columnDefs) => {
+    (index, columnDef) => {
       return () => {
-        const filterActive = !!columnDefs?.isFiltered?.(settings);
+        const filterActive = !!columnDef?.isFiltered?.(settings);
         return {
-          columnName: columnDefs.title,
+          columnName: columnDef.title,
           dragState,
           dropLeftStyle: { ...widthData?.dropLeftStyles?.[index] },
           dropRightStyle: { ...widthData?.dropRightStyles?.[index] },
@@ -461,7 +461,7 @@ const InteractiveTable: InteractiveTable = ({
           onResize: handleResize(index),
           onResizeStart: handleResizeStart(index),
           onResizeStop: handleResizeStop,
-          width: widthData?.widths[index],
+          width: widthData?.widths[index] ?? columnDef.defaultWidth,
         };
       };
     },
