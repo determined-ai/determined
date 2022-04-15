@@ -37,11 +37,11 @@
 }
 .sheetEnterActive {
   opacity: 1;
-  transition: opacity var(--theme-animationCurve);
+  transition: opacity var(--animation-curve);
 
   .sheet {
     bottom: 0;
-    transition: bottom var(--theme-animationCurve);
+    transition: bottom var(--animation-curve);
   }
 }
 .sheetEnterDone {
@@ -57,11 +57,11 @@
 }
 .sheetExitActive {
   opacity: 0;
-  transition: opacity var(--theme-animationCurve);
+  transition: opacity var(--animation-curve);
 
   .sheet {
     bottom: -50%;
-    transition: bottom var(--theme-animationCurve);
+    transition: bottom var(--animation-curve);
   }
 }
 .sheetExitDone {

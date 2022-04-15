@@ -170,10 +170,10 @@
 }
 .collapsedEnterActive {
   flex-basis: var(--nav-side-bar-width-min);
-  transition: flex-basis var(--theme-animationCurve);
+  transition: flex-basis var(--animation-curve);
 
   section.launch {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: var(--nav-side-bar-width-min);
   }
   .logo {
@@ -181,61 +181,61 @@
     left: 12px;
     top: 16px;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      top var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 32px;
   }
   .logoIcon {
     height: 24px;
     left: 0;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      width var(--animation-curve);
     width: 32px;
   }
   .logoLabel {
     opacity: 0;
     transition:
-      opacity var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 0;
   }
   .launchBlock {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: 32px;
 
     .launchButton {
       opacity: 0;
       padding: 0;
       transition:
-        opacity var(--theme-animationCurve),
-        padding var(--theme-animationCurve),
-        width var(--theme-animationCurve);
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
+        width var(--animation-curve);
       width: 0;
     }
     .launchIcon {
       border-radius: 100%;
-      transition: border-radius var(--theme-animationCurve);
+      transition: border-radius var(--animation-curve);
     }
   }
   .navItem {
-    transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
+    transition: height var(--animation-curve), width var(--animation-curve);
     width: var(--nav-side-bar-width-min);
 
     .label {
       opacity: 0;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
     .status {
       right: 50%;
       transform: translateX(50%);
       transition:
-        bottom var(--theme-animationCurve),
-        right var(--theme-animationCurve),
-        transform var(--theme-animationCurve);
+        bottom var(--animation-curve),
+        right var(--animation-curve),
+        transform var(--animation-curve);
     }
   }
   .navItem.hasStatus {
@@ -244,12 +244,12 @@
     .status { bottom: 12px; }
   }
   .user {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: var(--nav-side-bar-width-min);
 
     span {
       opacity: 0;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
   }
 }
@@ -317,10 +317,10 @@
 }
 .collapsedExitActive {
   flex-basis: var(--nav-side-bar-width-max);
-  transition: flex-basis var(--theme-animationCurve);
+  transition: flex-basis var(--animation-curve);
 
   section.launch {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: var(--nav-side-bar-width-max);
   }
   .logo {
@@ -328,61 +328,61 @@
     left: 60px;
     top: 24px;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      top var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 128px;
   }
   .logoIcon {
     height: 40px;
     left: 32px;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      width var(--animation-curve);
     width: 52px;
   }
   .logoLabel {
     opacity: 1;
     transition:
-      opacity var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 120px;
   }
   .launchBlock {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: 206px;
 
     .launchButton {
       opacity: 1;
       padding: 0 16px;
       transition:
-        opacity var(--theme-animationCurve),
-        padding var(--theme-animationCurve),
-        width var(--theme-animationCurve);
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
+        width var(--animation-curve);
       width: 100%;
     }
     .launchIcon {
       border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
-      transition: border-radius var(--theme-animationCurve);
+      transition: border-radius var(--animation-curve);
     }
   }
   .navItem {
-    transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
+    transition: height var(--animation-curve), width var(--animation-curve);
     width: var(--nav-side-bar-width-max);
 
     .label {
       opacity: 1;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
     .status {
       right: 16px;
       transform: translateX(0);
       transition:
-        bottom var(--theme-animationCurve),
-        right var(--theme-animationCurve),
-        transform var(--theme-animationCurve);
+        bottom var(--animation-curve),
+        right var(--animation-curve),
+        transform var(--animation-curve);
     }
   }
   .navItem.hasStatus {
@@ -391,12 +391,12 @@
     .status { bottom: 16px; }
   }
   .user {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: var(--nav-side-bar-width-max);
 
     span {
       opacity: 1;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
   }
 }

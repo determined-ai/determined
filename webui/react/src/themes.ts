@@ -454,6 +454,8 @@ const darkDeterminedThemeX: Theme = generateStrongWeak(Object.assign(baseTheme, 
 }));
 
 export const globalCssVars = {
+  animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
+
   fontFamily: '"Objektiv Mk3", Arial, Helvetica, sans-serif',
   fontFamilyCode: '"Source Code Pro", monospace',
 

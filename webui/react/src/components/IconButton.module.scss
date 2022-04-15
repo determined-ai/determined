@@ -12,14 +12,14 @@
   outline: 0;
   padding: 0 6px;
   position: relative;
-  transition: border-color var(--theme-animationCurve), box-shadow var(--theme-animationCurve);
+  transition: border-color var(--animation-curve), box-shadow var(--animation-curve);
 
   &:hover {
     border-color: var(--theme-colors-action-normal);
 
     & > * {
       color: var(--theme-colors-action-normal);
-      transition: color var(--theme-animationCurve);
+      transition: color var(--animation-curve);
     }
   }
   &:focus { box-shadow: var(--theme-outline); }
