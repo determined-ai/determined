@@ -20,8 +20,11 @@
   }
   .action {
     grid-column: 3/4;
-    grid-row: 0/1;
-    visibility: hidden
+    grid-row: 1/2;
+    height: min-content;
+    justify-self: end;
+    visibility: hidden;
+    width: min-content;
   }
   .description {
     -webkit-box-orient: vertical;

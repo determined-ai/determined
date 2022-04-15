@@ -26,7 +26,7 @@ const ProjectCard: React.FC<Props> = ({ project, curUser }: Props) => {
           </Link>
         </h6>
         {!project.immutable && (
-          <ProjectActionDropdown curUser={curUser} project={project} />
+          <ProjectActionDropdown className={css.action} curUser={curUser} project={project} />
         )}
         <p className={css.description}>{project.description}</p>
         <div className={css.experiments}>

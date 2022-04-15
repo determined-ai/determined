@@ -11,6 +11,7 @@ import { DetailedUser, Project } from 'types';
 import handleError from 'utils/error';
 
 interface Props {
+  className?: string;
   curUser?: DetailedUser;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
@@ -19,7 +20,7 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
-  { project, children, curUser, onVisibleChange }: PropsWithChildren<Props>,
+  { project, children, curUser, onVisibleChange, className }: PropsWithChildren<Props>,
 ) => {
   const { modalOpen: openProjectMove } = useModalProjectMove({ projectId: project.id });
   const { modalOpen: openProjectDelete } = useModalProjectDelete({ project: project });
@@ -99,7 +100,10 @@ const ProjectActionDropdown: React.FC<Props> = (
       {children}
     </Dropdown>
   ) : (
-    <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
+    <div
+      className={[ css.base, className ].join(' ')}
+      title="Open actions menu"
+      onClick={stopPropagation}>
       <Dropdown overlay={ProjectActionMenu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-horizontal" />
