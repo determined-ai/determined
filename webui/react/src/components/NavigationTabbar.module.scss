@@ -1,5 +1,5 @@
 .base {
-  background-color: var(--theme-colors-base-2);
+  background-color: var(--theme-stage);
   height: var(--nav-bottom-bar-height);
 
   .toolbar {
@@ -10,17 +10,17 @@
   .toolbar > * { flex-grow: 1; }
   .toolbarItem {
     align-items: center;
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-stage-on);
     display: flex;
     height: var(--nav-bottom-bar-height);
     justify-content: center;
     position: relative;
 
     .status {
-      background-color: var(--theme-colors-action-normal);
+      background-color: var(--theme-status-active);
       border-radius: 8px;
       bottom: 8px;
-      color: var(--theme-colors-monochrome-17);
+      color: var(--theme-status-active-on);
       font-size: 11px;
       height: 0 16px;
       padding: 0 6px;
@@ -30,8 +30,8 @@
     }
   }
   .toolbarItem.active {
-    background-color: var(--theme-colors-base-0);
-    color: var(--theme-colors-monochrome-17);
+    background-color: var(--theme-stage-strong);
+    color: var(--theme-stage-on-strong);
   }
   .user {
     width: 100%;

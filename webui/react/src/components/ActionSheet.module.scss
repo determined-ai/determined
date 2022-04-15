@@ -1,5 +1,5 @@
 .base {
-  background-color: var(--theme-colors-overlay);
+  background-color: var(--theme-overlay);
   display: none;
   height: 100%;
   left: 0;
@@ -9,7 +9,7 @@
   width: 100%;
 
   .sheet {
-    background-color: var(--theme-colors-base-2);
+    background-color: var(--theme-float);
     bottom: 0;
     display: flex;
     flex-direction: column;
@@ -18,7 +18,7 @@
   }
   .item {
     align-items: center;
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-float-on);
     display: flex;
     height: var(--nav-bottom-bar-height);
 
