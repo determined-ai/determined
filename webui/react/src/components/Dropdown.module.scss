@@ -22,8 +22,8 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   }
   .content > :global(.ant-menu) > li {
     font-size: var(--theme-sizes-font-small);
-    height: var(--theme-sizes-layout-giant);
-    line-height: var(--theme-sizes-layout-giant);
+    height: 32px;
+    line-height: 32px;
   }
 }
 .base.arrow > .content::after {
@@ -31,9 +31,9 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   border-color: var(--theme-colors-monochrome-13);
   border-style: solid;
   content: '';
-  height: var(--theme-sizes-layout-medium);
+  height: 8px;
   position: absolute;
-  width: var(--theme-sizes-layout-medium);
+  width: 8px;
 }
 .base.arrow.bottom > .content::after {
   border-width: var(--theme-sizes-border-width) 0 0 var(--theme-sizes-border-width);

@@ -37,7 +37,7 @@ $border-color: var(--theme-colors-monochrome-13);
     background-color: var(--theme-colors-monochrome-17);
     display: flex;
     overflow: hidden;
-    padding: var(--theme-sizes-layout-medium);
+    padding: 8px;
     text-overflow: ellipsis;
     white-space: nowrap;
 
@@ -55,7 +55,7 @@ $border-color: var(--theme-colors-monochrome-13);
     position: sticky;
   }
   .cell.indent {
-    padding-left: var(--theme-sizes-layout-huge);
+    padding-left: 20px;
   }
   .cell.spanAll {
     border-right: 0;

@@ -5,7 +5,7 @@
   box-shadow: var(--theme-shadow);
   cursor: auto;
   display: none;
-  padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
+  padding: 4px 6px;
   pointer-events: none;
   position: absolute;
 
@@ -15,7 +15,7 @@
   }
   .label {
     color: var(--theme-colors-monochrome-6);
-    padding-right: var(--theme-sizes-layout-small);
+    padding-right: 6px;
     white-space: nowrap;
   }
   .label::after {

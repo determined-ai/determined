@@ -18,7 +18,7 @@ $arrow-left: 22px;
     display: flex;
     height: 48px;
     justify-content: space-between;
-    padding: var(--theme-sizes-layout-medium);
+    padding: 8px;
     position: absolute;
     width: 100%;
     z-index: 1;
@@ -43,7 +43,7 @@ $arrow-left: 22px;
     background-color: var(--theme-colors-monochrome-17);
     bottom: 0;
     content: '';
-    height: calc(var(--theme-sizes-layout-medium) - 1px);
+    height: calc(8px - 1px);
     left: 24px;
     position: absolute;
     transform: translateX(-50%);
@@ -53,13 +53,13 @@ $arrow-left: 22px;
     align-items: center;
     display: flex;
     flex-grow: 1;
-    gap: var(--theme-sizes-layout-medium);
+    gap: 8px;
     z-index: 1;
   }
   .message {
     font-size: var(--theme-sizes-font-medium);
     overflow: hidden;
-    padding: 0 var(--theme-sizes-layout-medium);
+    padding: 0 8px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -79,7 +79,7 @@ $arrow-left: 22px;
     .container {
       flex-wrap: wrap;
       height: 80px;
-      padding: var(--theme-sizes-layout-medium);
+      padding: 8px;
     }
     .actions {
       flex-grow: 0;
@@ -88,13 +88,13 @@ $arrow-left: 22px;
     }
     .message {
       order: 0;
-      padding: 0 0 var(--theme-sizes-layout-medium) 0;
+      padding: 0 0 8px 0;
       width: 100%;
     }
     .clear {
       flex-grow: 1;
       order: 2;
-      padding-left: var(--theme-sizes-layout-medium);
+      padding-left: 8px;
     }
     .clear > button { width: 100%; }
     &.show { height: 80px; }
@@ -105,7 +105,7 @@ $arrow-left: 22px;
       height: 120px;
     }
     .clear {
-      padding: var(--theme-sizes-layout-medium) 0 0 0;
+      padding: 8px 0 0 0;
       width: 100%;
     }
     &.show { height: 120px; }

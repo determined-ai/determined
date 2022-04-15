@@ -3,6 +3,6 @@
   flex-direction: column;
 
   & > *:not(:first-child) {
-    margin-top: var(--theme-sizes-layout-medium);
+    margin-top: 8px;
   }
 }

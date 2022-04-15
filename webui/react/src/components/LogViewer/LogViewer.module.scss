@@ -21,11 +21,11 @@
     width: 100%;
   }
   .buttons {
-    bottom: var(--theme-sizes-layout-giant);
+    bottom: 32px;
     display: flex;
     flex-direction: column;
     position: absolute;
-    right: var(--theme-sizes-layout-giant);
+    right: 32px;
   }
   .buttons > button {
     border-color: var(--theme-colors-monochrome-9);
@@ -35,7 +35,7 @@
     user-select: none;
   }
   .buttons > button + button {
-    margin-top: var(--theme-sizes-layout-big);
+    margin-top: 16px;
   }
   .scrollToOldest {
     opacity: 0.2;
@@ -76,5 +76,5 @@
   }
 }
 .options {
-  padding: var(--theme-sizes-layout-medium) var(--theme-sizes-layout-medium) 0 0;
+  padding: 8px 8px 0 0;
 }

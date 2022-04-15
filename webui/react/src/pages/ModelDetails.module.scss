@@ -9,7 +9,7 @@
     justify-content: center;
   }
   .overflow {
-    padding: var(--theme-sizes-layout-small);
+    padding: 6px;
   }
   .noVersions {
     align-items: center;
@@ -19,10 +19,10 @@
     display: flex;
     flex-direction: column;
     margin: 0;
-    padding: var(--theme-sizes-layout-enormous);
+    padding: 24px;
 
     .header {
-      margin-bottom: var(--theme-sizes-layout-medium);
+      margin-bottom: 8px;
     }
     .subtext {
       color: var(--theme-colors-monochrome-9);

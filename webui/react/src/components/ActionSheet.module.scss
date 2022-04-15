@@ -22,10 +22,10 @@
     display: flex;
     height: var(--nav-bottom-bar-height);
 
-    [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
+    [class^=Icon_base_] { padding: 0 16px; }
     .label { font-size: var(--theme-sizes-font-medium); }
     .spacer {
-      width: calc(24px + 2 * var(--theme-sizes-layout-big));
+      width: calc(24px + 2 * 16px);
     }
   }
 }

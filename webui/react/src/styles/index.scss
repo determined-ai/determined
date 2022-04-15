@@ -26,12 +26,12 @@ code {
   background-color: var(--theme-colors-monochrome-13);
   border-radius: var(--theme-sizes-border-radius);
   font-family: var(--font-family-code);
-  padding: 0 var(--theme-sizes-layout-tiny);
+  padding: 0 4px;
 }
 code.block {
   display: block;
-  margin: var(--theme-sizes-layout-medium) 0;
+  margin: 8px 0;
   overflow-x: scroll;
-  padding: var(--theme-sizes-layout-medium);
+  padding: 8px;
   white-space: pre;
 }

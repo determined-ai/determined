@@ -15,7 +15,7 @@
     }
   }
   [class*=Icon_base_] {
-    padding: 0 var(--theme-sizes-layout-medium);
+    padding: 0 8px;
   }
   .trial {
     align-items: center;
@@ -26,8 +26,8 @@
     display: inline-flex;
     font-size: var(--theme-sizes-font-micro);
     font-weight: 600;
-    margin-right: var(--theme-sizes-layout-medium);
-    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
+    margin-right: 8px;
+    padding: 4px 8px;
     text-transform: uppercase;
     vertical-align: top;
   }
@@ -43,7 +43,7 @@
     [class*=Icon_base_] { display: none; }
     .trial {
       font-size: var(--theme-sizes-font-medium);
-      margin-top: var(--theme-sizes-layout-medium);
+      margin-top: 8px;
     }
   }
 }

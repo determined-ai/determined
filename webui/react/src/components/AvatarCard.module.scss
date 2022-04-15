@@ -2,7 +2,7 @@
   align-items: center;
   cursor: pointer;
   display: flex;
-  padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
+  padding: 16px 16px;
   position: relative;
   width: var(--nav-side-bar-width-max);
 }
@@ -12,6 +12,6 @@
 .base > span {
   color: var(--theme-colors-monochrome-17);
   font-size: var(--theme-sizes-font-small);
-  margin-left: var(--theme-sizes-layout-big);
+  margin-left: 16px;
   pointer-events: none;
 }

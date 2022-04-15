@@ -7,9 +7,9 @@
     display: inline-flex;
     height: auto;
     justify-content: center;
-    min-height: var(--theme-sizes-layout-giant);
+    min-height: 32px;
     outline: 0;
-    padding: 0 var(--theme-sizes-layout-medium);
+    padding: 0 8px;
     position: relative;
     transition: all var(--theme-animationCurve)
   }
@@ -34,7 +34,7 @@
     display: flex;
   }
   .option > span > *:nth-child(2) {
-    margin-left: var(--theme-sizes-layout-medium);
+    margin-left: 8px;
   }
   .label {
     font-size: var(--theme-sizes-font-medium);
@@ -42,6 +42,6 @@
 }
 .base.iconOnly {
   .option {
-    padding: 0 var(--theme-sizes-layout-small);
+    padding: 0 6px;
   }
 }

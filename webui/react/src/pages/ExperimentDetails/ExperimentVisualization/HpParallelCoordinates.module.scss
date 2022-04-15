@@ -24,7 +24,7 @@ $tooltip-offset: 5px;
       border-radius: var(--theme-sizes-border-radius);
       box-shadow: var(--theme-shadow);
       left: $tooltip-offset;
-      padding: var(--theme-sizes-layout-medium);
+      padding: 8px;
       position: absolute;
       top: $tooltip-offset;
     }
@@ -35,7 +35,7 @@ $tooltip-offset: 5px;
       display: table-cell;
     }
     .row > *:last-child {
-      padding-left: var(--theme-sizes-layout-medium);
+      padding-left: 8px;
     }
   }
 }

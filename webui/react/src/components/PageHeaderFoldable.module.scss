@@ -7,7 +7,7 @@
   flex-wrap: wrap;
   font-size: var(--theme-sizes-font-small);
   justify-content: space-between;
-  padding: var(--theme-sizes-layout-big);
+  padding: 16px;
   width: 100%;
 }
 .left {
@@ -22,7 +22,7 @@
 .toggle {
   cursor: pointer;
   height: 20px;
-  margin: 0 var(--theme-sizes-layout-big);
+  margin: 0 16px;
   overflow: hidden;
 }
 .options {
@@ -30,7 +30,7 @@
   justify-content: flex-end;
 
   > button {
-    margin-left: var(--theme-sizes-layout-medium);
+    margin-left: 8px;
   }
 }
 .optionsDropdown {
@@ -64,7 +64,7 @@
     }
   }
   i {
-    margin-right: var(--theme-sizes-layout-small);
+    margin-right: 6px;
   }
 }
 .bottom {

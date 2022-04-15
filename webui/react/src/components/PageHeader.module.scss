@@ -1,7 +1,7 @@
 .base {
   display: flex;
   flex-direction: column;
-  padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-big);
+  padding: 16px 16px 0 16px;
   width: 100%;
 
   .breadcrumbs { align-self: flex-start; }
@@ -17,7 +17,7 @@
   .subTitle {
     color: var(--theme-colors-monochrome-7);
     font-size: var(--theme-sizes-font-medium);
-    padding-left: var(--theme-sizes-layout-medium);
+    padding-left: 8px;
   }
   .options {
     display: flex;
@@ -28,5 +28,5 @@
 .sticky {
   background-color: var(--theme-colors-monochrome-17);
   border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-  padding: var(--theme-sizes-layout-big);
+  padding: 16px;
 }

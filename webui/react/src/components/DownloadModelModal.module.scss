@@ -6,9 +6,9 @@
   .codeSample {
     background-color: var(--theme-colors-monochrome-13);
     border: 1px solid var(--theme-colors-monochrome-11);
-    border-radius: var(--theme-sizes-layout-tiny);
-    margin-bottom: var(--theme-sizes-layout-medium);
-    padding: var(--theme-sizes-layout-medium);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 8px;
   }
   .bottomLine {
     color: var(--theme-colors-monochrome-8);

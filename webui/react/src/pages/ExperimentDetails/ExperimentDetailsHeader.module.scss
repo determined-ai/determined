@@ -11,8 +11,8 @@
     border-radius: 20px;
     display: flex;
     justify-content: center;
-    margin-right: var(--theme-sizes-layout-medium);
-    padding: var(--theme-sizes-layout-tiny);
+    margin-right: 8px;
+    padding: 4px;
 
     .buttonPlay i {
       margin-left: 3px;
@@ -41,14 +41,14 @@
     border-right: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-17);
     flex-shrink: 0;
     overflow: hidden;
-    padding-right: var(--theme-sizes-layout-small);
+    padding-right: 6px;
     text-overflow: ellipsis;
   }
   .experimentName {
     flex-shrink: 1;
     opacity: 0.75;
     overflow: hidden;
-    padding-left: var(--theme-sizes-layout-small);
+    padding-left: 6px;
     text-overflow: ellipsis;
   }
   // .state {
@@ -56,12 +56,12 @@
   //   display: inline-flex;
   //   font-size: var(--theme-sizes-font-micro);
   //   font-weight: 600;
-  //   margin-right: var(--theme-sizes-layout-medium);
-  //   padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
+  //   margin-right: 8px;
+  //   padding: 4px 8px;
   //   text-transform: uppercase;
   // }
   // [class*=Icon_base_] {
-  //   padding: 0 var(--theme-sizes-layout-medium);
+  //   padding: 0 8px;
   // }
 
   @media only screen and (max-width: $breakpoint-tablet) {
@@ -101,7 +101,7 @@
     display: inline-block;
     line-height: 32px;
     opacity: 0.75;
-    padding-right: var(--theme-sizes-layout-small);
+    padding-right: 6px;
   }
   .link {
     color: inherit;

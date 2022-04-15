@@ -18,14 +18,14 @@
 
     .status {
       background-color: var(--theme-colors-action-normal);
-      border-radius: var(--theme-sizes-layout-medium);
-      bottom: var(--theme-sizes-layout-medium);
+      border-radius: 8px;
+      bottom: 8px;
       color: var(--theme-colors-monochrome-17);
       font-size: var(--theme-sizes-font-tiny);
-      height: 0 var(--theme-sizes-layout-big);
-      padding: 0 var(--theme-sizes-layout-small);
+      height: 0 16px;
+      padding: 0 6px;
       position: absolute;
-      right: var(--theme-sizes-layout-big);
+      right: 16px;
       white-space: nowrap;
     }
   }

@@ -7,10 +7,10 @@
   border-width: var(--theme-sizes-border-width);
   cursor: pointer;
   display: flex;
-  height: var(--theme-sizes-layout-giant);
+  height: 32px;
   justify-content: center;
   outline: 0;
-  padding: 0 var(--theme-sizes-layout-small);
+  padding: 0 6px;
   position: relative;
   transition: border-color var(--theme-animationCurve), box-shadow var(--theme-animationCurve);
 

@@ -77,7 +77,6 @@ export interface ThemeX {
       width: string;
     };
     font: {[size in ShirtSize]: string};
-    layout: {[size in ShirtSize]: string};
   };
 }
 
@@ -275,20 +274,6 @@ const lightDeterminedTheme: ThemeX = {
       jumbo: '36px',
       mega: '40px',
     },
-    layout: {
-      micro: '2px',
-      tiny: '4px',
-      small: '6px',
-      medium: '8px',
-      large: '12px',
-      big: '16px',
-      great: '18px',
-      huge: '20px',
-      enormous: '24px',
-      giant: '32px',
-      jumbo: '36px',
-      mega: '40px',
-    },
   },
 };
 
@@ -383,20 +368,6 @@ const darkDeterminedTheme: ThemeX = {
       huge: '22px',
       enormous: '24px',
       giant: '28px',
-      jumbo: '36px',
-      mega: '40px',
-    },
-    layout: {
-      micro: '2px',
-      tiny: '4px',
-      small: '6px',
-      medium: '8px',
-      large: '12px',
-      big: '16px',
-      great: '18px',
-      huge: '20px',
-      enormous: '24px',
-      giant: '32px',
       jumbo: '36px',
       mega: '40px',
     },

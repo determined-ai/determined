@@ -6,18 +6,18 @@
     justify-content: space-between;
   }
   .bar {
-    margin: var(--theme-sizes-layout-small) 0;
+    margin: 6px 0;
   }
 }
 li.legend {
   list-style-type: none;
 
   .count {
-    margin-right: var(--theme-sizes-layout-small);
+    margin-right: 6px;
   }
 }
 ul.detailedLegends li {
-  margin-top: var(--theme-sizes-layout-small);
+  margin-top: 6px;
 }
 div.overallLegends {
   display: flex;
@@ -37,7 +37,7 @@ div.overallLegends {
     display: block;
     height: 100%;
     margin: 0;
-    margin-left: var(--theme-sizes-layout-huge);
+    margin-left: 20px;
     padding: 0;
   }
   li:first-child {

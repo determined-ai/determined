@@ -13,14 +13,14 @@
     border-radius: var(--theme-sizes-border-radius);
     cursor: pointer;
     display: flex;
-    height: var(--theme-sizes-layout-giant);
+    height: 32px;
     outline: 0;
-    padding: 0 var(--theme-sizes-layout-small);
+    padding: 0 6px;
     transition: 0.2s;
 
     &:hover { border-color: var(--theme-colors-states-active); }
   }
-  .button:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }
+  .button:not(:first-child) { margin-left: 8px; }
   .button:focus {
     box-shadow: var(--theme-outline);
   }

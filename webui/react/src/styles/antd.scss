@@ -80,7 +80,7 @@ html {
 
   .ant-modal > .ant-modal-content > .ant-modal-header,
   .ant-modal > .ant-modal-content > .ant-modal-body {
-    padding: var(--theme-sizes-layout-big);
+    padding: 16px;
   }
 
   /* Picker */
@@ -156,7 +156,7 @@ html {
   .ant-spin .ant-spin-text {
     color: var(--theme-colors-monochrome-8);
     font-style: italic;
-    margin-top: var(--theme-sizes-layout-big);
+    margin-top: 16px;
   }
 
   /* Statistic */
@@ -229,7 +229,7 @@ html {
   }
   .ant-table .ant-table-tbody > tr > td.ant-table-selection-column,
   .ant-table .ant-table-tbody > tr > td.fullCell {
-    min-width: var(--theme-sizes-layout-giant);
+    min-width: 32px;
     padding: 0;
     position: relative;
 
@@ -274,7 +274,7 @@ html {
   }
   .ant-tabs.no-padding {
     & > .ant-tabs-nav {
-      padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-big);
+      padding: 16px 16px 0 16px;
     }
   }
 
@@ -290,6 +290,6 @@ html {
     border-width: 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width) var(--theme-sizes-border-width);
   }
   .ant-tabs-card > .ant-tabs-content-holder > .ant-tabs-content {
-    padding: var(--theme-sizes-layout-big);
+    padding: 16px;
   }
 }
