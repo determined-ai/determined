@@ -103,11 +103,11 @@ type AllocationState int
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {
-	AllocationID AllocationID `db:"allocation_id"`
-	ResourcePool string       `db:"resource_pool"`
-	EventType    string       `db:"event_type"`
-	StartTime    *time.Time   `db:"start_time"`
-	EndTime      *time.Time   `db:"end_time"`
+	AllocationID AllocationID
+	ResourcePool string
+	EventType    string
+	StartTime    *time.Time
+	EndTime      *time.Time
 }
 
 const (
