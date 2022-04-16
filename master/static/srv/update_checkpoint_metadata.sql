@@ -9,5 +9,8 @@ WITH update_v1 AS (
 )
 SELECT metadata
 FROM update_v1
-UNION ALL update_v2
+WHERE metadata IS NOT NULL
+UNION ALL
+SELECT metadata
+FROM update_v2
 WHERE metadata IS NOT NULL
