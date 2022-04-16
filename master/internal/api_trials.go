@@ -27,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -341,25 +342,24 @@ func (a *apiServer) GetTrialCheckpoints(
 	})
 
 	sort.Slice(resp.Checkpoints, func(i, j int) bool {
-		a1, a2 := resp.Checkpoints[i], resp.Checkpoints[j]
+		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
-			a2, a1 = a1, a2
+			aj, ai = ai, aj
 		}
 
 		switch req.SortBy {
 		case apiv1.GetTrialCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			return a1.Metadata.AsMap()["latest_batch"].(float64) <
-				a2.Metadata.AsMap()["latest_batch"].(float64)
+			return protoless.CheckpointLatestBatchLess(ai, aj)
 		case apiv1.GetTrialCheckpointsRequest_SORT_BY_UUID:
-			return a1.Uuid < a2.Uuid
+			return ai.Uuid < aj.Uuid
 		case apiv1.GetTrialCheckpointsRequest_SORT_BY_END_TIME:
-			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+			return protoless.CheckpointReportTimeLess(ai, aj)
 		case apiv1.GetTrialCheckpointsRequest_SORT_BY_STATE:
-			return a1.State.Number() < a2.State.Number()
+			return ai.State.Number() < aj.State.Number()
 		case apiv1.GetTrialCheckpointsRequest_SORT_BY_UNSPECIFIED:
 			fallthrough
 		default:
-			return a1.ReportTime.AsTime().Before(a2.ReportTime.AsTime())
+			return protoless.CheckpointLatestBatchLess(ai, aj)
 		}
 	})
 
