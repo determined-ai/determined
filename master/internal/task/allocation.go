@@ -377,7 +377,6 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	now := time.Now().UTC()
 	err := a.db.RecordTaskStats(&model.TaskStats{
 		AllocationID: msg.ID,
-		ResourcePool: msg.ResourcePool,
 		EventType:    "QUEUED",
 		StartTime:    &msg.JobSubmissionTime,
 		EndTime:      &now,

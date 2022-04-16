@@ -424,7 +424,6 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		if msg.ContainerStatsRecord.EndStats {
 			err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
 		} else {
-			msg.ContainerStatsRecord.Stats.ResourcePool = a.resourcePoolName
 			err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
 		}
 		if err != nil {

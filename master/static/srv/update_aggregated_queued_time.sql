@@ -5,16 +5,20 @@ WITH const AS (
 ),
 day_agg AS (SELECT
     'queued' AS aggregation_type,
-    resource_pool AS aggregation_key,
+    allocations.resource_pool AS aggregation_key,
     avg(
         extract(
             epoch
-            FROM end_time - start_time
+            FROM task_stats.end_time - task_stats.start_time
             ) 
     ) AS seconds
-FROM task_stats, const
-WHERE end_time >= const.target_date AND end_time < (const.target_date + interval '1 day') AND event_type = 'QUEUED'
-GROUP BY resource_pool),
+FROM task_stats, const, allocations
+WHERE 
+    allocations.allocation_id = task_stats.allocation_id
+    AND task_stats.end_time >= const.target_date 
+    AND task_stats.end_time < (const.target_date + interval '1 day') 
+    AND event_type = 'QUEUED'
+GROUP BY allocations.resource_pool),
 total_agg AS (SELECT
     'queued' AS aggregation_type,
     'total' AS aggregation_key,
@@ -25,7 +29,10 @@ total_agg AS (SELECT
             ) 
     ), 0) AS seconds
 FROM task_stats, const
-WHERE end_time >= const.target_date AND end_time < (const.target_date + interval '1 day') AND event_type = 'QUEUED'
+WHERE 
+    end_time >= const.target_date 
+    AND end_time < (const.target_date + interval '1 day') 
+    AND event_type = 'QUEUED'
 ),
 
 all_aggs AS (
