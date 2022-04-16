@@ -271,3 +271,10 @@ class DummyCheckpointContext(CheckpointContext):
     ) -> None:
         # No master to report to; just log the event.
         logger.info(f"saved checkpoint {storage_id}")
+
+    def get_metadata(self, storage_id: str) -> Dict[str, Any]:
+        # TODO: when the StorageManager supports downloading with a file filter, we should attempt
+        # to download metadata.json from the checkpoint and read it here.
+        raise NotImplementedError(
+            "DummyCheckpointContext is not able to read metadata from checkpoint storage yet."
+        )
