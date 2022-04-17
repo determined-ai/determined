@@ -3912,6 +3912,34 @@ export interface V1PauseExperimentResponse {
 }
 
 /**
+ * Set the proxy address for some allocation.
+ * @export
+ * @interface V1PostAllocationProxyAddressRequest
+ */
+export interface V1PostAllocationProxyAddressRequest {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1PostAllocationProxyAddressRequest
+     */
+    allocationId?: string;
+    /**
+     * The address of the host where the service is, w.r.t. the master.
+     * @type {string}
+     * @memberof V1PostAllocationProxyAddressRequest
+     */
+    proxyAddress?: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PostAllocationProxyAddressResponse
+ */
+export interface V1PostAllocationProxyAddressResponse {
+}
+
+/**
  * Request for updating a checkpoints metadata.
  * @export
  * @interface V1PostCheckpointMetadataRequest
@@ -11124,6 +11152,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationProxyAddressRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling postAllocationProxyAddress.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAllocationProxyAddress.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/proxy_address`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostAllocationProxyAddressRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body 
          * @param {*} [options] Override http request option.
@@ -12037,6 +12111,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationProxyAddressRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body 
          * @param {*} [options] Override http request option.
@@ -12473,6 +12567,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1PostAllocationProxyAddressRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
+            return InternalApiFp(configuration).postAllocationProxyAddress(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
          * @param {V1PostTrialProfilerMetricsBatchRequest} body 
          * @param {*} [options] Override http request option.
@@ -12856,6 +12961,19 @@ export class InternalApi extends BaseAPI {
      */
     public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
+     * @param {string} allocationId The id of the allocation.
+     * @param {V1PostAllocationProxyAddressRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
+        return InternalApiFp(this.configuration).postAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**

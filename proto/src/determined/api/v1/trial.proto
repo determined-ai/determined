@@ -353,6 +353,16 @@ message AllocationRendezvousInfoResponse {
   determined.trial.v1.RendezvousInfo rendezvous_info = 1;
 }
 
+// Set the proxy address for some allocation.
+message PostAllocationProxyAddressRequest {
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The address of the host where the service is, w.r.t. the master.
+  string proxy_address = 2;
+}
+// Response to PostAllocationProxyAddressRequest
+message PostAllocationProxyAddressResponse {}
+
 // Arguments to an all gather.
 message AllocationAllGatherRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

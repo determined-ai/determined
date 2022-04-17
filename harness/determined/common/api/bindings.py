@@ -3307,6 +3307,28 @@ class v1PatchUserResponse:
             "user": self.user.to_json(),
         }
 
+class v1PostAllocationProxyAddressRequest:
+    def __init__(
+        self,
+        allocationId: "typing.Optional[str]" = None,
+        proxyAddress: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+        self.proxyAddress = proxyAddress
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAllocationProxyAddressRequest":
+        return cls(
+            allocationId=obj.get("allocationId", None),
+            proxyAddress=obj.get("proxyAddress", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId if self.allocationId is not None else None,
+            "proxyAddress": self.proxyAddress if self.proxyAddress is not None else None,
+        }
+
 class v1PostCheckpointMetadataRequest:
     def __init__(
         self,
@@ -6896,6 +6918,26 @@ def post_PauseExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
+
+def post_PostAllocationProxyAddress(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1PostAllocationProxyAddressRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/proxy_address",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostAllocationProxyAddress", _resp)
 
 def post_PostCheckpointMetadata(
     session: "client.Session",

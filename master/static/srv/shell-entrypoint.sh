@@ -23,7 +23,7 @@ if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
 	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 fi
 
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
