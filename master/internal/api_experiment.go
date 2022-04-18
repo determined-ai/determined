@@ -254,8 +254,8 @@ func (a *apiServer) GetExperiments(
 	stateFilterExpr := strings.Join(allStates, ",")
 	userFilterExpr := strings.Join(req.Users, ",")
 	userIds := make([]string, 0)
-	for _, userId := range req.UserIds {
-		userIds = append(userIds, strconv.Itoa(int(userId)))
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
 	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
