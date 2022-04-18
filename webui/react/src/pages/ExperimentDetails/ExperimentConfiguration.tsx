@@ -14,6 +14,9 @@ interface Props {
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
+  /**
+   * strip registry_auth from config for display
+   */
   let publicConfig = {};
   if (experiment.configRaw) {
     const {

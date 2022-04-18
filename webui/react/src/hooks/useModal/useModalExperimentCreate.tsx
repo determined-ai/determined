@@ -221,35 +221,27 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     const error = modalState.error || modalState.configError;
     if (error) throw new Error(error);
 
-    let fullConfig;
+    /**
+     * add back registry_auth if it was stripped
+     * and no new registry_auth was provided
+     */
+    let userConfig, fullConfig;
     if (!modalState.isAdvancedMode) {
       await formRef.current?.validateFields();
-      const publicConfig = modalState.config;
-      if (registryCredentials) {
-        const { environment, ...restConfig } = publicConfig;
-        fullConfig = {
-          environment: { registry_auth: registryCredentials, ...environment },
-          ...restConfig,
-        };
-      } else {
-        fullConfig = publicConfig;
-      }
-
+      userConfig = modalState.config;
     } else {
-
-      const userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
-
-      if(!userConfig?.environment?.registry_auth && registryCredentials) {
-        const { environment, ...restConfig } = userConfig;
-        fullConfig = {
-          environment: { registry_auth: registryCredentials, ...environment },
-          ...restConfig,
-        };
-      } else {
-        fullConfig = userConfig;
-      }
-
+      userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     }
+    if(!userConfig?.environment?.registry_auth && registryCredentials) {
+      const { environment, ...restConfig } = userConfig;
+      fullConfig = {
+        environment: { registry_auth: registryCredentials, ...environment },
+        ...restConfig,
+      };
+    } else {
+      fullConfig = userConfig;
+    }
+
     const configString = getConfigFromForm(fullConfig);
     await submitExperiment(configString);
   }, [ getConfigFromForm, modalState, submitExperiment, registryCredentials ]);
