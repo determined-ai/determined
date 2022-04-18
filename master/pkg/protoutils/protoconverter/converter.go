@@ -49,8 +49,11 @@ func (c *ProtoConverter) ToDoubleWrapper(x float64) *wrapperspb.DoubleValue {
 }
 
 // ToTimestamp converts a time.Time into a timestamppb.Timestamp.
-func (c *ProtoConverter) ToTimestamp(x time.Time) *timestamppb.Timestamp {
-	return timestamppb.New(x)
+func (c *ProtoConverter) ToTimestamp(x *time.Time) *timestamppb.Timestamp {
+	if x == nil {
+		return nil
+	}
+	return timestamppb.New(*x)
 }
 
 // ToExperimentv1State converts a model.State string into a proto state.

@@ -19,26 +19,26 @@ import (
 type ExperimentMetadata struct {
 	bun.BaseModel `bun:"select:experiments"`
 
-	ID           int       `bun:"id"`
-	Name         string    `bun:"name"`
-	Description  string    `bun:"description"`
-	ProjectID    int       `bun:"project_id"`
-	JobID        string    `bun:"job_id"`
-	Archived     bool      `bun:"archived"`
-	Username     string    `bun:"username"`
-	DisplayName  string    `bun:"display_name"`
-	Labels       []string  `bun:"labels"`
-	ResourcePool string    `bun:"resource_pool"`
-	SearcherType string    `bun:"searcher_type"`
-	Notes        string    `bun:"notes"`
-	StartTime    time.Time `bun:"start_time"`
-	EndTime      time.Time `bun:"end_time"`
+	ID           int         `bun:"id"`
+	Name         string      `bun:"name"`
+	Description  string      `bun:"description"`
+	ProjectID    int         `bun:"project_id"`
+	JobID        string      `bun:"job_id"`
+	Archived     bool        `bun:"archived"`
+	Username     string      `bun:"username"`
+	DisplayName  string      `bun:"display_name"`
+	Labels       []string    `bun:"labels"`
+	ResourcePool string      `bun:"resource_pool"`
+	SearcherType string      `bun:"searcher_type"`
+	Notes        string      `bun:"notes"`
+	StartTime    *time.Time  `bun:"start_time"`
+	EndTime      *time.Time  `bun:"end_time"`
 	State        model.State `bun:"state"`
-	Progress     float64   `bun:"progress"`
-	ForkedFrom   int32     `bun:"forked_from"`
-	UserID       int       `bun:"user_id"`
-	NumTrials    int32     `bun:"num_trials"`
-	TrialIDs     []int32   `bun:"trial_ids"`
+	Progress     float64     `bun:"progress"`
+	ForkedFrom   int32       `bun:"forked_from"`
+	UserID       int         `bun:"user_id"`
+	NumTrials    int32       `bun:"num_trials"`
+	TrialIDs     []int32     `bun:"trial_ids"`
 }
 
 func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
@@ -46,15 +46,15 @@ func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 	parsedForkedFrom := wrapperspb.Int32(p.ForkedFrom)
 	parsedProgress := wrapperspb.Double(p.Progress)
 	out := &experimentv1.Experiment{
-		Id:          conv.ToInt32(p.ID),
-		Name:        p.Name,
-		Description: p.Description,
-		Archived:    p.Archived,
-		Username:    p.Username,
-		StartTime:   conv.ToTimestamp(p.StartTime),
-		EndTime:     conv.ToTimestamp(p.EndTime),
-		ProjectId:   conv.ToInt32(p.ProjectID),
-		JobId:       p.JobID,
+		Id:           conv.ToInt32(p.ID),
+		Name:         p.Name,
+		Description:  p.Description,
+		Archived:     p.Archived,
+		Username:     p.Username,
+		StartTime:    conv.ToTimestamp(p.StartTime),
+		EndTime:      conv.ToTimestamp(p.EndTime),
+		ProjectId:    conv.ToInt32(p.ProjectID),
+		JobId:        p.JobID,
 		State:        conv.ToExperimentv1State(string(p.State)),
 		Progress:     parsedProgress,
 		ForkedFrom:   parsedForkedFrom,
@@ -79,7 +79,7 @@ type ProjectMetadata struct {
 	Name                    string          `bun:"name"`
 	Description             string          `bun:"description"`
 	WorkspaceID             int             `bun:"workspace_id"`
-	LastExperimentStartedAt time.Time       `bun:"last_experiment_started_at"`
+	LastExperimentStartedAt *time.Time      `bun:"last_experiment_started_at"`
 	Notes                   []model.JSONObj `bun:"notes"`
 	NumExperiments          int             `bun:"num_experiments"`
 	NumActiveExperiments    int             `bun:"num_active_experiments"`
@@ -117,10 +117,17 @@ func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 // Fetch list of Projects
 func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, error) {
 	ps := []*ProjectMetadata{}
-
 	q, err := opts(db.Bun().
 		NewSelect().
-		Model(&ps))
+		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.description").
+		ColumnExpr("username, project_metadata.immutable, workspace_id, project_metadata.notes").
+		ColumnExpr("(workspaces.archived OR project_metadata.archived) AS archived").
+		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE project_id = project_metadata.id) AS num_experiments").
+		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE project_id = project_metadata.id AND experiments.state = 'ACTIVE') AS num_active_experiments").
+		ColumnExpr("(SELECT MAX(start_time) FROM experiments WHERE project_id = project_metadata.id) AS last_experiment_started_at").
+		Model(&ps).
+		Join("JOIN users ON users.id = project_metadata.user_id").
+		Join("JOIN workspaces ON workspaces.id = project_metadata.workspace_id"))
 	if err != nil {
 		return nil, fmt.Errorf("building query: %w", err)
 	}
@@ -167,7 +174,7 @@ func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 	var s struct {
 		NumActiveExperiments    int
 		NumExperiments          int
-		LastExperimentStartedAt time.Time
+		LastExperimentStartedAt *time.Time
 	}
 	experiment := db.Bun().NewSelect().
 		ColumnExpr("COUNT(*) AS num_experiments").
