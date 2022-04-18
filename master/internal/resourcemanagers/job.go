@@ -83,10 +83,14 @@ func (j jobSortState) SetJobPosition(
 
 	// if the calculated position results in the wrong order
 	// we subtract a minimal decimal amount instead.
+	minDecimal := decimal.New(1, job.DecimalExp)
+	if isK8s {
+		minDecimal = decimal.New(1, job.K8sExp)
+	}
 	if aheadOf && newPos.GreaterThanOrEqual(j[anchor1]) {
-		newPos = j[anchor1].Sub(decimal.New(1, job.DecimalExp))
+		newPos = j[anchor1].Sub(minDecimal)
 	} else if !aheadOf && newPos.LessThanOrEqual(j[anchor1]) {
-		newPos = j[anchor1].Add(decimal.New(1, job.DecimalExp))
+		newPos = j[anchor1].Add(minDecimal)
 	}
 
 	j[job.TailAnchor] = initalizeQueuePosition(time.Now(), isK8s)

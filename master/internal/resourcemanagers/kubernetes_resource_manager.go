@@ -400,18 +400,11 @@ func (k *kubernetesResourceManager) moveJob(
 		}
 	}
 
-	if needMove(
-		k.queuePositions[jobID],
-		k.queuePositions[anchorID],
-		k.queuePositions[secondAnchor],
-		aheadOf,
-	) {
-		msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
-		if err != nil {
-			return err
-		}
-		ctx.Tell(groupAddr, msg)
+	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
+	if err != nil {
+		return err
 	}
+	ctx.Tell(groupAddr, msg)
 
 	addr, ok := k.jobIDtoAddr[jobID]
 	if !ok {
@@ -481,6 +474,8 @@ func (k *kubernetesResourceManager) assignResources(
 			group:       k.groups[req.Group],
 			initialPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
 		})
+
+
 
 		k.addrToContainerID[req.TaskActor] = containerID
 
@@ -617,6 +612,7 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 		newSpec.Labels = make(map[string]string)
 	}
 	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
+	fmt.Println(newSpec.Labels["determined-queue-position"])
 	spec.Environment.SetPodSpec(newSpec)
 }
 
