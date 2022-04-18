@@ -303,3 +303,15 @@ export interface PatchWorkspaceParams extends Api.V1PatchWorkspace {
 export interface PatchProjectParams extends Api.V1PatchProject {
   id: number;
 }
+
+export interface ArchiveProjectParams {
+  id: number;
+}
+
+export type UnarchiveProjectParams = ArchiveProjectParams;
+
+export interface ArchiveWorkspaceParams {
+  id: number;
+}
+
+export type UnarchiveWorkspaceParams = ArchiveWorkspaceParams;

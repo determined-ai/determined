@@ -1,0 +1,25 @@
+.base {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0;
+  padding: 12px;
+  width: 100%;
+
+  .icon {
+    background-color: var(--theme-colors-monochrome-13);
+    border-radius: 15%;
+    display: flex;
+    font-size: var(--theme-sizes-font-tiny);
+    height: 32px;
+    justify-content: center;
+    padding: var(--theme-sizes-layout-medium);
+    width: 32px;
+  }
+  .name {
+    font-size: var(--theme-sizes-font-big);
+    margin: 0;
+    text-align: center;
+  }
+}

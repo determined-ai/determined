@@ -761,6 +761,7 @@ export enum JobAction {
 export interface Workspace {
   archived: boolean;
   id: number;
+  immutable: boolean;
   name: string;
   username: string;
 }
@@ -777,6 +778,7 @@ export interface Project {
   archived: boolean;
   description?: string;
   id: number;
+  immutable: boolean;
   lastExperimentStartedAt?: Date;
   name: string;
   notes: Note[];

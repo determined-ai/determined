@@ -585,6 +585,7 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
   return {
     archived: data.archived,
     id: data.id,
+    immutable: data.immutable,
     name: data.name,
     username: data.username,
   };
@@ -595,6 +596,7 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
     archived: data.archived,
     description: data.description,
     id: data.id,
+    immutable: data.immutable,
     lastExperimentStartedAt: data.lastExperimentStartedAt,
     name: data.name,
     notes: data.notes,

@@ -718,6 +718,22 @@ export const patchWorkspace: Service.DetApi<
   },
 };
 
+export const archiveWorkspace: Service.DetApi<
+  Service.ArchiveWorkspaceParams, Api.V1ArchiveWorkspaceResponse, void
+> = {
+  name: 'archiveWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
+};
+
+export const unarchiveWorkspace: Service.DetApi<
+  Service.UnarchiveWorkspaceParams, Api.V1UnarchiveWorkspaceResponse, void
+> = {
+  name: 'unarchiveWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
+};
+
 /* Projects */
 
 export const getProject: Service.DetApi<
@@ -831,6 +847,22 @@ export const moveProject: Service.DetApi<
       projectId: params.projectId,
     },
   ),
+};
+
+export const archiveProject: Service.DetApi<
+  Service.ArchiveProjectParams, Api.V1ArchiveProjectResponse, void
+> = {
+  name: 'archiveProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.archiveProject(params.id),
+};
+
+export const unarchiveProject: Service.DetApi<
+  Service.UnarchiveProjectParams, Api.V1UnarchiveProjectResponse, void
+> = {
+  name: 'unarchiveProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
 /* Tasks */
