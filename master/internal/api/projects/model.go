@@ -20,27 +20,29 @@ type ExperimentMetadata struct {
 	bun.BaseModel `bun:"select:experiments"`
 
 	ID           int       `bun:"id"`
-	Name         string    `bun:"config"->>'name'`
-	Description  string    `bun:"config"->>'description'`
+	Name         string    `bun:"name"`
+	Description  string    `bun:"description"`
 	ProjectID    int       `bun:"project_id"`
 	JobID        string    `bun:"job_id"`
 	Archived     bool      `bun:"archived"`
 	Username     string    `bun:"username"`
-	Labels       []string  `bun:"config"->'labels'`
-	ResourcePool string    `bun:"config"->'resources'->>'resource_pool'`
-	SearcherType string    `bun:"config"->'searcher'->'name'`
+	DisplayName  string    `bun:"display_name"`
+	Labels       []string  `bun:"labels"`
+	ResourcePool string    `bun:"resource_pool"`
+	SearcherType string    `bun:"searcher_type"`
 	Notes        string    `bun:"notes"`
 	StartTime    time.Time `bun:"start_time"`
 	EndTime      time.Time `bun:"end_time"`
-	State        string    `bun:"state"`
+	State        model.State `bun:"state"`
 	Progress     float64   `bun:"progress"`
 	ForkedFrom   int32     `bun:"forked_from"`
 	UserID       int       `bun:"user_id"`
+	NumTrials    int32     `bun:"num_trials"`
+	TrialIDs     []int32   `bun:"trial_ids"`
 }
 
 func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 	conv := protoconverter.ProtoConverter{}
-	var trialIDs []int32
 	parsedForkedFrom := wrapperspb.Int32(p.ForkedFrom)
 	parsedProgress := wrapperspb.Double(p.Progress)
 	out := &experimentv1.Experiment{
@@ -53,7 +55,7 @@ func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 		EndTime:     conv.ToTimestamp(p.EndTime),
 		ProjectId:   conv.ToInt32(p.ProjectID),
 		JobId:       p.JobID,
-		// State:        experimentv1.State,
+		State:        conv.ToExperimentv1State(string(p.State)),
 		Progress:     parsedProgress,
 		ForkedFrom:   parsedForkedFrom,
 		UserId:       conv.ToInt32(p.UserID),
@@ -61,8 +63,8 @@ func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 		Notes:        p.Notes,
 		Labels:       p.Labels,
 		SearcherType: p.SearcherType,
-		TrialIds:     trialIDs,
-		NumTrials:    0,
+		TrialIds:     p.TrialIDs,
+		NumTrials:    p.NumTrials,
 	}
 	if err := conv.Error(); err != nil {
 		return nil, fmt.Errorf("converting experiment to proto: %w", err)
@@ -138,7 +140,15 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*Experiment
 		NewSelect().
 		Model(&exps).
 		ColumnExpr("experiment_metadata.id").
-		ColumnExpr("users.username AS username").
+		ColumnExpr("start_time, end_time, state, archived, owner_id AS user_id").
+		ColumnExpr("job_id, parent_id AS forked_from, progress, project_id").
+		ColumnExpr("COALESCE(notes, 'omitted') AS notes").
+		ColumnExpr("(SELECT COUNT(*) FROM trials t WHERE experiment_metadata.id = t.experiment_id) AS num_trials").
+		ColumnExpr("(SELECT json_agg(id) FROM trials t WHERE experiment_metadata.id = t.experiment_id) AS trial_ids").
+		ColumnExpr("config->>'name' AS name, config->>'description' AS description").
+		ColumnExpr("config->'resources'->>'resource_pool' AS resource_pool").
+		ColumnExpr("config->'labels' AS labels, config->'searcher'->'name' as searcher_type").
+		ColumnExpr("users.username, COALESCE(users.display_name, users.username) as display_name").
 		Join("JOIN users ON users.id = experiment_metadata.owner_id"))
 	if err != nil {
 		return nil, fmt.Errorf("building query: %w", err)
@@ -172,10 +182,10 @@ func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 
 	q := db.Bun().
 		NewSelect().
-		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.immutable").
-		ColumnExpr("0 AS num_experiments").
-		ColumnExpr("0 AS num_active_experiments").
+		ColumnExpr("0 AS num_experiments, 0 AS num_active_experiments").
 		ColumnExpr("now() AS last_experiment_started_at").
+		ColumnExpr("description, workspace_id, notes, project_metadata.immutable").
+		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.archived").
 		ColumnExpr("users.username AS username").
 		Join("JOIN users ON users.id = project_metadata.user_id").
 		Join("JOIN workspaces ON workspaces.id = project_metadata.workspace_id").

@@ -2,11 +2,9 @@ package protoconverter
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
@@ -52,6 +51,21 @@ func (c *ProtoConverter) ToDoubleWrapper(x float64) *wrapperspb.DoubleValue {
 // ToTimestamp converts a time.Time into a timestamppb.Timestamp.
 func (c *ProtoConverter) ToTimestamp(x time.Time) *timestamppb.Timestamp {
 	return timestamppb.New(x)
+}
+
+// ToExperimentv1State converts a model.State string into a proto state.
+func (c *ProtoConverter) ToExperimentv1State(state string) experimentv1.State {
+	if c.err != nil {
+		return 0
+	}
+
+	out, ok := experimentv1.State_value["STATE_"+state]
+	if !ok {
+		c.err = errors.Errorf("invalid experimentv1.State: %q", state)
+		return 0
+	}
+
+	return experimentv1.State(out)
 }
 
 // ToCheckpointv1State converts a model.State string into a checkpointv1.State.
