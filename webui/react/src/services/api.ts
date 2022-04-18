@@ -249,6 +249,14 @@ export const patchWorkspace = generateDetApi<
   Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
 >(Config.patchWorkspace);
 
+export const archiveWorkspace = generateDetApi<
+  Service.ArchiveWorkspaceParams, Api.V1ArchiveWorkspaceResponse, void
+>(Config.archiveWorkspace);
+
+export const unarchiveWorkspace = generateDetApi<
+  Service.UnarchiveWorkspaceParams, Api.V1UnarchiveWorkspaceResponse, void
+>(Config.unarchiveWorkspace);
+
 /* Projects */
 
 export const getProject = generateDetApi<
@@ -280,6 +288,14 @@ export const patchProject = generateDetApi<
 export const moveProject = generateDetApi<
   Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
 >(Config.moveProject);
+
+export const archiveProject = generateDetApi<
+  Service.ArchiveProjectParams, Api.V1ArchiveProjectResponse, void
+>(Config.archiveProject);
+
+export const unarchiveProject = generateDetApi<
+  Service.UnarchiveProjectParams, Api.V1UnarchiveProjectResponse, void
+>(Config.unarchiveProject);
 
 /* Tasks */
 

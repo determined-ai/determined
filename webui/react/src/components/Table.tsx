@@ -12,7 +12,7 @@ import { paths } from 'routes/utils';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
-  Pagination, StartEndTimes, TrialItem,
+  Pagination, Project, StartEndTimes, TrialItem, Workspace,
 } from 'types';
 import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
@@ -23,7 +23,7 @@ import css from './Table.module.scss';
 import TimeAgo from './TimeAgo';
 import TimeDuration from './TimeDuration';
 
-type TableRecord = CommandTask | ExperimentItem | TrialItem;
+type TableRecord = CommandTask | ExperimentItem | TrialItem | Project | Workspace;
 
 export interface TablePaginationConfig {
   current: number;
@@ -36,7 +36,7 @@ export interface TablePaginationConfig {
 
 export type Renderer<T = unknown> = (text: string, record: T, index: number) => React.ReactNode;
 
-export type GenericRenderer = <T extends TableRecord>(
+export type GenericRenderer<T extends TableRecord> = (
   text: string, record: T, index: number,
 ) => React.ReactNode;
 

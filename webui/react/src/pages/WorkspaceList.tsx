@@ -2,7 +2,7 @@ import { Button } from 'antd';
 import React, { useCallback } from 'react';
 
 import Page from 'components/Page';
-import useModalWorkspaceCreate from 'hooks/useModal/useModalWorkspaceCreate';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 
 const WorkspaceList: React.FC = () => {
   const { modalOpen } = useModalWorkspaceCreate({});

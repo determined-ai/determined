@@ -1,0 +1,69 @@
+.base {
+  background-color: var(--theme-colors-monochrome-17);
+  border: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-13);
+  border-radius: 12px;
+  color: var(--theme-colors-monochrome-7);
+  display: grid;
+  font-size: 11px;
+  grid-template-columns: 50px auto 50px;
+  grid-template-rows: 40px auto 40px;
+  max-width: 325px;
+  min-width: min-content;
+  padding: var(--theme-sizes-layout-huge);
+
+  .name {
+    color: var(--theme-colors-monochrome-4);
+    font-size: 14px;
+    grid-column: 1/3;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .action {
+    grid-column: 3/4;
+    grid-row: 1/2;
+    height: min-content;
+    justify-self: end;
+    visibility: hidden;
+    width: min-content;
+  }
+  .description {
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    grid-column: 1/4;
+    grid-row: 2/3;
+    -webkit-line-clamp: 2;
+    margin: 0;
+    overflow: hidden;
+  }
+  .experiments {
+    align-items: flex-end;
+    align-self: end;
+    display: flex;
+    gap: var(--theme-sizes-layout-tiny);
+    grid-column: 1/3;
+    grid-row: 3/4;
+  }
+  .lastExperiment {
+    margin-left: var(--theme-sizes-layout-small);
+  }
+  .avatar {
+    grid-column: 3/4;
+    grid-row: 3/4;
+    place-self: end;
+  }
+  &:hover {
+    background-color: var(--theme-colors-monochrome-16);
+
+    .action {
+      visibility: visible;
+    }
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base {
+    width: 165px;
+  }
+}
