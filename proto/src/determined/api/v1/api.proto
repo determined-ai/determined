@@ -114,7 +114,7 @@ service Determined {
   // Get the requested user.
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = {
-      get: "/api/v1/users/{username}"
+      get: "/api/v1/users/{user_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"
@@ -134,7 +134,7 @@ service Determined {
   rpc SetUserPassword(SetUserPasswordRequest)
       returns (SetUserPasswordResponse) {
     option (google.api.http) = {
-      post: "/api/v1/users/{username}/password"
+      post: "/api/v1/users/{user_id}/password"
       body: "password"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -144,7 +144,7 @@ service Determined {
   // Patch a user's fields.
   rpc PatchUser(PatchUserRequest) returns (PatchUserResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/users/{username}",
+      patch: "/api/v1/users/{user_id}",
       body: "user"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

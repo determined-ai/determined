@@ -241,12 +241,12 @@ export interface GetJobQStatsParams extends FetchOptions {
 
 export interface SetUserPasswordParams {
   password: string;
-  username: string;
+  userId: number;
 }
 
 export interface PatchUserParams {
+  userId: number;
   userParams: {
     displayName: string;
   };
-  username: string;
 }
