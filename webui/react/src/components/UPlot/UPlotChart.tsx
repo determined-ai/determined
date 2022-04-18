@@ -4,8 +4,6 @@ import uPlot, { AlignedData } from 'uplot';
 
 import Message, { MessageType } from 'components/Message';
 import useResize from 'hooks/useResize';
-import { RecordKey } from 'types';
-import { distance } from 'utils/chart';
 
 import { FacetedData, UPlotData } from './types';
 
@@ -26,141 +24,161 @@ interface ScaleZoomData {
   min?: number;
 }
 
+const shouldUpdate = (
+  prev: Partial<uPlot.Options> | undefined,
+  next: Partial<uPlot.Options> | undefined,
+  chart: uPlot | undefined,
+): boolean => {
+  if (! prev || !next || !chart) return true;
+  if (Object.keys(prev).length !== Object.keys(next).length) {
+    return true;
+  }
+  if (prev.axes?.length !== next.axes?.length) {
+    return true;
+  }
+
+  if (
+    prev.axes?.some((prevAxis, seriesIdx) => {
+      const nextAxis = next.axes?.[seriesIdx];
+      return prevAxis.label !== nextAxis?.label;
+    })
+  ) {
+    return true;
+  }
+
+  if (chart?.series?.length !== next.series?.length) {
+    return true;
+  }
+
+  if (
+    chart.series.some((chartSerie, seriesIdx) => {
+      const nextSerie = next.series?.[seriesIdx];
+      return (
+        (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show) ||
+        (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
+      );
+    })
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const getNormalizedData = (data: AlignedData | FacetedData | undefined, options: uPlot.Options) => {
+  if (!data || data.length < 2) return [ false, undefined ];
+
+  // Is the chart aligned (eg. linear) or faceted (eg. scatter plot)?
+  if (options?.mode === 2) {
+    return [ true, data as AlignedData ];
+  } else {
+    // Figure out the lowest sized series data.
+    const chartData = data as AlignedData;
+    const minDataLength = chartData.reduce((acc: number, series: UPlotData[]) => {
+      return Math.min(acc, series.length);
+    }, Number.MAX_SAFE_INTEGER);
+
+    // Making sure the X series and all the other series data are the same length;
+    const trimmedData = chartData.map(series => series.slice(0, minDataLength));
+
+    // Checking to make sure the X series has some data.
+    const hasXValues = (trimmedData?.[0]?.length ?? 0) !== 0;
+
+    return [ hasXValues, trimmedData as unknown as AlignedData ];
+  }
+};
 const SCROLL_THROTTLE_TIME = 500;
 
 const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const scalesRef = useRef<Record<RecordKey, uPlot.Scale>>();
   const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
-  const isZoomed = useRef<boolean>(false);
-  const mousePosition = useRef<[number, number]>();
 
-  const [ hasData, normalizedData ] = useMemo(() => {
-    if (!data || data.length < 2) return [ false, undefined ];
+  const getAugmentedOptions = (options: Partial<uPlot.Options> | undefined) => uPlot.assign(
+    {
 
-    // Is the chart aligned (eg. linear) or faceted (eg. scatter plot)?
-    if (options?.mode === 2) {
-      return [ true, data as AlignedData ];
-    } else {
-      // Figure out the lowest sized series data.
-      const chartData = data as AlignedData;
-      const minDataLength = chartData.reduce((acc: number, series: UPlotData[]) => {
-        return Math.min(acc, series.length);
-      }, Number.MAX_SAFE_INTEGER);
+      hooks: {
+        setScale: [ (uPlot: uPlot, scaleKey: string) => {
+          if (![ 'x', 'y' ].includes(scaleKey)) return;
 
-      // Making sure the X series and all the other series data are the same length;
-      const trimmedData = chartData.map(series => series.slice(0, minDataLength));
+          const currentMax: number|undefined =
+            uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
+          const currentMin: number|undefined =
+            uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
+          let max: number|undefined = scalesZoomData.current[scaleKey]?.max;
+          let min: number|undefined = scalesZoomData.current[scaleKey]?.min;
 
-      // Checking to make sure the X series has some data.
-      const hasXValues = trimmedData?.[0]?.length !== 0;
+          if (max == null || currentMax > max) max = currentMax;
+          if (min == null || currentMin < min) min = currentMin;
 
-      return [ hasXValues, trimmedData as unknown as AlignedData ];
-    }
-  }, [ data, options?.mode ]);
+          scalesZoomData.current[scaleKey] = {
+            isZoomed: currentMax < max || currentMin > min,
+            max,
+            min,
+          };
+        } ],
+      },
+      width: chartDivRef.current?.offsetWidth,
+    },
+    options || {},
+  ) as uPlot.Options;
+
+  const optionsRef = useRef<uPlot.Options>(getAugmentedOptions(options));
+
+  const [ hasData, normalizedData ] = useMemo(
+    () => getNormalizedData(data, optionsRef.current)
+    , [ data ],
+  );
 
   /*
    * Chart mount and dismount.
    */
   useEffect(() => {
-    if (!chartDivRef.current || !hasData || !options) return;
-
-    const optionsExtended = uPlot.assign(
-      {
-        cursor: {
-          bind: {
-            dblclick: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-              return (e: Event) => {
-                isZoomed.current = false;
-                handler(e);
-              };
-            },
-            mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-              return (e: MouseEvent) => {
-                mousePosition.current = [ e.clientX, e.clientY ];
-                handler(e);
-              };
-            },
-            mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-              return (e: MouseEvent) => {
-                if (!mousePosition.current) {
-                  handler(e);
-                  return;
-                }
-                if (distance(
-                  e.clientX,
-                  e.clientY,
-                  mousePosition.current[0],
-                  mousePosition.current[1],
-                ) > 5) {
-                  isZoomed.current = true;
-                }
-                mousePosition.current = undefined;
-                handler(e);
-              };
-            },
-          },
-          drag: { dist: 5, uni: 10, x: true, y: true },
-        },
-        hooks: {
-          ready: [ (chart: uPlot) => {
-            chartRef.current = chart;
-          } ],
-          setScale: [ (uPlot: uPlot, scaleKey: string) => {
-            const currentMax = uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
-            const currentMin = uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
-            let max = scalesZoomData.current[scaleKey]?.max;
-            let min = scalesZoomData.current[scaleKey]?.min;
-
-            if (max == null || currentMax > max) max = currentMax;
-            if (min == null || currentMin < min) min = currentMin;
-
-            scalesZoomData.current[scaleKey] = { isZoomed: isZoomed.current, max, min };
-
-            /*
-             * Save the scale info if zoomed in and clear it otherwise.
-             * This info will be used to restore the zoom when remounting
-             * the chart, which can be caused by new series data, chart option
-             * changes, etc.
-             */
-            if (!scalesRef.current) scalesRef.current = {};
-            if (isZoomed.current) {
-              scalesRef.current[scaleKey] = uPlot.scales[scaleKey];
-            } else {
-              delete scalesRef.current[scaleKey];
-            }
-            if (Object.keys(scalesRef.current).length === 0) scalesRef.current = undefined;
-          } ],
-        },
-        scales: scalesRef.current,
-        width: chartDivRef.current.offsetWidth,
-      },
-      options,
-    ) as uPlot.Options;
-
-    const plotChart = new uPlot(optionsExtended, normalizedData, chartDivRef.current);
-
+    if (!chartDivRef.current) return;
+    scalesZoomData.current = {};
+    const data = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
+    if (!chartRef?.current) {
+      chartRef.current = new uPlot(optionsRef.current, data, chartDivRef.current);
+    }
     return () => {
-      plotChart.destroy();
+      chartRef?.current?.destroy();
       chartRef.current = undefined;
     };
-  }, [ chartDivRef, hasData, normalizedData, options ]);
+  }, [ chartDivRef, chartRef ]);
+
+  useEffect(() => {
+    if (!chartDivRef.current) return;
+    if (shouldUpdate(optionsRef.current, options, chartRef.current)) {
+      chartRef.current?.destroy();
+      chartRef.current = undefined;
+      const newOptions = uPlot.assign(optionsRef.current, options || {}) as uPlot.Options;
+      chartRef.current = new uPlot(
+        newOptions,
+        normalizedData as AlignedData,
+        chartDivRef.current,
+      );
+    }
+    return () => {
+      if (options) optionsRef.current = options as uPlot.Options;
+    };
+
+  }, [ options, normalizedData ]);
 
   /*
    * Chart data when data changes.
    */
   useEffect(() => {
     if (!chartRef.current || !normalizedData) return;
-    chartRef.current.setData(normalizedData, isZoomed.current);
-  }, [ normalizedData ]);
-
+    const isZoomed = Object.values(scalesZoomData.current).some(i => i.isZoomed === true);
+    chartRef.current.setData(normalizedData as AlignedData, !isZoomed);
+  }, [ chartRef, hasData, normalizedData ]);
   /*
    * When a focus index is provided, highlight applicable series.
    */
   useEffect(() => {
     if (!chartRef.current) return;
     const hasFocus = focusIndex !== undefined;
-    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
+    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });'';
   }, [ focusIndex ]);
 
   /*
@@ -198,7 +216,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   }, []);
 
   return (
-    <div ref={chartDivRef} style={style}>
+    <div ref={chartDivRef} style={{ ...style }}>
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}

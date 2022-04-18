@@ -83,7 +83,7 @@ const ProfilesEnabled: React.FC = () => {
     metrics[MetricType.Timing].isEmpty
   );
 
-  const chartInfo = useMemo(() => {
+  const chartOptions = useMemo(() => {
     // Define shared options between all charts.
     const sharedOptions: Partial<Options> = {
       cursor: {
@@ -92,6 +92,7 @@ const ProfilesEnabled: React.FC = () => {
         sync: {
           key: chartSyncKey.current.key,
           match: [ matchSyncKeys, matchSyncKeys ],
+          // scales: [ chartSyncKey.current.key, null ],
           setSeries: true,
         },
       },
@@ -102,22 +103,54 @@ const ProfilesEnabled: React.FC = () => {
 
     // Convert metrics into uPlot-friendly data and define chart specific configs.
     const config = {
+      [MetricType.System]: { axes: [ timeAxis, metricAxis(settings.name) ] },
+      [MetricType.Throughput]: { axes: [ timeAxis, metricAxis('samples_per_second') ] },
+      [MetricType.Timing]: { axes: [ timeAxis, { label: 'Seconds', scale: 'y' } ] },
+    };
+
+    // Finalize uPlot data and options for all charts.
+    const metricKeys = [ MetricType.System, MetricType.Throughput, MetricType.Timing ];
+    const uPlotData = metricKeys.reduce((acc, key) => {
+
+      // Pad the series data with empty series data.
+      const series = metricKeys.reduce((acc, seriesKey) => {
+        const metricNames = metrics[seriesKey].names.slice(1);
+        if (seriesKey === key) {
+          const series = metricNames.map(seriesMapping);
+          acc.push(...series);
+        } else {
+          const filler = metricNames.map(fillerMapping);
+          acc.push(...filler);
+        }
+        return acc;
+      }, [ timeSeries, batchSeries ]);
+
+      const options = { ...sharedOptions, axes: config[key].axes, series } as Options;
+
+      return { ...acc, [key]: options };
+    }, {} as Record<MetricType, Options>);
+
+    return uPlotData;
+  }, [ settings.name, metrics ]);
+
+  const chartData = useMemo(() => {
+    // Define shared options between all charts.
+
+    // Convert metrics into uPlot-friendly data and define chart specific configs.
+    const metricData = {
       [MetricType.System]: {
-        axes: [ timeAxis, metricAxis(settings.name) ],
         data: convertMetricsToUplotData(
           metrics[MetricType.System].dataByTime,
           metrics[MetricType.System].names,
         ),
       },
       [MetricType.Throughput]: {
-        axes: [ timeAxis, metricAxis('samples_per_second') ],
         data: convertMetricsToUplotData(
           metrics[MetricType.Throughput].dataByTime,
           metrics[MetricType.Throughput].names,
         ),
       },
       [MetricType.Timing]: {
-        axes: [ timeAxis, { label: 'Seconds', scale: 'y' } ],
         data: convertMetricsToUplotData(
           metrics[MetricType.Timing].dataByTime,
           metrics[MetricType.Timing].names,
@@ -128,11 +161,11 @@ const ProfilesEnabled: React.FC = () => {
     // Finalize uPlot data and options for all charts.
     const metricKeys = Object.keys(metrics) as MetricType[];
     const uPlotData = metricKeys.reduce((acc, key) => {
-      const [ times, batches ] = config[key].data;
+      const [ times, batches ] = metricData[key].data;
 
       // Pad the series data with empty series data.
       const data = metricKeys.reduce((acc, seriesKey) => {
-        const seriesData = config[seriesKey].data.slice(2);
+        const seriesData = metricData[seriesKey].data.slice(2);
         if (seriesKey === key) {
           acc.push(...seriesData);
         } else {
@@ -144,25 +177,12 @@ const ProfilesEnabled: React.FC = () => {
       }, [ times || [], batches || [] ]);
 
       // Pad the series config with blank series where applicable.
-      const series = metricKeys.reduce((acc, seriesKey) => {
-        const metricNames = metrics[seriesKey].names.slice(1);
-        if (seriesKey === key) {
-          const series = metricNames.map(seriesMapping);
-          acc.push(...series);
-        } else {
-          const filler = new Array(metricNames.length).fill(null).map(fillerMapping);
-          acc.push(...filler);
-        }
-        return acc;
-      }, [ timeSeries, batchSeries ]);
 
-      const options = { ...sharedOptions, axes: config[key].axes, series } as Options;
-
-      return { ...acc, [key]: { data, options } };
-    }, {} as Record<MetricType, { data: AlignedData, options: Options }>);
+      return { ...acc, [key]: data };
+    }, {} as Record<MetricType, AlignedData>);
 
     return uPlotData;
-  }, [ metrics, settings.name ]);
+  }, [ metrics ]);
 
   /*
    * Preserve and restore scroll position upon re-render.
@@ -189,8 +209,8 @@ const ProfilesEnabled: React.FC = () => {
         loading={metrics[MetricType.Throughput].isLoading}
         title="Throughput">
         <UPlotChart
-          data={chartInfo[MetricType.Throughput].data}
-          options={chartInfo[MetricType.Throughput].options}
+          data={chartData[MetricType.Throughput]}
+          options={chartOptions[MetricType.Throughput]}
           style={CHART_STYLE}
         />
       </Section>
@@ -207,8 +227,8 @@ const ProfilesEnabled: React.FC = () => {
           />
         ) : (
           <UPlotChart
-            data={chartInfo[MetricType.Timing].data}
-            options={chartInfo[MetricType.Timing].options}
+            data={chartData[MetricType.Timing]}
+            options={chartOptions[MetricType.Timing]}
             style={CHART_STYLE}
           />
         )}
@@ -220,8 +240,8 @@ const ProfilesEnabled: React.FC = () => {
         loading={metrics[MetricType.System].isLoading}
         title="System Metrics">
         <UPlotChart
-          data={chartInfo[MetricType.System].data}
-          options={chartInfo[MetricType.System].options}
+          data={chartData[MetricType.System]}
+          options={chartOptions[MetricType.System]}
           style={CHART_STYLE}
         />
       </Section>
