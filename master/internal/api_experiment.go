@@ -98,7 +98,7 @@ func (a *apiServer) GetExperiment(
 		Config:     protoutils.ToStruct(conf),
 	}
 
-	if model.TerminalStates[model.StateFromProto(exp.State)] {
+	if model.StateFromProto(exp.State) != model.ActiveState {
 		return &resp, nil
 	}
 
