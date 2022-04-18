@@ -125,7 +125,7 @@ export const setUserPassword: Service.DetApi<
   name: 'setUserPassword',
   postProcess: (response) => response,
   request: (params) => detApi.Users.setUserPassword(
-    params.username,
+    params.userId,
     params.password,
   ),
 };
@@ -136,7 +136,7 @@ export const patchUser: Service.DetApi<
   name: 'patchUser',
   postProcess: (response) => decoder.mapV1User(response.user),
   request: (params) => detApi.Users.patchUser(
-    params.username,
+    params.userId,
     params.userParams,
   ),
 };

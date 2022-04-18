@@ -374,10 +374,10 @@ class TFKerasTrialController(det.TrialController):
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
             logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-            with self.context._core.checkpointing.restore_path(
+            with self.context._core.checkpoint.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
-                self._load(pathlib.Path(load_path))
+                self._load(load_path)
 
         self._configure_callbacks(train_config.callbacks)
 
@@ -828,11 +828,11 @@ class TFKerasTrialController(det.TrialController):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_weights",
                         }
-                        with self.context._core.checkpointing.store_path(metadata) as (
-                            storage_id,
+                        with self.context._core.checkpoint.store_path(metadata) as (
                             path,
+                            storage_id,
                         ):
-                            self._save_checkpoint(pathlib.Path(path))
+                            self._save_checkpoint(path)
                         response = {"uuid": storage_id}
                     else:
                         response = {}
@@ -962,7 +962,7 @@ class TFKerasTrialController(det.TrialController):
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.
-            _ = self.context.distributed._zmq_gather(None)
+            _ = self.context.distributed.gather(None)
 
             num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
             if isinstance(num_inputs, EagerTensor):
@@ -1011,7 +1011,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.12``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.15``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

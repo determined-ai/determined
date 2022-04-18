@@ -17,8 +17,15 @@ export enum BaseType {
   String = 'String',
 }
 
+enum PathChangeType {
+  None = 'none',
+  Push = 'push',
+  Replace = 'replace',
+}
+
 type GenericSettingsType = Primitive | Primitive[] | undefined;
 type GenericSettings = Record<string, GenericSettingsType>;
+type PathChange<T> = { querySettings: Partial<T>, type: PathChangeType }
 
 /*
  * defaultValue     - Optional default value. `undefined` as ultimate default.
@@ -179,12 +186,18 @@ const getNewQueryPath = (
   return `${basePath}?${queries}`;
 };
 
+const defaultPathChange = {
+  querySettings: {},
+  type: PathChangeType.None,
+};
+
 const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): SettingsHook<T> => {
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(options?.storagePath || config.storagePath);
   const prevSearch = usePrevious(location.search, undefined);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
+  const [ pathChange, setPathChange ] = useState<PathChange<T>>(defaultPathChange);
 
   const configMap = useMemo(() => {
     return config.settings.reduce((acc, prop) => {
@@ -245,13 +258,14 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     });
 
     // Update internal settings state for when skipping url encoding of settings.
-    setSettings({ ...clone(settings), ...internalSettings });
+    setSettings(prev => ({ ...clone(prev), ...internalSettings }));
 
-    // Update path with new and validated settings.
-    const query = settingsToQuery(config, { ...clone(settings), ...querySettings });
-    const path = getNewQueryPath(config, location.pathname, location.search, query);
-    push ? history.push(path) : history.replace(path);
-  }, [ config, configMap, history, location.pathname, location.search, settings, storage ]);
+    // Mark to trigger side effect of updating path.
+    setPathChange({
+      querySettings,
+      type: push ? PathChangeType.Push : PathChangeType.Replace,
+    });
+  }, [ configMap, storage ]);
 
   const resetSettings = useCallback((keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
@@ -288,6 +302,18 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       });
     }
   }, [ config, history, location.pathname, location.search, prevSearch, settings, storage ]);
+
+  useEffect(() => {
+    if (pathChange.type === PathChangeType.None) return;
+
+    // Update path with new and validated settings.
+    const query = settingsToQuery(config, { ...clone(settings), ...pathChange.querySettings });
+    const path = getNewQueryPath(config, location.pathname, location.search, query);
+    pathChange.type === PathChangeType.Push ? history.push(path) : history.replace(path);
+
+    // Reset path change.
+    setPathChange(defaultPathChange);
+  }, [ config, history, location.pathname, location.search, pathChange, settings ]);
 
   return { activeSettings, resetSettings, settings, updateSettings };
 };

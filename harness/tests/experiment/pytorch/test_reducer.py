@@ -90,7 +90,7 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
             chief_ip="localhost",
             force_tcp=False,
         )
-        reducer_context = _PyTorchReducerContext(distributed_context._zmq_allgather)
+        reducer_context = _PyTorchReducerContext(distributed_context.allgather)
         # reducer_context.wrap_reducer(lambda x: x, "dummy")
         wrapped_reducer = reducer_context.wrap_reducer(dummy_reducer)
         return DummyDistributedReducerContext(distributed_context, reducer_context, wrapped_reducer)

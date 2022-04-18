@@ -1,17 +1,21 @@
-from determined._core._distributed import DistributedContext, DummyDistributed
-from determined._core._checkpointing import Checkpointing, DummyCheckpointing
-from determined._core._training import Training, DummyTraining, EarlyExitReason
+from determined._core._distributed import DistributedContext, DummyDistributedContext
+from determined._core._checkpoint import (
+    CheckpointContext,
+    DownloadMode,
+    DummyCheckpointContext,
+)
+from determined._core._train import TrainContext, DummyTrainContext, EarlyExitReason
 from determined._core._searcher import (
-    DummySearcher,
-    OpsMode,
-    Searcher,
-    SearcherOp,
+    DummySearcherContext,
+    SearcherMode,
+    SearcherContext,
+    SearcherOperation,
     Unit,
     _parse_searcher_units,
 )
-from determined._core._preemption import (
-    DummyPreemption,
-    Preemption,
+from determined._core._preempt import (
+    DummyPreemptContext,
+    PreemptContext,
     _PreemptionWatcher,
     PreemptMode,
 )

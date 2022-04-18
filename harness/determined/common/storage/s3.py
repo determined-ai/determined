@@ -1,15 +1,13 @@
-import contextlib
 import logging
 import os
 import re
 import tempfile
-from typing import Iterator, Optional
+from typing import Optional, Union
 
 import requests
 
 from determined import errors
-from determined.common import util
-from determined.common.storage.base import StorageManager
+from determined.common import storage, util
 
 
 def normalize_prefix(prefix: Optional[str]) -> str:
@@ -22,7 +20,7 @@ def normalize_prefix(prefix: Optional[str]) -> str:
     return new_prefix
 
 
-class S3StorageManager(StorageManager):
+class S3StorageManager(storage.CloudStorageManager):
     """
     Store and load checkpoints from S3.
     """
@@ -72,32 +70,13 @@ class S3StorageManager(StorageManager):
     def get_storage_prefix(self, storage_id: str) -> str:
         return os.path.join(self.prefix, storage_id)
 
-    def post_store_path(self, storage_id: str, storage_dir: str) -> None:
-        """post_store_path uploads the checkpoint to s3 and deletes the original files."""
-        try:
-            logging.info(f"Uploading checkpoint {storage_id} to s3")
-            self.upload(storage_id, storage_dir)
-        finally:
-            self._remove_checkpoint_directory(storage_id)
-
-    @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[str]:
-        storage_dir = os.path.join(self._base_path, storage_id)
-        os.makedirs(storage_dir, exist_ok=True)
-
-        logging.info(f"Downloading checkpoint {storage_id} from S3")
-        self.download(storage_id, storage_dir)
-
-        try:
-            yield os.path.join(self._base_path, storage_id)
-        finally:
-            self._remove_checkpoint_directory(storage_id)
-
     @util.preserve_random_state
-    def upload(self, storage_id: str, storage_dir: str) -> None:
-        storage_prefix = self.get_storage_prefix(storage_id)
-        for rel_path in sorted(self._list_directory(storage_dir)):
-            key_name = f"{storage_prefix}/{rel_path}"
+    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+        src = os.fspath(src)
+        prefix = self.get_storage_prefix(dst)
+        logging.info(f"Uploading to s3: {prefix}/{dst}")
+        for rel_path in sorted(self._list_directory(src)):
+            key_name = f"{prefix}/{rel_path}"
             logging.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
 
             if rel_path.endswith("/"):
@@ -113,39 +92,40 @@ class S3StorageManager(StorageManager):
                     # effort for supporting empty directories, so... just ignore empty directories.
                     pass
             else:
-                abs_path = os.path.join(storage_dir, rel_path)
+                abs_path = os.path.join(src, rel_path)
                 self.bucket.upload_file(abs_path, key_name)
 
     @util.preserve_random_state
-    def download(self, storage_id: str, storage_dir: str) -> None:
-        storage_prefix = self.get_storage_prefix(storage_id)
+    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+        dst = os.fspath(dst)
+        prefix = self.get_storage_prefix(src)
+        logging.info(f"Downloading {prefix} from S3")
         found = False
-        for obj in self.bucket.objects.filter(Prefix=storage_prefix):
+        for obj in self.bucket.objects.filter(Prefix=prefix):
             found = True
-            dst = os.path.join(storage_dir, os.path.relpath(obj.key, storage_prefix))
-            dst_dir = os.path.dirname(dst)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir, exist_ok=True)
+            _dst = os.path.join(dst, os.path.relpath(obj.key, prefix))
+            dst_dir = os.path.dirname(_dst)
+            os.makedirs(dst_dir, exist_ok=True)
 
-            logging.debug(f"Downloading s3://{self.bucket_name}/{obj.key} to {dst}")
+            logging.debug(f"Downloading s3://{self.bucket_name}/{obj.key} to {_dst}")
 
             # Only create empty directory for keys that end with "/".
             # See `upload` method for more context.
             if obj.key.endswith("/"):
-                os.makedirs(dst, exist_ok=True)
+                os.makedirs(_dst, exist_ok=True)
                 continue
 
-            self.bucket.download_file(obj.key, dst)
+            self.bucket.download_file(obj.key, _dst)
 
         if not found:
-            raise errors.CheckpointNotFound(f"Did not find checkpoint {storage_id} in S3")
+            raise errors.CheckpointNotFound(f"Did not find {prefix} in S3")
 
     @util.preserve_random_state
-    def delete(self, storage_id: str) -> None:
-        logging.info(f"Deleting checkpoint {storage_id} from S3")
+    def delete(self, tgt: str) -> None:
+        prefix = self.get_storage_prefix(tgt)
+        logging.info(f"Deleting {prefix} from S3")
 
-        storage_prefix = self.get_storage_prefix(storage_id)
-        objects = [{"Key": obj.key} for obj in self.bucket.objects.filter(Prefix=storage_prefix)]
+        objects = [{"Key": obj.key} for obj in self.bucket.objects.filter(Prefix=prefix)]
 
         # S3 delete_objects has a limit of 1000 objects.
         for chunk in util.chunks(objects, 1000):

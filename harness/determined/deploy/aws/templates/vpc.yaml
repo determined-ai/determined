@@ -4,35 +4,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-0d40f290731382e9c
-      Agent: ami-0d176cdb6b32566db
+      Agent: ami-09b858b9faff207a9
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-07cc75e9e8f9300eb
-    #   Agent: ami-088e4e803ff373f18
+    #   Agent: ami-015ab3e5a38ea8658
     # ap-southeast-1:
     #   Master: ami-06004dc0577827979
-    #   Agent: ami-068f289a206c31489
+    #   Agent: ami-0a93cc0d839604673
     # ap-southeast-2:
     #   Master: ami-0e1310e493e66914a
-    #   Agent: ami-032a946a9fd45ec4f
+    #   Agent: ami-0c70420cc468cff2b
     eu-central-1:
       Master: ami-0243761267e52b9ce
-      Agent: ami-0e92c111fcc229c5c
+      Agent: ami-00c3bdcf86fef0569
     eu-west-1:
       Master: ami-015afd151917a362d
-      Agent: ami-07025eacc9516a176
+      Agent: ami-004336f1e6d7af72c
     # eu-west-2:
     #   Master: ami-0b2537c6147faa3e2
-    #   Agent: ami-0b493173e1195f12a
+    #   Agent: ami-0792151eff6317968
     us-east-1:
       Master: ami-000722651477bd39b
-      Agent: ami-007563bd927780a2f
+      Agent: ami-05b2885aabd00770b
     us-east-2:
       Master: ami-0f597975071f4c4ec
-      Agent: ami-0035f4fc059d423b7
+      Agent: ami-0e66fcef272135c97
     us-west-2:
       Master: ami-0d37fe5ba03a9ac43
-      Agent: ami-0a1d521d5d47c1013
+      Agent: ami-059453aebcb2d4a14
 
 Parameters:
   VpcCIDR:
@@ -82,7 +82,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.17.14-dev0
+    Default: 0.17.15-dev0
 
   DBPassword:
     Type: String
