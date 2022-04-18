@@ -1,6 +1,5 @@
 import { GridListView } from 'components/GridListRadioGroup';
 import { InteractiveTableSettings } from 'components/InteractiveTable';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
@@ -86,7 +85,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.String },
     },
     {
-      defaultValue: MINIMUM_PAGE_SIZE,
+      defaultValue: 100,
       key: 'tableLimit',
       storageKey: 'tableLimit',
       type: { baseType: BaseType.Integer },

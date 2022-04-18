@@ -10,4 +10,17 @@
       gap: var(--theme-sizes-layout-tiny)
     }
   }
+  .grid {
+    display: grid;
+    gap: var(--theme-sizes-layout-large);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base {
+    .controls {
+      flex-wrap: wrap;
+    }
+  }
 }

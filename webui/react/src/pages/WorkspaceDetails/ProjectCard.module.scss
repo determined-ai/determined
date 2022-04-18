@@ -7,6 +7,8 @@
   font-size: 11px;
   grid-template-columns: 50px auto 50px;
   grid-template-rows: 40px auto 40px;
+  max-width: 325px;
+  min-width: min-content;
   padding: var(--theme-sizes-layout-huge);
 
   .name {
@@ -42,6 +44,7 @@
     gap: var(--theme-sizes-layout-tiny);
     grid-column: 1/2;
     grid-row: 3/4;
+    margin-right: var(--theme-sizes-layout-small);
   }
   .lastExperiment {
     align-self: end;
@@ -59,5 +62,11 @@
     .action {
       visibility: visible;
     }
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base {
+    width: 165px;
   }
 }

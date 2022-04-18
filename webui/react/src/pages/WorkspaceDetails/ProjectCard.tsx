@@ -31,7 +31,7 @@ const ProjectCard: React.FC<Props> = ({ project, curUser }: Props) => {
         <p className={css.description}>{project.description}</p>
         <div className={css.experiments}>
           <Icon name="experiment" size="small" />
-          <span>{project.numExperiments}</span>
+          <span>{project.numExperiments.toLocaleString()}</span>
         </div>
         {project.lastExperimentStartedAt && (
           <TimeAgo className={css.lastExperiment} datetime={project.lastExperimentStartedAt} />

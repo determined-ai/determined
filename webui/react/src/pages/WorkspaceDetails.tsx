@@ -15,6 +15,7 @@ import { GenericRenderer, getFullPaginationConfig,
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
+import useResize from 'hooks/useResize';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspace, getWorkspaceProjects, isNotFound } from 'services/api';
@@ -22,6 +23,7 @@ import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
@@ -61,6 +63,7 @@ const WorkspaceDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const size = useResize();
 
   const id = parseInt(workspaceId);
 
@@ -91,7 +94,10 @@ const WorkspaceDetails: React.FC = () => {
         users: settings.user,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
-      setProjects(response.projects);
+      setProjects(prev => {
+        if (isEqual(prev, response.projects)) return prev;
+        return response.projects;
+      });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch projects.' });
     } finally {
@@ -223,7 +229,10 @@ const WorkspaceDetails: React.FC = () => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
+          <Grid
+            gap={ShirtSize.medium}
+            minItemWidth={size.width <= 480 ? 165 : 300}
+            mode={GridMode.AutoFill}>
             {projects.map(project => (
               <ProjectCard curUser={user} key={project.id} project={project} />
             ))}
@@ -252,13 +261,14 @@ const WorkspaceDetails: React.FC = () => {
     isLoading,
     projects,
     settings,
+    size.width,
     total,
     updateSettings,
     user ]);
 
   useEffect(() => {
-    fetchAll();
-  }, [ fetchAll ]);
+    fetchProjects();
+  }, [ fetchProjects ]);
 
   useEffect(() => {
     return () => canceler.abort();
@@ -284,16 +294,18 @@ const WorkspaceDetails: React.FC = () => {
       <div className={css.controls}>
         <SelectFilter
           bordered={false}
+          dropdownMatchSelectWidth={140}
           label="View:"
           value={projectFilter}
           onSelect={handleViewSelect}>
           <Option value={ProjectFilters.All}>All projects</Option>
           <Option value={ProjectFilters.Mine}>My projects</Option>
-          <Option value={ProjectFilters.Others}>Others projects</Option>
+          <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
         </SelectFilter>
         <div className={css.options}>
           <SelectFilter
             bordered={false}
+            dropdownMatchSelectWidth={150}
             label="Sort:"
             value={settings.sortKey}
             onSelect={handleSortSelect}>
