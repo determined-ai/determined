@@ -1,6 +1,6 @@
 import json
 from argparse import Namespace
-from typing import Any, List, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 from determined.cli.session import setup_session
 from determined.common.api import authentication, bindings
@@ -72,7 +72,7 @@ def project_by_name(
 def list_project_experiments(args: Namespace) -> None:
     sess = setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-    kwargs = {
+    kwargs: Dict[str, Any] = {
         "id": p.id,
         "orderBy": bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"],
         "sortBy": bindings.v1GetProjectExperimentsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"],
@@ -110,14 +110,13 @@ def describe_project(args: Namespace) -> None:
     else:
         render_project(p)
         print("\nAssociated Experiments")
-        users: List[str] = []
-        if args.all:
-            experiments = bindings.get_GetProjectExperiments(sess, id=p.id).experiments
-        else:
-            users = [authentication.must_cli_auth().get_session_user()]
-            experiments = bindings.get_GetProjectExperiments(
-                sess, archived="false", id=p.id, users=users
-            ).experiments
+        kwargs: Dict[str, Any] = {
+            "id": p.id,
+        }
+        if not args.all:
+            kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
+            kwargs["archived"] = "false"
+        experiments = bindings.get_GetProjectExperiments(sess, **kwargs).experiments
         render_experiments(args, experiments)
 
 
