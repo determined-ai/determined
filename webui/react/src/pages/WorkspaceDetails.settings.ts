@@ -19,7 +19,6 @@ export const DEFAULT_COLUMNS: ProjectColumnName[] = [
   'numExperiments',
   'lastUpdated',
   'user',
-  'archived',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
@@ -34,6 +33,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
 
 export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;
+  columns: ProjectColumnName[];
   name?: string;
   sortKey: V1GetWorkspaceProjectsRequestSortBy;
   state?: RunState[];

@@ -1,10 +1,11 @@
-import { Select } from 'antd';
+import { Select, Space, Switch } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InteractiveTable, { ColumnDef } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
@@ -16,7 +17,7 @@ import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspace, getWorkspaceProjects, isNotFound } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
@@ -27,8 +28,8 @@ import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
-import settingsConfig,
-{ DEFAULT_COLUMN_WIDTHS, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
+  ProjectColumnName, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
@@ -84,7 +85,7 @@ const WorkspaceDetails: React.FC = () => {
   const fetchProjects = useCallback(async () => {
     try {
       const response = await getWorkspaceProjects({
-        archived: settings.archived,
+        archived: settings.archived ? undefined : false,
         id,
         limit: settings.tableLimit,
         name: settings.name,
@@ -213,6 +214,39 @@ const WorkspaceDetails: React.FC = () => {
     ] as ColumnDef<Project>[];
   }, [ user ]);
 
+  const switchShowArchived = useCallback((showArchived: boolean) => {
+    let newColumns: ProjectColumnName[];
+    let newColumnWidths: number[];
+
+    if (showArchived) {
+      if (settings.columns?.includes('archived')) {
+        // just some defensive coding: don't add archived twice
+        newColumns = settings.columns;
+        newColumnWidths = settings.columnWidths;
+      } else {
+        newColumns = [ ...settings.columns, 'archived' ];
+        newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
+      }
+    } else {
+      const archivedIndex = settings.columns.indexOf('archived');
+      if (archivedIndex !== -1) {
+        newColumns = [ ...settings.columns ];
+        newColumnWidths = [ ...settings.columnWidths ];
+        newColumns.splice(archivedIndex, 1);
+        newColumnWidths.splice(archivedIndex, 1);
+      } else {
+        newColumns = settings.columns;
+        newColumnWidths = settings.columnWidths;
+      }
+    }
+    updateSettings({
+      archived: showArchived,
+      columns: newColumns,
+      columnWidths: newColumnWidths,
+    });
+
+  }, [ settings, updateSettings ]);
+
   const actionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
       <ProjectActionDropdown
@@ -252,7 +286,7 @@ const WorkspaceDetails: React.FC = () => {
             }, total)}
             settings={settings}
             size="small"
-            updateSettings={updateSettings}
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
           />
         );
     }
@@ -302,7 +336,9 @@ const WorkspaceDetails: React.FC = () => {
           <Option value={ProjectFilters.Mine}>My projects</Option>
           <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
         </SelectFilter>
-        <div className={css.options}>
+        <Space>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <SelectFilter
             bordered={false}
             dropdownMatchSelectWidth={150}
@@ -318,7 +354,7 @@ const WorkspaceDetails: React.FC = () => {
             </Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
-        </div>
+        </Space>
       </div>
       <Spinner spinning={isLoading}>
         {projects.length !== 0 ? (
