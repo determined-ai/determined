@@ -29,7 +29,8 @@ const shouldUpdate = (
   next: Partial<uPlot.Options> | undefined,
   chart: uPlot | undefined,
 ): boolean => {
-  if (! prev || !next || !chart) return true;
+  if (!chart || !next) return false;
+  if (!prev) return true;
   if (Object.keys(prev).length !== Object.keys(next).length) {
     return true;
   }
@@ -144,11 +145,12 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       chartRef?.current?.destroy();
       chartRef.current = undefined;
     };
-  }, [ chartDivRef, chartRef ]);
+  }, [ ]);
 
   useEffect(() => {
     if (!chartDivRef.current) return;
     if (shouldUpdate(optionsRef.current, options, chartRef.current)) {
+      console.log('create');
       chartRef.current?.destroy();
       chartRef.current = undefined;
       const newOptions = uPlot.assign(optionsRef.current, options || {}) as uPlot.Options;
@@ -216,7 +218,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   }, []);
 
   return (
-    <div ref={chartDivRef} style={style}>
+    <div ref={chartDivRef} style={{ ...style }}>
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
