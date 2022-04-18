@@ -82,45 +82,7 @@ func (c *ProtoConverter) ToInt32(i int) int32 {
 	return int32(i)
 }
 
-func (c *ProtoConverter) ToUUID(x string) uuid.UUID {
-	if c.err != nil {
-		return uuid.UUID{}
-	}
-
-	y, err := uuid.Parse(x)
-	if err != nil {
-		c.err = fmt.Errorf("string %s is not a valid uuid", x)
-		return uuid.UUID{}
-	}
-
-	return y
-}
-
-// TODO more precise enum
-// TODO ryan, are these even the right states?
-func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
-	if c.err != nil {
-		return ""
-	}
-
-	switch x {
-	case checkpointv1.State_STATE_UNSPECIFIED:
-		return ""
-	case checkpointv1.State_STATE_ACTIVE:
-		return model.ActiveState
-	case checkpointv1.State_STATE_COMPLETED:
-		return model.CompletedState
-	case checkpointv1.State_STATE_DELETED:
-		return model.DeletedState
-	case checkpointv1.State_STATE_ERROR:
-		return model.ErrorState
-	default:
-		c.err = fmt.Errorf("state %s is not a valid state to the backend", x)
-		return ""
-	}
-}
-
-// Convert JSON data from db into Note objects
+// Convert JSON data from db into Note objects.
 func (c *ProtoConverter) ToProjectNotes(j []model.JSONObj) ([]*projectv1.Note, error) {
 	var notes []*projectv1.Note
 	b, err := json.Marshal(j)

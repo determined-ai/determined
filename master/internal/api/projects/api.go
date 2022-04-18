@@ -16,14 +16,18 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
+// Wrapper for project routes.
 type ProjectServer struct {
-	// TODO: Remove this DB eventually (??)
 	db *db.PgDB
 }
 
+// Helper to create project route wrapper.
 func NewProjectServer(db *db.PgDB) *ProjectServer {
 	return &ProjectServer{db: db}
 }
+
+const byname = "name"
+const bydescription = "description"
 
 func (s *ProjectServer) GetProject(
 	ctx context.Context, req *apiv1.GetProjectRequest,
@@ -58,9 +62,9 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_ID:
 		orderByColumn = byid
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_NAME:
-		orderByColumn = "name"
+		orderByColumn = byname
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_DESCRIPTION:
-		orderByColumn = "description"
+		orderByColumn = bydescription
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED:
 		orderByColumn = byid
 	default:
@@ -136,9 +140,9 @@ func (s *ProjectServer) GetProjectExperiments(ctx context.Context,
 	case apiv1.GetProjectExperimentsRequest_SORT_BY_ID:
 		orderByColumn = byid
 	case apiv1.GetProjectExperimentsRequest_SORT_BY_NAME:
-		orderByColumn = "name"
+		orderByColumn = byname
 	case apiv1.GetProjectExperimentsRequest_SORT_BY_DESCRIPTION:
-		orderByColumn = "description"
+		orderByColumn = bydescription
 	case apiv1.GetProjectExperimentsRequest_SORT_BY_STATE:
 		orderByColumn = "state"
 	case apiv1.GetProjectExperimentsRequest_SORT_BY_NUM_TRIALS:

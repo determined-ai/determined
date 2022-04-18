@@ -35,7 +35,7 @@ type ExperimentMetadata struct {
 	State        string    `bun:"state"`
 	Progress     float64   `bun:"progress"`
 	ForkedFrom   int32     `bun:"forked_from"`
-	UserId       int       `bun:"user_id"`
+	UserID       int       `bun:"user_id"`
 }
 
 func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
@@ -56,7 +56,7 @@ func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 		// State:        experimentv1.State,
 		Progress:     parsedProgress,
 		ForkedFrom:   parsedForkedFrom,
-		UserId:       conv.ToInt32(p.UserId),
+		UserId:       conv.ToInt32(p.UserID),
 		ResourcePool: p.ResourcePool,
 		Notes:        p.Notes,
 		Labels:       p.Labels,
@@ -154,9 +154,9 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*Experiment
 func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 	p := ProjectMetadata{}
 
-	var s struct{
-		NumActiveExperiments	int
-		NumExperiments				int
+	var s struct {
+		NumActiveExperiments    int
+		NumExperiments          int
 		LastExperimentStartedAt time.Time
 	}
 	experiment := db.Bun().NewSelect().
