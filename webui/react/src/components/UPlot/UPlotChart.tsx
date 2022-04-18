@@ -1,11 +1,11 @@
-import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { option } from 'fp-ts/lib/Option';
+import React, { useEffect, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/message';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { isEqual } from 'utils/data';
 
 import { FacetedData } from './types';
 
@@ -22,123 +22,141 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-interface ChartBounds {
+interface ZoomInfo {
   isZoomed?: boolean;
   max?: number;
   min?: number;
 }
 
-type ChartBoundsData = Record<string, ChartBounds>
+type ZoomScales = Record<string, ZoomInfo>;
 
+const EMPTY_DATA = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
 const SCROLL_THROTTLE_TIME = 500;
 
 const shouldRecreate = (
-  prev: Partial<Options> | undefined,
-  next: Partial<Options> | undefined,
-  chart: uPlot | undefined,
+  chart?: uPlot,
+  oldOptions?: Partial<uPlot.Options>,
+  newOptions?: Partial<uPlot.Options>,
 ): boolean => {
-  if (!chart) return true;
-  if (!next) return false;
-  if (!prev) return true;
-  if (prev === next) return false;
-  if (prev.key !== next.key) return true;
-  if (Object.keys(prev).length !== Object.keys(next).length) return true;
+  if (!chart || !oldOptions) return true;
+  if (!newOptions) return false;
 
-  if (prev.title !== next.title) return true;
-  if (prev.axes?.length !== next.axes?.length) return true;
+  // if (oldOptions.key !== newOptions.key) return true;
+  if (Object.keys(oldOptions).length !== Object.keys(newOptions).length) return true;
 
-  if (chart?.series?.length !== next.series?.length) return true;
+  if (oldOptions.title !== newOptions.title) return true;
+  if (oldOptions.axes?.length !== newOptions.axes?.length) return true;
 
-  if (prev.scales?.y?.distr !== next.scales?.y?.distr) return true;
+  if (oldOptions.axes?.length !== newOptions.axes?.length) return true;
+  if (oldOptions.series?.length !== newOptions.series?.length) return true;
+  if (oldOptions.scales?.y?.distr !== newOptions.scales?.y?.distr) return true;
 
-  const someAxisLabelHasChanged =
-    prev.axes?.some((prevAxis, seriesIdx) => {
-      const nextAxis = next.axes?.[seriesIdx];
-      return prevAxis.label !== nextAxis?.label;
-    });
+  const oldOptionKeys = JSON.stringify(Object.keys(oldOptions));
+  const newOptionKeys = JSON.stringify(Object.keys(newOptions));
+  if (oldOptionKeys !== newOptionKeys) return true;
+
+  const someAxisLabelHasChanged = oldOptions.axes?.some((oldAxis, seriesIdx) => {
+    const newAxis = newOptions.axes?.[seriesIdx];
+    return oldAxis.label !== newAxis?.label;
+  });
   if (someAxisLabelHasChanged) return true;
 
-  const someSeriesHasChanged =
-    chart.series.some((chartSerie, seriesIdx) => {
-      const nextSerie = next.series?.[seriesIdx];
-      const prevSerie = prev.series?.[seriesIdx];
-      return (
-        (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show)
-        || (prevSerie?.show != null && prevSerie?.show !== nextSerie?.show)
-        || (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
-        || (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
-      );
-    });
-  if(someSeriesHasChanged) return true;
+  const someSeriesHasChanged = chart.series.some((chartSeries, seriesIdx) => {
+    const oldSeries = oldOptions.series?.[seriesIdx];
+    const newSeries = newOptions.series?.[seriesIdx];
+    return (
+      (newSeries?.show != null && chartSeries?.show !== newSeries?.show)
+      || (oldSeries?.show != null && oldSeries?.show !== newSeries?.show)
+      || (newSeries?.label != null && chartSeries?.label !== newSeries?.label)
+      || (newSeries?.fill != null && chartSeries?.fill !== newSeries?.fill)
+    );
+  });
+  if (someSeriesHasChanged) return true;
 
   return false;
 };
 
-const getExtendedOptions = (
-  options: Partial<uPlot.Options> | undefined,
-  boundsRef: MutableRefObject<ChartBoundsData>,
+const extendOptions = (
   width?: number,
+  options: Partial<uPlot.Options> = {},
+  zoom: ZoomScales = {},
   onReady?: (uPlot: uPlot) => void,
   onDestroy?: (uPlot: uPlot) => void,
-): uPlot.Options =>
-  uPlot.assign(
-    {
-      hooks: {
-        destroy: [ onDestroy ],
-        ready: [ onReady ],
-        setScale: [
-          (uPlot: uPlot, scaleKey: string) => {
-            /**
-             * This fires *after* scale change
-             * This function attempts to detect whether update was due to a zoom.
-             * It does so by looking at whether the bounds curresponding to the
-             * chart viewport are smaller than the maximum previous extent of those
-             * bounds. If so, it is "zoomed". Sometimes setData can cause this to happen.
-             * In particular, the scales generated for two points may be smaller than
-             * for the first point alone. We try to provide some help here by saying
-             * that if there is only one data point and an xScale is provided in options,
-             * then don't reset the scale in setData. But the consumer of the component
-             * still would need to manually provide a scale with min and max
-             * centered around the point when- and only when- their component has one point
-             */
-            if (scaleKey !== 'x') return;
+): uPlot.Options => uPlot.assign({
+  hooks: {
+    destroy: [ onDestroy ],
+    ready: [ onReady ],
+    setScale: [ (uPlot: uPlot, scaleKey: string) => {
+      if (![ 'x', 'y' ].includes(scaleKey)) return;
 
-            // prevMax/Min indicate the previous max/min extent of the data.
-            const prevMax = boundsRef.current[scaleKey]?.max;
-            const prevMin = boundsRef.current[scaleKey]?.min;
+      const boundWidth = scaleKey === 'x' ? uPlot.bbox.width : 0;
+      const boundHeight = scaleKey === 'x' ? 0 : uPlot.bbox.height;
+      const currentMax: number | undefined = uPlot.posToVal(boundWidth, scaleKey);
+      const currentMin: number | undefined = uPlot.posToVal(boundHeight, scaleKey);
+      let max: number | undefined = zoom[scaleKey]?.max;
+      let min: number | undefined = zoom[scaleKey]?.min;
 
-            const bboxMax: number | undefined = uPlot.posToVal(
-              scaleKey === 'x' ? uPlot.bbox.width : 0,
-              scaleKey,
-            );
-            const bboxMin: number | undefined = uPlot.posToVal(
-              scaleKey === 'x' ? 0 : uPlot.bbox.height,
-              scaleKey,
-            );
+      if (max == null || currentMax > max) max = currentMax;
+      if (min == null || currentMin < min) min = currentMin;
 
-            // the new max/min extent of the data
-            const maxMax = Math.max(prevMax ?? Number.MIN_SAFE_INTEGER, bboxMax);
-            const minMin = Math.min(prevMin ?? Number.MAX_SAFE_INTEGER, bboxMin);
+      zoom[scaleKey] = {
+        isZoomed: currentMax < max || currentMin > min,
+        max,
+        min,
+      };
+    } ],
+  },
+  width,
+}, options ?? {}) as uPlot.Options;
 
-            /**
-             * here we are cheating a bit by assuming that a zoom is smaller on both ends
-             * this is to get around the issue of calling it a zoom when setData
-             * causes the scale to go from [99.9, 100.1] to [100, 200]
-             */
-            const isZoomed = bboxMax < maxMax && bboxMin > minMin;
+// setScale: [
+//   (uPlot: uPlot, scaleKey: string) => {
+//     /**
+//      * This fires *after* scale change
+//      * This function attempts to detect whether update was due to a zoom.
+//      * It does so by looking at whether the bounds curresponding to the
+//      * chart viewport are smaller than the maximum previous extent of those
+//      * bounds. If so, it is "zoomed". Sometimes setData can cause this to happen.
+//      * In particular, the scales generated for two points may be smaller than
+//      * for the first point alone. We try to provide some help here by saying
+//      * that if there is only one data point and an xScale is provided in options,
+//      * then don't reset the scale in setData. But the consumer of the component
+//      * still would need to manually provide a scale with min and max
+//      * centered around the point when- and only when- their component has one point
+//      */
+//     if (scaleKey !== 'x') return;
 
-            boundsRef.current[scaleKey] = {
-              isZoomed,
-              max: maxMax,
-              min: minMin,
-            };
-          },
-        ],
-      },
-      width,
-    },
-    options || {},
-  ) as uPlot.Options;
+//     // prevMax/Min indicate the previous max/min extent of the data.
+//     const prevMax = boundsRef.current[scaleKey]?.max;
+//     const prevMin = boundsRef.current[scaleKey]?.min;
+
+//     const bboxMax: number | undefined = uPlot.posToVal(
+//       scaleKey === 'x' ? uPlot.bbox.width : 0,
+//       scaleKey,
+//     );
+//     const bboxMin: number | undefined = uPlot.posToVal(
+//       scaleKey === 'x' ? 0 : uPlot.bbox.height,
+//       scaleKey,
+//     );
+
+//     // the new max/min extent of the data
+//     const maxMax = Math.max(prevMax ?? Number.MIN_SAFE_INTEGER, bboxMax);
+//     const minMin = Math.min(prevMin ?? Number.MAX_SAFE_INTEGER, bboxMin);
+
+//     /**
+//      * here we are cheating a bit by assuming that a zoom is smaller on both ends
+//      * this is to get around the issue of calling it a zoom when setData
+//      * causes the scale to go from [99.9, 100.1] to [100, 200]
+//      */
+//     const isZoomed = bboxMax < maxMax && bboxMin > minMin;
+
+//     boundsRef.current[scaleKey] = {
+//       isZoomed,
+//       max: maxMax,
+//       min: minMin,
+//     };
+//   },
+// ],
 
 const UPlotChart: React.FC<Props> = ({
   data,
@@ -149,24 +167,16 @@ const UPlotChart: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const boundsRef = useRef<Record<string, ChartBounds>>({});
+  const zoomRef = useRef<ZoomScales>({});
+  const optionsRef = useRef<uPlot.Options>(extendOptions(undefined, options));
+  const dataRef = useRef<uPlot.AlignedData>(EMPTY_DATA);
+  const [ isEmpty, setIsEmpty ] = useState(true);
   const [ isReady, setIsReady ] = useState(false);
+  const resize = useResize(chartDivRef);
 
-  const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
-
-  const extendedOptions = useMemo(
-    () =>
-      getExtendedOptions(
-        options,
-        boundsRef,
-        chartDivRef.current?.offsetWidth,
-        () => setIsReady(true),
-        () => setIsReady(false),
-      ),
-    [ options ],
-  );
-  const previousExtendedOptions = usePrevious(extendedOptions, undefined);
-
+  /**
+   * Ensure that the chart is cleaned up during unmount if applicable.
+   */
   useEffect(() => {
     return () => {
       chartRef?.current?.destroy();
@@ -174,78 +184,57 @@ const UPlotChart: React.FC<Props> = ({
     };
   }, []);
 
+  /**
+   * Recreate chart if the new `options` prop changes require it.
+   */
   useEffect(() => {
-    if (!chartDivRef.current) return;
-    if (shouldRecreate(previousExtendedOptions, extendedOptions, chartRef.current)) {
-      /**
-       * TODO: instead of returning true or false,
-       * return a list of actions/payloads to dispatch
-       * with setData, setSeries, addSeries, etc.
-       */
-      chartRef.current?.destroy();
+    const newOptions = extendOptions(
+      chartDivRef.current?.offsetWidth,
+      options,
+      zoomRef.current,
+      () => setIsReady(true),
+      () => setIsReady(false),
+    );
+    const recreate = shouldRecreate(chartRef.current, optionsRef.current, newOptions);
+    console.log('recreate?', recreate);
+    if (chartDivRef.current && shouldRecreate(chartRef.current, optionsRef.current, newOptions)) {
+      optionsRef.current = newOptions;
+      chartRef?.current?.destroy();
       chartRef.current = undefined;
 
-      const isZoomed = Object.values(boundsRef.current).some((i) => i.isZoomed === true);
-      boundsRef.current = {};
-      if (!isZoomed) {
-        /**
-         * reset of zoom
-         */
-      } else {
-        /**
-         * TODO: preserve zoom when new series is selected?
-         * There are some additional challenges because the setDatas will be interpreted as
-         * zooms when the data is streaming in since the bounds are smaller at first
-         * Might also want to preserve other user interactions with the charts
-         * by taking some things from chartRef.current and putting them in newOptions
-         * e.g. a series is updated, say it's hidden, that update is reflected in options
-         * but series is a list, and uPlot.assign does not merge the lists, it clobbers.
-         * (as one would expect)
-         */
-      }
       try {
-        if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length){
-          chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
-        }
-      } catch(e) {
-        chartRef.current?.destroy();
-        chartRef.current = undefined;
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Unable to Load data for chart',
-          publicSubject: 'Bad Data',
-          silent: false,
-          type: ErrorType.Ui,
-        });
-      }
-    } else {
-      const isZoomed: boolean = Object.values(boundsRef.current).some((i) => i.isZoomed === true);
-      const propsProvideScales: boolean = Object.values(extendedOptions?.scales ?? {}).some(
-        (scale) => scale.min != null || scale.max != null,
-      );
-      const onlyOneXValue: boolean = Array.isArray(data) && data[0]?.length === 1;
-      const customScaleIsInEffect = isZoomed || (propsProvideScales && onlyOneXValue);
-      const resetScales = !customScaleIsInEffect;
-
-      try {
-        if (chartRef.current && isReady){
-          chartRef.current.setData(data as AlignedData, resetScales);
-          if (onlyOneXValue) chartRef.current.redraw(true, false);
-        }
-
-      } catch(e) {
-        chartRef.current?.destroy();
-        chartRef.current = undefined;
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Unable to Load data for chart',
-          publicSubject: 'Bad Data',
-          silent: false,
-          type: ErrorType.Ui,
-        });
+        chartRef.current = new uPlot(optionsRef.current, dataRef.current, chartDivRef.current);
+      } catch (e) {
+        // Something happened during uPlot creation, setting as "no data" for now.
+        setIsEmpty(true);
       }
     }
-  }, [ previousExtendedOptions, extendedOptions, data, isReady ]);
+  }, [ options ]);
+
+  /**
+   * Update `isEmpty` state and `dataRef` when source data changes.
+   */
+  useEffect(() => {
+    const alignedData = data as uPlot.AlignedData | undefined;
+
+    if (optionsRef.current.mode === 2 && alignedData) {
+      setIsEmpty(false);
+      dataRef.current = alignedData;
+    } else if (alignedData && alignedData?.length >= 2) {
+      const xDataCount = alignedData[0]?.length ?? 0;
+      setIsEmpty(xDataCount === 0);
+      dataRef.current = alignedData;
+    } else {
+      setIsEmpty(false);
+      dataRef.current = EMPTY_DATA;
+    }
+
+    // Update chart with data changes if chart already exists.
+    if (chartRef.current) {
+      const isZoomed = Object.values(zoomRef.current).some(i => i.isZoomed === true);
+      chartRef.current?.setData(dataRef.current, !isZoomed);
+    }
+  }, [ data, isReady ]);
 
   /**
    * When a focus index is provided, highlight applicable series.
@@ -253,21 +242,42 @@ const UPlotChart: React.FC<Props> = ({
   useEffect(() => {
     if (!chartRef.current) return;
     const hasFocus = focusIndex !== undefined;
-    chartRef.current.setSeries(hasFocus ? (focusIndex as number) + 1 : null, { focus: hasFocus });
+    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
   }, [ focusIndex ]);
 
-  /*
-   * Resize the chart when resize events happen.
+  /**
+   * When scales settings change in options, update chart scale.
    */
-  const resize = useResize(chartDivRef);
   useEffect(() => {
     if (!chartRef.current) return;
+
+    const oldScaleKeys = Object.keys(optionsRef.current.scales ?? {}).sort();
+    const newScales = options?.scales ?? {};
+    const newScaleKeys = Object.keys(newScales).sort();
+    if (isEqual(oldScaleKeys, newScaleKeys)) return;
+
+    newScaleKeys.forEach(scaleKey => {
+      const scales = newScales[scaleKey];
+      if (scales.min != null && scales.max != null) {
+        console.log('scales changed', scaleKey, scales);
+        chartRef.current?.setScale(scaleKey, { max: scales.max, min: scales.min });
+      }
+    });
+  }, [ options?.scales ]);
+
+  /**
+   * Resize the chart when resize events happen.
+   */
+  useEffect(() => {
+    if (!chartRef.current || !resize.width || !resize.height) return;
     const [ width, height ] = [ resize.width, options?.height || chartRef.current.height ];
+
     if (chartRef.current.width === width && chartRef.current.height === height) return;
+
     chartRef.current.setSize({ height, width });
   }, [ options?.height, resize ]);
 
-  /*
+  /**
    * Resync the chart when scroll events happen to correct the cursor position upon
    * a parent container scrolling.
    */
@@ -292,7 +302,7 @@ const UPlotChart: React.FC<Props> = ({
 
   return (
     <div ref={chartDivRef} style={style}>
-      {!hasData && (
+      {isEmpty && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
           title={noDataMessage || 'No Data to plot.'}
