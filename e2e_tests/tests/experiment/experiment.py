@@ -212,7 +212,7 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     return False
 
 
-def create_exp_get_trial_id():
+def create_exp_get_trial_id() -> int:
     exp_id = create_experiment(
         conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
     )
