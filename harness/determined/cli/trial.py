@@ -128,12 +128,6 @@ def trial_logs(args: Namespace) -> None:
 
 @authentication.required
 def generate_support_bundle(args: Namespace) -> None:
-    with tempfile.TemporaryDirectory as temp_dir: 
-        trial_logs_filepath = write_trial_logs(args, temp_dir)
-        master_logs_filepath = write_master_logs(args, temp_dir)
-        api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
-
-    bundle = None
     output_dir = args.output_dir
     if output_dir is None:
         output_dir = os.getcwd()
@@ -141,8 +135,12 @@ def generate_support_bundle(args: Namespace) -> None:
     dt = datetime.now().strftime("%Y%m%dT%H%M%S")
     tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
     fullpath = os.path.join(output_dir, tar_filename)
+
+    with tempfile.TemporaryDirectory() as temp_dir, tarfile.open(fullpath, "w:gz") as bundle: 
+        trial_logs_filepath = write_trial_logs(args, temp_dir)
+        master_logs_filepath = write_master_logs(args, temp_dir)
+        api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
     
-    with tarfile.open(fullpath, "w:gz") as bundle: 
         bundle.add(trial_logs_filepath, arcname=os.path.basename(trial_logs_filepath))
         bundle.add(master_logs_filepath, arcname=os.path.basename(master_logs_filepath))
         bundle.add(api_trail_filepath, arcname=os.path.basename(api_trail_filepath))
@@ -151,9 +149,9 @@ def generate_support_bundle(args: Namespace) -> None:
         print(f"bundle path: {fullpath}")
 
 
-def write_trial_logs(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> str:
+def write_trial_logs(args: Namespace, temp_dir: str) -> str:
     trial_logs = api.trial_logs(args.master, args.trial_id)
-    file_path = os.path.join(temp_dir.name, "trial_logs.txt")
+    file_path = os.path.join(temp_dir, "trial_logs.txt")
     with open(file_path, "w") as f:
         for log in trial_logs:
             f.write(log["message"])
@@ -161,18 +159,18 @@ def write_trial_logs(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> 
     return file_path
 
 
-def write_master_logs(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> str:
+def write_master_logs(args: Namespace, temp_dir: str) -> str:
     response = api.get(args.master, "logs")
-    file_path = os.path.join(temp_dir.name, "master_logs.txt")
+    file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
         for log in response.json():
             f.write("{} [{}]: {}".format(log["time"], log["level"], log["message"]))
     return file_path
 
 
-def write_api_call(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> Tuple[str, str]:
-    file_path1 = os.path.join(temp_dir.name, "api_experiment_call.json")
-    file_path2 = os.path.join(temp_dir.name, "api_trial_call.json")
+def write_api_call(args: Namespace, temp_dir: str) -> Tuple[str, str]:
+    file_path1 = os.path.join(temp_dir, "api_experiment_call.json")
+    file_path2 = os.path.join(temp_dir, "api_trial_call.json")
 
     trial_obj = bindings.get_GetTrial(setup_session(args), trialId=args.trial_id).trial
     experiment_id = trial_obj.experimentId
