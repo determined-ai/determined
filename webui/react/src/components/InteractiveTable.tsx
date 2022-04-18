@@ -298,9 +298,9 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({
-    dropLeftStyles: settings?.columnWidths.map(() => ({})),
-    dropRightStyles: settings?.columnWidths.map(() => ({})),
-    widths: settings?.columnWidths,
+    dropLeftStyles: settings?.columnWidths.map(() => ({})) ?? [],
+    dropRightStyles: settings?.columnWidths.map(() => ({})) ?? [],
+    widths: settings?.columnWidths ?? [],
   });
 
   const [ isResizing, setIsResizing ] = useState(false);
@@ -319,7 +319,7 @@ const InteractiveTable: InteractiveTable = ({
         ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
     );
     if (typeof pagePadding !== 'number') pagePadding = 16;
-    return columnsWidths.reduce((a, b) => a + b) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
+    return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
   }, []);
 
   const getUpscaledWidths = useCallback(
@@ -446,11 +446,11 @@ const InteractiveTable: InteractiveTable = ({
   }, [ updateSettings, widthData ]);
 
   const onHeaderCell = useCallback(
-    (index, columnDefs) => {
+    (index, columnDef) => {
       return () => {
-        const filterActive = !!columnDefs?.isFiltered?.(settings);
+        const filterActive = !!columnDef?.isFiltered?.(settings);
         return {
-          columnName: columnDefs.title,
+          columnName: columnDef.title,
           dragState,
           dropLeftStyle: { ...widthData?.dropLeftStyles?.[index] },
           dropRightStyle: { ...widthData?.dropRightStyles?.[index] },
@@ -461,7 +461,7 @@ const InteractiveTable: InteractiveTable = ({
           onResize: handleResize(index),
           onResizeStart: handleResizeStart(index),
           onResizeStop: handleResizeStop,
-          width: widthData?.widths[index],
+          width: widthData?.widths[index] ?? columnDef.defaultWidth,
         };
       };
     },
@@ -480,19 +480,20 @@ const InteractiveTable: InteractiveTable = ({
   const renderColumns: ColumnsType<RecordType> = useMemo(
     () =>
       [
-        ...settings.columns.map((columnName, index) => {
-          const column = columnDefs[columnName];
-          const columnWidth = widthData.widths[index];
-          const sortOrder =
+        ...settings.columns.filter(columnName => columnDefs[columnName])
+          .map((columnName, index) => {
+            const column = columnDefs[columnName];
+            const columnWidth = widthData.widths[index];
+            const sortOrder =
             column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-          return {
-            onHeaderCell: onHeaderCell(index, column),
-            sortOrder,
-            width: columnWidth,
-            ...column,
-          };
-        }),
+            return {
+              onHeaderCell: onHeaderCell(index, column),
+              sortOrder,
+              width: columnWidth,
+              ...column,
+            };
+          }),
         { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH },
       ] as ColumnsType<RecordType>,
 
