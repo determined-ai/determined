@@ -5,7 +5,7 @@ import tarfile
 import tempfile
 from argparse import Namespace
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from determined.cli import render
 from determined.cli.session import setup_session
@@ -127,7 +127,7 @@ def trial_logs(args: Namespace) -> None:
 
 
 @authentication.required
-def generate_support_bundle(args: Namespace):
+def generate_support_bundle(args: Namespace) -> None:
     temp_dir = tempfile.TemporaryDirectory()
     trial_logs_filepath = write_trial_logs(args, temp_dir)
 
@@ -159,7 +159,7 @@ def generate_support_bundle(args: Namespace):
     bundle.close()
 
 
-def write_trial_logs(args, temp_dir):
+def write_trial_logs(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> str:
     trial_logs = api.trial_logs(args.master, args.trial_id)
     file_path = os.path.join(temp_dir.name, "trial_logs.txt")
     with open(file_path, "w") as f:
@@ -169,7 +169,7 @@ def write_trial_logs(args, temp_dir):
     return file_path
 
 
-def write_master_logs(args, temp_dir):
+def write_master_logs(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> str:
     response = api.get(args.master, "logs")
     file_path = os.path.join(temp_dir.name, "master_logs.txt")
     with open(file_path, "w") as f:
@@ -178,7 +178,7 @@ def write_master_logs(args, temp_dir):
     return file_path
 
 
-def write_api_call(args, temp_dir):
+def write_api_call(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> Tuple[str, str]:
     file_path1 = os.path.join(temp_dir.name, "api_experiment_call.json")
     file_path2 = os.path.join(temp_dir.name, "api_trial_call.json")
 
@@ -192,7 +192,7 @@ def write_api_call(args, temp_dir):
     return file_path1, file_path2
 
 
-def create_json_file_in_dir(content, file_path):
+def create_json_file_in_dir(content, file_path) -> None:
     with open(file_path, "w") as f:
         json.dump(content, f)
 
