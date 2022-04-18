@@ -81,10 +81,11 @@ func (a *apiServer) GetModels(
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
-	userIDFilterExpr := strings.Trim(
-		strings.Join(strings.Split(fmt.Sprint(req.UserIds), " "), ","),
-		"[]",
-	)
+	userIds := make([]string, 0)
+	for _, userId := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userId)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
