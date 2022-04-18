@@ -42,14 +42,11 @@
     align-self: end;
     display: flex;
     gap: var(--theme-sizes-layout-tiny);
-    grid-column: 1/2;
+    grid-column: 1/3;
     grid-row: 3/4;
-    margin-right: var(--theme-sizes-layout-small);
   }
   .lastExperiment {
-    align-self: end;
-    grid-column: 2/3;
-    grid-row: 3/4;
+    margin-left: var(--theme-sizes-layout-small);
   }
   .avatar {
     grid-column: 3/4;

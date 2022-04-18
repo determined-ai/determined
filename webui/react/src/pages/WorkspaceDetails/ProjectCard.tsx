@@ -32,10 +32,10 @@ const ProjectCard: React.FC<Props> = ({ project, curUser }: Props) => {
         <div className={css.experiments}>
           <Icon name="experiment" size="small" />
           <span>{project.numExperiments.toLocaleString()}</span>
-        </div>
-        {project.lastExperimentStartedAt && (
-          <TimeAgo className={css.lastExperiment} datetime={project.lastExperimentStartedAt} />
-        )}
+          {project.lastExperimentStartedAt && (
+            <TimeAgo className={css.lastExperiment} datetime={project.lastExperimentStartedAt} />
+          )}
+        </div> 
         <div className={css.avatar}><Avatar username={project.username} /></div>
       </div>
     </ProjectActionDropdown>
