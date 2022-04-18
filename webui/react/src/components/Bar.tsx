@@ -19,6 +19,12 @@ export interface Props {
   size?: ShirtSize;
 }
 
+const sizeMap = {
+  [ShirtSize.small]: '4px',
+  [ShirtSize.medium]: '12px',
+  [ShirtSize.large]: '24px',
+};
+
 const partStyle = (part: BarPart) => {
   let style = {
     backgroundColor: part.color,
@@ -35,7 +41,7 @@ const partStyle = (part: BarPart) => {
   return style;
 };
 
-const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {
+const Bar: React.FC<Props> = ({ barOnly, parts, size = ShirtSize.small }: Props) => {
   const classes: string[] = [ css.base ];
 
   if (barOnly) classes.push(css.barOnly);
@@ -44,15 +50,13 @@ const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {
     <div className={classes.join(' ')}>
       <div
         className={css.bar}
-        style={{ height: `var(--theme-sizes-layout-${size || ShirtSize.tiny})` }}>
+        style={{ height: `calc(${sizeMap[size]} + var(--theme-density) * 1px)` }}>
         <div className={css.parts}>
-          {parts.filter(part => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => {
-            return (
-              <Tooltip key={idx} title={part.label}>
-                <li style={partStyle(part)} />
-              </Tooltip>
-            );
-          })}
+          {parts.filter(part => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => (
+            <Tooltip key={idx} title={part.label}>
+              <li style={partStyle(part)} />
+            </Tooltip>
+          ))}
         </div>
 
       </div>

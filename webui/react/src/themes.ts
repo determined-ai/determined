@@ -10,18 +10,9 @@ import { isColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
  * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
  */
 export enum ShirtSize {
-  micro = 'micro',
-  tiny = 'tiny',
   small = 'small',
   medium = 'medium',
   large = 'large',
-  big = 'big',
-  great = 'great',
-  huge = 'huge',
-  enormous = 'enormous',
-  giant = 'giant',
-  jumbo = 'jumbo',
-  mega = 'mega',
 }
 
 enum StateColors {
@@ -337,9 +328,7 @@ const themeBase = {
   floatBorderWeak: undefined,
 
   // Specialized and unique styles.
-  overlay: undefined,
-  overlayStrong: undefined,
-  overlayWeak: undefined,
+  density: '0',
   borderRadius: '4px',
   borderRadiusStrong: '8px',
   borderRadiusWeak: '2px',
@@ -349,6 +338,9 @@ const themeBase = {
   elevation: undefined,
   elevationStrong: undefined,
   elevationWeak: undefined,
+  overlay: undefined,
+  overlayStrong: undefined,
+  overlayWeak: undefined,
 
   // Status styles.
   statusActive: 'rgba(0, 155, 222, 1.0)',
