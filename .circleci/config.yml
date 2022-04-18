@@ -1141,7 +1141,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
       - checkout
       - react-get-deps
@@ -1153,7 +1153,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     resource_class: large
     steps:
       - checkout
@@ -1171,7 +1171,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
         environment:
           CI: "true"
     resource_class: large
@@ -1186,7 +1186,7 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
       - checkout
       - react-get-deps
