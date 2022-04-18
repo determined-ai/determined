@@ -79,7 +79,7 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	}
 
 	var pageInfo db.PageInfo
-	cs, err := List(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+	cs, err := ProjectList(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 		q = q.Where("workspace_id = ?", req.Id)
 
 		if req.Archived != nil {

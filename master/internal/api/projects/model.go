@@ -16,7 +16,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
-type experimentMetadata struct {
+// ExperimentMetadata matches rows returned from experiment queries.
+type ExperimentMetadata struct {
 	bun.BaseModel `bun:"select:experiments"`
 
 	ID           int         `bun:"id"`
@@ -42,7 +43,7 @@ type experimentMetadata struct {
 }
 
 // ToProto converts each ExperimentMetadata model into API-accessible format.
-func (p *experimentMetadata) ToProto() (*experimentv1.Experiment, error) {
+func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 	conv := protoconverter.ProtoConverter{}
 	parsedForkedFrom := wrapperspb.Int32(p.ForkedFrom)
 	parsedProgress := wrapperspb.Double(p.Progress)
@@ -73,7 +74,8 @@ func (p *experimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 	return out, nil
 }
 
-type projectMetadata struct {
+// ProjectMetadata matches rows returned from project queries.
+type ProjectMetadata struct {
 	bun.BaseModel `bun:"select:projects"`
 
 	ID                      int             `bun:"id"`
@@ -90,7 +92,7 @@ type projectMetadata struct {
 }
 
 // ToProto converts each ProjectMetadata model into API-accessible format.
-func (p *projectMetadata) ToProto() (*projectv1.Project, error) {
+func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 	conv := protoconverter.ProtoConverter{}
 	notes, err := conv.ToProjectNotes(p.Notes)
 	if err != nil {
@@ -116,9 +118,9 @@ func (p *projectMetadata) ToProto() (*projectv1.Project, error) {
 	return out, nil
 }
 
-// Fetch list of Projects.
-func List(ctx context.Context, opts db.SelectExtension) ([]*projectMetadata, error) {
-	ps := []*projectMetadata{}
+// ProjectList fetches multiple Projects.
+func ProjectList(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, error) {
+	ps := []*ProjectMetadata{}
 	q, err := opts(db.Bun().
 		NewSelect().
 		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.description").
@@ -143,10 +145,10 @@ func List(ctx context.Context, opts db.SelectExtension) ([]*projectMetadata, err
 	return ps, nil
 }
 
-// Fetch list of Experiments.
-func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*experimentMetadata,
+// ExperimentList returns multiple Experiments.
+func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*ExperimentMetadata,
 	error) {
-	exps := []*experimentMetadata{}
+	exps := []*ExperimentMetadata{}
 
 	q, err := opts(db.Bun().
 		NewSelect().
@@ -155,8 +157,10 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*experiment
 		ColumnExpr("start_time, end_time, state, archived, owner_id AS user_id").
 		ColumnExpr("job_id, parent_id AS forked_from, progress, project_id").
 		ColumnExpr("COALESCE(notes, 'omitted') AS notes").
-		ColumnExpr("(SELECT COUNT(*) FROM trials t WHERE experiment_metadata.id = t.experiment_id) AS num_trials").
-		ColumnExpr("(SELECT json_agg(id) FROM trials t WHERE experiment_metadata.id = t.experiment_id) AS trial_ids").
+		ColumnExpr("(SELECT COUNT(*) FROM trials t WHERE " +
+			"experiment_metadata.id = t.experiment_id) AS num_trials").
+		ColumnExpr("(SELECT json_agg(id) FROM trials t WHERE " +
+			"experiment_metadata.id = t.experiment_id) AS trial_ids").
 		ColumnExpr("config->>'name' AS name, config->>'description' AS description").
 		ColumnExpr("config->'resources'->>'resource_pool' AS resource_pool").
 		ColumnExpr("config->'labels' AS labels, config->'searcher'->'name' as searcher_type").
@@ -172,9 +176,9 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*experiment
 	return exps, nil
 }
 
-// Fetch single Project by its ID.
-func ByID(ctx context.Context, id int32) (*projectMetadata, error) {
-	p := projectMetadata{}
+// ByID returns a single Project by its ID.
+func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
+	p := ProjectMetadata{}
 
 	var s struct {
 		NumActiveExperiments    int
