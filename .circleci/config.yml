@@ -29,7 +29,7 @@ parameters:
     default: cimg/base:2021.11
   machine-image:
     type: string
-    default: ubuntu-2004:202101-01
+    default: ubuntu-2004:202201-02
   gpu-machine-image:
     type: string
     default: ubuntu-2004-cuda-11.2:202103-01

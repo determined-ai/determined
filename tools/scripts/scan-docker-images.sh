@@ -3,14 +3,19 @@
 MAJOR_SEPARATOR='================================================================================'
 MINOR_SEPARATOR='--------------------------------------------------------------------------------'
 
+# These vulnerabilities are disputed or awaiting analysis by the NumPy, Scikit-learn, or Python communities
+DISPUTED="CVE-2020-13092 CVE-2021-41495 CVE-2021-41496 CVE-2015-20107"
 # These vulnerabilities pertain to the Docker engine (or proprietary distributions), but only the Python client is included in the images
 DOCKER="CVE-2017-7297 CVE-2019-13139 CVE-2019-13509 CVE-2019-16884 CVE-2019-5736"
 # This vulnerability is fixed in JupyterLab 3.2.0, but was still flagged after we moved to that version
 FIXED_IN_JUPYTER_3_2_0="CVE-2021-32797"
-# These vulnerabilities are fixed in newer versions of TensorFlow, but not in 1.15, which is out of maintenance and no longer our default
+# These vulnerabilities are fixed in newer versions of TensorFlow, but not in 1.15 and 2.4 which are out of maintenance and no longer our defaults
 TENSORFLOW_1_15="GHSA-2r8p-fg3c-wcj4 GHSA-4xfp-4pfp-89wg GHSA-5xwc-mrhx-5g3m GHSA-6gv8-p3vj-pxvr GHSA-6p5r-g9mq-ggh2 GHSA-7fvx-3jfc-2cpc GHSA-8pmx-p244-g88h GHSA-9c8h-vvrj-w2p8 GHSA-c5x2-p679-95wc GHSA-c9qf-r67m-p7cg GHSA-cgfm-62j4-v4rf GHSA-cwv3-863g-39vx GHSA-f5cx-5wr3-5qrc GHSA-f8h4-7rgh-q2gm GHSA-fcwc-p4fc-c5cc GHSA-g25h-jr74-qp5j GHSA-g8wg-cjwc-xhhp GHSA-gh6x-4whr-2qv4 GHSA-h4pc-gx2w-f2xv GHSA-hpv4-7p9c-mvfr GHSA-hwr7-8gxx-fj5p GHSA-jf7h-7m85-w2v2 GHSA-m7fm-4jfh-jrg6 GHSA-q3g3-h9r4-prrc GHSA-qr82-2c78-4m8h GHSA-r4c4-5fpq-56wg GHSA-r6jx-9g48-2r5r GHSA-v768-w7m9-2vmm GHSA-v82p-hv3v-p6qp GHSA-w4xf-2pqw-5mq7 GHSA-w74j-v8xh-3w5h GHSA-wp77-4gmm-7cq8 GHSA-374m-jm66-3vj8 GHSA-3rcw-9p9x-582v GHSA-49rx-x2rw-pc6f GHSA-4f99-p9c2-3j8x GHSA-57wx-m983-2f88 GHSA-7pxj-m4jf-r6h2 GHSA-cqv6-3phm-hcwx GHSA-f54p-f6jp-4rhr GHSA-fr77-rrx3-cp7g GHSA-j86v-p27c-73fm GHSA-m342-ff57-4jcc GHSA-pgcq-h79j-2f69 GHSA-rg3m-hqc5-344v GHSA-vwhq-49r4-gj9v"
+TENSORFLOW_2_4="GHSA-8jj7-5vxc-pg2q GHSA-98p5-x8x4-c9m5 GHSA-9c78-vcq7-7vxq GHSA-9gwq-6cwj-47h3 GHSA-c6fh-56w7-fvjw GHSA-h6gw-r52c-724r GHSA-pfjj-m3jj-9jc9 GHSA-q85f-69q7-55h2 GHSA-qx3f-p745-w4hr GHSA-vjg4-v33c-ggc4 GHSA-wc4g-r73w-x8mm GHSA-23hm-7w47-xw72 GHSA-247x-2f9f-5wp7 GHSA-24x4-6qmh-88qg GHSA-43q8-3fv7-pr5x GHSA-44qp-9wwf-734r GHSA-4hvf-hxvg-f67v GHSA-5qw5-89mw-wcg2 GHSA-6gmv-pjp9-p8w8 GHSA-77gp-3h4r-6428"
+# These vulnerabilities are found in ROCm-specific tools and will not be addressed at this time
+ROCM="GHSA-47wv-vhj2-g66m GHSA-8c5j-9r9f-c6w8 GHSA-53qw-q765-4fww GHSA-v6rh-hp5x-86rv GHSA-8vj2-vxx3-667w GHSA-9j59-75qj-795w GHSA-pw3c-h7wp-cvhx GHSA-p5w8-wqhj-9hhf GHSA-p737-p57g-4cpr"
 
-IGNORED_VULNERABILITIES=" ${DOCKER} ${FIXED_IN_JUPYTER_3_2_0} ${TENSORFLOW_1_15} "
+IGNORED_VULNERABILITIES="${DISPUTED} ${DOCKER} ${FIXED_IN_JUPYTER_3_2_0} ${TENSORFLOW_1_15} ${TENSORFLOW_2_4} ${ROCM} "
 
 # Exit codes
 SUCCESS=0
