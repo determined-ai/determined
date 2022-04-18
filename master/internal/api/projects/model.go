@@ -17,18 +17,18 @@ import (
 )
 
 type ExperimentMetadata struct {
-	bun.BaseModel `bun:"select:experiments_view"`
+	bun.BaseModel `bun:"select:experiments"`
 
-	ID           int       `bun:"id,nullzero"`
-	Name         string    `bun:"name"`
-	Description  string    `bun:"description"`
+	ID           int       `bun:"id"`
+	Name         string    `bun:"config"->>'name'`
+	Description  string    `bun:"config"->>'description'`
 	ProjectID    int       `bun:"project_id"`
 	JobID        string    `bun:"job_id"`
 	Archived     bool      `bun:"archived"`
 	Username     string    `bun:"username"`
-	Labels       []string  `bun:"labels"`
-	ResourcePool string    `bun:"resource_pool"`
-	SearcherType string    `bun:"searcher_type"`
+	Labels       []string  `bun:"config"->'labels'`
+	ResourcePool string    `bun:"config"->'resources'->>'resource_pool'`
+	SearcherType string    `bun:"config"->'searcher'->'name'`
 	Notes        string    `bun:"notes"`
 	StartTime    time.Time `bun:"start_time"`
 	EndTime      time.Time `bun:"end_time"`
@@ -71,9 +71,9 @@ func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 }
 
 type ProjectMetadata struct {
-	bun.BaseModel `bun:"select:projects_view"`
+	bun.BaseModel `bun:"select:projects"`
 
-	ID                      int             `bun:"id,nullzero"`
+	ID                      int             `bun:"id"`
 	Name                    string          `bun:"name"`
 	Description             string          `bun:"description"`
 	WorkspaceID             int             `bun:"workspace_id"`
@@ -112,23 +112,6 @@ func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 	return out, nil
 }
 
-// Fetch single Project
-func Single(ctx context.Context, opts db.SelectExtension) (*ProjectMetadata, error) {
-	p := ProjectMetadata{}
-
-	q, err := opts(db.Bun().
-		NewSelect().
-		Model(&p))
-	if err != nil {
-		return nil, fmt.Errorf("building query: %w", err)
-	}
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, fmt.Errorf("getting single project: %w", err)
-	}
-	return &p, nil
-}
-
 // Fetch list of Projects
 func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, error) {
 	ps := []*ProjectMetadata{}
@@ -153,7 +136,10 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*Experiment
 
 	q, err := opts(db.Bun().
 		NewSelect().
-		Model(&exps))
+		Model(&exps).
+		ColumnExpr("experiment_metadata.id").
+		ColumnExpr("users.username AS username").
+		Join("JOIN users ON users.id = experiment_metadata.owner_id"))
 	if err != nil {
 		return nil, fmt.Errorf("building query: %w", err)
 	}
@@ -166,7 +152,29 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*Experiment
 
 // Fetch single Project by its ID
 func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
-	return Single(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-		return q.Where("id = ?", id), nil
-	})
+	p := ProjectMetadata{}
+
+	// experiments := db.Bun().NewSelect().
+	// 	ColumnExpr("COUNT(*) AS num_experiments").
+	// 	ColumnExpr("SUM(case when state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments").
+	// 	ColumnExpr("MAX(start_time) AS last_experiment_started_at").
+	// 	TableExpr("experiments").
+	// 	Where("project_id = ?", id)
+
+	q := db.Bun().
+		NewSelect().
+		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.immutable").
+		ColumnExpr("0 AS num_experiments").
+		ColumnExpr("0 AS num_active_experiments").
+		ColumnExpr("now() AS last_experiment_started_at").
+		ColumnExpr("users.username AS username").
+		Join("JOIN users ON users.id = project_metadata.user_id").
+		Join("JOIN workspaces ON workspaces.id = project_metadata.workspace_id").
+		Model(&p).
+		Where("project_metadata.id = ?", id)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("getting single project: %w", err)
+	}
+	return &p, nil
 }

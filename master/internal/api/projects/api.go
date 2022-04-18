@@ -48,7 +48,7 @@ func (s *ProjectServer) GetProject(
 func (s *ProjectServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
-	const byid = "id"
+	const byid = "project_metadata.id"
 	orderByColumn := ""
 	switch req.SortBy {
 	case apiv1.GetWorkspaceProjectsRequest_SORT_BY_CREATION_TIME:
@@ -126,7 +126,7 @@ func (s *ProjectServer) GetProjectExperiments(ctx context.Context,
 	}
 
 	// Construct the ordering expression.
-	const byid = "id"
+	const byid = "experiment_metadata.id"
 	orderByColumn := ""
 	switch req.SortBy {
 	case apiv1.GetProjectExperimentsRequest_SORT_BY_START_TIME:
