@@ -398,12 +398,13 @@ export interface Step extends WorkloadGroup, StartEndTimes {
   training: MetricsWorkload;
 }
 
+type MetricStruct = Record<string, number>;
 export interface Metrics extends Api.V1Metrics {
   // these two fields are present in the protos
   // as a struct and list of structs, respectively
   // here, we are being a bit more precise
-  avgMetrics: Record<string, number>;
-  batchMetrics?: Array<Record<string, number>>;
+  avgMetrics: MetricStruct;
+  batchMetrics?: Array<MetricStruct>;
 }
 
 export type Metadata = Record<RecordKey, string>;

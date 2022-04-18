@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
@@ -461,7 +460,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
     state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
     taskId: data.taskId,
     totalBatches:
-      data.metadata['latest_batch'] ?? data.training.trainingMetrics?.batchMetrics?.length ?? 0,
+      data.metadata['latest_batch'] ?? 0,
     trainingMetrics: data.training.trainingMetrics,
     trialId: data.training.trialId,
     uuid: data.uuid,
