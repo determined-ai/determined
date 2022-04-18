@@ -121,10 +121,6 @@ const TaskList: React.FC = () => {
         getJupyterLabs({ signal: canceler.signal }),
         getShells({ signal: canceler.signal }),
         getTensorBoards({ signal: canceler.signal }),
-        // getCommands({ signal: canceler.signal, users: settings.user }),
-        // getJupyterLabs({ signal: canceler.signal, users: settings.user }),
-        // getShells({ signal: canceler.signal, users: settings.user }),
-        // getTensorBoards({ signal: canceler.signal, users: settings.user }),
       ]);
       const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
       setTasks(prev => {
@@ -139,7 +135,6 @@ const TaskList: React.FC = () => {
       });
     }
   }, [ canceler ]);
-  // }, [ canceler, settings.user ]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([ fetchUsers(), fetchTasks() ]);
