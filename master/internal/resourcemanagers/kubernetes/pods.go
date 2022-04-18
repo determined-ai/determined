@@ -186,6 +186,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case ChangePriority:
 		p.receivePriorityChange(ctx, msg)
 
+	case ChangePosition:
+		p.receivePositionChange(ctx, msg)
+
 	case KillTaskPod:
 		p.receiveKillPod(ctx, msg)
 
@@ -437,17 +440,35 @@ func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
-	podName, ok := p.containerIDToPodName[msg.PodID.String()]
+func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {
+	podName, ok := p.containerIDToPodName[podID]
 	if !ok {
-		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+		ctx.Log().WithField("pod-id", podID).Debug(
 			"received change priority command for unregistered container id")
-		return
+		return nil
 	}
 	ref, ok := p.podNameToPodHandler[podName]
 	if !ok {
-		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+		ctx.Log().WithField("pod-id", podID).Debug(
 			"received change priority command for unregistered container id")
+		return nil
+	}
+
+	return ref
+}
+
+func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
+	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
+	if ref == nil {
+		return
+	}
+
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receivePositionChange(ctx *actor.Context, msg ChangePosition) {
+	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
+	if ref == nil {
 		return
 	}
 

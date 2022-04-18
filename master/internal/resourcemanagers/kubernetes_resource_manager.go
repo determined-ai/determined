@@ -381,7 +381,7 @@ func (k *kubernetesResourceManager) moveJob(
 		return job.ErrJobNotFound(anchorID)
 	}
 
-	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList, k.groups, k.queuePositions, false)
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList, k.groups, k.queuePositions, true)
 
 	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
@@ -392,26 +392,25 @@ func (k *kubernetesResourceManager) moveJob(
 	}
 
 	if prioChange {
-		resp := ctx.Ask(k.IDToGroupActor[jobID], job.SetGroupPriority{
+		resp := ctx.Ask(k.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
 			Priority:     anchorPriority,
-			ResourcePool: KubernetesDummyResourcePool,
 		})
 		if resp.Error() != nil {
 			return resp.Error()
 		}
-		if needMove(
-			k.queuePositions[jobID],
-			k.queuePositions[anchorID],
-			k.queuePositions[secondAnchor],
-			aheadOf,
-		) {
-			return nil
-		}
 	}
 
-	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
-	if err != nil {
-		return err
+	if needMove(
+		k.queuePositions[jobID],
+		k.queuePositions[anchorID],
+		k.queuePositions[secondAnchor],
+		aheadOf,
+	) {
+		msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
+		if err != nil {
+			return err
+		}
+		ctx.Tell(groupAddr, msg)
 	}
 
 	addr, ok := k.jobIDtoAddr[jobID]
@@ -423,9 +422,7 @@ func (k *kubernetesResourceManager) moveJob(
 		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
 	}
 
-	ctx.Tell(groupAddr, msg)
-
-	ctx.Tell(k.podsActor, kubernetes.ChangePriority{PodID: containerID})
+	ctx.Tell(k.podsActor, kubernetes.ChangePosition{PodID: containerID})
 
 	return nil
 }
