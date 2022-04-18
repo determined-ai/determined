@@ -35,7 +35,7 @@ const ProjectCard: React.FC<Props> = ({ project, curUser }: Props) => {
           {project.lastExperimentStartedAt && (
             <TimeAgo className={css.lastExperiment} datetime={project.lastExperimentStartedAt} />
           )}
-        </div> 
+        </div>
         <div className={css.avatar}><Avatar username={project.username} /></div>
       </div>
     </ProjectActionDropdown>
