@@ -92,7 +92,6 @@ const ProfilesEnabled: React.FC = () => {
         sync: {
           key: chartSyncKey.current.key,
           match: [ matchSyncKeys, matchSyncKeys ],
-          // scales: [ chartSyncKey.current.key, null ],
           setSeries: true,
         },
       },
