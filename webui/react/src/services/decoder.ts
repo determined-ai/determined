@@ -444,6 +444,26 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
+/* using any here because this comes from the api as any /*
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const decodeMetricStruct = (data: any): Record<string, number> => {
+  const metrics: Record<string, number> = {};
+  Object.entries(data || {}).forEach(([ metric, value ]) => {
+    if (typeof metric === 'string' && (typeof value === 'number' || typeof value === 'string')) {
+      const numberValue = (typeof value === 'number') ? value : parseFloat(value);
+      if (!isNaN(numberValue)) metrics[metric] = numberValue;
+    }
+  });
+  return metrics;
+};
+
+export const decodeMetrics = (data: Sdk.V1Metrics): types.Metrics => {
+  return {
+    avgMetrics: decodeMetricStruct(data.avgMetrics),
+    batchMetrics: data.batchMetrics?.map(decodeMetricStruct),
+  };
+};
+
 export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCheckpoint => {
   const resources: Record<string, number> = {};
   Object.entries(data.resources || {}).forEach(([ res, val ]) => {
@@ -460,12 +480,12 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
     searcherMetric: data.training.searcherMetric,
     state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
     taskId: data.taskId,
-    totalBatches:
-      data.metadata['latest_batch'] ?? 0,
-    trainingMetrics: data.training.trainingMetrics,
+    totalBatches: data.metadata['latest_batch'] ?? 0,
+    trainingMetrics: data.training.trainingMetrics && decodeMetrics(data.training.trainingMetrics),
     trialId: data.training.trialId,
     uuid: data.uuid,
-    validationMetrics: data.training.validationMetrics,
+    validationMetrics:
+      data.training.validationMetrics && decodeMetrics(data.training.validationMetrics),
   };
 };
 
