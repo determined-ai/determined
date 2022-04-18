@@ -192,7 +192,7 @@ def write_api_call(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> Tu
     return file_path1, file_path2
 
 
-def create_json_file_in_dir(content, file_path) -> None:
+def create_json_file_in_dir(content: json, file_path: str) -> None:
     with open(file_path, "w") as f:
         json.dump(content, f)
 
