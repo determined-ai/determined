@@ -154,12 +154,21 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*Experiment
 func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 	p := ProjectMetadata{}
 
-	// experiments := db.Bun().NewSelect().
-	// 	ColumnExpr("COUNT(*) AS num_experiments").
-	// 	ColumnExpr("SUM(case when state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments").
-	// 	ColumnExpr("MAX(start_time) AS last_experiment_started_at").
-	// 	TableExpr("experiments").
-	// 	Where("project_id = ?", id)
+	var s struct{
+		NumActiveExperiments	int
+		NumExperiments				int
+		LastExperimentStartedAt time.Time
+	}
+	experiment := db.Bun().NewSelect().
+		ColumnExpr("COUNT(*) AS num_experiments").
+		ColumnExpr("SUM(case when state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments").
+		ColumnExpr("MAX(start_time) AS last_experiment_started_at").
+		TableExpr("experiments").
+		Where("project_id = ?", id).
+		Model(&s)
+	if err := experiment.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("getting single project: %w", err)
+	}
 
 	q := db.Bun().
 		NewSelect().
@@ -176,5 +185,9 @@ func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 	if err := q.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("getting single project: %w", err)
 	}
+	p.NumActiveExperiments = s.NumActiveExperiments
+	p.NumExperiments = s.NumExperiments
+	p.LastExperimentStartedAt = s.LastExperimentStartedAt
+
 	return &p, nil
 }
