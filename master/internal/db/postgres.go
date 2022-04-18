@@ -53,7 +53,7 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
-// Pagination data.
+// PageInfo is a standard schema of Pagination data.
 type PageInfo struct {
 	StartIndex int
 	EndIndex   int
@@ -72,7 +72,7 @@ func newPageInfo(offset, limit, count int) PageInfo {
 	}
 }
 
-// Sharing pagination over API.
+// ToProto formats pagination information for the API.
 func (p *PageInfo) ToProto() *apiv1.Pagination {
 	return &apiv1.Pagination{
 		// TODO these being int32 is totally wrong.
@@ -84,6 +84,7 @@ func (p *PageInfo) ToProto() *apiv1.Pagination {
 	}
 }
 
+// AddPagination inserts the pagination info into the response.
 func AddPagination(
 	ctx context.Context, q *bun.SelectQuery, offset, limit int,
 ) (*bun.SelectQuery, PageInfo, error) {
@@ -103,7 +104,7 @@ func AddPagination(
 	}
 }
 
-// Functions which receive SelectQuery.
+// SelectExtension is a type for functions which receive SelectQuery.
 type SelectExtension func(*bun.SelectQuery) (*bun.SelectQuery, error)
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.

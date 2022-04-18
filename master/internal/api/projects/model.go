@@ -16,7 +16,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
-type ExperimentMetadata struct {
+type experimentMetadata struct {
 	bun.BaseModel `bun:"select:experiments"`
 
 	ID           int         `bun:"id"`
@@ -41,7 +41,8 @@ type ExperimentMetadata struct {
 	TrialIDs     []int32     `bun:"trial_ids"`
 }
 
-func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
+// ToProto converts each ExperimentMetadata model into API-accessible format.
+func (p *experimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 	conv := protoconverter.ProtoConverter{}
 	parsedForkedFrom := wrapperspb.Int32(p.ForkedFrom)
 	parsedProgress := wrapperspb.Double(p.Progress)
@@ -72,7 +73,7 @@ func (p *ExperimentMetadata) ToProto() (*experimentv1.Experiment, error) {
 	return out, nil
 }
 
-type ProjectMetadata struct {
+type projectMetadata struct {
 	bun.BaseModel `bun:"select:projects"`
 
 	ID                      int             `bun:"id"`
@@ -88,7 +89,8 @@ type ProjectMetadata struct {
 	Immutable               bool            `bun:"immutable"`
 }
 
-func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
+// ToProto converts each ProjectMetadata model into API-accessible format.
+func (p *projectMetadata) ToProto() (*projectv1.Project, error) {
 	conv := protoconverter.ProtoConverter{}
 	notes, err := conv.ToProjectNotes(p.Notes)
 	if err != nil {
@@ -114,17 +116,20 @@ func (p *ProjectMetadata) ToProto() (*projectv1.Project, error) {
 	return out, nil
 }
 
-// Fetch list of Projects
-func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, error) {
-	ps := []*ProjectMetadata{}
+// Fetch list of Projects.
+func List(ctx context.Context, opts db.SelectExtension) ([]*projectMetadata, error) {
+	ps := []*projectMetadata{}
 	q, err := opts(db.Bun().
 		NewSelect().
 		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.description").
 		ColumnExpr("username, project_metadata.immutable, workspace_id, project_metadata.notes").
 		ColumnExpr("(workspaces.archived OR project_metadata.archived) AS archived").
-		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE project_id = project_metadata.id) AS num_experiments").
-		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE project_id = project_metadata.id AND experiments.state = 'ACTIVE') AS num_active_experiments").
-		ColumnExpr("(SELECT MAX(start_time) FROM experiments WHERE project_id = project_metadata.id) AS last_experiment_started_at").
+		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE " +
+			"project_id = project_metadata.id) AS num_experiments").
+		ColumnExpr("(SELECT COUNT(*) FROM experiments WHERE project_id = project_metadata.id " +
+			"AND experiments.state = 'ACTIVE') AS num_active_experiments").
+		ColumnExpr("(SELECT MAX(start_time) FROM experiments WHERE project_id = project_metadata.id) " +
+			"AS last_experiment_started_at").
 		Model(&ps).
 		Join("JOIN users ON users.id = project_metadata.user_id").
 		Join("JOIN workspaces ON workspaces.id = project_metadata.workspace_id"))
@@ -138,10 +143,10 @@ func List(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetadata, err
 	return ps, nil
 }
 
-// Fetch list of Experiments
-func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*ExperimentMetadata,
+// Fetch list of Experiments.
+func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*experimentMetadata,
 	error) {
-	exps := []*ExperimentMetadata{}
+	exps := []*experimentMetadata{}
 
 	q, err := opts(db.Bun().
 		NewSelect().
@@ -167,9 +172,9 @@ func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*Experiment
 	return exps, nil
 }
 
-// Fetch single Project by its ID
-func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
-	p := ProjectMetadata{}
+// Fetch single Project by its ID.
+func ByID(ctx context.Context, id int32) (*projectMetadata, error) {
+	p := projectMetadata{}
 
 	var s struct {
 		NumActiveExperiments    int
@@ -192,7 +197,8 @@ func ByID(ctx context.Context, id int32) (*ProjectMetadata, error) {
 		ColumnExpr("0 AS num_experiments, 0 AS num_active_experiments").
 		ColumnExpr("now() AS last_experiment_started_at").
 		ColumnExpr("description, workspace_id, notes, project_metadata.immutable").
-		ColumnExpr("project_metadata.id, project_metadata.name, project_metadata.archived").
+		ColumnExpr("project_metadata.id, project_metadata.name").
+		ColumnExpr("(workspaces.archived OR project_metadata.archived) AS archived").
 		ColumnExpr("users.username AS username").
 		Join("JOIN users ON users.id = project_metadata.user_id").
 		Join("JOIN workspaces ON workspaces.id = project_metadata.workspace_id").

@@ -16,12 +16,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
-// Wrapper for project routes.
+// ProjectServer is a wrapper for project routes.
 type ProjectServer struct {
 	db *db.PgDB
 }
 
-// Helper to create project route wrapper.
+// NewProjectServer is a helper to create ProjectServer, a project route wrapper.
 func NewProjectServer(db *db.PgDB) *ProjectServer {
 	return &ProjectServer{db: db}
 }
@@ -29,6 +29,7 @@ func NewProjectServer(db *db.PgDB) *ProjectServer {
 const byname = "name"
 const bydescription = "description"
 
+// GetProject is a request for information about a specific project by its ID.
 func (s *ProjectServer) GetProject(
 	ctx context.Context, req *apiv1.GetProjectRequest,
 ) (*apiv1.GetProjectResponse, error) {
@@ -49,6 +50,7 @@ func (s *ProjectServer) GetProject(
 	}
 }
 
+// GetWorkspaceProjects is a request for information about all project in a workspace by its ID.
 func (s *ProjectServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
@@ -120,6 +122,7 @@ func (s *ProjectServer) GetWorkspaceProjects(
 	}, nil
 }
 
+// GetProjectExperiments is a request for information about all experiments in a project by its ID.
 func (s *ProjectServer) GetProjectExperiments(ctx context.Context,
 	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
 	error) {

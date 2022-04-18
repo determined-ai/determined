@@ -99,7 +99,7 @@ func (c *ProtoConverter) ToInt32(i int) int32 {
 	return int32(i)
 }
 
-// Convert JSON data from db into Note objects.
+// ToProjectNotes converts JSON data from db into Note objects.
 func (c *ProtoConverter) ToProjectNotes(j []model.JSONObj) ([]*projectv1.Note, error) {
 	var notes []*projectv1.Note
 	b, err := json.Marshal(j)
