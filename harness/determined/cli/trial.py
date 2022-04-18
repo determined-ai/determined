@@ -128,35 +128,27 @@ def trial_logs(args: Namespace) -> None:
 
 @authentication.required
 def generate_support_bundle(args: Namespace) -> None:
-    temp_dir = tempfile.TemporaryDirectory()
-    trial_logs_filepath = write_trial_logs(args, temp_dir)
-
-    master_logs_filepath = write_master_logs(args, temp_dir)
-
-    api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
+    with tempfile.TemporaryDirectory as temp_dir: 
+        trial_logs_filepath = write_trial_logs(args, temp_dir)
+        master_logs_filepath = write_master_logs(args, temp_dir)
+        api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
 
     bundle = None
-    if args.output_dir is None:
+    output_dir = args.output_dir
+    if output_dir is None:
         output_dir = os.getcwd()
 
-    else:
-        bundle = tarfile.open(f"{args.output_dir}.tar.gz", "w:gz")
-
-    filename_printf = "det-bundle-trial-{trial_id}-{datetime}.tar.gz"
-    tar_filename = filename_printf.format(
-        trial_id=args.trial_id, datetime=datetime.now().strftime("%Y%m%dT%H%M%S")
-    )
+    dt = datetime.now().strftime("%Y%m%dT%H%M%S")
+    tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
     fullpath = os.path.join(output_dir, tar_filename)
-    bundle = tarfile.open(fullpath, "w:gz")
+    
+    with tarfile.open(fullpath, "w:gz") as bundle: 
+        bundle.add(trial_logs_filepath, arcname=os.path.basename(trial_logs_filepath))
+        bundle.add(master_logs_filepath, arcname=os.path.basename(master_logs_filepath))
+        bundle.add(api_trail_filepath, arcname=os.path.basename(api_trail_filepath))
+        bundle.add(api_experiment_filepath, arcname=os.path.basename(api_experiment_filepath))
 
-    bundle.add(trial_logs_filepath, arcname=os.path.basename(trial_logs_filepath))
-    bundle.add(master_logs_filepath, arcname=os.path.basename(master_logs_filepath))
-    bundle.add(api_trail_filepath, arcname=os.path.basename(api_trail_filepath))
-    bundle.add(api_experiment_filepath, arcname=os.path.basename(api_experiment_filepath))
-
-    print(f"bundle directory: {bundle.name}")
-
-    bundle.close()
+        print(f"bundle path: {fullpath}")
 
 
 def write_trial_logs(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> str:
@@ -186,7 +178,6 @@ def write_api_call(args: Namespace, temp_dir: tempfile.TemporaryDirectory) -> Tu
     experiment_id = trial_obj.experimentId
     exp_obj = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
 
-    trial_obj.to_json(), exp_obj.to_json()
     create_json_file_in_dir(exp_obj.to_json(), file_path1)
     create_json_file_in_dir(trial_obj.to_json(), file_path2)
     return file_path1, file_path2
