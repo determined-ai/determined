@@ -508,7 +508,7 @@ const InteractiveTable: InteractiveTable = ({
     header: { cell: HeaderCell },
   };
   return (
-    <div ref={tableRef}>
+    <div className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={spinning}>
         <Table
           bordered
