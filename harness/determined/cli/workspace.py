@@ -10,7 +10,7 @@ from determined.common.experimental import session
 
 from . import render
 
-PROJECT_HEADERS = ["ID", "Name", "# Experiments", "# Active Experiments"]
+PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
 WORKSPACE_HEADERS = ["ID", "Name"]
 
 
@@ -67,6 +67,7 @@ def list_workspace_projects(args: Namespace) -> None:
             [
                 p.id,
                 p.name,
+                p.description,
                 p.numExperiments,
                 p.numActiveExperiments,
             ]
@@ -100,6 +101,7 @@ def describe_workspace(args: Namespace) -> None:
             [
                 p.id,
                 p.name,
+                p.description,
                 p.numExperiments,
                 p.numActiveExperiments,
             ]
@@ -111,9 +113,9 @@ def describe_workspace(args: Namespace) -> None:
 @authentication.required
 def delete_workspace(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
-        "Deleting a workspace will result in the unrecoverable \n"
-        "deletion of all associated projects. For a recoverable \n"
-        "alternative, see the 'archive' command. Do you still \n"
+        'Deleting workspace "' + args.workspace_name + '" will result \n'
+        "in the unrecoverable deletion of all associated projects. For a \n"
+        "recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
         sess = setup_session(args)
