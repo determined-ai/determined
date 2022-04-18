@@ -13,6 +13,7 @@ import handleError from 'utils/error';
 interface Props {
   className?: string;
   curUser?: DetailedUser;
+  direction?: 'vertical' | 'horizontal';
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
 }
@@ -20,7 +21,8 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
-  { project, children, curUser, onVisibleChange, className }: PropsWithChildren<Props>,
+  { project, children, curUser, onVisibleChange, className, direction = 'vertical' }
+  : PropsWithChildren<Props>,
 ) => {
   const { modalOpen: openProjectMove } = useModalProjectMove({ projectId: project.id });
   const { modalOpen: openProjectDelete } = useModalProjectDelete({ project: project });
@@ -43,13 +45,13 @@ const ProjectActionDropdown: React.FC<Props> = (
       try {
         unarchiveProject({ id: project.id });
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
+        handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         archiveProject({ id: project.id });
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive workspace.' });
+        handleError(e, { publicSubject: 'Unable to archive project.' });
       }
     }
   }, [ project.archived, project.id ]);
@@ -85,7 +87,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     return (children as JSX.Element) ?? (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
         <button disabled>
-          <Icon name="overflow-vertical" />
+          <Icon name={`overflow-${direction}`} />
         </button>
       </div>
     );
@@ -106,7 +108,7 @@ const ProjectActionDropdown: React.FC<Props> = (
       onClick={stopPropagation}>
       <Dropdown overlay={ProjectActionMenu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
-          <Icon name="overflow-horizontal" />
+          <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
     </div>
