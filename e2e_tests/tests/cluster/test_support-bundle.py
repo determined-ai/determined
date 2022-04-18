@@ -6,12 +6,11 @@ from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import config as conf
 from tests import experiment as exp
-from tests import trial
 
 
 @pytest.mark.e2e_cpu
 def test_support_bundle():
-    trial_id = trial.create_exp_get_trial_id()
+    trial_id = exp.create_exp_get_trial_id()
 
     command = ["det", "trial", "support-bundle", str(trial_id), "-o", f"e2etest_trial{trial_id}"]
 
