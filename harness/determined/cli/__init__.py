@@ -7,6 +7,7 @@ from . import (
     master,
     model,
     notebook,
+    project,
     remote,
     render,
     resources,

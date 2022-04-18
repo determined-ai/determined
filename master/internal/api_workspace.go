@@ -199,7 +199,7 @@ func (a *apiServer) DeleteWorkspace(
 		user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not delete-able by this user",
+		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not deletable by this user",
 			req.Id)
 	}
 
