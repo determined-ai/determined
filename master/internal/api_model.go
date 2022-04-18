@@ -81,6 +81,11 @@ func (a *apiServer) GetModels(
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0)
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
@@ -115,6 +120,7 @@ func (a *apiServer) GetModels(
 		idFilterExpr,
 		archFilterExpr,
 		userFilterExpr,
+		userIDFilterExpr,
 		labelFilterExpr,
 		nameFilter,
 		descFilterExpr,
@@ -153,7 +159,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", modelName, "")
+		&getResp.Models, 0, "", "", "", "", modelName, "")
 	if err != nil {
 		return err
 	}
