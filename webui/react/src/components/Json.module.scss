@@ -1,9 +1,10 @@
 .base {
+  margin: 0;
   padding-inline-start: 0;
 }
 .item {
   align-items: center;
-  border-color: var(--theme-colors-monochrome-14);
+  border-color: var(--theme-stage-border);
   border-style: dashed;
   border-width: 0 0 1px 0;
   display: flex;
@@ -24,7 +25,7 @@
   padding: 0;
 }
 .label {
-  color: var(--theme-colors-monochrome-7);
+  color: var(--theme-stage-on);
   margin-right: 8px;
 }
 .value {

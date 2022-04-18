@@ -48,7 +48,7 @@
     width: 5px;
   }
   .blueTrack {
-    background-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
   }
   .grayTrack {
     background-color: lightgray;
@@ -57,7 +57,7 @@
     justify-content: center;
   }
   .trackOption {
-    background-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
     border-radius: 100%;
     height: 10px;
     left: -50%;
@@ -65,7 +65,7 @@
     width: 10px;
   }
   .tick {
-    background-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
     height: 2px;
     left: -100%;
     position: relative;

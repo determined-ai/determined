@@ -90,7 +90,7 @@
 }
 .link {
   &:hover {
-    border-color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
     box-shadow: var(--theme-shadow);
     margin-bottom: calc(-1 * 2px);
     margin-left: 0;

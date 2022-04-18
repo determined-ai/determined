@@ -8,8 +8,8 @@
   }
   .button {
     align-items: center;
-    background-color: var(--theme-colors-monochrome-17);
-    border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+    background-color: var(--theme-stage);
+    border: solid var(--theme-stroke-width) var(--theme-stage-border);
     border-radius: var(--theme-border-radius);
     cursor: pointer;
     display: flex;
@@ -18,14 +18,14 @@
     padding: 0 6px;
     transition: 0.2s;
 
-    &:hover { border-color: var(--theme-colors-states-active); }
+    &:hover { border-color: var(--theme-status-active); }
   }
   .button:not(:first-child) { margin-left: 8px; }
   .button:focus {
     box-shadow: var(--theme-outline);
   }
   .button.active {
-    border-color: var(--theme-colors-states-active);
-    color: var(--theme-colors-states-active);
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active);
   }
 }

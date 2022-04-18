@@ -28,6 +28,7 @@
     right: 32px;
   }
   .buttons > button {
+    background-color: var(--theme-float);
     border-color: var(--theme-float-border);
     box-shadow: var(--theme-elevation);
     color: var(--theme-float-on);

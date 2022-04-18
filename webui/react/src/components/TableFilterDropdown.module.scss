@@ -38,7 +38,7 @@
     font-weight: bold;
   }
   .option.selected > [class*=Icon_base] {
-    color: var(--theme-colors-action-normal);
+    color: var(--theme-status-active);
     display: flex;
   }
   .footer {

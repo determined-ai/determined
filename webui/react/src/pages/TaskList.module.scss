@@ -25,7 +25,7 @@
     outline: 0;
   }
   button:hover {
-    border-color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
   }
   button:focus {
     box-shadow: var(--theme-outline);

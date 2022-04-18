@@ -1,7 +1,7 @@
 .base {
   align-items: center;
-  background-color: var(--theme-colors-monochrome-17);
-  border-color: var(--theme-colors-monochrome-12);
+  background-color: var(--theme-stage-on);
+  border-color: var(--theme-stage-border);
   border-radius: 3px;
   border-style: solid;
   border-width: var(--theme-stroke-width);
@@ -15,16 +15,16 @@
   transition: border-color var(--animation-curve), box-shadow var(--animation-curve);
 
   &:hover {
-    border-color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
 
     & > * {
-      color: var(--theme-colors-action-normal);
+      color: var(--theme-status-active);
       transition: color var(--animation-curve);
     }
   }
   &:focus { box-shadow: var(--theme-outline); }
 }
 .base[class*=primary] {
-  &:hover { border-color: var(--theme-colors-action-light); }
+  &:hover { border-color: var(--theme-status-active-weak); }
   &:hover > * { color: var(--theme-colors-monochrome-17); }
 }

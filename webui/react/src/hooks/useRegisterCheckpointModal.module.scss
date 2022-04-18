@@ -7,7 +7,7 @@
     margin: 0;
   }
   .expandDetails {
-    color: var(--theme-colors-action-normal);
+    color: var(--theme-status-active);
     cursor: pointer;
     margin: 0;
   }
@@ -19,7 +19,7 @@
     justify-content: space-between;
 
     p {
-      color: var(--theme-colors-action-normal);
+      color: var(--theme-status-active);
       cursor: pointer;
       margin: 0;
     }

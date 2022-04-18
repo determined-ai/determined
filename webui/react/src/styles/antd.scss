@@ -154,7 +154,7 @@ html {
     display: flex;
   }
   .ant-spin .ant-spin-text {
-    color: var(--theme-colors-monochrome-8);
+    color: var(--theme-background-on);
     font-style: italic;
     margin-top: 16px;
   }
@@ -270,7 +270,7 @@ html {
   .ant-tabs-bottom > .ant-tabs-nav::before,
   .ant-tabs-top > div > .ant-tabs-nav::before,
   .ant-tabs-bottom > div > .ant-tabs-nav::before {
-    border-color: var(--theme-colors-monochrome-12);
+    border-color: var(--theme-stage-border);
   }
   .ant-tabs.no-padding {
     & > .ant-tabs-nav {
@@ -281,11 +281,11 @@ html {
   /* Tabs Cards Style */
 
   .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
-    border-color: var(--theme-colors-monochrome-12);
+    border-color: var(--theme-stage-border);
   }
   .ant-tabs-card > .ant-tabs-content-holder {
-    background-color: var(--theme-colors-monochrome-17);
-    border-color: var(--theme-colors-monochrome-12);
+    background-color: var(--theme-stage);
+    border-color: var(--theme-stage-border);
     border-style: solid;
     border-width: 0 var(--theme-stroke-width) var(--theme-stroke-width) var(--theme-stroke-width);
   }

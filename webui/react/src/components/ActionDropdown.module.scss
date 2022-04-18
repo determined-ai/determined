@@ -16,7 +16,7 @@
     padding: 0;
     width: 100%;
 
-    &:hover { color: var(--theme-colors-action-normal); }
+    &:hover { color: var(--theme-status-active); }
   }
   button:disabled,
   button[disabled] {
