@@ -12,7 +12,7 @@ from tests import experiment as exp
 def test_support_bundle():
     trial_id = exp.create_exp_get_trial_id()
 
-    command = ["det", "trial", "support-bundle", str(trial_id), "-o", f"e2etest_trial{trial_id}"]
+    command = ["det", "trial", "support-bundle", str(trial_id), "-o", f"e2etest_trial_{trial_id}"]
 
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
