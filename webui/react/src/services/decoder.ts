@@ -444,7 +444,7 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
-/* using any here because this comes from the api as any /*
+/* using any here because this comes from the api as any */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decodeMetricStruct = (data: any): Record<string, number> => {
   const metrics: Record<string, number> = {};

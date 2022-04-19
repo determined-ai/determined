@@ -9,7 +9,6 @@ import { paths } from 'routes/utils';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,
-  CoreApiGenericCheckpoint,
   ExperimentConfig,
   RunState,
 } from 'types';
@@ -21,7 +20,7 @@ import css from './CheckpointModal.module.scss';
 import Link from './Link';
 
 interface Props {
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
+  checkpoint: CheckpointWorkloadExtended;
   config: ExperimentConfig;
   onHide?: () => void;
   searcherValidation?: number;
@@ -31,7 +30,7 @@ interface Props {
 
 const getStorageLocation = (
   config: ExperimentConfig,
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint,
+  checkpoint: CheckpointWorkloadExtended,
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
@@ -106,16 +105,11 @@ const CheckpointModal: React.FC<Props> = (
     showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
   }, [ checkpoint.uuid, onHide, showRegisterCheckpointModal ]);
 
-  const searcherMetric =
-    props.searcherValidation ??
-    ('searcherMetric' in checkpoint ? checkpoint.searcherMetric : undefined);
+  const searcherMetric = props.searcherValidation;
 
-  const checkpointTime =
-    'endTime' in checkpoint
-      ? checkpoint.endTime
-      : 'reportTime' in checkpoint
-        ? checkpoint.reportTime
-        : undefined;
+  if (!checkpoint.experimentId || !checkpoint.trialId) {
+    return null;
+  }
 
   return (
     <Modal
@@ -127,28 +121,21 @@ const CheckpointModal: React.FC<Props> = (
       width={768}
       onCancel={onHide}>
       <div className={css.base}>
-        {renderRow('Source', checkpoint.experimentId ? (
-          <div className={css.source}>
-            <Link path={paths.experimentDetails(checkpoint.experimentId.toString())}>
-              Experiment {checkpoint.experimentId}
-            </Link>
-            {!!checkpoint.trialId && (
-              <><span className={css.sourceDivider} />
-                <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
-                  Trial {checkpoint.trialId}
-                </Link>
-              </>
-            )}
-            {!!checkpoint.totalBatches && (
-              <>
-                <span className={css.sourceDivider} />
-                <span>Batch {checkpoint.totalBatches}</span>
-              </>
-            )}
-          </div>
-        ) : 'taskId' in checkpoint
-          ? (<div className={css.source}><span>Task {checkpoint.taskId}</span></div>)
-          : null)}
+        {renderRow(
+          'Source', (
+            <div className={css.source}>
+              <Link path={paths.experimentDetails(checkpoint.experimentId)}>
+                Experiment {checkpoint.experimentId}
+              </Link>
+              <span className={css.sourceDivider} />
+              <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
+                Trial {checkpoint.trialId}
+              </Link>
+              <span className={css.sourceDivider} />
+              <span>Batch {checkpoint.totalBatches}</span>
+            </div>
+          ),
+        )}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
@@ -158,7 +145,7 @@ const CheckpointModal: React.FC<Props> = (
             <HumanReadableNumber num={searcherMetric} /> {`(${config.searcher.metric})`}
           </>,
         )}
-        {checkpointTime && renderRow('Checkpoint Time', formatDatetime(checkpointTime))}
+        {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
         {renderRow('Total Size', totalSize)}
         {resources.length !== 0 && renderRow(
           'Resources', (
