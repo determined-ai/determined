@@ -423,6 +423,10 @@ func (rp *ResourcePool) moveJob(
 	anchorID model.JobID,
 	aheadOf bool,
 ) error {
+	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+		return fmt.Errorf("unable to perform operation on resource pool with %s",
+			rp.config.Scheduler.GetType())
+	}
 	if anchorID == "" || jobID == "" || anchorID == jobID {
 		return nil
 	}
