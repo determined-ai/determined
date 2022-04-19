@@ -14,6 +14,7 @@ interface Props {
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
+  fetchProjects?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
 }
@@ -21,12 +22,15 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
-  { project, children, curUser, onVisibleChange, className, direction = 'vertical' }
+  { project, children, curUser, onVisibleChange, className, direction = 'vertical', fetchProjects }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openProjectMove } = useModalProjectMove({ project });
-  const { modalOpen: openProjectDelete } = useModalProjectDelete({ project });
-  const { modalOpen: openProjectEdit } = useModalProjectEdit({ project });
+  const { modalOpen: openProjectMove } = useModalProjectMove({ onClose: fetchProjects, project });
+  const { modalOpen: openProjectDelete } = useModalProjectDelete({
+    onClose: fetchProjects,
+    project,
+  });
+  const { modalOpen: openProjectEdit } = useModalProjectEdit({ onClose: fetchProjects, project });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.username === project.username;
@@ -44,17 +48,19 @@ const ProjectActionDropdown: React.FC<Props> = (
     if (project.archived) {
       try {
         unarchiveProject({ id: project.id });
+        fetchProjects?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         archiveProject({ id: project.id });
+        fetchProjects?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive project.' });
       }
     }
-  }, [ project.archived, project.id ]);
+  }, [ fetchProjects, project.archived, project.id ]);
 
   const handleDeleteClick = useCallback(() => {
     openProjectDelete();

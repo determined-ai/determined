@@ -12,13 +12,14 @@ import css from './ProjectCard.module.scss';
 
 interface Props {
   curUser?: DetailedUser;
+  fetchProjects?: () => void;
   project: Project;
 }
 
-const ProjectCard: React.FC<Props> = ({ project, curUser }: Props) => {
+const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props) => {
 
   return (
-    <ProjectActionDropdown curUser={curUser} project={project}>
+    <ProjectActionDropdown curUser={curUser} fetchProjects={fetchProjects} project={project}>
       <div className={css.base}>
         <h6 className={css.name}>
           <Link inherit path={paths.projectDetails(project.id)}>
@@ -30,6 +31,7 @@ const ProjectCard: React.FC<Props> = ({ project, curUser }: Props) => {
             className={css.action}
             curUser={curUser}
             direction="horizontal"
+            fetchProjects={fetchProjects}
             project={project}
           />
         )}

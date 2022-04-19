@@ -208,12 +208,13 @@ const WorkspaceList: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <WorkspaceActionDropdown
         curUser={user}
+        fetchWorkspaces={fetchWorkspaces}
         workspace={record}
         onVisibleChange={onVisibleChange}>
         {children}
       </WorkspaceActionDropdown>
     ),
-    [ user ],
+    [ fetchWorkspaces, user ],
   );
 
   const workspacesList = useMemo(() => {
@@ -225,7 +226,12 @@ const WorkspaceList: React.FC = () => {
             minItemWidth={size.width <= 480 ? 165 : 300}
             mode={GridMode.AutoFill}>
             {workspaces.map(workspace => (
-              <WorkspaceCard curUser={user} key={workspace.id} workspace={workspace} />
+              <WorkspaceCard
+                curUser={user}
+                fetchWorkspaces={fetchWorkspaces}
+                key={workspace.id}
+                workspace={workspace}
+              />
             ))}
           </Grid>
         );
@@ -249,6 +255,7 @@ const WorkspaceList: React.FC = () => {
     }
   }, [ actionDropdown,
     columns,
+    fetchWorkspaces,
     isLoading,
     settings,
     size.width,

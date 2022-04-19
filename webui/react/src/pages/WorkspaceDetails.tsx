@@ -251,12 +251,13 @@ const WorkspaceDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <ProjectActionDropdown
         curUser={user}
+        fetchProjects={fetchProjects}
         project={record}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>
     ),
-    [ user ],
+    [ fetchProjects, user ],
   );
 
   const projectsList = useMemo(() => {
@@ -268,7 +269,12 @@ const WorkspaceDetails: React.FC = () => {
             minItemWidth={size.width <= 480 ? 165 : 300}
             mode={GridMode.AutoFill}>
             {projects.map(project => (
-              <ProjectCard curUser={user} key={project.id} project={project} />
+              <ProjectCard
+                curUser={user}
+                fetchProjects={fetchProjects}
+                key={project.id}
+                project={project}
+              />
             ))}
           </Grid>
         );
@@ -292,6 +298,7 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [ actionDropdown,
     columns,
+    fetchProjects,
     isLoading,
     projects,
     settings,

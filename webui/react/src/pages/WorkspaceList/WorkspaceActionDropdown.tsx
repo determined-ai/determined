@@ -12,6 +12,7 @@ interface Props {
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
+  fetchWorkspaces?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspace: Workspace;
 }
@@ -19,10 +20,16 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const WorkspaceActionDropdown: React.FC<Props> = (
-  { workspace, children, curUser, onVisibleChange, className, direction = 'vertical' }
+  {
+    workspace, children, curUser, onVisibleChange,
+    className, direction = 'vertical', fetchWorkspaces,
+  }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({ workspace });
+  const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({
+    onClose: fetchWorkspaces,
+    workspace,
+  });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.username === workspace.username;
@@ -32,17 +39,19 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     if (workspace.archived) {
       try {
         unarchiveWorkspace({ id: workspace.id });
+        fetchWorkspaces?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
       }
     } else {
       try {
         archiveWorkspace({ id: workspace.id });
+        fetchWorkspaces?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ workspace.archived, workspace.id ]);
+  }, [ fetchWorkspaces, workspace.archived, workspace.id ]);
 
   const handleDeleteClick = useCallback(() => {
     openWorkspaceDelete();

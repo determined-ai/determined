@@ -10,10 +10,11 @@ import css from './WorkspaceCard.module.scss';
 
 interface Props {
   curUser?: DetailedUser;
+  fetchWorkspaces?: () => void;
   workspace: Workspace;
 }
 
-const WorkspaceCard: React.FC<Props> = ({ workspace, curUser }: Props) => {
+const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }: Props) => {
 
   const nameAcronym = useMemo(() => {
     return workspace.name
@@ -22,7 +23,10 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser }: Props) => {
   }, [ workspace.name ]);
 
   return (
-    <WorkspaceActionDropdown curUser={curUser} workspace={workspace}>
+    <WorkspaceActionDropdown
+      curUser={curUser}
+      fetchWorkspaces={fetchWorkspaces}
+      workspace={workspace}>
       <div className={css.base}>
         <div className={css.icon}>
           <span>{nameAcronym}</span>
@@ -40,6 +44,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser }: Props) => {
             className={css.action}
             curUser={curUser}
             direction="horizontal"
+            fetchWorkspaces={fetchWorkspaces}
             workspace={workspace}
           />
         )}
