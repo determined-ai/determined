@@ -715,8 +715,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 	sort.Slice(resp.Checkpoints, func(i, j int) bool {
 		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
-		if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
-			return order
+		if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC {
+			if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
+				return order
+			}
 		}
 
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
