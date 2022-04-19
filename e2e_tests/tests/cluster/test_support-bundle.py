@@ -12,11 +12,8 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_cpu
 def test_support_bundle():
-    exp_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
-    )
-
-    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+    exp_id = exp.run_basic_test(config_file = conf.fixtures_path("no_op/single-one-short-step.yaml"),
+                model_def_file =conf.fixtures_path("no_op"), expected_trials = 1)
 
     trial_id = exp.first_trial_in_experiment(exp_id)
     output_dir = f"e2etest_trial_{trial_id}"

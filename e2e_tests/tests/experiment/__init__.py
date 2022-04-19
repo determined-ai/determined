@@ -29,7 +29,6 @@ from .experiment import (
     trial_logs,
     trial_metrics,
     wait_for_experiment_state,
-    workloads_for_mode,
     first_trial_in_experiment,
 )
 
