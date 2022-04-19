@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -55,8 +55,9 @@ const shouldUpdate = (
     chart.series.some((chartSerie, seriesIdx) => {
       const nextSerie = next.series?.[seriesIdx];
       return (
-        (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show) ||
-        (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
+        (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show)
+        || (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
+        || (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
       );
     })
   ) {
@@ -92,12 +93,13 @@ const SCROLL_THROTTLE_TIME = 500;
 
 const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props) => {
   const chartRef = useRef<uPlot>();
+  const [ chartIsMounted, setChartIsMounted ] = useState(false);
   const chartDivRef = useRef<HTMLDivElement>(null);
   const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
 
-  const getAugmentedOptions = (options: Partial<uPlot.Options> | undefined) => uPlot.assign(
+  const getAugmentedOptions = (options: Partial<uPlot.Options> | undefined)
+  : uPlot.Options => uPlot.assign(
     {
-
       hooks: {
         setScale: [ (uPlot: uPlot, scaleKey: string) => {
           if (![ 'x', 'y' ].includes(scaleKey)) return;
@@ -140,28 +142,37 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
     const data = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
     if (!chartRef?.current) {
       chartRef.current = new uPlot(optionsRef.current, data, chartDivRef.current);
+      setChartIsMounted(true);
     }
     return () => {
       chartRef?.current?.destroy();
       chartRef.current = undefined;
+      setChartIsMounted(false);
     };
   }, [ ]);
 
   useEffect(() => {
     if (!chartDivRef.current) return;
-    if (shouldUpdate(optionsRef.current, options, chartRef.current)) {
-      console.log('create');
+    let newOptions = getAugmentedOptions(options);
+    if (shouldUpdate(optionsRef.current, newOptions, chartRef.current)) {
       chartRef.current?.destroy();
       chartRef.current = undefined;
-      const newOptions = uPlot.assign(optionsRef.current, options || {}) as uPlot.Options;
-      chartRef.current = new uPlot(
-        newOptions,
-        normalizedData as AlignedData,
-        chartDivRef.current,
-      );
+      /**
+       * TODO: preserve zoom when new series is selected?
+       * may also want to preserve other user interactions with the chart
+       * by taking some things off chartRef.current and putting them in newOptions
+       */
+      newOptions = uPlot.assign(
+        optionsRef.current,
+        newOptions || {},
+        // { scales: scalesZoomData.current }, // not what we want
+      ) as uPlot.Options;
+      chartRef.current = new uPlot(newOptions, normalizedData as AlignedData, chartDivRef.current);
+    } else {
+      chartRef.current?.redraw();
     }
     return () => {
-      if (options) optionsRef.current = options as uPlot.Options;
+      if (options) optionsRef.current = newOptions as uPlot.Options;
     };
 
   }, [ options, normalizedData ]);
@@ -172,8 +183,12 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   useEffect(() => {
     if (!chartRef.current || !normalizedData) return;
     const isZoomed = Object.values(scalesZoomData.current).some(i => i.isZoomed === true);
+    /**
+     * possibly condition on some aspect of the data to see whether it changed
+     * would involve making some assumptions
+     */
     chartRef.current.setData(normalizedData as AlignedData, !isZoomed);
-  }, [ chartRef, hasData, normalizedData ]);
+  }, [ hasData, normalizedData, chartIsMounted ]);
   /*
    * When a focus index is provided, highlight applicable series.
    */
@@ -218,7 +233,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   }, []);
 
   return (
-    <div ref={chartDivRef} style={{ ...style }}>
+    <div ref={chartDivRef} style={style}>
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
