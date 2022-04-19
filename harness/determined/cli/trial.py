@@ -129,29 +129,28 @@ def trial_logs(args: Namespace) -> None:
 
 @authentication.required
 def generate_support_bundle(args: Namespace) -> None:
-    output_dir = args.output_dir
-    if output_dir is None:
-        output_dir = os.getcwd()
+    try: 
+        output_dir = args.output_dir
+        if output_dir is None:
+            output_dir = os.getcwd()
 
-    elif not os.path.exists(output_dir):
-        raise ValueError(f"{output_dir} directory does not exist.")
+        dt = datetime.now().strftime("%Y%m%dT%H%M%S")
+        tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
+        fullpath = os.path.join(output_dir, tar_filename)
 
-    dt = datetime.now().strftime("%Y%m%dT%H%M%S")
-    tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
-    fullpath = os.path.join(output_dir, tar_filename)
+        with tempfile.TemporaryDirectory() as temp_dir, tarfile.open(fullpath, "w:gz") as bundle:
+            trial_logs_filepath = write_trial_logs(args, temp_dir)
+            master_logs_filepath = write_master_logs(args, temp_dir)
+            api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
 
-    with tempfile.TemporaryDirectory() as temp_dir, tarfile.open(fullpath, "w:gz") as bundle:
-        trial_logs_filepath = write_trial_logs(args, temp_dir)
-        master_logs_filepath = write_master_logs(args, temp_dir)
-        api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
+            bundle.add(trial_logs_filepath, arcname=os.path.join(tar_filename, os.path.basename(trial_logs_filepath)))
+            bundle.add(master_logs_filepath, arcname= os.path.join(tar_filename, os.path.basename(master_logs_filepath)))
+            bundle.add(api_trail_filepath, arcname=os.path.join(tar_filename, os.path.basename(api_trail_filepath)))
+            bundle.add(api_experiment_filepath, arcname=os.path.join(tar_filename, os.path.basename(api_experiment_filepath)))
 
-        bundle.add(trial_logs_filepath, arcname=os.path.basename(trial_logs_filepath))
-        bundle.add(master_logs_filepath, arcname=os.path.basename(master_logs_filepath))
-        bundle.add(api_trail_filepath, arcname=os.path.basename(api_trail_filepath))
-        bundle.add(api_experiment_filepath, arcname=os.path.basename(api_experiment_filepath))
-
-        print(f"bundle path: {fullpath}")
-
+            print(f"bundle path: {fullpath}")
+    except FileNotFoundError: 
+        print("Could not create the bundle because the output_dir provived was not found.")
 
 def write_trial_logs(args: Namespace, temp_dir: str) -> str:
     trial_logs = api.trial_logs(args.master, args.trial_id)
@@ -168,7 +167,7 @@ def write_master_logs(args: Namespace, temp_dir: str) -> str:
     file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
         for log in response.json():
-            f.write("{} [{}]: {}".format(log["time"], log["level"], log["message"]))
+            f.write("{} [{}]: {}\n".format(log["time"], log["level"], log["message"]))
     return file_path
 
 

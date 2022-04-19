@@ -212,13 +212,13 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     return False
 
 
-def first_trial_in_experiment(exp_id) -> int:
+def experiment_first_trial(exp_id: int) -> int:
     session = test_session()
     trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials
 
     assert len(trials) > 0
-    trial_example = trials[0]
-    trial_id = trial_example.id
+    trial = trials[0]
+    trial_id = trial.id
     return trial_id
 
 
