@@ -12,9 +12,11 @@ from botocore import exceptions as boto_exc
 
 from tests import config
 from tests.experiment import profile_test
-#from tests.nightly.compute_stats import compare_stats
 
 from .cluster_log_manager import ClusterLogManager
+
+# from tests.nightly.compute_stats import compare_stats
+
 
 _INTEG_MARKERS = {
     "tensorflow1_cpu",
