@@ -1,12 +1,11 @@
 import { Alert } from 'antd';
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import useScroll from 'hooks/useScroll';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
 import { convertMetricsToUplotData, getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
@@ -16,7 +15,7 @@ import css from './ProfilesEnabled.module.scss';
 import { MetricType } from './types';
 
 const CHART_HEIGHT = 300;
-const CHART_STYLE: React.CSSProperties = { height: '100%', paddingBottom: 16 };
+const CHART_STYLE: React.CSSProperties = { height: '100%', paddingBottom: 36 };
 
 /*
  * Shared uPlot chart options.
@@ -69,8 +68,6 @@ const ProfilesEnabled: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
-  const scroll = useScroll(containerRef);
-  const scrollTop = useRef(0);
 
   const isLoading = (
     metrics[MetricType.System].isLoading ||
@@ -84,6 +81,12 @@ const ProfilesEnabled: React.FC = () => {
   );
 
   const chartOptions = useMemo(() => {
+    /**
+     * TODO: metrics is a big object with all the data, but
+     * the only dependency on metrics here is through metrics[keys].name
+     * we should be able to pull that out into a separate object
+     * within ProfileFiltersProviders in order to have cleaner deps
+     */
     // Define shared options between all charts.
     const sharedOptions: Partial<Options> = {
       cursor: {
@@ -111,7 +114,12 @@ const ProfilesEnabled: React.FC = () => {
     const metricKeys = [ MetricType.System, MetricType.Throughput, MetricType.Timing ];
     const uPlotData = metricKeys.reduce((acc, key) => {
 
-      // Pad the series data with empty series data.
+      /**
+       * TODO: this is one of the two places where the charts are interdependent
+       * if there is a away to have the charts sync without their each having
+       * 'shadow series' for the ones corresponding to the other charts,
+       * we can remove this and reduce the entanglement
+       */
       const series = metricKeys.reduce((acc, seriesKey) => {
         const metricNames = metrics[seriesKey].names.slice(1);
         if (seriesKey === key) {
@@ -163,6 +171,12 @@ const ProfilesEnabled: React.FC = () => {
       const [ times, batches ] = metricData[key].data;
 
       // Pad the series data with empty series data.
+      /**
+       * TODO: this is the second of the two places where the charts are interdependent
+       * if there is a away to have the charts sync without their each having
+       * 'shadow series' for the ones corresponding to the other charts,
+       * we can remove this and reduce the entanglement
+       */
       const data = metricKeys.reduce((acc, seriesKey) => {
         const seriesData = metricData[seriesKey].data.slice(2);
         if (seriesKey === key) {
@@ -182,17 +196,6 @@ const ProfilesEnabled: React.FC = () => {
 
     return uPlotData;
   }, [ metrics ]);
-
-  /*
-   * Preserve and restore scroll position upon re-render.
-   */
-  useEffect(() => {
-    if (containerRef.current && scroll.scrollTop === 0 && scrollTop.current !== 0) {
-      containerRef.current.scrollTop = scrollTop.current;
-    } else {
-      scrollTop.current = scroll.scrollTop;
-    }
-  }, [ scroll ]);
 
   if (isLoading) {
     return <Spinner spinning tip="Waiting for profiler data..." />;

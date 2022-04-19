@@ -87,7 +87,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
   const [ tickThrottle, setTickThrottle ] = useState(false);
   useInterval(() => {
     setTickThrottle(!tickThrottle);
-  }, 2500);
+  }, 2000);
 
   const context = useMemo<ProfilesFiltersContextInterface>(
     () =>
@@ -102,7 +102,10 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
         updateSettings,
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    , [ tickThrottle, settings.name ],
+    , [ tickThrottle,
+      settings.name,
+      settings.agentId,
+      settings.gpuUuid ],
   );
 
   return (

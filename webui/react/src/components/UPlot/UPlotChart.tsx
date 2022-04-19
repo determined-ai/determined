@@ -63,7 +63,6 @@ const shouldUpdate = (
   ) {
     return true;
   }
-
   return false;
 };
 
@@ -160,7 +159,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       /**
        * TODO: preserve zoom when new series is selected?
        * may also want to preserve other user interactions with the chart
-       * by taking some things off chartRef.current and putting them in newOptions
+       * by taking some things from chartRef.current and putting them in newOptions
        */
       newOptions = uPlot.assign(
         optionsRef.current,
@@ -169,7 +168,15 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
       ) as uPlot.Options;
       chartRef.current = new uPlot(newOptions, normalizedData as AlignedData, chartDivRef.current);
     } else {
-      chartRef.current?.redraw();
+      /**
+       * TODO: instead of returning true or false,
+       * shouldUpdate could return actions:
+       * 'noAction', 'resetSeries', and 'remount', etc.
+       * then the we could put addSeries and delSeries here
+       * or remount, etc.
+       * depending on the action returned
+       */
+      // chartRef.current?.redraw();
     }
     return () => {
       if (options) optionsRef.current = newOptions as uPlot.Options;
@@ -184,8 +191,13 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
     if (!chartRef.current || !normalizedData) return;
     const isZoomed = Object.values(scalesZoomData.current).some(i => i.isZoomed === true);
     /**
-     * possibly condition on some aspect of the data to see whether it changed
+     * TODO: possible perf improvement
+     * possibly condition on some aspect
+     * of the data: length, min, max etc.
+     * to see whether the data changed
      * would involve making some assumptions
+     * on what are the possible way that
+     * the data can change
      */
     chartRef.current.setData(normalizedData as AlignedData, !isZoomed);
   }, [ hasData, normalizedData, chartIsMounted ]);
