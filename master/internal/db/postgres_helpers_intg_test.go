@@ -85,9 +85,10 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 }
 
 func requireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+	task := RequireMockTask(t, db, exp.OwnerID)
 	rqID := model.NewRequestID(rand.Reader)
 	tr := model.Trial{
-		TaskID:       model.NewTaskID(),
+		TaskID:       task.TaskID,
 		RequestID:    &rqID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,

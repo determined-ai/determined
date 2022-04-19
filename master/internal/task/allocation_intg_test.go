@@ -1,7 +1,9 @@
+//go:build integration
+// +build integration
+
 package task
 
 import (
-	"crypto/rand"
 	"fmt"
 	"testing"
 	"time"
@@ -16,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -59,7 +62,7 @@ func TestAllocation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			system, _, rm, trialImpl, trial, db, a, self := setup(t)
+			system, _, rm, trialImpl, trial, _, a, self := setup(t)
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -80,9 +83,6 @@ func TestAllocation(t *testing.T) {
 				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
 				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
 			}
-			db.On("AddAllocation", mock.Anything).Return(nil)
-			db.On("RecordTaskStats", mock.Anything).Return(nil)
-			db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
 			trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
 				Msg: tasks.TaskSpec{},
 			})
@@ -96,7 +96,6 @@ func TestAllocation(t *testing.T) {
 			}).Error())
 			system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
 			require.Nil(t, trialImpl.AssertExpectations())
-			require.True(t, db.AssertExpectations(t))
 
 			// Pre-ready stage.
 			for _, r := range resources {
@@ -105,12 +104,10 @@ func TestAllocation(t *testing.T) {
 					ResourcesID:    summary.ResourcesID,
 					ResourcesState: sproto.Assigned,
 				}
-				db.On("UpdateAllocationState", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 
 				beforePulling := time.Now().UTC().Truncate(time.Millisecond)
 				containerStateChanged.ResourcesState = sproto.Pulling
-				db.On("UpdateAllocationStartTime", mock.Anything).Return(nil)
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
 				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
@@ -145,9 +142,6 @@ func TestAllocation(t *testing.T) {
 			}
 
 			// Terminating stage.
-			db.On("DeleteAllocationSession", a.model.AllocationID).Return(nil)
-			db.On("CompleteAllocation", mock.Anything).Return(nil)
-			db.On("CompleteAllocationTelemetry", a.model.AllocationID).Return([]byte{}, nil)
 			for _, r := range resources {
 				summary := r.Summary()
 				containerStateChanged := sproto.ResourcesStateChanged{
@@ -170,13 +164,13 @@ func TestAllocation(t *testing.T) {
 				}
 			}
 			require.Contains(t, trialImpl.Messages, tc.exit)
-			require.True(t, db.AssertExpectations(t))
+			//require.True(t, db.AssertExpectations(t))
 		})
 	}
 }
 
 func TestAllocationAllGather(t *testing.T) {
-	system, _, rm, trialImpl, _, db, a, self := setup(t)
+	system, _, rm, trialImpl, _, _, a, self := setup(t)
 
 	// Pre-allocated stage.
 	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -197,9 +191,7 @@ func TestAllocationAllGather(t *testing.T) {
 		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
 		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
 	}
-	db.On("AddAllocation", mock.Anything).Return(nil)
-	db.On("RecordTaskStats", mock.Anything).Return(nil)
-	db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
+
 	trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
 		Msg: tasks.TaskSpec{},
 	})
@@ -213,7 +205,6 @@ func TestAllocationAllGather(t *testing.T) {
 	}).Error())
 	system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
 	require.Nil(t, trialImpl.AssertExpectations())
-	require.True(t, db.AssertExpectations(t))
 
 	numPeers := 4
 	type peerState struct {
@@ -272,7 +263,7 @@ func TestAllocationAllGather(t *testing.T) {
 
 func setup(t *testing.T) (
 	*actor.System, *actors.MockActor, *actor.Ref, *actors.MockActor,
-	*actor.Ref, *mocks.DB, *Allocation, *actor.Ref,
+	*actor.Ref, *db.PgDB, *Allocation, *actor.Ref,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
@@ -292,22 +283,22 @@ func setup(t *testing.T) (
 	trialAddr := "trial"
 	trial := system.MustActorOf(actor.Addr(trialAddr), &trialImpl)
 
-	// mock db.
-	db := &mocks.DB{}
+	// real db.
+	pgDB := db.MustSetupTestPostgres(t)
 
 	// instantiate the allocation
-	rID := model.NewRequestID(rand.Reader)
-	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
+	task := db.RequireMockTask(t, pgDB, nil)
+
 	a := NewAllocation(
 		detLogger.Context{},
 		sproto.AllocateRequest{
-			TaskID:       taskID,
-			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", taskID)),
+			TaskID:       task.TaskID,
+			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
 			SlotsNeeded:  2,
 			Preemptible:  true,
 			// ...
 		},
-		db,
+		pgDB,
 		rm,
 		logger,
 	)
@@ -316,5 +307,5 @@ func setup(t *testing.T) (
 	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)
 
-	return system, &rmImpl, rm, &trialImpl, trial, db, a.(*Allocation), self
+	return system, &rmImpl, rm, &trialImpl, trial, pgDB, a.(*Allocation), self
 }

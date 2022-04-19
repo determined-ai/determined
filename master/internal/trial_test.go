@@ -201,6 +201,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 
 	// mock db.
 	db := &mocks.DB{}
+	db.On("AddTask", mock.Anything).Return(nil)
 
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)

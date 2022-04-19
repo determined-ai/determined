@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -101,7 +103,7 @@ func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
+func (rp *ResourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateRequest) {
 	rp.notifyOnStop(ctx, msg.TaskActor, sproto.ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.AllocationID) == 0 {
@@ -144,7 +146,19 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		return false
 	}
 
-	resources := make([]sproto.Resources, 0, len(fits))
+	resources := make([]*containerResources, 0, len(fits))
+	rollback := false
+
+	defer func() {
+		if rollback {
+			// Rollback previous allocations.
+			for _, resource := range resources {
+				ctx.Tell(resource.agent.Handler,
+					agent.DeallocateContainer{ContainerID: resource.containerID})
+			}
+		}
+	}()
+
 	for _, fit := range fits {
 		containerID := cproto.NewID()
 		resp := ctx.Ask(fit.Agent.Handler, agent.AllocateFreeDevices{
@@ -163,31 +177,45 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		case error:
 			// Rollback previous allocations.
 			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
-			for _, resource := range resources {
-				resource := resource.(*containerResources)
-				ctx.Tell(resource.agent.Handler,
-					agent.DeallocateContainer{ContainerID: resource.containerID})
-			}
-
+			rollback = true
 			return false
 		default:
 			panic(fmt.Sprintf("bad AllocateFreeDevices response: %s", resp))
 		}
 	}
 
+	// Persist allocation_resources and container_resources.
+	for _, cr := range resources {
+		rs := task.NewResourcesState(cr, -1)
+		if err := rs.Persist(); err != nil {
+			ctx.Log().WithError(err).Error("persistence failure")
+			rollback = true
+			return false
+		}
+		if err := cr.Persist(); err != nil {
+			ctx.Log().WithError(err).Error("persistence failure")
+			rollback = true
+			return false
+		}
+	}
+
+	sprotoResources := make([]sproto.Resources, len(resources))
+	for i, v := range resources {
+		sprotoResources[i] = v
+	}
+
 	allocated := sproto.ResourcesAllocated{
 		ID:                req.AllocationID,
 		ResourcePool:      rp.config.PoolName,
-		Resources:         resources,
+		Resources:         sprotoResources,
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
-	req.TaskActor.System().Tell(req.TaskActor, allocated)
+	ctx.Tell(req.TaskActor, allocated)
 
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(resources))
 	for _, allocation := range resources {
-		allocation := allocation.(*containerResources)
 		allocatedAgents = append(allocatedAgents, allocation.agent.Handler)
 	}
 
@@ -625,7 +653,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		rp.receiveSetTaskName(ctx, msg)
 
 	case sproto.AllocateRequest:
-		rp.addTask(ctx, msg)
+		rp.allocateRequest(ctx, msg)
 
 	case sproto.ResourcesReleased:
 		rp.resourcesReleased(ctx, msg.TaskActor)
@@ -752,4 +780,28 @@ func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
 		ContainerID: c.containerID,
 		LogContext:  logCtx,
 	})
+}
+
+func (c containerResources) Persist() error {
+	summary := c.Summary()
+
+	var agentID aproto.ID
+
+	switch agentCount := len(summary.AgentDevices); agentCount {
+	case 1:
+		for key := range summary.AgentDevices {
+			agentID = key
+			break
+		}
+	default:
+		return errors.New(fmt.Sprintf("%d agents in containerResources summary", agentCount))
+	}
+
+	snapshot := agent.ContainerSnapshot{
+		ResourceID: summary.ResourcesID,
+		ID:         c.containerID,
+		AgentID:    agentID,
+	}
+	_, err := db.Bun().NewInsert().Model(&snapshot).Exec(context.TODO())
+	return err
 }

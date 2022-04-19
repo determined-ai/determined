@@ -18,34 +18,22 @@ import (
 
 // AddTrial adds the trial to the database and sets its ID.
 func (db *PgDB) AddTrial(trial *model.Trial) error {
-	return db.withTransaction("add_trial", func(tx *sqlx.Tx) error {
-		if trial.ID != 0 {
-			return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
-		}
+	if trial.ID != 0 {
+		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
+	}
 
-		if err := addTask(tx, &model.Task{
-			TaskID:     trial.TaskID,
-			TaskType:   model.TaskTypeTrial,
-			StartTime:  trial.StartTime,
-			JobID:      &trial.JobID,
-			LogVersion: model.CurrentTaskLogVersion,
-		}); err != nil {
-			return err
-		}
-
-		if err := namedGet(tx, &trial.ID, `
+	if err := db.namedGet(&trial.ID, `
 INSERT INTO trials
-  (task_id, request_id, experiment_id, state, start_time, end_time,
-   hparams, warm_start_checkpoint_id, seed)
+(task_id, request_id, experiment_id, state, start_time, end_time,
+hparams, warm_start_checkpoint_id, seed)
 VALUES (:task_id, :request_id, :experiment_id, :state, :start_time,
-        :end_time, :hparams, :warm_start_checkpoint_id, :seed)
+	:end_time, :hparams, :warm_start_checkpoint_id, :seed)
 RETURNING id`, trial); err != nil {
-			// Assume the foreign key constraint is handled by the database.
-			return errors.Wrapf(err, "error inserting trial %v", *trial)
-		}
+		// Assume the foreign key constraint is handled by the database.
+		return errors.Wrapf(err, "error inserting trial %v", *trial)
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // TrialByID looks up a trial by ID, returning an error if none exists.
