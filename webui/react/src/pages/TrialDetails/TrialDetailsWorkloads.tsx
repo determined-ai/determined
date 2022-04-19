@@ -13,7 +13,7 @@ import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import {
-  CheckpointDetail, CommandTask, ExperimentBase, MetricName,
+  CheckpointWorkloadExtended, CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
@@ -44,7 +44,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   trial,
   updateSettings,
 }: Props) => {
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
+  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
 
   const hasFiltersApplied = useMemo(() => {
@@ -58,9 +58,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       if (trial && record.checkpoint && hasCheckpointStep(record)) {
         const checkpoint = {
           ...record.checkpoint,
-          batch: record.checkpoint.totalBatches,
-          experimentId: trial?.experimentId,
-          trialId: trial?.id,
+          experimentId: trial.experimentId,
+          trialId: trial.id,
         };
         return (
           <Tooltip title="View Checkpoint">
@@ -130,7 +129,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       });
   }, [ settings.filter, trial?.workloads ]);
 
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+  const handleCheckpointShow = (
+    event: React.MouseEvent,
+    checkpoint: CheckpointWorkloadExtended,
+  ) => {
     event.stopPropagation();
     setActiveCheckpoint(checkpoint);
     setShowCheckpoint(true);
@@ -195,7 +197,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           checkpoint={activeCheckpoint}
           config={experiment?.config}
           show={showCheckpoint}
-          title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
+          title={`Checkpoint for Batch ${activeCheckpoint.totalBatches}`}
           onHide={handleCheckpointDismiss}
         />
       )}
