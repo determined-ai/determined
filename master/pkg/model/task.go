@@ -104,7 +104,6 @@ type AllocationState int
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {
 	AllocationID AllocationID
-	ResourcePool string
 	EventType    string
 	StartTime    *time.Time
 	EndTime      *time.Time
