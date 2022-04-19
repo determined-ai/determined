@@ -3,7 +3,6 @@ import subprocess
 
 import pytest
 
-from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
