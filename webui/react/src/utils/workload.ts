@@ -10,13 +10,6 @@ export const checkpointSize = (
   return 0;
 };
 
-export const getBatchNumber = (
-  data: { batch: number } | { totalBatches: number },
-): number => {
-  if ('batch' in data) return data.batch;
-  return data.totalBatches;
-};
-
 export const getWorkload = (
   workload: Type.WorkloadGroup,
 ): Type.MetricsWorkload | Type.CheckpointWorkload => {

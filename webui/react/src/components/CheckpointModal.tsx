@@ -6,17 +6,21 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
-import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
-  ExperimentConfig, RunState } from 'types';
+import {
+  CheckpointStorageType,
+  CheckpointWorkloadExtended,
+  ExperimentConfig,
+  RunState,
+} from 'types';
 import { formatDatetime } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/workload';
+import { checkpointSize } from 'utils/workload';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';
 
 interface Props {
-  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended;
   config: ExperimentConfig;
   onHide?: () => void;
   searcherValidation?: number;
@@ -26,7 +30,7 @@ interface Props {
 
 const getStorageLocation = (
   config: ExperimentConfig,
-  checkpoint: CheckpointDetail | CheckpointWorkload,
+  checkpoint: CheckpointWorkloadExtended,
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
@@ -101,11 +105,7 @@ const CheckpointModal: React.FC<Props> = (
     showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
   }, [ checkpoint.uuid, onHide, showRegisterCheckpointModal ]);
 
-  const totalBatchesProcessed = getBatchNumber(checkpoint);
-
-  const searcherMetric = props.searcherValidation !== undefined ?
-    props.searcherValidation :
-    ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
+  const searcherMetric = props.searcherValidation;
 
   if (!checkpoint.experimentId || !checkpoint.trialId) {
     return null;
@@ -132,7 +132,7 @@ const CheckpointModal: React.FC<Props> = (
                 Trial {checkpoint.trialId}
               </Link>
               <span className={css.sourceDivider} />
-              <span>Batch {totalBatchesProcessed}</span>
+              <span>Batch {checkpoint.totalBatches}</span>
             </div>
           ),
         )}
