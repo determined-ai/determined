@@ -1,10 +1,10 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  border-color: var(--theme-colors-monochrome-12);
+  background-color: var(--theme-surface);
+  border-color: var(--theme-surface-border);
   border-radius: var(--theme-border-radius);
   border-style: solid;
   border-width: var(--theme-stroke-width);
-  color: var(--theme-colors-monochrome-5);
+  color: var(--theme-surface-on);
   display: block;
   overflow: hidden;
   overflow-wrap: break-word;
@@ -34,10 +34,10 @@
     }
     .icon {
       align-items: center;
-      background-color: var(--theme-colors-monochrome-17);
+      background-color: var(--theme-surface-strong);
       border:
         var(--theme-stroke-width) solid
-        var(--theme-colors-monochrome-11);
+        var(--theme-surface-border-strong);
       border-radius: var(--theme-border-radius);
       display: flex;
       flex-shrink: 0;
@@ -46,7 +46,7 @@
       width: 44px;
     }
     .name {
-      color: var(--theme-colors-monochrome-2);
+      color: var(--theme-surface-on-strong);
       font-size: 14px;
       line-height: 20px;
       overflow: hidden;
@@ -91,7 +91,7 @@
 .link {
   &:hover {
     border-color: var(--theme-status-active);
-    box-shadow: var(--theme-shadow);
+    box-shadow: var(--theme-elevation);
     margin-bottom: calc(-1 * 2px);
     margin-left: 0;
     margin-right: 0;

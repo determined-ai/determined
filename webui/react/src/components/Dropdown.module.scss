@@ -15,10 +15,10 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   }
   .content > :global(.ant-menu),
   .content > * {
-    background-color: var(--theme-colors-monochrome-17);
-    border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
+    background-color: var(--theme-float);
+    border: solid var(--theme-stroke-width) var(--theme-float-border);
     border-radius: var(--theme-border-radius);
-    box-shadow: var(--theme-shadow);
+    box-shadow: var(--theme-elevation);
   }
   .content > :global(.ant-menu) > li {
     font-size: 12px;
@@ -27,8 +27,8 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   }
 }
 .base.arrow > .content::after {
-  background-color: var(--theme-colors-monochrome-17);
-  border-color: var(--theme-colors-monochrome-13);
+  background-color: var(--theme-float);
+  border-color: var(--theme-float-border);
   border-style: solid;
   content: '';
   height: 8px;

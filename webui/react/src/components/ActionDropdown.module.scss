@@ -1,5 +1,5 @@
 .base {
-  color: var(--theme-colors-monochrome-8);
+  color: var(--theme-float);
   display: flex;
   justify-content: flex-end;
 
@@ -20,7 +20,7 @@
   }
   button:disabled,
   button[disabled] {
-    color: var(--theme-colors-monochrome-11);
+    color: var(--theme-float-on);
     cursor: not-allowed;
 
     &:hover { color: var(--theme-colors-monochrome-11); }

@@ -1,5 +1,6 @@
 .base {
   background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;

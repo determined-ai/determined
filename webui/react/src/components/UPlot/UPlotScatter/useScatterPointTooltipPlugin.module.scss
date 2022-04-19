@@ -1,8 +1,8 @@
 .tooltip {
-  background-color: var(--theme-colors-monochrome-17);
-  border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
+  background-color: var(--theme-float);
+  border: solid var(--theme-stroke-width) var(--theme-float-border);
   border-radius: var(--theme-border-radius);
-  box-shadow: var(--theme-shadow);
+  box-shadow: var(--theme-elevation);
   cursor: auto;
   display: none;
   padding: 4px 6px;
@@ -14,7 +14,7 @@
     font-size: 12px;
   }
   .label {
-    color: var(--theme-colors-monochrome-6);
+    color: var(--theme-float-on-weak);
     padding-right: 6px;
     white-space: nowrap;
   }
@@ -22,7 +22,7 @@
     content: ':';
   }
   .info {
-    color: var(--theme-colors-monochrome-0);
+    color: var(--theme-float-on);
     white-space: nowrap;
   }
 }

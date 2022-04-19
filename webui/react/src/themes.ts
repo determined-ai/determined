@@ -216,14 +216,14 @@ const stateColorMapping = {
   [RunState.Active]: 'active',
   [RunState.Canceled]: 'inactive',
   [RunState.Completed]: 'success',
-  [RunState.Deleted]: 'failed',
-  [RunState.Deleting]: 'failed',
-  [RunState.DeleteFailed]: 'failed',
-  [RunState.Errored]: 'failed',
+  [RunState.Deleted]: 'critical',
+  [RunState.Deleting]: 'critical',
+  [RunState.DeleteFailed]: 'critical',
+  [RunState.Errored]: 'critical',
   [RunState.Paused]: 'suspended',
   [RunState.StoppingCanceled]: 'inactive',
   [RunState.StoppingCompleted]: 'success',
-  [RunState.StoppingError]: 'failed',
+  [RunState.StoppingError]: 'critical',
   [RunState.Unspecified]: 'inactive',
   [CommandState.Pending]: 'suspended',
   [CommandState.Assigned]: 'suspended',
@@ -245,9 +245,10 @@ const stateColorMapping = {
 export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
 SlotState | JobState
 
-export const getStateColorCssVar = (state: StateOfUnion | undefined): string => {
+export const getStateColorCssVar = (state: StateOfUnion | undefined, isOn = false): string => {
   const name = state ? stateColorMapping[state] : 'active';
-  return `var(--theme-colors-states-${name})`;
+  const on = isOn ? '-on' : '';
+  return `var(--theme-status-${name}${on})`;
 };
 
 export const getStateColor = (state: StateOfUnion | undefined): string => {
@@ -268,7 +269,18 @@ const generateStrongWeak = (theme: Theme): Theme => {
       if (baseValue && isColor(baseValue)) {
         const rgba = str2rgba(baseValue);
         const mixer = isStrong ? rgbaStrong : rgbaWeak;
-        theme[key as keyof Theme] = rgba2str(rgbaFromGradient(rgba, mixer, 0.1));
+        if (key === 'stageWeak') {
+          console.log(
+            key,
+            baseKey,
+            baseValue,
+            isColor(baseValue),
+            rgba,
+            mixer,
+            rgba2str(rgbaFromGradient(rgba, mixer, 0.05)),
+          );
+        }
+        theme[key as keyof Theme] = rgba2str(rgbaFromGradient(rgba, mixer, 0.05));
       }
     }
   }
@@ -327,6 +339,32 @@ const themeBase = {
   floatBorderStrong: undefined,
   floatBorderWeak: undefined,
 
+  // Interactive styles.
+  primary: undefined,
+  primaryHover: undefined,
+  primaryActive: undefined,
+  primaryInactive: undefined,
+  primaryOn: undefined,
+  primaryOnHover: undefined,
+  primaryOnActive: undefined,
+  primaryOnInactive: undefined,
+  primaryBorder: undefined,
+  primaryBorderHover: undefined,
+  primaryBorderActive: undefined,
+  primaryBorderInactive: undefined,
+  secondary: undefined,
+  secondaryHover: undefined,
+  secondaryActive: undefined,
+  secondaryInactive: undefined,
+  secondaryOn: undefined,
+  secondaryOnHover: undefined,
+  secondaryOnActive: undefined,
+  secondaryOnInactive: undefined,
+  secondaryBorder: undefined,
+  secondaryBorderHover: undefined,
+  secondaryBorderActive: undefined,
+  secondaryBorderInactive: undefined,
+
   // Specialized and unique styles.
   density: '0',
   borderRadius: '4px',
@@ -367,6 +405,12 @@ const themeBase = {
   statusPendingOn: 'rgba(255, 255, 255, 1.0)',
   statusPendingOnStrong: undefined,
   statusPendingOnWeak: undefined,
+  statusSuccess: 'rgba(0, 153, 0, 1.0',
+  statusSuccessStrong: undefined,
+  statusSuccessWeak: undefined,
+  statusSuccessOn: 'rgba(255, 255, 255, 1.0',
+  statusSuccessOnStrong: undefined,
+  statusSuccessOnWeak: undefined,
   statusWarning: 'rgba(204, 153, 0, 1.0)',
   statusWarningStrong: undefined,
   statusWarningWeak: undefined,
@@ -381,18 +425,18 @@ const themeLight = {
   weak: 'rgba(255, 255, 255, 1.0)',
 
   // Area and surface styles.
-  background: 'rgba(204, 204, 202, 1.0)',
+  background: 'rgba(240, 240, 240, 1.0)',
   backgroundOn: 'rgba(18, 18, 18, 1.0)',
   backgroundBorder: undefined,
-  stage: 'rgba(220, 219, 217, 1.0)',
+  stage: 'rgba(246, 246, 246, 1.0)',
   stageOn: 'rgba(69, 69, 69, 1.0)',
   stageBorder: 'rgba(194, 194, 194, 1.0)',
-  surface: 'rgba(200, 199, 197, 1.0)',
+  surface: 'rgba(250, 250, 250, 1.0)',
   surfaceOn: 'rgba(0, 8, 16, 1.0)',
-  surfaceBorder: 'rgba(190, 190, 190, 1.0)',
-  float: 'rgba(195, 195, 195, 1.0)',
+  surfaceBorder: 'rgba(225, 225, 225, 1.0)',
+  float: 'rgba(255, 255, 255, 1.0)',
   floatOn: 'rgba(49, 49, 49, 1.0)',
-  floatBorder: 'rgba(100, 100, 100, 1.0)',
+  floatBorder: 'rgba(225, 225, 225, 1.0)',
 
   // Specialized and unique styles.
   overlay: 'rgba(255, 255, 255, 0.75)',

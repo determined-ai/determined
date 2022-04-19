@@ -38,9 +38,9 @@ html {
   /* Dropdown */
 
   .ant-dropdown-menu {
-    border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+    border: solid var(--theme-stroke-width) var(--theme-float-border);
     border-radius: var(--theme-border-radius);
-    box-shadow: var(--theme-shadow);
+    box-shadow: var(--theme-elevation);
   }
 
   /* Form */
@@ -186,7 +186,7 @@ html {
     border-width: var(--theme-stroke-width);
   }
   .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger {
-    background-color: var(--theme-colors-monochrome-13);
+    background-color: var(--theme-surface-weak);
   }
   .ant-table-tbody > tr [class*=tagPlus] {
     opacity: 0;
