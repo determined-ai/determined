@@ -38,20 +38,18 @@ const shouldUpdate = (
     return true;
   }
 
-  if (
+  const someAxisLabelHasChanged =
     prev.axes?.some((prevAxis, seriesIdx) => {
       const nextAxis = next.axes?.[seriesIdx];
       return prevAxis.label !== nextAxis?.label;
-    })
-  ) {
-    return true;
-  }
+    });
+  if (someAxisLabelHasChanged) return true;
 
   if (chart?.series?.length !== next.series?.length) {
     return true;
   }
 
-  if (
+  const someSeriesHasChanged =
     chart.series.some((chartSerie, seriesIdx) => {
       const nextSerie = next.series?.[seriesIdx];
       return (
@@ -59,18 +57,20 @@ const shouldUpdate = (
         || (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
         || (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
       );
-    })
-  ) {
-    return true;
-  }
+    });
+  if(someSeriesHasChanged) return true;
+
   return false;
 };
 
-const getNormalizedData = (data: AlignedData | FacetedData | undefined, options: uPlot.Options) => {
+const getNormalizedData = (
+  data: AlignedData | FacetedData | undefined,
+  mode: uPlot.Mode | undefined,
+) => {
   if (!data || data.length < 2) return [ false, undefined ];
 
   // Is the chart aligned (eg. linear) or faceted (eg. scatter plot)?
-  if (options?.mode === 2) {
+  if (mode === 2) {
     return [ true, data as AlignedData ];
   } else {
     // Figure out the lowest sized series data.
@@ -80,7 +80,7 @@ const getNormalizedData = (data: AlignedData | FacetedData | undefined, options:
     }, Number.MAX_SAFE_INTEGER);
 
     // Making sure the X series and all the other series data are the same length;
-    const trimmedData = chartData.map(series => series.slice(0, minDataLength));
+    const trimmedData = chartData.map((series) => series.slice(0, minDataLength));
 
     // Checking to make sure the X series has some data.
     const hasXValues = (trimmedData?.[0]?.length ?? 0) !== 0;
@@ -128,7 +128,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   const optionsRef = useRef<uPlot.Options>(getAugmentedOptions(options));
 
   const [ hasData, normalizedData ] = useMemo(
-    () => getNormalizedData(data, optionsRef.current)
+    () => getNormalizedData(data, optionsRef.current?.mode)
     , [ data ],
   );
 
@@ -207,7 +207,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   useEffect(() => {
     if (!chartRef.current) return;
     const hasFocus = focusIndex !== undefined;
-    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });'';
+    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
   }, [ focusIndex ]);
 
   /*
