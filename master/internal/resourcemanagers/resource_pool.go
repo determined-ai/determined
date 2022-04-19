@@ -176,7 +176,10 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	}
 
 	allocated := sproto.ResourcesAllocated{
-		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Resources: resources,
+		ID:                req.AllocationID,
+		ResourcePool:      rp.config.PoolName,
+		Resources:         resources,
+		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
@@ -722,6 +725,7 @@ func (c containerResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
+	spec.TaskType = logCtx["task-type"].(model.TaskType)
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{

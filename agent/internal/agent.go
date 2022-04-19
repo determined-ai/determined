@@ -99,6 +99,11 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
 		}
 
+	case aproto.ContainerStatsRecord:
+		if a.socket != nil {
+			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerStatsRecord: &msg}})
+		}
+
 	case model.TaskLog:
 		return a.postTaskLog(msg)
 

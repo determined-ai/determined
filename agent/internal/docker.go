@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type dockerActor struct {
@@ -39,7 +40,9 @@ type (
 	}
 	pullImage struct {
 		cproto.PullSpec
-		Name string
+		Name         string
+		TaskType     string
+		AllocationID model.AllocationID
 	}
 	runContainer struct {
 		cproto.RunSpec
@@ -124,6 +127,28 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		return
 	}
 
+	now := time.Now().UTC()
+	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStatsRecord{
+		EndStats: false,
+		TaskType: model.TaskType(msg.TaskType),
+		Stats: &model.TaskStats{
+			AllocationID: msg.AllocationID,
+			EventType:    "IMAGEPULL",
+			StartTime:    &now,
+		}})
+
+	defer func() {
+		now := time.Now().UTC()
+		ctx.Tell(ctx.Self().Parent(), aproto.ContainerStatsRecord{
+			EndStats: true,
+			TaskType: model.TaskType(msg.TaskType),
+			Stats: &model.TaskStats{
+				AllocationID: msg.AllocationID,
+				EventType:    "IMAGEPULL",
+				EndTime:      &now,
+			}})
+	}()
+
 	// TODO: replace with command.EncodeAuthToBase64
 	reg := ""
 	if msg.Registry != nil {
@@ -169,6 +194,7 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		sendErr(ctx, errors.Wrap(err, "error closing log stream"))
 		return
 	}
+
 	ctx.Tell(ctx.Sender(), imagePulled{})
 }
 

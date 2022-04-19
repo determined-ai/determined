@@ -101,6 +101,14 @@ type Allocation struct {
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState int
 
+// TaskStats is the model for task stats in the database.
+type TaskStats struct {
+	AllocationID AllocationID
+	EventType    string
+	StartTime    *time.Time
+	EndTime      *time.Time
+}
+
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
 	AllocationStatePending AllocationState = 0

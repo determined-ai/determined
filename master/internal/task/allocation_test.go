@@ -81,6 +81,7 @@ func TestAllocation(t *testing.T) {
 				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
 			}
 			db.On("AddAllocation", mock.Anything).Return(nil)
+			db.On("RecordTaskStats", mock.Anything).Return(nil)
 			db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
 			trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
 				Msg: tasks.TaskSpec{},
@@ -197,6 +198,7 @@ func TestAllocationAllGather(t *testing.T) {
 		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
 	}
 	db.On("AddAllocation", mock.Anything).Return(nil)
+	db.On("RecordTaskStats", mock.Anything).Return(nil)
 	db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
 	trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
 		Msg: tasks.TaskSpec{},

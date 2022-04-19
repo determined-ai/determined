@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -418,9 +419,26 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
+	case msg.ContainerStatsRecord != nil:
+		if a.taskNeedsRecording(msg.ContainerStatsRecord) {
+			var err error
+			if msg.ContainerStatsRecord.EndStats {
+				err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
+			} else {
+				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
+			}
+			if err != nil {
+				ctx.Log().Errorf("Error record task stats %s", err)
+			}
+		}
+
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}
+}
+
+func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
+	return record.TaskType == model.TaskTypeTrial
 }
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
