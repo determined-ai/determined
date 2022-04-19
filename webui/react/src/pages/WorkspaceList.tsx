@@ -69,8 +69,9 @@ const WorkspaceList: React.FC = () => {
       const response = await getWorkspaces({});
       setTotal(response.pagination.total ?? 0);
       setWorkspaces(prev => {
-        if (isEqual(prev, response.workspaces)) return prev;
-        return response.workspaces;
+        const withoutDefault = response.workspaces.filter(w => !w.immutable);
+        if (isEqual(prev, withoutDefault)) return prev;
+        return withoutDefault;
       });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch workspaces.' });

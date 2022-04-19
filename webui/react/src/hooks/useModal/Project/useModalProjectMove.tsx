@@ -6,7 +6,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import SelectFilter from 'components/SelectFilter';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { getWorkspaces, moveProject } from 'services/api';
-import { Workspace } from 'types';
+import { Project, Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import css from './useModalProjectMove.module.scss';
@@ -15,10 +16,10 @@ const { Option } = Select;
 
 interface Props {
   onClose?: () => void;
-  projectId: number;
+  project: Project;
 }
 
-const useModalProjectMove = ({ onClose, projectId }: Props): ModalHooks => {
+const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   const [ destinationWorkspaceId, setDestinationWorkspaceId ] = useState<number>();
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
 
@@ -31,7 +32,12 @@ const useModalProjectMove = ({ onClose, projectId }: Props): ModalHooks => {
   const fetchWorkspaces = useCallback(async () => {
     try {
       const response = await getWorkspaces({ limit: 0 });
-      setWorkspaces(response.workspaces);
+      setWorkspaces(prev => {
+        const withoutDefaultAndCurrent = response.workspaces.filter(w =>
+          !w.immutable && w.id !== project.workspaceId);
+        if (isEqual(prev, withoutDefaultAndCurrent)) return prev;
+        return withoutDefaultAndCurrent;
+      });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -41,7 +47,7 @@ const useModalProjectMove = ({ onClose, projectId }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, []);
+  }, [ project.workspaceId ]);
 
   useEffect(() => {
     fetchWorkspaces();
@@ -75,7 +81,7 @@ const useModalProjectMove = ({ onClose, projectId }: Props): ModalHooks => {
   const handleOk = useCallback(async () => {
     if (!destinationWorkspaceId) return;
     try {
-      await moveProject({ destinationWorkspaceId, projectId });
+      await moveProject({ destinationWorkspaceId, projectId: project.id });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -85,7 +91,7 @@ const useModalProjectMove = ({ onClose, projectId }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ destinationWorkspaceId, projectId ]);
+  }, [ destinationWorkspaceId, project.id ]);
 
   const getModalProps = useCallback((destinationWorkspaceId?: number): ModalFuncProps => {
     return {

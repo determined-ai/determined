@@ -24,9 +24,9 @@ const ProjectActionDropdown: React.FC<Props> = (
   { project, children, curUser, onVisibleChange, className, direction = 'vertical' }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openProjectMove } = useModalProjectMove({ projectId: project.id });
-  const { modalOpen: openProjectDelete } = useModalProjectDelete({ project: project });
-  const { modalOpen: openProjectEdit } = useModalProjectEdit({ project: project });
+  const { modalOpen: openProjectMove } = useModalProjectMove({ project });
+  const { modalOpen: openProjectDelete } = useModalProjectDelete({ project });
+  const { modalOpen: openProjectEdit } = useModalProjectEdit({ project });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.username === project.username;
