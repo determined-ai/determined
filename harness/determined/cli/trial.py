@@ -3,6 +3,7 @@ import json
 import os
 import tarfile
 import tempfile
+import typing
 from argparse import Namespace
 from datetime import datetime
 from typing import Any, List, Tuple
@@ -184,7 +185,7 @@ def write_api_call(args: Namespace, temp_dir: str) -> Tuple[str, str]:
     return api_experiment_filepath, api_trial_filepath
 
 
-def create_json_file_in_dir(content: json, file_path: str) -> None:
+def create_json_file_in_dir(content: typing.Any, file_path: str) -> None:
     with open(file_path, "w") as f:
         json.dump(content, f)
 
