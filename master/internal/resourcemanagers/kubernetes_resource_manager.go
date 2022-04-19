@@ -106,7 +106,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case
 		job.GetJobQ,
-		job.GetJobSummary,
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
@@ -327,7 +326,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasksWithPosition(k.reqList, k.groups, k.queuePositions, true)
-	jobQinfo, _ := reduceToJobQInfo(reqs)
+	jobQinfo := reduceToJobQInfo(reqs)
 
 	return jobQinfo
 }

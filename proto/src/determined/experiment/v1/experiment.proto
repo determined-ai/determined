@@ -50,7 +50,6 @@ message Experiment {
         "state",
         "archived",
         "num_trials",
-        "job_id",
         "username",
         "job_id",
         "searcher_type"

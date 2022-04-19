@@ -8,14 +8,12 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
+func reduceToJobQInfo(reqs AllocReqs) map[model.JobID]*job.RMJobInfo {
 	isAdded := make(map[model.JobID]*job.RMJobInfo)
-	jobActors := make(map[model.JobID]*actor.Ref)
 	jobsAhead := 0
 	for _, req := range reqs {
 		if !req.IsUserVisible {
@@ -28,7 +26,6 @@ func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model
 				State:     req.State,
 			}
 			isAdded[req.JobID] = v1JobInfo
-			jobActors[req.JobID] = req.Group
 			jobsAhead++
 		}
 		// Carry over the the highest state.
@@ -40,7 +37,7 @@ func reduceToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model
 			v1JobInfo.AllocatedSlots += req.SlotsNeeded
 		}
 	}
-	return isAdded, jobActors
+	return isAdded
 }
 
 func jobStats(taskList *taskList) *jobv1.QueueStats {
@@ -53,7 +50,7 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 		}
 		reqs = append(reqs, req)
 	}
-	jobsMap, _ := reduceToJobQInfo(reqs)
+	jobsMap := reduceToJobQInfo(reqs)
 	for _, jobInfo := range jobsMap {
 		if jobInfo.State == job.SchedulingStateQueued {
 			stats.QueuedCount++
