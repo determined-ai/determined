@@ -12,6 +12,18 @@ mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
 ln -sf /proc/$$/fd/1 "$STDOUT_FILE"
 ln -sf /proc/$$/fd/2 "$STDERR_FILE"
 
+# Create a FIFO to monitor process substitution exits, and a count to know how
+# many to wait on.
+DET_LOG_WAIT_FIFO=/run/determined/train/logs/wait.fifo
+DET_LOG_WAIT_COUNT=0
+mkfifo $DET_LOG_WAIT_FIFO
+
+# Save the original stdout and stderr. Process substitutions we'll be doing
+# below block until their stdin is closed and, when we clean up, by saving these
+# we can close them safely and replace stdout and stderr for the shell with the
+# original.
+exec {ORIGINAL_STDOUT}>&1 {ORIGINAL_STDERR}>&2
+
 if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
 	# To do logging with a sidecar in Kubernetes, we need to log to files that
 	# can then be read from the sidecar. To avoid a disk explosion, we need to
@@ -27,22 +39,33 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
 	mkdir -p -m 755 $STDOUT_ROTATE_DIR
 	mkdir -p -m 755 $STDERR_ROTATE_DIR
 
-	# Create a fifo to monitor process substitution exits, and a count to know how many to wait on.
-	DET_LOG_WAIT_FIFO=/run/determined/train/logs/wait.fifo
-	DET_LOG_WAIT_COUNT=0
-	mkfifo $DET_LOG_WAIT_FIFO
-
-	# We save the original stdout and stderr. These process substitions block until their stdin
-	# is closed and, when we clean up, by saving these we can close them safely and replace stdout
-	# and stderr for the shell with the original.
-	exec {ORIGINAL_STDOUT}>&1 1> >(
+	exec 1> >(
 		multilog n2 "$STDOUT_ROTATE_DIR"
 		: >$DET_LOG_WAIT_FIFO
 	) \
-	{ORIGINAL_STDERR}>&2 2> >(
+	2> >(
 		multilog n2 "$STDERR_ROTATE_DIR"
 		: >$DET_LOG_WAIT_FIFO
 	)
 
 	((DET_LOG_WAIT_COUNT += 2))
 fi
+
+# A task may output carriage return characters (\r) to do something mildly fancy
+# with the terminal like update a progress bar in place on one line. Python's
+# tqdm library is a common way to do this. That works poorly with our logging,
+# since Fluent Bit interprets everything as one line, causing it to mash
+# everything together and buffer the output for way too long. Since we're not
+# going to do anything like interpreting the carriage returns in our log
+# displays, here we simply replace them all with newlines to get a reasonable
+# effect in those cases. This must be after the multilog exec, since exec
+# redirections are applied in reverse order.
+exec > >(
+	stdbuf -o0 tr '\r' '\n'
+	: >$DET_LOG_WAIT_FIFO
+) 2> >(
+	stdbuf -o0 tr '\r' '\n' >&2
+	: >$DET_LOG_WAIT_FIFO
+)
+
+((DET_LOG_WAIT_COUNT += 2))
