@@ -91,10 +91,12 @@ const NavigationTabbar: React.FC = () => {
             },
           },
           {
+            icon: 'settings',
             label: 'Settings',
             onClick: () => openUserSettingsModal(),
           },
           {
+            icon: 'user',
             label: 'Sign out',
             onClick: e => handlePathUpdate(e, paths.logout()),
           },
