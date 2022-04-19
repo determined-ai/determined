@@ -6584,6 +6584,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     immutable: boolean;
+    /**
+     * Number of projects associated with this workspace.
+     * @type {number}
+     * @memberof V1Workspace
+     */
+    numProjects: number;
 }
 
 

@@ -11,15 +11,19 @@ from determined.common.experimental import session
 from . import render
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
-WORKSPACE_HEADERS = ["ID", "Name"]
+WORKSPACE_HEADERS = ["ID", "Name", "# Projects"]
 
 
-def render_workspace(workspace: v1Workspace) -> None:
+def render_workspaces(workspaces: List[v1Workspace]) -> None:
     values = [
-        workspace.id,
-        workspace.name,
+        [
+            w.id,
+            w.name,
+            w.numProjects,
+        ]
+        for w in workspaces
     ]
-    render.tabulate_or_csv(WORKSPACE_HEADERS, [values], False)
+    render.tabulate_or_csv(WORKSPACE_HEADERS, values, False)
 
 
 def workspace_by_name(sess: session.Session, name: str) -> v1Workspace:
@@ -40,14 +44,7 @@ def list_workspaces(args: Namespace) -> None:
     if args.json:
         print(json.dumps([w.to_json() for w in workspaces], indent=2))
     else:
-        values = [
-            [
-                w.id,
-                w.name,
-            ]
-            for w in workspaces
-        ]
-        render.tabulate_or_csv(WORKSPACE_HEADERS, values, False)
+        render_workspaces(workspaces)
 
 
 @authentication.required
@@ -84,7 +81,7 @@ def create_workspace(args: Namespace) -> None:
     if args.json:
         print(json.dumps(w.to_json(), indent=2))
     else:
-        render_workspace(w)
+        render_workspaces([w])
 
 
 @authentication.required
@@ -94,7 +91,7 @@ def describe_workspace(args: Namespace) -> None:
     if args.json:
         print(json.dumps(w.to_json(), indent=2))
     else:
-        render_workspace(w)
+        render_workspaces([w])
         print("\nAssociated Projects")
         projects = bindings.get_GetWorkspaceProjects(sess, id=w.id).projects
         values = [
@@ -152,7 +149,7 @@ def edit_workspace(args: Namespace) -> None:
     if args.json:
         print(json.dumps(w.to_json(), indent=2))
     else:
-        render_workspace(w)
+        render_workspaces([w])
 
 
 args_description = [
