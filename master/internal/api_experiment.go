@@ -689,15 +689,25 @@ func (a *apiServer) GetExperimentCheckpoints(
 		return true
 	})
 
+	logrus.Infof("req = %v", req)
+	for _, c := range resp.Checkpoints {
+		logrus.Infof("checkpoint = %s, %v", c.Uuid, c.ReportTime)
+	}
+
 	sort.Slice(resp.Checkpoints, func(i, j int) bool {
+		logrus.Warnf("less %d %d", i, j)
 		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
-		if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
-			return order
+		if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC {
+			if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
+				return order
+			}
 		}
 
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 			aj, ai = ai, aj
 		}
+
+		logrus.Warnf("ai.end_time = %v, aj.end_time = %v", ai.ReportTime, aj.ReportTime)
 
 		switch req.SortBy {
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
@@ -718,6 +728,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return protoless.CheckpointTrialIDLess(ai, aj)
 		}
 	})
+
+	for _, c := range resp.Checkpoints {
+		logrus.Infof("checkpoint = %s, %v", c.Uuid, c.ReportTime)
+	}
 
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }

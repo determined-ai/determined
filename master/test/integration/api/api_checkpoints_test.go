@@ -178,6 +178,24 @@ func testGetExperimentCheckpoints(
 
 		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 		assert.NilError(t, err, "failed to add checkpoint meta")
+
+		trialMetrics := trialv1.TrialMetrics{
+			TrialId:     int32(trial.ID),
+			TrialRunId:  int32(0),
+			LatestBatch: int32(latestBatch),
+			Metrics: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"loss": {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: float64(float64(i) * (4.5 - float64(i))),
+						},
+					},
+				},
+			},
+		}
+
+		err = db.AddValidationMetrics(context.Background(), &trialMetrics)
+		assert.NilError(t, err, "failed to add validation metrics")
 	}
 
 	ctx, cancel := context.WithTimeout(creds, 10*time.Second)
@@ -196,6 +214,7 @@ func testGetExperimentCheckpoints(
 
 	// check sorting by assending end time
 	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME
+	req.OrderBy = apiv1.OrderBy_ORDER_BY_ASC
 	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
 	assert.NilError(t, err, "GetExperimentCheckpoints error")
 	ckptsCl = resp.Checkpoints
@@ -204,6 +223,19 @@ func testGetExperimentCheckpoints(
 	for j := 0; j < 5; j += 1 {
 		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
 	}
+
+	// check sorting by searcher metric
+	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
+	req.OrderBy = apiv1.OrderBy_ORDER_BY_UNSPECIFIED
+	resp, err = cl.GetExperimentCheckpoints(ctx, &req)
+	assert.NilError(t, err, "GetExperimentCheckpoints error")
+	ckptsCl = resp.Checkpoints
+
+	assert.Equal(t, len(ckptsCl), 5)
+	// the metric is 4.5*i - i^2
+	assert.Equal(t, ckptsCl[0].Uuid, uuids[0]) // metric(0) = 0
+	assert.Equal(t, ckptsCl[1].Uuid, uuids[4]) // metric(4) = 2
+	assert.Equal(t, ckptsCl[2].Uuid, uuids[1]) // metric(1) = 3.5
 
 	// check sorting by assending uuid
 	req.SortBy = apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID
