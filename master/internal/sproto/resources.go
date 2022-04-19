@@ -224,12 +224,31 @@ func FromContainerFailureType(t aproto.FailureType) FailureType {
 	}
 }
 
-// IsRestartableSystemError checks if the error is caused by the system and
+// InvalidResourcesRequestError is an unrecoverable validation error from the underlying RM.
+type InvalidResourcesRequestError struct {
+	Cause error
+}
+
+func (e InvalidResourcesRequestError) Error() string {
+	return fmt.Sprintf("invalid resources request: %s", e.Cause.Error())
+}
+
+// IsUnrecoverableSystemError checks if the error is absolutely unrecoverable.
+func IsUnrecoverableSystemError(err error) bool {
+	switch err.(type) {
+	case InvalidResourcesRequestError:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsTransientSystemError checks if the error is caused by the system and
 // shouldn't count against `max_restarts`.
-func IsRestartableSystemError(err error) bool {
-	switch contErr := err.(type) {
+func IsTransientSystemError(err error) bool {
+	switch err := err.(type) {
 	case ResourcesFailure:
-		switch contErr.FailureType {
+		switch err.FailureType {
 		case ContainerFailed, TaskError:
 			return false
 		// Questionable, could be considered failures, but for now we don't.
