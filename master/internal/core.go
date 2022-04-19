@@ -908,10 +908,6 @@ func (m *Master) Run(ctx context.Context) error {
 	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
 
-	trialsGroup := m.echo.Group("/trials", authFuncs...)
-	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
-	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
-
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
