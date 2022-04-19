@@ -3,6 +3,7 @@ import json
 import pathlib
 import shutil
 import warnings
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import constants, storage
@@ -21,6 +22,15 @@ class CheckpointState(enum.Enum):
     COMPLETED = 2
     ERROR = 3
     DELETED = 4
+
+
+@dataclass
+class CheckpointTrainingMetadata:
+    experiment_config: Dict[str, Any]
+    experiment_id: str
+    trial_id: str
+    hparams: Dict[str, Any]
+    validation_metrics: Dict[str, Any]
 
 
 class Checkpoint(object):
@@ -42,38 +52,24 @@ class Checkpoint(object):
     def __init__(
         self,
         session: session.Session,
+        task_id: str,
+        allocation_id: str,
         uuid: str,
-        experiment_config: Dict[str, Any],
-        experiment_id: int,
-        trial_id: int,
-        hparams: Dict[str, Any],
-        batch_number: int,
         report_time: Optional[str],
         resources: Dict[str, Any],
-        validation_metrics: Dict[str, Any],
         metadata: Dict[str, Any],
-        determined_version: Optional[str] = None,
-        framework: Optional[str] = None,
-        format: Optional[str] = None,  # noqa: A002
-        model_version: Optional[int] = None,
-        model_id: Optional[int] = None,
+        state: CheckpointState,
+        training: Optional[CheckpointTrainingMetadata] = None
     ):
         self._session = session
+        self.task_id = task_id
+        self.allocation_id = allocation_id
         self.uuid = uuid
-        self.experiment_config = experiment_config
-        self.experiment_id = experiment_id
-        self.trial_id = trial_id
-        self.hparams = hparams
-        self.batch_number = batch_number
         self.report_time = report_time
         self.resources = resources
-        self.validation_metrics = validation_metrics
-        self.framework = framework
-        self.format = format
-        self.determined_version = determined_version
-        self.model_version = model_version
-        self.model_id = model_id
         self.metadata = metadata
+        self.state = state
+        self.training = training
 
     def _find_shared_fs_path(self) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
@@ -398,25 +394,25 @@ class Checkpoint(object):
     @classmethod
     def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
         metadata = data.get("metadata", {})
-        training = data["training"]
+        training_data = data["training"]
+        training = CheckpointTrainingMetadata(
+            training_data["experimentConfig"],
+            training_data["experimentId"],
+            training_data["trialId"],
+            training_data["hparams"],
+            training_data["validationMetrics"],
+        ) if training_data else None
 
         return cls(
             session,
+            data["taskId"],
+            data["allocationId"],
             data["uuid"],
-            training.get("experimentConfig"),
-            training.get("experimentId"),
-            training.get("trialId"),
-            training.get("hparams"),
-            metadata.get("latest_batch"),
             data.get("reportTime"),
             data["resources"],
-            training.get("validationMetrics"),
             metadata,
-            model_id=data.get("model_id"),
-            framework=data.get("framework"),
-            format=data.get("format"),
-            determined_version=data.get("determined_version", data.get("determinedVersion")),
-            model_version=data.get("model_version"),
+            data["state"],
+            training,
         )
 
     @classmethod

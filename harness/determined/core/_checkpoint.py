@@ -4,11 +4,12 @@ import logging
 import os
 import pathlib
 import uuid
+from datetime import datetime
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 import determined as det
 from determined import core, tensorboard
-from determined.common import storage
+from determined.common import storage, constants
 from determined.common.api import bindings
 from determined.common.experimental.session import Session
 
@@ -231,14 +232,20 @@ class CheckpointContext:
             )
 
         body = {
+            "taskId": self._task_id,
+            "allocationId": self._allocation_id,
             "uuid": storage_id,
+            "reportTime": datetime.now(),  # YYY or should it be settable?
             "resources": resources,
-            **self._static_metadata,
-            **metadata,
+            "metadata": metadata,
+            "state": constants.COMPLETED,  # YYY can it be anything else?
         }
         logger.info(f"Reported checkpoint to master {storage_id}")
-        self._session.post(self._api_path, data=det.util.json_encode(body))
+        api_path = "/api/v1/checkpoints"
+        self._session.post(api_path, data=det.util.json_encode(body))
         # XXX: confirm that this implementation is ok for now
+        # instead of
+        # bindings.post_ReportCheckpoint(self._session, body=ckpt)
 
         # Also sync tensorboard.
         if self._tbd_mgr:
