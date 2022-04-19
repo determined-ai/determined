@@ -19,10 +19,10 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import { validateDetApiEnum } from 'services/utils';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { isEqual } from 'utils/data';
-import handleError from 'utils/error';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
@@ -51,8 +51,10 @@ const WorkspaceList: React.FC = () => {
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
   const [ workspaceFilter, setWorkspaceFilter ] = useState<WorkspaceFilters>(WorkspaceFilters.All);
   const [ total, setTotal ] = useState(0);
+  const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
+  const [ canceler ] = useState(new AbortController());
   const size = useResize();
 
   const {
@@ -66,7 +68,15 @@ const WorkspaceList: React.FC = () => {
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const response = await getWorkspaces({});
+      const response = await getWorkspaces({
+        archived: settings.archived ? undefined : false,
+        limit: settings.tableLimit,
+        name: settings.name,
+        offset: settings.tableOffset,
+        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+        sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
+        users: settings.user,
+      }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
       setWorkspaces(prev => {
         const withoutDefault = response.workspaces.filter(w => !w.immutable);
@@ -74,11 +84,19 @@ const WorkspaceList: React.FC = () => {
         return withoutDefault;
       });
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch workspaces.' });
+      if (!pageError) setPageError(e as Error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [ canceler.signal,
+    pageError,
+    settings.archived,
+    settings.name,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.user ]);
 
   usePolling(fetchWorkspaces);
 
@@ -242,6 +260,14 @@ const WorkspaceList: React.FC = () => {
   useEffect(() => {
     fetchWorkspaces();
   }, [ fetchWorkspaces ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
+
+  if (pageError) {
+    return <Message title="Unable to fetch workspaces" type={MessageType.Warning} />;
+  }
 
   return (
     <Page
