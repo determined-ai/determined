@@ -129,7 +129,7 @@ def trial_logs(args: Namespace) -> None:
 
 @authentication.required
 def generate_support_bundle(args: Namespace) -> None:
-    try: 
+    try:
         output_dir = args.output_dir
         if output_dir is None:
             output_dir = os.getcwd()
@@ -143,14 +143,27 @@ def generate_support_bundle(args: Namespace) -> None:
             master_logs_filepath = write_master_logs(args, temp_dir)
             api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
 
-            bundle.add(trial_logs_filepath, arcname=os.path.join(tar_filename, os.path.basename(trial_logs_filepath)))
-            bundle.add(master_logs_filepath, arcname= os.path.join(tar_filename, os.path.basename(master_logs_filepath)))
-            bundle.add(api_trail_filepath, arcname=os.path.join(tar_filename, os.path.basename(api_trail_filepath)))
-            bundle.add(api_experiment_filepath, arcname=os.path.join(tar_filename, os.path.basename(api_experiment_filepath)))
+            bundle.add(
+                trial_logs_filepath,
+                arcname=os.path.join(tar_filename, os.path.basename(trial_logs_filepath)),
+            )
+            bundle.add(
+                master_logs_filepath,
+                arcname=os.path.join(tar_filename, os.path.basename(master_logs_filepath)),
+            )
+            bundle.add(
+                api_trail_filepath,
+                arcname=os.path.join(tar_filename, os.path.basename(api_trail_filepath)),
+            )
+            bundle.add(
+                api_experiment_filepath,
+                arcname=os.path.join(tar_filename, os.path.basename(api_experiment_filepath)),
+            )
 
             print(f"bundle path: {fullpath}")
-    except FileNotFoundError: 
+    except FileNotFoundError:
         print("Could not create the bundle because the output_dir provived was not found.")
+
 
 def write_trial_logs(args: Namespace, temp_dir: str) -> str:
     trial_logs = api.trial_logs(args.master, args.trial_id)
