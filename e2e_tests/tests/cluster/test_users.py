@@ -796,10 +796,9 @@ def test_experiment_delete() -> None:
     non_owner_user = create_test_user(ADMIN_CREDENTIALS)
 
     with logged_in_user(user):
-        experiment_id = exp.create_experiment(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
+        experiment_id = exp.run_basic_test(
+            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
         )
-        exp.cancel_experiment(experiment_id)
 
     with logged_in_user(non_owner_user):
         # "det experiment delete" call should fail, because the user is not an admin and
