@@ -843,6 +843,7 @@ main_cmd = Cmd(
                     help="Return the best N checkpoints for this experiment. "
                     "If this flag is used, only checkpoints with an associated "
                     "validation metric will be considered.",
+                    metavar="N",
                 ),
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],

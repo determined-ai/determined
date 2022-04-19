@@ -47,8 +47,6 @@ class Checkpoint(object):
     that return instances of this class.
     """
 
-    # XXX: this object ends updating to correspond to new protobuf spec
-    # see breaking change warning: https://determined-ai.slack.com/archives/C7E6HPZ5F/p1644019706340119
     def __init__(
         self,
         session: session.Session,
@@ -59,7 +57,7 @@ class Checkpoint(object):
         resources: Dict[str, Any],
         metadata: Dict[str, Any],
         state: CheckpointState,
-        training: Optional[CheckpointTrainingMetadata] = None
+        training: Optional[CheckpointTrainingMetadata] = None,
     ):
         self._session = session
         self.task_id = task_id
@@ -71,12 +69,18 @@ class Checkpoint(object):
         self.state = state
         self.training = training
 
+    def get_training(self) -> CheckpointTrainingMetadata:
+        if self.training is None:
+            raise RuntimeError("Non-training checkpoints are not yet supported.")
+        return self.training
+
     def _find_shared_fs_path(self) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
         This function assumes the host path of the shared fs exists.
         """
-        host_path = self.experiment_config["checkpoint_storage"]["host_path"]
-        storage_path = self.experiment_config["checkpoint_storage"].get("storage_path")
+        checkpoint_storage = self.get_training().experiment_config["checkpoint_storage"]
+        host_path = checkpoint_storage["host_path"]
+        storage_path = checkpoint_storage.get("storage_path")
         potential_paths = [
             pathlib.Path(shared._full_storage_path(host_path, storage_path), self.uuid),
             pathlib.Path(
@@ -128,13 +132,14 @@ class Checkpoint(object):
         if not any(p.exists() for p in potential_metadata_paths):
             # If the target directory doesn't already appear to contain a
             # checkpoint, attempt to fetch one.
-            if self.experiment_config["checkpoint_storage"]["type"] == "shared_fs":
+            checkpoint_storage = self.get_training().experiment_config["checkpoint_storage"]
+            if checkpoint_storage["type"] == "shared_fs":
                 src_ckpt_dir = self._find_shared_fs_path()
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
             else:
                 local_ckpt_dir.mkdir(parents=True, exist_ok=True)
                 manager = storage.build(
-                    self.experiment_config["checkpoint_storage"],
+                    checkpoint_storage,
                     container_path=None,
                 )
                 if not isinstance(
@@ -148,7 +153,7 @@ class Checkpoint(object):
                     raise AssertionError(
                         "Downloading from Azure, S3 or GCS requires the experiment to be "
                         "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
-                            self.experiment_config["checkpoint_storage"]["type"]
+                            checkpoint_storage["type"]
                         )
                     )
 
@@ -159,7 +164,7 @@ class Checkpoint(object):
         # export api, we need to start writing a different format (the user-defined metadata only),
         # and we need to start writing it at upload time, not download time.
         #
-        # see https://determined-ai.slack.com/archives/CSLAGUF3M/p1642188450030600?thread_ts=1642115346.016000&cid=CSLAGUF3M
+        # see https://rb.gy/vaxl7a
         # for more context.
         self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
 
@@ -174,23 +179,8 @@ class Checkpoint(object):
         use this method directly to obtain the latest metadata.
         """
         with open(path, "w") as f:
-            # XXX: this is the old metadata checkpoint protobuf format.  Needs to become the new
-            # user metadata field of the new checkpoint protobuf format.
-            # XXX: maybe we need to look at the determined_version
-            json.dump(
-                {
-                    "determined_version": self.determined_version,
-                    "framework": self.framework,
-                    "format": self.format,
-                    "experiment_id": self.experiment_id,
-                    "trial_id": self.trial_id,
-                    "hparams": self.hparams,
-                    "experiment_config": self.experiment_config,
-                    "metadata": self.metadata,
-                },
-                f,
-                indent=2,
-            )
+            # YYY: only dump user metadata
+            json.dump(self.metadata, f, indent=2)
 
     def load(
         self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
@@ -385,23 +375,29 @@ class Checkpoint(object):
         return Checkpoint._get_type(metadata)
 
     def __repr__(self) -> str:
-        if self.model_id is not None:
-            return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
-                self.uuid, self.trial_id, self.model_id, self.model_version
+        if self.training is not None:
+            return (
+                f"Checkpoint(uuid={self.uuid}, task_id={self.task_id},"
+                f" trial_id={self.training.trial_id})"
             )
-        return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
+        else:
+            return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
         metadata = data.get("metadata", {})
         training_data = data["training"]
-        training = CheckpointTrainingMetadata(
-            training_data["experimentConfig"],
-            training_data["experimentId"],
-            training_data["trialId"],
-            training_data["hparams"],
-            training_data["validationMetrics"],
-        ) if training_data else None
+        training = (
+            CheckpointTrainingMetadata(
+                training_data["experimentConfig"],
+                training_data["experimentId"],
+                training_data["trialId"],
+                training_data["hparams"],
+                training_data["validationMetrics"],
+            )
+            if training_data
+            else None
+        )
 
         return cls(
             session,

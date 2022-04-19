@@ -4,12 +4,12 @@ import logging
 import os
 import pathlib
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 import determined as det
 from determined import core, tensorboard
-from determined.common import storage, constants
+from determined.common import storage
 from determined.common.api import bindings
 from determined.common.experimental.session import Session
 
@@ -235,10 +235,10 @@ class CheckpointContext:
             "taskId": self._task_id,
             "allocationId": self._allocation_id,
             "uuid": storage_id,
-            "reportTime": datetime.now(),  # YYY or should it be settable?
+            "reportTime": datetime.now(timezone.utc),  # YYY or should it be settable?
             "resources": resources,
             "metadata": metadata,
-            "state": constants.COMPLETED,  # YYY can it be anything else?
+            "state": bindings.determinedcheckpointv1State.STATE_COMPLETED,  # YYY a new const?
         }
         logger.info(f"Reported checkpoint to master {storage_id}")
         api_path = "/api/v1/checkpoints"
