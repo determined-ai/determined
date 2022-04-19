@@ -8,7 +8,6 @@ import uuid
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
 
 import appdirs
-from e2e_tests.tests.experiment.experiment import cancel_experiment, create_experiment
 import pexpect
 import pytest
 from pexpect import spawn
@@ -797,10 +796,10 @@ def test_experiment_delete() -> None:
     non_owner_user = create_test_user(ADMIN_CREDENTIALS)
 
     with logged_in_user(user):
-        experiment_id = create_experiment(
+        experiment_id = exp.create_experiment(
             conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
         )
-        cancel_experiment(experiment_id)
+        exp.cancel_experiment(experiment_id)
 
     with logged_in_user(non_owner_user):
         # "det experiment delete" call should fail, because the user is not an admin and
@@ -826,6 +825,5 @@ def test_experiment_delete() -> None:
             if child.exitstatus > 0:
                 return
             elif time.time() > experiment_delete_deadline:
-                pytest.fail("experiment didn't delete after timeout \n"
-                            + str(output))
+                pytest.fail("experiment didn't delete after timeout \n" + str(output))
                 return

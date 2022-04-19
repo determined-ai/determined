@@ -114,7 +114,8 @@ func (a *apiServer) GetExperiment(
 		// easy deducible how long that would block. So the best we can really do is return without
 		// an error if we're in this case and log. This is a debug log because of how often the
 		// happens when polling for an experiment to end.
-		if !strings.Contains(err.Error(), actorDidNotRespond) || !strings.Contains(err.Error(), "could not be found") {
+		if !strings.Contains(err.Error(), actorDidNotRespond) ||
+			!strings.Contains(err.Error(), "could not be found") {
 			// REMOVEME: the actor could not be found issue seems to be allowing exp delete test to pass
 			return nil, err
 		}
