@@ -7,7 +7,7 @@ import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
 import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
+  CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
@@ -19,14 +19,13 @@ interface Props {
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
-  const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
+  const bestCheckpoint: CheckpointWorkloadExtended | undefined = useMemo(() => {
     if (!trial) return;
     const cp = trial.bestAvailableCheckpoint;
     if (!cp) return;
 
     return {
       ...cp,
-      batch: cp.totalBatches,
       experimentId: trial.experimentId,
       trialId: trial.id,
     };
@@ -66,7 +65,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             experiment={experiment}
             title="Best Checkpoint">
             <OverviewStats clickable title="Best Checkpoint">
-              Batch {bestCheckpoint.batch}
+              Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
           </CheckpointModalTrigger>
         )}
