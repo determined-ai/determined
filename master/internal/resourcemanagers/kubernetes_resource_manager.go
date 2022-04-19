@@ -392,10 +392,14 @@ func (k *kubernetesResourceManager) moveJob(
 	}
 
 	if prioChange {
+		g := k.getOrCreateGroup(ctx, k.IDToGroupActor[jobID])
+		oldPriority := g.priority
+		g.priority = &anchorPriority
 		resp := ctx.Ask(k.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
 			Priority:     anchorPriority,
 		})
 		if resp.Error() != nil {
+			g.priority = oldPriority
 			return resp.Error()
 		}
 	}
