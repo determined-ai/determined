@@ -36,12 +36,6 @@ type podMetadata struct {
 	containerID string
 }
 
-type patchStringValue struct {
-	Op    string `json:"op"`
-	Path  string `json:"path"`
-	Value string `json:"value"`
-}
-
 // High lever overview of the actors within the kubernetes package:
 //
 //   pods
@@ -459,20 +453,16 @@ func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {
 
 func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
 	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
-	if ref == nil {
-		return
+	if ref != nil {
+		ctx.Tell(ref, msg)
 	}
-
-	ctx.Tell(ref, msg)
 }
 
 func (p *pods) receivePositionChange(ctx *actor.Context, msg ChangePosition) {
 	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
-	if ref == nil {
-		return
+	if ref != nil {
+		ctx.Tell(ref, msg)
 	}
-
-	ctx.Tell(ref, msg)
 }
 
 func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {

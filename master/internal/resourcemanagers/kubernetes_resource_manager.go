@@ -2,10 +2,12 @@ package resourcemanagers
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/shopspring/decimal"
+
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
@@ -35,10 +37,10 @@ type kubernetesResourceManager struct {
 	groups            map[*actor.Ref]*group
 	addrToContainerID map[*actor.Ref]cproto.ID
 	containerIDtoAddr map[string]*actor.Ref
-	jobIDtoAddr 	  map[model.JobID]*actor.Ref
-	addrToJobID		  map[*actor.Ref]model.JobID
-	groupActorToID 	  map[*actor.Ref]model.JobID
-	IDToGroupActor 	  map[model.JobID]*actor.Ref
+	jobIDtoAddr       map[model.JobID]*actor.Ref
+	addrToJobID       map[*actor.Ref]model.JobID
+	groupActorToID    map[*actor.Ref]model.JobID
+	IDToGroupActor    map[model.JobID]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
 	podsActor *actor.Ref
@@ -64,8 +66,8 @@ func newKubernetesResourceManager(
 		groups:            make(map[*actor.Ref]*group),
 		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
-		jobIDtoAddr: 	   make(map[model.JobID]*actor.Ref),
-		addrToJobID:	   make(map[*actor.Ref]model.JobID),
+		jobIDtoAddr:       make(map[model.JobID]*actor.Ref),
+		addrToJobID:       make(map[*actor.Ref]model.JobID),
 		groupActorToID:    make(map[*actor.Ref]model.JobID),
 		IDToGroupActor:    make(map[model.JobID]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
@@ -377,11 +379,12 @@ func (k *kubernetesResourceManager) moveJob(
 		return job.ErrJobNotFound(jobID)
 	}
 
-	if _, ok := k.queuePositions[anchorID]; !ok {
+	if _, ok = k.queuePositions[anchorID]; !ok {
 		return job.ErrJobNotFound(anchorID)
 	}
 
-	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList, k.groups, k.queuePositions, true)
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList,
+		k.groups, k.queuePositions, true)
 
 	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
@@ -396,7 +399,7 @@ func (k *kubernetesResourceManager) moveJob(
 		oldPriority := g.priority
 		g.priority = &anchorPriority
 		resp := ctx.Ask(k.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
-			Priority:     anchorPriority,
+			Priority: anchorPriority,
 		})
 		if resp.Error() != nil {
 			g.priority = oldPriority
@@ -471,15 +474,13 @@ func (k *kubernetesResourceManager) assignResources(
 	for pod := 0; pod < numPods; pod++ {
 		containerID := cproto.NewID()
 		allocations = append(allocations, &k8sPodResources{
-			req:         req,
-			podsActor:   k.podsActor,
-			containerID: containerID,
-			slots:       slotsPerPod,
-			group:       k.groups[req.Group],
+			req:             req,
+			podsActor:       k.podsActor,
+			containerID:     containerID,
+			slots:           slotsPerPod,
+			group:           k.groups[req.Group],
 			initialPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
 		})
-
-
 
 		k.addrToContainerID[req.TaskActor] = containerID
 
@@ -557,11 +558,11 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 }
 
 type k8sPodResources struct {
-	req         *sproto.AllocateRequest
-	podsActor   *actor.Ref
-	group       *group
-	containerID cproto.ID
-	slots       int
+	req             *sproto.AllocateRequest
+	podsActor       *actor.Ref
+	group           *group
+	containerID     cproto.ID
+	slots           int
 	initialPosition decimal.Decimal
 }
 

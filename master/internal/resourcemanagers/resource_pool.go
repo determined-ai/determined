@@ -439,7 +439,8 @@ func (rp *ResourcePool) moveJob(
 		return job.ErrJobNotFound(anchorID)
 	}
 
-	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, rp.taskList, rp.groups, rp.queuePositions, false)
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
