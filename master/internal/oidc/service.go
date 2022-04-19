@@ -14,6 +14,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -99,7 +100,27 @@ func (s *Service) callback(c echo.Context) error {
 		return errors.Wrap(err, "failed to get user info from oidc provider")
 	}
 
-	u, err := s.db.UserByUsername(userInfo.Email)
+	var claims map[string]interface{}
+	if err = userInfo.Claims(&claims); err != nil {
+		return errors.Wrap(err, "failed to extract OIDC claims")
+	}
+
+	claimValueRaw, ok := claims[s.config.AuthenticationClaim]
+	if !ok {
+		return errors.New("user info did not contain expected claim value")
+	}
+	claimValue, ok := claimValueRaw.(string)
+	if !ok {
+		return errors.New("user info claim value was not a string")
+	}
+
+	log.
+		WithField("auth-claim", s.config.AuthenticationClaim).
+		WithField("auth-claim-value", claimValue).
+		WithField("scim-attribute", s.config.SCIMAuthenticationAttribute).
+		Debug("attempting to authenticate user via OIDC")
+
+	u, err := s.db.UserBySCIMAttribute(s.config.SCIMAuthenticationAttribute, claimValue)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "user has not been provisioned")
 	}
@@ -165,7 +186,9 @@ func authCodeURLWithParams(conf oauth2.Config, state string, kv map[string]strin
 	}
 	queries := u.Query()
 	for k, v := range kv {
-		queries.Add(k, v)
+		if v != "" {
+			queries.Add(k, v)
+		}
 	}
 
 	u.RawQuery = queries.Encode()

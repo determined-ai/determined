@@ -17,20 +17,22 @@ import (
 // from model.SCIMUser because the latter is the result of joining a scimUserRow
 // with a model.User.
 type scimUserRow struct {
-	ID         model.UUID       `db:"id"`
-	UserID     model.UserID     `db:"user_id"`
-	ExternalID string           `db:"external_id"`
-	Name       model.SCIMName   `db:"name"`
-	Emails     model.SCIMEmails `db:"emails"`
+	ID            model.UUID             `db:"id"`
+	UserID        model.UserID           `db:"user_id"`
+	ExternalID    string                 `db:"external_id"`
+	Name          model.SCIMName         `db:"name"`
+	Emails        model.SCIMEmails       `db:"emails"`
+	RawAttributes map[string]interface{} `db:"raw_attributes"`
 }
 
 // AddSCIMUser adds a user as well as additional SCIM-specific fields. If
 // the user already exists, this function will return an error.
 func (db *PgDB) AddSCIMUser(suser *model.SCIMUser) (*model.SCIMUser, error) {
 	row := &scimUserRow{
-		ExternalID: suser.ExternalID,
-		Emails:     suser.Emails,
-		Name:       suser.Name,
+		ExternalID:    suser.ExternalID,
+		Emails:        suser.Emails,
+		Name:          suser.Name,
+		RawAttributes: suser.RawAttributes,
 	}
 
 	user := &model.User{
@@ -83,8 +85,8 @@ func addSCIMUser(tx *sqlx.Tx, userID model.UserID, row *scimUserRow) (model.UUID
 
 	stmt, err := tx.PrepareNamed(`
 INSERT INTO scim.users
-(id, user_id, external_id, name, emails)
-VALUES (:id, :user_id, :external_id, :name, :emails)`)
+(id, user_id, external_id, name, emails, raw_attributes)
+VALUES (:id, :user_id, :external_id, :name, :emails, :raw_attributes)`)
 	if err != nil {
 		return model.UUID{}, errors.WithStack(err)
 	}
@@ -204,6 +206,23 @@ WHERE u.id = s.user_id AND s.id = $1`, id).StructScan(&suser); err == sql.ErrNoR
 	return &suser, nil
 }
 
+// UserBySCIMAttribute returns the user with the given value for the given SCIM attribute.
+func (db *PgDB) UserBySCIMAttribute(name, value string) (*model.User, error) {
+	var user model.User
+	err := db.sql.QueryRowx(`
+SELECT
+	u.*
+FROM users u, scim.users s
+WHERE u.id = s.user_id AND s.raw_attributes->>$1 = $2`, name, value).StructScan(&user)
+	if err == sql.ErrNoRows {
+		return nil, errors.WithStack(ErrNotFound)
+	} else if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &user, nil
+}
+
 // SetSCIMUser updates fields on an existing SCIM user.
 func (db *PgDB) SetSCIMUser(id string, user *model.SCIMUser) (*model.SCIMUser, error) {
 	return db.UpdateSCIMUser(id, user,
@@ -214,6 +233,7 @@ func (db *PgDB) SetSCIMUser(id string, user *model.SCIMUser) (*model.SCIMUser, e
 			"name",
 			"username",
 			"password_hash",
+			"raw_attributes",
 		})
 }
 

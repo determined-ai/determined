@@ -130,6 +130,10 @@ func DefaultConfig() *Config {
 		},
 		FeatureSwitches: []string{},
 		ResourceConfig:  *DefaultResourceConfig(),
+		OIDC: OIDCConfig{
+			AuthenticationClaim:         "email",
+			SCIMAuthenticationAttribute: "userName",
+		},
 	}
 }
 
