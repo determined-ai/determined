@@ -55,7 +55,13 @@ def mask_config_dict(d: Dict) -> Dict:
         for key in new_dict["checkpoint_storage"].keys():
             if key in hidden_checkpoint_storage_keys:
                 new_dict["checkpoint_storage"][key] = mask
-    except KeyError:
+    except (KeyError, AttributeError):
+        pass
+
+    try:
+        if new_dict["environment"]["registry_auth"].get("password") is not None:
+            new_dict["environment"]["registry_auth"]["password"] = mask
+    except (KeyError, AttributeError):
         pass
 
     return new_dict
