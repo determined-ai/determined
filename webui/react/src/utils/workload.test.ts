@@ -59,13 +59,6 @@ describe('Workload Utilities', () => {
     });
   });
 
-  describe('getBatchNumber', () => {
-    it('should return `batch` or `totalBatches` as batch count', () => {
-      expect(utils.getBatchNumber({ batch: 100 })).toBe(100);
-      expect(utils.getBatchNumber({ totalBatches: 100 })).toBe(100);
-    });
-  });
-
   describe('getWorkload', () => {
     it('should extract first available training workload', () => {
       expect(utils.getWorkload(WORKLOADS[0])).toStrictEqual(WORKLOADS[0].training);
