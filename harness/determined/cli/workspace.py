@@ -1,6 +1,6 @@
 import json
 from argparse import Namespace
-from typing import Any, List
+from typing import Any, List, Sequence
 
 from determined.cli.session import setup_session
 from determined.common.api import authentication, bindings
@@ -14,7 +14,7 @@ PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Exper
 WORKSPACE_HEADERS = ["ID", "Name", "# Projects"]
 
 
-def render_workspaces(workspaces: List[v1Workspace]) -> None:
+def render_workspaces(workspaces: Sequence[v1Workspace]) -> None:
     values = [
         [
             w.id,
