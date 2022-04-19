@@ -444,20 +444,22 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
-/* using any here because this comes from the api as any */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const decodeMetricStruct = (data: any): Record<string, number> => {
-  const metrics: Record<string, number> = {};
-  Object.entries(data || {}).forEach(([ metric, value ]) => {
-    if (typeof metric === 'string' && (typeof value === 'number' || typeof value === 'string')) {
-      const numberValue = (typeof value === 'number') ? value : parseFloat(value);
-      if (!isNaN(numberValue)) metrics[metric] = numberValue;
-    }
-  });
-  return metrics;
-};
-
 export const decodeMetrics = (data: Sdk.V1Metrics): types.Metrics => {
+  /**
+   * using any here because this comes from the api as any
+   * however, the protos indicate that it is a Struct/Record
+   */
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const decodeMetricStruct = (data: any): Record<string, number> => {
+    const metrics: Record<string, number> = {};
+    Object.entries(data || {}).forEach(([ metric, value ]) => {
+      if (typeof metric === 'string' && (typeof value === 'number' || typeof value === 'string')) {
+        const numberValue = (typeof value === 'number') ? value : parseFloat(value);
+        if (!isNaN(numberValue)) metrics[metric] = numberValue;
+      }
+    });
+    return metrics;
+  };
   return {
     avgMetrics: decodeMetricStruct(data.avgMetrics),
     batchMetrics: data.batchMetrics?.map(decodeMetricStruct),
