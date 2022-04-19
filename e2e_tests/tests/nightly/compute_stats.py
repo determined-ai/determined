@@ -10,7 +10,6 @@ from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import config as conf
 
-DATE_PATTERN = "%Y-%m-%dT%H:%M:%S.%f"
 ADD_KEY = "adding"
 REMOVE_KEY = "removing"
 
