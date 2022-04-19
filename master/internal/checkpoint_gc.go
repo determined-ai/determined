@@ -71,13 +71,14 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(t.ToTaskSpec())
 		}
-	case actor.PostStop, *task.AllocationExited:
+	case *task.AllocationExited:
 		t.completeTask(ctx)
 	case actor.ChildStopped:
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == t.allocationID.String() {
 			t.completeTask(ctx)
 		}
+	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -88,4 +89,5 @@ func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
 	if err := t.db.CompleteTask(t.taskID, time.Now().UTC()); err != nil {
 		ctx.Log().WithError(err).Error("marking GC task complete")
 	}
+	ctx.Self().Stop()
 }
