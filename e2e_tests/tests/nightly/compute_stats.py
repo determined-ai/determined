@@ -1,14 +1,14 @@
-import calendar
 import re
 import subprocess
 import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
+from dateutil import parser
+
 from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import config as conf
-from dateutil import parser
 
 DATE_PATTERN = "%Y-%m-%dT%H:%M:%S.%f"
 ADD_KEY = "adding"
