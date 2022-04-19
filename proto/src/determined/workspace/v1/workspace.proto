@@ -10,7 +10,14 @@ import "google/protobuf/wrappers.proto";
 message Workspace {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "archived", "id", "immutable", "name", "username" ]
+      required: [
+        "archived",
+        "id",
+        "immutable",
+        "name",
+        "num_projects",
+        "username"
+      ]
     }
   };
   // The unique id of the workspace.
@@ -25,6 +32,8 @@ message Workspace {
   string username = 4;
   // Whether this workspace is immutable (default uncategorized workspace).
   bool immutable = 5;
+  // Number of projects associated with this workspace.
+  int32 num_projects = 6;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
