@@ -133,7 +133,7 @@ def generate_support_bundle(args: Namespace) -> None:
         output_dir = os.getcwd()
 
     elif not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        raise ValueError(f'{output_dir} directory does not exist.')
 
     dt = datetime.now().strftime("%Y%m%dT%H%M%S")
     tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
@@ -172,16 +172,16 @@ def write_master_logs(args: Namespace, temp_dir: str) -> str:
 
 
 def write_api_call(args: Namespace, temp_dir: str) -> Tuple[str, str]:
-    file_path1 = os.path.join(temp_dir, "api_experiment_call.json")
-    file_path2 = os.path.join(temp_dir, "api_trial_call.json")
+    api_experiment_filepath = os.path.join(temp_dir, "api_experiment_call.json")
+    api_trial_filepath = os.path.join(temp_dir, "api_trial_call.json")
 
     trial_obj = bindings.get_GetTrial(setup_session(args), trialId=args.trial_id).trial
     experiment_id = trial_obj.experimentId
     exp_obj = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
 
-    create_json_file_in_dir(exp_obj.to_json(), file_path1)
-    create_json_file_in_dir(trial_obj.to_json(), file_path2)
-    return file_path1, file_path2
+    create_json_file_in_dir(exp_obj.to_json(), api_experiment_filepath)
+    create_json_file_in_dir(trial_obj.to_json(), api_trial_filepath)
+    return api_experiment_filepath, api_trial_filepath
 
 
 def create_json_file_in_dir(content: json, file_path: str) -> None:

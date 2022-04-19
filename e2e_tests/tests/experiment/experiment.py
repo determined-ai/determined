@@ -212,12 +212,7 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     return False
 
 
-def create_exp_get_trial_id() -> int:
-    exp_id = create_experiment(
-        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
-    )
-
-    wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+def first_trial_in_experiment(exp_id) -> int:
     session = test_session()
     trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials
 
