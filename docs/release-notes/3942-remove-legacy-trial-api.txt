@@ -1,0 +1,11 @@
+:orphan:
+
+**Breaking Changes**
+
+Removed these endpoints from the legacy API:
+
+-  /trials/:trial_id
+-  /trials/:trial_id/metrics
+
+This data is available in the REST API's ``/api/v1/trials`` and
+   ``/api/v1/experiments/:experiment_id/trials``.
