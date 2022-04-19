@@ -133,7 +133,7 @@ def generate_support_bundle(args: Namespace) -> None:
         output_dir = os.getcwd()
 
     elif not os.path.exists(output_dir):
-        raise ValueError(f'{output_dir} directory does not exist.')
+        raise ValueError(f"{output_dir} directory does not exist.")
 
     dt = datetime.now().strftime("%Y%m%dT%H%M%S")
     tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
