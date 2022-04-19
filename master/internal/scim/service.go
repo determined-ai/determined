@@ -169,6 +169,9 @@ func (s *service) PostUser(c echo.Context) (interface{}, error) {
 	if err = json.Unmarshal(body, &user); err != nil {
 		return nil, newBadRequestError(err)
 	}
+	if err = json.Unmarshal(body, &user.RawAttributes); err != nil {
+		return nil, newBadRequestError(err)
+	}
 
 	if err = check.Validate(user); err != nil {
 		return nil, newBadRequestError(err)
@@ -218,6 +221,9 @@ func (s *service) PutUser(c echo.Context) (interface{}, error) {
 
 	var user model.SCIMUser
 	if err = json.Unmarshal(body, &user); err != nil {
+		return nil, newBadRequestError(err)
+	}
+	if err = json.Unmarshal(body, &user.RawAttributes); err != nil {
 		return nil, newBadRequestError(err)
 	}
 

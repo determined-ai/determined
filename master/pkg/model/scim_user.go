@@ -104,6 +104,9 @@ type SCIMUser struct {
 	Password string          `json:"password,omitempty"`
 	Schemas  SCIMUserSchemas `json:"schemas"`
 	Meta     *SCIMUserMeta   `json:"meta"`
+
+	UserID        UserID                 `db:"user_id" json:"-"`
+	RawAttributes map[string]interface{} `db:"raw_attributes" json:"-"`
 }
 
 // Validate checks that external data satisfies the expected invariants.
