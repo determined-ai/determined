@@ -419,15 +419,17 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
-	case msg.ContainerStatsRecord != nil && a.taskNeedsRecording(msg.ContainerStatsRecord):
-		var err error
-		if msg.ContainerStatsRecord.EndStats {
-			err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
-		} else {
-			err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
-		}
-		if err != nil {
-			ctx.Log().Errorf("Error record task stats %s", err)
+	case msg.ContainerStatsRecord != nil:
+		if a.taskNeedsRecording(msg.ContainerStatsRecord) {
+			var err error
+			if msg.ContainerStatsRecord.EndStats {
+				err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
+			} else {
+				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
+			}
+			if err != nil {
+				ctx.Log().Errorf("Error record task stats %s", err)
+			}
 		}
 
 	default:
