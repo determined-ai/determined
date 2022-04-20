@@ -143,17 +143,25 @@ def generate_support_bundle(args: Namespace) -> None:
             master_logs_filepath = write_master_logs(args, temp_dir)
             api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
 
-            bundle.add(trial_logs_filepath,
-                    arcname=os.path.join(bundle_name, os.path.basename(trial_logs_filepath)))
-            bundle.add(master_logs_filepath,
-                    arcname=os.path.join(bundle_name, os.path.basename(master_logs_filepath)))
-            bundle.add(api_trail_filepath,
-                    arcname=os.path.join(bundle_name, os.path.basename(api_trail_filepath)))
-            bundle.add(api_experiment_filepath,
-                    arcname=os.path.join(bundle_name, os.path.basename(api_experiment_filepath)))
+            bundle.add(
+                trial_logs_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(trial_logs_filepath)),
+            )
+            bundle.add(
+                master_logs_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(master_logs_filepath)),
+            )
+            bundle.add(
+                api_trail_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(api_trail_filepath)),
+            )
+            bundle.add(
+                api_experiment_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(api_experiment_filepath)),
+            )
 
             print(f"bundle path: {fullpath}")
-            
+
     except FileNotFoundError:
         print("Could not create the bundle because the output_dir provived was not found.")
 
