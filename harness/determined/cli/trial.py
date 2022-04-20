@@ -135,32 +135,25 @@ def generate_support_bundle(args: Namespace) -> None:
             output_dir = os.getcwd()
 
         dt = datetime.now().strftime("%Y%m%dT%H%M%S")
-        tar_filename = f"det-bundle-trial-{args.trial_id}-{dt}.tar.gz"
-        fullpath = os.path.join(output_dir, tar_filename)
+        bundle_name = f"det-bundle-trial-{args.trial_id}-{dt}"
+        fullpath = os.path.join(output_dir, f"{bundle_name}.tar.gz")
 
         with tempfile.TemporaryDirectory() as temp_dir, tarfile.open(fullpath, "w:gz") as bundle:
             trial_logs_filepath = write_trial_logs(args, temp_dir)
             master_logs_filepath = write_master_logs(args, temp_dir)
             api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
 
-            bundle.add(
-                trial_logs_filepath,
-                arcname=os.path.join(tar_filename, os.path.basename(trial_logs_filepath)),
-            )
-            bundle.add(
-                master_logs_filepath,
-                arcname=os.path.join(tar_filename, os.path.basename(master_logs_filepath)),
-            )
-            bundle.add(
-                api_trail_filepath,
-                arcname=os.path.join(tar_filename, os.path.basename(api_trail_filepath)),
-            )
-            bundle.add(
-                api_experiment_filepath,
-                arcname=os.path.join(tar_filename, os.path.basename(api_experiment_filepath)),
-            )
+            bundle.add(trial_logs_filepath,
+                    arcname=os.path.join(bundle_name, os.path.basename(trial_logs_filepath)))
+            bundle.add(master_logs_filepath,
+                    arcname=os.path.join(bundle_name, os.path.basename(master_logs_filepath)))
+            bundle.add(api_trail_filepath,
+                    arcname=os.path.join(bundle_name, os.path.basename(api_trail_filepath)))
+            bundle.add(api_experiment_filepath,
+                    arcname=os.path.join(bundle_name, os.path.basename(api_experiment_filepath)))
 
             print(f"bundle path: {fullpath}")
+            
     except FileNotFoundError:
         print("Could not create the bundle because the output_dir provived was not found.")
 
