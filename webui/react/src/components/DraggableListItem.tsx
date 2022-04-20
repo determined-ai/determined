@@ -19,7 +19,7 @@ interface DroppableItemProps {
 const DraggableTypes = { COLUMN: 'COLUMN' };
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-const withDragAndDropProvider = <T extends Props>
+const withDragAndDropProvider = <T extends {}>
 (Component: React.FunctionComponent<T>) =>
   (props: T) => (
     <DndProvider backend={HTML5Backend}>
