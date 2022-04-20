@@ -918,6 +918,16 @@ var (
                     }
                 }
             }
+        },
+        "slurm": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }
