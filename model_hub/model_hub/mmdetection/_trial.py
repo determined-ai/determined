@@ -63,10 +63,10 @@ class MMDetTrial(det_torch.PyTorchTrial):
         self.context.experimental.disable_auto_to_device()
 
         # Build model and make sure it's compatible with horovod.
-        model = mmdet.models.build_detector(self.cfg.model)
+        self.model = mmdet.models.build_detector(self.cfg.model)
 
         # Initialize model
-        model.init_weights()
+        self.model.init_weights()
 
         # If use_pretrained, try loading pretrained weights for the mmcv config if available.
         if self.hparams.use_pretrained:
@@ -176,7 +176,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         batch = {key: batch[key].data[0] for key in batch}
 
         losses = self.model(**batch)
-        loss, log_vars = self.model._parse_losses(losses)
+        loss, log_vars = self.model.module._parse_losses(losses)
         self.model.zero_grad()
         self.context.backward(loss)
         self.context.step_optimizer(

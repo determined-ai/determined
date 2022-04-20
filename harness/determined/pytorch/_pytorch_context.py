@@ -31,6 +31,17 @@ except ImportError:
     pass
 
 
+class PyTorchDistributedDataParallel(torch.nn.parallel.DistributedDataParallel):
+    """
+    Passthrough Model Wrapper to enable access to inner module attributes
+    """
+    def __getattr__(self, name):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.module, name)
+
+
 class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     """Contains runtime information for any Determined workflow that uses the ``PyTorch`` API.
 

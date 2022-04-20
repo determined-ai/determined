@@ -140,7 +140,7 @@ class EvalCallback(det_torch.PyTorchCallback):
         self.model = model
 
     def on_validation_start(self) -> None:
-        if self.context.distributed.get_size() > 1:
+        if self.context.distributed.get_size() > 1 and self.context._distributed_backend.use_horovod():
             logging.info("Broadcasting batch norm stats from chief for eval.")
             for _, module in self.model.named_modules():
                 if isinstance(module, bn._BatchNorm) and module.track_running_stats:
