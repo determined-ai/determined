@@ -119,6 +119,13 @@ const NavigationTabbar: React.FC = () => {
           },
           {
             external: true,
+            icon: 'pencil',
+            label: 'Share Feedback',
+            path: paths.submitProductFeedback(),
+            popout: true,
+          },
+          {
+            external: true,
             icon: 'cloud',
             label: 'API (Beta)',
             path: paths.docs('/rest-api/'),

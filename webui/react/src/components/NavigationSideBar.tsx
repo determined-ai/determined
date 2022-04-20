@@ -47,6 +47,13 @@ const menuConfig = {
     { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
     {
       external: true,
+      icon: 'pencil',
+      label: 'Share Feedback',
+      path: paths.submitProductFeedback(),
+      popout: true,
+    },
+    {
+      external: true,
       icon: 'cloud',
       label: 'API (Beta)',
       path: paths.docs('/rest-api/'),

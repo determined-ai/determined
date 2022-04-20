@@ -232,6 +232,9 @@ export const paths = {
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },
+  submitProductFeedback: (): string => {
+    return 'https://airtable.com/shr87rnMuHhiDTpLo';
+  },
   taskList: (): string => {
     return '/tasks';
   },
