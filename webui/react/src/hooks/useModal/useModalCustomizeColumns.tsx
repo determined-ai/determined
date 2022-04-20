@@ -1,7 +1,8 @@
 import { Button, Input, ModalFuncProps } from 'antd';
-import DraggableListItem from 'components/DraggableListItem';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
+
+import DraggableListItem from 'components/DraggableListItem';
 import { isEqual } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
@@ -94,32 +95,31 @@ const useModalCustomizeColumns = ({
 
   const renderRow = useCallback((row, style, handleClick) => {
     return (
-      <li style={style} onClick={handleClick} >
+      <li style={style} onClick={handleClick}>
         {renderColumnName(row)}
       </li>
     );
   }, [ renderColumnName ]);
 
-  const renderDraggableRow = useCallback((index, row, style, handleClick, handleDrop) => {
-    return (
-      <DraggableListItem  index={index} onDrop={handleDrop} style={style} onClick={handleClick}>
-        {renderColumnName(row)}
-      </DraggableListItem>
-    );
-    }, []
-  )
-
-  const switchRowOrder = (itemToMoveIndex:number, newItemIndex:number) => {
-    if(itemToMoveIndex != newItemIndex){
-      let updatedVisibleColumns = [...visibleColumns];
+  const switchRowOrder = useCallback((itemToMoveIndex:number, newItemIndex:number) => {
+    if(itemToMoveIndex !== newItemIndex){
+      const updatedVisibleColumns = [ ...visibleColumns ];
       const columnToMove = updatedVisibleColumns[newItemIndex];
-      updatedVisibleColumns.splice(newItemIndex,1);
-      updatedVisibleColumns.splice(itemToMoveIndex,0,columnToMove);
+      updatedVisibleColumns.splice(newItemIndex, 1);
+      updatedVisibleColumns.splice(itemToMoveIndex, 0, columnToMove);
       setVisibleColumns(updatedVisibleColumns);
     }
     return;
-  }
-  
+  }, [ visibleColumns ]);
+
+  const renderDraggableRow = useCallback((index, row, style, handleClick, handleDrop) => {
+    return (
+      <DraggableListItem index={index} style={style} onClick={handleClick} onDrop={handleDrop}>
+        {renderColumnName(row)}
+      </DraggableListItem>
+    );
+  }, [ renderColumnName ]);
+
   const renderHiddenRow = useCallback(({ index, style }) => {
     const row = filteredHiddenColumns[index];
     return renderRow(row, style, () => makeVisible(row));
@@ -127,8 +127,14 @@ const useModalCustomizeColumns = ({
 
   const renderVisibleRow = useCallback(({ index, style }) => {
     const row = filteredVisibleColumns[index];
-    return renderDraggableRow(index, row, style, () => makeHidden(row), (itemIndex: number, newIndex:number) => switchRowOrder(itemIndex,newIndex));
-  }, [ filteredVisibleColumns, makeHidden, renderRow ]);
+    return renderDraggableRow(
+      index,
+      row,
+      style,
+      () => makeHidden(row),
+      (itemIndex: number, newIndex:number) => switchRowOrder(itemIndex, newIndex),
+    );
+  }, [ filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder ]);
 
   const modalContent = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
