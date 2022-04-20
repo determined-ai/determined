@@ -49,6 +49,24 @@ type GetJobQ struct {
 	ResourcePool string
 }
 
+// DeleteJob instructs the RM to clean up all metadata associated with a job external to
+// Determined.
+type DeleteJob struct {
+	JobID model.JobID
+}
+
+// DeleteJobResponse returns to the caller if the cleanup was successful or not.
+type DeleteJobResponse struct {
+	Err <-chan error
+}
+
+// EmptyDeleteJobResponse returns a response with an empty error chan.
+func EmptyDeleteJobResponse() DeleteJobResponse {
+	respC := make(chan error, 1)
+	respC <- nil
+	return DeleteJobResponse{Err: respC}
+}
+
 // GetJobQStats requests stats for a queue.
 // Expected response: jobv1.QueueStats.
 type GetJobQStats struct {

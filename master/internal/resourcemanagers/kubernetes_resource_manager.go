@@ -110,6 +110,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		job.SetGroupWeight,
 		job.SetGroupPriority,
 		job.MoveJob,
+		job.DeleteJob,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -317,6 +318,10 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 	case job.MoveJob:
 		ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in Kubernetes"))
+
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in k8s.
+		ctx.Respond(job.EmptyDeleteJobResponse())
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
