@@ -13,6 +13,8 @@ import handleError from 'utils/error';
 interface Props {
   className?: string;
   curUser?: DetailedUser;
+  direction?: 'vertical' | 'horizontal';
+  fetchProjects?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
 }
@@ -20,11 +22,15 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
-  { project, children, curUser, onVisibleChange, className }: PropsWithChildren<Props>,
+  { project, children, curUser, onVisibleChange, className, direction = 'vertical', fetchProjects }
+  : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openProjectMove } = useModalProjectMove({ projectId: project.id });
-  const { modalOpen: openProjectDelete } = useModalProjectDelete({ project: project });
-  const { modalOpen: openProjectEdit } = useModalProjectEdit({ project: project });
+  const { modalOpen: openProjectMove } = useModalProjectMove({ onClose: fetchProjects, project });
+  const { modalOpen: openProjectDelete } = useModalProjectDelete({
+    onClose: fetchProjects,
+    project,
+  });
+  const { modalOpen: openProjectEdit } = useModalProjectEdit({ onClose: fetchProjects, project });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.username === project.username;
@@ -42,17 +48,19 @@ const ProjectActionDropdown: React.FC<Props> = (
     if (project.archived) {
       try {
         unarchiveProject({ id: project.id });
+        fetchProjects?.();
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
+        handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         archiveProject({ id: project.id });
+        fetchProjects?.();
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive workspace.' });
+        handleError(e, { publicSubject: 'Unable to archive project.' });
       }
     }
-  }, [ project.archived, project.id ]);
+  }, [ fetchProjects, project.archived, project.id ]);
 
   const handleDeleteClick = useCallback(() => {
     openProjectDelete();
@@ -61,17 +69,17 @@ const ProjectActionDropdown: React.FC<Props> = (
   const ProjectActionMenu = useMemo(() => {
     return (
       <Menu>
-        {userHasPermissions &&
-          <Menu.Item onClick={handleEditClick}>Edit...</Menu.Item>}
-        {userHasPermissions &&
-          <Menu.Item onClick={handleMoveClick}>Move...</Menu.Item>}
+        {userHasPermissions && !project.archived &&
+          <Menu.Item key="edit" onClick={handleEditClick}>Edit...</Menu.Item>}
+        {userHasPermissions && !project.archived &&
+          <Menu.Item key="move" onClick={handleMoveClick}>Move...</Menu.Item>}
         {userHasPermissions && (
-          <Menu.Item onClick={handleArchiveClick}>
+          <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
             {project.archived ? 'Unarchive' : 'Archive'}
           </Menu.Item>
         )}
-        {userHasPermissions &&
-        <Menu.Item danger onClick={handleDeleteClick}>Delete...</Menu.Item>}
+        {userHasPermissions && !project.archived &&
+        <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
       </Menu>
     );
   }, [ handleArchiveClick,
@@ -85,7 +93,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     return (children as JSX.Element) ?? (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
         <button disabled>
-          <Icon name="overflow-vertical" />
+          <Icon name={`overflow-${direction}`} />
         </button>
       </div>
     );
@@ -106,7 +114,7 @@ const ProjectActionDropdown: React.FC<Props> = (
       onClick={stopPropagation}>
       <Dropdown overlay={ProjectActionMenu} placement="bottomRight" trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
-          <Icon name="overflow-horizontal" />
+          <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
     </div>

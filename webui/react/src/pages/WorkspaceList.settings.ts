@@ -1,40 +1,34 @@
 import { GridListView } from 'components/GridListRadioGroup';
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 
-export type ProjectColumnName =
+export type WorkspaceColumnName =
   | 'action'
   | 'archived'
-  | 'description'
-  | 'lastUpdated'
   | 'name'
-  | 'numExperiments'
+  | 'numProjects'
   | 'user';
 
-export const DEFAULT_COLUMNS: ProjectColumnName[] = [
+export const DEFAULT_COLUMNS: WorkspaceColumnName[] = [
   'name',
-  'description',
-  'numExperiments',
-  'lastUpdated',
+  'numProjects',
   'user',
 ];
 
-export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
+export const DEFAULT_COLUMN_WIDTHS: Record<WorkspaceColumnName, number> = {
   action: 46,
   archived: 75,
-  description: 147,
-  lastUpdated: 100,
   name: 150,
-  numExperiments: 74,
+  numProjects: 74,
   user: 85,
 };
 
-export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
+export interface WorkspaceListSettings extends InteractiveTableSettings {
   archived?: boolean;
-  columns: ProjectColumnName[];
+  columns: WorkspaceColumnName[];
   name?: string;
-  sortKey: V1GetWorkspaceProjectsRequestSortBy;
+  sortKey: V1GetWorkspacesRequestSortBy;
   user?: string[];
   view: GridListView;
 }
@@ -57,7 +51,7 @@ const config: SettingsConfig = {
       },
     },
     {
-      defaultValue: DEFAULT_COLUMNS.map((col: ProjectColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+      defaultValue: DEFAULT_COLUMNS.map((col: WorkspaceColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
       key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
@@ -77,7 +71,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME,
+      defaultValue: V1GetWorkspacesRequestSortBy.NAME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },
@@ -109,7 +103,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.String },
     },
   ],
-  storagePath: 'workspace-details',
+  storagePath: 'workspace-list',
 };
 
 export default config;

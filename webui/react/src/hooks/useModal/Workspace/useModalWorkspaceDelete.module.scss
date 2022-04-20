@@ -6,4 +6,7 @@
   .label {
     color: var(--theme-colors-monochrome-7)
   }
+  :global(p) {
+    margin: 0;
+  }
 }
