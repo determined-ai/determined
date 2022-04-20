@@ -23,6 +23,10 @@
       font-size: 14px;
       margin: 0;
       overflow: hidden;
+
+      & * {
+        margin: 0;
+      }
     }
   }
   .action {
