@@ -6,6 +6,7 @@
   display: grid;
   font-size: 11px;
   grid-template-columns: 100px auto 50px;
+  height: 100px;
   max-width: 325px;
   min-width: min-content;
   padding: var(--theme-sizes-layout-big);
@@ -49,6 +50,9 @@
           margin: 0;
         }
       }
+    }
+    .projects {
+      margin: 0;
     }
   }
   .action {

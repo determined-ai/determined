@@ -69,17 +69,17 @@ const ProjectActionDropdown: React.FC<Props> = (
   const ProjectActionMenu = useMemo(() => {
     return (
       <Menu>
-        {userHasPermissions &&
-          <Menu.Item onClick={handleEditClick}>Edit...</Menu.Item>}
-        {userHasPermissions &&
-          <Menu.Item onClick={handleMoveClick}>Move...</Menu.Item>}
+        {userHasPermissions && !project.archived &&
+          <Menu.Item key="edit" onClick={handleEditClick}>Edit...</Menu.Item>}
+        {userHasPermissions && !project.archived &&
+          <Menu.Item key="move" onClick={handleMoveClick}>Move...</Menu.Item>}
         {userHasPermissions && (
-          <Menu.Item onClick={handleArchiveClick}>
+          <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
             {project.archived ? 'Unarchive' : 'Archive'}
           </Menu.Item>
         )}
-        {userHasPermissions &&
-        <Menu.Item danger onClick={handleDeleteClick}>Delete...</Menu.Item>}
+        {userHasPermissions && !project.archived &&
+        <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
       </Menu>
     );
   }, [ handleArchiveClick,

@@ -65,7 +65,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
             {workspace.archived ? 'Unarchive' : 'Archive'}
           </Menu.Item>
         )}
-        {userHasPermissions &&
+        {userHasPermissions && !workspace.archived &&
         <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
       </Menu>
     );

@@ -50,6 +50,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
               </Tooltip>
             )}
           </div>
+          <p className={css.projects}>
+            {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
+          </p>
           <div className={css.avatar}><Avatar username={workspace.username} /></div>
         </div>
         {!workspace.immutable && (
