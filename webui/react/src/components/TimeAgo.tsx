@@ -16,6 +16,7 @@ interface Props {
   long?: boolean;
   noUpdate?: boolean;
   stringCase?: TimeAgoCase;
+  tooltipFormat?: string;
   units?: number;
 }
 
@@ -26,7 +27,7 @@ export enum TimeAgoCase {
 }
 
 export const JUST_NOW = 'Just Now';
-export const TOOLTIP_FORMAT = 'MMM D, YYYY - h:mm a';
+export const DEFAULT_TOOLTIP_FORMAT = 'MMM D, YYYY - h:mm a';
 
 const TimeAgo: React.FC<Props> = ({
   className,
@@ -35,6 +36,7 @@ const TimeAgo: React.FC<Props> = ({
   long = false,
   noUpdate = false,
   stringCase = TimeAgoCase.Sentence,
+  tooltipFormat = DEFAULT_TOOLTIP_FORMAT,
   units = 1,
 }: Props) => {
   const [ now, setNow ] = useState(() => Date.now());
@@ -105,7 +107,7 @@ const TimeAgo: React.FC<Props> = ({
   }, [ updateInterval ]);
 
   return (
-    <Tooltip title={dayjs(milliseconds).format(TOOLTIP_FORMAT)}>
+    <Tooltip title={dayjs(milliseconds).format(tooltipFormat)}>
       <div className={classes.join(' ')}>{durationString}</div>
     </Tooltip>
   );

@@ -587,6 +587,7 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
     id: data.id,
     immutable: data.immutable,
     name: data.name,
+    numProjects: data.numProjects,
     username: data.username,
   };
 };
