@@ -16,6 +16,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/projects"
+	"github.com/determined-ai/determined/master/internal/api/workspaces"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -23,6 +24,7 @@ import (
 type apiServer struct {
 	m *Master
 	*projects.ProjectServer
+	*workspaces.WorkspaceServer
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.

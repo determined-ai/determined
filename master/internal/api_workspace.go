@@ -2,9 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -27,17 +24,6 @@ func (a *apiServer) GetWorkspaceFromID(id int32, userID int32) (*workspacev1.Wor
 		return w, errors.Wrapf(err,
 			"error fetching workspace (%d) from database", id)
 	}
-}
-
-func (a *apiServer) GetWorkspace(
-	ctx context.Context, req *apiv1.GetWorkspaceRequest) (*apiv1.GetWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	w, err := a.GetWorkspaceFromID(req.Id, user.User.Id)
-	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
 func (a *apiServer) PostWorkspace(
