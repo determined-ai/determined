@@ -6,24 +6,21 @@ import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 export type WorkspaceColumnName =
   | 'action'
   | 'archived'
-  | 'lastUpdated'
   | 'name'
-  | 'numExperiments'
+  | 'numProjects'
   | 'user';
 
 export const DEFAULT_COLUMNS: WorkspaceColumnName[] = [
   'name',
-  'numExperiments',
-  'lastUpdated',
+  'numProjects',
   'user',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<WorkspaceColumnName, number> = {
   action: 46,
   archived: 75,
-  lastUpdated: 100,
   name: 150,
-  numExperiments: 74,
+  numProjects: 74,
   user: 85,
 };
 

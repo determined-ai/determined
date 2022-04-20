@@ -149,6 +149,12 @@ const WorkspaceList: React.FC = () => {
         title: 'Name',
       },
       {
+        dataIndex: 'numProjects',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['numProjects'],
+        key: 'numProjects',
+        title: 'Projects',
+      },
+      {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
