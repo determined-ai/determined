@@ -35,6 +35,8 @@ export interface InteractiveTableSettings {
   tableOffset: number;
 }
 
+import { getCssVar } from 'themes';
+
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
 
@@ -314,10 +316,7 @@ const InteractiveTable: InteractiveTable = ({
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   const getAdjustedColumnWidthSum = useCallback((columnsWidths: number[]) => {
-    let pagePadding = parseInt(
-      getComputedStyle(document.body)
-        ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
-    );
+    let pagePadding = parseInt(getCssVar('--theme-sizes-layout-big').slice(0, -2));
     if (typeof pagePadding !== 'number') pagePadding = 16;
     return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
   }, []);

@@ -247,6 +247,10 @@ const stateColorMapping = {
 export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
 SlotState | JobState
 
+export const getCssVar = (name: string): string => {
+  return window.getComputedStyle(document.body)?.getPropertyValue(name);
+};
+
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,
   options: { isOn?: boolean, strongWeak?: 'strong' | 'weak' } = {},
@@ -258,8 +262,7 @@ export const getStateColorCssVar = (
 };
 
 export const getStateColor = (state: StateOfUnion | undefined): string => {
-  const cssVar = getStateColorCssVar(state);
-  return window.getComputedStyle(document.body).getPropertyValue(cssVar);
+  return getCssVar(getStateColorCssVar(state));
 };
 
 const generateStrongWeak = (theme: Theme): Theme => {

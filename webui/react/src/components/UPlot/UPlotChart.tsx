@@ -4,10 +4,13 @@ import uPlot, { AlignedData } from 'uplot';
 
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
+import useTheme from 'hooks/useTheme';
 import Message, { MessageType } from 'shared/components/message';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { getCssVar } from 'themes';
+import { RecordKey } from 'types';
+import { distance } from 'utils/chart';
 import handleError from 'utils/error';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import { FacetedData } from './types';
 
@@ -156,17 +159,32 @@ const UPlotChart: React.FC<Props> = ({
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
-  const extendedOptions = useMemo(
-    () =>
-      getExtendedOptions(
-        options,
-        boundsRef,
-        chartDivRef.current?.offsetWidth,
-        () => setIsReady(true),
-        () => setIsReady(false),
-      ),
-    [ options ],
-  );
+  const extendedOptions = useMemo(() => {
+    const extended = getExtendedOptions(
+      options,
+      boundsRef,
+      chartDivRef.current?.offsetWidth,
+      () => setIsReady(true),
+      () => setIsReady(false),
+    );
+
+    // Override chart support colors to match theme.
+    if (extended.axes) {
+      const borderColor = getCssVar('--theme-surface-border-weak');
+      const labelColor = getCssVar('--theme-surface-on');
+      extended.axes = extended.axes.map(axis => {
+        return {
+          ...axis,
+          border: { stroke: borderColor },
+          grid: { stroke: borderColor },
+          stroke: labelColor,
+          ticks: { stroke: borderColor },
+        };
+      });
+    }
+
+    return extended;
+  }, [ options ]);
   const previousExtendedOptions = usePrevious(extendedOptions, undefined);
 
   useEffect(() => {

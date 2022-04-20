@@ -1,6 +1,9 @@
 import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
+import useTheme from 'hooks/useTheme';
+import { getCssVar } from 'themes';
+
 import css from './ParallelCoordinates.module.scss';
 
 interface Props {
@@ -18,6 +21,7 @@ const ParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<Hermes>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const { mode } = useTheme();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -28,7 +32,7 @@ const ParallelCoordinates: React.FC<Props> = ({
       chartRef.current?.destroy();
       chartRef.current = undefined;
     };
-  }, [ config, dimensions ]);
+  }, [ dimensions ]);
 
   useEffect(() => {
     let redraw = true;
@@ -40,7 +44,41 @@ const ParallelCoordinates: React.FC<Props> = ({
     }
 
     try {
-      if (config) chartRef.current?.setConfig(config, false);
+      if (config) {
+        const newConfig = Hermes.deepMerge({
+          style: {
+            axes: {
+              label: {
+                fillStyle: getCssVar('--theme-surface-on'),
+                strokeStyle: getCssVar('--theme-surface-weak'),
+              },
+              labelActive: {
+                fillStyle: getCssVar('--theme-surface-on-strong'),
+                strokeStyle: getCssVar('--theme-surface-weak'),
+              },
+              labelHover: {
+                fillStyle: getCssVar('--theme-surface-on-strong'),
+                strokeStyle: getCssVar('--theme-surface-weak'),
+              },
+            },
+            dimension: {
+              label: {
+                fillStyle: getCssVar('--theme-surface-on'),
+                strokeStyle: getCssVar('--theme-surface-weak'),
+              },
+              labelActive: {
+                fillStyle: getCssVar('--theme-status-active'),
+                strokeStyle: getCssVar('--theme-surface-weak'),
+              },
+              labelHover: {
+                fillStyle: getCssVar('--theme-status-active'),
+                strokeStyle: getCssVar('--theme-surface-weak'),
+              },
+            },
+          },
+        }, config);
+        chartRef.current?.setConfig(newConfig, false);
+      }
     } catch (e) {
       redraw = false;
     }
@@ -52,7 +90,7 @@ const ParallelCoordinates: React.FC<Props> = ({
     }
 
     if (redraw) chartRef.current?.redraw();
-  }, [ config, data, dimensions ]);
+  }, [ config, data, dimensions, mode ]);
 
   return (
     <div className={css.base}>
