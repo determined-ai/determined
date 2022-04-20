@@ -139,27 +139,6 @@ func (a *apiServer) PatchProject(
 		errors.Wrapf(err, "error updating project (%d) in database", currProject.Id)
 }
 
-func (a *apiServer) DeleteProject(
-	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
-	error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	holder := &projectv1.Project{}
-	err = a.m.db.QueryProto("delete_project", holder, req.Id, user.User.Id,
-		user.User.Admin)
-
-	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
-			req.Id)
-	}
-
-	return &apiv1.DeleteProjectResponse{},
-		errors.Wrapf(err, "error deleting project (%d)", req.Id)
-}
-
 func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
 	error) {

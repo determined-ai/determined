@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -18,7 +19,7 @@ import (
 
 // ProjectServer is a wrapper for project routes.
 type ProjectServer struct {
-	db *db.PgDB
+	db     *db.PgDB
 }
 
 // NewProjectServer is a helper to create ProjectServer, a project route wrapper.
@@ -120,6 +121,34 @@ func (s *ProjectServer) GetWorkspaceProjects(
 		Projects:   pcs,
 		Pagination: pageInfo.ToProto(),
 	}, nil
+}
+
+// OwnedWorkspaces returns a query for IDs of workspaces which were created by this user.
+func ownedWorkspaces(user_id int32) (*bun.SelectQuery) {
+	return db.Bun().NewSelect().
+		ColumnExpr("id").
+		TableExpr("workspaces").
+		Where("NOT immutable").
+		Where("user_id = ?", user_id)
+}
+
+// DeleteProject is a request to delete a project by ID.
+func (s *ProjectServer) DeleteProject(ctx context.Context,
+	req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, s.db, &s.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+
+	owned_workspaces := ownedWorkspaces(int32(user.ID))
+	err = ProjectDeletion(ctx, func(q *bun.DeleteQuery) (*bun.DeleteQuery, error) {
+		q = q.Where("id = ?", req.Id)
+		q = q.Where("user_id = ? OR ? IS TRUE OR workspace_id IN (?)",
+			user.ID, user.Admin, owned_workspaces,
+		)
+		return q, nil
+	})
+	return &apiv1.DeleteProjectResponse{}, err
 }
 
 // GetProjectExperiments is a request for information about all experiments in a project by its ID.
