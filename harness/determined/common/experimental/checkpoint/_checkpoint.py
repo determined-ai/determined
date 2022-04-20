@@ -163,9 +163,6 @@ class Checkpoint(object):
         # checkpoint protobuf and now that we are releasing a breaking change to the Checkpoint
         # export api, we need to start writing a different format (the user-defined metadata only),
         # and we need to start writing it at upload time, not download time.
-        #
-        # see https://rb.gy/vaxl7a
-        # for more context.
         self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
 
         return str(local_ckpt_dir)
