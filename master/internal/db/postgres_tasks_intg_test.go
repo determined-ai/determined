@@ -76,7 +76,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
 	// And an allocation.
-	aID := model.NewAllocationID(string(tID) + "-1")
+	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
 		AllocationID: aID,
 		TaskID:       tID,

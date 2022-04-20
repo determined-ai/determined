@@ -50,7 +50,7 @@ func TestClusterAPI(t *testing.T) {
 	require.NoError(t, err, "failed to add task")
 
 	// Add an allocation
-	aID := model.NewAllocationID(string(tID) + "-1")
+	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
 		AllocationID: aID,
 		TaskID:       tID,

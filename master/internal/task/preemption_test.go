@@ -15,7 +15,7 @@ func TestPreemption(t *testing.T) {
 
 	// Watch nil should not panic and return an error.
 	id := uuid.New()
-	_, err := p.Watch(model.NewAllocationID(uuid.New().String()), id)
+	_, err := p.Watch(model.AllocationID(uuid.New().String()), id)
 	assert.ErrorContains(t, err, "stale task")
 
 	// All method on nil should not panic.
@@ -24,7 +24,7 @@ func TestPreemption(t *testing.T) {
 	p.Close()
 
 	// "task" is allocated.
-	t1 := model.NewAllocationID(uuid.New().String())
+	t1 := model.AllocationID(uuid.New().String())
 	p = *NewPreemption(t1)
 
 	// real watcher connects
