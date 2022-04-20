@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Type
 from determined.common.check import check_eq, check_in, check_type
 
 from .base import StorageManager
+from .cloud import CloudStorageManager
 from .azure import AzureStorageManager
 from .gcs import GCSStorageManager
 from .hdfs import HDFSStorageManager
@@ -89,29 +90,17 @@ def validate_manager(manager: StorageManager) -> None:
     deleted from. Throws an exception if any of the operations fail.
     """
 
-    class Validater:
-        """
-        Validater for reading and writing a UUID to a checkpoint. The
-        UUID saved must match the UUID that is loaded.
-        """
+    storage_id = str(uuid.uuid4())
 
-        def __init__(self) -> None:
-            self.storage_id = str(uuid.uuid4())
+    with manager.store_path(storage_id) as path:
+        path.mkdir(parents=True, exist_ok=True)
+        with path.joinpath("VALIDATE.txt").open("w") as f:
+            f.write(storage_id)
 
-        def save(self, storage_dir: str) -> None:
-            os.makedirs(storage_dir)
-            with open(os.path.join(storage_dir, "VALIDATE.txt"), "w") as fp:
-                fp.write(self.storage_id)
-
-        def load(self, storage_dir: str) -> None:
-            with open(os.path.join(storage_dir, "VALIDATE.txt"), "r") as fp:
-                check_eq(fp.read(), self.storage_id, "Unable to properly load from storage")
-
-    validater = Validater()
-    with manager.store_path() as (storage_id, path):
-        validater.save(path)
     with manager.restore_path(storage_id) as path:
-        validater.load(path)
+        with path.joinpath("VALIDATE.txt").open("r") as f:
+            check_eq(f.read(), storage_id, "Unable to properly load from storage")
+
     manager.delete(storage_id)
 
 

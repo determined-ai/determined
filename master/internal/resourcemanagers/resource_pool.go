@@ -176,7 +176,10 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	}
 
 	allocated := sproto.ResourcesAllocated{
-		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Resources: resources,
+		ID:                req.AllocationID,
+		ResourcePool:      rp.config.PoolName,
+		Resources:         resources,
+		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
@@ -282,7 +285,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case
 		sproto.AddAgent,
-		sproto.RemoveAgent:
+		sproto.RemoveAgent,
+		sproto.UpdateAgent:
 		return rp.receiveAgentMsg(ctx)
 
 	case
@@ -299,7 +303,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
-		job.RecoverJobPosition:
+		job.RecoverJobPosition,
+		job.DeleteJob:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -368,29 +373,47 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
+	var agentID string
+	switch msg := ctx.Message().(type) {
+	// TODO(ilia): I hope go will have a good way to do this one day.
+	case sproto.AddAgent:
+		agentID = msg.Agent.Address().Local()
+	case sproto.RemoveAgent:
+		agentID = msg.Agent.Address().Local()
+	case sproto.UpdateAgent:
+		agentID = msg.Agent.Address().Local()
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	logger := ctx.Log().WithField("agent-id", agentID)
+
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
-		agentID := msg.Agent.Address().Local()
-		ctx.Log().Infof("adding agent: %s", agentID)
+		// agent_id is logged in the unstructured message because this log line is used by
+		// some scripts that parse the logs for GPU usage stats.
+		logger.Infof("adding agent: %s", agentID)
 		rp.agents[msg.Agent] = true
 		err := rp.updateAgentStartStats(rp.config.PoolName, agentID, msg.Slots)
 		if err != nil {
-			ctx.Log().WithError(err).Error("failed to update agent start stats")
+			logger.WithError(err).Error("failed to update agent start stats")
 		}
-
 	case sproto.RemoveAgent:
-		agentID := msg.Agent.Address().Local()
-		ctx.Log().Infof("removing agent: %s", agentID)
+		logger.Infof("removing agent: %s", agentID)
 
 		delete(rp.agents, msg.Agent)
 		err := rp.updateAgentEndStats(agentID)
 		if err != nil {
-			ctx.Log().WithError(err).Error("failed to update agent end stats")
+			logger.WithError(err).Error("failed to update agent end stats")
 		}
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+	case sproto.UpdateAgent:
+		_, ok := rp.agents[msg.Agent]
+		if !ok {
+			logger.Warn("received update on unknown agent")
+		} else {
+			logger.Debug("updating agent")
+		}
 	}
+
 	return nil
 }
 
@@ -553,6 +576,11 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 
 	case job.RecoverJobPosition:
 		rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
+
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in determined-agents world.
+		ctx.Respond(job.EmptyDeleteJobResponse())
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -703,6 +731,7 @@ func (c containerResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
+	spec.TaskType = logCtx["task-type"].(model.TaskType)
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{

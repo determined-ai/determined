@@ -2,7 +2,7 @@ import os
 import unittest.mock
 import uuid
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import pytest
 
@@ -63,14 +63,15 @@ def test_validate(manager: storage.SharedFSStorageManager) -> None:
 
 
 def test_validate_read_only_dir(manager: storage.SharedFSStorageManager) -> None:
-    def permission_error(_1: str, _2: str) -> None:
+    def permission_error(_: Any, __: str) -> None:
         raise PermissionError("Permission denied")
 
-    with unittest.mock.patch("builtins.open", permission_error):
-        assert len(os.listdir(manager._base_path)) == 0
-        with pytest.raises(PermissionError, match="Permission denied"):
-            storage.validate_manager(manager)
-        assert len(os.listdir(manager._base_path)) == 1
+    with unittest.mock.patch("pathlib.Path.open", permission_error):
+        with unittest.mock.patch("builtins.open", permission_error):
+            assert len(os.listdir(manager._base_path)) == 0
+            with pytest.raises(PermissionError, match="Permission denied"):
+                storage.validate_manager(manager)
+            assert len(os.listdir(manager._base_path)) == 1
 
 
 @pytest.mark.cloud

@@ -107,7 +107,7 @@ class MetricMaker(det.TrialController):
         self.latest_batch = self.env.latest_batch
 
         if self.env.latest_checkpoint is not None:
-            with self.context._core.checkpointing.restore_path(
+            with self.context._core.checkpoint.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self.load(pathlib.Path(load_path))
@@ -129,11 +129,11 @@ class MetricMaker(det.TrialController):
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 metadata = {"latest_batch": self.latest_batch}
                 if self.is_chief:
-                    with self.context._core.checkpointing.store_path(metadata) as (
-                        storage_id,
+                    with self.context._core.checkpoint.store_path(metadata) as (
                         path,
+                        storage_id,
                     ):
-                        self.save(pathlib.Path(path))
+                        self.save(path)
                         response = {"uuid": storage_id}
                 else:
                     response = {}
@@ -176,7 +176,6 @@ class MetricMaker(det.TrialController):
         metrics, where the overall state of a trial is like a piece-wise
         function which takes into account multiple generations of hparams.
         """
-        path.mkdir()
         with path.joinpath("checkpoint_file").open("w") as f:
             f.write(str(self.value))
 

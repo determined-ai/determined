@@ -453,7 +453,7 @@ const ExperimentList: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
@@ -488,6 +488,27 @@ const ExperimentList: React.FC = () => {
     userFilterDropdown,
     users,
   ]);
+
+  useEffect(() => {
+    // This is the failsafe for when column settings get into a bad shape.
+    if (!settings.columns?.length || !settings.columnWidths?.length) {
+      updateSettings({
+        columns: DEFAULT_COLUMNS,
+        columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
+      });
+    } else {
+      const columnNames = columns.map(column => column.dataIndex as ExperimentColumnName);
+      const actualColumns = settings.columns.filter(name => columnNames.includes(name));
+      const newSettings: Partial<ExperimentListSettings> = {};
+      if (actualColumns.length < settings.columns.length) {
+        newSettings.columns = actualColumns;
+      }
+      if (settings.columnWidths.length !== actualColumns.length) {
+        newSettings.columnWidths = actualColumns.map(name => DEFAULT_COLUMN_WIDTHS[name]);
+      }
+      if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
+    }
+  }, [ settings.columns, settings.columnWidths, columns, resetSettings, updateSettings ]);
 
   const transferColumns = useMemo(() => {
     return columns

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -344,6 +345,38 @@ WHERE task_id = $1
 		return 0, err
 	}
 	return count, nil
+}
+
+// RecordTaskStats record stats for tasks.
+func (db *PgDB) RecordTaskStats(stats *model.TaskStats) error {
+	return RecordTaskStatsBun(stats)
+}
+
+// RecordTaskStatsBun record stats for tasks with bun.
+func RecordTaskStatsBun(stats *model.TaskStats) error {
+	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
+	return err
+}
+
+// RecordTaskEndStats record end stats for tasks.
+func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
+	return RecordTaskEndStatsBun(stats)
+}
+
+// RecordTaskEndStatsBun record end stats for tasks with bun.
+func RecordTaskEndStatsBun(stats *model.TaskStats) error {
+	_, err := Bun().NewUpdate().Model(stats).Column("end_time").Where(
+		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
+	).Exec(context.TODO())
+	return err
+}
+
+// EndAllTaskStats called at master starts, in case master previously crushed.
+func (db *PgDB) EndAllTaskStats() error {
+	_, err := db.sql.Exec(`
+UPDATE task_stats SET end_time = greatest(cluster_heartbeat, start_time) FROM cluster_id
+WHERE end_time IS NULL`)
+	return err
 }
 
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.

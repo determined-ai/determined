@@ -1,21 +1,21 @@
-import calendar
 import re
 import subprocess
 import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
+from dateutil import parser
+
 from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import config as conf
 
-DATE_PATTERN = "%Y-%m-%dT%H:%M:%S.%f"
 ADD_KEY = "adding"
 REMOVE_KEY = "removing"
 
 
 def iso_date_to_epoch(iso_date: str) -> int:
-    return calendar.timegm(datetime.strptime(iso_date[:-4], DATE_PATTERN).timetuple())
+    return int(parser.parse(iso_date).timestamp())
 
 
 def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
@@ -33,7 +33,11 @@ def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
         for _, line in enumerate(f):
             match_date = date_parsing_re.match(line)
             if match_date:
-                ts = iso_date_to_epoch(match_date.group(1))
+                try:
+                    ts = iso_date_to_epoch(match_date.group(1))
+                except parser.ParserError:
+                    print("Skip unrecognized date time format ", match_date.group(1))
+                    continue
                 max_ts = ts if max_ts == -1 or ts > max_ts else max_ts
                 min_ts = ts if min_ts == -1 or ts < min_ts else min_ts
             match_line = line_parsing_re.match(line)

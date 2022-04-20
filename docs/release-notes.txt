@@ -8,6 +8,17 @@
  Version 0.17
 **************
 
+Version 0.17.14
+===============
+
+**Release Date:** April 13, 2022
+
+**Bug Fixes**
+
+-  Resource Pool: Fix a bug that causes the resource pool and resource manager to crash after
+   submitting a command with a non-default priority. We recommend that all users on 0.17.12 and
+   0.17.13 update to 0.17.14 or later.
+
 Version 0.17.13
 ===============
 

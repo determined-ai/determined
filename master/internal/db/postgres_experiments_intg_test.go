@@ -5,6 +5,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -203,7 +205,10 @@ func TestGetExperiments(t *testing.T) {
 				err := db.AddExperiment(&exp)
 				require.NoError(t, err, "failed to add experiment")
 			}
-
+			userIDFilterExpr := strings.Trim(
+				strings.Join(strings.Split(fmt.Sprint([]int32{int32(user.ID)}), " "), ","),
+				"[]",
+			)
 			resp := &apiv1.GetExperimentsResponse{}
 			err := db.QueryProtof(
 				"get_experiments",
@@ -212,6 +217,7 @@ func TestGetExperiments(t *testing.T) {
 				tt.stateFilter,
 				tt.archivedFilter,
 				user.Username, // Always filter by a random user so the state is inconsequential.
+				userIDFilterExpr,
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,

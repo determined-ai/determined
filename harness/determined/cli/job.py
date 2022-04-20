@@ -173,7 +173,7 @@ args_description = [
     Cmd(
         "j|ob",
         None,
-        "manage job",
+        "manage jobs",
         [
             Cmd(
                 "list ls",
@@ -194,6 +194,7 @@ args_description = [
                         format_args["csv"],
                     ),
                 ],
+                is_default=True,
             ),
             Cmd(
                 "u|pdate",

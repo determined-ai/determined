@@ -258,6 +258,8 @@ class DeterminedControlHook(estimator.RunHook):
         checkpoint_dir = os.path.dirname(
             self.estimator_trial_controller.estimator.latest_checkpoint()
         )
+        # shuil.copytree doesn't like to copy into a directory, even an empty one.
+        checkpoint_path.rmdir()
         shutil.copytree(checkpoint_dir, str(checkpoint_path))
 
         # Calibrate the CheckpointState metadata file to the new location.
@@ -313,8 +315,8 @@ class DeterminedControlHook(estimator.RunHook):
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
                         }
-                        with _core.checkpointing.store_path(metadata) as (storage_id, path):
-                            self._checkpoint_model(pathlib.Path(path))
+                        with _core.checkpoint.store_path(metadata) as (path, storage_id):
+                            self._checkpoint_model(path)
                         response = {"uuid": storage_id}
                     else:
                         response = {}
@@ -732,7 +734,7 @@ class EstimatorTrialController(det.TrialController):
             return
 
         logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
-        with self.context._core.checkpointing.restore_path(self.env.latest_checkpoint) as load_path:
+        with self.context._core.checkpoint.restore_path(self.env.latest_checkpoint) as load_path:
             for callback in self.train_hooks:
                 if isinstance(callback, estimator.RunHook):
                     callback.on_checkpoint_load(str(load_path))
@@ -748,9 +750,9 @@ class EstimatorTrialController(det.TrialController):
             logging.debug(f"Load path set to {self.estimator_dir}.")
 
             # Load WorkloadSequencer state.
-            wlsq_path = os.path.join(load_path, "workload_sequencer.pkl")
-            if self.wlsq is not None and os.path.exists(wlsq_path):
-                with open(wlsq_path, "rb") as f:
+            wlsq_path = load_path / "workload_sequencer.pkl"
+            if self.wlsq is not None and wlsq_path.exists():
+                with wlsq_path.open("rb") as f:
                     self.wlsq.load_state(pickle.load(f))
 
     def compute_validation_metrics(self) -> workload.Response:
@@ -780,10 +782,10 @@ class EstimatorTrialController(det.TrialController):
         assert (
             self.context.distributed.size > 1
         ), "average_metrics can only be called during distributed training"
-        all_metrics = self.context.distributed._zmq_gather(metrics)
+        all_metrics = self.context.distributed.gather(metrics)
         if not self.is_chief:
             return None
-        assert all_metrics is not None, "chief did not get metrics from _zmq_gather()"
+        assert all_metrics is not None, "chief did not get metrics from gather()"
 
         for key in metrics:
             if isinstance(metrics[key], numbers.Number):
@@ -797,7 +799,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12``).
+    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

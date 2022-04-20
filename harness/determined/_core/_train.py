@@ -17,9 +17,10 @@ class EarlyExitReason(enum.Enum):
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
 
 
-class Training:
+class TrainContext:
     """
-    Some training-related REST API wrappers.
+    TrainContext gives access to report training and validation metrics to the Determined master
+    during trial tasks.
     """
 
     def __init__(
@@ -39,15 +40,26 @@ class Training:
         self._tbd_writer = tbd_writer
 
     def set_status(self, status: str) -> None:
+        """
+        Report a short user-facing string that the WebUI can render to indicate what a trial is
+        working on.
+        """
+
         body = {"state": status}
         logger.debug(f"set_status({status})")
         self._session.post(f"/api/v1/trials/{self._trial_id}/runner/metadata", json=body)
 
-    def get_last_validation(self) -> Optional[int]:
+    def _get_last_validation(self) -> Optional[int]:
+        # This is needed by the workload sequencer, but it is not generally stable, because it is
+        # easy to call this before reporting any metrics.  If your last checkpoint was older than
+        # your last validation, then the value you get from this function might be higher before
+        # you report metrics than after (since metrics get archived on first report of new metrics,
+        # not on trial restart).  However, this bug does not happen to affect the workload sequencer
+        # because of the workload sequencer's very specific use of this function.
         r = self._session.get(f"/api/v1/trials/{self._trial_id}")
         val = r.json()["trial"].get("latestValidation") or {}
         latest_batch = val.get("totalBatches")
-        logger.debug(f"get_last_validation() -> {latest_batch}")
+        logger.debug(f"_get_last_validation() -> {latest_batch}")
         return latest_batch
 
     def report_training_metrics(
@@ -56,6 +68,13 @@ class Training:
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
+        """
+        Report training metrics to the master.
+
+        You can include a list of *batch_metrics*.  Batch metrics are not be shown in the WebUI but
+        may be accessed from the master via the CLI for post-processing.
+        """
+
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
@@ -113,6 +132,13 @@ class Training:
         latest_batch: int,
         metrics: Dict[str, Any],
     ) -> None:
+        """
+        Report validation metrics to the master.
+
+        Note that for hyperparameter search, this is independent of the need to report the searcher
+        metric via ``SearcherOperation.report_completed()`` in the Searcher API.
+        """
+
         serializable_metrics = self._get_serializable_metrics(metrics)
         reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
@@ -133,6 +159,14 @@ class Training:
             self._tbd_mgr.sync()
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
+        """
+        Report an early exit reason to the Determined master.
+
+        Currenlty, the only meaningful value to report is ``EarlyExitReason.INVALID_HP``, which is
+        reported automatically in ``core.Context.__exit__()`` detects an exception of type
+        ``det.InvalidHP``.
+        """
+
         body = {"reason": EarlyExitReason(reason).value}
         logger.info(f"report_early_exit({reason})")
         r = self._session.post(
@@ -143,6 +177,14 @@ class Training:
             logger.warn("early exit has already been reported for this trial, ignoring new value")
 
     def get_experiment_best_validation(self) -> Optional[float]:
+        """
+        Get the best reported validation metric reported so far, across the whole experiment.
+
+        The value returned will be the highest or lowest reported validation metric value, using
+        the searcher.metric field of the experiment config as the key and searcher.smaller_is_better
+        for the comparison.
+        """
+
         logger.debug("get_experiment_best_validation()")
         try:
             r = self._session.get(
@@ -154,16 +196,14 @@ class Training:
         return float(r.json()["metric"])
 
 
-class DummyTraining(Training):
-    """ """
-
+class DummyTrainContext(TrainContext):
     def __init__(self) -> None:
         pass
 
     def set_status(self, status: str) -> None:
         logger.info(f"status: {status}")
 
-    def get_last_validation(self) -> Optional[int]:
+    def _get_last_validation(self) -> Optional[int]:
         return None
 
     def report_training_metrics(

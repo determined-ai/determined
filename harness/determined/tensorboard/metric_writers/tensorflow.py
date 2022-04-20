@@ -40,6 +40,10 @@ class TFWriter(tensorboard.MetricWriter):
         self._seen_summary_tags: Set[str] = set()
 
     def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
+        # Fix for protobuf 3.20 breaking change that disallows assigning single-element numpy arrays
+        # to float fields.
+        if isinstance(value, np.ndarray):
+            value = value.item()
         summary = self.createSummary()
         summary_value = summary.value.add()
         summary_value.tag = name

@@ -36,7 +36,10 @@ type RMJobInfo struct { // rename ?
 }
 
 // GetJobSummary requests a summary of the job.
-type GetJobSummary struct{}
+type GetJobSummary struct {
+	JobID        model.JobID
+	ResourcePool string
+}
 
 // GetJob requests a job representation from a job.
 type GetJob struct{}
@@ -44,6 +47,24 @@ type GetJob struct{}
 // GetJobQ is used to get all job information in one go to avoid any inconsistencies.
 type GetJobQ struct {
 	ResourcePool string
+}
+
+// DeleteJob instructs the RM to clean up all metadata associated with a job external to
+// Determined.
+type DeleteJob struct {
+	JobID model.JobID
+}
+
+// DeleteJobResponse returns to the caller if the cleanup was successful or not.
+type DeleteJobResponse struct {
+	Err <-chan error
+}
+
+// EmptyDeleteJobResponse returns a response with an empty error chan.
+func EmptyDeleteJobResponse() DeleteJobResponse {
+	respC := make(chan error, 1)
+	respC <- nil
+	return DeleteJobResponse{Err: respC}
 }
 
 // GetJobQStats requests stats for a queue.
@@ -237,8 +258,27 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC)
 		if err != nil {
 			ctx.Respond(err)
+			return nil
 		}
 		ctx.Respond(jobs)
+
+	case GetJobSummary:
+		jobs, err := j.jobQSnapshot(ctx, msg.ResourcePool)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		jobInfo, ok := jobs[msg.JobID]
+		if !ok || jobInfo == nil {
+			// job is not active.
+			ctx.Respond(ErrJobNotFound(msg.JobID))
+			return nil
+		}
+		summary := jobv1.JobSummary{
+			State:     jobInfo.State.Proto(),
+			JobsAhead: int32(jobInfo.JobsAhead),
+		}
+		ctx.Respond(&summary)
 
 	case *apiv1.UpdateJobQueueRequest:
 		errors := make([]string, 0)

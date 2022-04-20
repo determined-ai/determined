@@ -87,14 +87,16 @@ const NavigationTabbar: React.FC = () => {
         actions={[
           {
             render: () => {
-              return <AvatarCard className={css.user} user={auth.user} />;
+              return <AvatarCard className={css.user} key="Avatar" user={auth.user} />;
             },
           },
           {
+            icon: 'settings',
             label: 'Settings',
             onClick: () => openUserSettingsModal(),
           },
           {
+            icon: 'user',
             label: 'Sign out',
             onClick: e => handlePathUpdate(e, paths.logout()),
           },

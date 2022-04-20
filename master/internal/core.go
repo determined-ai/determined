@@ -839,6 +839,9 @@ func (m *Master) Run(ctx context.Context) error {
 	if err = m.db.CloseOpenAllocations(); err != nil {
 		return err
 	}
+	if err = m.db.EndAllTaskStats(); err != nil {
+		return err
+	}
 
 	// The below function call is intentionally made after the call to CloseOpenAllocations.
 	// This ensures that in the scenario where a cluster fails all open allocations are

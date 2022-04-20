@@ -118,7 +118,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(responseReattachContainers{ContainersReattached: reattachedContainers})
 		}
 
-	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog:
+	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog, aproto.ContainerStatsRecord:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:
@@ -132,8 +132,8 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		}
 		// actually overwrite the spec.
 		msg.Spec = enrichedSpec
-
-		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
+		if ref, ok := ctx.ActorOf(
+			msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
 			if ctx.ExpectingResponse() {
 				ctx.Respond(errors.Errorf("container already created: %s", msg.Container.ID))

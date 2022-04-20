@@ -101,7 +101,6 @@ type command struct {
 	serviceAddress *string
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
-	rmJobInfo      *job.RMJobInfo
 
 	logCtx logger.Context
 }
@@ -135,10 +134,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		priority := c.Config.Resources.Priority
 		if priority != nil {
-			ctx.Tell(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-				Priority: *priority,
-				Handler:  ctx.Self(),
-			})
+			if err := c.setPriority(ctx, *priority, true); err != nil {
+				return errors.Wrapf(err, "setting priority of task %v", c.taskID)
+			}
 		}
 
 		var portProxyConf *sproto.PortProxyConfig
@@ -195,9 +193,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			JobID:    c.jobID,
 			JobActor: ctx.Self(),
 		})
-
-	case *job.RMJobInfo:
-		c.rmJobInfo = msg
 
 	case job.GetJob:
 		ctx.Respond(c.toV1Job())
@@ -269,7 +264,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillNotebookRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
-		c.clearJobInfo()
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
 		if err != nil {
@@ -290,7 +284,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillCommandRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
-		c.clearJobInfo()
 
 	case *apiv1.SetCommandPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -312,7 +305,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillShellRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
-		c.clearJobInfo()
 
 	case *apiv1.SetShellPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -334,7 +326,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTensorboardRequest:
 		ctx.Tell(c.allocation, task.Kill)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
-		c.clearJobInfo()
 
 	case *apiv1.SetTensorboardPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -375,6 +366,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 		return fmt.Errorf("setting priority for job type %s in kubernetes is not supported",
 			c.jobType)
 	}
+
 	c.Config.Resources.Priority = &priority
 
 	if forward {
@@ -528,12 +520,5 @@ func (c *command) toV1Job() *jobv1.Job {
 		j.ResourcePool = c.Config.Resources.ResourcePool
 	}
 
-	job.UpdateJobQInfo(&j, c.rmJobInfo)
-
 	return &j
-}
-
-// clearJobInfo clears the job info from the command.
-func (c *command) clearJobInfo() {
-	c.rmJobInfo = nil
 }
