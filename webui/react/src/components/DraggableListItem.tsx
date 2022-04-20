@@ -12,10 +12,11 @@ interface Props {
   onDrop: (indexOne: number, indexTwo: number) => void;
   style: CSSProperties;
 }
-
 interface DroppableItemProps {
   index: number
 }
+
+const DraggableTypes = { COLUMN: 'COLUMN' };
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 const withDragAndDropProvider = <T extends {}>
@@ -25,8 +26,6 @@ const withDragAndDropProvider = <T extends {}>
       <Component {...props} />
     </DndProvider>
   );
-
-const DraggableTypes = { COLUMN: 'COLUMN' };
 
 const DraggableListItem: React.FC<Props> = ({ index, style, onClick, children, onDrop }: Props) => {
 
