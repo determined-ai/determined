@@ -528,32 +528,36 @@ const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | und
 const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
 const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
 
+const filterLogMessage = (message: string): string => {
+  let filteredMessage = message.trim();
+
+  if (defaultRegex.test(message)) {
+    const matches = message.match(defaultRegex) || [];
+    filteredMessage = matches[2] || '';
+  } else if (kubernetesRegex.test(message)) {
+    const matches = message.match(kubernetesRegex) || [];
+    filteredMessage = [ matches[1], matches[2], matches[4] ].join(' ');
+  }
+
+  return filteredMessage;
+};
+
 export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   const logData = data as Sdk.V1TrialLogsResponse;
-  const log = {
+  return {
     id: logData.id,
     level: decodeV1LogLevelToLogLevel(logData.level),
-    message: logData.message,
+    message: filterLogMessage(logData.message),
     time: logData.timestamp as unknown as string,
   };
-  if (defaultRegex.test(logData.message)) {
-    const matches = logData.message.match(defaultRegex) || [];
-    const message = matches[2] || '';
-    log.message = message;
-  } else if (kubernetesRegex.test(logData.message)) {
-    const matches = logData.message.match(kubernetesRegex) || [];
-    const message = [ matches[1], matches[2], matches[4] ].join(' ');
-    log.message = message;
-  }
-  return log;
 };
 
 export const jsonToTaskLog = (data: unknown): types.Log => {
   const logData = data as Sdk.V1TaskLogsResponse;
   return ({
     id: logData.id,
-    level: decodeV1LogLevelToLogLevel(logData.level ?? Sdk.V1LogLevel.UNSPECIFIED),
-    message: (logData.message ?? '').trim(),      // Task logs comes with tailing `\n`.
+    level: decodeV1LogLevelToLogLevel(logData.level),
+    message: filterLogMessage(logData.message),
     time: logData.timestamp as unknown as string,
   });
 };
