@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React from 'react';
 
 import Avatar from 'components/Avatar';
@@ -21,11 +22,20 @@ const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props
   return (
     <ProjectActionDropdown curUser={curUser} fetchProjects={fetchProjects} project={project}>
       <div className={css.base}>
-        <h6 className={css.name}>
-          <Link inherit path={paths.projectDetails(project.id)}>
-            {project.name}
-          </Link>
-        </h6>
+        <div className={css.nameRow}>
+          <h6 className={css.name}>
+            <Link inherit path={paths.projectDetails(project.id)}>
+              {project.name}
+            </Link>
+          </h6>
+          {project.archived && (
+            <Tooltip title="Archived">
+              <div>
+                <Icon name="archive" size="small" />
+              </div>
+            </Tooltip>
+          )}
+        </div>
         {!project.immutable && (
           <ProjectActionDropdown
             className={css.action}

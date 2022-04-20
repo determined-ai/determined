@@ -85,7 +85,7 @@ const WorkspaceDetails: React.FC = () => {
   const fetchProjects = useCallback(async () => {
     try {
       const response = await getWorkspaceProjects({
-        archived: settings.archived ? undefined : false,
+        archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
         id,
         limit: settings.tableLimit,
         name: settings.name,
@@ -112,7 +112,8 @@ const WorkspaceDetails: React.FC = () => {
     settings.sortKey,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user ]);
+    settings.user,
+    workspace?.archived ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -330,7 +331,7 @@ const WorkspaceDetails: React.FC = () => {
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader workspace={workspace} />}
+      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter
@@ -344,8 +345,12 @@ const WorkspaceDetails: React.FC = () => {
           <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
         </SelectFilter>
         <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          {!workspace.archived && (
+            <>
+              <Switch checked={settings.archived} onChange={switchShowArchived} />
+              <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+            </>
+          )}
           <SelectFilter
             bordered={false}
             dropdownMatchSelectWidth={150}
