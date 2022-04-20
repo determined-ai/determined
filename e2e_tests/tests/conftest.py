@@ -91,7 +91,7 @@ def instantiate_gpu() -> None:
     ]
 
     subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
 @pytest.fixture(scope="session", autouse=True)
