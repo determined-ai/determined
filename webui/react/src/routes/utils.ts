@@ -5,7 +5,7 @@ import React from 'react';
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { CommandTask } from 'types';
+import { BrandingType, CommandTask } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -232,8 +232,10 @@ export const paths = {
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },
-  submitProductFeedback: (): string => {
-    return 'https://airtable.com/shr87rnMuHhiDTpLo';
+  submitProductFeedback: (branding: BrandingType): string => {
+    return branding === BrandingType.Determined
+      ? 'https://airtable.com/shr87rnMuHhiDTpLo'
+      : 'https://airtable.com/shrodYROolF0E1iYf';
   },
   taskList: (): string => {
     return '/tasks';

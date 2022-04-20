@@ -7,7 +7,7 @@ import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { ResourceType } from 'types';
+import { BrandingType, ResourceType } from 'types';
 import { percent } from 'utils/number';
 
 import AvatarCard from './AvatarCard';
@@ -42,14 +42,14 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const menuConfig = {
+const menuConfig = (branding: BrandingType) => ({
   bottom: [
     { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
     {
       external: true,
       icon: 'pencil',
       label: 'Share Feedback',
-      path: paths.submitProductFeedback(),
+      path: paths.submitProductFeedback(branding),
       popout: true,
     },
     {
@@ -69,7 +69,7 @@ const menuConfig = {
     { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
     { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
   ],
-};
+});
 
 const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
   const location = useLocation();
@@ -97,7 +97,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { auth, cluster: overview, ui, resourcePools } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, info } = useStore();
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
@@ -183,7 +183,7 @@ const NavigationSideBar: React.FC = () => {
             />
           </section>
           <section className={css.top}>
-            {menuConfig.top.map(config => (
+            {menuConfig(info.branding).top.map(config => (
               <NavigationItem
                 key={config.icon}
                 status={config.icon === 'cluster' ? cluster : undefined}
@@ -193,7 +193,7 @@ const NavigationSideBar: React.FC = () => {
             ))}
           </section>
           <section className={css.bottom}>
-            {menuConfig.bottom.map(config => (
+            {menuConfig(info.branding).bottom.map(config => (
               <NavigationItem
                 key={config.icon}
                 tooltip={settings.navbarCollapsed}
