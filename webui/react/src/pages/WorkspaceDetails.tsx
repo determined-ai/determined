@@ -344,7 +344,7 @@ const WorkspaceDetails: React.FC = () => {
           <Option value={ProjectFilters.Mine}>My projects</Option>
           <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
         </SelectFilter>
-        <Space>
+        <Space wrap>
           {!workspace.archived && (
             <>
               <Switch checked={settings.archived} onChange={switchShowArchived} />
