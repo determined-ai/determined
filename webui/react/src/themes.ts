@@ -3,7 +3,9 @@
 import {
   BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState,
 } from 'types';
-import { isColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
+import { isColor, rgba2str, rgbaMix, str2rgba } from 'utils/color';
+
+const STRONG_WEAK_DELTA = 40;
 
 /*
  * Where did we get our sizes from?
@@ -269,21 +271,11 @@ const generateStrongWeak = (theme: Theme): Theme => {
       if (baseValue && isColor(baseValue)) {
         const rgba = str2rgba(baseValue);
         const mixer = isStrong ? rgbaStrong : rgbaWeak;
-        if (key === 'stageWeak') {
-          console.log(
-            key,
-            baseKey,
-            baseValue,
-            isColor(baseValue),
-            rgba,
-            mixer,
-            rgba2str(rgbaFromGradient(rgba, mixer, 0.05)),
-          );
-        }
-        theme[key as keyof Theme] = rgba2str(rgbaFromGradient(rgba, mixer, 0.05));
+        theme[key as keyof Theme] = rgba2str(rgbaMix(rgba, mixer, STRONG_WEAK_DELTA));
       }
     }
   }
+
   return theme as Theme;
 };
 
@@ -340,33 +332,25 @@ const themeBase = {
   floatBorderWeak: undefined,
 
   // Interactive styles.
-  primary: undefined,
-  primaryHover: undefined,
-  primaryActive: undefined,
-  primaryInactive: undefined,
-  primaryOn: undefined,
-  primaryOnHover: undefined,
-  primaryOnActive: undefined,
-  primaryOnInactive: undefined,
-  primaryBorder: undefined,
-  primaryBorderHover: undefined,
-  primaryBorderActive: undefined,
-  primaryBorderInactive: undefined,
-  secondary: undefined,
-  secondaryHover: undefined,
-  secondaryActive: undefined,
-  secondaryInactive: undefined,
-  secondaryOn: undefined,
-  secondaryOnHover: undefined,
-  secondaryOnActive: undefined,
-  secondaryOnInactive: undefined,
-  secondaryBorder: undefined,
-  secondaryBorderHover: undefined,
-  secondaryBorderActive: undefined,
-  secondaryBorderInactive: undefined,
+  ix: undefined,
+  ixStrong: undefined,
+  ixWeak: undefined,
+  ixActive: undefined,
+  ixInactive: undefined,
+  ixOn: undefined,
+  ixOnStrong: undefined,
+  ixOnWeak: undefined,
+  ixOnActive: undefined,
+  ixOnInactive: undefined,
+  ixBorder: undefined,
+  ixBorderStrong: undefined,
+  ixBorderWeak: undefined,
+  ixBorderActive: undefined,
+  ixBorderInactive: undefined,
 
   // Specialized and unique styles.
   density: '0',
+  targetFocus: '0px 0px 4px rgba(0, 155, 222, 0.12)',
   borderRadius: '4px',
   borderRadiusStrong: '8px',
   borderRadiusWeak: '2px',
@@ -438,6 +422,17 @@ const themeLight = {
   floatOn: 'rgba(49, 49, 49, 1.0)',
   floatBorder: 'rgba(225, 225, 225, 1.0)',
 
+  // Interactive styles.
+  ix: 'rgba(255, 255, 255, 1.0)',
+  ixActive: 'rgba(231, 247, 255, 1.0)',
+  ixInactive: 'rgba(245, 245, 245, 1.0)',
+  ixOn: 'rgba(38, 38, 38, 1.0)',
+  ixOnActive: 'rgba(0, 155, 222, 1.0)',
+  ixOnInactive: 'rgba(217, 217, 217, 1.0)',
+  ixBorder: 'rgba(217, 217, 217, 1.0)',
+  ixBorderActive: 'rgba(0, 155, 222, 1.0)',
+  ixBorderInactive: 'rgba(217, 217, 217, 1.0)',
+
   // Specialized and unique styles.
   overlay: 'rgba(255, 255, 255, 0.75)',
   overlayStrong: 'rgba(255, 255, 255, 1.0)',
@@ -465,6 +460,17 @@ const themeDark = {
   float: 'rgba(60, 60, 60, 1.0)',
   floatOn: 'rgba(206, 206, 206, 1.0)',
   floatBorder: 'rgba(155, 155, 155, 1.0)',
+
+  // Interactive styles.
+  ix: 'rgba(21, 21, 23, 1.0)',
+  ixActive: 'rgba(17, 27, 38, 1.0)',
+  ixInactive: 'rgba(49, 49, 49, 1.0)',
+  ixOn: 'rgba(209, 209, 209, 1.0)',
+  ixOnActive: 'rgba(23, 125, 220, 1.0)',
+  ixOnInactive: 'rgba(45, 45, 45, 1.0)',
+  ixBorder: 'rgba(67, 67, 67, 1.0)',
+  ixBorderActive: 'rgba(23, 125, 220, 1.0)',
+  ixBorderInactive: 'rgba(45, 45, 45, 1.0)',
 
   // Specialized and unique styles.
   overlay: 'rgba(0, 0, 0, 0.75)',
