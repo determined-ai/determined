@@ -8,7 +8,6 @@ import useCreateExperimentModal, {
 } from 'hooks/useModal/useModalExperimentCreate';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
-import { getStateColorCssVar } from 'themes';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
@@ -89,7 +88,6 @@ const TrialDetailsHeader: React.FC<Props> = ({
     <PageHeaderFoldable
       leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
       options={headerOptions}
-      style={{ backgroundColor: getStateColorCssVar(trial.state) }}
     />
   );
 };

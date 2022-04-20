@@ -5,7 +5,7 @@ import {
 } from 'types';
 import { isColor, rgba2str, rgbaMix, str2rgba } from 'utils/color';
 
-const STRONG_WEAK_DELTA = 40;
+const STRONG_WEAK_DELTA = 45;
 
 /*
  * Where did we get our sizes from?
@@ -222,13 +222,13 @@ const stateColorMapping = {
   [RunState.Deleting]: 'critical',
   [RunState.DeleteFailed]: 'critical',
   [RunState.Errored]: 'critical',
-  [RunState.Paused]: 'suspended',
+  [RunState.Paused]: 'warning',
   [RunState.StoppingCanceled]: 'inactive',
   [RunState.StoppingCompleted]: 'success',
   [RunState.StoppingError]: 'critical',
   [RunState.Unspecified]: 'inactive',
-  [CommandState.Pending]: 'suspended',
-  [CommandState.Assigned]: 'suspended',
+  [CommandState.Pending]: 'warning',
+  [CommandState.Assigned]: 'warning',
   [CommandState.Pulling]: 'active',
   [CommandState.Starting]: 'active',
   [CommandState.Running]: 'active',
@@ -241,16 +241,20 @@ const stateColorMapping = {
   [SlotState.Potential]: 'potential',
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
-  [JobState.QUEUED]: 'suspended',
+  [JobState.QUEUED]: 'warning',
 };
 
 export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
 SlotState | JobState
 
-export const getStateColorCssVar = (state: StateOfUnion | undefined, isOn = false): string => {
+export const getStateColorCssVar = (
+  state: StateOfUnion | undefined,
+  options: { isOn?: boolean, strongWeak?: 'strong' | 'weak' } = {},
+): string => {
   const name = state ? stateColorMapping[state] : 'active';
-  const on = isOn ? '-on' : '';
-  return `var(--theme-status-${name}${on})`;
+  const on = options.isOn ? '-on' : '';
+  const strongWeak = options.strongWeak ? `-${options.strongWeak}` : '';
+  return `var(--theme-status-${name}${on}${strongWeak})`;
 };
 
 export const getStateColor = (state: StateOfUnion | undefined): string => {
@@ -349,7 +353,7 @@ const themeBase = {
   ixBorderInactive: undefined,
 
   // Specialized and unique styles.
-  density: '0',
+  density: '2',
   targetFocus: '0px 0px 4px rgba(0, 155, 222, 0.12)',
   borderRadius: '4px',
   borderRadiusStrong: '8px',
@@ -389,10 +393,10 @@ const themeBase = {
   statusPendingOn: 'rgba(255, 255, 255, 1.0)',
   statusPendingOnStrong: undefined,
   statusPendingOnWeak: undefined,
-  statusSuccess: 'rgba(0, 153, 0, 1.0',
+  statusSuccess: 'rgba(0, 153, 0, 1.0)',
   statusSuccessStrong: undefined,
   statusSuccessWeak: undefined,
-  statusSuccessOn: 'rgba(255, 255, 255, 1.0',
+  statusSuccessOn: 'rgba(255, 255, 255, 1.0)',
   statusSuccessOnStrong: undefined,
   statusSuccessOnWeak: undefined,
   statusWarning: 'rgba(204, 153, 0, 1.0)',
@@ -417,7 +421,7 @@ const themeLight = {
   stageBorder: 'rgba(194, 194, 194, 1.0)',
   surface: 'rgba(250, 250, 250, 1.0)',
   surfaceOn: 'rgba(0, 8, 16, 1.0)',
-  surfaceBorder: 'rgba(225, 225, 225, 1.0)',
+  surfaceBorder: 'rgba(212, 212, 212, 1.0)',
   float: 'rgba(255, 255, 255, 1.0)',
   floatOn: 'rgba(49, 49, 49, 1.0)',
   floatBorder: 'rgba(225, 225, 225, 1.0)',
@@ -454,12 +458,12 @@ const themeDark = {
   stage: 'rgba(35, 36, 38, 1.0)',
   stageOn: 'rgba(186, 186, 186, 1.0)',
   stageBorder: 'rgba(61, 61, 61, 1.0)',
-  surface: 'rgba(55, 56, 57, 1.0)',
+  surface: 'rgba(48, 49, 50, 1.0)',
   surfaceOn: 'rgba(255, 247, 239, 1.0)',
-  surfaceBorder: 'rgba(65, 65, 65, 1.0)',
-  float: 'rgba(60, 60, 60, 1.0)',
+  surfaceBorder: 'rgba(85, 85, 85, 1.0)',
+  float: 'rgba(60, 61, 62, 1.0)',
   floatOn: 'rgba(206, 206, 206, 1.0)',
-  floatBorder: 'rgba(155, 155, 155, 1.0)',
+  floatBorder: 'rgba(90, 91, 92, 1.0)',
 
   // Interactive styles.
   ix: 'rgba(21, 21, 23, 1.0)',

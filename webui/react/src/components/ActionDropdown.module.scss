@@ -1,5 +1,5 @@
 .base {
-  color: var(--theme-float);
+  color: var(--theme-ix-on);
   display: flex;
   justify-content: flex-end;
 
@@ -23,6 +23,6 @@
     color: var(--theme-float-on);
     cursor: not-allowed;
 
-    &:hover { color: var(--theme-colors-monochrome-11); }
+    &:hover { color: var(--theme-ix-on-active); }
   }
 }

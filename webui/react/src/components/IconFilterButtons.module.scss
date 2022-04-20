@@ -2,29 +2,10 @@
   align-items: center;
   display: flex;
 
-  .buttons {
-    align-items: center;
-    display: flex;
+  .inactive {
+    color: inherit;
   }
-  .button {
-    align-items: center;
-    background-color: var(--theme-stage);
-    border: solid var(--theme-stroke-width) var(--theme-stage-border);
-    border-radius: var(--theme-border-radius);
-    cursor: pointer;
-    display: flex;
-    height: 32px;
-    outline: 0;
-    padding: 0 6px;
-    transition: 0.2s;
-
-    &:hover { border-color: var(--theme-status-active); }
-  }
-  .button:not(:first-child) { margin-left: 8px; }
-  .button:focus {
-    box-shadow: var(--theme-outline);
-  }
-  .button.active {
+  .active {
     border-color: var(--theme-status-active);
     color: var(--theme-status-active);
   }

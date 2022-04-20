@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -73,9 +73,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const { modalOpen: openModalCreate } = useModalExperimentCreate();
 
-  const backgroundColor = useMemo(() => {
-    return getStateColorCssVar(experiment.state);
-  }, [ experiment.state ]);
+  const stateStyle = useMemo(() => ({
+    backgroundColor: getStateColorCssVar(experiment.state),
+    color: getStateColorCssVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
+  }), [ experiment.state ]);
 
   const handlePauseClick = useCallback(async () => {
     setIsChangingState(true);
@@ -316,43 +317,38 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           </div>
         )}
         leftContent={(
-          <div className={css.base}>
-            <div className={css.experimentInfo}>
-              <Spinner spinning={isChangingState}>
-                <div className={css.experimentState} style={{ backgroundColor }}>
-                  {pausableRunStates.has(experiment.state) && (
-                    <Button
-                      className={css.buttonPause}
-                      ghost={true}
-                      icon={<Icon name="pause" size="large" />}
-                      shape="circle"
-                      onClick={handlePauseClick}
-                    />
-                  )}
-                  {experiment.state === RunState.Paused && (
-                    <Button
-                      className={css.buttonPlay}
-                      ghost={true}
-                      icon={<Icon name="play" size="large" />}
-                      shape="circle"
-                      onClick={handlePlayClick}
-                    />
-                  )}
-                  {!terminalRunStates.has(experiment.state) && (
-                    <Button
-                      className={css.buttonStop}
-                      ghost={true}
-                      icon={<Icon name="stop" size="large" />}
-                      shape="circle"
-                      onClick={handleStopClick}
-                    />
-                  )}
-                  <span className={css.state}>{stateToLabel(experiment.state)}</span>
-                </div>
-              </Spinner>
-              <div className={css.experimentId}>Experiment {experiment.id}</div>
-            </div>
-            <div className={css.experimentName}>
+          <Space align="center" className={css.base}>
+            <Spinner spinning={isChangingState}>
+              <div className={css.state} style={stateStyle}>
+                {pausableRunStates.has(experiment.state) && (
+                  <Button
+                    className={css.buttonPause}
+                    icon={<Icon name="pause" size="large" />}
+                    shape="circle"
+                    onClick={handlePauseClick}
+                  />
+                )}
+                {experiment.state === RunState.Paused && (
+                  <Button
+                    className={css.buttonPlay}
+                    icon={<Icon name="play" size="large" />}
+                    shape="circle"
+                    onClick={handlePlayClick}
+                  />
+                )}
+                {!terminalRunStates.has(experiment.state) && (
+                  <Button
+                    className={css.buttonStop}
+                    icon={<Icon name="stop" size="large" />}
+                    shape="circle"
+                    onClick={handleStopClick}
+                  />
+                )}
+                <label>{stateToLabel(experiment.state)}</label>
+              </div>
+            </Spinner>
+            <div className={css.id}>Experiment {experiment.id}</div>
+            <div className={css.name}>
               <InlineEditor
                 isOnDark
                 maxLength={128}
@@ -367,10 +363,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <div className={css.trial}>Trial {trial.id}</div>
               </>
             ) : null}
-          </div>
+          </Space>
         )}
         options={headerOptions}
-        style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
       />
       <ExperimentHeaderProgress experiment={experiment} />
     </>

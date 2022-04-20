@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback } from 'react';
 
-import Icon from './Icon';
+import IconButton from './IconButton';
 import css from './IconFilterButtons.module.scss';
 
 interface FilterButton {
@@ -13,36 +13,27 @@ interface FilterButton {
 
 interface Props {
   buttons: FilterButton[];
-  onClick?: (id: string) => void;
+  onClick?: (id: string, e?: React.MouseEvent) => void;
 }
 
 const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
-  const handleClick = useCallback((id: string): (() => void) => {
-    return (): void => {
-      if (onClick) onClick(id);
-    };
+  const handleClick = useCallback((id: string) => {
+    return (e: React.MouseEvent) => onClick?.(id, e);
   }, [ onClick ]);
 
   return (
-    <div className={css.base}>
-      <div className={css.buttons}>
-        {buttons.map(button => {
-          const buttonClasses = [ css.button ];
-          if (button.active) buttonClasses.push(css.active);
-          return (
-            <Tooltip key={button.id} placement="top" title={button.label}>
-              <button
-                aria-label={button.label}
-                className={buttonClasses.join(' ')}
-                tabIndex={0}
-                onClick={handleClick(button.id)}>
-                <Icon name={button.icon} />
-              </button>
-            </Tooltip>
-          );
-        })}
-      </div>
-    </div>
+    <Space className={css.base}>
+      {buttons.map(button => (
+        <IconButton
+          className={button.active ? css.active : css.inactive}
+          icon={button.icon}
+          key={button.id}
+          label={button.label}
+          tooltipPlacement="top"
+          onClick={handleClick(button.id)}
+        />
+      ))}
+    </Space>
   );
 };
 

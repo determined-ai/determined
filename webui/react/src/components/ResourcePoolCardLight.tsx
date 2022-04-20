@@ -136,7 +136,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({
               hideHeader
               poolType={pool.type}
               resourceStates={computeContainerStates}
-              size={ShirtSize.large}
+              size={ShirtSize.medium}
               slotsPotential={totalComputeSlots}
               totalSlots={pool.slotsAvailable}
             />
@@ -151,7 +151,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({
               isAux={true}
               poolType={pool.type}
               resourceStates={computeContainerStates}
-              size={ShirtSize.big}
+              size={ShirtSize.medium}
               totalSlots={totalComputeSlots}
             />
           )}

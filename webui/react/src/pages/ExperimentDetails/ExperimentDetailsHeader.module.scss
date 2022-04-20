@@ -1,19 +1,21 @@
 .base {
-  align-items: center;
-  display: flex;
+  font-size: 14px;
 
-  .experimentInfo {
+  .state {
     align-items: center;
-    display: flex;
-  }
-  .experimentState {
-    align-items: center;
-    border-radius: 20px;
+    border-radius: 24px;
     display: flex;
     justify-content: center;
-    margin-right: 8px;
     padding: 4px;
 
+    button {
+      background-color: transparent;
+      color: #fff;
+      opacity: 0.75;
+    }
+    .buttonPlay {
+      border-color: #fff;
+    }
     .buttonPlay i {
       margin-left: 3px;
     }
@@ -24,55 +26,52 @@
     .buttonPlay:hover,
     .buttonStop:hover {
       color: inherit;
-      opacity: 0.75;
+      opacity: 1;
     }
     .buttonPause:hover,
     .buttonPlay:hover {
       border-color: inherit;
     }
-    .state {
+    label {
       display: inline-block;
       font-size: 10px;
       font-weight: bold;
+      line-height: 16px;
       text-transform: uppercase;
     }
   }
-  .experimentId {
-    border-right: var(--theme-stroke-width) solid var(--theme-colors-monochrome-17);
+  .id {
     flex-shrink: 0;
     overflow: hidden;
-    padding-right: 6px;
     text-overflow: ellipsis;
   }
-  .experimentName {
+  .name {
     flex-shrink: 1;
-    opacity: 0.75;
     overflow: hidden;
-    padding-left: 6px;
     text-overflow: ellipsis;
   }
 
-  @media only screen and (max-width: $breakpoint-tablet) {
-    align-items: flex-start;
-    flex-direction: column;
-    width: 100%;
+  // @media only screen and (max-width: $breakpoint-tablet) {
+  //   align-items: flex-start;
+  //   flex-direction: column;
+  //   width: 100%;
 
-    .experimentInfo {
-      width: 100%;
-    }
-    .experimentId {
-      border-right: 0;
-      flex-shrink: 1;
-      font-size: 14px;
-      width: 100%;
-    }
-    .experimentName {
-      font-size: 14px;
-    }
-    .trial {
-      font-size: 14px;
-    }
-  }
+  //   .experimentInfo {
+  //     width: 100%;
+  //   }
+  //   .experimentId {
+  //     border-right: 0;
+  //     flex-shrink: 1;
+  //     font-size: 14px;
+  //     width: 100%;
+  //   }
+  //   .experimentName {
+  //     font-size: 14px;
+  //   }
+  //   .trial {
+  //     font-size: 14px;
+  //   }
+  // }
 }
 .foldableSection {
   display: flex;

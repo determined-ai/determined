@@ -11,13 +11,13 @@
     margin-top: 4px;
   }
   .label {
-    color: var(--theme-colors-monochrome-8);
+    color: var(--theme-float-on-weak);
     flex-basis: 30%;
     flex-shrink: 0;
     padding-right: 16px;
   }
   .content {
-    color: var(--theme-colors-monochrome-6);
+    color: var(--theme-float-on);
     flex-grow: 1;
   }
   .source,
@@ -46,8 +46,8 @@
     background:
       repeating-linear-gradient(
         to right,
-        var(--theme-colors-monochrome-12) 0,
-        var(--theme-colors-monochrome-12) 2px,
+        var(--theme-float-border-weak) 0,
+        var(--theme-float-border-weak) 2px,
         transparent 3px,
         transparent 7px
       );

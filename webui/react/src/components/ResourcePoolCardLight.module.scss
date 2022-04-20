@@ -3,6 +3,7 @@ $line-height: 22px;
 
 .base {
   background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
   border-radius: var(--theme-border-radius);
   box-shadow: var(--theme-elevation);
   color: var(--theme-surface-on);
