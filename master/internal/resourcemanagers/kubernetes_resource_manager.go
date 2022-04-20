@@ -322,10 +322,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 	case job.DeleteJob:
 		// For now, there is nothing to cleanup in k8s.
-		respC := make(chan error, 1)
-		respC <- nil
-		resp := job.DeleteJobResponse{Err: respC}
-		ctx.Respond(resp)
+		ctx.Respond(job.EmptyDeleteJobResponse())
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

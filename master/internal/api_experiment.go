@@ -252,7 +252,6 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	if err = a.m.db.DeleteExperiment(exp.ID); err != nil {
 		return errors.Wrapf(err, "deleting experiment from database")
 	}
-
 	return nil
 }
 
