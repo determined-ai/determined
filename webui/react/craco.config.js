@@ -2,10 +2,10 @@
 const path = require('path');
 
 const { when } = require('@craco/craco');
-const CracoSassResoucesPlugin = require('@jonny1994/craco-sass-resources-loader');
 const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin');
 const AntDesignThemePlugin = require('antd-theme-webpack-plugin');
 const CracoLessPlugin = require('craco-less');
+const CracoSassResoucesPlugin = require('craco-sass-resources-loader');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const { DefinePlugin } = require('webpack');
 
