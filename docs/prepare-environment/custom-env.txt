@@ -20,8 +20,8 @@ guide.
  Environment Variables
 ***********************
 
-For both trial runners and commands, you configure the environment variables inside the container
-using the :ref:`experiment <experiment-configuration>` or :ref:`task
+For both trial runners and commands, you can configure the environment variables inside the
+container using the :ref:`experiment <experiment-configuration>` or :ref:`task
 <command-notebook-configuration>` ``environment.environment_variables`` configuration field. The
 format is a list of ``NAME=VALUE`` strings. For example:
 
@@ -61,9 +61,9 @@ You can also set variables for each accelerator type, separately:
 
 If a ``startup-hook.sh`` file exists in the top level of your model definition directory, this file
 is automatically run with every Docker container startup. This occurs before any Python interpreters
-are launched or deep learning operations are performed, permitting the startup hook to customize the
-container environment, install additional dependencies, download data sets, or do almost anything
-that can be done in a shell script.
+are launched or deep learning operations are performed. The startup hook can be used to customize
+the container environment, install additional dependencies, and download data sets among other shell
+script commands.
 
 Startup hooks are not cached and run before the start of every workload so expensive or long-running
 operations in a startup hook can result in poor performance.
@@ -101,34 +101,12 @@ Default Images
 +-------------+---------------------------------------------------------------------------------------+
 | Environment | File Name                                                                             |
 +=============+=======================================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12``    |
+| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15``    |
 +-------------+---------------------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12`` |
+| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` |
 +-------------+---------------------------------------------------------------------------------------+
-| ROCm        | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.12``                |
+| AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15``                |
 +-------------+---------------------------------------------------------------------------------------+
-
-Supported legacy Images
-=======================
-
--  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b``
--  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b``
--  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b``
--  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-067db2b``
-
-The performance of some models can vary with different CUDA versions.
-
-Container Contents
-==================
-
-Experiments and tasks are run in containers that include the following packages:
-
--  CUDA 11.1
--  Horovod 0.24.2
--  PyTorch 1.10.2
--  Python 3.8.x
--  TensorFlow 2.8
--  Ubuntu 20.04
 
 .. _custom-docker-images:
 
@@ -143,8 +121,8 @@ publish to a Docker registry, such as `Docker Hub <https://hub.docker.com/>`__.
 
 .. warning::
 
-   It is important that you do NOT install the TensorFlow, PyTorch, Horovod, or Apex packages
-   because of conflicts with the officially-installed packages.
+   Do NOT install TensorFlow, PyTorch, Horovod, or Apex packages, which conflict with
+   Determined-installed packages.
 
 It is recommended that custom images use one of the official Determined images as a base image,
 using the ``FROM`` instruction.
