@@ -61,12 +61,12 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     return (
       <Menu>
         {userHasPermissions && (
-          <Menu.Item onClick={handleArchiveClick}>
+          <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
             {workspace.archived ? 'Unarchive' : 'Archive'}
           </Menu.Item>
         )}
         {userHasPermissions &&
-        <Menu.Item danger onClick={handleDeleteClick}>Delete...</Menu.Item>}
+        <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
       </Menu>
     );
   }, [ handleArchiveClick, handleDeleteClick, workspace.archived, userHasPermissions ]);

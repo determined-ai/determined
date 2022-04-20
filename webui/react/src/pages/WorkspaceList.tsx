@@ -134,6 +134,7 @@ const WorkspaceList: React.FC = () => {
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
       <WorkspaceActionDropdown
         curUser={user}
+        fetchWorkspaces={fetchWorkspaces}
         workspace={record}
       />
     );
@@ -150,12 +151,14 @@ const WorkspaceList: React.FC = () => {
       {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
+        key: 'user',
         render: userRenderer,
         title: 'User',
       },
       {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
+        key: 'archived',
         title: 'Archived',
       },
       {
@@ -169,7 +172,7 @@ const WorkspaceList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Workspace>[];
-  }, [ user ]);
+  }, [ fetchWorkspaces, user ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: WorkspaceColumnName[];

@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import React, { useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
@@ -37,7 +37,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           <div className={css.nameRow}>
             <h6 className={css.name}>
               <Link inherit path={paths.workspaceDetails(workspace.id)}>
-                {workspace.name}
+                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                  {workspace.name}
+                </Typography.Paragraph>
               </Link>
             </h6>
             {workspace.archived && (
