@@ -199,8 +199,8 @@ const (
 	LogLevelDebug = "DEBUG"
 	// LogLevelInfo is the info task log level.
 	LogLevelInfo = "INFO"
-	// LogLevelWarn is the warn task log level.
-	LogLevelWarn = "WARN"
+	// LogLevelWarning is the warn task log level.
+	LogLevelWarning = "WARNING"
 	// LogLevelError is the error task log level.
 	LogLevelError = "ERROR"
 	// LogLevelCritical is the critical task log level.
@@ -221,7 +221,7 @@ func TaskLogLevelFromProto(l logv1.LogLevel) string {
 	case logv1.LogLevel_LOG_LEVEL_INFO:
 		return LogLevelInfo
 	case logv1.LogLevel_LOG_LEVEL_WARNING:
-		return LogLevelWarn
+		return LogLevelWarning
 	case logv1.LogLevel_LOG_LEVEL_ERROR:
 		return LogLevelError
 	case logv1.LogLevel_LOG_LEVEL_CRITICAL:
@@ -240,7 +240,7 @@ func TaskLogLevelToProto(l string) logv1.LogLevel {
 		return logv1.LogLevel_LOG_LEVEL_DEBUG
 	case LogLevelInfo:
 		return logv1.LogLevel_LOG_LEVEL_INFO
-	case LogLevelWarn:
+	case LogLevelWarning:
 		return logv1.LogLevel_LOG_LEVEL_WARNING
 	case LogLevelError:
 		return logv1.LogLevel_LOG_LEVEL_ERROR

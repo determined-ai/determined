@@ -40,6 +40,7 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
 "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
 
+JUPYTER_LAB_LOG_FORMAT="%(levelname)s: [%(name)s] %(message)s"
 READINESS_REGEX='^.*Jupyter Server .* is running.*$'
 exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.allow_origin="*" \
@@ -49,5 +50,11 @@ exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.open_browser=False \
                  --ServerApp.token="" \
                  --ServerApp.trust_xheaders=True \
+                 --Application.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+                 --JupyterApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+                 --ExtensionApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+                 --LabServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+                 --LabApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+                 --ServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
     2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "${READINESS_REGEX}") >&2)
 
