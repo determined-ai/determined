@@ -13,6 +13,7 @@ $line-height: 22px;
   overflow: hidden;
   padding: var(--theme-sizes-layout-medium) $padding var(--theme-sizes-layout-medium);
   text-overflow: ellipsis;
+  height: 100%;
 
   .body {
     display: flex;

@@ -17,6 +17,7 @@ import TaskList from 'pages/TaskList';
 import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
+import ResourcepoolDetail from 'pages/ResourcepoolDetail'
 
 import Routes from './routes';
 import { RouteConfig } from './types';
@@ -25,6 +26,7 @@ const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
+  resourcepool: ResourcepoolDetail,
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,

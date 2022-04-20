@@ -10,19 +10,17 @@ import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/sta
 import { useStore } from 'contexts/Store';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
-import { ResourcePool, ResourceState, ResourceType } from 'types';
+import { ResourcePool } from 'types';
 import { clone } from 'utils/data';
 
 import Json from './Json';
 import Link from './Link';
 import css from './ResourcePoolCardLight.module.scss';
 import ResourcePoolDetails from './ResourcePoolDetails';
+import { getSlotContainerStates } from 'utils/cluster';
 
 interface Props {
-  computeContainerStates: ResourceState[];
   resourcePool: ResourcePool;
-  resourceType: ResourceType;
-  totalComputeSlots: number;
 }
 
 export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
@@ -70,13 +68,11 @@ const poolAttributes = [
 type SafeRawJson = Record<string, unknown>;
 
 const ResourcePoolCardLight: React.FC<Props> = ({
-  computeContainerStates,
   resourcePool: pool,
-  totalComputeSlots,
 }: Props) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
 
-  const { pool: poolOverview } = useStore();
+  const { pool: poolOverview, agents } = useStore();
 
   const descriptionClasses = [ css.description ];
 
@@ -124,33 +120,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({
         </div>
       </div>
       <div className={css.body}>
-        <section>
-          {poolOverview[pool.name]?.total > 0 && (
-            <SlotAllocationBar
-              footer={{ queued: pool?.stats?.queuedCount }}
-              hideHeader
-              poolType={pool.type}
-              resourceStates={computeContainerStates}
-              size={ShirtSize.large}
-              slotsPotential={totalComputeSlots}
-              totalSlots={pool.slotsAvailable}
-            />
-          )}
-          {isAux && (
-            <SlotAllocationBar
-              footer={{
-                auxContainerCapacity: pool.auxContainerCapacity,
-                auxContainersRunning: pool.auxContainersRunning,
-              }}
-              hideHeader
-              isAux={true}
-              poolType={pool.type}
-              resourceStates={computeContainerStates}
-              size={ShirtSize.big}
-              totalSlots={totalComputeSlots}
-            />
-          )}
-        </section>
+        <RenderAllocationBarResourcePool resourcePool={pool} />
         <section className={css.details}>
           <Json hideDivider json={shortDetails} />
           <div>
@@ -166,5 +136,47 @@ const ResourcePoolCardLight: React.FC<Props> = ({
     </div>
   );
 };
+
+export const RenderAllocationBarResourcePool: React.FC<Props> = ({
+  resourcePool: pool,
+}: Props)  => {
+  const { pool: poolOverview, agents } = useStore();
+  const isAux = useMemo(() => {
+    return pool.auxContainerCapacityPerAgent > 0;
+  }, [ pool ]);
+  return (
+    <section>
+          {poolOverview[pool.name]?.total > 0 && (
+            <SlotAllocationBar
+              footer={{ queued: pool?.stats?.queuedCount }}
+              hideHeader
+              poolType={pool.type}
+              resourceStates={
+                getSlotContainerStates(agents || [], pool.slotType, pool.name)
+              }
+              size={ShirtSize.large}
+              slotsPotential={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+              totalSlots={pool.slotsAvailable}
+            />
+          )}
+          {isAux && (
+            <SlotAllocationBar
+              footer={{
+                auxContainerCapacity: pool.auxContainerCapacity,
+                auxContainersRunning: pool.auxContainersRunning,
+              }}
+              hideHeader
+              isAux={true}
+              poolType={pool.type}
+              resourceStates={
+                getSlotContainerStates(agents || [], pool.slotType, pool.name)
+              }
+              size={ShirtSize.big}
+              totalSlots={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+            />
+          )}
+        </section>
+  )
+}
 
 export default ResourcePoolCardLight;

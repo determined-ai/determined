@@ -86,6 +86,11 @@ const routes: RouteConfig[] = [
     title: 'Cluster',
   },
   {
+    id: 'resourcepool',
+    needAuth: true,
+    path: '/resourcepool/:poolname'
+  },
+  {
     icon: 'logs',
     id: 'clusterLogs',
     needAuth: true,

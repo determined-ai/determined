@@ -196,6 +196,9 @@ export const paths = {
   clusters: (): string => {
     return '/clusters';
   },
+  resourcePool: (name: string): string =>{
+    return `/resourcepool/${name}`
+  },
   dashboard: (): string => {
     return '/dashboard';
   },

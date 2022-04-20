@@ -14,27 +14,18 @@ export default {
 
 export const Default = (): React.ReactNode => (
   <ResourcePoolCardLight
-    computeContainerStates={[]}
     resourcePool={rps.random()}
-    resourceType={ResourceType.CUDA}
-    totalComputeSlots={3}
   />
 );
 
 export const CPU = (): React.ReactNode => (
   <ResourcePoolCardLight
-    computeContainerStates={[]}
     resourcePool={rps.random()}
-    resourceType={ResourceType.CPU}
-    totalComputeSlots={3}
   />
 );
 
 export const Aux = (): React.ReactNode => (
   <ResourcePoolCardLight
-    computeContainerStates={[]}
     resourcePool={rps.random()}
-    resourceType={ResourceType.UNSPECIFIED}
-    totalComputeSlots={0}
   />
 );

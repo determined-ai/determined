@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-
+import {paths} from 'routes/utils'
 import Grid, { GridMode } from 'components/Grid';
 import ResourcePoolCardLight from 'components/ResourcePoolCardLight';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
@@ -11,7 +11,8 @@ import { ShirtSize } from 'themes';
 import {
   ResourcePool,
 } from 'types';
-import { getSlotContainerStates } from 'utils/cluster';
+import Link from 'components/Link'
+
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 
@@ -44,15 +45,11 @@ const ClusterOverview: React.FC = () => {
         title={'Resource Pools'}>
         <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
-            <ResourcePoolCardLight
-              computeContainerStates={
-                getSlotContainerStates(agents || [], rp.slotType, rp.name)
-              }
-              key={idx}
-              resourcePool={rp}
-              resourceType={rp.slotType}
-              totalComputeSlots={rp.maxAgents * (rp.slotsPerAgent ?? 0)}
-            />
+            <Link path={paths.resourcePool(rp.name)} key={idx}>
+              <ResourcePoolCardLight
+                resourcePool={rp}
+              />
+            </Link>
           ))}
         </Grid>
       </Section>
