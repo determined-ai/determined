@@ -466,26 +466,6 @@ export interface StreamResultOfV1MetricNamesResponse {
 /**
  * 
  * @export
- * @interface StreamResultOfV1NotebookLogsResponse
- */
-export interface StreamResultOfV1NotebookLogsResponse {
-    /**
-     * 
-     * @type {V1NotebookLogsResponse}
-     * @memberof StreamResultOfV1NotebookLogsResponse
-     */
-    result?: V1NotebookLogsResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1NotebookLogsResponse
-     */
-    error?: RuntimeStreamError;
-}
-
-/**
- * 
- * @export
  * @interface StreamResultOfV1TaskLogsFieldsResponse
  */
 export interface StreamResultOfV1TaskLogsFieldsResponse {
@@ -3714,20 +3694,6 @@ export interface V1Notebook {
      * @memberof V1Notebook
      */
     jobId: string;
-}
-
-/**
- * Response to NotebookLogsRequest.
- * @export
- * @interface V1NotebookLogsResponse
- */
-export interface V1NotebookLogsResponse {
-    /**
-     * The Notebook's log entry.
-     * @type {V1LogEntry}
-     * @memberof V1NotebookLogsResponse
-     */
-    logEntry?: V1LogEntry;
 }
 
 /**
@@ -14671,58 +14637,6 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
         },
         /**
          * 
-         * @summary Stream notebook logs.
-         * @param {string} notebookId Requested Notebook id.
-         * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of notebook logs. A value of 0 denotes no limit.
-         * @param {boolean} [follow] Continue following logs until the notebook stops or the limit is reached.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        notebookLogs(notebookId: string, offset?: number, limit?: number, follow?: boolean, options: any = {}): FetchArgs {
-            // verify required parameter 'notebookId' is not null or undefined
-            if (notebookId === null || notebookId === undefined) {
-                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling notebookLogs.');
-            }
-            const localVarPath = `/api/v1/notebooks/{notebookId}/logs`
-                .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset;
-            }
-
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit;
-            }
-
-            if (follow !== undefined) {
-                localVarQueryParameter['follow'] = follow;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Set the priority of the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {V1SetNotebookPriorityRequest} body 
@@ -14859,28 +14773,6 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Stream notebook logs.
-         * @param {string} notebookId Requested Notebook id.
-         * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of notebook logs. A value of 0 denotes no limit.
-         * @param {boolean} [follow] Continue following logs until the notebook stops or the limit is reached.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        notebookLogs(notebookId: string, offset?: number, limit?: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1NotebookLogsResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).notebookLogs(notebookId, offset, limit, follow, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Set the priority of the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {V1SetNotebookPriorityRequest} body 
@@ -14955,19 +14847,6 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
-         * @summary Stream notebook logs.
-         * @param {string} notebookId Requested Notebook id.
-         * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of notebook logs. A value of 0 denotes no limit.
-         * @param {boolean} [follow] Continue following logs until the notebook stops or the limit is reached.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        notebookLogs(notebookId: string, offset?: number, limit?: number, follow?: boolean, options?: any) {
-            return NotebooksApiFp(configuration).notebookLogs(notebookId, offset, limit, follow, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Set the priority of the requested notebook.
          * @param {string} notebookId The id of the notebook.
          * @param {V1SetNotebookPriorityRequest} body 
@@ -15038,21 +14917,6 @@ export class NotebooksApi extends BaseAPI {
      */
     public launchNotebook(body: V1LaunchNotebookRequest, options?: any) {
         return NotebooksApiFp(this.configuration).launchNotebook(body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Stream notebook logs.
-     * @param {string} notebookId Requested Notebook id.
-     * @param {number} [offset] Skip the number of notebook logs before returning results. Negative values denote number of notebook logs to skip from the end before returning results.
-     * @param {number} [limit] Limit the number of notebook logs. A value of 0 denotes no limit.
-     * @param {boolean} [follow] Continue following logs until the notebook stops or the limit is reached.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof NotebooksApi
-     */
-    public notebookLogs(notebookId: string, offset?: number, limit?: number, follow?: boolean, options?: any) {
-        return NotebooksApiFp(this.configuration).notebookLogs(notebookId, offset, limit, follow, options)(this.fetch, this.basePath);
     }
 
     /**

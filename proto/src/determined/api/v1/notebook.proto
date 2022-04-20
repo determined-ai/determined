@@ -95,25 +95,6 @@ message SetNotebookPriorityResponse {
   determined.notebook.v1.Notebook notebook = 1;
 }
 
-// Stream notebook logs.
-message NotebookLogsRequest {
-  // Requested Notebook id.
-  string notebook_id = 1;
-  // Skip the number of notebook logs before returning results. Negative values
-  // denote number of notebook logs to skip from the end before returning
-  // results.
-  int32 offset = 2;
-  // Limit the number of notebook logs. A value of 0 denotes no limit.
-  int32 limit = 3;
-  // Continue following logs until the notebook stops or the limit is reached.
-  bool follow = 4;
-}
-// Response to NotebookLogsRequest.
-message NotebookLogsResponse {
-  // The Notebook's log entry.
-  determined.log.v1.LogEntry log_entry = 1;
-}
-
 // Request to launch a notebook.
 message LaunchNotebookRequest {
   // Notebook config (JSON).

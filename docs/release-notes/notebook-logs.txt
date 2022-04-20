@@ -1,0 +1,5 @@
+:orphan:
+
+**Breaking Changes**
+
+-  Remove the notebook logs endpoint in favor of the new task logs endpoint.
