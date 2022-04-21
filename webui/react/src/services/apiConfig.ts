@@ -404,7 +404,7 @@ export const getExperimentLabels: Service.DetApi<
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Experiments.getExperimentLabels(options.project_id || 0),
+  request: (params, options) => detApi.Experiments.getExperimentLabels(params.project_id, options),
 };
 
 export const getTrialDetails: Service.DetApi<
