@@ -10,7 +10,9 @@ import determined as det
 C10D_PORT = 29400
 
 
-def create_launch_cmd(num_nodes: int, proc_per_node: int, node_rank: int, master_addr: str, override_args: List[str]) -> List[str]:
+def create_launch_cmd(
+    num_nodes: int, proc_per_node: int, node_rank: int, master_addr: str, override_args: List[str]
+) -> List[str]:
     cmd = [
         "python3",
         "-m",
@@ -57,11 +59,13 @@ def main(override_args: List[str], script: List[str]) -> int:
     chief_ip = info.container_addrs[0]
     os.environ["DET_CHIEF_IP"] = chief_ip
 
-    torch_distributed_cmd = create_launch_cmd(len(info.container_addrs),
-                                              len(info.slot_ids),
-                                              info.container_rank,
-                                              "localhost" if len(info.container_addrs) == 1 else chief_ip,
-                                              override_args)
+    torch_distributed_cmd = create_launch_cmd(
+        len(info.container_addrs),
+        len(info.slot_ids),
+        info.container_rank,
+        "localhost" if len(info.container_addrs) == 1 else chief_ip,
+        override_args,
+    )
 
     log_redirect_cmd = create_log_redirect_cmd()
 
@@ -84,9 +88,9 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
         usage="%(prog)s [[TORCH_OVERRIDES...] --] (--trial TRIAL)|(SCRIPT...)",
         description=("Launch a script under pytorch distributed on a Determined cluster"),
         epilog=(
-            "TORCH_OVERRIDES may be a list of arguments to pass directly to torch.distributed.launch to override "
-            "the values set by Determined automatically.  When provided, the list of override "
-            "arguments must be terminated by a `--` argument."
+            "TORCH_OVERRIDES may be a list of arguments to pass directly to "
+            "torch.distributed.launch to override the values set by Determined automatically.  "
+            "When provided, the list of override arguments must be terminated by a `--` argument."
         ),
     )
     # For legacy Trial classes.

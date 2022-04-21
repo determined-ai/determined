@@ -214,8 +214,8 @@ class DistributedContext:
     @classmethod
     def from_torch_distributed(cls, chief_ip: Optional[str] = None) -> "DistributedContext":
         """
-        Create a DistributedContext using the standard torch distributed environment variables to determine
-        rank information.
+        Create a DistributedContext using the standard torch distributed environment variables to
+        determine rank information.
 
         The IP address for the chief worker is required whenever CROSS_SIZE > 1.  The value may
         be provided via the chief_ip argument or the DET_CHIEF_IP environment variable.

@@ -2,14 +2,14 @@ import contextlib
 import io
 import os
 import sys
+from typing import Callable, Dict, Iterator, List
 
 import determined as det
-from typing import List, Iterator, Callable, Dict
 from tests.experiment import utils
 
 
 def make_mock_cluster_info(
-        container_addrs: List[str], container_rank: int, num_slots: int
+    container_addrs: List[str], container_rank: int, num_slots: int
 ) -> det.ClusterInfo:
     config = utils.make_default_exp_config({}, 100, "loss", None)
     trial_info_mock = det.TrialInfo(
@@ -51,7 +51,9 @@ def set_resources_id_env_var() -> Iterator[None]:
         del os.environ["DET_RESOURCES_ID"]
 
 
-def test_parse_args(positive_cases: Dict[str, List], negative_cases: Dict[str, List], parse_func: Callable):
+def test_parse_args(
+    positive_cases: Dict[str, List], negative_cases: Dict[str, List], parse_func: Callable
+):
     for args, exp in positive_cases.items():
         assert exp == parse_func(args.split()), f"test case failed, args = {args}"
 

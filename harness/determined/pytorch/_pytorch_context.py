@@ -176,12 +176,13 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             model = model.to(self.device)
 
             if self.distributed.size > 1 and self._distributed_backend.use_torch():
-                
+
                 class PyTorchDistributedDataParallel(torch.nn.parallel.DistributedDataParallel):
                     """
                     Pass-through Model Wrapper to enable access to inner module attributes
                     when using PyTorch DDP
                     """
+
                     def __getattr__(self, name):
                         try:
                             return super().__getattr__(name)

@@ -1,7 +1,6 @@
 import contextlib
 import json
 import logging
-import os
 import pathlib
 import pickle
 import random
@@ -63,7 +62,7 @@ class PyTorchTrialController(det.TrialController):
 
         self.latest_batch = self.env.latest_batch
 
-        # Currently only horovod and torch distributed backends are supported if distributed training
+        # Currently only horovod and torch backends are supported for distributed training
         if self.context.distributed.size > 1:
             assert (
                 self.use_horovod or self.use_torch

@@ -1,15 +1,11 @@
-import contextlib
-import io
 import os
-import sys
 import time
-from typing import Any, Iterator, List
+from typing import Any, List
 from unittest import mock
 
 import pytest
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
-import determined as det
 import determined.launch.deepspeed
 from determined import constants, launch
 from tests.launch import test_util
@@ -252,4 +248,3 @@ def test_launch_worker(
 
     expected_cmd = pid_server_cmd + sshd_cmd
     mock_subprocess.assert_called_once_with(expected_cmd)
-

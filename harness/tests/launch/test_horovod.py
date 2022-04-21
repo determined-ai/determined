@@ -1,18 +1,12 @@
-import contextlib
-import io
 import os
-import sys
 import time
-from typing import Iterator, List
 from unittest import mock
 
 import pytest
 
-import determined as det
 import determined.launch.horovod
 from determined import constants, horovod, launch
 from determined.common.api import certs
-from tests.experiment import utils  # noqa: I100
 from tests.launch import test_util
 
 
@@ -58,7 +52,9 @@ def test_horovod_chief(
     nnodes: int,
     autohorovod: bool,
 ) -> None:
-    info = test_util.make_mock_cluster_info(["0.0.0.{i}" for i in range(nnodes)], 0, num_slots=nslots)
+    info = test_util.make_mock_cluster_info(
+        ["0.0.0.{i}" for i in range(nnodes)], 0, num_slots=nslots
+    )
     experiment_config = info.trial._config
     mock_cluster_info.return_value = info
     mock_start_time = time.time()
