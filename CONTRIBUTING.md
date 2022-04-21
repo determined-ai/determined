@@ -52,7 +52,7 @@ git clone git@github.com:determined-ai/determined.git
 
 - Go (>= 1.18)
 - Python (>= 3.6, <= 3.9)
-- Node (>= 16.14.2)
+- Node (>= 16.13)
 - NPM (>= 8)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
