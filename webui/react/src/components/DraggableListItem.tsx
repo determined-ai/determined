@@ -7,14 +7,14 @@ import css from './DraggableListItem.module.scss';
 
 interface Props {
   children: React.ReactNode;
-  column: string;
+  columnName: string;
   index: number;
   onClick: (event: React.MouseEvent) => void;
   onDrop: (column: string, newNeighborColumnName: string) => void;
   style: CSSProperties;
 }
 interface DroppableItemProps {
-  column: string;
+  columnName: string;
   index: number;
 }
 
@@ -30,7 +30,7 @@ const withDragAndDropProvider = <T extends {}>
   );
 
 const DraggableListItem: React.FC<Props> = ({
-  column,
+  columnName,
   index,
   style,
   onClick,
@@ -46,14 +46,14 @@ const DraggableListItem: React.FC<Props> = ({
         isOver: !!monitor.isOver(),
       }),
       drop: (item: DroppableItemProps) => {
-        onDrop(item.column, column);
+        onDrop(item.columnName, columnName);
       },
     }),
     [],
   );
 
   const [ , drag ] = useDrag(() => ({
-    item: { column, index },
+    item: { columnName, index },
     type: DraggableTypes.COLUMN,
   }));
 

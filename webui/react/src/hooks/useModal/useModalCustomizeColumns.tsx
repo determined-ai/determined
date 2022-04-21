@@ -100,6 +100,7 @@ const useModalCustomizeColumns = ({
       </li>
     );
   }, [ renderColumnName ]);
+  
   const switchRowOrder = useCallback((column:string, newNeighborColumn:string) => {
     if(column !== newNeighborColumn){
       const updatedVisibleColumns = [ ...visibleColumns ];
@@ -117,7 +118,7 @@ const useModalCustomizeColumns = ({
   const renderDraggableRow = useCallback((row, index, style, handleClick, handleDrop) => {
     return (
       <DraggableListItem
-        column={row}
+        columnName={row}
         index={index}
         style={style}
         onClick={handleClick}
