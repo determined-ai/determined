@@ -11,7 +11,7 @@ SELECT
             ),
             NULL
         )
-    ) AS stdtypes,
+    ) AS allocation_ids,
     array_to_json(
         array_remove(
             array(

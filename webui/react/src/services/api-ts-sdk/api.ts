@@ -5402,7 +5402,7 @@ export interface V1Task {
 }
 
 /**
- * Response to TaskLogFieldsRequest.
+ * Response to TaskLogsFieldsRequest.
  * @export
  * @interface V1TaskLogsFieldsResponse
  */

@@ -474,7 +474,7 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 			resp.Level = logv1.LogLevel_LOG_LEVEL_DEBUG
 		case LogLevelInfo:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
-		case LogLevelWarn:
+		case LogLevelWarning:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_WARNING
 		case LogLevelError:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_ERROR
