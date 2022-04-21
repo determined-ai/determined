@@ -749,7 +749,7 @@ def unarchive(args: Namespace) -> None:
 
 
 @authentication.required
-def move_project(args: Namespace) -> None:
+def move_experiment(args: Namespace) -> None:
     sess = setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     req = bindings.v1MoveExperimentRequest(
@@ -1032,7 +1032,7 @@ main_cmd = Cmd(
         ),
         Cmd(
             "move",
-            move_project,
+            move_experiment,
             "move experiment to another project",
             [
                 experiment_id_arg("experiment ID to move"),

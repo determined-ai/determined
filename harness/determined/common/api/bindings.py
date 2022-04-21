@@ -1559,6 +1559,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+    SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
 
 class v1GetExperimentsResponse:
     def __init__(
@@ -1908,7 +1909,6 @@ class v1GetProjectExperimentsRequestSortBy(enum.Enum):
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
-    SORT_BY_ADDITIONAL = "SORT_BY_ADDITIONAL"
 
 class v1GetProjectExperimentsResponse:
     def __init__(
