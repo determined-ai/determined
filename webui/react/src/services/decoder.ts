@@ -525,41 +525,44 @@ const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | und
   return logLevelMap[level];
 };
 
-const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
-const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
+const newlineRegex = /(\r\n|\n)$/g;
+const messageRegex = new RegExp(
+  [
+    '^',
+    '\\[([^\\]]+)\\]\\s',                             // timestamp
+    '([0-9a-f]{8})?\\s?',                             // container id
+    '\\|\\|',                                         // divider ||
+    '(\\s(CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?',  // log level
+    '(\\[(\\d+)\\]\\s)?',                             // process id
+    '([\\s\\S]*)',                                    // message
+    '$',
+  ].join(''),
+  'im',
+);
 
-const filterLogMessage = (message: string): string => {
-  let filteredMessage = message.trim();
+const formatLogMessage = (message: string): string => {
+  let filteredMessage = message.replace(newlineRegex, '');
 
-  if (defaultRegex.test(message)) {
-    const matches = message.match(defaultRegex) || [];
-    filteredMessage = matches[2] || '';
-  } else if (kubernetesRegex.test(message)) {
-    const matches = message.match(kubernetesRegex) || [];
-    filteredMessage = [ matches[1], matches[2], matches[4] ].join(' ');
+  const matches = filteredMessage.match(messageRegex) ?? [];
+  if (matches.length === 8) {
+    filteredMessage = matches[7] ?? '';
+    if (matches[6] != null) filteredMessage = `[${matches[6]}] ${filteredMessage}`;
+    if (matches[2] != null) filteredMessage = `${matches[2]} ${filteredMessage}`;
   }
 
-  return filteredMessage;
+  return filteredMessage.trim();
 };
 
-export const jsonToTrialLog = (data: unknown): types.TrialLog => {
-  const logData = data as Sdk.V1TrialLogsResponse;
+export const mapV1LogsResponse = <
+  T extends Sdk.V1TrialLogsResponse | Sdk.V1TaskLogsResponse
+>(data: unknown): types.TrialLog => {
+  const logData = data as T;
   return {
     id: logData.id,
     level: decodeV1LogLevelToLogLevel(logData.level),
-    message: filterLogMessage(logData.message),
+    message: formatLogMessage(logData.message),
     time: logData.timestamp as unknown as string,
   };
-};
-
-export const jsonToTaskLog = (data: unknown): types.Log => {
-  const logData = data as Sdk.V1TaskLogsResponse;
-  return ({
-    id: logData.id,
-    level: decodeV1LogLevelToLogLevel(logData.level),
-    message: filterLogMessage(logData.message),
-    time: logData.timestamp as unknown as string,
-  });
 };
 
 export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.ResourceType => {
