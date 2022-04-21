@@ -58,6 +58,8 @@ message GetProjectExperimentsRequest {
     SORT_BY_FORKED_FROM = 10;
     // Returns experiments sorted by resource pool.
     SORT_BY_RESOURCE_POOL = 11;
+    // Additional option to differentiate from experiments.
+    SORT_BY_ADDITIONAL = 12;
   }
 
   // Sort the experiments by the given field.

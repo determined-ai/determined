@@ -1908,6 +1908,7 @@ class v1GetProjectExperimentsRequestSortBy(enum.Enum):
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+    SORT_BY_ADDITIONAL = "SORT_BY_ADDITIONAL"
 
 class v1GetProjectExperimentsResponse:
     def __init__(
@@ -6459,7 +6460,7 @@ def get_GetExperiments(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetProjectExperimentsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
