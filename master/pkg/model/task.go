@@ -308,8 +308,6 @@ func (t *TaskLog) Message() string {
 		parts = append(parts, fmt.Sprintf("[rank=%d]", *t.RankID))
 	}
 
-	parts = append(parts, ("||"))
-
 	// e.g., " INFO"
 	if t.Level != nil {
 		parts = append(parts, fmt.Sprintf("%s:", *t.Level))
