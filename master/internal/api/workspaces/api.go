@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"database/sql"
-	
+
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,7 +48,6 @@ func (s *WorkspaceServer) GetWorkspace(
 // GetWorkspaces is a request for information about all workspaces matching search criteria.
 func (s *WorkspaceServer) GetWorkspaces(
 	ctx context.Context, req *apiv1.GetWorkspacesRequest) (*apiv1.GetWorkspacesResponse, error) {
-
 	const byid = "id"
 	orderByColumn := ""
 	switch req.SortBy {
