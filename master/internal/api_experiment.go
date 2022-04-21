@@ -314,7 +314,7 @@ func (a *apiServer) GetExperimentLabels(_ context.Context,
 	resp := &apiv1.GetExperimentLabelsResponse{}
 
 	var err error
-	labelUsage, err := a.m.db.ExperimentLabelUsage()
+	labelUsage, err := a.m.db.ExperimentLabelUsage(req.ProjectId)
 	if err != nil {
 		return nil, err
 	}

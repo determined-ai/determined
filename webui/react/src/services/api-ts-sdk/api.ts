@@ -9108,10 +9108,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Get a list of unique experiment labels (sorted by popularity).
+         * @param {number} [projectId] Filter experiments by project.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentLabels(options: any = {}): FetchArgs {
+        getExperimentLabels(projectId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiment/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -9124,6 +9125,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -10003,11 +10008,12 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of unique experiment labels (sorted by popularity).
+         * @param {number} [projectId] Filter experiments by project.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentLabels(options);
+        getExperimentLabels(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentLabels(projectId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10415,11 +10421,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Get a list of unique experiment labels (sorted by popularity).
+         * @param {number} [projectId] Filter experiments by project.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentLabels(options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentLabels(options)(fetch, basePath);
+        getExperimentLabels(projectId?: number, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentLabels(projectId, options)(fetch, basePath);
         },
         /**
          * 
@@ -10696,12 +10703,13 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of unique experiment labels (sorted by popularity).
+     * @param {number} [projectId] Filter experiments by project.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentLabels(options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentLabels(options)(this.fetch, this.basePath);
+    public getExperimentLabels(projectId?: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentLabels(projectId, options)(this.fetch, this.basePath);
     }
 
     /**

@@ -99,7 +99,10 @@ message GetExperimentsResponse {
 }
 
 // Get a list of experiment labels.
-message GetExperimentLabelsRequest {}
+message GetExperimentLabelsRequest {
+  // Filter experiments by project.
+  int32 project_id = 1;
+}
 // Response to GetExperimentsLabelsRequest.
 message GetExperimentLabelsResponse {
   // The list of labels used across all experiments.
