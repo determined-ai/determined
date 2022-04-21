@@ -10,6 +10,38 @@ import determined as det
 C10D_PORT = 29400
 
 
+def create_launch_cmd(num_nodes: int, proc_per_node: int, node_rank: int, master_addr: str, override_args: List[str]) -> List[str]:
+    cmd = [
+        "python3",
+        "-m",
+        "torch.distributed.run",
+        "--nnodes",
+        str(num_nodes),
+        "--nproc_per_node",
+        str(proc_per_node),
+        "--node_rank",
+        str(node_rank),
+        "--max_restarts",
+        "0",
+        "--master_addr",
+        master_addr,
+        "--master_port",
+        str(C10D_PORT),
+        "--module",
+    ]
+
+    cmd.extend(override_args)
+    return cmd
+
+
+def create_log_redirect_cmd() -> List[str]:
+    return [
+        "determined.exec.worker_process_wrapper",
+        "RANK",
+        "--",
+    ]
+
+
 def main(override_args: List[str], script: List[str]) -> int:
     override_args = override_args or []
 
@@ -25,32 +57,13 @@ def main(override_args: List[str], script: List[str]) -> int:
     chief_ip = info.container_addrs[0]
     os.environ["DET_CHIEF_IP"] = chief_ip
 
-    torch_distributed_cmd = [
-        "python3",
-        "-m",
-        "torch.distributed.run",
-        "--nnodes",
-        str(len(info.container_addrs)),
-        "--nproc_per_node",
-        str(len(info.slot_ids)),
-        "--node_rank",
-        str(info.container_rank),
-        "--max_restarts",
-        "0",
-        "--master_addr",
-        "localhost" if len(info.container_addrs) == 1 else chief_ip,
-        "--master_port",
-        str(C10D_PORT),
-        "--module",
-    ]
+    torch_distributed_cmd = create_launch_cmd(len(info.container_addrs),
+                                              len(info.slot_ids),
+                                              info.container_rank,
+                                              "localhost" if len(info.container_addrs) == 1 else chief_ip,
+                                              override_args)
 
-    torch_distributed_cmd.extend(override_args)
-
-    log_redirect_cmd = [
-        "determined.exec.worker_process_wrapper",
-        "RANK",
-        "--",
-    ]
+    log_redirect_cmd = create_log_redirect_cmd()
 
     logging.debug(
         f"Torch distributed launching with: {torch_distributed_cmd + log_redirect_cmd + script}"

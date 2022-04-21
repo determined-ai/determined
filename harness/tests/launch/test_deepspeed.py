@@ -29,8 +29,6 @@ def test_parse_args() -> None:
         # Scripts which require -- still work.
         "script -- arg": ["script", "--", "arg"],
     }
-    for args, exp in positive_test_cases.items():
-        assert exp == launch.deepspeed.parse_args(args.split()), f"test case failed, args = {args}"
 
     negative_test_cases = {
         "--trial my_module:MyTrial script": "extra arguments",
@@ -38,21 +36,7 @@ def test_parse_args() -> None:
         "--asdf 1 script ": "unrecognized arguments",
     }
 
-    for args, msg in negative_test_cases.items():
-        old = sys.stderr
-        fake = io.StringIO()
-        sys.stderr = fake
-        try:
-            try:
-                launch.deepspeed.parse_args(args.split())
-            except SystemExit:
-                # This is expected.
-                err = fake.getvalue()
-                assert msg in err, f"test case failed, args='{args}' msg='{msg}', stderr='{err}'"
-                continue
-            raise AssertionError(f"negative test case did not fail: args='{args}'")
-        finally:
-            sys.stderr = old
+    test_util.test_parse_args(positive_test_cases, negative_test_cases, launch.deepspeed.parse_args)
 
 
 @mock.patch("subprocess.Popen")

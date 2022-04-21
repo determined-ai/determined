@@ -1,8 +1,10 @@
 import contextlib
+import io
 import os
+import sys
 
 import determined as det
-from typing import List, Iterator
+from typing import List, Iterator, Callable, Dict
 from tests.experiment import utils
 
 
@@ -47,3 +49,24 @@ def set_resources_id_env_var() -> Iterator[None]:
         yield
     finally:
         del os.environ["DET_RESOURCES_ID"]
+
+
+def test_parse_args(positive_cases: Dict[str, List], negative_cases: Dict[str, List], parse_func: Callable):
+    for args, exp in positive_cases.items():
+        assert exp == parse_func(args.split()), f"test case failed, args = {args}"
+
+    for args, msg in negative_cases.items():
+        old = sys.stderr
+        fake = io.StringIO()
+        sys.stderr = fake
+        try:
+            try:
+                parse_func(args.split())
+            except SystemExit:
+                # This is expected.
+                err = fake.getvalue()
+                assert msg in err, f"test case failed, args='{args}' msg='{msg}', stderr='{err}'"
+                continue
+            raise AssertionError(f"negative test case did not fail: args='{args}'")
+        finally:
+            sys.stderr = old
