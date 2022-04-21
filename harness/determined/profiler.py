@@ -1,4 +1,5 @@
 import contextlib
+import math
 import logging
 import queue
 import threading
@@ -14,6 +15,7 @@ import determined as det
 from determined.common import api, check
 from determined.common.api import TrialProfilerMetricsBatch
 
+STRESS_FACTOR = 100
 MAX_COLLECTION_SECONDS = 300
 LOG_NAMESPACE = "determined-profiler"
 
@@ -833,11 +835,24 @@ class MetricBatch:
 
         for (metric_type, metric_name, gpu_uuid), measurements in self.batch.items():
             if len(measurements) > 0:
+              if metric_name == 'samples_per_second':
                 labels = MetricBatch.make_labels(
                     metric_name, self.trial_id, self.agent_id, metric_type.value, gpu_uuid
                 )
                 batch = MetricBatch.to_post_format(measurements, labels)
                 trial_profiler_metrics_batches.append(batch)
+              else:
+                for n in range(STRESS_FACTOR):
+                  transformed_measurements = [
+                    Measurement(
+                      timestamp=m.timestamp, 
+                      batch_idx=m.batch_idx, 
+                      value= m.measurement * (0.5 * math.sin(n * m.measurement) + 1)) for m in measurements]
+                  labels = MetricBatch.make_labels(
+                      f"{metric_name}_{n}" , self.trial_id, self.agent_id, metric_type.value, gpu_uuid
+                  )
+                  batch = MetricBatch.to_post_format(transformed_measurements, labels)
+                  trial_profiler_metrics_batches.append(batch)
 
         self.clear()
         return trial_profiler_metrics_batches
