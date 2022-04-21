@@ -187,7 +187,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             model = model.to(self.device)
 
             if self.distributed.size > 1 and self._distributed_backend.use_torch():
-                wrapped_model = torch.nn.parallel.DistributedDataParallel(model)
+                wrapped_model = PyTorchDistributedDataParallel(model)
             else:
                 wrapped_model = model
 
