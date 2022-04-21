@@ -36,7 +36,7 @@ def main(override_args: List[str], script: List[str]) -> int:
         "--node_rank",
         str(info.container_rank),
         "--max_restarts",
-        "1",
+        "0",
         "--master_addr",
         "localhost" if len(info.container_addrs) == 1 else chief_ip,
         "--master_port",

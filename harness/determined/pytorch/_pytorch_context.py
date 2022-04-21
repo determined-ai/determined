@@ -31,17 +31,6 @@ except ImportError:
     pass
 
 
-class PyTorchDistributedDataParallel(torch.nn.parallel.DistributedDataParallel):
-    """
-    Passthrough Model Wrapper to enable access to inner module attributes
-    """
-    def __getattr__(self, name):
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return getattr(self.module, name)
-
-
 class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     """Contains runtime information for any Determined workflow that uses the ``PyTorch`` API.
 
@@ -187,6 +176,18 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             model = model.to(self.device)
 
             if self.distributed.size > 1 and self._distributed_backend.use_torch():
+                
+                class PyTorchDistributedDataParallel(torch.nn.parallel.DistributedDataParallel):
+                    """
+                    Pass-through Model Wrapper to enable access to inner module attributes
+                    when using PyTorch DDP
+                    """
+                    def __getattr__(self, name):
+                        try:
+                            return super().__getattr__(name)
+                        except AttributeError:
+                            return getattr(self.module, name)
+
                 wrapped_model = PyTorchDistributedDataParallel(model)
             else:
                 wrapped_model = model
