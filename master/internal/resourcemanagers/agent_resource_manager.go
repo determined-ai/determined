@@ -76,8 +76,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority,
-		job.MoveJob, job.DeleteJob:
+		job.MoveJob:
 		a.forwardToAllPools(ctx, msg)
+
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in determined-agents world.
+		ctx.Respond(job.EmptyDeleteJobResponse())
 
 	case job.RecoverJobPosition:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
