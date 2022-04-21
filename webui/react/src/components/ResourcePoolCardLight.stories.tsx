@@ -1,7 +1,7 @@
 import React from 'react';
 
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
-import { ResourcePool, ResourceType } from 'types';
+import { ResourcePool } from 'types';
 
 import ResourcePoolCardLight from './ResourcePoolCardLight';
 

@@ -196,9 +196,6 @@ export const paths = {
   clusters: (): string => {
     return '/clusters';
   },
-  resourcePool: (name: string): string =>{
-    return `/resourcepool/${name}`
-  },
   dashboard: (): string => {
     return '/dashboard';
   },
@@ -239,6 +236,9 @@ export const paths = {
     return branding === BrandingType.Determined
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
       : 'https://airtable.com/shrodYROolF0E1iYf';
+  },
+  resourcePool: (name: string): string => {
+    return `/resourcepool/${name}`;
   },
   taskList: (): string => {
     return '/tasks';

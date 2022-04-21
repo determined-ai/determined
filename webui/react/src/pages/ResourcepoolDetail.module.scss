@@ -1,0 +1,9 @@
+.nav {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+
+  .icon {
+    margin: 0 var(--theme-sizes-layout-enormous);
+  }
+}

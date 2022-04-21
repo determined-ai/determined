@@ -11,13 +11,13 @@ import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
 import Reload from 'pages/Reload';
+import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
 import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
-import ResourcepoolDetail from 'pages/ResourcepoolDetail'
 
 import Routes from './routes';
 import { RouteConfig } from './types';
@@ -26,7 +26,6 @@ const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
-  resourcepool: ResourcepoolDetail,
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
@@ -35,6 +34,7 @@ const routeComponentMap: Record<string, FC> = {
   models: ModelRegistry,
   modelVersionDetails: ModelVersionDetails,
   reload: Reload,
+  resourcepool: ResourcepoolDetail,
   signIn: SignIn,
   signOut: SignOut,
   taskList: TaskList,

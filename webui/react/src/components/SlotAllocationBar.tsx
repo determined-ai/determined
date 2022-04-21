@@ -194,14 +194,14 @@ const SlotAllocationBar: React.FC<Props> = ({
           {poolType === V1ResourcePoolType.K8S ? (
             <header>{`${isAux ?
               `${footer.auxContainersRunning} Aux Containers Running` :
-              `${stateTallies.RUNNING} Compute Slots Allocated`}`}
+              `${stateTallies.RUNNING} ${title || 'Compute'} Slots Allocated`}`}
             </header>
           )
             : (
               <header>{`${isAux ?
                 `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
-                `${stateTallies.RUNNING}/${totalSlots} Compute Slots Allocated`}`}
+                `${stateTallies.RUNNING}/${totalSlots} ${title || 'Compute'} Slots Allocated`}`}
               </header>
             )}
           {footer.queued ? (

@@ -18,6 +18,7 @@ const { TabPane } = Tabs;
 enum TabType {
   Overview = 'overview',
   HistoricalUsage = 'historical-usage',
+  Logs = 'logs'
 }
 
 interface Params {

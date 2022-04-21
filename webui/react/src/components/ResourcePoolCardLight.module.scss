@@ -9,11 +9,11 @@ $line-height: 22px;
   display: flex;
   flex-direction: column;
   font-size: var(--theme-sizes-font-medium);
+  height: 100%;
   line-height: $line-height;
   overflow: hidden;
   padding: var(--theme-sizes-layout-medium) $padding var(--theme-sizes-layout-medium);
   text-overflow: ellipsis;
-  height: 100%;
 
   .body {
     display: flex;

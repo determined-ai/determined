@@ -10,17 +10,18 @@ import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/sta
 import { useStore } from 'contexts/Store';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
-import { ResourcePool } from 'types';
+import { deviceTypes, ResourcePool } from 'types';
+import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
 
 import Json from './Json';
 import Link from './Link';
 import css from './ResourcePoolCardLight.module.scss';
 import ResourcePoolDetails from './ResourcePoolDetails';
-import { getSlotContainerStates } from 'utils/cluster';
 
 interface Props {
   resourcePool: ResourcePool;
+  size?: ShirtSize;
 }
 
 export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
@@ -67,12 +68,8 @@ const poolAttributes = [
 
 type SafeRawJson = Record<string, unknown>;
 
-const ResourcePoolCardLight: React.FC<Props> = ({
-  resourcePool: pool,
-}: Props) => {
+const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
-
-  const { pool: poolOverview, agents } = useStore();
 
   const descriptionClasses = [ css.description ];
 
@@ -137,46 +134,52 @@ const ResourcePoolCardLight: React.FC<Props> = ({
   );
 };
 
-export const RenderAllocationBarResourcePool: React.FC<Props> = ({
-  resourcePool: pool,
-}: Props)  => {
+export const RenderAllocationBarResourcePool: React.FC<Props> = (
+  {
+    resourcePool: pool,
+    size = ShirtSize.large,
+  }: Props,
+) => {
   const { pool: poolOverview, agents } = useStore();
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
   }, [ pool ]);
   return (
     <section>
-          {poolOverview[pool.name]?.total > 0 && (
-            <SlotAllocationBar
-              footer={{ queued: pool?.stats?.queuedCount }}
-              hideHeader
-              poolType={pool.type}
-              resourceStates={
-                getSlotContainerStates(agents || [], pool.slotType, pool.name)
-              }
-              size={ShirtSize.large}
-              slotsPotential={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
-              totalSlots={pool.slotsAvailable}
-            />
-          )}
-          {isAux && (
-            <SlotAllocationBar
-              footer={{
-                auxContainerCapacity: pool.auxContainerCapacity,
-                auxContainersRunning: pool.auxContainersRunning,
-              }}
-              hideHeader
-              isAux={true}
-              poolType={pool.type}
-              resourceStates={
-                getSlotContainerStates(agents || [], pool.slotType, pool.name)
-              }
-              size={ShirtSize.big}
-              totalSlots={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
-            />
-          )}
-        </section>
-  )
-}
+      {poolOverview[pool.name]?.total > 0 && (
+        <SlotAllocationBar
+          footer={{ queued: pool?.stats?.queuedCount }}
+          hideHeader
+          poolType={pool.type}
+          resourceStates={
+            getSlotContainerStates(agents || [], pool.slotType, pool.name)
+          }
+          size={size}
+          slotsPotential={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+          title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+          totalSlots={pool.slotsAvailable}
+        />
+      )}
+      {isAux && (
+        <SlotAllocationBar
+          footer={{
+            auxContainerCapacity: pool.auxContainerCapacity,
+            auxContainersRunning: pool.auxContainersRunning,
+            queued: pool?.stats?.queuedCount,
+          }}
+          hideHeader
+          isAux={true}
+          poolType={pool.type}
+          resourceStates={
+            getSlotContainerStates(agents || [], pool.slotType, pool.name)
+          }
+          size={size}
+          title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+          totalSlots={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+        />
+      )}
+    </section>
+  );
+};
 
 export default ResourcePoolCardLight;
