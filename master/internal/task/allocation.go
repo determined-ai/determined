@@ -400,11 +400,13 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	for cID, r := range a.resources {
-		r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
+		if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 			Token:        token,
 			AgentRank:    a.resources[cID].rank,
 			IsMultiAgent: len(a.resources) > 1,
-		})
+		}); err != nil {
+			return fmt.Errorf("starting resources (%v): %w", r, err)
+		}
 	}
 	a.resourcesStarted = true
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})

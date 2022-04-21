@@ -716,7 +716,7 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 // StartContainer notifies the agent to start a container.
 func (c containerResources) Start(
 	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
-) {
+) error {
 	handler := c.agent.Handler
 	spec.ContainerID = string(c.containerID)
 	spec.ResourcesID = string(c.containerID)
@@ -732,7 +732,7 @@ func (c containerResources) Start(
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	spec.TaskType = logCtx["task-type"].(model.TaskType)
-	ctx.Tell(handler, sproto.StartTaskContainer{
+	return ctx.Ask(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
@@ -744,7 +744,7 @@ func (c containerResources) Start(
 			Spec: spec.ToDockerSpec(),
 		},
 		LogContext: logCtx,
-	})
+	}).Error()
 }
 
 // KillContainer notifies the agent to kill the container.

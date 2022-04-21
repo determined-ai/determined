@@ -170,7 +170,7 @@ type ResourcesSummary struct {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo)
+	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
 	Kill(*actor.Context, logger.Context)
 }
 
