@@ -12,7 +12,7 @@ number of features.
 *********
 
 For PyTorch users, begin with :doc:`the MNIST tutorial, which uses the simplest model
-</tutorials/tf-mnist-tutorial>`. If you already have runnable code, follow the
+</tutorials/pytorch-mnist-tutorial>`. If you already have runnable code, follow the
 :doc:`/tutorials/pytorch-porting-tutorial` steps to port your code to use Determined Pytorch APIs.
 
 ******************
@@ -20,7 +20,7 @@ For PyTorch users, begin with :doc:`the MNIST tutorial, which uses the simplest 
 ******************
 
 TensorFlow Keras users can begin with :doc:`the MNIST tutorial, which uses the simplest model
-</tutorials/pytorch-mnist-tutorial>`.
+</tutorials/tf-mnist-tutorial>`.
 
 .. toctree::
    :maxdepth: 1
