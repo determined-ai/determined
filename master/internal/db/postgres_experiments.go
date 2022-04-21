@@ -28,14 +28,14 @@ const (
 
 // ExperimentLabelUsage returns a flattened and deduplicated list of all the
 // labels in use across all experiments.
-func (db *PgDB) ExperimentLabelUsage() (labelUsage map[string]int, err error) {
+func (db *PgDB) ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error) {
 	// First, assemble all the JSON lists that the database returns into a
 	// single tally of all the labels
 	type dbLabelList struct {
 		Labels []byte
 	}
 	var rawLists []dbLabelList
-	err = db.Query("get_experiment_labels", &rawLists)
+	err = db.Query("get_experiment_labels", &rawLists, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("error in get_experiment_labels query: %w", err)
 	}

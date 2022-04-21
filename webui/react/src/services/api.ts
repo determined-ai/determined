@@ -156,7 +156,7 @@ export const patchExperiment = generateDetApi<
 >(Config.patchExperiment);
 
 export const getExperimentLabels = generateDetApi<
-  Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+  Service.ExperimentLabelsParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
 export const moveExperiment = generateDetApi<

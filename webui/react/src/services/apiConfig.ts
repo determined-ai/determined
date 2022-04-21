@@ -400,11 +400,11 @@ export const getExpTrials: Service.DetApi<
 };
 
 export const getExperimentLabels: Service.DetApi<
-  Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+  Service.ExperimentLabelsParams, Api.V1GetExperimentLabelsResponse, string[]
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Experiments.getExperimentLabels(options),
+  request: (params, options) => detApi.Experiments.getExperimentLabels(params.project_id, options),
 };
 
 export const getTrialDetails: Service.DetApi<

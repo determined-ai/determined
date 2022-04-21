@@ -669,13 +669,13 @@ func (_m *DB) ExperimentIDByTrialID(trialID int) (int, error) {
 	return r0, r1
 }
 
-// ExperimentLabelUsage provides a mock function with given fields:
-func (_m *DB) ExperimentLabelUsage() (map[string]int, error) {
-	ret := _m.Called()
+// ExperimentLabelUsage provides a mock function with given fields: projectID
+func (_m *DB) ExperimentLabelUsage(projectID int32) (map[string]int, error) {
+	ret := _m.Called(projectID)
 
 	var r0 map[string]int
-	if rf, ok := ret.Get(0).(func() map[string]int); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(int32) map[string]int); ok {
+		r0 = rf(projectID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]int)
@@ -683,8 +683,8 @@ func (_m *DB) ExperimentLabelUsage() (map[string]int, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(int32) error); ok {
+		r1 = rf(projectID)
 	} else {
 		r1 = ret.Error(1)
 	}
