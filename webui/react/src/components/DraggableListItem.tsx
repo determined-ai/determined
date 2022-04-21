@@ -7,13 +7,15 @@ import css from './DraggableListItem.module.scss';
 
 interface Props {
   children: React.ReactNode;
+  column: string;
   index: number;
   onClick: (event: React.MouseEvent) => void;
-  onDrop: (indexOne: number, indexTwo: number) => void;
+  onDrop: (column: string, newNeighborColumnName: string) => void;
   style: CSSProperties;
 }
 interface DroppableItemProps {
-  index: number
+  column: string;
+  index: number;
 }
 
 const DraggableTypes = { COLUMN: 'COLUMN' };
@@ -27,31 +29,41 @@ const withDragAndDropProvider = <T extends {}>
     </DndProvider>
   );
 
-const DraggableListItem: React.FC<Props> = ({ index, style, onClick, children, onDrop }: Props) => {
+const DraggableListItem: React.FC<Props> = ({
+  column,
+  index,
+  style,
+  onClick,
+  children, onDrop,
+}: Props) => {
 
-  const [ { isOver }, drop ] = useDrop(
+  const [ { isOver, dropDirection }, drop ] = useDrop(
     () => ({
       accept: DraggableTypes.COLUMN,
       collect: (monitor) => ({
         canDrop: !!monitor.canDrop(),
+        dropDirection: monitor.getItem()?.index > index ? 'above' : 'below',
         isOver: !!monitor.isOver(),
       }),
       drop: (item: DroppableItemProps) => {
-        onDrop(index, item.index);
+        onDrop(item.column, column);
       },
     }),
     [],
   );
 
   const [ , drag ] = useDrag(() => ({
-    item: { index },
+    item: { column, index },
     type: DraggableTypes.COLUMN,
   }));
 
   return (
     <span ref={drop}>
       <li
-        className={isOver ? css.dropTarget : undefined}
+        className={isOver ? (dropDirection === 'above' ?
+          css.aboveDropTarget : (dropDirection === 'below' ?
+            css.belowDropTarget : undefined))
+          : undefined}
         ref={drag}
         style={style}
         onClick={onClick}>

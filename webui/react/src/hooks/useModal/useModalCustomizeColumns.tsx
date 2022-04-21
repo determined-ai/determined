@@ -100,21 +100,28 @@ const useModalCustomizeColumns = ({
       </li>
     );
   }, [ renderColumnName ]);
-
-  const switchRowOrder = useCallback((itemToMoveIndex:number, newItemIndex:number) => {
-    if(itemToMoveIndex !== newItemIndex){
+  const switchRowOrder = useCallback((column:string, newNeighborColumn:string) => {
+    if(column !== newNeighborColumn){
       const updatedVisibleColumns = [ ...visibleColumns ];
-      const columnToMove = updatedVisibleColumns[newItemIndex];
-      updatedVisibleColumns.splice(newItemIndex, 1);
-      updatedVisibleColumns.splice(itemToMoveIndex, 0, columnToMove);
+      const columnIndex =
+      updatedVisibleColumns.findIndex(columnName => columnName === column);
+      const newNeighborColumnIndex =
+      updatedVisibleColumns.findIndex(columnName => columnName === newNeighborColumn);
+      updatedVisibleColumns.splice(columnIndex, 1);
+      updatedVisibleColumns.splice(newNeighborColumnIndex, 0, column);
       setVisibleColumns(updatedVisibleColumns);
     }
     return;
   }, [ visibleColumns ]);
 
-  const renderDraggableRow = useCallback((index, row, style, handleClick, handleDrop) => {
+  const renderDraggableRow = useCallback((row, index, style, handleClick, handleDrop) => {
     return (
-      <DraggableListItem index={index} style={style} onClick={handleClick} onDrop={handleDrop}>
+      <DraggableListItem
+        column={row}
+        index={index}
+        style={style}
+        onClick={handleClick}
+        onDrop={handleDrop}>
         {renderColumnName(row)}
       </DraggableListItem>
     );
@@ -128,11 +135,11 @@ const useModalCustomizeColumns = ({
   const renderVisibleRow = useCallback(({ index, style }) => {
     const row = filteredVisibleColumns[index];
     return renderDraggableRow(
-      index,
       row,
+      index,
       style,
       () => makeHidden(row),
-      (itemIndex: number, newIndex:number) => switchRowOrder(itemIndex, newIndex),
+      (column: string, newColumnNeighbor: string) => switchRowOrder(column, newColumnNeighbor),
     );
   }, [ filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder ]);
 
