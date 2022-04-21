@@ -8,12 +8,12 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
-import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { Log, LogLevel, RecordKey } from 'types';
 import { clone } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';

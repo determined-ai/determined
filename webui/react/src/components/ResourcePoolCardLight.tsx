@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
-
 import awsLogo from 'assets/images/aws-logo.svg';
 import gcpLogo from 'assets/images/gcp-logo.svg';
 import k8sLogo from 'assets/images/k8s-logo.svg';
 import staticLogo from 'assets/images/on-prem-logo.svg';
+import React, { useCallback, useMemo, useState } from 'react';
+
 import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import Message, { MessageType } from 'components/Message';
 import useResize from 'hooks/useResize';
+import Message, { MessageType } from 'shared/components/message';
 import { RecordKey } from 'types';
 import { distance } from 'utils/chart';
 
