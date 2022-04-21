@@ -13,6 +13,7 @@ import determined.launch.horovod
 from determined import constants, horovod, launch
 from determined.common.api import certs
 from tests.experiment import utils  # noqa: I100
+from tests.launch import test_util
 
 
 def test_parse_args() -> None:
@@ -74,7 +75,7 @@ def test_horovod_chief(
     nnodes: int,
     autohorovod: bool,
 ) -> None:
-    info = make_mock_cluster_info(["0.0.0.{i}" for i in range(nnodes)], 0, num_slots=nslots)
+    info = test_util.make_mock_cluster_info(["0.0.0.{i}" for i in range(nnodes)], 0, num_slots=nslots)
     experiment_config = info.trial._config
     mock_cluster_info.return_value = info
     mock_start_time = time.time()
@@ -104,7 +105,7 @@ def test_horovod_chief(
 
     mock_popen.return_value = mock_proc
 
-    with set_resources_id_env_var():
+    with test_util.set_resources_id_env_var():
         assert launch.horovod.main(hvd_args, script, autohorovod) == 99
 
     if autohorovod and nnodes == 1 and nslots == 1:
@@ -138,7 +139,7 @@ def test_sshd_worker(
     mock_cluster_info: mock.MagicMock,
     mock_popen: mock.MagicMock,
 ) -> None:
-    info = make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, num_slots=1)
+    info = test_util.make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, num_slots=1)
     mock_cluster_info.return_value = info
     hvd_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
@@ -155,7 +156,7 @@ def test_sshd_worker(
 
     mock_popen.return_value = mock_proc
 
-    with set_resources_id_env_var():
+    with test_util.set_resources_id_env_var():
         assert launch.horovod.main(hvd_args, script, True) == 99
 
     mock_cluster_info.assert_called_once()
@@ -175,46 +176,3 @@ def test_sshd_worker(
     )
 
     mock_proc.wait.assert_called_once()
-
-
-def make_mock_cluster_info(
-    container_addrs: List[str], container_rank: int, num_slots: int
-) -> det.ClusterInfo:
-    config = utils.make_default_exp_config({}, 100, "loss", None)
-    trial_info_mock = det.TrialInfo(
-        trial_id=1,
-        experiment_id=1,
-        trial_seed=0,
-        hparams={},
-        config=config,
-        latest_batch=0,
-        trial_run_id=0,
-        debug=False,
-        unique_port_offset=0,
-        inter_node_network_interface=None,
-    )
-    rendezvous_info_mock = det.RendezvousInfo(
-        container_addrs=container_addrs, container_rank=container_rank
-    )
-    cluster_info_mock = det.ClusterInfo(
-        master_url="localhost",
-        cluster_id="clusterId",
-        agent_id="agentId",
-        slot_ids=list(range(num_slots)),
-        task_id="taskId",
-        allocation_id="allocationId",
-        session_token="sessionToken",
-        task_type="TRIAL",
-        rendezvous_info=rendezvous_info_mock,
-        trial_info=trial_info_mock,
-    )
-    return cluster_info_mock
-
-
-@contextlib.contextmanager
-def set_resources_id_env_var() -> Iterator[None]:
-    try:
-        os.environ["DET_RESOURCES_ID"] = "resourcesId"
-        yield
-    finally:
-        del os.environ["DET_RESOURCES_ID"]
