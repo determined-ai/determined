@@ -1,7 +1,8 @@
 import { Empty } from 'antd';
-import iconAlert from 'assets/images/icon-alert.svg';
-import iconWarning from 'assets/images/icon-warning.svg';
 import React from 'react';
+
+import iconAlert from 'shared/assets/images/icon-alert.svg';
+import iconWarning from 'shared/assets/images/icon-warning.svg';
 
 import css from './Message.module.scss';
 
