@@ -54,6 +54,10 @@ message GetProjectExperimentsRequest {
     SORT_BY_USER = 8;
     // Returns experiments sorted by their name.
     SORT_BY_NAME = 9;
+    // Returns experiments sorted by originating experiment.
+    SORT_BY_FORKED_FROM = 10;
+    // Returns experiments sorted by resource pool.
+    SORT_BY_RESOURCE_POOL = 11;
   }
 
   // Sort the experiments by the given field.

@@ -85,8 +85,6 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 		return nil, err
 	}
 
-	a.sort(resp.Projects, req.OrderBy, req.SortBy,
-		apiv1.GetWorkspaceProjectsRequest_SORT_BY_UNSPECIFIED)
 	return resp, a.paginate(&resp.Pagination, &resp.Projects, req.Offset, req.Limit)
 }
 

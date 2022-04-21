@@ -296,6 +296,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_USER:          "display_name",
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
+		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:    "project_id",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -338,7 +339,7 @@ func (a *apiServer) GetExperimentLabels(_ context.Context,
 	resp := &apiv1.GetExperimentLabelsResponse{}
 
 	var err error
-	labelUsage, err := a.m.db.ExperimentLabelUsage()
+	labelUsage, err := a.m.db.ExperimentLabelUsage(req.ProjectId)
 	if err != nil {
 		return nil, err
 	}

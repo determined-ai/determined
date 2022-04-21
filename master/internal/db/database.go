@@ -112,7 +112,7 @@ type DB interface {
 	GetTrialProfilerMetricsBatches(
 		labelsJSON []byte, offset, limit int,
 	) (model.TrialProfilerMetricsBatchBatch, error)
-	ExperimentLabelUsage() (labelUsage map[string]int, err error)
+	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)
 	MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (

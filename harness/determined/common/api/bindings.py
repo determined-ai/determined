@@ -1559,6 +1559,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+    SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
 
 class v1GetExperimentsResponse:
     def __init__(
@@ -1906,6 +1907,8 @@ class v1GetProjectExperimentsRequestSortBy(enum.Enum):
     SORT_BY_PROGRESS = "SORT_BY_PROGRESS"
     SORT_BY_USER = "SORT_BY_USER"
     SORT_BY_NAME = "SORT_BY_NAME"
+    SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
+    SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
 
 class v1GetProjectExperimentsResponse:
     def __init__(
@@ -6367,8 +6370,12 @@ def get_GetExperimentCheckpoints(
 
 def get_GetExperimentLabels(
     session: "client.Session",
+    *,
+    projectId: "typing.Optional[int]" = None,
 ) -> "v1GetExperimentLabelsResponse":
-    _params = None
+    _params = {
+        "projectId": projectId,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/experiment/labels",
