@@ -80,9 +80,9 @@ class PyTorchTrialController(det.TrialController):
             hvd.init()
         if distributed_backend.use_torch():
             if torch.cuda.is_available():
-                dist.init_process_group(backend="nccl")
+                dist.init_process_group(backend="nccl")  # type: ignore
             else:
-                dist.init_process_group(backend="gloo")
+                dist.init_process_group(backend="gloo")  # type: ignore
 
         cls._set_random_seeds(env.trial_seed)
 

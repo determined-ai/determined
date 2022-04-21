@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
-import determined.launch.deepspeed
+import determined.launch.deepspeed  # noqa: F401
 from determined import constants, launch
 from tests.launch import test_util
 
@@ -32,7 +32,9 @@ def test_parse_args() -> None:
         "--asdf 1 script ": "unrecognized arguments",
     }
 
-    test_util.test_parse_args(positive_test_cases, negative_test_cases, launch.deepspeed.parse_args)
+    test_util.parse_args_check(
+        positive_test_cases, negative_test_cases, launch.deepspeed.parse_args
+    )
 
 
 @mock.patch("subprocess.Popen")

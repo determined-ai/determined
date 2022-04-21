@@ -48,6 +48,8 @@ def main(override_args: List[str], script: List[str]) -> int:
     override_args = override_args or []
 
     info = det.get_cluster_info()
+    assert info is not None, "must be run on-cluster"
+
     os.environ["USE_TORCH_DISTRIBUTED"] = "True"
 
     single_slot = len(info.container_addrs) == 1 and len(info.slot_ids) == 1

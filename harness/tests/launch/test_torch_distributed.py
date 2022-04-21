@@ -1,7 +1,7 @@
 import os
 from unittest import mock
 
-import determined.launch.torch_distributed
+import determined.launch.torch_distributed  # noqa: F401
 from determined import launch
 from tests.launch import test_util
 
@@ -22,7 +22,7 @@ def test_parse_args() -> None:
         "": "empty script",
         "--asdf 1 script ": "unrecognized arguments",
     }
-    test_util.test_parse_args(
+    test_util.parse_args_check(
         positive_test_cases, negative_test_cases, launch.torch_distributed.parse_args
     )
 

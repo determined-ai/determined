@@ -51,9 +51,7 @@ def set_resources_id_env_var() -> Iterator[None]:
         del os.environ["DET_RESOURCES_ID"]
 
 
-def test_parse_args(
-    positive_cases: Dict[str, List], negative_cases: Dict[str, List], parse_func: Callable
-):
+def parse_args_check(positive_cases: Dict, negative_cases: Dict, parse_func: Callable) -> None:
     for args, exp in positive_cases.items():
         assert exp == parse_func(args.split()), f"test case failed, args = {args}"
 

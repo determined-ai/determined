@@ -177,13 +177,15 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
             if self.distributed.size > 1 and self._distributed_backend.use_torch():
 
-                class PyTorchDistributedDataParallel(torch.nn.parallel.DistributedDataParallel):
+                class PyTorchDistributedDataParallel(
+                    torch.nn.parallel.DistributedDataParallel  # type: ignore
+                ):
                     """
                     Pass-through Model Wrapper to enable access to inner module attributes
                     when using PyTorch DDP
                     """
 
-                    def __getattr__(self, name):
+                    def __getattr__(self, name: str) -> Any:
                         try:
                             return super().__getattr__(name)
                         except AttributeError:
@@ -645,11 +647,11 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     # PyTorch DDP automatically syncs gradients by default on every backward pass.
                     # no_sync() disables gradient all-reduce until the last iteration.
                     with self._no_sync():
-                        loss.backward(
+                        loss.backward(  # type: ignore
                             gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                         )
                 else:
-                    loss.backward(
+                    loss.backward(  # type: ignore
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
 

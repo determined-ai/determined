@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-import determined.launch.horovod
+import determined.launch.horovod  # noqa: F401
 from determined import constants, horovod, launch
 from determined.common.api import certs
 from tests.launch import test_util
@@ -33,7 +33,7 @@ def test_parse_args() -> None:
         "--asdf 1 script ": "unrecognized arguments",
     }
 
-    test_util.test_parse_args(positive_test_cases, negative_test_cases, launch.horovod.parse_args)
+    test_util.parse_args_check(positive_test_cases, negative_test_cases, launch.horovod.parse_args)
 
 
 @pytest.mark.parametrize("autohorovod", [True, False])
