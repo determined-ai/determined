@@ -82,6 +82,13 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
+def instantiate_gpu() -> None:
+    command = ["det", "cmd", "--config", "resources.slots=1", "'sleep 30'"]
+
+    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+@pytest.fixture(scope="session", autouse=True)
 def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogManager]]:
     master_config_path = request.config.getoption("--master-config-path")
     master_config_path = Path(master_config_path) if master_config_path else None
