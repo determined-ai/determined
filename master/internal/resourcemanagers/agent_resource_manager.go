@@ -79,6 +79,10 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		job.MoveJob:
 		a.forwardToAllPools(ctx, msg)
 
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in determined-agents world.
+		ctx.Respond(job.EmptyDeleteJobResponse())
+
 	case job.RecoverJobPosition:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
 
