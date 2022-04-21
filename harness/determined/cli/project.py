@@ -149,6 +149,22 @@ def edit_project(args: Namespace) -> None:
         render_project(new_p)
 
 
+@authentication.required
+def archive_project(args: Namespace) -> None:
+    sess = setup_session(args)
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    bindings.post_ArchiveProject(sess, id=p.id)
+    print(f"Successfully archived project {args.project_name}.")
+
+
+@authentication.required
+def unarchive_project(args: Namespace) -> None:
+    sess = setup_session(args)
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    bindings.post_UnarchiveProject(sess, id=p.id)
+    print(f"Successfully un-archived project {args.project_name}.")
+
+
 args_description = [
     Cmd(
         "p|roject",
@@ -233,6 +249,24 @@ args_description = [
                         default=False,
                         help="automatically answer yes to prompts",
                     ),
+                ],
+            ),
+            Cmd(
+                "archive",
+                archive_project,
+                "archive project",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    Arg("project_name", type=str, help="name of the project"),
+                ],
+            ),
+            Cmd(
+                "unarchive",
+                unarchive_project,
+                "unarchive project",
+                [
+                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    Arg("project_name", type=str, help="name of the project"),
                 ],
             ),
             Cmd(
