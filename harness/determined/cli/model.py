@@ -45,10 +45,10 @@ def render_model_version(model_version: ModelVersion) -> None:
     values = [
         [
             model_version.model_version,
-            checkpoint.trial_id,
-            checkpoint.batch_number,
+            checkpoint.get_training().trial_id,
+            checkpoint.metadata["latest_batch"],
             checkpoint.uuid,
-            json.dumps(checkpoint.validation_metrics, indent=2),
+            json.dumps(checkpoint.get_training().validation_metrics, indent=2),
             json.dumps(checkpoint.metadata, indent=2),
         ]
     ]
@@ -112,10 +112,10 @@ def list_versions(args: Namespace) -> None:
         values = [
             [
                 version.model_version,
-                version.checkpoint.trial_id,
-                version.checkpoint.batch_number,
+                version.checkpoint.get_training().trial_id,
+                version.checkpoint.metadata["latest_batch"],
                 version.checkpoint.uuid,
-                json.dumps(version.checkpoint.validation_metrics, indent=2),
+                json.dumps(version.checkpoint.get_training().validation_metrics, indent=2),
                 json.dumps(version.checkpoint.metadata, indent=2),
             ]
             for version in model.get_versions()
