@@ -16,6 +16,7 @@ message Workspace {
         "immutable",
         "name",
         "num_projects",
+        "pinned",
         "username"
       ]
     }
@@ -34,6 +35,8 @@ message Workspace {
   bool immutable = 5;
   // Number of projects associated with this workspace.
   int32 num_projects = 6;
+  // Pin status of this workspace for the current user.
+  bool pinned = 7;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.

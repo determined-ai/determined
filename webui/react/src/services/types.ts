@@ -272,6 +272,7 @@ export interface AddProjectNoteParams {
 export interface GetWorkspacesParams extends PaginationParams {
   archived?: boolean;
   name?: string;
+  pinned?: boolean;
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME';
   users?: string[];
 }

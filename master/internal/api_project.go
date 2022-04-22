@@ -128,7 +128,7 @@ func (a *apiServer) PostProject(
 		return nil, err
 	}
 
-	w, err := a.GetWorkspaceFromID(req.WorkspaceId)
+	w, err := a.GetWorkspaceFromID(req.WorkspaceId, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (a *apiServer) DeleteProject(
 func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
 	error) {
-	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId)
+	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId, 0)
 	if err != nil {
 		return nil, err
 	}

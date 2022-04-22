@@ -114,6 +114,8 @@ message GetWorkspacesRequest {
   google.protobuf.BoolValue archived = 6;
   // Limit the workspaces to those from particular users.
   repeated string users = 7;
+  // Limit the workspaces to those with pinned status by the current user.
+  google.protobuf.BoolValue pinned = 8;
 }
 
 // Response to GetWorkspacesRequest.
@@ -208,3 +210,29 @@ message UnarchiveWorkspaceRequest {
 
 // Response to UnarchiveWorkspaceRequest.
 message UnarchiveWorkspaceResponse {}
+
+// Request for pinning a workspace.
+message PinWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the workspace.
+  int32 id = 1;
+}
+
+// Response to PinWorkspaceRequest.
+message PinWorkspaceResponse {}
+
+// Request for un-pinning a workspace.
+message UnpinWorkspaceRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the workspace.
+  int32 id = 1;
+}
+
+// Response to UnpinWorkspaceRequest.
+message UnpinWorkspaceResponse {}

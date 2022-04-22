@@ -99,6 +99,20 @@ def test_workspace_org() -> None:
             map(lambda w: w.name, list_test_3)
         )
 
+        # Test pinned workspaces.
+        bindings.post_PinWorkspace(sess, id=made_workspace.id)
+        pinned = bindings.get_GetWorkspaces(
+            sess,
+            pinned=True,
+        ).workspaces
+        assert len(pinned) == 1 and pinned[0].id == made_workspace.id
+        bindings.post_UnpinWorkspace(sess, id=made_workspace.id)
+        pinned = bindings.get_GetWorkspaces(
+            sess,
+            pinned=True,
+        ).workspaces
+        assert len(pinned) == 0
+
         # Add a test project to a workspace.
         r4 = bindings.post_PostProject(
             sess,
