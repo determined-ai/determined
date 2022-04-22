@@ -30,7 +30,7 @@ class Session:
         timeout: Optional[int],
     ) -> requests.Response:
         if params:
-            for k, v in params.iteritems():
+            for k, v in params.items():
                 if type(v) == bool:
                     params[k] = str(v).lower()
         return request.do_request(
