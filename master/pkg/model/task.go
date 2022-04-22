@@ -109,6 +109,13 @@ type TaskStats struct {
 	EndTime      *time.Time
 }
 
+type ResourceAggregates struct {
+	Date            *time.Time
+	AggregationType string
+	AggregationKey  string
+	Seconds         float32
+}
+
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
 	AllocationStatePending AllocationState = 0
