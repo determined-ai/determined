@@ -2,4 +2,5 @@
 
 **Bug Fixes**
 
--  CLI: Stop using SSL "noverify" option for some API requests.
+-  CLI: API requests executed through python bindings have been erroneously using SSL "noverify"
+   option since 0.17.6, making them potentially unsecure. This option is now disabled.
