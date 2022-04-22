@@ -1344,6 +1344,24 @@ service Determined {
       tags: "Workspaces"
     };
   }
+  // Pin a workspace.
+  rpc PinWorkspace(PinWorkspaceRequest) returns (PinWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/pin"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Unpin a workspace.
+  rpc UnpinWorkspace(UnpinWorkspaceRequest) returns (UnpinWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/unpin"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
 
   // Get the requested project.
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {

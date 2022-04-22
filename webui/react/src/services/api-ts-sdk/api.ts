@@ -4288,6 +4288,14 @@ export interface V1PauseExperimentResponse {
 }
 
 /**
+ * Response to PinWorkspaceRequest.
+ * @export
+ * @interface V1PinWorkspaceResponse
+ */
+export interface V1PinWorkspaceResponse {
+}
+
+/**
  * Request for updating a checkpoints metadata.
  * @export
  * @interface V1PostCheckpointMetadataRequest
@@ -6412,6 +6420,14 @@ export interface V1UnarchiveWorkspaceResponse {
 }
 
 /**
+ * Response to UnpinWorkspaceRequest.
+ * @export
+ * @interface V1UnpinWorkspaceResponse
+ */
+export interface V1UnpinWorkspaceResponse {
+}
+
+/**
  * Request to update the job queue.
  * @export
  * @interface V1UpdateJobQueueRequest
@@ -6565,6 +6581,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     numProjects: number;
+    /**
+     * Pin status of this workspace for the current user.
+     * @type {boolean}
+     * @memberof V1Workspace
+     */
+    pinned: boolean;
 }
 
 
@@ -19561,10 +19583,11 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
          * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19607,6 +19630,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarQueryParameter['users'] = users;
             }
 
+            if (pinned !== undefined) {
+                localVarQueryParameter['pinned'] = pinned;
+            }
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -19639,6 +19666,43 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"V1PatchWorkspace" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Pin a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pinWorkspace(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling pinWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}/pin`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
             return {
                 url: url.format(localVarUrlObj),
@@ -19699,6 +19763,43 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}/unarchive`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Unpin a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpinWorkspace(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unpinWorkspace.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}/unpin`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -19800,11 +19901,12 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
          * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19844,6 +19946,25 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          */
         unarchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unarchiveWorkspace(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Unpin a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpinWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unpinWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19904,11 +20025,12 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
          * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(fetch, basePath);
         },
         /**
          * 
@@ -19930,6 +20052,16 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          */
         unarchiveWorkspace(id: number, options?: any) {
             return WorkspacesApiFp(configuration).unarchiveWorkspace(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unpin a workspace.
+         * @param {number} id The id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpinWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).unpinWorkspace(id, options)(fetch, basePath);
         },
     };
 };
@@ -20012,12 +20144,13 @@ export class UsersApi extends BaseAPI {
      * @param {string} [name] Limit the workspaces to those matching the name.
      * @param {boolean} [archived] Limit the workspaces to those with an archived status.
      * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+     * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
+    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20043,6 +20176,18 @@ export class UsersApi extends BaseAPI {
      */
     public unarchiveWorkspace(id: number, options?: any) {
         return WorkspacesApiFp(this.configuration).unarchiveWorkspace(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Unpin a workspace.
+     * @param {number} id The id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public unpinWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).unpinWorkspace(id, options)(this.fetch, this.basePath);
     }
 
 }

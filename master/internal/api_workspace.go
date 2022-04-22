@@ -16,9 +16,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetWorkspaceFromID(id int32) (*workspacev1.Workspace, error) {
+func (a *apiServer) GetWorkspaceFromID(id int32, userID int32) (*workspacev1.Workspace,
+	error) {
 	w := &workspacev1.Workspace{}
-	switch err := a.m.db.QueryProto("get_workspace", w, id); err {
+	switch err := a.m.db.QueryProto("get_workspace", w, id, userID); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "workspace (%d) not found", id)
@@ -29,8 +30,13 @@ func (a *apiServer) GetWorkspaceFromID(id int32) (*workspacev1.Workspace, error)
 }
 
 func (a *apiServer) GetWorkspace(
-	_ context.Context, req *apiv1.GetWorkspaceRequest) (*apiv1.GetWorkspaceResponse, error) {
-	w, err := a.GetWorkspaceFromID(req.Id)
+	ctx context.Context, req *apiv1.GetWorkspaceRequest) (*apiv1.GetWorkspaceResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := a.GetWorkspaceFromID(req.Id, user.User.Id)
 	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
@@ -89,12 +95,20 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 }
 
 func (a *apiServer) GetWorkspaces(
-	_ context.Context, req *apiv1.GetWorkspacesRequest) (*apiv1.GetWorkspacesResponse, error) {
-	resp := &apiv1.GetWorkspacesResponse{}
+	ctx context.Context, req *apiv1.GetWorkspacesRequest) (*apiv1.GetWorkspacesResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	nameFilter := req.Name
 	archFilterExpr := ""
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
+	}
+	pinFilterExpr := ""
+	if req.Pinned != nil {
+		pinFilterExpr = strconv.FormatBool(req.Pinned.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
 	// Construct the ordering expression.
@@ -120,13 +134,17 @@ func (a *apiServer) GetWorkspaces(
 	default:
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
-	err := a.m.db.QueryProtof(
+
+	resp := &apiv1.GetWorkspacesResponse{}
+	err = a.m.db.QueryProtof(
 		"get_workspaces",
 		[]interface{}{orderExpr},
 		&resp.Workspaces,
 		userFilterExpr,
 		nameFilter,
 		archFilterExpr,
+		pinFilterExpr,
+		user.User.Id,
 	)
 	if err != nil {
 		return nil, err
@@ -149,9 +167,14 @@ func (a *apiServer) PostWorkspace(
 }
 
 func (a *apiServer) PatchWorkspace(
-	_ context.Context, req *apiv1.PatchWorkspaceRequest) (*apiv1.PatchWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.PatchWorkspaceRequest) (*apiv1.PatchWorkspaceResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	// Verify current workspace exists and can be edited.
-	currWorkspace, err := a.GetWorkspaceFromID(req.Id)
+	currWorkspace, err := a.GetWorkspaceFromID(req.Id, user.User.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +201,7 @@ func (a *apiServer) PatchWorkspace(
 
 	finalWorkspace := &workspacev1.Workspace{}
 	err = a.m.db.QueryProto("update_workspace",
-		finalWorkspace, currWorkspace.Id, currWorkspace.Name)
+		finalWorkspace, currWorkspace.Id, currWorkspace.Name, user.User.Id)
 
 	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
 		errors.Wrapf(err, "error updating workspace (%d) in database", currWorkspace.Id)
@@ -245,4 +268,32 @@ func (a *apiServer) UnarchiveWorkspace(
 
 	return &apiv1.UnarchiveWorkspaceResponse{},
 		errors.Wrapf(err, "error unarchiving workspace (%d)", req.Id)
+}
+
+func (a *apiServer) PinWorkspace(
+	ctx context.Context, req *apiv1.PinWorkspaceRequest) (*apiv1.PinWorkspaceResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &workspacev1.Workspace{}
+	err = a.m.db.QueryProto("pin_workspace", holder, req.Id, user.User.Id)
+
+	return &apiv1.PinWorkspaceResponse{},
+		errors.Wrapf(err, "error pinning workspace (%d)", req.Id)
+}
+
+func (a *apiServer) UnpinWorkspace(
+	ctx context.Context, req *apiv1.UnpinWorkspaceRequest) (*apiv1.UnpinWorkspaceResponse, error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &workspacev1.Workspace{}
+	err = a.m.db.QueryProto("unpin_workspace", holder, req.Id, user.User.Id)
+
+	return &apiv1.UnpinWorkspaceResponse{},
+		errors.Wrapf(err, "error un-pinning workspace (%d)", req.Id)
 }
