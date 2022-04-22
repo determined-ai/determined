@@ -1,7 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  API: Fix an issue where a reported job state could be stale due to a faulty caching mechanism.
-   This could have resulted in an experiment showing in `queued` or `scheduled` state, either in CLI
-   or WebUI, when it was in the other state.

@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Fix an issue where deleted experiments would get stuck in a ``DELETING`` state indefinitely due
-      to their checkpoint GC tasks not to completing.
