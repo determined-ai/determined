@@ -176,7 +176,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         batch = {key: batch[key].data[0] for key in batch}
 
         losses = self.model(**batch)
-        loss, log_vars = self.model.module._parse_losses(losses)
+        loss, log_vars = self.model._parse_losses(losses)
         self.model.zero_grad()
         self.context.backward(loss)
         self.context.step_optimizer(

@@ -531,8 +531,22 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if self.distributed.size > 1 and self._distributed_backend.use_torch():
             # If Torch DDP is in use, re-wrap the models
+            class PyTorchDistributedDataParallel(
+                torch.nn.parallel.DistributedDataParallel  # type: ignore
+            ):
+                """
+                Pass-through Model Wrapper to enable access to inner module attributes
+                when using PyTorch DDP
+                """
+
+                def __getattr__(self, name: str) -> Any:
+                    try:
+                        return super().__getattr__(name)
+                    except AttributeError:
+                        return getattr(self.module, name)
+
             self.models = [
-                torch.nn.parallel.DistributedDataParallel(model) for model in self.models
+                PyTorchDistributedDataParallel(model) for model in self.models
             ]
 
         if not isinstance(optimizers, list):
@@ -715,9 +729,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             return
 
         # Communication needs to be synchronized so that is completed
-        # before we apply gradient clipping and `step()`. In the case of APEX
-        # this is called in backward() instead, so that it's inside the context
+        # before we apply gradient clipping and `step()`.
+        # In the case of APEX this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
+        # In the case of PyTorch DDP, losses are synchronized during the backwards() pass.
         if (
             self.distributed.size > 1
             and self._distributed_backend.use_horovod()
@@ -752,6 +767,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         else:
             step_fn = optimizer.step  # type: ignore
 
+        # In the case of PyTorch DDP, losses are synchronized automatically on the backwards() pass
         if self.distributed.size > 1 and self._distributed_backend.use_horovod():
             with optimizer.skip_synchronize():  # type: ignore
                 step_fn()

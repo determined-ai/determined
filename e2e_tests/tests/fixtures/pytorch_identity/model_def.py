@@ -52,10 +52,7 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
 
         loss = self.loss_fn(self.model(data), label)
 
-        if self.context._distributed_backend.use_torch():
-            weight = self.model.module.weight.data.item()
-        else:
-            weight = self.model.weight.data.item()
+        weight = self.model.weight.data.item()
 
         return {"val_loss": loss, "weight": weight}
 
