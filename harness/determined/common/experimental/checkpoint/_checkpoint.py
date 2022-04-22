@@ -69,16 +69,10 @@ class Checkpoint(object):
         self.state = state
         self.training = training
 
-    def get_training(self) -> CheckpointTrainingMetadata:
-        if self.training is None:
-            raise RuntimeError("Non-training checkpoints are not yet supported.")
-        return self.training
-
-    def _find_shared_fs_path(self) -> pathlib.Path:
+    def _find_shared_fs_path(self, checkpoint_storage: Dict[str, Any]) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
         This function assumes the host path of the shared fs exists.
         """
-        checkpoint_storage = self.get_training().experiment_config["checkpoint_storage"]
         host_path = checkpoint_storage["host_path"]
         storage_path = checkpoint_storage.get("storage_path")
         potential_paths = [
@@ -132,9 +126,12 @@ class Checkpoint(object):
         if not any(p.exists() for p in potential_metadata_paths):
             # If the target directory doesn't already appear to contain a
             # checkpoint, attempt to fetch one.
-            checkpoint_storage = self.get_training().experiment_config["checkpoint_storage"]
+            if not self.training:
+                raise NotImplementedError("Non-training checkpoints cannot be downloaded")
+
+            checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
             if checkpoint_storage["type"] == "shared_fs":
-                src_ckpt_dir = self._find_shared_fs_path()
+                src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
             else:
                 local_ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -383,7 +380,7 @@ class Checkpoint(object):
     @classmethod
     def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
         metadata = data.get("metadata", {})
-        training_data = data["training"]
+        training_data = data.get("training")
         training = (
             CheckpointTrainingMetadata(
                 training_data["experimentConfig"],

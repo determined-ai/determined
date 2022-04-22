@@ -79,6 +79,8 @@ class CheckpointContext:
         ckpt_dir = os.fspath(ckpt_dir)
 
         storage_id = str(uuid.uuid4())
+        # XXX we would like to add metadata.json here but we shouldn't
+        # since it will get out of date if user adds custom key-value pairs to it
         self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
         resources = self._storage_manager._list_directory(ckpt_dir)
         self._report_checkpoint(storage_id, resources, metadata)
