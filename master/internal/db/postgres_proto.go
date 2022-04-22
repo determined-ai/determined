@@ -3,12 +3,13 @@ package db
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // QueryProto returns the result of the query. Any placeholder parameters are replaced
@@ -34,20 +35,6 @@ func (db *PgDB) QueryProtof(
 	)
 }
 
-// extendedFloat handles serializing floats to JSON, including special cases for infinite values.
-type extendedFloat float64
-
-// MarshalJSON implements the json.Marshaler interface.
-func (f extendedFloat) MarshalJSON() ([]byte, error) {
-	switch float64(f) {
-	case math.Inf(1):
-		return []byte(`"Infinity"`), nil
-	case math.Inf(-1):
-		return []byte(`"-Infinity"`), nil
-	}
-	return json.Marshal(float64(f))
-}
-
 func protoParser(rows *sqlx.Rows, val interface{}) error {
 	message, ok := val.(proto.Message)
 	if !ok {
@@ -60,7 +47,7 @@ func protoParser(rows *sqlx.Rows, val interface{}) error {
 	for key, value := range dest {
 		switch parsed := value.(type) {
 		case float64:
-			dest[key] = extendedFloat(parsed)
+			dest[key] = model.ExtendedFloat64(parsed)
 		case []byte:
 			var marshaled interface{}
 			if err := json.Unmarshal(parsed, &marshaled); err != nil {

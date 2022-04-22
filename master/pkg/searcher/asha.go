@@ -33,8 +33,8 @@ type (
 	}
 
 	trialMetric struct {
-		RequestID model.RequestID `json:"request_id"`
-		Metric    float64         `json:"metric"`
+		RequestID model.RequestID       `json:"request_id"`
+		Metric    model.ExtendedFloat64 `json:"metric"`
 		// fields below used by asha.go.
 		Promoted bool `json:"promoted"`
 	}
@@ -98,7 +98,7 @@ func (r *rung) promotionsAsync(
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
 		len(r.Metrics),
-		func(i int) bool { return r.Metrics[i].Metric > metric },
+		func(i int) bool { return float64(r.Metrics[i].Metric) > metric },
 	)
 	promoteNow := insertIndex < numPromote
 
@@ -106,7 +106,7 @@ func (r *rung) promotionsAsync(
 	copy(r.Metrics[insertIndex+1:], r.Metrics[insertIndex:])
 	r.Metrics[insertIndex] = trialMetric{
 		RequestID: requestID,
-		Metric:    metric,
+		Metric:    model.ExtendedFloat64(metric),
 		Promoted:  promoteNow,
 	}
 
@@ -199,7 +199,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 		rung.Metrics = append(rung.Metrics,
 			trialMetric{
 				RequestID: requestID,
-				Metric:    metric,
+				Metric:    model.ExtendedFloat64(metric),
 			},
 		)
 
