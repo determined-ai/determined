@@ -21,7 +21,7 @@ Version 0.17.15
 **Bug Fixes**
 
 -  Fix an issue where deleted experiments would get stuck in a ``DELETING`` state indefinitely due
-   to their checkpoint GC tasks not to completing.
+   to their checkpoint GC tasks not completing.
 
 -  API: Fix an issue where a reported job state could be stale due to a faulty caching mechanism.
    This could have resulted in an experiment showing in `queued` or `scheduled` state, either in CLI
