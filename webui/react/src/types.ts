@@ -310,6 +310,7 @@ export enum ExperimentAction {
   Delete = 'Delete',
   Fork = 'Fork',
   Kill = 'Kill',
+  Move = 'Move',
   Pause = 'Pause',
   OpenTensorBoard = 'View in TensorBoard',
   Unarchive = 'Unarchive',
