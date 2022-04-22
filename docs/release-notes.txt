@@ -8,6 +8,31 @@
  Version 0.17
 **************
 
+Version 0.17.15
+===============
+
+**Release Date:** April 22, 2022
+
+**Breaking Changes**
+
+-  API: Endpoints for getting or updating a user now accept a ``userId`` instead of ``username`` as
+   the path parameter.
+
+**Bug Fixes**
+
+-  Fix an issue where deleted experiments would get stuck in a ``DELETING`` state indefinitely due
+   to their checkpoint GC tasks not to completing.
+
+-  API: Fix an issue where a reported job state could be stale due to a faulty caching mechanism.
+   This could have resulted in an experiment showing in `queued` or `scheduled` state, either in CLI
+   or WebUI, when it was in the other state.
+
+**New Features**
+
+-  Add a translation of DeepSpeed's DCGAN example using the new DeepSpeedTrial API.
+
+----
+
 Version 0.17.14
 ===============
 
