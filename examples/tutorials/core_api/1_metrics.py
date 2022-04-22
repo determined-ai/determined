@@ -13,6 +13,7 @@ import time
 # NEW: import determined
 import determined as det
 
+
 def main(core_context, increment_by):
     x = 0
     for batch in range(100):
@@ -24,6 +25,7 @@ def main(core_context, increment_by):
             core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
     # NEW: report a "validation" metric at the end.
     core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
+
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
