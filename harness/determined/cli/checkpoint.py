@@ -47,12 +47,19 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
     # Print information about the downloaded step/checkpoint.
     table = [
-        ["Experiment ID", checkpoint.get_training().experiment_id],
-        ["Trial ID", checkpoint.get_training().trial_id],
+        ["Experiment ID", checkpoint.training.experiment_id if checkpoint.training else None],
+        ["Trial ID", checkpoint.training.trial_id if checkpoint.training else None],
         ["Batch #", checkpoint.metadata.get("latest_batch")],
         ["Report Time", render.format_time(checkpoint.report_time)],
         ["Checkpoint UUID", checkpoint.uuid],
-        ["Validation Metrics", json.dumps(checkpoint.get_training().validation_metrics, indent=4)],
+        [
+            "Validation Metrics",
+            (
+                json.dumps(checkpoint.training.validation_metrics, indent=4)
+                if checkpoint.training
+                else None
+            ),
+        ],
         ["Metadata", json.dumps(checkpoint.metadata or {}, indent=4)],
     ]
 
