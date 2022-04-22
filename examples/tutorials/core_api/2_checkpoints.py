@@ -14,27 +14,32 @@ save the trial ID in the checkpoint and use that to distinguish the two types of
 """
 
 import logging
+import pathlib
 import sys
 import time
 
 import determined as det
 
+
 # NEW: given a checkpoint_directory of type pathlib.Path, save our state to a file.
-def save_state(x, latest_batch, trial_id, path):
-    with path.joinpath("state").open("w") as f:
+# You can save multiple files, and use any file names or directory structures.
+# All files nested under `checkpoint_directory` path fill be included into the checkpoint.
+def save_state(x, latest_batch, trial_id, checkpoint_directory):
+    with checkpoint_directory.joinpath("state").open("w") as f:
         f.write(f"{x},{latest_batch},{trial_id}")
 
+
 # NEW: given a checkpoint_directory, load our state from a file.
-def load_state(trial_id, path):
-    import pathlib
-    path = pathlib.Path(path)
-    with path.joinpath("state").open("r") as f:
+def load_state(trial_id, checkpoint_directory):
+    checkpoint_directory = pathlib.Path(checkpoint_directory)
+    with checkpoint_directory.joinpath("state").open("r") as f:
         x, latest_batch, ckpt_trial_id = [int(field) for field in f.read().split(",")]
     if ckpt_trial_id == trial_id:
         return x, latest_batch
     else:
         # This is a new trial; load the "model weight" but not the batch count.
         return x, 0
+
 
 def main(core_context, latest_checkpoint, trial_id, increment_by):
     x = 0

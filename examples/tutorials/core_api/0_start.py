@@ -13,12 +13,14 @@ import logging
 import sys
 import time
 
+
 def main(increment_by):
     x = 0
     for batch in range(100):
         x += increment_by
         time.sleep(.1)
         print("x is now", x)
+
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
