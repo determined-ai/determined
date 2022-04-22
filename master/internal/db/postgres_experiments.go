@@ -214,7 +214,7 @@ func (db *PgDB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatc
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
-  s.metrics->'avg_metrics'->$1 AS metric,
+  (s.metrics->'avg_metrics'->>$1)::float8 AS metric,
   s.end_time AS end_time,
   s.total_batches as batches
 FROM trials t
@@ -254,7 +254,7 @@ func (db *PgDB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBa
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
-  v.metrics->'validation_metrics'->$1 AS metric,
+  (v.metrics->'validation_metrics'->>$1)::float8 AS metric,
   v.end_time AS end_time,
   v.total_batches as batches
 FROM trials t
@@ -298,7 +298,7 @@ func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string
 	err = db.sql.Select(&trials, fmt.Sprintf(`
 SELECT t.id FROM (
   SELECT t.id,
-    %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
+    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
@@ -325,7 +325,7 @@ func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metri
 SELECT t.id FROM (
   SELECT t.id,
     max(v.total_batches) as progress,
-    %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
+    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
   WHERE t.experiment_id=$2
@@ -391,7 +391,7 @@ func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metr
 	rows, err := db.sql.Query(`
 SELECT
   v.total_batches AS batches,
-  v.metrics->'validation_metrics'->$1 AS value,
+  (v.metrics->'validation_metrics'->>$1)::float8 AS value,
   v.end_time as end_time
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
@@ -481,7 +481,7 @@ SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
   v.total_batches AS batches,
-  v.metrics->'validation_metrics'->$1 as metric
+  (v.metrics->'validation_metrics'->>$1)::float8 as metric
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
 JOIN (
