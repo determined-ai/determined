@@ -5641,6 +5641,7 @@ class v1Workspace:
         immutable: bool,
         name: str,
         numProjects: int,
+        pinned: bool,
         username: str,
     ):
         self.id = id
@@ -5649,6 +5650,7 @@ class v1Workspace:
         self.username = username
         self.immutable = immutable
         self.numProjects = numProjects
+        self.pinned = pinned
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -5659,6 +5661,7 @@ class v1Workspace:
             username=obj["username"],
             immutable=obj["immutable"],
             numProjects=obj["numProjects"],
+            pinned=obj["pinned"],
         )
 
     def to_json(self) -> typing.Any:
@@ -5669,6 +5672,7 @@ class v1Workspace:
             "username": self.username,
             "immutable": self.immutable,
             "numProjects": self.numProjects,
+            "pinned": self.pinned,
         }
 
 def post_AckAllocationPreemptionSignal(
@@ -7210,6 +7214,7 @@ def get_GetWorkspaces(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    pinned: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetWorkspacesRequestSortBy]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspacesResponse":
@@ -7219,6 +7224,7 @@ def get_GetWorkspaces(
         "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy else None,
+        "pinned": pinned,
         "sortBy": sortBy.value if sortBy else None,
         "users": users,
     }
@@ -7681,6 +7687,25 @@ def post_PauseExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
+
+def post_PinWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/pin",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PinWorkspace", _resp)
 
 def post_PostCheckpointMetadata(
     session: "client.Session",
@@ -8200,6 +8225,25 @@ def post_UnarchiveWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveWorkspace", _resp)
+
+def post_UnpinWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/unpin",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnpinWorkspace", _resp)
 
 def post_UpdateJobQueue(
     session: "client.Session",
