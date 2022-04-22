@@ -487,6 +487,8 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
     for name, schema in swagger_definitions.items():
         if "enum" in schema:
             members = schema["enum"]
+            if enums[json.dumps(members)] is not None:
+                raise ValueError("cannot link enum members to its types.")
             enums[json.dumps(members)] = name
     return enums
 
