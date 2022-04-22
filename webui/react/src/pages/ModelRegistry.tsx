@@ -435,12 +435,19 @@ const ModelRegistry: React.FC = () => {
     showModal({});
   }, [ showModal ]);
 
+  // archive === false is a filter
+  const filtered = (settings.archived != null
+  || settings.description
+  || settings.tags
+  || settings.name
+  || settings.users);
+
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
       <Section
         options={<Button onClick={showCreateModelModal}>New Model</Button>}
         title="Model Registry">
-        {(models.length === 0 && !isLoading) ?
+        {(models.length === 0 && !isLoading && !filtered) ?
           (
             <div className={css.emptyBase}>
               <div className={css.icon}>
