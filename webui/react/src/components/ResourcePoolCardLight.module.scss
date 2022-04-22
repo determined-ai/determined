@@ -11,7 +11,7 @@ $line-height: 22px;
   font-size: var(--theme-sizes-font-medium);
   line-height: $line-height;
   overflow: hidden;
-  padding: var(--theme-sizes-layout-tiny) $padding 0;
+  padding: var(--theme-sizes-layout-medium) $padding var(--theme-sizes-layout-medium);
   text-overflow: ellipsis;
 
   .body {
@@ -58,6 +58,7 @@ section.details {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  font-size: var(--theme-sizes-font-small);
 
   ul {
     flex-grow: 1;
