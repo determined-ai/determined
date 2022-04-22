@@ -2,6 +2,7 @@ import { Button, Input, ModalFuncProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import DraggableListItem from 'components/DraggableListItem';
 import { isEqual } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
@@ -100,6 +101,33 @@ const useModalCustomizeColumns = ({
     );
   }, [ renderColumnName ]);
 
+  const switchRowOrder = useCallback((column:string, newNeighborColumn:string) => {
+    if(column !== newNeighborColumn){
+      const updatedVisibleColumns = [ ...visibleColumns ];
+      const columnIndex =
+      updatedVisibleColumns.findIndex(columnName => columnName === column);
+      const newNeighborColumnIndex =
+      updatedVisibleColumns.findIndex(columnName => columnName === newNeighborColumn);
+      updatedVisibleColumns.splice(columnIndex, 1);
+      updatedVisibleColumns.splice(newNeighborColumnIndex, 0, column);
+      setVisibleColumns(updatedVisibleColumns);
+    }
+    return;
+  }, [ visibleColumns ]);
+
+  const renderDraggableRow = useCallback((row, index, style, handleClick, handleDrop) => {
+    return (
+      <DraggableListItem
+        columnName={row}
+        index={index}
+        style={style}
+        onClick={handleClick}
+        onDrop={handleDrop}>
+        {renderColumnName(row)}
+      </DraggableListItem>
+    );
+  }, [ renderColumnName ]);
+
   const renderHiddenRow = useCallback(({ index, style }) => {
     const row = filteredHiddenColumns[index];
     return renderRow(row, style, () => makeVisible(row));
@@ -107,8 +135,14 @@ const useModalCustomizeColumns = ({
 
   const renderVisibleRow = useCallback(({ index, style }) => {
     const row = filteredVisibleColumns[index];
-    return renderRow(row, style, () => makeHidden(row));
-  }, [ filteredVisibleColumns, makeHidden, renderRow ]);
+    return renderDraggableRow(
+      row,
+      index,
+      style,
+      () => makeHidden(row),
+      switchRowOrder,
+    );
+  }, [ filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder ]);
 
   const modalContent = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
