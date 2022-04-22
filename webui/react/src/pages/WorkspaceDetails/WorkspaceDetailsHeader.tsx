@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import WorkspaceIcon from 'components/WorkspaceIcon';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
@@ -61,7 +62,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
   return (
     <div className={css.base}>
       <Space align="center">
-        <div className={css.icon}>{workspace.name[0]}</div>
+        <WorkspaceIcon name={workspace.name} size={32} />
         <div className={css.nameRow}>
           <h1 className={css.name}>
             <InlineEditor disabled={workspace.immutable} maxLength={80} value={workspace.name} />

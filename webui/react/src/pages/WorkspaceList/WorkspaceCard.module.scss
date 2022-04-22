@@ -11,20 +11,6 @@
   min-width: min-content;
   padding: var(--theme-sizes-layout-big);
 
-  .icon {
-    aspect-ratio: 1;
-    background-color: var(--theme-colors-monochrome-15);
-    border-radius: 8px;
-    display: grid;
-    height: 70px;
-    width: 70px;
-
-    & > * {
-      font-size: var(--theme-sizes-font-medium);
-      place-self: center;
-      text-transform: uppercase;
-    }
-  }
   .info {
     display: flex;
     flex-direction: column;

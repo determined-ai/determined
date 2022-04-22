@@ -1,9 +1,10 @@
 import { Tooltip, Typography } from 'antd';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
+import WorkspaceIcon from 'components/WorkspaceIcon';
 import { paths } from 'routes/utils';
 import { DetailedUser, Workspace } from 'types';
 
@@ -17,22 +18,13 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }: Props) => {
-
-  const nameAcronym = useMemo(() => {
-    return workspace.name
-      .split(/\s/).reduce((response, word) => response += word.slice(0, 1), '')
-      .slice(0, 3);
-  }, [ workspace.name ]);
-
   return (
     <WorkspaceActionDropdown
       curUser={curUser}
       fetchWorkspaces={fetchWorkspaces}
       workspace={workspace}>
       <div className={css.base}>
-        <div className={css.icon}>
-          <span>{nameAcronym}</span>
-        </div>
+        <WorkspaceIcon name={workspace.name} size={70} />
         <div className={css.info}>
           <div className={css.nameRow}>
             <h6 className={css.name}>
