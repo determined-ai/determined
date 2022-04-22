@@ -531,8 +531,9 @@ const messageRegex = new RegExp(
     '^',
     '\\[([^\\]]+)\\]\\s',                             // timestamp
     '([0-9a-f]{8})?\\s?',                             // container id
-    '\\|\\|',                                         // divider ||
-    '(\\s(CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?',  // log level
+    '(\\[rank=(\\d+)\\])?\\s?',                       // rank id
+    '(\\|\\|\\s)?',                                   // divider ||
+    '((CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?',     // log level
     '(\\[(\\d+)\\]\\s)?',                             // process id
     '([\\s\\S]*)',                                    // message
     '$',
@@ -544,10 +545,17 @@ const formatLogMessage = (message: string): string => {
   let filteredMessage = message.replace(newlineRegex, '');
 
   const matches = filteredMessage.match(messageRegex) ?? [];
-  if (matches.length === 8) {
-    filteredMessage = matches[7] ?? '';
-    if (matches[6] != null) filteredMessage = `[${matches[6]}] ${filteredMessage}`;
-    if (matches[2] != null) filteredMessage = `${matches[2]} ${filteredMessage}`;
+  if (matches.length === 11) {
+    filteredMessage = matches[10] ?? '';
+
+    // process id
+    if (matches[9] != null) filteredMessage = `[${matches[9]}] ${filteredMessage}`;
+
+    // rank id
+    if (matches[4] != null) filteredMessage = `[rank=${matches[4]}] ${filteredMessage}`;
+
+    // container id
+    if (matches[2] != null) filteredMessage = `[${matches[2]}] ${filteredMessage}`;
   }
 
   return filteredMessage.trim();
