@@ -12,25 +12,28 @@ Multi-slot tasks in Determined get the following features out-of-the box:
 """
 
 import logging
+import pathlib
 import sys
 import time
 import multiprocessing
 
 import determined as det
 
-def save_state(x, latest_batch, trial_id, path):
-    with path.joinpath("state").open("w") as f:
+
+def save_state(x, latest_batch, trial_id, checkpoint_directory):
+    with checkpoint_directory.joinpath("state").open("w") as f:
         f.write(f"{x},{latest_batch},{trial_id}")
 
-def load_state(trial_id, path):
-    import pathlib
-    path = pathlib.Path(path)
-    with path.joinpath("state").open("r") as f:
+
+def load_state(trial_id, checkpoint_directory):
+    checkpoint_directory = pathlib.Path(checkpoint_directory)
+    with checkpoint_directory.joinpath("state").open("r") as f:
         x, latest_batch, ckpt_trial_id = [int(field) for field in f.read().split(",")]
     if ckpt_trial_id == trial_id:
         return x, latest_batch
     else:
         return x, 0
+
 
 def main(core_context, latest_checkpoint, trial_id, increment_by):
     x = 0
@@ -60,7 +63,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                     core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
                     op.report_progress(batch)
                     checkpoint_metadata = {"latest_batch": batch}
-                    with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
+                    with core_context.checkpoint.store_path(checkpoint_metadata) as (checkpoint_directory, uuid):
                         save_state(x, batch, trial_id, path)
                     last_checkpoint_batch = batch
                 if core_context.preempt.should_preempt():
