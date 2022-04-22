@@ -143,11 +143,11 @@ type ResourcesFailure struct {
 }
 
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
-func NewResourcesFailure(failureType FailureType, msg string, code ExitCode) *ResourcesFailure {
+func NewResourcesFailure(failureType FailureType, msg string, code *ExitCode) *ResourcesFailure {
 	return &ResourcesFailure{
 		FailureType: failureType,
 		ErrMsg:      msg,
-		ExitCode:    &code,
+		ExitCode:    code,
 	}
 }
 
@@ -198,9 +198,6 @@ const (
 
 	// AgentError denotes that the agent failed to launch the container.
 	AgentError = FailureType("agent failed to launch the container")
-
-	// UnknownError denotes an internal error that did not map to a know failure type.
-	UnknownError
 )
 
 // FromContainerFailureType converts an aproto.FailureType to a FailureType. This mapping is not
