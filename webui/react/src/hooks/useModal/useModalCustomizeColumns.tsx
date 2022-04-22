@@ -140,7 +140,7 @@ const useModalCustomizeColumns = ({
       index,
       style,
       () => makeHidden(row),
-      (column: string, newColumnNeighbor: string) => switchRowOrder(column, newColumnNeighbor),
+      switchRowOrder,
     );
   }, [ filteredVisibleColumns, makeHidden, renderDraggableRow, switchRowOrder ]);
 
