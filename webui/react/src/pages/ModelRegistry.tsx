@@ -254,6 +254,17 @@ const ModelRegistry: React.FC = () => {
     });
   }, [ deleteCurrentModel ]);
 
+  const showCannotDelete = () => {
+    Modal.confirm({
+      closable: true,
+      content: 'Only the item creator or an admin can delete items from the model registry.',
+      icon: null,
+      maskClosable: true,
+      okText: 'Ok',
+      title: 'Unable to Delete',
+    });
+  };
+
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
       await patchModel({
@@ -294,9 +305,8 @@ const ModelRegistry: React.FC = () => {
               </Menu.Item>
               <Menu.Item
                 danger
-                disabled={!isDeletable}
                 key="delete-model"
-                onClick={() => showConfirmDelete(record)}>
+                onClick={() => isDeletable ? showConfirmDelete(record) : showCannotDelete()}>
                 Delete Model
               </Menu.Item>
             </Menu>

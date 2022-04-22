@@ -120,6 +120,17 @@ const ModelDetails: React.FC = () => {
     });
   }, [ deleteVersion ]);
 
+  const showCannotDelete = () => {
+    Modal.confirm({
+      closable: true,
+      content: 'Only the item creator or an admin can delete items from the model registry.',
+      icon: null,
+      maskClosable: true,
+      okText: 'Ok',
+      title: 'Unable to Delete',
+    });
+  };
+
   const saveVersionDescription =
     useCallback(async (editedDescription: string, versionId: number) => {
       try {
@@ -159,9 +170,9 @@ const ModelDetails: React.FC = () => {
               {useActionRenderer(_, record)}
               <Menu.Item
                 danger
-                disabled={!isDeletable}
+
                 key="delete-version"
-                onClick={() => showConfirmDelete(record)}>
+                onClick={() => isDeletable ? showConfirmDelete(record) : showCannotDelete()}>
                 Delete Version
               </Menu.Item>
             </Menu>

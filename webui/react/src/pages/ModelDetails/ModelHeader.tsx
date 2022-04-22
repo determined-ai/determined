@@ -86,6 +86,17 @@ const ModelHeader: React.FC<Props> = (
     });
   }, [ onDelete ]);
 
+  const showCannotDelete = () => {
+    Modal.confirm({
+      closable: true,
+      content: 'Only the item creator or an admin can delete items from the model registry.',
+      icon: null,
+      maskClosable: true,
+      okText: 'Ok',
+      title: 'Unable to Delete',
+    });
+  };
+
   return (
     <header className={css.base}>
       <div className={css.breadcrumbs}>
@@ -135,9 +146,8 @@ const ModelHeader: React.FC<Props> = (
                   </Menu.Item>
                   <Menu.Item
                     danger
-                    disabled={!isDeletable}
                     key="delete-model"
-                    onClick={() => showConfirmDelete(model)}>
+                    onClick={() => isDeletable ? showConfirmDelete(model) : showCannotDelete()}>
                     Delete
                   </Menu.Item>
                 </Menu>

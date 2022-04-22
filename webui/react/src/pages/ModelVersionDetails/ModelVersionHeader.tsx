@@ -56,6 +56,17 @@ const ModelVersionHeader: React.FC<Props> = (
     });
   }, [ onDeregisterVersion, modelVersion.version ]);
 
+  const showCannotDelete = () => {
+    Modal.confirm({
+      closable: true,
+      content: 'Only the item creator or an admin can delete items from the model registry.',
+      icon: null,
+      maskClosable: true,
+      okText: 'Ok',
+      title: 'Unable to Delete',
+    });
+  };
+
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content: (
@@ -117,9 +128,9 @@ const ModelVersionHeader: React.FC<Props> = (
       },
       {
         danger: true,
-        disabled: !isDeletable,
+        disabled: false,
         key: 'deregister-version',
-        onClick: showConfirmDelete,
+        onClick: () => isDeletable ? showConfirmDelete() : showCannotDelete(),
         text: 'Deregister Version',
       },
     ];
