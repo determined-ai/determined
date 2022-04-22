@@ -638,6 +638,7 @@ export const getWorkspaces: Service.DetApi<
       params.name,
       params.archived,
       params.users,
+      params.pinned,
       options,
     );
   },

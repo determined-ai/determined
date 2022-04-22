@@ -103,13 +103,13 @@ def test_workspace_org() -> None:
         bindings.post_PinWorkspace(sess, id=made_workspace.id)
         pinned = bindings.get_GetWorkspaces(
             sess,
-            pinned="true",
+            pinned=True,
         ).workspaces
         assert len(pinned) == 1 and pinned[0].id == made_workspace.id
         bindings.post_UnpinWorkspace(sess, id=made_workspace.id)
         pinned = bindings.get_GetWorkspaces(
             sess,
-            pinned="true",
+            pinned=True,
         ).workspaces
         assert len(pinned) == 0
 

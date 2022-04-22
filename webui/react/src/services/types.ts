@@ -274,6 +274,7 @@ export interface GetWorkspacesParams extends PaginationParams {
   name?: string;
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME';
   users?: string[];
+  pinned?: boolean;
 }
 
 export interface GetWorkspaceParams {
