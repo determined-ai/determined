@@ -16,10 +16,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetWorkspaceFromID(id int32, user_id int32) (*workspacev1.Workspace,
+func (a *apiServer) GetWorkspaceFromID(id int32, userID int32) (*workspacev1.Workspace,
 	error) {
 	w := &workspacev1.Workspace{}
-	switch err := a.m.db.QueryProto("get_workspace", w, id, user_id); err {
+	switch err := a.m.db.QueryProto("get_workspace", w, id, userID); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "workspace (%d) not found", id)
