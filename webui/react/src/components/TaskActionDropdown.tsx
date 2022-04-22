@@ -170,8 +170,8 @@ const TaskActionDropdown: React.FC<Props> = ({
   if (isUnarchivable) menuItems.push(<Menu.Item key={Action.Unarchive}>Unarchive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key={Action.Cancel}>Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
-  if (isDeletable) menuItems.push(<Menu.Item key={Action.Delete}>Delete</Menu.Item>);
-  if (isMovable) menuItems.push(<Menu.Item key={Action.Move}>Move</Menu.Item>);
+  if (isDeletable) menuItems.push(<Menu.Item danger key={Action.Delete}>Delete</Menu.Item>);
+  if (isMovable) menuItems.push(<Menu.Item key={Action.Move}>Move...</Menu.Item>);
   if (isExperiment) {
     menuItems.push(<Menu.Item key={Action.OpenTensorBoard}>View in TensorBoard</Menu.Item>);
   } else {

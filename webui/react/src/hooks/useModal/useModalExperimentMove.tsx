@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Empty, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -108,15 +108,29 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
         </div>
         <div>
           <label className={css.label} htmlFor="project">Project</label>
-          <List
-            className={css.listContainer}
-            height={200}
-            innerElementType="ul"
-            itemCount={projects.length}
-            itemSize={24}
-            width="100%">
-            {renderRow}
-          </List>
+          {selectedWorkspaceId === undefined ? (
+            <div className={css.emptyContainer}>
+              <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            </div>
+          ) :
+            projects.length === 0 ? (
+              <div className={css.emptyContainer}>
+                <Empty
+                  description="Workspace contains no projects"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+              </div>
+            ) : (
+              <List
+                className={css.listContainer}
+                height={200}
+                innerElementType="ul"
+                itemCount={projects.length}
+                itemSize={24}
+                width="100%">
+                {renderRow}
+              </List>
+            )}
         </div>
       </div>
     );
