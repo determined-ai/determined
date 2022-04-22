@@ -4,6 +4,7 @@ from typing import Any, Iterator
 from unittest import mock
 
 import pytest
+import requests
 
 from determined import core
 from tests import parallel
@@ -43,6 +44,9 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
             storage_manager = make_mock_storage_manager()
             if not dummy:
                 session = mock.MagicMock()
+                response = requests.Response()
+                response.status_code = 200
+                session._do_request.return_value = response
                 tbd_mgr = mock.MagicMock()
                 checkpoint_context = core.CheckpointContext(
                     pex.distributed,
@@ -68,13 +72,13 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
                 storage_manager._list_directory.assert_called_once()
                 storage_manager._list_directory.reset_mock()
                 if not dummy:
-                    session.post.assert_called_once()
-                    session.post.reset_mock()
+                    session._do_request.assert_called_once()
+                    session._do_request.reset_mock()
             else:
                 storage_manager.upload.assert_not_called()
                 storage_manager._list_directory.assert_not_called()
                 if not dummy:
-                    session.post.assert_not_called()
+                    session._do_request.assert_not_called()
                     tbd_mgr.sync.assert_not_called()
 
             # Test store_path.
@@ -91,13 +95,13 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
                 storage_manager._list_directory.assert_called_once()
                 storage_manager._list_directory.reset_mock()
                 if not dummy:
-                    session.post.assert_called_once()
-                    session.post.reset_mock()
+                    session._do_request.assert_called_once()
+                    session._do_request.reset_mock()
             else:
                 storage_manager.store_path.assert_not_called()
                 storage_manager._list_directory.assert_not_called()
                 if not dummy:
-                    session.post.assert_not_called()
+                    session._do_request.assert_not_called()
                     tbd_mgr.sync.assert_not_called()
 
             # Test download.

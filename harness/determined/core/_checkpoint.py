@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
-import determined as det
 from determined import core, tensorboard
 from determined.common import storage
 from determined.common.api import bindings
@@ -233,21 +232,18 @@ class CheckpointContext:
                 "'latest_batch' item, which has not been provided"
             )
 
-        body = {
-            "taskId": self._task_id,
-            "allocationId": self._allocation_id,
-            "uuid": storage_id,
-            "reportTime": datetime.now(timezone.utc),  # YYY or should it be settable?
-            "resources": resources,
-            "metadata": metadata,
-            "state": bindings.determinedcheckpointv1State.STATE_COMPLETED,  # YYY a new const?
-        }
+        ckpt = bindings.v1Checkpoint(
+            allocationId=self._allocation_id,
+            metadata=metadata,
+            resources={k: str(v) for k, v in resources.items()},
+            taskId=self._task_id,
+            training=bindings.v1CheckpointTrainingMetadata(),
+            uuid=storage_id,
+            reportTime=datetime.now(timezone.utc).isoformat(),
+            state=bindings.determinedcheckpointv1State.STATE_COMPLETED,
+        )
+        bindings.post_ReportCheckpoint(self._session, body=ckpt)
         logger.info(f"Reported checkpoint to master {storage_id}")
-        api_path = "/api/v1/checkpoints"
-        self._session.post(api_path, data=det.util.json_encode(body))
-        # XXX: confirm that this implementation is ok for now
-        # instead of
-        # bindings.post_ReportCheckpoint(self._session, body=ckpt)
 
         # Also sync tensorboard.
         if self._tbd_mgr:
