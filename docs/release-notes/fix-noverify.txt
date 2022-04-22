@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  CLI: Stop using SSL "noverify" option for some API requests.
