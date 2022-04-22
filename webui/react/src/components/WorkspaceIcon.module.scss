@@ -5,7 +5,6 @@
   display: grid;
 
   & > * {
-    font-size: var(--theme-sizes-font-medium);
     place-self: center;
     text-transform: uppercase;
   }

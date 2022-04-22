@@ -11,7 +11,9 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import Spinner from 'components/Spinner';
 import { checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
   ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig, relativeTimeRenderer,
   stateRenderer,
@@ -37,7 +39,7 @@ import { activateExperiment, archiveExperiment, cancelExperiment, deleteExperime
 import { Determinedexperimentv1State,
   V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
+import { isNotFound, validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import { ExperimentAction as Action, CommandTask, ExperimentItem,
   Project, RecordKey, RunState, Workspace } from 'types';
 import { isEqual } from 'utils/data';
@@ -49,6 +51,7 @@ import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
+import ProjectDetailsHeader from './ProjectDetails/ProjectDetailsHeader';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -739,57 +742,78 @@ const ProjectDetails: React.FC = () => {
     [ user, handleActionComplete ],
   );
 
+  if (isNaN(id)) {
+    return <Message title={`Invalid Project ID ${projectId}`} />;
+  } else if (pageError) {
+    const message = isNotFound(pageError) ?
+      `Unable to find Project ${projectId}` :
+      `Unable to fetch Project ${projectId}`;
+    return <Message title={message} type={MessageType.Warning} />;
+  } else if (!project) {
+    return <Spinner tip={`Loading project ${projectId} details...`} />;
+  }
+
   return (
     <Page
+      bodyNoPadding
       containerRef={pageRef}
       docTitle="Project Details"
-      id="projectDetails"
-      options={(
-        <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-          <Button onClick={openModal}>Columns</Button>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
-          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
-        </Space>
-      )}>
-      <TableBatch
-        actions={[
-          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-          { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
-          { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
-          { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
-          { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
-          { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
-          { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
-          { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
-        ]}
-        selectedRowCount={(settings.row ?? []).length}
-        onAction={handleBatchAction}
-        onClear={clearSelected}
-      />
-      <InteractiveTable
-        areRowsSelected={!!settings.row}
-        columns={columns}
-        containerRef={pageRef}
-        ContextMenu={ExperimentActionDropdown}
-        dataSource={experiments}
-        loading={isLoading}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, total)}
-        rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey="id"
-        rowSelection={{
-          onChange: handleTableRowSelect,
-          preserveSelectedRowKeys: true,
-          selectedRowKeys: settings.row ?? [],
-        }}
-        settings={settings as InteractiveTableSettings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+      id="projectDetails">
+      <ProjectDetailsHeader
+        experimentsTab={(
+          <>
+            <TableBatch
+              actions={[
+                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
+                { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
+                { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
+                { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
+                { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
+                { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
+                { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
+              ]}
+              selectedRowCount={(settings.row ?? []).length}
+              onAction={handleBatchAction}
+              onClear={clearSelected}
+            />
+            <InteractiveTable
+              areRowsSelected={!!settings.row}
+              columns={columns}
+              containerRef={pageRef}
+              ContextMenu={ExperimentActionDropdown}
+              dataSource={experiments}
+              loading={isLoading}
+              pagination={getFullPaginationConfig({
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              }, total)}
+              rowClassName={defaultRowClassName({ clickable: false })}
+              rowKey="id"
+              rowSelection={{
+                onChange: handleTableRowSelect,
+                preserveSelectedRowKeys: true,
+                selectedRowKeys: settings.row ?? [],
+              }}
+              settings={settings as InteractiveTableSettings}
+              showSorterTooltip={false}
+              size="small"
+              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            />
+          </>
+        )}
+        notesTab={<div />}
+        options={(
+          <Space>
+            <Switch checked={settings.archived} onChange={switchShowArchived} />
+            <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+            <Button onClick={openModal}>Columns</Button>
+            <Button onClick={resetColumnWidths}>Reset Widths</Button>
+            <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+          </Space>
+        )}
+        project={project}
+        workspace={workspace}
       />
     </Page>
   );

@@ -1,0 +1,16 @@
+.base {
+  padding: var(--theme-sizes-layout-big);
+
+  .noPadding {
+    padding: 0;
+  }
+  .body {
+    padding-top: var(--theme-sizes-layout-big);
+  }
+}
+.breadcrumbsRow {
+  background-color: var(--theme-colors-monochrome-16);
+  border-bottom: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-12);
+  padding: var(--theme-sizes-layout-medium) var(--theme-sizes-layout-big);
+  width: 100%;
+}

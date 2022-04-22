@@ -134,7 +134,7 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
         </div>
       </div>
     );
-  }, [ handleWorkspaceSelect, projects.length, renderRow, workspaces ]);
+  }, [ handleWorkspaceSelect, projects.length, renderRow, selectedWorkspaceId, workspaces ]);
 
   const handleOk = useCallback(async () => {
     if (!destinationProjectId) return;

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 
 import { hex2hsl, hsl2str } from 'utils/color';
 import md5 from 'utils/md5';
@@ -8,9 +8,10 @@ import css from './WorkspaceIcon.module.scss';
 interface Props {
   name?: string;
   size?: number;
+  style?: CSSProperties;
 }
 
-const WorkspaceIcon: React.FC<Props> = ({ name, size = 70 }: Props) => {
+const WorkspaceIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
   const nameAcronym = useMemo(() => {
     if (!name) return '-';
     return name
@@ -20,7 +21,7 @@ const WorkspaceIcon: React.FC<Props> = ({ name, size = 70 }: Props) => {
 
   const color = useMemo(() => {
     if (!name) {
-      return hsl2str(hex2hsl('#808080'));
+      return hsl2str({ ...hex2hsl('#808080'), l: 90 });
     }
     const hexColor = md5(name).substring(0, 6);
     const hslColor = hex2hsl(hexColor);
@@ -36,7 +37,7 @@ const WorkspaceIcon: React.FC<Props> = ({ name, size = 70 }: Props) => {
   return (
     <div
       className={css.base}
-      style={{ backgroundColor: color, fontSize, height: size, width: size }}>
+      style={{ backgroundColor: color, fontSize, height: size, width: size, ...style }}>
       <span>{nameAcronym}</span>
     </div>
   );
