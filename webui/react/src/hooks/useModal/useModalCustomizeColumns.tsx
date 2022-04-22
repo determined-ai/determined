@@ -29,9 +29,11 @@ const useModalCustomizeColumns = ({
   defaultVisibleColumns,
   onSave,
 }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const [ columnList ] = useState(columns); //this is only to prevent rerendering
   const [ searchTerm, setSearchTerm ] = useState('');
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(
+    { onClose: () => setSearchTerm('') },
+  );
   const [ visibleColumns, setVisibleColumns ] = useState<string[]>([]);
 
   const handleSave = useCallback(() => {
