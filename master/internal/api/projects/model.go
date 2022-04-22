@@ -146,25 +146,25 @@ func ProjectList(ctx context.Context, opts db.SelectExtension) ([]*ProjectMetada
 }
 
 // ProjectDeletion deletes a project if access is allowed.
-// func ProjectDeletion(ctx context.Context, opts db.SelectExtension) error {
-// 	var ids []struct {
-// 		id int32
-// 	}
-// 	q, err := opts(db.Bun().
-// 		NewDelete().
-// 		Where("NOT immutable").
-// 		Returning("id").
-// 		Model(&ids))
-// 	if err != nil {
-// 		return fmt.Errorf("building query: %w", err)
-// 	}
-//
-// 	_, err = q.Exec(ctx)
-// 	if len(ids) == 0 {
-// 		return fmt.Errorf("no row selected")
-// 	}
-// 	return err
-// }
+func ProjectDeletion(ctx context.Context, opts db.DeleteExtension) error {
+	var ids []struct {
+		id int32
+	}
+	q, err := opts(db.Bun().
+		NewDelete().
+		Where("NOT immutable").
+		Returning("id").
+		Model(&ids))
+	if err != nil {
+		return fmt.Errorf("building query: %w", err)
+	}
+
+	_, err = q.Exec(ctx)
+	if len(ids) == 0 {
+		return fmt.Errorf("no row selected")
+	}
+	return err
+}
 
 // ExperimentList returns multiple Experiments.
 func ExperimentList(ctx context.Context, opts db.SelectExtension) ([]*ExperimentMetadata,

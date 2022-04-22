@@ -107,6 +107,9 @@ func AddPagination(
 // SelectExtension is a type for functions which receive SelectQuery.
 type SelectExtension func(*bun.SelectQuery) (*bun.SelectQuery, error)
 
+// DeleteExtension is a type for functions which receive DeleteQuery.
+type DeleteExtension func(*bun.DeleteQuery) (*bun.DeleteQuery, error)
+
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair

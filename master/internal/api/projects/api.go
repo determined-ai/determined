@@ -19,6 +19,7 @@ import (
 
 // ProjectServer is a wrapper for project routes.
 type ProjectServer struct {
+	m *Master
 	db *db.PgDB
 }
 
@@ -126,7 +127,7 @@ func (s *ProjectServer) GetWorkspaceProjects(
 // DeleteProject is a request to delete a project by ID.
 func (s *ProjectServer) DeleteProject(ctx context.Context,
 	req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, s.db, &s.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx, s.db, &s.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
