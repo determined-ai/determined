@@ -201,7 +201,7 @@ func (a *apiServer) PatchWorkspace(
 
 	finalWorkspace := &workspacev1.Workspace{}
 	err = a.m.db.QueryProto("update_workspace",
-		finalWorkspace, currWorkspace.Id, currWorkspace.Name)
+		finalWorkspace, currWorkspace.Id, currWorkspace.Name, user.User.Id)
 
 	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
 		errors.Wrapf(err, "error updating workspace (%d) in database", currWorkspace.Id)
