@@ -664,6 +664,14 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 func (a *Allocation) terminated(ctx *actor.Context) {
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.State()}
+	if a.exited {
+		// Never exit twice, even if for some reason when emptying our inbox post-stop
+		// we receive another release resources. If this were allowed, the trial could have a
+		// task.AllocationExited message in its inbox while it is awaiting our exit. As soon
+		// as we exit, it would reschedule and new allocation and then await its stop - and
+		// as soon as that allocation asked us to build a task spec, we would deadlock.
+		return
+	}
 	a.exited = true
 	defer ctx.Tell(ctx.Self().Parent(), exit)
 	defer ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})

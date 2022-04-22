@@ -173,7 +173,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		return t.allocationExited(ctx, msg)
+		if t.allocation != nil && t.runID == mustParseTrialRunID(ctx.Sender()) {
+			return t.allocationExited(ctx, msg)
+		}
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
 			ContainerID: ptrs.Ptr(string(msg.Container.ID)),
