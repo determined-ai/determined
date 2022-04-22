@@ -31,6 +31,7 @@ type GenericCommandSpec struct {
 // ToTaskSpec generates a TaskSpec.
 func (s GenericCommandSpec) ToTaskSpec(
 	keys *ssh.PrivateAndPublicKeys,
+	taskType model.TaskType,
 ) TaskSpec {
 	res := s.Base
 
@@ -81,6 +82,6 @@ func (s GenericCommandSpec) ToTaskSpec(
 	}
 
 	res.UseFluentLogging = true
-	res.TaskType = model.TaskTypeCommand
+	res.TaskType = taskType
 	return res
 }

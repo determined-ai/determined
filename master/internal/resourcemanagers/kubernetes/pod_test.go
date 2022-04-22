@@ -158,7 +158,7 @@ func createPodWithMockQueue() (
 		actorMap["task"],
 		actorMap["cluster"],
 		actorMap["resource"],
-		commandSpec.ToTaskSpec(nil),
+		commandSpec.ToTaskSpec(nil, model.TaskTypeCommand),
 	)
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),
