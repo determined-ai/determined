@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"math"
 
 	"github.com/pkg/errors"
 )
@@ -69,5 +70,36 @@ func (s *RawString) Scan(src interface{}) error {
 	default:
 		return errors.Errorf("unexpected type: %T", src)
 	}
+	return nil
+}
+
+// ExtendedFloat64 handles serializing floats to JSON, including special cases for infinite values.
+type ExtendedFloat64 float64
+
+// MarshalJSON implements the json.Marshaler interface.
+func (f ExtendedFloat64) MarshalJSON() ([]byte, error) {
+	switch float64(f) {
+	case math.Inf(1):
+		return []byte(`"Infinity"`), nil
+	case math.Inf(-1):
+		return []byte(`"-Infinity"`), nil
+	}
+	return json.Marshal(float64(f))
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (f *ExtendedFloat64) UnmarshalJSON(data []byte) error {
+	var inner float64
+	switch string(data) {
+	case `"Infinity"`:
+		inner = math.Inf(1)
+	case `"-Infinity"`:
+		inner = math.Inf(-1)
+	default:
+		if err := json.Unmarshal(data, &inner); err != nil {
+			return err
+		}
+	}
+	*f = ExtendedFloat64(inner)
 	return nil
 }
