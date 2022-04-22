@@ -276,7 +276,7 @@ def test_end_to_end_adaptive() -> None:
     assert top_2_uuids == top_k_uuids[:2]
 
     # Check that metrics are truly in sorted order.
-    metrics = [c.get_training().validation_metrics["avgMetrics"]["validation_loss"] for c in top_k]
+    metrics = [c.training.validation_metrics["avgMetrics"]["validation_loss"] for c in top_k]
 
     assert metrics == sorted(metrics)
 
