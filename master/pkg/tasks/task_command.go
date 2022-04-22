@@ -81,6 +81,6 @@ func (s GenericCommandSpec) ToTaskSpec(
 	}
 
 	res.UseFluentLogging = true
-
+	res.TaskType = model.TaskTypeCommand
 	return res
 }
