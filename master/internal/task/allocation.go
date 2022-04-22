@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -400,11 +399,13 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	for cID, r := range a.resources {
-		r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
+		if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
 			Token:        token,
 			AgentRank:    a.resources[cID].rank,
 			IsMultiAgent: len(a.resources) > 1,
-		})
+		}); err != nil {
+			return fmt.Errorf("starting resources (%v): %w", r, err)
+		}
 	}
 	a.resourcesStarted = true
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
@@ -687,26 +688,24 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	case a.req.Preemptible && a.preemption.Acknowledged():
 		ctx.Log().Info("allocation successfully stopped")
 		return
-	case len(a.resources.exited()) > 0:
-		if a.exitReason == nil {
-			// This is true because searcher and preemption exits both ack preemption.
-			exit.UserRequestedStop = true
-			ctx.Log().Info("allocation successfully stopped early")
-			return
-		}
-
+	case a.exitReason == nil && len(a.resources.exited()) > 0:
+		// This is true because searcher and preemption exits both ack preemption.
+		exit.UserRequestedStop = true
+		ctx.Log().Info("allocation successfully stopped early")
+		return
+	case a.exitReason != nil:
 		switch err := a.exitReason.(type) {
-		case aproto.ContainerFailure:
+		case sproto.ResourcesFailure:
 			switch err.FailureType {
-			case aproto.ContainerFailed, aproto.TaskError:
+			case sproto.ContainerFailed, sproto.TaskError:
 				ctx.Log().WithError(err).Infof("allocation exited with failure (%s)", err.FailureType)
 				exit.Err = err
 				return
-			case aproto.AgentError, aproto.AgentFailed:
+			case sproto.AgentError, sproto.AgentFailed:
 				ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
 				exit.Err = err
 				return
-			case aproto.TaskAborted, aproto.ContainerAborted:
+			case sproto.TaskAborted, sproto.ContainerAborted:
 				ctx.Log().WithError(err).Debugf("allocation aborted (%s)", err.FailureType)
 				exit.Err = err
 				return
@@ -718,9 +717,10 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 			exit.Err = err
 			return
 		}
-
 	default:
-		panic("allocation exited without being killed, preempted or having a container exit")
+		// If we ever exit without a reason and we have no exited resources, something has gone
+		// wrong.
+		panic("allocation exited early without a valid reason")
 	}
 }
 

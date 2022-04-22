@@ -65,7 +65,7 @@ func TestAllocation(t *testing.T) {
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
 				rsrv := &mocks.Resources{}
 				rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return().Times(1)
+					Return(nil).Times(1)
 				rsrv.On("Summary").Return(sproto.ResourcesSummary{
 					AllocationID:  a.req.AllocationID,
 					ResourcesID:   rID,
@@ -182,7 +182,7 @@ func TestAllocationAllGather(t *testing.T) {
 	mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
 		rsrv := &mocks.Resources{}
 		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return().Times(1)
+			Return(nil).Times(1)
 		rsrv.On("Summary").Return(sproto.ResourcesSummary{
 			AllocationID:  a.req.AllocationID,
 			ResourcesID:   rID,

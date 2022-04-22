@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -333,7 +334,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			resourcesStopped.Failure = sproto.NewResourcesFailure(
 				sproto.ContainerFailed,
 				exitMessage,
-				sproto.ExitCode(exitCode))
+				ptrs.Ptr(sproto.ExitCode(exitCode)))
 		}
 		p.informTaskResourcesStopped(ctx, resourcesStopped)
 		ctx.Self().Stop()
