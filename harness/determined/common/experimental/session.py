@@ -29,6 +29,10 @@ class Session:
         headers: Optional[Dict[str, Any]],
         timeout: Optional[int],
     ) -> requests.Response:
+        if params:
+            for k, v in params.iteritems():
+                if type(v) == bool:
+                    params[k] = str(v).lower()
         return request.do_request(
             method,
             self._master,
