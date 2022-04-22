@@ -1,11 +1,17 @@
 import distutils.util
 import json
+import os
+import tarfile
+import tempfile
+import typing
 from argparse import Namespace
-from typing import Any, List
+from datetime import datetime
+from typing import Any, List, Tuple
 
 from determined.cli import render
+from determined.cli.session import setup_session
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -121,6 +127,82 @@ def trial_logs(args: Namespace) -> None:
     )
 
 
+@authentication.required
+def generate_support_bundle(args: Namespace) -> None:
+    try:
+        output_dir = args.output_dir
+        if output_dir is None:
+            output_dir = os.getcwd()
+
+        dt = datetime.now().strftime("%Y%m%dT%H%M%S")
+        bundle_name = f"det-bundle-trial-{args.trial_id}-{dt}"
+        fullpath = os.path.join(output_dir, f"{bundle_name}.tar.gz")
+
+        with tempfile.TemporaryDirectory() as temp_dir, tarfile.open(fullpath, "w:gz") as bundle:
+            trial_logs_filepath = write_trial_logs(args, temp_dir)
+            master_logs_filepath = write_master_logs(args, temp_dir)
+            api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
+
+            bundle.add(
+                trial_logs_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(trial_logs_filepath)),
+            )
+            bundle.add(
+                master_logs_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(master_logs_filepath)),
+            )
+            bundle.add(
+                api_trail_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(api_trail_filepath)),
+            )
+            bundle.add(
+                api_experiment_filepath,
+                arcname=os.path.join(bundle_name, os.path.basename(api_experiment_filepath)),
+            )
+
+            print(f"bundle path: {fullpath}")
+
+    except FileNotFoundError:
+        print("Could not create the bundle because the output_dir provived was not found.")
+
+
+def write_trial_logs(args: Namespace, temp_dir: str) -> str:
+    trial_logs = api.trial_logs(args.master, args.trial_id)
+    file_path = os.path.join(temp_dir, "trial_logs.txt")
+    with open(file_path, "w") as f:
+        for log in trial_logs:
+            f.write(log["message"])
+
+    return file_path
+
+
+def write_master_logs(args: Namespace, temp_dir: str) -> str:
+    response = api.get(args.master, "logs")
+    file_path = os.path.join(temp_dir, "master_logs.txt")
+    with open(file_path, "w") as f:
+        for log in response.json():
+            f.write("{} [{}]: {}\n".format(log["time"], log["level"], log["message"]))
+    return file_path
+
+
+def write_api_call(args: Namespace, temp_dir: str) -> Tuple[str, str]:
+    api_experiment_filepath = os.path.join(temp_dir, "api_experiment_call.json")
+    api_trial_filepath = os.path.join(temp_dir, "api_trial_call.json")
+
+    trial_obj = bindings.get_GetTrial(setup_session(args), trialId=args.trial_id).trial
+    experiment_id = trial_obj.experimentId
+    exp_obj = bindings.get_GetExperiment(setup_session(args), experimentId=experiment_id)
+
+    create_json_file_in_dir(exp_obj.to_json(), api_experiment_filepath)
+    create_json_file_in_dir(trial_obj.to_json(), api_trial_filepath)
+    return api_experiment_filepath, api_trial_filepath
+
+
+def create_json_file_in_dir(content: typing.Any, file_path: str) -> None:
+    with open(file_path, "w") as f:
+        json.dump(content, f)
+
+
 args_description = [
     Cmd(
         "t|rial",
@@ -193,6 +275,21 @@ args_description = [
                         "--quiet",
                         action="store_true",
                         help="only print the path to the checkpoint",
+                    ),
+                ],
+            ),
+            Cmd(
+                "support-bundle",
+                generate_support_bundle,
+                "support bundle",
+                [
+                    Arg("trial_id", type=int, help="trial ID"),
+                    Arg(
+                        "-o",
+                        "--output-dir",
+                        type=str,
+                        default=None,
+                        help="Desired output directory for the logs",
                     ),
                 ],
             ),

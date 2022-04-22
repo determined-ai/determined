@@ -32,6 +32,7 @@ from .experiment import (
     workloads_with_checkpoint,
     workloads_with_training,
     workloads_with_validation,
+    experiment_first_trial,
 )
 
 from .record_profiling import (
