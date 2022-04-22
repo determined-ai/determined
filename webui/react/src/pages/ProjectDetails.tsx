@@ -199,11 +199,11 @@ const ProjectDetails: React.FC = () => {
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ signal: canceler.signal });
+      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) { handleError(e); }
-  }, [ canceler.signal ]);
+  }, [ canceler.signal, id ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
