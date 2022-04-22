@@ -600,8 +600,8 @@ def verify_completed_experiment_metadata(
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
     # The last step of every trial should be the same batch number as the last checkpoint.
-    for t in trials:
-        if expect_checkpoints:
+    if expect_checkpoints:
+        for t in trials:
             last_workload_matches_last_checkpoint(t.workloads)
 
     # When the experiment completes, all slots should now be free. This
