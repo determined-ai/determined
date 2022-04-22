@@ -61,8 +61,8 @@ The job queue can be changed in the WebUI **Job Queue** section or by using the 
 update`` command. You can make changes on a per-job basis by selecting a job and a job operation.
 Available operations include:
 
--  changing priorities for resource pools using the priority scheduler
--  changing weights for resource pools using the fair share scheduler
+-  changing job priorities for agent and Kubernetes priority scheduler
+-  changing weights for agent resource manager using the fair share scheduler
 -  changing the order of queued jobs
 -  changing resource pools
 
@@ -137,3 +137,6 @@ There are a number of constraints associated with using the job queue to modify 
 
 -  The change resource pool operation can only be performed on experiments. To change the resource
    pool of other tasks, cancel the task and resubmit it.
+
+-  Changing priority in Kubernetes always involves an implicit cancleation of the job, even in
+   case of increasing the job's priority. Priority change in Kubernetes is limited to experiments.
