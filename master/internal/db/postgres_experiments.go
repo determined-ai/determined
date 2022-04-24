@@ -967,9 +967,9 @@ WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 		if _, err := tx.Exec(`
 DELETE FROM checkpoints_v2
 WHERE task_id IN (
-	SELECT task_id
+	SELECT tk.task_id
 	FROM tasks tk
-	JOIN trials t ON t.task_id = tk.id
+	JOIN trials t ON t.task_id = tk.task_id
 	JOIN experiments e ON t.experiment_id = e.id
 	WHERE experiment_id = $1
 )`, id); err != nil {
