@@ -4,8 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/shopspring/decimal"
-
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -494,72 +492,6 @@ func (rp *ResourcePool) moveJob(
 	ctx.Tell(groupAddr, msg)
 
 	return nil
-}
-
-func findAnchor(
-	jobID model.JobID,
-	anchorID model.JobID,
-	aheadOf bool,
-	taskList *taskList,
-	groups map[*actor.Ref]*group,
-	queuePositions jobSortState,
-	k8s bool,
-) (bool, model.JobID, int) {
-	var secondAnchor model.JobID
-	targetPriority := 0
-	anchorPriority := 0
-	anchorIdx := 0
-	prioChange := false
-
-	sortedReqs := sortTasksWithPosition(taskList, groups, queuePositions, k8s)
-
-	for i, req := range sortedReqs {
-		if req.JobID == jobID {
-			targetPriority = *groups[req.Group].priority
-		} else if req.JobID == anchorID {
-			anchorPriority = *groups[req.Group].priority
-			anchorIdx = i
-		}
-	}
-
-	if aheadOf {
-		if anchorIdx == 0 {
-			secondAnchor = job.HeadAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx-1].JobID
-		}
-	} else {
-		if anchorIdx >= len(sortedReqs)-1 {
-			secondAnchor = job.TailAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx+1].JobID
-		}
-	}
-
-	if targetPriority != anchorPriority {
-		prioChange = true
-	}
-
-	return prioChange, secondAnchor, anchorPriority
-}
-
-func needMove(
-	jobPos decimal.Decimal,
-	anchorPos decimal.Decimal,
-	secondPos decimal.Decimal,
-	aheadOf bool,
-) bool {
-	if aheadOf {
-		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
-			return false
-		}
-		return true
-	}
-	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
-		return false
-	}
-
-	return true
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
