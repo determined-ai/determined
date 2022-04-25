@@ -126,7 +126,7 @@ class Checkpoint(object):
         if not any(p.exists() for p in potential_metadata_paths):
             # If the target directory doesn't already appear to contain a
             # checkpoint, attempt to fetch one.
-            if not self.training:
+            if self.training is None:
                 raise NotImplementedError("Non-training checkpoints cannot be downloaded")
 
             checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
