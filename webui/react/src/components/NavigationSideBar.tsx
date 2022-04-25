@@ -113,8 +113,8 @@ const NavigationSideBar: React.FC = () => {
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-      { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-      { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
+      // { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
+      // { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
     ],
   }), [ info.branding ]);
 

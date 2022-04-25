@@ -188,7 +188,7 @@ const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
 
 export const paths = {
   cluster: (): string => {
-    return '/cluster';
+    return '/clusters';
   },
   clusterLogs: (): string => {
     return '/logs';
