@@ -630,8 +630,8 @@ class PyTorchTrialController(det.TrialController):
             for idx, model in enumerate(self.context.models):
                 # If the checkpointed model is DDP and we are currently running in single-slot,
                 # remove the module prefix from checkpointed data
-                print(f"loading checkpoint {checkpoint['models_state_dict'][idx]}")
-                
+                print(f"loading checkpoint {checkpoint}")
+
                 torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
                     checkpoint["models_state_dict"][idx], "module."
                 )
