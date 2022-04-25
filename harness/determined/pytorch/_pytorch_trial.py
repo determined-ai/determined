@@ -628,11 +628,12 @@ class PyTorchTrialController(det.TrialController):
             self.context.models[0].load_state_dict(checkpoint["model_state_dict"])
         else:
             for idx, model in enumerate(self.context.models):
-                if isinstance(model, torch.nn.parallel.DistributedDataParallel):
-                    torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
-                        checkpoint["models_state_dict"][idx], "module."
-                    )
-                    
+                # If the checkpointed model is DDP and we are currently running in single-slot,
+                # remove the module prefix from checkpointed data
+                torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
+                    checkpoint["models_state_dict"][idx], "module."
+                )
+
                 model.load_state_dict(checkpoint["models_state_dict"][idx])
 
         if "optimizer_state_dict" in checkpoint:
