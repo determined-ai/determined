@@ -51,7 +51,7 @@ import { openCommand } from 'wait';
 
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
-import ProjectDetailsHeader from './ProjectDetails/ProjectDetailsHeader';
+import ProjectDetailsHeader, { TabInfo } from './ProjectDetails/ProjectDetailsHeader';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -742,7 +742,7 @@ const ProjectDetails: React.FC = () => {
     [ user, handleActionComplete ],
   );
 
-  const tabs = useMemo(() => {
+  const tabs: TabInfo[] = useMemo(() => {
     return ([ {
       body: (
         <>

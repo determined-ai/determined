@@ -28,15 +28,16 @@ const ProjectDetailsHeader: React.FC<Props> = (
   { workspace, project, tabs }: Props,
 ) => {
   if (project.immutable) {
+    const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
     return (
       <div className={css.base}>
         <PageHeader
           className={css.noPadding}
-          options={tabs[0].options}
+          options={experimentsTab?.options}
           title="Uncategorized"
         />
         <div className={css.body}>
-          {tabs[0].body}
+          {experimentsTab?.body}
         </div>
       </div>
     );
