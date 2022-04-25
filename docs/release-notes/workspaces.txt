@@ -1,0 +1,16 @@
+:orphan:
+
+**New Features**
+
+-  Workspaces: Adds Projects, which are collections of experiments, and Workspaces, which are
+   collections of projects. Users can use the WebUI or CLI to create, edit, and delete workspaces
+   and projects, as well as moving experiments to different projects and projects to different
+   workspaces. To create an experiment in a project, add ``workspace`` and ``project`` fields in the
+   experiment configuration. Any experiments where those fields are not specified will be added to
+   the Uncategorized project. Run ``det workspace --help`` and ``det project –help`` for more
+   information.
+
+**Breaking Changes**
+
+-  Web: Removes the Dashboard and Experiment List pages. All existing experiments were moved into the
+      default Uncategorized project, which is linked in the navigation bar.
