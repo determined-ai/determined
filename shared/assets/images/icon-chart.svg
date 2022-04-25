@@ -1,0 +1,10 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+<ellipse opacity="0.03" cx="512" cy="844" rx="400" ry="60" fill="black"/>
+<ellipse opacity="0.03" cx="512" cy="844" rx="300" ry="40" fill="black"/>
+<ellipse opacity="0.04" cx="502" cy="844" rx="200" ry="20" fill="black"/>
+<rect opacity="0.2" x="267" y="157" width="490" height="490" rx="95" fill="white" stroke="black" stroke-width="10"/>
+<g opacity="0.4">
+<path d="M650 460L700 510L650 560" stroke="black" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M330 280C330 440 450 510 700 510" stroke="black" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
