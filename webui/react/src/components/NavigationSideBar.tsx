@@ -5,9 +5,10 @@ import { CSSTransition } from 'react-transition-group';
 
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { ResourceType } from 'types';
+import { ResourceType, Workspace } from 'types';
 import { percent } from 'utils/number';
 
 import AvatarCard from './AvatarCard';
@@ -54,8 +55,7 @@ const menuConfig = {
     },
   ],
   top: [
-    { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
-    { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+    { icon: 'experiment', label: 'Uncategorized', path: paths.projectDetails(1) },
     { icon: 'model', label: 'Model Registry', path: paths.modelList() },
     { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
     { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -95,6 +95,8 @@ const NavigationSideBar: React.FC = () => {
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
+  const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
+  const [ pinnedWorkspaces, setPinnedWorkspaces ] = useState<Workspace[]>([]);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -184,6 +186,23 @@ const NavigationSideBar: React.FC = () => {
                 {...config}
               />
             ))}
+          </section>
+          <section className={css.workspaces}>
+            <div className={css.workspaceTitleRow}>
+              <Link className={css.workspaceTitle} inherit path={paths.workspaceList()}>
+                Workspaces
+              </Link>
+              <Button type="text" onClick={() => openWorkspaceCreateModal()}>
+                <Icon name="add-small" size="tiny" />
+              </Button>
+            </div>
+            {pinnedWorkspaces.length === 0 ?
+              <p className={css.noWorkspaces}>No pinned workspaces</p> :
+              pinnedWorkspaces.map(workspace => (
+                <div className={css.workspaceItem} key={workspace.id}>
+                  {workspace.name}
+                </div>
+              ))}
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map(config => (

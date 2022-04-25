@@ -25,8 +25,38 @@
     padding: var(--theme-sizes-layout-big) 0;
     width: var(--theme-sizes-navigation-maxWidth);
   }
-  section.top {
+  section.workspaces {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
+
+    .workspaceTitleRow {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      font-size: var(--theme-sizes-font-small);
+      justify-content: space-between;
+      
+
+      &:hover {
+        background-color: var(--theme-colors-base-3);
+        color: var(--theme-colors-monochrome-17);
+      }
+      .workspaceTitle {
+        flex-grow: 1;
+        padding-left: var(--theme-sizes-layout-big);
+      }
+      & > * {
+        color: #bfbfbf;
+        height: min-content;
+      }
+    }
+    .noWorkspaces {
+      align-self: center;
+      color: #bfbfbf;
+      font-size: var(--theme-sizes-font-small);
+      padding: var(--theme-sizes-layout-small);
+    }
   }
   footer {
     position: relative;
