@@ -23,7 +23,7 @@ import determined as det
 
 # NEW: given a checkpoint_directory of type pathlib.Path, save our state to a file.
 # You can save multiple files, and use any file names or directory structures.
-# All files nested under `checkpoint_directory` path fill be included into the checkpoint.
+# All files nested under `checkpoint_directory` path will be included into the checkpoint.
 def save_state(x, latest_batch, trial_id, checkpoint_directory):
     with checkpoint_directory.joinpath("state").open("w") as f:
         f.write(f"{x},{latest_batch},{trial_id}")
