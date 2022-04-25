@@ -111,11 +111,14 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 
 	case sproto.ResourcesAllocated:
 		for rank, allocation := range msg.Resources {
-			allocation.Start(ctx, nil, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
+			if err := allocation.Start(ctx, nil, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
 				Token:        "",
 				AgentRank:    rank,
 				IsMultiAgent: len(msg.Resources) > 1,
-			})
+			}); err != nil {
+				ctx.Respond(err)
+				return nil
+			}
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})

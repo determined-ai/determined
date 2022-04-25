@@ -146,7 +146,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({
               isAux={true}
               poolType={pool.type}
               resourceStates={computeContainerStates}
-              size={ShirtSize.large}
+              size={ShirtSize.big}
               totalSlots={totalComputeSlots}
             />
           )}

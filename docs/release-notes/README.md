@@ -34,10 +34,10 @@ classifying the release note according to one of the following categories:
    requirements still apply. Passing [Grammarly](https://app.grammarly.com/) checks is usually
    sufficient.
 
-   * Name the file with the PR number as a prefix. For example, `1097-nvidia-a100-support.txt`.
-   * The file should be in [reStructuredText](https://determinedai.atlassian.net/l/c/53h3PrPo) format
-     and must start with the `:orphan:` metadata string to avoid errors when building the docs.
-   * Specify one or more of the following categories, depending on the extent of the change:
+   * Give the file a descriptive name related to the change.
+   * Write the release note using [reStructuredText](https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html), following Determined documentation [style conventions](https://determinedai.atlassian.net/l/c/53h3PrPo).
+   * Include the `:orphan:` [metadata directive](https://www.sphinx-doc.org/en/master/usage/restructuredtext/field-lists.html#metadata) to suppress warnings about the file not being included in the table of contents. Later, the file is merged into the final release note and deleted.
+   * Specify one or more of the following categories, depending on the scope of the change:
 
      * `**Bug Fixes**`
      * `**Breaking Changes**`
@@ -46,7 +46,7 @@ classifying the release note according to one of the following categories:
 
    * Enter a title for the change, or titles for each change, as one or more list elements.
 
-     Begin each title with a prefix for the affected component:
+     Begin each title with a prefix for the applicable component:
 
      * `WebUI`
      * `Notebook`
@@ -56,18 +56,20 @@ classifying the release note according to one of the following categories:
      * `Experiment`
      * `API`
      * `Images`
-     * or other applicable component.
+     * other component.
 
    * Provide a short, descriptive, summary title.
-   * In one or more list elements, provide more detailed description(s) of the change.
+   * In one or more list items, provide additional information. Describe:
 
-     Describe what changed, why the change was needed, and how the
-     change affects the user. Do not give details of how the change was implemented.
-     If there is a Jira issue associated with the change, the Jira description can be
-     helpful as a guide to what context should also be provided in the release note.
+     * what changed
+     * why the change was needed
+     * how the change affects the user
 
-     Be sure to highlight API changes and backward incompatibility, and describe any steps
-     that must be taken to upgrade safely.
+     Do not give details about how the change was implemented.
+
+     If there is a Jira issue associated with the change, the Jira **Description** field, with some rewording can be used as the description.
+
+     Be sure to highlight API changes and backward incompatibility, including steps needed to upgrade safely.
 
      Do not include:
 
@@ -75,9 +77,6 @@ classifying the release note according to one of the following categories:
      * customer identifiers
      * internal project status or plans
      * Jira issue or PR identifiers
-
-3. As part of the PR review, a documentation team member is assigned as a reviewer and
-   reviews and approves the release note part of the PR.
 
 ### Release Note Example
 
@@ -96,7 +95,8 @@ classifying the release note according to one of the following categories:
 
 ## How to Collect and Publish the Release Notes for a Release
 
-1. As part of the release process, the release manager merges the individual release note files
-together into the `docs/release-notes.txt` file, creating a new version heading.
-2. Delete the individual files from `docs/release-notes/`.
-3. Additional copy editing and formatting as needed.
+As part of the release process, the release manager:
+
+1. Prepends the individual `docs/release-notes/` files to the `docs/release-notes.txt` file and creates a new version heading.
+2. Deletes the individual files from `docs/release-notes/`.
+3. Performs additional copy editing as needed.

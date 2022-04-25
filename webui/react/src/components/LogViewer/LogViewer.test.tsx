@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { FetchArgs } from 'services/api-ts-sdk';
-import { jsonToTaskLog } from 'services/decoder';
+import { mapV1LogsResponse } from 'services/decoder';
 import { LogLevelFromApi } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -183,7 +183,7 @@ jest.mock('services/utils', () => ({
 }));
 
 describe('LogViewer', () => {
-  const decoder = jsonToTaskLog;
+  const decoder = mapV1LogsResponse;
 
   describe('static logs', () => {
     it('should render logs with initial logs and show partial logs', async () => {

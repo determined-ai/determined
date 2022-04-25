@@ -363,7 +363,16 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.ErrorState)
 		}
 		return t.transition(ctx, model.CompletedState)
-	case exit.Err != nil && !sproto.IsRestartableSystemError(exit.Err):
+	case exit.Err != nil && sproto.IsUnrecoverableSystemError(exit.Err):
+		ctx.Log().
+			WithError(exit.Err).
+			Errorf("trial encountered unrecoverable failure")
+		return t.transition(ctx, model.ErrorState)
+	case exit.Err != nil && sproto.IsTransientSystemError(exit.Err):
+		ctx.Log().
+			WithError(exit.Err).
+			Errorf("trial encountered transient system error")
+	case exit.Err != nil && !sproto.IsTransientSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())

@@ -9,7 +9,7 @@ import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
-import { jsonToTrialLog } from 'services/decoder';
+import { mapV1LogsResponse } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
@@ -170,7 +170,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   return (
     <div className={css.base}>
       <LogViewer
-        decoder={jsonToTrialLog}
+        decoder={mapV1LogsResponse}
         title={logFilters}
         onDownload={handleDownloadLogs}
         onFetch={trial && handleFetch}

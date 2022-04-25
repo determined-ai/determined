@@ -837,15 +837,6 @@ service Determined {
       tags: "Notebooks"
     };
   }
-  // Stream notebook logs.
-  rpc NotebookLogs(NotebookLogsRequest) returns (stream NotebookLogsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/notebooks/{notebook_id}/logs"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Notebooks"
-    };
-  }
   // Launch a notebook.
   rpc LaunchNotebook(LaunchNotebookRequest) returns (LaunchNotebookResponse) {
     option (google.api.http) = {
