@@ -4,6 +4,7 @@ import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 import css from 'components/ActionDropdown.module.scss';
 import Icon from 'components/Icon';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
+import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
 import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
 import { DetailedUser, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -30,6 +31,10 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     onClose: fetchWorkspaces,
     workspace,
   });
+  const { modalOpen: openWorkspaceEdit } = useModalWorkspaceEdit({
+    onClose: fetchWorkspaces,
+    workspace,
+  });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.username === workspace.username;
@@ -53,6 +58,10 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     }
   }, [ fetchWorkspaces, workspace.archived, workspace.id ]);
 
+  const handleEditClick = useCallback(() => {
+    openWorkspaceEdit();
+  }, [ openWorkspaceEdit ]);
+
   const handleDeleteClick = useCallback(() => {
     openWorkspaceDelete();
   }, [ openWorkspaceDelete ]);
@@ -60,6 +69,11 @@ const WorkspaceActionDropdown: React.FC<Props> = (
   const WorkspaceActionMenu = useMemo(() => {
     return (
       <Menu>
+        {userHasPermissions && (
+          <Menu.Item key="edit" onClick={handleEditClick}>
+            Edit...
+          </Menu.Item>
+        )}
         {userHasPermissions && (
           <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
             {workspace.archived ? 'Unarchive' : 'Archive'}
@@ -69,7 +83,11 @@ const WorkspaceActionDropdown: React.FC<Props> = (
         <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
       </Menu>
     );
-  }, [ handleArchiveClick, handleDeleteClick, workspace.archived, userHasPermissions ]);
+  }, [ userHasPermissions,
+    handleEditClick,
+    handleArchiveClick,
+    workspace.archived,
+    handleDeleteClick ]);
 
   if (!userHasPermissions) {
     return (children as JSX.Element) ?? (
