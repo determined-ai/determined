@@ -127,7 +127,16 @@ Here's what our example response looks like. We see it matches the expected resp
          "archived": true,
          "numTrials": 1,
          "progress": 0,
-         "username": "determined"
+         "username": "determined",
+         "trialIds": [],
+         "displayName": "determined",
+         "userId": 2,
+         "resourcePool": "default",
+         "name": "mnist_pytorch_const",
+         "notes": "",
+         "jobId": "c3395190-2f99-4b2b-b92d-c686079abc41",
+         "forkedFrom": 1,
+         "projectId": 1
        }
      ],
      "pagination": {
