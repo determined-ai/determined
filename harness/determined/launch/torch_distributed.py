@@ -57,7 +57,7 @@ def main(override_args: List[str], script: List[str]) -> int:
         return subprocess.Popen(script).wait()
 
     os.environ["USE_TORCH_DISTRIBUTED"] = "True"
-    
+
     chief_ip = info.container_addrs[0]
     os.environ["DET_CHIEF_IP"] = chief_ip
 
