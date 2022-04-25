@@ -263,6 +263,7 @@ const stateColorMapping = {
   [CommandState.Terminating]: 'inactive',
   [CommandState.Terminated]: 'inactive',
   [ResourceState.Unspecified]: 'inactive',
+  [ResourceState.Warm]: 'pending',
   [SlotState.Free]: 'free',
   [SlotState.Pending]: 'pending',
   [SlotState.Running]: 'active',
