@@ -15,7 +15,6 @@ import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
 
 import Json from './Json';
-import Link from './Link';
 import css from './ResourcePoolCardLight.module.scss';
 import ResourcePoolDetails from './ResourcePoolDetails';
 
@@ -113,7 +112,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
         </div>
         <div className={css.default}>
           {(pool.defaultAuxPool || pool.defaultComputePool) && <span>default</span>}
-          <Link onClick={toggleModal}><Icon name="info" /></Link>
+          <Icon name="info" title={pool.description ? pool.description : 'No Description'} />
         </div>
       </div>
       <div className={css.body}>
@@ -165,7 +164,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
           footer={{
             auxContainerCapacity: pool.auxContainerCapacity,
             auxContainersRunning: pool.auxContainersRunning,
-            queued: pool?.stats?.queuedCount,
+            // queued: pool?.stats?.queuedCount,
           }}
           hideHeader
           isAux={true}

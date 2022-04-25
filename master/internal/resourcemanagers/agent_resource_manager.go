@@ -509,10 +509,13 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	return resp, nil
 }
 
-func (a *agentResourceManager) fetchAvgQueuedTime(pool string) ([]*jobv1.AggregateQueueStats, error) {
+func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
+	[]*jobv1.AggregateQueueStats, error,
+) {
 	aggregates := make([]model.ResourceAggregates, 0)
 	err := db.Bun().NewSelect().Model(&aggregates).Where(
-		"aggregation_type = ? AND aggregation_key = ? AND date >= CURRENT_TIMESTAMP - interval '30 days'", "queued", pool,
+		"aggregation_type = ? AND aggregation_key = ? AND date >= CURRENT_TIMESTAMP - interval '30 days'",
+		"queued", pool,
 	).Scan(context.TODO())
 	if err != nil {
 		return nil, err
@@ -524,5 +527,18 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) ([]*jobv1.Aggrega
 			Seconds:     record.Seconds,
 		})
 	}
+	today := float32(0)
+	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
+		"avg(extract(epoch FROM end_time - start_time))",
+	).Where(
+		"event_type = ? AND end_time >= CURRENT_DATE", "QUEUED",
+	).Scan(context.TODO(), &today)
+	if err != nil {
+		return nil, err
+	}
+	res = append(res, &jobv1.AggregateQueueStats{
+		PeriodStart: time.Now().Format("2006-01-02"),
+		Seconds:     today,
+	})
 	return res, nil
 }

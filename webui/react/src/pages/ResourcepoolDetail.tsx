@@ -1,8 +1,9 @@
-import { Tabs } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Divider, Tabs } from 'antd';
+import React, { Fragment, useCallback, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Icon from 'components/Icon';
+import Json from 'components/Json';
 import Page from 'components/Page';
 import { poolLogo } from 'components/ResourcePoolCard';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLight';
@@ -13,7 +14,10 @@ import { ShirtSize } from 'themes';
 import { ResourceState } from 'types';
 import { JobState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { clone } from 'utils/data';
+import { camelCaseToSentence } from 'utils/string';
 
+import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 
@@ -64,6 +68,32 @@ const ResourcepoolDetail: React.FC = () => {
     const basePath = paths.resourcePool(pool.name);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ history, pool ]);
+
+  const renderPoolConfig = useCallback(() => {
+    if(!pool) return;
+    const details = clone(pool.details);
+    for (const key in details) {
+      if (details[key] === null) {
+        delete details[key];
+      }
+    }
+
+    const mainSection = clone(pool);
+    delete mainSection.details;
+    return (
+      <Page>
+        <Json json={mainSection} translateLabel={camelCaseToSentence} />
+        {Object.keys(details).map(key => (
+          <Fragment key={key}>
+            <Divider />
+            <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
+            <Json json={details[key]} translateLabel={camelCaseToSentence} />
+          </Fragment>
+        ))}
+      </Page>
+    );
+  }, [ pool ]);
+
   if(!pool) return <div />;
   return (
     <Page>
@@ -79,15 +109,23 @@ const ResourcepoolDetail: React.FC = () => {
         <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.huge} />
       </Section>
       <Section>
-        <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+        <Tabs
+          className="no-padding"
+          defaultActiveKey={tabKey}
+          destroyInactiveTabPane={true}
+          onChange={handleTabChange}>
           <TabPane key="active" tab={`Active ${pool.stats?.scheduledCount}`}>
             <JobQueue jobState={JobState.SCHEDULED} selected={pool} />
           </TabPane>
           <TabPane key="queued" tab={`Queued ${pool.stats?.queuedCount}`}>
             <JobQueue jobState={JobState.QUEUED} selected={pool} />
           </TabPane>
-          <TabPane key="stats" tab="Stats" />
-          <TabPane key="configuration" tab="Configuration" />
+          <TabPane key="stats" tab="Stats">
+            <ClustersQueuedChart poolName={pool.name} />
+          </TabPane>
+          <TabPane key="configuration" tab="Configuration">
+            {renderPoolConfig()}
+          </TabPane>
         </Tabs>
       </Section>
 

@@ -1,0 +1,15 @@
+.filter {
+  margin-top: -40px;
+  position: absolute;
+  right: 0;
+
+  :global(.ant-radio-button-wrapper) {
+    background-color: transparent;
+    border: none;
+    box-shadow: none !important;
+
+    &::before {
+      content: none;
+    }
+  }
+}

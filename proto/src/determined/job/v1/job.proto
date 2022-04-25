@@ -133,7 +133,7 @@ message QueueStats {
 // Aggregate statistics for a queue.
 message AggregateQueueStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "date", "seconds" ] }
+    json_schema: { required: [ "period_start", "seconds" ] }
   };
   // Number of queued jobs in the queue.
   string period_start = 1;
