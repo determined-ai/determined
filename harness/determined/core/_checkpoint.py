@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import json
 import logging
 import os
 import pathlib
@@ -78,10 +79,13 @@ class CheckpointContext:
         ckpt_dir = os.fspath(ckpt_dir)
 
         storage_id = str(uuid.uuid4())
-        # XXX we would like to add metadata.json here but we shouldn't
-        # since it will get out of date if user adds custom key-value pairs to it
-        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
         resources = self._storage_manager._list_directory(ckpt_dir)
+
+        # add metadata pre-upload but without counting it among resources
+        if metadata is not None:
+            self._write_metadata_file(ckpt_dir, metadata)
+
+        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
         self._report_checkpoint(storage_id, resources, metadata)
         return storage_id
 
@@ -159,6 +163,8 @@ class CheckpointContext:
         with self._storage_manager.store_path(storage_id) as path:
             yield path, storage_id
             resources = self._storage_manager._list_directory(path)
+            self._write_metadata_file(path, metadata)
+
         self._report_checkpoint(storage_id, resources, metadata)
 
     @contextlib.contextmanager
@@ -213,6 +219,12 @@ class CheckpointContext:
         Delete a checkpoint from the storage backend.
         """
         self._storage_manager.delete(storage_id)
+
+    def _write_metadata_file(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]]) -> None:
+        if metadata is not None:
+            metadata_path = str(pathlib.Path(ckpt_dir).joinpath("metadata.json"))
+            with open(metadata_path, "w") as f:
+                json.dump(metadata, f, indent=2)
 
     def _report_checkpoint(
         self,
