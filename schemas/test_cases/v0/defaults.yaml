@@ -53,6 +53,7 @@
     registry_auth:
       username: samiam
       password: eggsnham
+    slurm: []
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
