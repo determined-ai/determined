@@ -6,7 +6,7 @@ import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'ut
 import { DetApi, FetchOptions } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const ndjsonStream = require('can-ndjson-stream');
+const ndjsonStream = require('./can-ndjson-stream');
 
 /* Response Helpers */
 
