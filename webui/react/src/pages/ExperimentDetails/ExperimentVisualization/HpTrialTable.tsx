@@ -86,7 +86,7 @@ const HpTrialTable: React.FC<Props> = ({
       return <HumanReadableNumber num={record.metric} />;
     };
     const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
-      return numericSorter(recordA.metric || undefined, recordB.metric || undefined);
+      return numericSorter(recordA.metric ?? undefined, recordB.metric ?? undefined);
     };
     const metricColumn = {
       dataIndex: 'metric',
