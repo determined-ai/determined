@@ -37,7 +37,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolName }:Props) => {
         // If aggregates only has one record of today, then do not display.
         const agg = aggregates.length > 1 ? aggregates.filter(
           item => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
-        ): [];
+        ) : [];
         setQueuedStats({
           hoursAverage: { average: agg.map(item => secondToHour(item.seconds)) },
           time: agg.map(item => item.periodStart),
