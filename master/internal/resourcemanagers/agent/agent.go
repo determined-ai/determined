@@ -209,6 +209,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
 			log.WithError(err).Error("failed to write start container message")
+			ctx.Respond(sproto.NewResourcesFailure(sproto.AgentError, err.Error(), nil))
 		}
 
 		if err := a.agentState.startContainer(ctx, msg); err != nil {

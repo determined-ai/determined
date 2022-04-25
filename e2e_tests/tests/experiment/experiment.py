@@ -212,6 +212,16 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     return False
 
 
+def experiment_first_trial(exp_id: int) -> int:
+    session = test_session()
+    trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials
+
+    assert len(trials) > 0
+    trial = trials[0]
+    trial_id = trial.id
+    return trial_id
+
+
 def test_session() -> session.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)

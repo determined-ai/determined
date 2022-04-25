@@ -3086,24 +3086,6 @@ class v1Notebook:
             "jobId": self.jobId,
         }
 
-class v1NotebookLogsResponse:
-    def __init__(
-        self,
-        logEntry: "typing.Optional[v1LogEntry]" = None,
-    ):
-        self.logEntry = logEntry
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1NotebookLogsResponse":
-        return cls(
-            logEntry=v1LogEntry.from_json(obj["logEntry"]) if obj.get("logEntry", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "logEntry": self.logEntry.to_json() if self.logEntry is not None else None,
-        }
-
 class v1OrderBy(enum.Enum):
     ORDER_BY_UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ORDER_BY_ASC = "ORDER_BY_ASC"

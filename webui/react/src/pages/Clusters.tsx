@@ -8,7 +8,9 @@ import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 
+import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
+import css from './Clusters.module.scss';
 import ClustersOverview from './Clusters/ClustersOverview';
 
 const { TabPane } = Tabs;
@@ -57,7 +59,10 @@ const Clusters: React.FC = () => {
         <TabPane key="overview" tab="Overview">
           <ClustersOverview />
         </TabPane>
-        <TabPane key="logs" tab="Cluster Logs">
+        <TabPane className={css.tab} key="historical-usage" tab="Historical Usage">
+          <ClusterHistoricalUsage />
+        </TabPane>
+        <TabPane key="logs" tab="Master Logs">
           <ClusterLogs />
         </TabPane>
       </Tabs>

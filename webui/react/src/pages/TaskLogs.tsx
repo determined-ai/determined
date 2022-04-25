@@ -10,7 +10,7 @@ import { commandTypeToLabel } from 'constants/states';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
-import { jsonToTaskLog } from 'services/decoder';
+import { mapV1LogsResponse } from 'services/decoder';
 import { consumeStream } from 'services/utils';
 import { CommandType } from 'types';
 
@@ -135,7 +135,7 @@ const TaskLogs: React.FC = () => {
       id="task-logs"
       title={title}>
       <LogViewer
-        decoder={jsonToTaskLog}
+        decoder={mapV1LogsResponse}
         title={logFilters}
         onFetch={handleFetch}
       />

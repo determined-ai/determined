@@ -14,17 +14,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
 
@@ -72,35 +69,6 @@ func (a *apiServer) SetNotebookPriority(
 	_ context.Context, req *apiv1.SetNotebookPriorityRequest,
 ) (resp *apiv1.SetNotebookPriorityResponse, err error) {
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
-}
-
-func (a *apiServer) NotebookLogs(
-	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer,
-) error {
-	if err := grpcutil.ValidateRequest(
-		grpcutil.ValidateLimit(req.Limit),
-	); err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithCancel(resp.Context())
-	defer cancel()
-
-	res := make(chan api.BatchResult, taskLogsChanBuffer)
-	go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
-		TaskId: req.NotebookId,
-		Limit:  req.Limit,
-		Follow: req.Follow,
-	}, res)
-
-	return processBatches(res, func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			lr := r.(*logger.Entry)
-			return resp.Send(&apiv1.NotebookLogsResponse{
-				LogEntry: &logv1.LogEntry{Id: int32(lr.ID), Message: lr.Message},
-			})
-		})
-	})
 }
 
 func (a *apiServer) LaunchNotebook(

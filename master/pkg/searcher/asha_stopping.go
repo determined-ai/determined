@@ -71,7 +71,7 @@ func (r *rung) continueTraining(requestID model.RequestID, metric float64, divis
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
 		len(r.Metrics),
-		func(i int) bool { return r.Metrics[i].Metric >= metric },
+		func(i int) bool { return float64(r.Metrics[i].Metric) >= metric },
 	)
 	// We will continue training if trial ranked in top 1/divisor for the rung or
 	// if there are fewere than divisor trials in the rung.
@@ -81,7 +81,7 @@ func (r *rung) continueTraining(requestID model.RequestID, metric float64, divis
 	copy(r.Metrics[insertIndex+1:], r.Metrics[insertIndex:])
 	r.Metrics[insertIndex] = trialMetric{
 		RequestID: requestID,
-		Metric:    metric,
+		Metric:    model.ExtendedFloat64(metric),
 		Promoted:  promoteNow,
 	}
 
@@ -158,7 +158,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 		rung.Metrics = append(rung.Metrics,
 			trialMetric{
 				RequestID: requestID,
-				Metric:    metric,
+				Metric:    model.ExtendedFloat64(metric),
 			},
 		)
 

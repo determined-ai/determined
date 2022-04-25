@@ -487,7 +487,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p k8sPodResources) Start(
 	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
-) {
+) error {
 	spec.ContainerID = string(p.containerID)
 	spec.ResourcesID = string(p.containerID)
 	spec.AllocationID = string(p.req.AllocationID)
@@ -501,13 +501,13 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["allocation_id"] = spec.AllocationID
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
-	ctx.Tell(p.podsActor, kubernetes.StartTaskPod{
+	return ctx.Ask(p.podsActor, kubernetes.StartTaskPod{
 		TaskActor:  p.req.TaskActor,
 		Spec:       spec,
 		Slots:      p.slots,
 		Rank:       rri.AgentRank,
 		LogContext: logCtx,
-	})
+	}).Error()
 }
 
 // Kill notifies the pods actor that it should stop the pod.

@@ -143,11 +143,11 @@ type ResourcesFailure struct {
 }
 
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
-func NewResourcesFailure(failureType FailureType, msg string, code ExitCode) *ResourcesFailure {
+func NewResourcesFailure(failureType FailureType, msg string, code *ExitCode) *ResourcesFailure {
 	return &ResourcesFailure{
 		FailureType: failureType,
 		ErrMsg:      msg,
-		ExitCode:    &code,
+		ExitCode:    code,
 	}
 }
 
@@ -198,9 +198,6 @@ const (
 
 	// AgentError denotes that the agent failed to launch the container.
 	AgentError = FailureType("agent failed to launch the container")
-
-	// UnknownError denotes an internal error that did not map to a know failure type.
-	UnknownError
 )
 
 // FromContainerFailureType converts an aproto.FailureType to a FailureType. This mapping is not
@@ -224,12 +221,31 @@ func FromContainerFailureType(t aproto.FailureType) FailureType {
 	}
 }
 
-// IsRestartableSystemError checks if the error is caused by the system and
+// InvalidResourcesRequestError is an unrecoverable validation error from the underlying RM.
+type InvalidResourcesRequestError struct {
+	Cause error
+}
+
+func (e InvalidResourcesRequestError) Error() string {
+	return fmt.Sprintf("invalid resources request: %s", e.Cause.Error())
+}
+
+// IsUnrecoverableSystemError checks if the error is absolutely unrecoverable.
+func IsUnrecoverableSystemError(err error) bool {
+	switch err.(type) {
+	case InvalidResourcesRequestError:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsTransientSystemError checks if the error is caused by the system and
 // shouldn't count against `max_restarts`.
-func IsRestartableSystemError(err error) bool {
-	switch contErr := err.(type) {
+func IsTransientSystemError(err error) bool {
+	switch err := err.(type) {
 	case ResourcesFailure:
-		switch contErr.FailureType {
+		switch err.FailureType {
 		case ContainerFailed, TaskError:
 			return false
 		// Questionable, could be considered failures, but for now we don't.
