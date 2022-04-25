@@ -80,6 +80,14 @@ commands:
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
+  # circleci's checkout does not fetch submodules by default
+  # https://circleci.com/docs/2.0/configuration-reference/#checkout
+  checkout-with-sm:
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
+
   set-slack-user-id:
     steps:
       - run:
@@ -1143,7 +1151,7 @@ jobs:
     docker:
       - image: cimg/node:16.14.2
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react check
 
@@ -1156,7 +1164,7 @@ jobs:
       - image: cimg/node:16.14.2
     resource_class: large
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: |
             if <<parameters.dev-mode>>; then
@@ -1176,7 +1184,7 @@ jobs:
           CI: "true"
     resource_class: large
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react test-ci
       - store_test_results:
@@ -1188,7 +1196,7 @@ jobs:
     docker:
       - image: cimg/node:16.14.2
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react build-storybook
       - store_artifacts:
