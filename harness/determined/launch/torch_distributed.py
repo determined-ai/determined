@@ -50,14 +50,14 @@ def main(override_args: List[str], script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
 
-    os.environ["USE_TORCH_DISTRIBUTED"] = "True"
-
     single_slot = len(info.container_addrs) == 1 and len(info.slot_ids) == 1
 
     # Detect single-slot trials and skip distributed launch
     if single_slot:
         return subprocess.Popen(script).wait()
 
+    os.environ["USE_TORCH_DISTRIBUTED"] = "True"
+    
     chief_ip = info.container_addrs[0]
     os.environ["DET_CHIEF_IP"] = chief_ip
 
