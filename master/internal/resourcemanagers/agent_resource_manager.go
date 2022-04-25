@@ -516,7 +516,7 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 	err := db.Bun().NewSelect().Model(&aggregates).Where(
 		"aggregation_type = ? AND aggregation_key = ? AND date >= CURRENT_TIMESTAMP - interval '30 days'",
 		"queued", pool,
-	).Scan(context.TODO())
+	).Order("date ASC").Scan(context.TODO())
 	if err != nil {
 		return nil, err
 	}
