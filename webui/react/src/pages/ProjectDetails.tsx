@@ -742,6 +742,91 @@ const ProjectDetails: React.FC = () => {
     [ user, handleActionComplete ],
   );
 
+  const tabs = useMemo(() => {
+    return ([ {
+      body: (
+        <>
+          <TableBatch
+            actions={[
+              { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+              { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
+              { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
+              { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
+              { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
+              { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
+              { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
+              { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
+            ]}
+            selectedRowCount={(settings.row ?? []).length}
+            onAction={handleBatchAction}
+            onClear={clearSelected}
+          />
+          <InteractiveTable
+            areRowsSelected={!!settings.row}
+            columns={columns}
+            containerRef={pageRef}
+            ContextMenu={ExperimentActionDropdown}
+            dataSource={experiments}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="id"
+            rowSelection={{
+              onChange: handleTableRowSelect,
+              preserveSelectedRowKeys: true,
+              selectedRowKeys: settings.row ?? [],
+            }}
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          />
+        </>
+      ),
+      options: (
+        <Space>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Button onClick={openModal}>Columns</Button>
+          <Button onClick={resetColumnWidths}>Reset Widths</Button>
+          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+        </Space>
+      ),
+      title: 'Experiments',
+    }, {
+      body: (
+        <div>
+          {project?.notes}
+        </div>),
+      title: 'Notes',
+    } ]);
+  }, [ ExperimentActionDropdown,
+    clearSelected,
+    columns,
+    experiments,
+    filterCount,
+    handleBatchAction,
+    handleTableRowSelect,
+    hasActivatable,
+    hasArchivable,
+    hasCancelable,
+    hasDeletable,
+    hasKillable,
+    hasPausable,
+    hasUnarchivable,
+    isLoading,
+    openModal,
+    project?.notes,
+    resetColumnWidths,
+    resetFilters,
+    settings,
+    switchShowArchived,
+    total,
+    updateSettings ]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (pageError) {
@@ -760,59 +845,8 @@ const ProjectDetails: React.FC = () => {
       docTitle="Project Details"
       id="projectDetails">
       <ProjectDetailsHeader
-        experimentsTab={(
-          <>
-            <TableBatch
-              actions={[
-                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-                { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
-                { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
-                { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
-                { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
-                { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
-                { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
-                { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
-              ]}
-              selectedRowCount={(settings.row ?? []).length}
-              onAction={handleBatchAction}
-              onClear={clearSelected}
-            />
-            <InteractiveTable
-              areRowsSelected={!!settings.row}
-              columns={columns}
-              containerRef={pageRef}
-              ContextMenu={ExperimentActionDropdown}
-              dataSource={experiments}
-              loading={isLoading}
-              pagination={getFullPaginationConfig({
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
-              }, total)}
-              rowClassName={defaultRowClassName({ clickable: false })}
-              rowKey="id"
-              rowSelection={{
-                onChange: handleTableRowSelect,
-                preserveSelectedRowKeys: true,
-                selectedRowKeys: settings.row ?? [],
-              }}
-              settings={settings as InteractiveTableSettings}
-              showSorterTooltip={false}
-              size="small"
-              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-            />
-          </>
-        )}
-        notesTab={<div />}
-        options={(
-          <Space>
-            <Switch checked={settings.archived} onChange={switchShowArchived} />
-            <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-            <Button onClick={openModal}>Columns</Button>
-            <Button onClick={resetColumnWidths}>Reset Widths</Button>
-            <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
-          </Space>
-        )}
         project={project}
+        tabs={tabs}
         workspace={workspace}
       />
     </Page>

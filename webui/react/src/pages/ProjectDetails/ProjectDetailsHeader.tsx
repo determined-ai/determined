@@ -6,32 +6,37 @@ import PageHeader from 'components/PageHeader';
 import WorkspaceIcon from 'components/WorkspaceIcon';
 import { paths } from 'routes/utils';
 import { Project, Workspace } from 'types';
+import { sentenceToCamelCase } from 'utils/string';
 
 import css from './ProjectDetailsHeader.module.scss';
 
 const { TabPane } = Tabs;
 
-interface Props {
-  experimentsTab: React.ReactNode;
-  notesTab: React.ReactNode;
+export interface TabInfo {
+  body: React.ReactNode;
   options?: React.ReactNode;
+  title: string;
+}
+
+interface Props {
   project: Project;
+  tabs: TabInfo[];
   workspace?: Workspace;
 }
 
 const ProjectDetailsHeader: React.FC<Props> = (
-  { workspace, project, options, experimentsTab, notesTab }: Props,
+  { workspace, project, tabs }: Props,
 ) => {
   if (project.immutable) {
     return (
       <div className={css.base}>
         <PageHeader
           className={css.noPadding}
-          options={options}
+          options={tabs[0].options}
           title="Uncategorized"
         />
         <div className={css.body}>
-          {experimentsTab}
+          {tabs[0].body}
         </div>
       </div>
     );
@@ -57,26 +62,25 @@ const ProjectDetailsHeader: React.FC<Props> = (
           </Breadcrumb.Item>
         </Breadcrumb>
       </div>
-      <Tabs defaultActiveKey="experiments" tabBarStyle={{ padding: 16, paddingBottom: 0 }}>
-        <TabPane key="experiments" tab="Experiments">
-          <div className={css.base}>
-            <PageHeader
-              className={css.noPadding}
-              options={options}
-              title="Experiments"
-            />
-            <div className={css.body}>
-              {experimentsTab}
-            </div>
-          </div>
-        </TabPane>
-        <TabPane key="notes" tab="Notes">
-          <PageHeader
-            className={css.noPadding}
-            title="Notes"
-          />
-          {notesTab}
-        </TabPane>
+      <Tabs
+        defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
+        tabBarStyle={{ padding: 16, paddingBottom: 0 }}>
+        {tabs.map(tabInfo => {
+          return (
+            <TabPane key={sentenceToCamelCase(tabInfo.title)} tab={tabInfo.title}>
+              <div className={css.base}>
+                <PageHeader
+                  className={css.noPadding}
+                  options={tabInfo.options}
+                  title={tabInfo.title}
+                />
+                <div className={css.body}>
+                  {tabInfo.body}
+                </div>
+              </div>
+            </TabPane>
+          );
+        })}
       </Tabs>
     </div>
   );
