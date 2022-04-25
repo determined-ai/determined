@@ -9,6 +9,7 @@ import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -120,17 +121,6 @@ const ModelDetails: React.FC = () => {
     });
   }, [ deleteVersion ]);
 
-  const showCannotDelete = () => {
-    Modal.confirm({
-      closable: true,
-      content: 'Only the item creator or an admin can delete items from the model registry.',
-      icon: null,
-      maskClosable: true,
-      okText: 'Ok',
-      title: 'Unable to Delete',
-    });
-  };
-
   const saveVersionDescription =
     useCallback(async (editedDescription: string, versionId: number) => {
       try {
@@ -172,7 +162,8 @@ const ModelDetails: React.FC = () => {
                 danger
 
                 key="delete-version"
-                onClick={() => isDeletable ? showConfirmDelete(record) : showCannotDelete()}>
+                onClick={() => isDeletable ?
+                  showConfirmDelete(record) : showModalItemCannotDelete()}>
                 Delete Version
               </Menu.Item>
             </Menu>

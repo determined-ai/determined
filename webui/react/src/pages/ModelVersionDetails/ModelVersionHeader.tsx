@@ -9,6 +9,7 @@ import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
@@ -55,17 +56,6 @@ const ModelVersionHeader: React.FC<Props> = (
       title: 'Confirm Delete',
     });
   }, [ onDeregisterVersion, modelVersion.version ]);
-
-  const showCannotDelete = () => {
-    Modal.confirm({
-      closable: true,
-      content: 'Only the item creator or an admin can delete items from the model registry.',
-      icon: null,
-      maskClosable: true,
-      okText: 'Ok',
-      title: 'Unable to Delete',
-    });
-  };
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -130,7 +120,8 @@ const ModelVersionHeader: React.FC<Props> = (
         danger: true,
         disabled: false,
         key: 'deregister-version',
-        onClick: () => isDeletable ? showConfirmDelete() : showCannotDelete(),
+        onClick: () => isDeletable ?
+          showConfirmDelete() : showModalItemCannotDelete(),
         text: 'Deregister Version',
       },
     ];

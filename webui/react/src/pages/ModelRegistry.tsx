@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -254,17 +255,6 @@ const ModelRegistry: React.FC = () => {
     });
   }, [ deleteCurrentModel ]);
 
-  const showCannotDelete = () => {
-    Modal.confirm({
-      closable: true,
-      content: 'Only the item creator or an admin can delete items from the model registry.',
-      icon: null,
-      maskClosable: true,
-      okText: 'Ok',
-      title: 'Unable to Delete',
-    });
-  };
-
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
       await patchModel({
@@ -306,7 +296,8 @@ const ModelRegistry: React.FC = () => {
               <Menu.Item
                 danger
                 key="delete-model"
-                onClick={() => isDeletable ? showConfirmDelete(record) : showCannotDelete()}>
+                onClick={() => isDeletable ?
+                  showConfirmDelete(record) : showModalItemCannotDelete()}>
                 Delete Model
               </Menu.Item>
             </Menu>
