@@ -118,7 +118,6 @@ const ModelVersionHeader: React.FC<Props> = (
       },
       {
         danger: true,
-        disabled: false,
         key: 'deregister-version',
         onClick: () => isDeletable ?
           showConfirmDelete() : showModalItemCannotDelete(),
