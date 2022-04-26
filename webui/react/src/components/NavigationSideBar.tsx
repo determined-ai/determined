@@ -7,7 +7,7 @@ import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { BrandingType, ResourceType } from 'types';
+import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 
 import AvatarCard from './AvatarCard';
@@ -41,35 +41,6 @@ const settingsConfig: SettingsConfig = {
   ],
   storagePath: 'navigation',
 };
-
-const menuConfig = (branding: BrandingType) => ({
-  bottom: [
-    { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
-    {
-      external: true,
-      icon: 'cloud',
-      label: 'API (Beta)',
-      path: paths.docs('/rest-api/'),
-      popout: true,
-    },
-    {
-      external: true,
-      icon: 'pencil',
-      label: 'Share Feedback',
-      path: paths.submitProductFeedback(branding),
-      popout: true,
-    },
-  ],
-  top: [
-    { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
-    { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
-    { icon: 'model', label: 'Model Registry', path: paths.modelList() },
-    { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-    { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-    { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-    { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
-  ],
-});
 
 const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
   const location = useLocation();
@@ -117,6 +88,35 @@ const NavigationSideBar: React.FC = () => {
     return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
       / totalSlots)}%`;
   }, [ overview, resourcePools ]);
+
+  const menuConfig = useMemo(() => ({
+    bottom: [
+      { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
+      {
+        external: true,
+        icon: 'cloud',
+        label: 'API (Beta)',
+        path: paths.docs('/rest-api/'),
+        popout: true,
+      },
+      {
+        external: true,
+        icon: 'pencil',
+        label: 'Share Feedback',
+        path: paths.submitProductFeedback(info.branding),
+        popout: true,
+      },
+    ],
+    top: [
+      { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
+      { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+      { icon: 'model', label: 'Model Registry', path: paths.modelList() },
+      { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
+      { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+      { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
+      { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
+    ],
+  }), [ info.branding ]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
@@ -183,7 +183,7 @@ const NavigationSideBar: React.FC = () => {
             />
           </section>
           <section className={css.top}>
-            {menuConfig(info.branding).top.map(config => (
+            {menuConfig.top.map(config => (
               <NavigationItem
                 key={config.icon}
                 status={config.icon === 'cluster' ? cluster : undefined}
@@ -193,7 +193,7 @@ const NavigationSideBar: React.FC = () => {
             ))}
           </section>
           <section className={css.bottom}>
-            {menuConfig(info.branding).bottom.map(config => (
+            {menuConfig.bottom.map(config => (
               <NavigationItem
                 key={config.icon}
                 tooltip={settings.navbarCollapsed}
