@@ -17,10 +17,9 @@ import time
 @pytest.mark.e2e_cpu_postgres
 @pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu
-#@pytest.mark.timeout(5 * 60)
+@pytest.mark.timeout(10 * 60)
 def test_trial_logs() -> None:
     # TODO: refactor tests to not use cli singleton auth.
-    start = time.time()
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
@@ -38,10 +37,6 @@ def test_trial_logs() -> None:
     check_logs(master_url, trial_id, log_regex, api.trial_logs, api.trial_log_fields)
     # And so should new task log APIs.
     check_logs(master_url, task_id, log_regex, api.task_logs, api.task_log_fields)
-
-    end = time.time()
-
-    print(f"total runtime : {start - end}")
 
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
