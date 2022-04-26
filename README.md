@@ -1,6 +1,6 @@
 # Shared UI
 
-We this directory for shareable code snippets, UI components, etc.
+We use this directory for shareable code snippets, UI components, etc.
 
 - separate reusable and shareable code across different Determined UIs
 - leave build and transpliation to target projects
@@ -14,8 +14,19 @@ Limitations:
 - shared dependencies between all the projects would need to have similar APIs
 - no pre-canned component-level versioning solution
 
+Read more about the methodology and tradeoffs [here](https://hpe-my.sharepoint.com/:w:/p/hamid_zare/EZh809x5395CrmypPcu8yiUBO4_Pk1cK_MdRnP3bywOLrQ?e=VdccG4)
+
 ## How
 
-TODO instructions for sharing new components, updating existing ones, deprecating, etc.
-
 Code in this directory should not depend on internal dependencies that leave outside this directory
+
+## TODO
+
+- [ ] write down instructions for
+  - [ ] sharing an existing module
+  - [ ] creating & sharing a new module
+  - [ ] best practices for structuring a component directory
+
+## Future Work
+
+- [ ] set up storybooks
