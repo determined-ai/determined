@@ -12,7 +12,7 @@ import { useStore } from 'contexts/Store';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
@@ -168,7 +168,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
     setHasLoaded(false);
 
-    consumeStream<V1TrialsSnapshotResponse>(
+    readStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
