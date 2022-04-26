@@ -1,0 +1,18 @@
+.actionOverflow {
+  display: none;
+}
+.actionList {
+  display: inline-flex;
+}
+
+@media only screen and (max-width: $breakpoint-tablet) {
+  .actionList {
+    display: none;
+  }
+  .actionOverflow {
+    cursor: pointer;
+    display: block;
+
+    &:hover { color: var(--theme-colors-action-normal); }
+  }
+}

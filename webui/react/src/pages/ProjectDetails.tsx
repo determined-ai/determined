@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Switch } from 'antd';
+import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -49,9 +49,10 @@ import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
+import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
-import ProjectDetailsHeader, { TabInfo } from './ProjectDetails/ProjectDetailsHeader';
+import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -655,7 +656,7 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ updateSettings ]);
 
-  const { modalOpen } = useModalCustomizeColumns({
+  const { modalOpen: openCustomizeColumns } = useModalCustomizeColumns({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
     onSave: (handleUpdateColumns as (columns: string[]) => void),
@@ -667,9 +668,9 @@ const ProjectDetails: React.FC = () => {
     [ settings.columns, updateSettings ],
   );
 
-  const openModal = useCallback(() => {
-    modalOpen({ initialVisibleColumns: settings.columns });
-  }, [ settings.columns, modalOpen ]);
+  const handleCustomizeColumnsClick = useCallback(() => {
+    openCustomizeColumns({ initialVisibleColumns: settings.columns });
+  }, [ openCustomizeColumns, settings.columns ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ExperimentColumnName[];
@@ -742,6 +743,50 @@ const ProjectDetails: React.FC = () => {
     [ user, handleActionComplete ],
   );
 
+  const ExperimentTabOptions = useMemo(() => {
+    return (
+      <>
+        <Space className={css.actionList}>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
+          <Button onClick={resetColumnWidths}>Reset Widths</Button>
+          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+        </Space>
+        <div className={css.actionOverflow} title="Open actions menu">
+          <Dropdown
+            overlay={(
+              <Menu>
+                <Menu.Item
+                  key="switchArchive"
+                  onClick={() => switchShowArchived(!settings.archived)}>
+                  {settings.archived ? 'Hide Archived' : 'Show Archived'}
+                </Menu.Item>
+                <Menu.Item key="columns" onClick={handleCustomizeColumnsClick}>Columns</Menu.Item>
+                <Menu.Item key="resetWidths" onClick={resetColumnWidths}>Reset Widths</Menu.Item>
+                {filterCount > 0 && (
+                  <Menu.Item key="resetFilters" onClick={resetFilters}>
+                    Clear Filters ({filterCount})
+                  </Menu.Item>
+                )}
+              </Menu>
+            )}
+            placement="bottomRight"
+            trigger={[ 'click' ]}>
+            <div>
+              <Icon name="overflow-vertical" />
+            </div>
+          </Dropdown>
+        </div>
+      </>
+    );
+  }, [ filterCount,
+    handleCustomizeColumnsClick,
+    resetColumnWidths,
+    resetFilters,
+    settings.archived,
+    switchShowArchived ]);
+
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {
       body: (
@@ -786,15 +831,7 @@ const ProjectDetails: React.FC = () => {
           />
         </>
       ),
-      options: (
-        <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-          <Button onClick={openModal}>Columns</Button>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
-          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
-        </Space>
-      ),
+      options: ExperimentTabOptions,
       title: 'Experiments',
     }, {
       body: (
@@ -804,10 +841,10 @@ const ProjectDetails: React.FC = () => {
       title: 'Notes',
     } ]);
   }, [ ExperimentActionDropdown,
+    ExperimentTabOptions,
     clearSelected,
     columns,
     experiments,
-    filterCount,
     handleBatchAction,
     handleTableRowSelect,
     hasActivatable,
@@ -818,12 +855,8 @@ const ProjectDetails: React.FC = () => {
     hasPausable,
     hasUnarchivable,
     isLoading,
-    openModal,
     project?.notes,
-    resetColumnWidths,
-    resetFilters,
     settings,
-    switchShowArchived,
     total,
     updateSettings ]);
 
@@ -844,7 +877,7 @@ const ProjectDetails: React.FC = () => {
       containerRef={pageRef}
       docTitle="Project Details"
       id="projectDetails">
-      <ProjectDetailsHeader
+      <ProjectDetailsTabs
         project={project}
         tabs={tabs}
         workspace={workspace}

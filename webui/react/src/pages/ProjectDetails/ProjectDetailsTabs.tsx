@@ -1,5 +1,5 @@
 import { Breadcrumb, Tabs } from 'antd';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Link from 'components/Link';
 import PageHeader from 'components/PageHeader';
@@ -8,7 +8,7 @@ import { paths } from 'routes/utils';
 import { Project, Workspace } from 'types';
 import { sentenceToCamelCase } from 'utils/string';
 
-import css from './ProjectDetailsHeader.module.scss';
+import css from './ProjectDetailsTabs.module.scss';
 
 const { TabPane } = Tabs;
 
@@ -24,9 +24,19 @@ interface Props {
   workspace?: Workspace;
 }
 
-const ProjectDetailsHeader: React.FC<Props> = (
+const ProjectDetailsTabs: React.FC<Props> = (
   { workspace, project, tabs }: Props,
 ) => {
+  const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
+
+  const handleTabSwitch = useCallback((tabKey) => {
+    setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
+  }, [ tabs ]);
+
+  useEffect(() => {
+    handleTabSwitch(sentenceToCamelCase(activeTab.title));
+  }, [ activeTab.title, handleTabSwitch ]);
+
   if (project.immutable) {
     const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
     return (
@@ -65,19 +75,14 @@ const ProjectDetailsHeader: React.FC<Props> = (
       </div>
       <Tabs
         defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
-        tabBarStyle={{ padding: 16, paddingBottom: 0 }}>
+        tabBarExtraContent={activeTab.options}
+        tabBarStyle={{ padding: 16, paddingBottom: 0 }}
+        onChange={handleTabSwitch}>
         {tabs.map(tabInfo => {
           return (
             <TabPane key={sentenceToCamelCase(tabInfo.title)} tab={tabInfo.title}>
               <div className={css.base}>
-                <PageHeader
-                  className={css.noPadding}
-                  options={tabInfo.options}
-                  title={tabInfo.title}
-                />
-                <div className={css.body}>
-                  {tabInfo.body}
-                </div>
+                {tabInfo.body}
               </div>
             </TabPane>
           );
@@ -87,4 +92,4 @@ const ProjectDetailsHeader: React.FC<Props> = (
   );
 };
 
-export default ProjectDetailsHeader;
+export default ProjectDetailsTabs;
