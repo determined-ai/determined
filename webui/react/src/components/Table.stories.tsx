@@ -6,6 +6,7 @@ import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask } from 'types';
 import { alphaNumericSorter, commandStateSorter, dateTimeStringSorter } from 'utils/sort';
 import { generateCommandTask } from 'utils/task';
+import { getDisplayName } from 'utils/user';
 
 import {
   defaultRowClassName, relativeTimeRenderer, stateRenderer,
@@ -63,7 +64,9 @@ const columns: ColumnType<CommandTask>[] = [
   {
     key: 'user',
     render: userRenderer,
-    sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.username, b.username),
+    sorter: (a: CommandTask, b: CommandTask): number => (
+      alphaNumericSorter(getDisplayName(a), getDisplayName(b))
+    ),
     title: 'User',
   },
   {

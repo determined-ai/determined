@@ -41,6 +41,7 @@ const trialDetails: TrialDetails = {
 
 const experimentDetails: ExperimentBase = {
   ...sampleExperiment,
+  userId: 123,
   username: 'hamid',
 };
 

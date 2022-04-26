@@ -34,7 +34,7 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
       <div className={css.field}>
         <span className={css.header}>Avatar</span>
         <span className={css.body}>
-          <Avatar hideTooltip large username={auth.user?.username} />
+          <Avatar hideTooltip large userId={auth.user?.id} />
         </span>
         <Divider />
       </div>

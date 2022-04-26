@@ -150,8 +150,8 @@ const ModelDetails: React.FC = () => {
 
     const OverflowRenderer = (_:string, record: ModelVersion) => {
       const isDeletable = user?.isAdmin
-        || user?.username === model?.model.username
-        || user?.username === record.username;
+        || user?.id === model?.model.userId
+        || user?.id === record.userId;
       return (
         <Dropdown
           overlay={(
@@ -211,11 +211,8 @@ const ModelDetails: React.FC = () => {
         width: 140,
       },
       {
-        dataIndex: 'username',
-        render: (username: string, record: ModelVersion, index) =>
-          username ?
-            userRenderer(username, record, index) :
-            userRenderer(record.model.username, record.model, index),
+        dataIndex: 'user',
+        render: userRenderer,
         title: 'User',
         width: 1,
       },
@@ -231,7 +228,7 @@ const ModelDetails: React.FC = () => {
       return column;
     });
   }, [ showConfirmDelete,
-    model?.model.username,
+    model?.model.userId,
     saveModelVersionTags,
     user,
     settings.sortKey,

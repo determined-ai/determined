@@ -211,6 +211,7 @@ const TrialRangeHyperparametersContainer = () => {
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
     state: RunState.Completed,
+    userId: 123,
     username: 'determined',
   };
   const sampleTrial: TrialDetails = {

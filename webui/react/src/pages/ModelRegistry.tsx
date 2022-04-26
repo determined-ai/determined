@@ -282,7 +282,7 @@ const ModelRegistry: React.FC = () => {
     );
 
     const overflowRenderer = (_:string, record: ModelItem) => {
-      const isDeletable = user?.isAdmin || user?.username === record.username;
+      const isDeletable = user?.isAdmin || user?.id === record.userId;
       return (
         <Dropdown
           overlay={(

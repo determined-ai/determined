@@ -8,6 +8,7 @@ const SampleExperimentTask: ExperimentTask = {
   archived: false,
   resourcePool: '',
   state: 'ACTIVE' as RunState,
+  userId: 123,
   username: '',
 };
 const SampleCommandTask: CommandTask = {
@@ -15,6 +16,7 @@ const SampleCommandTask: CommandTask = {
   resourcePool: '',
   state: 'PENDING' as CommandState,
   type: 'COMMAND' as CommandType,
+  userId: 123,
   username: '',
 };
 

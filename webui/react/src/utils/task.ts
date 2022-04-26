@@ -51,6 +51,7 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
     progress,
     state: state as Type.RunState,
     url: '#',
+    userId: user.id,
     username: user.username,
   };
 }
@@ -64,6 +65,7 @@ export function generateCommandTask(idx: number): Type.RecentCommandTask {
     displayName: user.displayName,
     state: state as Type.CommandState,
     type: getRandomElementOfEnum(Type.CommandType),
+    userId: user.id,
     username: user.username,
   };
 }
@@ -100,6 +102,7 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
     hyperparameters: {},
     id: id,
     name: experimentTask.name,
+    userId: user.id,
     username: user.username,
   } as Type.ExperimentOld;
 };
@@ -125,6 +128,7 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
         numTrials: Math.round(Math.random() * 60000),
         resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
         searcherType: 'single',
+        userId: user.id,
         username: user.username,
       } as Type.ExperimentItem;
     });
@@ -223,6 +227,7 @@ export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.Recent
     startTime: experiment.startTime,
     state: experiment.state,
     url: paths.experimentDetails(experiment.id),
+    userId: experiment.userId,
     username: experiment.username,
   };
   return task;

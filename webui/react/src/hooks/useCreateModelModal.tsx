@@ -80,7 +80,6 @@ const useCreateModelModal = (): ModalHooks => {
         labels: tags,
         metadata: metadata,
         name: modelName,
-        username: user?.username,
       });
       if (!response?.id) return;
       closeModal();
@@ -105,7 +104,7 @@ const useCreateModelModal = (): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [ closeModal, showRegisterCheckpointModal, user?.username ]);
+  }, [ closeModal, showRegisterCheckpointModal, user?.id ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
     if (!modalRef.current) return Promise.reject();
