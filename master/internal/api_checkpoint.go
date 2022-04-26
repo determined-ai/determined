@@ -28,6 +28,13 @@ func (a *apiServer) GetCheckpoint(
 	}
 }
 
+func (a *apiServer) DeleteCheckpoints(
+	_ context.Context, req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
+	checkpoints := req.CheckpointUuids
+	// figure otu if
+	return &apiv1.DeleteCheckpointsResponse{}, nil
+}
+
 func (a *apiServer) PostCheckpointMetadata(
 	ctx context.Context, req *apiv1.PostCheckpointMetadataRequest,
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
