@@ -9,6 +9,7 @@ import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -159,9 +160,10 @@ const ModelDetails: React.FC = () => {
               {useActionRenderer(_, record)}
               <Menu.Item
                 danger
-                disabled={!isDeletable}
+
                 key="delete-version"
-                onClick={() => showConfirmDelete(record)}>
+                onClick={() => isDeletable ?
+                  showConfirmDelete(record) : showModalItemCannotDelete()}>
                 Delete Version
               </Menu.Item>
             </Menu>

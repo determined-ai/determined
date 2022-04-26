@@ -670,6 +670,15 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 func (a *Allocation) terminated(ctx *actor.Context) {
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.State()}
+	if a.exited {
+		// Never exit twice. If this were allowed, a trial could receive two task.AllocationExited
+		// messages. On receipt of the first message, the trial awaits our exit. Once we exit, it
+		// reschedules a new allocation, receives the second message and erroneously awaits the new
+		// allocation's stop. Once the new allocation asks the trial to build its task spec, they
+		// deadlock.
+		// This occurred when an allocation completed and was preempted in quick succession.
+		return
+	}
 	a.exited = true
 	defer ctx.Tell(ctx.Self().Parent(), exit)
 	defer ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})

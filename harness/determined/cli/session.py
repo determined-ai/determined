@@ -6,12 +6,7 @@ from determined.common.experimental import session
 
 
 def setup_session(args: Namespace) -> session.Session:
-    master = args.master or util.get_default_master_address()
-    cert = certs.default_load(
-        master_url=master,
-        explicit_path=getattr(args, "cert_path", None),
-        explicit_cert_name=getattr(args, "cert_name", None),
-        explicit_noverify=getattr(args, "noverify", True),
-    )
+    master_url = args.master or util.get_default_master_address()
+    cert = certs.default_load(master_url)
 
-    return session.Session(master, args.user, authentication.cli_auth, cert)
+    return session.Session(master_url, args.user, authentication.cli_auth, cert)
