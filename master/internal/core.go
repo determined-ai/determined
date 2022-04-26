@@ -921,8 +921,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
 
-	// used in _data_layer.py for streaming training data,
-	// see https://docs.determined.ai/latest/prepare-data/index.html#streaming-from-object-storage
+	// used in as a part of the data layer API (to be removed) in harness/determined/_data_layer
+	// see https://docs.determined.ai/latest/training-apis/data-layer.html#using-the-data-layer-api
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 
