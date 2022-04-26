@@ -287,7 +287,7 @@ def test_workspace_org() -> None:
         returned_notes = r5.notes
         assert len(returned_notes) == 2
 
-        # Create an experiment in the default project and move to a test project.
+        # Create an experiment in the default project.
         test_exp_id = run_basic_test(
             conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
         )
@@ -296,13 +296,17 @@ def test_workspace_org() -> None:
         wait_for_experiment_state(test_exp_id, bindings.determinedexperimentv1State.STATE_COMPLETED)
         assert test_exp.projectId == default_project.id
 
-        # Moving an experiment out of the default project
+        # Move the test experiment into a user-made project
+        exp_count = len(bindings.get_GetProjectExperiments(sess, id=made_project.id).experiments)
+        assert exp_count == 0
         mbody = bindings.v1MoveExperimentRequest(
             destinationProjectId=made_project.id, experimentId=test_exp_id
         )
         bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
         modified_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
         assert modified_exp.projectId == made_project.id
+        exp_count = len(bindings.get_GetProjectExperiments(sess, id=made_project.id).experiments)
+        assert exp_count == 1
 
         # Cannot move an experiment out of an archived project
         bindings.post_ArchiveProject(sess, id=made_project.id)
