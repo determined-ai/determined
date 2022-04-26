@@ -3717,6 +3717,7 @@ class v1ResourceAllocationAggregatedEntry:
         byAgentLabel: "typing.Dict[str, float]",
         byExperimentLabel: "typing.Dict[str, float]",
         byResourcePool: "typing.Dict[str, float]",
+        byUserId: "typing.Dict[str, float]",
         byUsername: "typing.Dict[str, float]",
         period: "v1ResourceAllocationAggregationPeriod",
         periodStart: str,
@@ -3729,6 +3730,7 @@ class v1ResourceAllocationAggregatedEntry:
         self.byExperimentLabel = byExperimentLabel
         self.byResourcePool = byResourcePool
         self.byAgentLabel = byAgentLabel
+        self.byUserId = byUserId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationAggregatedEntry":
@@ -3740,6 +3742,7 @@ class v1ResourceAllocationAggregatedEntry:
             byExperimentLabel={k: float(v) for k, v in obj["byExperimentLabel"].items()},
             byResourcePool={k: float(v) for k, v in obj["byResourcePool"].items()},
             byAgentLabel={k: float(v) for k, v in obj["byAgentLabel"].items()},
+            byUserId={k: float(v) for k, v in obj["byUserId"].items()},
         )
 
     def to_json(self) -> typing.Any:
@@ -3751,6 +3754,7 @@ class v1ResourceAllocationAggregatedEntry:
             "byExperimentLabel": {k: dump_float(v) for k, v in self.byExperimentLabel.items()},
             "byResourcePool": {k: dump_float(v) for k, v in self.byResourcePool.items()},
             "byAgentLabel": {k: dump_float(v) for k, v in self.byAgentLabel.items()},
+            "byUserId": {k: dump_float(v) for k, v in self.byUserId.items()},
         }
 
 class v1ResourceAllocationAggregatedResponse:

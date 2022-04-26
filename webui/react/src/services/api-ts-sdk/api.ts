@@ -4388,7 +4388,7 @@ export interface V1ResourceAllocationAggregatedEntry {
      */
     seconds: number;
     /**
-     * The seconds in the cluster used by experiments belonging to each user.
+     * The seconds in the cluster used by experiments belonging to each username.
      * @type {{ [key: string]: number; }}
      * @memberof V1ResourceAllocationAggregatedEntry
      */
@@ -4411,6 +4411,12 @@ export interface V1ResourceAllocationAggregatedEntry {
      * @memberof V1ResourceAllocationAggregatedEntry
      */
     byAgentLabel: { [key: string]: number; };
+    /**
+     * The seconds in the cluster used by experiments belonging to each user id.
+     * @type {{ [key: string]: number; }}
+     * @memberof V1ResourceAllocationAggregatedEntry
+     */
+    byUserId: { [key: string]: number; };
 }
 
 /**

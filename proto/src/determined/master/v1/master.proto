@@ -68,6 +68,7 @@ message ResourceAllocationAggregatedEntry {
         "period",
         "seconds",
         "byUsername",
+        "byUserId",
         "byExperimentLabel",
         "byResourcePool",
         "byAgentLabel"
@@ -80,7 +81,7 @@ message ResourceAllocationAggregatedEntry {
   ResourceAllocationAggregationPeriod period = 2;
   // The total number of seconds included in this allocation entry.
   float seconds = 3;
-  // The seconds in the cluster used by experiments belonging to each user.
+  // The seconds in the cluster used by experiments belonging to each username.
   map<string, float> by_username = 4;
   // The seconds in the cluster used by experiments labeled with each label.
   map<string, float> by_experiment_label = 5;
@@ -90,4 +91,6 @@ message ResourceAllocationAggregatedEntry {
   // The seconds in the cluster used by experiments assigned to each agent
   // label.
   map<string, float> by_agent_label = 7;
+  // The seconds in the cluster used by experiments belonging to each user id.
+  map<int32, float> by_user_id = 8;
 }
