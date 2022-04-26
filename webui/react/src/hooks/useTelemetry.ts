@@ -84,7 +84,7 @@ class Telemetry {
           clusterName: info.clusterName,
           edition: 'OSS',
           masterId: info.masterId,
-          username: auth.user.username,
+          userId: auth.user.id,
           version: info.version,
         });
         this.isIdentified = true;

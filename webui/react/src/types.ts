@@ -578,7 +578,7 @@ export interface ExperimentTask extends Task {
   projectId: number;
   resourcePool: string;
   state: CompoundRunState;
-  userId?: number;
+  userId: number;
   username: string;
   workspaceId: number;
 }
