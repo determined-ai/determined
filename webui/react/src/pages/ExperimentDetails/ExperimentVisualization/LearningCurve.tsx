@@ -1,5 +1,6 @@
 import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Message, { MessageType } from 'shared/components/message';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
@@ -11,8 +12,7 @@ import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/ut
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
-import Message, { MessageType } from 'shared/components/message';
+import { readStream } from 'services/utils';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
   metricTypeParamMap, RunState,
@@ -98,7 +98,7 @@ const LearningCurve: React.FC<Props> = ({
 
     setHasLoaded(false);
 
-    consumeStream<V1TrialsSampleResponse>(
+    readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
