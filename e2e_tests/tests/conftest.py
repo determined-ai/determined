@@ -84,6 +84,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def instantiate_gpu() -> None:
+    print("in fixture gpu instantiated")
     command = ["det", "cmd", "--config", "resources.slots=1", "'sleep 30'"]
 
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
