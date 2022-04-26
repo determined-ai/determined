@@ -51,7 +51,7 @@ func createGenericCommandActor(
 	spec tasks.GenericCommandSpec,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
-
+	spec.TaskType = taskType
 	cmd := &command{
 		db:         db,
 		taskLogger: taskLogger,
