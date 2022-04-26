@@ -331,7 +331,13 @@ const WorkspaceDetails: React.FC = () => {
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
+      headerComponent={(
+        <WorkspaceDetailsHeader
+          curUser={user}
+          fetchWorkspace={fetchAll}
+          workspace={workspace}
+        />
+      )}
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter

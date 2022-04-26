@@ -134,8 +134,8 @@ const WorkspaceList: React.FC = () => {
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
       <WorkspaceActionDropdown
         curUser={user}
-        fetchWorkspaces={fetchWorkspaces}
         workspace={record}
+        onComplete={fetchWorkspaces}
       />
     );
 
@@ -217,8 +217,8 @@ const WorkspaceList: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <WorkspaceActionDropdown
         curUser={user}
-        fetchWorkspaces={fetchWorkspaces}
         workspace={record}
+        onComplete={fetchWorkspaces}
         onVisibleChange={onVisibleChange}>
         {children}
       </WorkspaceActionDropdown>

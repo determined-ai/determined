@@ -317,3 +317,9 @@ export interface ArchiveWorkspaceParams {
 }
 
 export type UnarchiveWorkspaceParams = ArchiveWorkspaceParams;
+
+export interface PinWorkspaceParams {
+  id: number;
+}
+
+export type UnpinWorkspaceParams = ArchiveWorkspaceParams;

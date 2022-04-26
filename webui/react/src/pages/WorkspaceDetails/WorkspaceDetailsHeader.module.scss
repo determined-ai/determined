@@ -5,6 +5,7 @@
   justify-content: space-between;
   margin: 0;
   padding: 12px;
+  padding-bottom: 0;
   width: 100%;
 
   .nameRow {
@@ -19,6 +20,12 @@
       font-size: var(--theme-sizes-font-big);
       margin: 0;
       text-align: center;
+    }
+    .pinned {
+      color: var(--theme-colors-monochrome-9);
+      font-size: var(--theme-sizes-icon-medium);
+      height: min-content;
+      width: min-content;
     }
   }
 }
